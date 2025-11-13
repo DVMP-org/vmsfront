@@ -1,0 +1,38 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: false,
+  images: {
+    domains: ['localhost', 'api.gatekeeperhq.cfd', "storage.googleapis.com"],
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // ⛔️ Skips eslint errors at build time
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Allow dev origins for cross-origin requests in development
+  allowedDevOrigins: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://192.168.100.20:3000',
+    'http://192.168.100.20',
+  ],
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://api.gatekeeperhq.cfd'
+        : 'http://localhost:8080');
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+

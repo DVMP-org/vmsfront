@@ -1,0 +1,317 @@
+import { apiClient } from "@/lib/api-client";
+import {
+    House,
+    CreateHouseRequest,
+    Admin,
+    CreateAdminRequest,
+    AdminRole,
+    ResidentUser,
+    ResidentUserCreate,
+    GatePass,
+    GatePassCheckinRequest,
+    GatePassCheckinResponse,
+    GateEvent,
+    Visitor,
+    ApiResponse,
+    AdminDashboard,
+    AnalyticsSummary,
+    AllPermissionsResponse,
+    PaginatedResponse,
+    User,
+    ImportResponse,
+    AdminProfileUpdatePayload,
+    ForumCategory,
+    ForumCategoryPayload,
+    ForumCategoryUpdatePayload,
+    ForumTopic,
+    ForumTopicCreatePayload,
+    ForumTopicUpdatePayload,
+    ForumPost,
+    ForumPostCreatePayload,
+    ForumPostUpdatePayload,
+} from "@/types";
+
+export const adminService = {
+    // Dashboard
+    async getDashboard(): Promise<ApiResponse<AdminDashboard>> {
+        return apiClient.get("/admin/dashboard");
+    },
+
+    async getAnalyticsSummary(): Promise<ApiResponse<AnalyticsSummary>> {
+        return apiClient.get("/admin/analytics/summary");
+    },
+
+    async getAdminProfile(): Promise<ApiResponse<Admin>> {
+        return apiClient.get("/admin/me");
+    },
+
+    async updateAdminProfile(data: AdminProfileUpdatePayload): Promise<ApiResponse<Admin>> {
+        return apiClient.put("/admin/me", data);
+    },
+
+    // Houses
+    async getHouses(): Promise<ApiResponse<House[]>> {
+        return apiClient.get("/admin/house/list");
+    },
+
+    async createHouse(data: CreateHouseRequest): Promise<ApiResponse<House>> {
+        return apiClient.post("/admin/house/create", data);
+    },
+
+    // Residents
+    async getResidents(): Promise<ApiResponse<ResidentUser[]>> {
+        return apiClient.get("/admin/resident/list");
+    },
+
+    async createResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.post("/admin/resident/create", data);
+    },
+
+    async getUsers(): Promise<ApiResponse<User[]>> {
+        return apiClient.get("/admin/user/list");
+    },
+
+    // Admins
+    async getAdmins(): Promise<ApiResponse<Admin[]>> {
+        return apiClient.get("/admin/list");
+    },
+
+    async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
+        return apiClient.post("/admin/onboard", data);
+    },
+
+    // Roles
+    async getRoles(): Promise<ApiResponse<AdminRole[]>> {
+        return apiClient.get("/admin/role/list");
+    },
+
+    async getRole(roleId: string): Promise<ApiResponse<AdminRole>> {
+        return apiClient.get(`/admin/role/${roleId}`);
+    },
+
+    async createRole(data: {
+        name: string;
+        code: string;
+        description?: string;
+        permissions?: any;
+    }): Promise<ApiResponse<AdminRole>> {
+        return apiClient.post("/admin/role/create", data);
+    },
+
+    async updateRole(
+        roleId: string,
+        data: Partial<{
+            name: string;
+            code: string;
+            description?: string;
+            permissions?: any;
+        }>
+    ): Promise<ApiResponse<AdminRole>> {
+        return apiClient.put(`/admin/role/${roleId}`, data);
+    },
+
+    async deleteRole(roleId: string): Promise<ApiResponse<AdminRole>> {
+        return apiClient.delete(`/admin/role/${roleId}`);
+    },
+
+    // Gate Operations
+    async checkinPass(data: GatePassCheckinRequest): Promise<ApiResponse<GatePassCheckinResponse>> {
+        return apiClient.post("/admin/passes/checkin", data);
+    },
+
+    async checkoutPass(data: GatePassCheckinRequest): Promise<ApiResponse<GatePassCheckinResponse>> {
+        return apiClient.post("/admin/passes/checkout", data);
+    },
+
+    async getVisitorsByPassCode(passCode: string): Promise<ApiResponse<Visitor[]>> {
+        return apiClient.get(`/admin/passes/visitors/${passCode}`);
+    },
+
+    async getAllPermissions(): Promise<ApiResponse<AllPermissionsResponse>> {
+        return apiClient.get("/admin/role/permissions/all");
+    },
+
+    async getGatePasses(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
+        return apiClient.get("/admin/gate-passes/", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                status: params?.status ?? undefined,
+            },
+        });
+    },
+
+    async getGatePass(passId: string): Promise<ApiResponse<GatePass>> {
+        return apiClient.get(`/admin/gate-passes/${passId}`);
+    },
+
+    async getGateEvents(params?: {
+        page?: number;
+        pageSize?: number;
+        passId?: string;
+        houseId?: string;
+    }): Promise<ApiResponse<PaginatedResponse<GateEvent>>> {
+        return apiClient.get("/admin/gate-events/", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 15,
+                pass_id: params?.passId ?? undefined,
+                house_id: params?.houseId ?? undefined,
+            },
+        });
+    },
+
+    async getGateEvent(eventId: string): Promise<ApiResponse<GateEvent>> {
+        return apiClient.get(`/admin/gate-events/${eventId}`);
+    },
+
+    async getGatePassEvents(
+        passId: string,
+        params?: { page?: number; pageSize?: number }
+    ): Promise<ApiResponse<GateEvent[]>> {
+        return apiClient.get(`/admin/gate-passes/${passId}/events`, {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+            },
+        });
+    },
+
+    async importHouses(formData: FormData): Promise<ApiResponse<ImportResponse>> {
+        return apiClient.post("/admin/houses/create/bulk", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+    },
+
+    async importResidents(formData: FormData): Promise<ApiResponse<ImportResponse>> {
+        return apiClient.post("/admin/resident/create/bulk", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+    },
+
+    // Forum (Admin)
+    async getForumCategories(params?: {
+        page?: number;
+        pageSize?: number;
+        houseId?: string;
+        search?: string;
+        includeLocked?: boolean;
+    }): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
+        return apiClient.get("/admin/forum/category/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 12,
+                house_id: params?.houseId ?? undefined,
+                search_query: params?.search ?? undefined,
+                include_locked: params?.includeLocked ?? undefined,
+            },
+        });
+    },
+
+    async getForumCategory(categoryId: string): Promise<ApiResponse<ForumCategory>> {
+        return apiClient.get(`/admin/forum/category/${categoryId}`);
+    },
+
+    async createForumCategory(
+        data: ForumCategoryPayload
+    ): Promise<ApiResponse<ForumCategory>> {
+        return apiClient.post("/admin/forum/category/create", data);
+    },
+
+    async updateForumCategory(
+        categoryId: string,
+        data: ForumCategoryUpdatePayload
+    ): Promise<ApiResponse<ForumCategory>> {
+        return apiClient.put(`/admin/forum/category/${categoryId}/update`, data);
+    },
+
+    async deleteForumCategory(
+        categoryId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/forum/category/${categoryId}/delete`);
+    },
+
+    async getForumTopics(params?: {
+        page?: number;
+        pageSize?: number;
+        houseId?: string;
+        categoryId?: string;
+        status?: "pinned" | "locked" | "deleted";
+        search?: string;
+        startDate?: string;
+        endDate?: string;
+        includeDeleted?: boolean;
+    }): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
+        return apiClient.get("/admin/forum/topics", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                house_id: params?.houseId ?? undefined,
+                category_id: params?.categoryId ?? undefined,
+                status: params?.status ?? undefined,
+                search_query: params?.search ?? undefined,
+                start_date: params?.startDate ?? undefined,
+                end_date: params?.endDate ?? undefined,
+                include_deleted: params?.includeDeleted ?? undefined,
+            },
+        });
+    },
+
+    async getForumTopic(topicId: string): Promise<ApiResponse<ForumTopic>> {
+        return apiClient.get(`/admin/forum/topic/${topicId}`);
+    },
+
+    async createForumTopic(
+        data: ForumTopicCreatePayload
+    ): Promise<ApiResponse<ForumTopic>> {
+        return apiClient.post("/admin/forum/topic/create", data);
+    },
+
+    async updateForumTopic(
+        topicId: string,
+        data: ForumTopicUpdatePayload
+    ): Promise<ApiResponse<ForumTopic>> {
+        return apiClient.put(`/admin/forum/topic/${topicId}/update`, data);
+    },
+
+    async deleteForumTopic(
+        topicId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/forum/topic/${topicId}/delete`);
+    },
+
+    async getForumPosts(
+        topicId: string,
+        params?: { page?: number; pageSize?: number }
+    ): Promise<ApiResponse<PaginatedResponse<ForumPost>>> {
+        return apiClient.get(`/admin/forum/topic/${topicId}/post/all`, {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 20,
+            },
+        });
+    },
+
+    async createForumPost(
+        data: ForumPostCreatePayload
+    ): Promise<ApiResponse<ForumPost>> {
+        return apiClient.post("/admin/forum/topic/post/create", data);
+    },
+
+    async updateForumPost(
+        topicId: string,
+        postId: string,
+        data: ForumPostUpdatePayload
+    ): Promise<ApiResponse<ForumPost>> {
+        return apiClient.put(
+            `/admin/forum/topic/${topicId}/post/${postId}/update`,
+            data
+        );
+    },
+};

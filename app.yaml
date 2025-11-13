@@ -1,0 +1,10 @@
+
+
+build:
+  commands:
+    - npm cache clean --force
+    - npm ci
+env_variables:
+  NEXT_PUBLIC_API_URL: "api.gatekeeperhq.cfd"
+  NEXT_PUBLIC_APP_NAME: "VMSCORE"
+  NEXT_PUBLIC_WS_URL: "ws://api.gatekeeperhq.cfd"
