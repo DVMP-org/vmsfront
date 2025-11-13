@@ -18,6 +18,7 @@ import {
   ChevronRight,
   X,
   MessageSquare,
+  UserCog,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -45,6 +46,7 @@ const adminLinks = [
   { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
   { href: "/admin/houses", label: "Houses", icon: Building2 },
   { href: "/admin/residents", label: "Residents", icon: Users },
+  { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },

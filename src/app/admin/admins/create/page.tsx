@@ -29,6 +29,7 @@ export default function CreateAdminPage() {
     first_name: "",
     last_name: "",
     role_id: "",
+    email: "",
   });
   const [useCustomPermissions, setUseCustomPermissions] = useState(false);
   const [grantAll, setGrantAll] = useState(false);
@@ -51,6 +52,11 @@ export default function CreateAdminPage() {
       return;
     }
 
+    if (!form.email.trim()) {
+      toast.error("email is required.");
+      return;
+    }
+
     if (!form.role_id) {
       toast.error("Select a base role to inherit permissions from.");
       return;
@@ -64,7 +70,8 @@ export default function CreateAdminPage() {
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      role_id: form.role_id,
+      role_id: form.role_id,  
+      email: form.email.trim(),
       permissions: useCustomPermissions
         ? grantAll
           ? "*"
@@ -124,6 +131,15 @@ export default function CreateAdminPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Email"
+                  placeholder="email@ada.com"
+                  value={form.email}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, email: event.target.value }))
+                  }
+                  required
+                />
                 <Input
                   label="First name"
                   placeholder="Ada"

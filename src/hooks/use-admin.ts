@@ -92,6 +92,37 @@ export function useCreateAdmin() {
   });
 }
 
+export function useUpdateAdminRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ adminId, roleId }: { adminId: string; roleId: string }) =>
+      adminService.updateAdminRole(adminId, { role_id: roleId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "admins"] });
+      toast.success("Admin role updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update admin role");
+    },
+  });
+}
+
+export function useDeleteAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (adminId: string) => adminService.deleteAdmin(adminId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "admins"] });
+      toast.success("Admin deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete admin");
+    },
+  });
+}
+
 // Roles
 export function useAdminRoles() {
   return useQuery({

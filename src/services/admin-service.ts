@@ -29,6 +29,7 @@ import {
     ForumPost,
     ForumPostCreatePayload,
     ForumPostUpdatePayload,
+    UpdateAdminRoleRequest,
 } from "@/types";
 
 export const adminService = {
@@ -77,7 +78,15 @@ export const adminService = {
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.post("/admin/onboard", data);
+        return apiClient.post("/admin/create", data);
+    },
+
+    async updateAdminRole(adminId: string, data: UpdateAdminRoleRequest): Promise<ApiResponse<Admin>> {
+        return apiClient.put(`/admin/update/${adminId}/`, data);
+    },
+
+    async deleteAdmin(adminId: string): Promise<ApiResponse<Admin>> {
+        return apiClient.delete(`/admin/delete/${adminId}/`);
     },
 
     // Roles

@@ -323,8 +323,16 @@ export interface CreateHouseRequest {
 export interface CreateAdminRequest {
     first_name: string;
     last_name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    title?: string;
     role_id?: string;
     permissions?: string;
+}
+
+export interface UpdateAdminRoleRequest {
+    role_id: string;
 }
 
 export interface GatePassCheckinRequest {
