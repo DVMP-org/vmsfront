@@ -20,11 +20,7 @@ const nextConfig = {
     'http://192.168.100.20',
   ],
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-      (process.env.NODE_ENV === 'production'
-        ? 'https://api.gatekeeperhq.cfd'
-        : 'http://localhost:8080');
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL 
     return [
       {
         source: '/api/:path*',
