@@ -443,7 +443,7 @@ export default function ForumTopicPage() {
                   const avatarLabel = isAdminPost
                     ? "AD"
                     : initials || authorName.charAt(0).toUpperCase();
-                  const displayName = isAdminPost ? "Admin" : authorName;
+                  const displayName = isAdminPost ? "Estate Adminstrator" : authorName;
                   const isRecentlyCreated = recentPostId === post.id;
                   const isRecent =
                     post.created_at &&
