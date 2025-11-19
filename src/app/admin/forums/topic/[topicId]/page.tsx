@@ -60,7 +60,11 @@ export default function AdminForumTopicDetailPage() {
     page: postsPage,
     pageSize: 10,
   });
-  const { data: houses } = useAdminHouses();
+  const { data: housesData } = useAdminHouses({
+    page: 1,
+    pageSize: 500,
+  });
+  const houses = housesData?.items ?? [];
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
@@ -441,7 +445,7 @@ export default function AdminForumTopicDetailPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode="edit"
-        houses={houses ?? []}
+        houses={houses}
         categories={categoriesForModal}
         defaultHouseId={topic?.house_id || topic?.house?.id}
         initialValues={

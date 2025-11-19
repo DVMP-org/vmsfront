@@ -51,8 +51,18 @@ export const adminService = {
     },
 
     // Houses
-    async getHouses(): Promise<ApiResponse<House[]>> {
-        return apiClient.get("/admin/house/list");
+    async getHouses(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<House>>> {
+        return apiClient.get("/admin/house/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
     },
 
     async createHouse(data: CreateHouseRequest): Promise<ApiResponse<House>> {
@@ -60,8 +70,20 @@ export const adminService = {
     },
 
     // Residents
-    async getResidents(): Promise<ApiResponse<ResidentUser[]>> {
-        return apiClient.get("/admin/resident/list");
+    async getResidents(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<ApiResponse<PaginatedResponse<ResidentUser>>> {
+        return apiClient.get("/admin/resident/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                status: params?.status ?? undefined,
+            },
+        });
     },
 
     async createResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {

@@ -10,13 +10,18 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column } from "@/components/ui/DataTable";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Plus, Building2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { ImportResponse } from "@/types";
 import { House } from "@/types";
 
+const PAGE_SIZE = 10;
+
 export default function HousesPage() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -34,9 +39,23 @@ export default function HousesPage() {
     importFormRef.current?.reset();
   };
 
-  const { data: houses, isLoading } = useAdminHouses();
+  const { data, isLoading, isFetching } = useAdminHouses({
+    page,
+    pageSize: PAGE_SIZE,
+    search: search.trim() || undefined,
+  });
   const createHouseMutation = useCreateHouse();
   const importHousesMutation = useImportHouses();
+  const houses = data?.items ?? [];
+  const totalPages = data?.total_pages ?? 1;
+  const pageSize = data?.page_size ?? PAGE_SIZE;
+  const showPagination = (data?.total_pages ?? 0) > 1;
+
+  const handlePageChange = (nextPage: number) => {
+    const safeMax = Math.max(totalPages, 1);
+    const safePage = Math.min(Math.max(nextPage, 1), safeMax);
+    setPage(safePage);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +132,19 @@ export default function HousesPage() {
         </div>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="space-y-6 p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <Input
+                value={search}
+                onChange={(event) => {
+                  setPage(1);
+                  setSearch(event.target.value);
+                }}
+                placeholder="Search houses..."
+                className="md:w-1/2"
+              />
+            </div>
+
             {isLoading ? (
               <TableSkeleton />
             ) : !houses || houses.length === 0 ? (
@@ -127,15 +158,29 @@ export default function HousesPage() {
                 }}
               />
             ) : (
-              <DataTable
-                data={houses}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search houses..."
-                pageSize={10}
-                showPagination={true}
-                emptyMessage="No houses found"
-              />
+              <>
+                <DataTable
+                  data={houses}
+                  columns={columns}
+                  searchable={false}
+                  showPagination={false}
+                  emptyMessage="No houses found"
+                />
+                {showPagination && (
+                  <PaginationBar
+                    page={page}
+                    pageSize={pageSize}
+                    total={data?.total ?? houses.length}
+                    totalPages={totalPages}
+                    hasNext={data?.has_next}
+                    hasPrevious={data?.has_previous}
+                    resourceLabel="houses"
+                    onChange={handlePageChange}
+                    isFetching={isFetching}
+                    className="mt-6"
+                  />
+                )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminResidents, useImportResidents } from "@/hooks/use-admin";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -12,13 +12,27 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Users } from "lucide-react";
 import { getFullName } from "@/lib/utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
-
+const PAGE_SIZE = 10;
+const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
+  { label: "All Residents", value: undefined },
+  { label: "Super User", value: "super_user" },
+];
 export default function ResidentsPage() {
-  const { data: residents, isLoading } = useAdminResidents();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string | undefined>(undefined);
+
+  const { data, isLoading, isFetching } = useAdminResidents({
+    page,
+    pageSize: PAGE_SIZE,
+    search: search.trim() || undefined,
+    status,
+  });
   const importResidentsMutation = useImportResidents();
   const router = useRouter();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -31,6 +45,16 @@ export default function ResidentsPage() {
     importFormRef.current?.reset();
   };
 
+  const residents = useMemo(() => data?.items ?? [], [data]);
+  const totalPages = data?.total_pages ?? 1;
+  const pageSize = data?.page_size ?? PAGE_SIZE;
+  const showPagination = (data?.total_pages ?? 0) > 1;
+
+  const handlePageChange = (nextPage: number) => {
+    const safeMax = Math.max(totalPages, 1);
+    const safePage = Math.min(Math.max(nextPage, 1), safeMax);
+    setPage(safePage);
+  };
   const columns: Column<ResidentUser>[] = [
     {
       key: "name",
@@ -39,7 +63,7 @@ export default function ResidentsPage() {
       filterable: true,
       accessor: (row) => (
         <span className="font-medium">
-          {getFullName(row.user.first_name, row.user.last_name)}
+          {getFullName(row?.user?.first_name, row?.user?.last_name)}
         </span>
       ),
     },
@@ -48,21 +72,21 @@ export default function ResidentsPage() {
       header: "Email",
       sortable: true,
       filterable: true,
-      accessor: (row) => row.user.email,
+      accessor: (row) => row?.user?.email,
     },
     {
       key: "phone",
       header: "Phone",
       sortable: true,
       filterable: true,
-      accessor: (row) => row.user.phone || "-",
+      accessor: (row) => row?.user?.phone || "-",
     },
     {
       key: "houses",
       header: "Houses",
       sortable: false,
       accessor: (row) =>
-        row.houses && row.houses.length > 0 ? (
+        row.houses && row?.houses?.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {row.houses.map((house) => (
               <Badge key={house.id} variant="secondary">
@@ -115,7 +139,33 @@ export default function ResidentsPage() {
         </div>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="space-y-6 p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <Input
+                value={search}
+                onChange={(event) => {
+                  setPage(1);
+                  setSearch(event.target.value);
+                }}
+                placeholder="Search residents by name, email, or phone..."
+                className="md:w-1/2"
+              />
+              <select
+                value={status ?? ""}
+                onChange={(event) => {
+                  setPage(1);
+                  setStatus(event.target.value || undefined);
+                }}
+                className="rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
+              >
+                {STATUS_FILTERS.map((filter) => (
+                  <option key={filter.label} value={filter.value ?? ""}>
+                    {filter.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {isLoading ? (
               <TableSkeleton />
             ) : !residents || residents.length === 0 ? (
@@ -129,15 +179,29 @@ export default function ResidentsPage() {
                 }}
               />
             ) : (
-              <DataTable
-                data={residents}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search residents..."
-                pageSize={10}
-                showPagination={true}
-                emptyMessage="No residents found"
-              />
+              <>
+                <DataTable
+                  data={residents}
+                  columns={columns}
+                  searchable={false}
+                  showPagination={false}
+                  emptyMessage="No residents found"
+                />
+                {showPagination && (
+                  <PaginationBar
+                    page={page}
+                    pageSize={pageSize}
+                    total={data?.total ?? residents.length}
+                    totalPages={totalPages}
+                    hasNext={data?.has_next}
+                    hasPrevious={data?.has_previous}
+                    resourceLabel="residents"
+                    onChange={handlePageChange}
+                    isFetching={isFetching}
+                    className="mt-6"
+                  />
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -179,7 +243,7 @@ export default function ResidentsPage() {
             <code className="rounded bg-muted px-1">house_names</code> (comma-separated).
           </p>
           <pre className="rounded-lg bg-muted p-3 text-xs">
-{`email,first_name,last_name,phone,address,house_names
+            {`email,first_name,last_name,phone,address,house_names
 jane@example.com,Jane,Doe,+1234567890,Block 1,"Villa 1,Villa 2"
 bob@example.com,Bob,Wilson,,,"House B"`}
           </pre>

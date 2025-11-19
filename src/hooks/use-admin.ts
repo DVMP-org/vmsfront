@@ -6,19 +6,25 @@ import {
   GatePass,
   GatePassCheckinRequest,
   GateEvent,
+  ResidentUser,
   ResidentUserCreate,
   ImportResponse,
   PaginatedResponse,
+  House,
 } from "@/types";
 import { toast } from "sonner";
 import { AdminDashboard } from "@/types";
 
 // Houses
-export function useAdminHouses() {
-  return useQuery({
-    queryKey: ["admin", "houses"],
+export function useAdminHouses(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) {
+  return useQuery<PaginatedResponse<House>>({
+    queryKey: ["admin", "houses", params],
     queryFn: async () => {
-      const response = await adminService.getHouses();
+      const response = await adminService.getHouses(params);
       return response.data;
     },
   });
@@ -40,11 +46,16 @@ export function useCreateHouse() {
 }
 
 // Residents
-export function useAdminResidents() {
-  return useQuery({
-    queryKey: ["admin", "residents"],
+export function useAdminResidents(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+}) {
+  return useQuery<PaginatedResponse<ResidentUser>>({
+    queryKey: ["admin", "residents", params],
     queryFn: async () => {
-      const response = await adminService.getResidents();
+      const response = await adminService.getResidents(params);
       return response.data;
     },
   });

@@ -62,7 +62,11 @@ export default function AdminForumCategoryDetailPage() {
       : params.categoryId;
   }, [params?.categoryId]);
   const router = useRouter();
-  const { data: houses } = useAdminHouses();
+  const { data: housesData } = useAdminHouses({
+    page: 1,
+    pageSize: 500,
+  });
+  const houses = housesData?.items ?? [];
 
   const categoryQuery = useAdminForumCategory(normalizedCategoryId ?? null);
   const categoriesQuery = useAdminForumCategories({
@@ -479,7 +483,7 @@ export default function AdminForumCategoryDetailPage() {
       <CategoryFormModal
         isOpen={categoryModalOpen}
         mode="edit"
-        houses={houses ?? []}
+        houses={houses}
         defaultHouseId={category?.house_id}
         initialValues={
           category
@@ -516,7 +520,7 @@ export default function AdminForumCategoryDetailPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode={topicToEdit ? "edit" : "create"}
-        houses={houses ?? []}
+        houses={houses}
         categories={categoriesForModal}
         defaultHouseId={category?.house_id}
         initialValues={

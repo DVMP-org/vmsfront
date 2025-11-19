@@ -32,7 +32,10 @@ export default function CreateResidentPage() {
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [selectedHouseSlugs, setselectedHouseSlugs] = useState<string[]>([]);
 
-  const { data: houses, isLoading: housesLoading } = useAdminHouses();
+  const { data: housesData, isLoading: housesLoading } = useAdminHouses({
+    page: 1,
+    pageSize: 1000,
+  });
   const createResident = useCreateResident();
   const { data: users, isLoading: usersLoading } = useAdminUsers();
 
@@ -86,9 +89,13 @@ export default function CreateResidentPage() {
     );
   };
 
+  const houses = useMemo(
+    () => housesData?.items ?? [],
+    [housesData?.items]
+  );
   const sortedHouses = useMemo(
     () =>
-      (houses ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+      houses.slice().sort((a, b) => a.name.localeCompare(b.name)),
     [houses]
   );
 

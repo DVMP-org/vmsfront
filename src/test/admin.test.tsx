@@ -31,20 +31,33 @@ describe("Admin Hooks", () => {
 
   it("should fetch houses", async () => {
     const mockHouses = {
-      data: [
-        {
-          id: "1",
-          name: "Villa 123",
-          address: "123 Main St",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ],
+      data: {
+        items: [
+          {
+            id: "1",
+            name: "Villa 123",
+            address: "123 Main St",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        page_size: 10,
+        total_pages: 1,
+      },
     };
 
     vi.mocked(adminService.getHouses).mockResolvedValue(mockHouses);
 
-    const { result } = renderHook(() => useAdminHouses(), { wrapper });
+    const { result } = renderHook(
+      () =>
+        useAdminHouses({
+          page: 1,
+          pageSize: 10,
+        }),
+      { wrapper }
+    );
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -77,4 +90,3 @@ describe("Admin Hooks", () => {
     });
   });
 });
-

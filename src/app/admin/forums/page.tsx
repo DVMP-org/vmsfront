@@ -85,7 +85,14 @@ export default function AdminForumsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: houses } = useAdminHouses();
+  const { data: housesData } = useAdminHouses({
+    page: 1,
+    pageSize: 500,
+  });
+  const houses = useMemo(
+    () => housesData?.items ?? [],
+    [housesData?.items]
+  );
 
   const [filters, setFilters] = useState<FilterState>(() => ({
     houseId: searchParams.get("houseId") ?? DEFAULT_FILTERS.houseId,
@@ -173,7 +180,7 @@ export default function AdminForumsPage() {
   }, [searchInput, updateFilters]);
 
   const selectedHouse: House | undefined = useMemo(() => {
-    if (!houses) return undefined;
+    if (!houses || houses.length === 0) return undefined;
     if (filters.houseId === "all") return undefined;
     return houses.find((house) => house.id === filters.houseId);
   }, [houses, filters.houseId]);
@@ -790,7 +797,7 @@ export default function AdminForumsPage() {
       <CategoryFormModal
         isOpen={categoryModalOpen}
         mode={categoryModalMode}
-        houses={houses ?? []}
+        houses={houses}
         defaultHouseId={
           filters.houseId !== "all" ? filters.houseId : houses?.[0]?.id
         }
@@ -815,7 +822,7 @@ export default function AdminForumsPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode={topicModalMode}
-        houses={houses ?? []}
+        houses={houses}
         categories={categories}
         defaultHouseId={
           filters.houseId !== "all" ? filters.houseId : houses?.[0]?.id
