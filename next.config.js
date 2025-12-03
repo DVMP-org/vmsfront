@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', 'api.gatekeeperhq.cfd', "storage.googleapis.com"],
+    domains: ['localhost', 'api.boxharbor.cfd', "storage.googleapis.com"],
   },
   typescript: {
     ignoreBuildErrors: true,
