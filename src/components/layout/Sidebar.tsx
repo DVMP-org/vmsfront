@@ -19,6 +19,7 @@ import {
   X,
   MessageSquare,
   UserCog,
+  Puzzle,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -32,9 +33,21 @@ function buildResidentLinks(houseId?: string) {
   const base = houseId ? `/house/${houseId}` : "/select";
   return [
     { href: houseId ? base : "/select", label: "Dashboard", icon: Home },
-    { href: houseId ? `${base}/passes` : "/select", label: "My Passes", icon: CreditCard },
-    { href: houseId ? `${base}/visitors` : "/select", label: "Visitors", icon: Users },
-    { href: houseId ? `${base}/forum` : "/select", label: "Forum", icon: MessageSquare },
+    {
+      href: houseId ? `${base}/passes` : "/select",
+      label: "My Passes",
+      icon: CreditCard,
+    },
+    {
+      href: houseId ? `${base}/visitors` : "/select",
+      label: "Visitors",
+      icon: Users,
+    },
+    {
+      href: houseId ? `${base}/forum` : "/select",
+      label: "Forum",
+      icon: MessageSquare,
+    },
     { href: "/profile", label: "Profile", icon: Settings },
   ];
 }
@@ -48,6 +61,7 @@ const adminLinks = [
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
+  { href: "/admin/plugins", label: "Plugins", icon: Puzzle },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },
   { href: "/admin/profile", label: "Profile", icon: Settings },
@@ -68,11 +82,14 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     type === "resident" ? selectedHouse?.id ?? routeHouseId : undefined;
 
   const links = useMemo(
-    () => (type === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks),
+    () =>
+      type === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks,
     [type, effectiveHouseId]
   );
   const mostSpecificMatch = useMemo(() => {
-    const sortedLinks = [...links].sort((a, b) => b.href.length - a.href.length);
+    const sortedLinks = [...links].sort(
+      (a, b) => b.href.length - a.href.length
+    );
     return sortedLinks.find(
       (link) =>
         pathname === link.href ||
@@ -126,7 +143,11 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
       <div
         className={cn(
           "flex items-center border-b bg-muted/50",
-          isMobile ? "justify-between p-3" : collapsed ? "justify-center p-2" : "justify-between p-3"
+          isMobile
+            ? "justify-between p-3"
+            : collapsed
+            ? "justify-center p-2"
+            : "justify-between p-3"
         )}
       >
         {(!collapsed || isMobile) && (
@@ -151,10 +172,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
               variant="ghost"
               size="sm"
               onClick={toggleCollapse}
-              className={cn(
-                "h-8 w-8 p-0",
-                collapsed ? "mx-auto" : "ml-auto"
-              )}
+              className={cn("h-8 w-8 p-0", collapsed ? "mx-auto" : "ml-auto")}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
