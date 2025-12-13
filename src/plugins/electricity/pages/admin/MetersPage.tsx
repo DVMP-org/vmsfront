@@ -47,12 +47,12 @@ export default function AdminMetersPage() {
     // Fetch houses and residents for dropdowns
     const { data: housesData, isLoading: housesLoading } = useAdminHouses({
         page: 1,
-        pageSize: 1000,
+        pageSize: 100,
     });
 
     const { data: residentsData, isLoading: residentsLoading } = useAdminResidents({
         page: 1,
-        pageSize: 1000,
+        pageSize: 100,
     });
 
     // Create meter mutation

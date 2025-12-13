@@ -95,32 +95,76 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
       });
   }, []);
 
-  // Helper function to get routes for a plugin based on user type
-  // Now uses routes from routes.js instead of manifest
-  const getPluginRoutes = (plugin: typeof plugins[0]) => {
-    // Get routes from plugin loader (routes.js) based on user type
-    if (type === "admin" && plugin.adminRoutes && plugin.adminRoutes.length > 0) {
-      return plugin.adminRoutes;
-    }
-    if (type === "resident" && plugin.residentRoutes && plugin.residentRoutes.length > 0) {
-      return plugin.residentRoutes;
-    }
-    // Fallback to legacy routes
-    return plugin.routes || [];
-  };
-
   const routeHouseId = useMemo(() => {
     const match = pathname.match(/^\/house\/([^/]+)/);
     return match ? match[1] : undefined;
   }, [pathname]);
 
+  // Determine actual type based on pathname if it's a plugin route
+  // This ensures we show the correct sidebar even if type prop is incorrect
+  const actualType = useMemo<"resident" | "admin">(() => {
+    // If pathname starts with /plugins/, check if it's an admin route
+    if (pathname?.startsWith("/plugins/")) {
+      const pathSegments = pathname.split("/").filter(Boolean);
+      // Check if path contains "admin" segment
+      if (pathSegments.includes("admin")) {
+        return "admin";
+      }
+      // If we have plugins loaded, check more accurately
+      if (plugins.length > 0) {
+        for (const plugin of plugins) {
+          if (pathname.startsWith(`/plugins/${plugin.basePath.replace(/^\//, "")}/admin`)) {
+            return "admin";
+          }
+        }
+      }
+      // Default to resident for plugin routes without admin
+      return "resident";
+    }
+    // For non-plugin routes, use the type prop
+    return type;
+  }, [pathname, type, plugins]);
+
+  // Helper function to get routes for a plugin based on user type - memoized
+  // Strictly filters by type - no fallback to avoid showing wrong routes
+  const getPluginRoutesMemoized = useMemo(() => {
+    return (plugin: typeof plugins[0]): typeof plugin.adminRoutes => {
+      // Strict type-based filtering - only return routes for the current sidebar type
+      // Use actualType to ensure consistency with pathname
+      if (actualType === "admin") {
+        return (plugin.adminRoutes || []) as typeof plugin.adminRoutes;
+      }
+      if (actualType === "resident") {
+        return (plugin.residentRoutes || []) as typeof plugin.adminRoutes;
+      }
+      // Should never reach here, but return empty array as fallback
+      return [] as typeof plugin.adminRoutes;
+    };
+  }, [actualType]);
+
+  // Filter plugins to only show those that have routes for the current sidebar type
+  // This ensures plugins only appear in the correct sidebar context
+  const filteredPlugins = useMemo(() => {
+    return plugins.filter((plugin) => {
+      // Only show plugin if it has routes for the current sidebar type
+      // Use actualType to ensure consistency with pathname
+      if (actualType === "admin") {
+        return plugin.adminRoutes && plugin.adminRoutes.length > 0;
+      }
+      if (actualType === "resident") {
+        return plugin.residentRoutes && plugin.residentRoutes.length > 0;
+      }
+      return false;
+    });
+  }, [plugins, actualType]);
+
   const effectiveHouseId =
-    type === "resident" ? selectedHouse?.id ?? routeHouseId : undefined;
+    actualType === "resident" ? selectedHouse?.id ?? routeHouseId : undefined;
 
   const links = useMemo(
     () =>
-      type === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks,
-    [type, effectiveHouseId]
+      actualType === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks,
+    [actualType, effectiveHouseId]
   );
   const mostSpecificMatch = useMemo(() => {
     const sortedLinks = [...links].sort(
@@ -152,23 +196,6 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Auto-expand plugins with active routes
-  useEffect(() => {
-    const activePlugins = new Set<string>();
-    plugins.forEach((plugin) => {
-      // Use the same strict matching logic
-      if (findActivePluginRoute(plugin) !== null) {
-        activePlugins.add(plugin.name);
-      }
-    });
-    if (activePlugins.size > 0) {
-      setExpandedPlugins((prev) => {
-        const newSet = new Set(prev);
-        activePlugins.forEach((name) => newSet.add(name));
-        return newSet;
-      });
-    }
-  }, [pathname, type]);
 
   const toggleCollapse = () => {
     if (!isMobile) {
@@ -197,40 +224,54 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
   // Find the most specific active route for a plugin
   // Returns the route path if active, null otherwise
-  const findActivePluginRoute = (plugin: typeof plugins[0]): string | null => {
-    const routes = getPluginRoutes(plugin);
-    if (routes.length === 0 || !pathname) return null;
+  // Only checks routes of the current sidebar type (already filtered by getPluginRoutesMemoized)
+  const findActivePluginRoute = useMemo(() => {
+    return (plugin: typeof plugins[0]): string | null => {
+      // Early return if pathname doesn't belong to this plugin
+      if (!pathname) return null;
 
-    // Sort routes by path length (longer/more specific first)
-    // This ensures we check the most specific routes first
-    const sortedRoutes = [...routes].sort((a, b) => {
-      const aPath = a.path === "/" ? "" : a.path.replace(/^\/+|\/+$/g, "");
-      const bPath = b.path === "/" ? "" : b.path.replace(/^\/+|\/+$/g, "");
-      return bPath.length - aPath.length;
-    });
+      // Verify this plugin should even be checked for this type
+      // Use actualType to ensure consistency with pathname
+      const shouldCheckPlugin = actualType === "admin"
+        ? (plugin.adminRoutes && plugin.adminRoutes.length > 0)
+        : (plugin.residentRoutes && plugin.residentRoutes.length > 0);
 
-    // Find the most specific matching route
-    for (const route of sortedRoutes) {
-      const fullPath = buildPluginPath(plugin.basePath, route.path);
+      if (!shouldCheckPlugin) return null;
 
-      // Exact match - highest priority
-      if (pathname === fullPath) {
-        return route.path;
+      const routes = getPluginRoutesMemoized(plugin);
+      if (routes.length === 0) return null;
+
+      // Sort routes by path length (longer/more specific first)
+      // This ensures we check the most specific routes first
+      const sortedRoutes = [...routes].sort((a, b) => {
+        const aPath = a.path === "/" ? "" : a.path.replace(/^\/+|\/+$/g, "");
+        const bPath = b.path === "/" ? "" : b.path.replace(/^\/+|\/+$/g, "");
+        return bPath.length - aPath.length;
+      });
+
+      // Find the most specific matching route
+      for (const route of sortedRoutes) {
+        const fullPath = buildPluginPath(plugin.basePath, route.path);
+
+        // Exact match - highest priority
+        if (pathname === fullPath) {
+          return route.path;
+        }
+
+        // Check if pathname is a child of this route (strict matching)
+        // Only match if pathname starts with fullPath + "/" (not just fullPath)
+        // This ensures /admin doesn't match /admin-residents
+        if (pathname.startsWith(fullPath + "/")) {
+          // This is a child route, so this parent route is active
+          // But we check more specific routes first, so if we get here,
+          // it means no more specific route matched
+          return route.path;
+        }
       }
 
-      // Check if pathname is a child of this route (strict matching)
-      // Only match if pathname starts with fullPath + "/" (not just fullPath)
-      // This ensures /admin doesn't match /admin-residents
-      if (pathname.startsWith(fullPath + "/")) {
-        // This is a child route, so this parent route is active
-        // But we check more specific routes first, so if we get here,
-        // it means no more specific route matched
-        return route.path;
-      }
-    }
-
-    return null;
-  };
+      return null;
+    };
+  }, [pathname, actualType, getPluginRoutesMemoized]);
 
   // Check if a specific plugin route is active (strict matching)
   const isPluginRouteActive = (plugin: typeof plugins[0], routePath: string): boolean => {
@@ -242,6 +283,26 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const isPluginActive = (plugin: typeof plugins[0]) => {
     return findActivePluginRoute(plugin) !== null;
   };
+
+  // Auto-expand plugins with active routes
+  // Only checks filteredPlugins which already ensures correct type
+  useEffect(() => {
+    const activePlugins = new Set<string>();
+    filteredPlugins.forEach((plugin) => {
+      // Use the same strict matching logic
+      const activeRoute = findActivePluginRoute(plugin);
+      if (activeRoute !== null) {
+        activePlugins.add(plugin.name);
+      }
+    });
+    if (activePlugins.size > 0) {
+      setExpandedPlugins((prev) => {
+        const newSet = new Set(prev);
+        activePlugins.forEach((name) => newSet.add(name));
+        return newSet;
+      });
+    }
+  }, [pathname, actualType, filteredPlugins, findActivePluginRoute]);
 
   return (
     <aside
@@ -266,7 +327,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
       >
         {(!collapsed || isMobile) && (
           <span className="text-sm font-semibold text-foreground">
-            {type === "resident" ? "Resident" : "Admin"}
+            {actualType === "resident" ? "Resident" : "Admin"}
           </span>
         )}
         <div className="flex items-center gap-2">
@@ -342,7 +403,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         })}
         <>
 
-          {plugins.map(plugin => {
+          {filteredPlugins.map(plugin => {
             const isExpanded = expandedPlugins.has(plugin.name);
             const hasActiveRoute = isPluginActive(plugin);
             const pluginIcon = plugin.manifest.icon
@@ -397,7 +458,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 {/* Plugin Routes Submenu */}
                 {isExpanded && (isMobile || !collapsed) && (
                   <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
-                    {getPluginRoutes(plugin).map(route => {
+                    {getPluginRoutesMemoized(plugin).map(route => {
                       const isActive = isPluginRouteActive(plugin, route.path);
                       const routeHref = buildPluginPath(plugin.basePath, route.path);
                       // Get title and icon from route (routes.js) or fallback to path
