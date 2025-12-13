@@ -1,48 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Zap, CreditCard, ArrowUpRight, TrendingUp, Activity } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-
-// TODO: Replace with actual API types when available
-interface ResidentElectricityData {
-    meters: Array<{
-        id: string;
-        meterNumber: string;
-        houseAddress: string;
-        status: "active" | "inactive";
-        currentBalance?: number;
-        lastPurchase?: string;
-    }>;
-    recentPurchases: Array<{
-        id: string;
-        meterNumber: string;
-        amount: number;
-        units: number;
-        date: string;
-        status: "success" | "pending" | "failed";
-    }>;
-    totalSpent: number;
-    totalPurchases: number;
-}
-
-// Mock data - replace with API call
-const mockData: ResidentElectricityData = {
-    meters: [],
-    recentPurchases: [],
-    totalSpent: 0,
-    totalPurchases: 0,
-};
+import { useAppStore } from "@/store/app-store";
+import { useProfile } from "@/hooks/use-auth";
+import { electricityService } from "@/plugins/electricity/services/electricity-service";
+import { Meter, PurchaseToken } from "@/plugins/electricity/types";
+import { useQuery } from "@tanstack/react-query";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function ResidentElectricityDashboard() {
-    const [data, setData] = useState<ResidentElectricityData>(mockData);
-    const isLoading = false; // TODO: Replace with actual loading state from API
+    const router = useRouter();
+    const { selectedHouse } = useAppStore();
+    const { data: profile } = useProfile();
 
-    // TODO: Replace with actual API call
-    // const { data, isLoading } = useResidentElectricityData();
+    // Get current house ID from selected house or first house from profile
+    const currentHouseId = selectedHouse?.id || profile?.houses?.[0]?.id || null;
+
+    // Fetch meters for the current house
+    const { data: metersData, isLoading: isLoadingMeters } = useQuery({
+        queryKey: ["electricity", "meters", currentHouseId],
+        queryFn: async () => {
+            if (!currentHouseId) throw new Error("House ID is required");
+            const response = await electricityService.getMeters({
+                page: 1,
+                pageSize: 100,
+                house_id: currentHouseId,
+            });
+            return response.data;
+        },
+        enabled: !!currentHouseId,
+    });
+
+    // Fetch recent purchases for the current house
+    const { data: purchasesData, isLoading: isLoadingPurchases } = useQuery({
+        queryKey: ["electricity", "purchases", currentHouseId],
+        queryFn: async () => {
+            if (!currentHouseId) throw new Error("House ID is required");
+            const response = await electricityService.getPurchases({
+                page: 1,
+                pageSize: 10,
+                house_id: currentHouseId,
+            });
+            return response.data;
+        },
+        enabled: !!currentHouseId,
+    });
+
+    const meters = metersData?.items || [];
+    const recentPurchases = purchasesData?.items || [];
+    const totalPurchases = purchasesData?.total || 0;
+
+    const totalSpent = useMemo(() => {
+        return recentPurchases
+            .filter((p) => p.status === "success")
+            .reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
+    }, [recentPurchases]);
+
+    const isLoading = isLoadingMeters || isLoadingPurchases;
+
+    // Show error if no house selected
+    if (!currentHouseId) {
+        return (
+            <div className="space-y-6">
+                <EmptyState
+                    icon={Zap}
+                    title="No house selected"
+                    description="Please select a house from the dashboard to view electricity information"
+                    action={{
+                        label: "Go to Dashboard",
+                        onClick: () => router.push("/select"),
+                    }}
+                />
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                    <Skeleton className="h-32" />
+                    <Skeleton className="h-32" />
+                    <Skeleton className="h-32" />
+                </div>
+                <Skeleton className="h-64" />
+                <Skeleton className="h-64" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -56,7 +108,7 @@ export default function ResidentElectricityDashboard() {
                 </div>
                 <Button
                     onClick={() => {
-                        window.location.href = "/plugins/electricity/purchase";
+                        router.push("/plugins/electricity/purchase");
                     }}
                     className="gap-2"
                 >
@@ -78,10 +130,10 @@ export default function ResidentElectricityDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white">
-                            {data.meters.length}
+                            {meters.length}
                         </div>
                         <p className="text-sm text-white/80 mt-1">
-                            {data.meters.filter((m) => m.status === "active").length} active
+                            {meters.length} registered
                         </p>
                     </CardContent>
                 </Card>
@@ -97,7 +149,7 @@ export default function ResidentElectricityDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white">
-                            {data.totalPurchases}
+                            {totalPurchases}
                         </div>
                         <p className="text-sm text-white/80 mt-1">All time</p>
                     </CardContent>
@@ -114,7 +166,7 @@ export default function ResidentElectricityDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white">
-                            ₦{data.totalSpent.toLocaleString()}
+                            ₦{totalSpent.toLocaleString()}
                         </div>
                         <p className="text-sm text-white/80 mt-1">All time</p>
                     </CardContent>
@@ -130,7 +182,7 @@ export default function ResidentElectricityDashboard() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {data.meters.length === 0 ? (
+                    {meters.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                             <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No meters registered</p>
@@ -140,52 +192,36 @@ export default function ResidentElectricityDashboard() {
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
-                            {data.meters.map((meter) => (
+                                {meters.map((meter) => (
                                 <Card key={meter.id} className="border">
                                     <CardContent className="p-4">
                                         <div className="flex items-start justify-between mb-3">
-                                            <div>
+                                                <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Zap className="h-5 w-5 text-muted-foreground" />
                                                     <span className="font-semibold">
-                                                        {meter.meterNumber}
-                                                    </span>
-                                                    <Badge
-                                                        variant={
-                                                            meter.status === "active"
-                                                                ? "default"
-                                                                : "secondary"
-                                                        }
-                                                    >
-                                                        {meter.status}
-                                                    </Badge>
+                                                            {meter.meter_number}
+                                                        </span>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {meter.houseAddress}
+                                                        {meter.house?.name || meter.house?.address || "N/A"}
                                                 </p>
+                                                    <div className="flex gap-2 mt-1">
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {meter.meter_type}
+                                                        </Badge>
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {meter.disco}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {meter.currentBalance !== undefined && (
-                                            <div className="mt-3 pt-3 border-t">
-                                                <p className="text-xs text-muted-foreground mb-1">
-                                                    Current Balance
-                                                </p>
-                                                <p className="text-lg font-semibold">
-                                                    {meter.currentBalance} kWh
-                                                </p>
-                                            </div>
-                                        )}
-                                        {meter.lastPurchase && (
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                Last purchase: {formatDate(meter.lastPurchase)}
-                                            </p>
-                                        )}
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             className="w-full mt-4"
                                             onClick={() => {
-                                                window.location.href = `/plugins/electricity/purchase?meter=${meter.id}`;
+                                                router.push(`/plugins/electricity/purchase?meter=${meter.id}`);
                                             }}
                                         >
                                             Purchase Electricity
@@ -208,7 +244,7 @@ export default function ResidentElectricityDashboard() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {data.recentPurchases.length === 0 ? (
+                    {recentPurchases.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                             <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No purchases yet</p>
@@ -218,7 +254,7 @@ export default function ResidentElectricityDashboard() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {data.recentPurchases.map((purchase) => (
+                                {recentPurchases.map((purchase) => (
                                 <div
                                     key={purchase.id}
                                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -226,7 +262,7 @@ export default function ResidentElectricityDashboard() {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
                                             <p className="font-medium">
-                                                Meter: {purchase.meterNumber}
+                                                    Meter: {purchase.meter?.meter_number || "N/A"}
                                             </p>
                                             <Badge
                                                 variant={
@@ -234,22 +270,31 @@ export default function ResidentElectricityDashboard() {
                                                         ? "default"
                                                         : purchase.status === "pending"
                                                             ? "secondary"
-                                                            : "danger"
+                                                                : "warning"
                                                 }
                                             >
-                                                {purchase.status}
+                                                    {purchase.status || "pending"}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            {purchase.units} units purchased
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {formatDate(purchase.date)}
-                                        </p>
+                                            {purchase.units !== undefined && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    {purchase.units} units purchased
+                                                </p>
+                                            )}
+                                            {purchase.token && (
+                                                <p className="text-xs font-mono text-muted-foreground mt-1">
+                                                    Token: {purchase.token}
+                                                </p>
+                                            )}
+                                            {purchase.created_at && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    {formatDate(purchase.created_at)}
+                                                </p>
+                                            )}
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold">
-                                            ₦{purchase.amount.toLocaleString()}
+                                                ₦{parseFloat(purchase.amount || "0").toLocaleString()}
                                         </p>
                                     </div>
                                 </div>

@@ -13,8 +13,8 @@ import { Plus, Zap, Search, Building2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
-import { electricityService } from "@/services/electricity-service";
-import { Meter, MeterCreate } from "@/types";
+import { electricityService } from "@/plugins/electricity/services/electricity-service";
+import { Meter, MeterCreate } from "@/plugins/electricity/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMetersPage() {

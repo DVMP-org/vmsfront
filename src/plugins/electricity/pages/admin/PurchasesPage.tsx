@@ -10,8 +10,8 @@ import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Badge } from "@/components/ui/Badge";
 import { CreditCard, Search, DollarSign } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { electricityService } from "@/services/electricity-service";
-import { PurchaseToken } from "@/types";
+import { electricityService } from "@/plugins/electricity/services/electricity-service";
+import { PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
 
 export default function AdminPurchasesPage() {

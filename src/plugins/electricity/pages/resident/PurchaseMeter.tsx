@@ -1,81 +1,108 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Zap, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-
-// TODO: Replace with actual API types when available
-interface Meter {
-    id: string;
-    meterNumber: string;
-    houseAddress: string;
-    status: "active" | "inactive";
-    currentBalance?: number;
-}
-
-interface PurchaseForm {
-    meterId: string;
-    amount: number;
-    units?: number;
-}
-
-// Mock data - replace with API call
-const mockMeters: Meter[] = [];
+import { useAppStore } from "@/store/app-store";
+import { useProfile } from "@/hooks/use-auth";
+import { electricityService } from "@/plugins/electricity/services/electricity-service";
+import { Meter, PurchaseTokenCreate } from "@/plugins/electricity/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { TableSkeleton } from "@/components/ui/Skeleton";
 
 export default function ResidentPurchaseMeter() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const selectedMeterId = searchParams.get("meter");
+    const { selectedHouse } = useAppStore();
+    const { data: profile } = useProfile();
 
-    const [meters, setMeters] = useState<Meter[]>(mockMeters);
+    // Get current house ID from selected house or first house from profile
+    const currentHouseId = selectedHouse?.id || null;
+    const userEmail = profile?.user?.email || "";
+
+    const queryClient = useQueryClient();
+
+    // Fetch meters for the current house
+    const { data: metersData, isLoading: isLoadingMeters } = useQuery({
+        queryKey: ["electricity", "meters", currentHouseId],
+        queryFn: async () => {
+            if (!currentHouseId) throw new Error("House ID is required");
+            const response = await electricityService.getMeters({
+                page: 1,
+                pageSize: 100,
+                house_id: currentHouseId,
+            });
+            return response.data;
+        },
+        enabled: !!currentHouseId,
+    });
+
+    const meters = metersData?.items || [];
     const [selectedMeter, setSelectedMeter] = useState<Meter | null>(null);
-    const [formData, setFormData] = useState<PurchaseForm>({
-        meterId: selectedMeterId || "",
+    const [formData, setFormData] = useState({
         amount: 0,
     });
-    const [isProcessing, setIsProcessing] = useState(false);
     const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+    const [purchaseResult, setPurchaseResult] = useState<{ token?: string; units?: number } | null>(null);
 
-    // TODO: Replace with actual API calls
-    // const { data: meters } = useResidentMeters();
-    // const purchaseMutation = usePurchaseElectricity();
+    // Purchase mutation
+    const purchaseMutation = useMutation({
+        mutationFn: (data: PurchaseTokenCreate) => electricityService.purchaseToken(data),
+        onSuccess: (response) => {
+            toast.success("Electricity purchased successfully!");
+            setPurchaseSuccess(true);
+            setPurchaseResult({
+                token: response.data.token,
+                units: response.data.units,
+            });
+            queryClient.invalidateQueries({ queryKey: ["electricity", "meters", currentHouseId] });
+            queryClient.invalidateQueries({ queryKey: ["electricity", "purchases"] });
+            setFormData({ amount: 0 });
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.detail || "Failed to purchase electricity");
+        },
+    });
 
     useEffect(() => {
         if (selectedMeterId && meters.length > 0) {
             const meter = meters.find((m) => m.id === selectedMeterId);
             if (meter) {
                 setSelectedMeter(meter);
-                setFormData((prev) => ({ ...prev, meterId: meter.id }));
             }
         } else if (meters.length > 0 && !selectedMeter) {
             setSelectedMeter(meters[0]);
-            setFormData((prev) => ({ ...prev, meterId: meters[0].id }));
         }
     }, [selectedMeterId, meters, selectedMeter]);
 
     const handleMeterSelect = (meter: Meter) => {
         setSelectedMeter(meter);
-        setFormData((prev) => ({ ...prev, meterId: meter.id }));
     };
 
     const handleAmountChange = (amount: number) => {
-        // TODO: Calculate units based on current rate (from API)
-        // For now, using a mock calculation: 1 unit = ₦50
-        const units = amount / 50;
-        setFormData({
-            ...formData,
-            amount,
-            units: Math.round(units * 100) / 100,
-        });
+        setFormData({ amount });
     };
 
     const handlePurchase = async () => {
-        if (!formData.meterId) {
+        if (!selectedMeter) {
             toast.error("Please select a meter");
+            return;
+        }
+
+        if (!currentHouseId) {
+            toast.error("House information is required. Please select a house first.");
+            return;
+        }
+
+        if (!userEmail) {
+            toast.error("User email is required");
             return;
         }
 
@@ -84,39 +111,41 @@ export default function ResidentPurchaseMeter() {
             return;
         }
 
-        setIsProcessing(true);
-
-        // TODO: Replace with actual API call
-        // purchaseMutation.mutate(
-        //     {
-        //         meterId: formData.meterId,
-        //         amount: formData.amount,
-        //     },
-        //     {
-        //         onSuccess: () => {
-        //             toast.success("Electricity purchased successfully!");
-        //             setPurchaseSuccess(true);
-        //             setFormData({ meterId: formData.meterId, amount: 0 });
-        //         },
-        //         onError: (error) => {
-        //             toast.error(error.message || "Failed to purchase electricity");
-        //         },
-        //         onSettled: () => {
-        //             setIsProcessing(false);
-        //         },
-        //     }
-        // );
-
-        // Mock success
-        setTimeout(() => {
-            toast.success("Electricity purchased successfully! (mock)");
-            setPurchaseSuccess(true);
-            setIsProcessing(false);
-            setFormData({ meterId: formData.meterId, amount: 0 });
-        }, 2000);
+        purchaseMutation.mutate({
+            meter_id: selectedMeter.id,
+            amount: formData.amount.toString(),
+            house_id: currentHouseId,
+            email: userEmail,
+        });
     };
 
-    if (purchaseSuccess) {
+    // Show loading state
+    if (isLoadingMeters) {
+        return (
+            <div className="space-y-6">
+                <TableSkeleton />
+            </div>
+        );
+    }
+
+    // Show error if no house selected
+    if (!currentHouseId) {
+        return (
+            <div className="space-y-6">
+                <EmptyState
+                    icon={Zap}
+                    title="No house selected"
+                    description="Please select a house from the dashboard to purchase electricity"
+                    action={{
+                        label: "Go to Dashboard",
+                        onClick: () => router.push("/select"),
+                    }}
+                />
+            </div>
+        );
+    }
+
+    if (purchaseSuccess && purchaseResult) {
         return (
             <div className="space-y-6">
                 <Card className="border-green-200 bg-green-50 dark:bg-green-950">
@@ -124,15 +153,29 @@ export default function ResidentPurchaseMeter() {
                         <div className="flex flex-col items-center text-center">
                             <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />
                             <h2 className="text-2xl font-bold mb-2">Purchase Successful!</h2>
-                            <p className="text-muted-foreground mb-6">
+                            <p className="text-muted-foreground mb-4">
                                 Your electricity purchase has been processed successfully.
                             </p>
+                            {purchaseResult.token && (
+                                <div className="w-full max-w-md p-4 bg-white dark:bg-gray-900 rounded-lg border mb-6">
+                                    <p className="text-sm text-muted-foreground mb-2">Token:</p>
+                                    <p className="text-xl font-mono font-bold text-center break-all">
+                                        {purchaseResult.token}
+                                    </p>
+                                </div>
+                            )}
+                            {purchaseResult.units !== undefined && (
+                                <p className="text-lg font-semibold mb-6">
+                                    Units: {purchaseResult.units} kWh
+                                </p>
+                            )}
                             <div className="flex gap-2">
                                 <Button
                                     variant="outline"
                                     onClick={() => {
                                         setPurchaseSuccess(false);
-                                        window.location.href = "/plugins/electricity";
+                                        setPurchaseResult(null);
+                                        router.push("/plugins/electricity");
                                     }}
                                 >
                                     Go to Dashboard
@@ -140,7 +183,8 @@ export default function ResidentPurchaseMeter() {
                                 <Button
                                     onClick={() => {
                                         setPurchaseSuccess(false);
-                                        setFormData({ meterId: formData.meterId, amount: 0 });
+                                        setPurchaseResult(null);
+                                        setFormData({ amount: 0 });
                                     }}
                                 >
                                     Make Another Purchase
@@ -196,26 +240,15 @@ export default function ResidentPurchaseMeter() {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Zap className="h-5 w-5 text-muted-foreground" />
                                                 <span className="font-semibold">
-                                                    {meter.meterNumber}
+                                                    {meter.meter_number}
                                                 </span>
-                                                <Badge
-                                                    variant={
-                                                        meter.status === "active"
-                                                            ? "default"
-                                                            : "secondary"
-                                                    }
-                                                >
-                                                    {meter.status}
-                                                </Badge>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
-                                                {meter.houseAddress}
+                                                {meter.house?.name || meter.house?.address || "N/A"}
                                             </p>
-                                            {meter.currentBalance !== undefined && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Current: {meter.currentBalance} kWh
-                                                </p>
-                                            )}
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Type: {meter.meter_type} | DISCO: {meter.disco}
+                                            </p>
                                         </div>
                                         {selectedMeter?.id === meter.id && (
                                             <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -254,39 +287,24 @@ export default function ResidentPurchaseMeter() {
                                     />
                                 </div>
 
-                                {formData.units && formData.amount > 0 && (
-                                    <div className="p-4 bg-muted rounded-lg">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm text-muted-foreground">
-                                                Units to receive:
-                                            </span>
-                                            <span className="text-lg font-semibold">
-                                                {formData.units} kWh
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Rate: ₦50 per unit (mock rate)
-                                        </p>
-                                    </div>
-                                )}
+                                <div className="p-4 bg-muted rounded-lg">
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                        Selected Meter: {selectedMeter.meter_number}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Amount will be used to purchase electricity token for this meter
+                                    </p>
+                                </div>
 
                                 <div className="pt-4 border-t">
                                     <Button
                                         onClick={handlePurchase}
-                                        disabled={!formData.meterId || formData.amount <= 0 || isProcessing}
+                                        disabled={!selectedMeter || formData.amount <= 0 || purchaseMutation.isPending}
+                                        isLoading={purchaseMutation.isPending}
                                         className="w-full gap-2"
                                     >
-                                        {isProcessing ? (
-                                            <>
-                                                <AlertCircle className="h-4 w-4 animate-spin" />
-                                                Processing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CreditCard className="h-4 w-4" />
-                                                Purchase Electricity
-                                            </>
-                                        )}
+                                        <CreditCard className="h-4 w-4" />
+                                        Purchase Electricity
                                     </Button>
                                 </div>
                             </>
