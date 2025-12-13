@@ -74,15 +74,25 @@ export default function ResidentPurchaseMeter() {
     useEffect(() => {
         if (selectedMeterId && meters.length > 0) {
             const meter = meters.find((m) => m.id === selectedMeterId);
-            if (meter) {
+            if (meter && meter.id) {
                 setSelectedMeter(meter);
             }
         } else if (meters.length > 0 && !selectedMeter) {
-            setSelectedMeter(meters[0]);
+            // Auto-select first meter if none is selected
+            const firstMeter = meters[0];
+            if (firstMeter && firstMeter.id) {
+                setSelectedMeter(firstMeter);
+            }
         }
-    }, [selectedMeterId, meters, selectedMeter]);
+    }, [selectedMeterId, meters]);
 
     const handleMeterSelect = (meter: Meter) => {
+        console.log("Meter selected:", meter);
+        if (!meter || !meter.id) {
+            console.error("Invalid meter selected:", meter);
+            toast.error("Invalid meter selected");
+            return;
+        }
         setSelectedMeter(meter);
     };
 
@@ -93,6 +103,12 @@ export default function ResidentPurchaseMeter() {
     const handlePurchase = async () => {
         if (!selectedMeter) {
             toast.error("Please select a meter");
+            return;
+        }
+
+        if (!selectedMeter.id) {
+            toast.error("Selected meter is invalid. Please select a valid meter.");
+            console.error("Selected meter missing ID:", selectedMeter);
             return;
         }
 
@@ -111,12 +127,23 @@ export default function ResidentPurchaseMeter() {
             return;
         }
 
-        purchaseMutation.mutate({
-            meter_id: selectedMeter.id,
+        // Ensure we have a valid meter ID
+        const meterId = selectedMeter.id;
+        if (!meterId) {
+            toast.error("Meter ID is missing. Please select a meter again.");
+            console.error("Meter ID is missing from selected meter:", selectedMeter);
+            return;
+        }
+
+        const purchaseData: PurchaseTokenCreate = {
+            meter_id: meterId,
             amount: formData.amount.toString(),
             house_id: currentHouseId,
             email: userEmail,
-        });
+        };
+
+        console.log("Purchase data being sent:", purchaseData);
+        purchaseMutation.mutate(purchaseData);
     };
 
     // Show loading state

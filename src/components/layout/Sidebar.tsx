@@ -85,13 +85,15 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   // Load plugins from cache first, then refresh from API in background
   useEffect(() => {
     let isMounted = true;
+    let hasSetInitialPlugins = false;
 
     // Load cached plugins immediately for instant rendering
     loadPlugins(true)
       .then((loadedPlugins) => {
-        if (isMounted) {
+        if (isMounted && !hasSetInitialPlugins) {
           console.log("Sidebar: Loaded plugins (cached):", loadedPlugins);
           setPlugins(loadedPlugins);
+          hasSetInitialPlugins = true;
         }
       })
       .catch((error) => {
@@ -100,13 +102,24 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         return loadPlugins(false);
       })
       .then((loadedPlugins) => {
+        // Only update if plugins have changed and we're still mounted
         if (loadedPlugins && isMounted) {
-          setPlugins(loadedPlugins);
+          setPlugins((prevPlugins) => {
+            // Only update if the plugins actually changed (by comparing names)
+            const prevNames = new Set(prevPlugins.map(p => p.name));
+            const newNames = new Set(loadedPlugins.map(p => p.name));
+
+            if (prevNames.size !== newNames.size ||
+              Array.from(prevNames).some(name => !newNames.has(name))) {
+              return loadedPlugins;
+            }
+            return prevPlugins;
+          });
         }
       })
       .catch((error) => {
         console.error("Sidebar: Failed to load plugins:", error);
-        if (isMounted) {
+        if (isMounted && !hasSetInitialPlugins) {
           setPlugins([]);
         }
       });
@@ -165,8 +178,16 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
   // Filter plugins to only show those that have routes for the current sidebar type
   // This ensures plugins only appear in the correct sidebar context
+  // Also deduplicates by plugin name to prevent duplicates
   const filteredPlugins = useMemo(() => {
+    const seen = new Set<string>();
     return plugins.filter((plugin) => {
+      // Deduplicate by name first
+      if (seen.has(plugin.name)) {
+        return false;
+      }
+      seen.add(plugin.name);
+
       // Only show plugin if it has routes for the current sidebar type
       // Use actualType to ensure consistency with pathname
       if (actualType === "admin") {
@@ -179,14 +200,45 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     });
   }, [plugins, actualType]);
 
-  const effectiveHouseId =
-    actualType === "resident" ? selectedHouse?.id ?? routeHouseId : undefined;
+  // Memoize effectiveHouseId to prevent unnecessary recalculations
+  const effectiveHouseId = useMemo(() => {
+    if (actualType !== "resident") return undefined;
+    return selectedHouse?.id ?? routeHouseId;
+  }, [actualType, selectedHouse?.id, routeHouseId]);
 
-  const links = useMemo(
-    () =>
-      actualType === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks,
-    [actualType, effectiveHouseId]
-  );
+  const links = useMemo(() => {
+    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks;
+
+    // Deduplicate links by href AND label to prevent duplicates
+    // Use Map to track both href and label for better deduplication
+    const seen = new Map<string, Set<string>>(); // href -> Set of labels
+    const uniqueLinks: typeof linkArray = [];
+
+    for (const link of linkArray) {
+      const labelsForHref = seen.get(link.href);
+      if (!labelsForHref) {
+        // First time seeing this href
+        seen.set(link.href, new Set([link.label]));
+        uniqueLinks.push(link);
+      } else if (!labelsForHref.has(link.label)) {
+        // Same href but different label - should not happen, but skip to be safe
+        labelsForHref.add(link.label);
+      }
+      // If we've seen both this href and label, skip (duplicate)
+    }
+
+    // Double-check: ensure no duplicates by creating a final deduplicated array
+    const finalLinks: typeof linkArray = [];
+    const hrefSet = new Set<string>();
+    for (const link of uniqueLinks) {
+      if (!hrefSet.has(link.href)) {
+        hrefSet.add(link.href);
+        finalLinks.push(link);
+      }
+    }
+
+    return finalLinks;
+  }, [actualType, effectiveHouseId]);
   const mostSpecificMatch = useMemo(() => {
     const sortedLinks = [...links].sort(
       (a, b) => b.href.length - a.href.length
@@ -308,6 +360,9 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   // Auto-expand plugins with active routes
   // Only checks filteredPlugins which already ensures correct type
   useEffect(() => {
+    // Only run when plugins are actually loaded
+    if (filteredPlugins.length === 0) return;
+
     const activePlugins = new Set<string>();
     filteredPlugins.forEach((plugin) => {
       // Use the same strict matching logic
@@ -316,8 +371,20 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         activePlugins.add(plugin.name);
       }
     });
+
+    // Only update if there are active plugins and they're not already in the set
     if (activePlugins.size > 0) {
       setExpandedPlugins((prev) => {
+        // Check if we need to update at all
+        let needsUpdate = false;
+        activePlugins.forEach((name) => {
+          if (!prev.has(name)) {
+            needsUpdate = true;
+          }
+        });
+
+        if (!needsUpdate) return prev; // Return same reference if no change
+
         const newSet = new Set(prev);
         activePlugins.forEach((name) => newSet.add(name));
         return newSet;
@@ -386,10 +453,12 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = mostSpecificMatch?.href === link.href;
+          // Use a stable key that combines href and label to ensure uniqueness
+          const linkKey = `${link.href}-${link.label}`;
 
           return (
             <Link
-              key={link.href}
+              key={linkKey}
               href={link.href}
               onClick={handleLinkClick}
               className={cn(

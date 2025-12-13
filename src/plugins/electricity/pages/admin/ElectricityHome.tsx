@@ -114,18 +114,18 @@ export default function AdminElectricityDashboard() {
                             className={`overflow-hidden border-none bg-gradient-to-br ${card.accent}`}
                         >
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-white/90">
+                                <CardTitle className="text-sm font-medium text-muted/90">
                                     {card.title}
                                 </CardTitle>
-                                <span className="rounded-full bg-white/20 p-2 text-white shadow-sm">
+                                <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
                                     <Icon className="h-5 w-5" />
                                 </span>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-white">
+                                <div className="text-3xl font-bold text-muted-foreground">
                                     {card.value}
                                 </div>
-                                <p className="text-sm text-white/80 mt-1">
+                                <p className="text-sm text-muted-foreground mt-1">
                                     {card.description}
                                 </p>
                             </CardContent>

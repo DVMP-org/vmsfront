@@ -119,56 +119,56 @@ export default function ResidentElectricityDashboard() {
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-3">
-                <Card className="border-none bg-gradient-to-br from-blue-500 to-blue-600">
+                <Card className="border-none ">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-white/90">
+                        <CardTitle className="text-sm font-medium text-muted/90">
                             My Meters
                         </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-white shadow-sm">
+                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
                             <Zap className="h-5 w-5" />
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white">
+                        <div className="text-3xl font-bold text-muted">
                             {meters.length}
                         </div>
-                        <p className="text-sm text-white/80 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             {meters.length} registered
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none bg-gradient-to-br from-green-500 to-green-600">
+                <Card className="border-none">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-white/90">
+                        <CardTitle className="text-sm font-medium text-muted/90">
                             Total Purchases
                         </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-white shadow-sm">
+                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
                             <CreditCard className="h-5 w-5" />
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white">
+                        <div className="text-3xl font-bold text-muted">
                             {totalPurchases}
                         </div>
-                        <p className="text-sm text-white/80 mt-1">All time</p>
+                        <p className="text-sm text-muted-foreground mt-1">All time</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none bg-gradient-to-br from-purple-500 to-purple-600">
+                <Card className="border-none">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-white/90">
+                        <CardTitle className="text-sm font-medium text-muted/90">
                             Total Spent
                         </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-white shadow-sm">
+                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
                             <TrendingUp className="h-5 w-5" />
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white">
+                        <div className="text-3xl font-bold text-muted">
                             ₦{totalSpent.toLocaleString()}
                         </div>
-                        <p className="text-sm text-white/80 mt-1">All time</p>
+                        <p className="text-sm text-muted-foreground mt-1">All time</p>
                     </CardContent>
                 </Card>
             </div>
