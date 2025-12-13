@@ -345,4 +345,13 @@ export const adminService = {
             data
         );
     },
+
+    // Plugins
+    async getPlugins(): Promise<ApiResponse<any[]>> {
+        return apiClient.get("/admin/plugins");
+    },
+
+    async togglePlugin(pluginId: string): Promise<ApiResponse<any>> {
+        return apiClient.put(`/admin/plugins/${pluginId}/enable`);
+    },
 };

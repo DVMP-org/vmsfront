@@ -1,6 +1,7 @@
 import electricity from "@/plugins/electricity";
 import { isPluginPath } from "./plugin-utils";
 import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
+import { adminService } from "@/services/admin-service";
 
 /**
  * All frontend plugins registered here
@@ -16,7 +17,18 @@ import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
  * const PLUGINS = [electricity, myPlugin];
  * ```
  */
-const PLUGINS = [electricity];
+const FRONTEND_PLUGINS = [electricity];
+
+/**
+ * Backend plugin from API
+ */
+interface BackendPlugin {
+    id: string;
+    name: string;
+    version: string;
+    enabled: boolean;
+    [key: string]: any;
+}
 
 /**
  * Validates a plugin structure
@@ -65,13 +77,60 @@ function validatePlugin(plugin: any): plugin is {
 }
 
 /**
+ * Fetches enabled plugins from the backend API
+ * @returns Array of enabled backend plugins
+ */
+async function fetchEnabledPlugins(): Promise<BackendPlugin[]> {
+    try {
+        const response = await adminService.getPlugins();
+        if (response.data && Array.isArray(response.data)) {
+            // Only return enabled plugins
+            return response.data.filter((plugin: BackendPlugin) => plugin.enabled === true);
+        }
+        return [];
+    } catch (error) {
+        console.error("Failed to fetch plugins from API:", error);
+        // Return empty array on error - plugins won't load
+        return [];
+    }
+}
+
+/**
+ * Matches frontend plugin with backend plugin by name
+ * @param frontendPlugin Frontend plugin manifest
+ * @param backendPlugins Array of backend plugins
+ * @returns Matching backend plugin or null
+ */
+function matchPluginByName(
+    frontendPlugin: { manifest: { name: string; version?: string } },
+    backendPlugins: BackendPlugin[]
+): BackendPlugin | null {
+    return backendPlugins.find(
+        (backend) => backend.name === frontendPlugin.manifest.name
+    ) || null;
+}
+
+/**
  * Loads all registered plugins with validation
+ * Filters to only include plugins that are enabled in the backend
  * @returns Array of loaded plugins with normalized data
  */
-export function loadPlugins(): LoadedPlugin[] {
-    return PLUGINS
+export async function loadPlugins(): Promise<LoadedPlugin[]> {
+    // Fetch enabled plugins from backend
+    const enabledBackendPlugins = await fetchEnabledPlugins();
+
+    // Match frontend plugins with backend plugins and filter to only enabled ones
+    return FRONTEND_PLUGINS
         .filter(validatePlugin)
         .map(plugin => {
+            // Match with backend plugin
+            const backendPlugin = matchPluginByName(plugin, enabledBackendPlugins);
+
+            // Only include if plugin is enabled in backend
+            if (!backendPlugin) {
+                return null;
+            }
+
             // Normalize basePath to always start with /
             const basePath = plugin.manifest.frontend.basePath.startsWith("/")
                 ? plugin.manifest.frontend.basePath
@@ -80,14 +139,27 @@ export function loadPlugins(): LoadedPlugin[] {
             return {
                 name: plugin.manifest.name,
                 basePath,
-                manifest: plugin.manifest,
-                // Legacy routes for backward compatibility
+                manifest: {
+                    ...plugin.manifest,
+                    backendVersion: backendPlugin.version,
+                },
                 routes: plugin.routes,
-                // New separate routes for admin and resident
                 adminRoutes: plugin.adminRoutes,
-                residentRoutes: plugin.residentRoutes
-            };
-        });
+                residentRoutes: plugin.residentRoutes,
+                backendId: backendPlugin.id,
+            } as LoadedPlugin;
+        })
+        .filter((plugin): plugin is LoadedPlugin => plugin !== null);
+}
+
+/**
+ * Synchronous version for components that need immediate access
+ * Returns empty array - use async loadPlugins() for actual data
+ * @deprecated Use loadPlugins() async version instead
+ */
+export function loadPluginsSync(): LoadedPlugin[] {
+    console.warn("loadPluginsSync() is deprecated. Use async loadPlugins() instead.");
+    return [];
 }
 
 /**
@@ -122,8 +194,9 @@ export function getPluginRoutesForUserType(
  * @param path The path to search for
  * @returns The matching plugin or undefined
  */
-export function findPluginByPath(path: string): LoadedPlugin | undefined {
-    return loadPlugins().find(plugin => isPluginPath(path, plugin.basePath));
+export async function findPluginByPath(path: string): Promise<LoadedPlugin | undefined> {
+    const plugins = await loadPlugins();
+    return plugins.find(plugin => isPluginPath(path, plugin.basePath));
 }
 
 /**
@@ -131,6 +204,7 @@ export function findPluginByPath(path: string): LoadedPlugin | undefined {
  * @param name The plugin name
  * @returns The matching plugin or undefined
  */
-export function getPluginByName(name: string): LoadedPlugin | undefined {
-    return loadPlugins().find(plugin => plugin.name === name);
+export async function getPluginByName(name: string): Promise<LoadedPlugin | undefined> {
+    const plugins = await loadPlugins();
+    return plugins.find(plugin => plugin.name === name);
 }

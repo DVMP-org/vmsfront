@@ -22,6 +22,7 @@ export interface PluginManifest {
     name: string;
     title: string;
     version?: string;
+    backendVersion?: string; // Version from backend API
     icon?: string;
     frontend: {
         basePath: string;
@@ -59,4 +60,6 @@ export interface LoadedPlugin {
     // New: separate routes for admin and resident
     adminRoutes?: PluginRoute[];
     residentRoutes?: PluginRoute[];
+    // Backend plugin ID for enable/disable operations
+    backendId?: string;
 }

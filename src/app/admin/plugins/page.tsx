@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { adminService } from "@/services/admin-service";
+import { toast } from "sonner";
+import { loadPlugins } from "@/lib/plugin_loader";
 import {
   Card,
   CardContent,
@@ -53,7 +57,18 @@ interface PluginDetails {
   }[];
 }
 
-// Plugin type definition
+// Backend plugin from API
+interface BackendPlugin {
+  id: string;
+  name: string;
+  version: string;
+  enabled: boolean;
+  description?: string;
+  category?: string;
+  [key: string]: any;
+}
+
+// Plugin type definition (for UI display)
 interface Plugin {
   id: string;
   name: string;
@@ -65,6 +80,9 @@ interface Plugin {
   color: string;
   details: PluginDetails;
   config: PluginConfig;
+  backendVersion?: string;
+  frontendVersion?: string;
+  hasFrontend?: boolean; // Whether frontend plugin exists
 }
 
 // Mock plugin data with detailed information
@@ -622,19 +640,76 @@ const initialPlugins: Plugin[] = [
 ];
 
 export default function PluginsPage() {
-  const [plugins, setPlugins] = useState<Plugin[]>(initialPlugins);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
   const [editedConfig, setEditedConfig] = useState<PluginConfig>({});
 
-  const handleTogglePlugin = (pluginId: string) => {
-    setPlugins((prev) =>
-      prev.map((plugin) =>
-        plugin.id === pluginId
-          ? { ...plugin, enabled: !plugin.enabled }
-          : plugin
-      )
+  // Fetch plugins from API
+  const { data: backendPluginsResponse, isLoading: isLoadingPlugins } = useQuery({
+    queryKey: ["admin", "plugins"],
+    queryFn: async () => {
+      const response = await adminService.getPlugins();
+      return response.data as BackendPlugin[];
+    },
+  });
+
+  // Load frontend plugins
+  const [frontendPlugins, setFrontendPlugins] = useState<any[]>([]);
+  useEffect(() => {
+    loadPlugins().then(setFrontendPlugins).catch(console.error);
+  }, []);
+
+  // Toggle plugin enable/disable mutation
+  const togglePluginMutation = useMutation({
+    mutationFn: async (pluginId: string) => {
+      return adminService.togglePlugin(pluginId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "plugins"] });
+      toast.success("Plugin status updated");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to update plugin status");
+    },
+  });
+
+  // Match backend plugins with frontend plugins and mock data
+  const plugins: Plugin[] = (backendPluginsResponse || []).map((backendPlugin) => {
+    // Find matching frontend plugin
+    const frontendPlugin = frontendPlugins.find(
+      (fp) => fp.manifest.name === backendPlugin.name
     );
+
+    // Find matching mock plugin for UI details
+    const mockPlugin = initialPlugins.find(
+      (mp) => mp.name.toLowerCase().replace(/\s+/g, "_") === backendPlugin.name
+    );
+
+    return {
+      id: backendPlugin.id,
+      name: backendPlugin.name,
+      description: backendPlugin.description || mockPlugin?.description || "No description available",
+      icon: mockPlugin?.icon || Puzzle,
+      enabled: backendPlugin.enabled,
+      category: backendPlugin.category || mockPlugin?.category || "Other",
+      imageUrl: mockPlugin?.imageUrl || "/api/placeholder/400/300",
+      color: mockPlugin?.color || "from-gray-500/20 to-gray-600/20",
+      details: mockPlugin?.details || {
+        useCases: [],
+        setupSteps: [],
+        requirements: [],
+        configOptions: [],
+      },
+      config: mockPlugin?.config || {},
+      backendVersion: backendPlugin.version,
+      frontendVersion: frontendPlugin?.manifest.version,
+      hasFrontend: !!frontendPlugin,
+    };
+  });
+
+  const handleTogglePlugin = async (pluginId: string) => {
+    togglePluginMutation.mutate(pluginId);
   };
 
   const handleOpenDetails = (plugin: Plugin) => {
@@ -653,17 +728,14 @@ export default function PluginsPage() {
 
   const handleSaveConfig = () => {
     if (selectedPlugin) {
-      setPlugins((prev) =>
-        prev.map((plugin) =>
-          plugin.id === selectedPlugin.id
-            ? { ...plugin, config: editedConfig }
-            : plugin
-        )
-      );
+      // TODO: Save config to backend API when available
+      // For now, just close the modal
       handleCloseDetails();
+      toast.success("Configuration saved (mock)");
     }
   };
 
+  // Filter plugins based on search query
   const filteredPlugins = plugins.filter(
     (plugin) =>
       plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -742,9 +814,22 @@ export default function PluginsPage() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoadingPlugins && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Puzzle className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+                <p className="text-muted-foreground">Loading plugins...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Plugins Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPlugins.map((plugin) => {
+        {!isLoadingPlugins && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredPlugins.map((plugin) => {
             const Icon = plugin.icon;
             return (
               <Card
@@ -787,12 +872,34 @@ export default function PluginsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">
-                        {plugin.name}
-                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg truncate">
+                          {plugin.name}
+                        </CardTitle>
+                        {!plugin.hasFrontend && (
+                          <Badge variant="warning" className="text-xs">
+                            No Frontend
+                          </Badge>
+                        )}
+                        {plugin.hasFrontend && plugin.backendVersion && plugin.frontendVersion && 
+                         plugin.backendVersion !== plugin.frontendVersion && (
+                          <Badge variant="warning" className="text-xs">
+                            Version Mismatch
+                          </Badge>
+                        )}
+                      </div>
                       <CardDescription className="mt-1.5 line-clamp-2">
                         {plugin.description}
                       </CardDescription>
+                      {/* Version Info */}
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {plugin.backendVersion && (
+                          <span>Backend: v{plugin.backendVersion}</span>
+                        )}
+                        {plugin.frontendVersion && (
+                          <span>Frontend: v{plugin.frontendVersion}</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-shrink-0">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#2563eb)]/10 group-hover:text-[var(--brand-primary,#2563eb)]">
@@ -810,7 +917,8 @@ export default function PluginsPage() {
                     </span>
                     <button
                       onClick={() => handleTogglePlugin(plugin.id)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#2563eb)] focus:ring-offset-2 ${
+                      disabled={togglePluginMutation.isPending}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#2563eb)] focus:ring-offset-2 disabled:opacity-50 ${
                         plugin.enabled
                           ? "bg-[var(--brand-primary,#2563eb)]"
                           : "bg-gray-200"
@@ -839,10 +947,11 @@ export default function PluginsPage() {
               </Card>
             );
           })}
-        </div>
+          </div>
+        )}
 
         {/* Empty State */}
-        {filteredPlugins.length === 0 && (
+        {!isLoadingPlugins && filteredPlugins.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">

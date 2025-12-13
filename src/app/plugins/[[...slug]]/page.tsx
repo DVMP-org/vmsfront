@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { loadPlugins } from "@/lib/plugin_loader";
+import type { LoadedPlugin } from "@/types/plugin";
 import { extractRoutePath, normalizeRoutePath, isPluginPath } from "@/lib/plugin-utils";
 import { PluginErrorBoundary } from "@/components/PluginErrorBoundary";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -21,7 +22,7 @@ interface Props {
  * @param plugin The plugin to check
  * @returns true if the route matches an admin route
  */
-function isAdminRoute(fullPath: string, plugin: ReturnType<typeof loadPlugins>[0]): boolean {
+function isAdminRoute(fullPath: string, plugin: LoadedPlugin): boolean {
     // Check if path contains "/admin" as a path segment (not just anywhere in the string)
     // This avoids false positives like "/administer" matching
     const pathSegments = fullPath.split("/").filter(Boolean);
@@ -47,8 +48,21 @@ function isAdminRoute(fullPath: string, plugin: ReturnType<typeof loadPlugins>[0
 function PluginContent({ params }: Props) {
     const slugPath = params.slug?.join("/") ?? "";
     const fullPath = slugPath ? `/${slugPath}` : "/";
-    const plugins = loadPlugins();
+    const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
     const router = useRouter();
+
+    // Load plugins from API
+    useEffect(() => {
+        loadPlugins()
+            .then((loadedPlugins) => {
+                console.log("PluginPage: Loaded plugins:", loadedPlugins);
+                setPlugins(loadedPlugins);
+            })
+            .catch((error) => {
+                console.error("PluginPage: Failed to load plugins:", error);
+                setPlugins([]);
+            });
+    }, []);
 
     // Determine layout type based on the route path itself
     // Check if any plugin has this as an admin route

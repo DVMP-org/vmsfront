@@ -26,6 +26,7 @@ import {
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
+import type { LoadedPlugin } from "@/types/plugin";
 import { buildPluginPath } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -33,8 +34,6 @@ interface SidebarProps {
   type: "resident" | "admin";
   onMobileClose?: () => void;
 }
-
-const plugins = loadPlugins();
 
 function buildResidentLinks(houseId?: string) {
   const base = houseId ? `/house/${houseId}` : "/select";
@@ -78,9 +77,23 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
+  const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
   const user = useAuthStore((state) => state.user);
+
+  // Load plugins from API on mount
+  useEffect(() => {
+    loadPlugins()
+      .then((loadedPlugins) => {
+        console.log("Sidebar: Loaded plugins:", loadedPlugins);
+        setPlugins(loadedPlugins);
+      })
+      .catch((error) => {
+        console.error("Sidebar: Failed to load plugins:", error);
+        setPlugins([]);
+      });
+  }, []);
 
   // Helper function to get routes for a plugin based on user type
   // Now uses routes from routes.js instead of manifest
