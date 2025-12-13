@@ -214,7 +214,7 @@ export interface GateEvent {
     owner?: Visitor | Resident;
     gate_pass?: GatePass;
     scanned_by?: Admin
-    
+
 }
 
 export interface AdminRole {
