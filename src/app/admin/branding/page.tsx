@@ -269,7 +269,7 @@ export default function BrandingThemesPage() {
                             Customization workspace
                         </p>
                         <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Palette className="h-6 w-6 text-primary" />
+                            <Palette className="h-6 w-6 text-[var(--brand-primary,#2563eb)]" />
                             Branding Themes
                         </h1>
                         <p className="text-muted-foreground text-sm">
@@ -598,4 +598,6 @@ export default function BrandingThemesPage() {
         </DashboardLayout>
     );
 }
+
+
 
