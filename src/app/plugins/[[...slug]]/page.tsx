@@ -49,24 +49,54 @@ function PluginContent({ params }: Props) {
     const slugPath = params.slug?.join("/") ?? "";
     const fullPath = slugPath ? `/${slugPath}` : "/";
     const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
-    // Load plugins from API
+    // Load plugins from cache first, then refresh from API
     useEffect(() => {
-        loadPlugins()
+        let isMounted = true;
+
+        // Load cached plugins immediately for instant rendering
+        loadPlugins(true)
             .then((loadedPlugins) => {
-                console.log("PluginPage: Loaded plugins:", loadedPlugins);
-                setPlugins(loadedPlugins);
+                if (isMounted) {
+                    console.log("PluginPage: Loaded plugins (cached):", loadedPlugins);
+                    setPlugins(loadedPlugins);
+                    setIsLoading(false);
+                }
+            })
+            .catch((error) => {
+                console.error("PluginPage: Failed to load cached plugins:", error);
+                // Try to load from API without cache
+                return loadPlugins(false);
+            })
+            .then((loadedPlugins) => {
+                if (loadedPlugins && isMounted) {
+                    setPlugins(loadedPlugins);
+                    setIsLoading(false);
+                }
             })
             .catch((error) => {
                 console.error("PluginPage: Failed to load plugins:", error);
-                setPlugins([]);
+                if (isMounted) {
+                    setPlugins([]);
+                    setIsLoading(false);
+                }
             });
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // Determine layout type based on the route path itself
     // Check if any plugin has this as an admin route
     const layoutType = useMemo<"resident" | "admin">(() => {
+        // Quick check based on pathname if plugins not loaded yet
+        if (plugins.length === 0 && fullPath.includes("/admin")) {
+            return "admin";
+        }
+
         for (const plugin of plugins) {
             if (isPluginPath(fullPath, plugin.basePath)) {
                 if (isAdminRoute(fullPath, plugin)) {
@@ -77,6 +107,20 @@ function PluginContent({ params }: Props) {
         // Default to resident if not an admin route
         return "resident";
     }, [fullPath, plugins]);
+
+    // Show loading state while plugins are being loaded
+    if (isLoading) {
+        return (
+            <DashboardLayout type={layoutType}>
+                <div className="p-6 space-y-4">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-32 w-full" />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     for (const plugin of plugins) {
         // Check if this path belongs to this plugin

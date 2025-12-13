@@ -76,20 +76,119 @@ function validatePlugin(plugin: any): plugin is {
     return true;
 }
 
+const PLUGINS_CACHE_KEY = "vmscore_plugins_cache";
+const PLUGINS_CACHE_TIMESTAMP_KEY = "vmscore_plugins_cache_timestamp";
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Gets cached plugins from localStorage
+ * @returns Cached backend plugins or null if cache is invalid/expired
+ */
+function getCachedPlugins(): BackendPlugin[] | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+        const cachedData = localStorage.getItem(PLUGINS_CACHE_KEY);
+        const cachedTimestamp = localStorage.getItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+
+        if (!cachedData || !cachedTimestamp) {
+            return null;
+        }
+
+        const timestamp = parseInt(cachedTimestamp, 10);
+        const now = Date.now();
+
+        // Check if cache is expired
+        if (now - timestamp > CACHE_DURATION_MS) {
+            localStorage.removeItem(PLUGINS_CACHE_KEY);
+            localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+            return null;
+        }
+
+        const plugins = JSON.parse(cachedData) as BackendPlugin[];
+        return Array.isArray(plugins) ? plugins : null;
+    } catch (error) {
+        console.error("Failed to read plugins cache:", error);
+        // Clear invalid cache
+        localStorage.removeItem(PLUGINS_CACHE_KEY);
+        localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+        return null;
+    }
+}
+
+/**
+ * Caches plugins in localStorage
+ * @param plugins Array of backend plugins to cache
+ */
+function setCachedPlugins(plugins: BackendPlugin[]): void {
+    if (typeof window === "undefined") return;
+
+    try {
+        localStorage.setItem(PLUGINS_CACHE_KEY, JSON.stringify(plugins));
+        localStorage.setItem(PLUGINS_CACHE_TIMESTAMP_KEY, Date.now().toString());
+    } catch (error) {
+        console.error("Failed to cache plugins:", error);
+        // If storage is full or unavailable, clear old cache and try again
+        try {
+            localStorage.removeItem(PLUGINS_CACHE_KEY);
+            localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+            localStorage.setItem(PLUGINS_CACHE_KEY, JSON.stringify(plugins));
+            localStorage.setItem(PLUGINS_CACHE_TIMESTAMP_KEY, Date.now().toString());
+        } catch (retryError) {
+            console.error("Failed to cache plugins after retry:", retryError);
+        }
+    }
+}
+
+/**
+ * Clears the plugins cache
+ */
+export function clearPluginsCache(): void {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(PLUGINS_CACHE_KEY);
+    localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+}
+
 /**
  * Fetches enabled plugins from the backend API
+ * @param useCache Whether to use cached data if available
  * @returns Array of enabled backend plugins
  */
-async function fetchEnabledPlugins(): Promise<BackendPlugin[]> {
+async function fetchEnabledPlugins(useCache: boolean = true): Promise<BackendPlugin[]> {
+    // Try to use cache first if requested
+    if (useCache) {
+        const cached = getCachedPlugins();
+        if (cached) {
+            // Return cached data immediately, but refresh in background
+            fetchEnabledPlugins(false).then(plugins => {
+                setCachedPlugins(plugins);
+            }).catch(() => {
+                // Silently fail background refresh
+            });
+            return cached;
+        }
+    }
+
     try {
         const response = await adminService.getPlugins();
         if (response.data && Array.isArray(response.data)) {
             // Only return enabled plugins
-            return response.data.filter((plugin: BackendPlugin) => plugin.enabled === true);
+            const enabledPlugins = response.data.filter((plugin: BackendPlugin) => plugin.enabled === true);
+            // Cache the result
+            setCachedPlugins(enabledPlugins);
+            return enabledPlugins;
         }
         return [];
     } catch (error) {
         console.error("Failed to fetch plugins from API:", error);
+        // If API fails, try to return cached data as fallback
+        if (useCache) {
+            const cached = getCachedPlugins();
+            if (cached) {
+                console.log("Using cached plugins due to API error");
+                return cached;
+            }
+        }
         // Return empty array on error - plugins won't load
         return [];
     }
@@ -113,11 +212,12 @@ function matchPluginByName(
 /**
  * Loads all registered plugins with validation
  * Filters to only include plugins that are enabled in the backend
+ * @param useCache Whether to use cached plugins if available (default: true)
  * @returns Array of loaded plugins with normalized data
  */
-export async function loadPlugins(): Promise<LoadedPlugin[]> {
-    // Fetch enabled plugins from backend
-    const enabledBackendPlugins = await fetchEnabledPlugins();
+export async function loadPlugins(useCache: boolean = true): Promise<LoadedPlugin[]> {
+    // Fetch enabled plugins from backend (with caching)
+    const enabledBackendPlugins = await fetchEnabledPlugins(useCache);
 
     // Match frontend plugins with backend plugins and filter to only enabled ones
     return FRONTEND_PLUGINS

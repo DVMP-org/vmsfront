@@ -82,17 +82,38 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const { selectedHouse } = useAppStore();
   const user = useAuthStore((state) => state.user);
 
-  // Load plugins from API on mount
+  // Load plugins from cache first, then refresh from API in background
   useEffect(() => {
-    loadPlugins()
+    let isMounted = true;
+
+    // Load cached plugins immediately for instant rendering
+    loadPlugins(true)
       .then((loadedPlugins) => {
-        console.log("Sidebar: Loaded plugins:", loadedPlugins);
-        setPlugins(loadedPlugins);
+        if (isMounted) {
+          console.log("Sidebar: Loaded plugins (cached):", loadedPlugins);
+          setPlugins(loadedPlugins);
+        }
+      })
+      .catch((error) => {
+        console.error("Sidebar: Failed to load cached plugins:", error);
+        // Try to load from API without cache
+        return loadPlugins(false);
+      })
+      .then((loadedPlugins) => {
+        if (loadedPlugins && isMounted) {
+          setPlugins(loadedPlugins);
+        }
       })
       .catch((error) => {
         console.error("Sidebar: Failed to load plugins:", error);
-        setPlugins([]);
+        if (isMounted) {
+          setPlugins([]);
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const routeHouseId = useMemo(() => {
