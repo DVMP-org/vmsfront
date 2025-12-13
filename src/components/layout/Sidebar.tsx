@@ -16,6 +16,8 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   X,
   MessageSquare,
   UserCog,
@@ -73,6 +75,7 @@ const adminLinks = [
 export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
 
@@ -119,6 +122,27 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  // Auto-expand plugins with active routes
+  useEffect(() => {
+    const activePlugins = new Set<string>();
+    plugins.forEach((plugin) => {
+      const hasActive = plugin.manifest.frontend.routes.some((route) => {
+        const fullPath = `/plugins/${plugin.basePath}${route.path === "" ? "" : `/${route.path}`}`;
+        return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
+      });
+      if (hasActive) {
+        activePlugins.add(plugin.name);
+      }
+    });
+    if (activePlugins.size > 0) {
+      setExpandedPlugins((prev) => {
+        const newSet = new Set(prev);
+        activePlugins.forEach((name) => newSet.add(name));
+        return newSet;
+      });
+    }
+  }, [pathname]);
+
   const toggleCollapse = () => {
     if (!isMobile) {
       setCollapsed(!collapsed);
@@ -130,6 +154,31 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     if (isMobile && onMobileClose) {
       onMobileClose();
     }
+  };
+
+  const togglePlugin = (pluginName: string) => {
+    setExpandedPlugins((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(pluginName)) {
+        newSet.delete(pluginName);
+      } else {
+        newSet.add(pluginName);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if a plugin route is active
+  const isPluginRouteActive = (pluginBasePath: string, routePath: string) => {
+    const fullPath = `/plugins/${pluginBasePath}${routePath === "" ? "" : `/${routePath}`}`;
+    return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
+  };
+
+  // Check if any route in a plugin is active
+  const isPluginActive = (plugin: typeof plugins[0]) => {
+    return plugin.manifest.frontend.routes.some((route) =>
+      isPluginRouteActive(plugin.basePath, route.path)
+    );
   };
 
   return (
@@ -230,22 +279,95 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
           );
         })}
         <>
-          {plugins.map(plugin => (
-            <div key={plugin.name}>
-              <h4>{plugin.manifest.title}</h4>
-              <ul>
-                {plugin.manifest.frontend.routes.map(route => (
-                  <li key={route.path}>
-                    <Link
-                      href={`/plugins/${plugin.basePath}/${route.path}`}
-                    >
-                      {route.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+          {plugins.map(plugin => {
+            const isExpanded = expandedPlugins.has(plugin.name);
+            const hasActiveRoute = isPluginActive(plugin);
+            const pluginIcon = plugin.manifest.icon
+              ? `fa fa-${plugin.manifest.icon}`
+              : 'fa fa-cube';
+
+            return (
+              <div key={plugin.name} className="mb-1">
+                {/* Plugin Dropdown Header */}
+                <button
+                  onClick={() => togglePlugin(plugin.name)}
+                  className={cn(
+                    "flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200",
+                    "group relative",
+                    isMobile || !collapsed
+                      ? "gap-3 px-3 py-2.5 justify-between"
+                      : "justify-center px-2 py-2.5",
+                    hasActiveRoute
+                      ? "bg-[var(--brand-primary,#2563eb)] text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  title={collapsed && !isMobile ? plugin.manifest.title : undefined}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <i
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        pluginIcon,
+                        hasActiveRoute && "text-primary-foreground"
+                      )}
+                    />
+                    {(isMobile || !collapsed) && (
+                      <span className="flex-1 truncate text-left">{plugin.manifest.title}</span>
+                    )}
+                  </div>
+                  {(isMobile || !collapsed) && (
+                    <div className="flex-shrink-0">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  )}
+                  {collapsed && !isMobile && (
+                    <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                      {plugin.manifest.title}
+                    </span>
+                  )}
+                </button>
+
+                {/* Plugin Routes Submenu */}
+                {isExpanded && (isMobile || !collapsed) && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
+                    {plugin.manifest.frontend.routes.map(route => {
+                      const isActive = isPluginRouteActive(plugin.basePath, route.path);
+                      return (
+                        <li key={route.path}>
+                          <Link
+                            onClick={handleLinkClick}
+                            className={cn(
+                              "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                              "group relative",
+                              "gap-3 px-3 py-2.5",
+                              isActive
+                                ? "bg-[var(--brand-primary,#2563eb)] text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                            href={`/plugins/${plugin.basePath}${route.path === "" ? "" : `/${route.path}`}`}
+                          >
+                            <i
+                              className={cn(
+                                "h-4 w-4 flex-shrink-0",
+                                route.icon ? `fa fa-${route.icon}` : 'fa fa-circle',
+                                isActive && "text-primary-foreground"
+                              )}
+                            />
+                            <span className="flex-1 truncate">{route.title}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
         </>
       </nav>
     </aside>

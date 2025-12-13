@@ -7,19 +7,22 @@
         "basePath": "/electricity",
         "routes": [
             {
-                "path": "",
+                "path": "/",
                 "component": "ElectricityHome",
-                "title": "Dashboard"
+                "title": "Dashboard",
+                "icon": "zap"
             },
             {
-                "path": "validate",
+                "path": "/validate",
                 "component": "ValidateMeter",
-                "title": "Validate Meter"
+                "title": "Validate Meter",
+                "icon": "zap"
             },
             {
-                "path": "purchase",
+                "path": "/purchase",
                 "component": "PurchaseMeter",
-                "title": "Purchase"
+                "title": "Purchase",
+                "icon": "zap"
             }
         ]
     }

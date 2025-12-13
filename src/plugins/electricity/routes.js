@@ -1,7 +1,24 @@
 import dynamic from "next/dynamic";
+import { PluginRoute } from "./types";
 
-export default {
-    ElectricityHome: dynamic(() => import("./components/ElectricityHome")),
-    ValidateMeter: dynamic(() => import("./components/ValidateMeter")),
-    PurchaseMeter: dynamic(() => import("./components/PurchaseMeter"))
-};
+
+const ElectricityHome = dynamic(() => import("./pages/ElectricityHome"));
+const ValidateMeter = dynamic(() => import("./pages/ValidateMeter"));
+const PurchaseMeter = dynamic(() => import("./pages/PurchaseMeter"));
+
+const routes = [
+    {
+        path: "/",  // Changed from "" to "/" for consistency
+        component: ElectricityHome
+    },
+    {
+        path: "/validate",
+        component: ValidateMeter
+    },
+    {
+        path: "/purchase",
+        component: PurchaseMeter
+    }
+];
+
+export default routes;

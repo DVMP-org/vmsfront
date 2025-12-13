@@ -34,7 +34,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "export/types/**/*.ts",
-    "src/plugins/electricity/index.js"
+    "src/plugins/electricity/index.js",
+    "src/plugins/electricity/routes.js"
   ],
   "exclude": [
     "node_modules",

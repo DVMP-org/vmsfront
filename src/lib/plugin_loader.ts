@@ -15,8 +15,15 @@ export function loadPlugins() {
     }));
 }
 
+/**
+ * Finds a plugin by its path
+ * @param path The path to search for
+ * @returns The matching plugin or undefined
+ */
 export function findPluginByPath(path: string) {
-    return loadPlugins().find(plugin =>
-        path.startsWith(plugin.basePath.replace("/", ""))
-    );
+    const normalizedPath = path.replace(/^\/+/, ""); // Remove leading slashes
+    return loadPlugins().find(plugin => {
+        const normalizedBasePath = plugin.basePath.replace(/^\/+/, "");
+        return normalizedPath.startsWith(normalizedBasePath);
+    });
 }

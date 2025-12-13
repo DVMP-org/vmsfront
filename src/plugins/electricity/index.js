@@ -1,4 +1,4 @@
-import manifest from "./mainfest";
+import manifest from "./manifest.json";
 import routes from "./routes";
 
 export default {
