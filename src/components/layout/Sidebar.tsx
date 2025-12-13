@@ -23,11 +23,14 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
+import { loadPlugins } from "@/lib/plugin_loader";
 
 interface SidebarProps {
   type: "resident" | "admin";
   onMobileClose?: () => void;
 }
+
+const plugins = loadPlugins();
 
 function buildResidentLinks(houseId?: string) {
   const base = houseId ? `/house/${houseId}` : "/select";
@@ -146,8 +149,8 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
           isMobile
             ? "justify-between p-3"
             : collapsed
-            ? "justify-center p-2"
-            : "justify-between p-3"
+              ? "justify-center p-2"
+              : "justify-between p-3"
         )}
       >
         {(!collapsed || isMobile) && (
@@ -223,8 +226,27 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 </span>
               )}
             </Link>
+
           );
         })}
+        <>
+          {plugins.map(plugin => (
+            <div key={plugin.name}>
+              <h4>{plugin.manifest.title}</h4>
+              <ul>
+                {plugin.manifest.frontend.routes.map(route => (
+                  <li key={route.path}>
+                    <Link
+                      href={`/plugins/${plugin.basePath}/${route.path}`}
+                    >
+                      {route.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
       </nav>
     </aside>
   );

@@ -33,7 +33,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "export/types/**/*.ts"
+    "export/types/**/*.ts",
+    "src/plugins/electricity/index.js"
   ],
   "exclude": [
     "node_modules",

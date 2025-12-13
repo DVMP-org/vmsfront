@@ -1,0 +1,26 @@
+{
+    "name": "electricity_purchase",
+    "title": "Electricity Purchase",
+    "version": "1.0.0",
+    "icon": "zap",
+    "frontend": {
+        "basePath": "/electricity",
+        "routes": [
+            {
+                "path": "",
+                "component": "ElectricityHome",
+                "title": "Dashboard"
+            },
+            {
+                "path": "validate",
+                "component": "ValidateMeter",
+                "title": "Validate Meter"
+            },
+            {
+                "path": "purchase",
+                "component": "PurchaseMeter",
+                "title": "Purchase"
+            }
+        ]
+    }
+}
