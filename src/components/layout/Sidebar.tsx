@@ -25,8 +25,9 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
-import { loadPlugins } from "@/lib/plugin_loader";
+import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import { buildPluginPath } from "@/lib/plugin-utils";
+import { useAuthStore } from "@/store/auth-store";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -79,6 +80,21 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
+  const user = useAuthStore((state) => state.user);
+
+  // Helper function to get routes for a plugin based on user type
+  // Now uses routes from routes.js instead of manifest
+  const getPluginRoutes = (plugin: typeof plugins[0]) => {
+    // Get routes from plugin loader (routes.js) based on user type
+    if (type === "admin" && plugin.adminRoutes && plugin.adminRoutes.length > 0) {
+      return plugin.adminRoutes;
+    }
+    if (type === "resident" && plugin.residentRoutes && plugin.residentRoutes.length > 0) {
+      return plugin.residentRoutes;
+    }
+    // Fallback to legacy routes
+    return plugin.routes || [];
+  };
 
   const routeHouseId = useMemo(() => {
     const match = pathname.match(/^\/house\/([^/]+)/);
@@ -127,12 +143,8 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   useEffect(() => {
     const activePlugins = new Set<string>();
     plugins.forEach((plugin) => {
-      const routes = plugin.manifest.frontend.routes || [];
-      const hasActive = routes.some((route) => {
-        const fullPath = buildPluginPath(plugin.basePath, route.path);
-        return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
-      });
-      if (hasActive) {
+      // Use the same strict matching logic
+      if (findActivePluginRoute(plugin) !== null) {
         activePlugins.add(plugin.name);
       }
     });
@@ -143,7 +155,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         return newSet;
       });
     }
-  }, [pathname]);
+  }, [pathname, type]);
 
   const toggleCollapse = () => {
     if (!isMobile) {
@@ -170,18 +182,52 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     });
   };
 
-  // Check if a plugin route is active
-  const isPluginRouteActive = (pluginBasePath: string, routePath: string) => {
-    const fullPath = buildPluginPath(pluginBasePath, routePath);
-    return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
+  // Find the most specific active route for a plugin
+  // Returns the route path if active, null otherwise
+  const findActivePluginRoute = (plugin: typeof plugins[0]): string | null => {
+    const routes = getPluginRoutes(plugin);
+    if (routes.length === 0 || !pathname) return null;
+
+    // Sort routes by path length (longer/more specific first)
+    // This ensures we check the most specific routes first
+    const sortedRoutes = [...routes].sort((a, b) => {
+      const aPath = a.path === "/" ? "" : a.path.replace(/^\/+|\/+$/g, "");
+      const bPath = b.path === "/" ? "" : b.path.replace(/^\/+|\/+$/g, "");
+      return bPath.length - aPath.length;
+    });
+
+    // Find the most specific matching route
+    for (const route of sortedRoutes) {
+      const fullPath = buildPluginPath(plugin.basePath, route.path);
+
+      // Exact match - highest priority
+      if (pathname === fullPath) {
+        return route.path;
+      }
+
+      // Check if pathname is a child of this route (strict matching)
+      // Only match if pathname starts with fullPath + "/" (not just fullPath)
+      // This ensures /admin doesn't match /admin-residents
+      if (pathname.startsWith(fullPath + "/")) {
+        // This is a child route, so this parent route is active
+        // But we check more specific routes first, so if we get here,
+        // it means no more specific route matched
+        return route.path;
+      }
+    }
+
+    return null;
+  };
+
+  // Check if a specific plugin route is active (strict matching)
+  const isPluginRouteActive = (plugin: typeof plugins[0], routePath: string): boolean => {
+    const activeRoute = findActivePluginRoute(plugin);
+    return activeRoute === routePath;
   };
 
   // Check if any route in a plugin is active
   const isPluginActive = (plugin: typeof plugins[0]) => {
-    const routes = plugin.manifest.frontend.routes || [];
-    return routes.some((route) =>
-      isPluginRouteActive(plugin.basePath, route.path)
-    );
+    return findActivePluginRoute(plugin) !== null;
   };
 
   return (
@@ -338,9 +384,12 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 {/* Plugin Routes Submenu */}
                 {isExpanded && (isMobile || !collapsed) && (
                   <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
-                    {(plugin.manifest.frontend.routes || []).map(route => {
-                      const isActive = isPluginRouteActive(plugin.basePath, route.path);
+                    {getPluginRoutes(plugin).map(route => {
+                      const isActive = isPluginRouteActive(plugin, route.path);
                       const routeHref = buildPluginPath(plugin.basePath, route.path);
+                      // Get title and icon from route (routes.js) or fallback to path
+                      const routeTitle = route.title || route.path || "Route";
+                      const routeIcon = route.icon || "circle";
                       return (
                         <li key={route.path}>
                           <Link
@@ -358,11 +407,11 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                             <i
                               className={cn(
                                 "h-4 w-4 flex-shrink-0",
-                                route.icon ? `fa fa-${route.icon}` : 'fa fa-circle',
+                                `fa fa-${routeIcon}`,
                                 isActive && "text-primary-foreground"
                               )}
                             />
-                            <span className="flex-1 truncate">{route.title}</span>
+                            <span className="flex-1 truncate">{routeTitle}</span>
                           </Link>
                         </li>
                       );

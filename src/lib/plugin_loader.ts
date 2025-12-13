@@ -1,6 +1,6 @@
 import electricity from "@/plugins/electricity";
 import { isPluginPath } from "./plugin-utils";
-import type { LoadedPlugin } from "@/types/plugin";
+import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
 
 /**
  * All frontend plugins registered here
@@ -21,7 +21,12 @@ const PLUGINS = [electricity];
 /**
  * Validates a plugin structure
  */
-function validatePlugin(plugin: any): plugin is { manifest: any; routes: any[] } {
+function validatePlugin(plugin: any): plugin is {
+    manifest: any;
+    routes?: any[];
+    adminRoutes?: any[];
+    residentRoutes?: any[]
+} {
     if (!plugin) {
         console.error("Plugin is null or undefined");
         return false;
@@ -47,13 +52,13 @@ function validatePlugin(plugin: any): plugin is { manifest: any; routes: any[] }
         return false;
     }
 
-    if (!Array.isArray(plugin.routes)) {
-        console.error(`Plugin ${plugin.manifest.name} missing or invalid routes`);
-        return false;
-    }
+    // Check if plugin has at least one route type
+    const hasLegacyRoutes = Array.isArray(plugin.routes) && plugin.routes.length > 0;
+    const hasAdminRoutes = Array.isArray(plugin.adminRoutes) && plugin.adminRoutes.length > 0;
+    const hasResidentRoutes = Array.isArray(plugin.residentRoutes) && plugin.residentRoutes.length > 0;
 
-    if (plugin.routes.length === 0) {
-        console.warn(`Plugin ${plugin.manifest.name} has no routes`);
+    if (!hasLegacyRoutes && !hasAdminRoutes && !hasResidentRoutes) {
+        console.warn(`Plugin ${plugin.manifest.name} has no routes defined`);
     }
 
     return true;
@@ -76,9 +81,40 @@ export function loadPlugins(): LoadedPlugin[] {
                 name: plugin.manifest.name,
                 basePath,
                 manifest: plugin.manifest,
-                routes: plugin.routes
+                // Legacy routes for backward compatibility
+                routes: plugin.routes,
+                // New separate routes for admin and resident
+                adminRoutes: plugin.adminRoutes,
+                residentRoutes: plugin.residentRoutes
             };
         });
+}
+
+/**
+ * Gets routes for a specific user type
+ * @param plugin The loaded plugin
+ * @param userType The user type ("admin" or "resident")
+ * @returns Array of routes for the user type
+ */
+export function getPluginRoutesForUserType(
+    plugin: LoadedPlugin,
+    userType: "admin" | "resident"
+): PluginRoute[] {
+    // If plugin has separate admin/resident routes, use those
+    if (userType === "admin" && plugin.adminRoutes && plugin.adminRoutes.length > 0) {
+        return plugin.adminRoutes;
+    }
+    if (userType === "resident" && plugin.residentRoutes && plugin.residentRoutes.length > 0) {
+        return plugin.residentRoutes;
+    }
+
+    // Otherwise, use legacy routes (applies to both)
+    if (plugin.routes && plugin.routes.length > 0) {
+        return plugin.routes;
+    }
+
+    // Fallback to empty array
+    return [];
 }
 
 /**

@@ -1,23 +1,64 @@
 import dynamic from "next/dynamic";
 
+// Admin-specific components
+const AdminElectricityDashboard = dynamic(() => import("./pages/admin/ElectricityHome"));
+const AdminMetersPage = dynamic(() => import("./pages/admin/MetersPage"));
+const AdminPurchasesPage = dynamic(() => import("./pages/admin/PurchasesPage"));
+const AdminResidentsPage = dynamic(() => import("./pages/admin/ResidentsPage"));
 
-const ElectricityHome = dynamic(() => import("./pages/ElectricityHome"));
-const ValidateMeter = dynamic(() => import("./pages/ValidateMeter"));
-const PurchaseMeter = dynamic(() => import("./pages/PurchaseMeter"));
+// Resident-specific components
+const ResidentElectricityDashboard = dynamic(() => import("./pages/resident/ElectricityHome"));
+const ResidentPurchaseMeter = dynamic(() => import("./pages/resident/PurchaseMeter"));
 
-const routes = [
+// Legacy routes (for backward compatibility - applies to both admin and resident)
+const routes = [];
+
+// Admin-specific routes
+const adminRoutes = [
     {
-        path: "/",  // Changed from "" to "/" for consistency
-        component: ElectricityHome
+        path: "/admin",
+        component: AdminElectricityDashboard,
+        title: "Dashboard",
+        icon: "zap"
     },
     {
-        path: "/validate",
-        component: ValidateMeter
+        path: "/admin/meters",
+        component: AdminMetersPage,
+        title: "Meters",
+        icon: "zap"
     },
     {
-        path: "/purchase",
-        component: PurchaseMeter
+        path: "/admin/purchases",
+        component: AdminPurchasesPage,
+        title: "Purchases",
+        icon: "credit-card"
+    },
+    {
+        path: "/admin/residents",
+        component: AdminResidentsPage,
+        title: "Residents",
+        icon: "users"
     }
 ];
 
-export default routes;
+// Resident-specific routes
+const residentRoutes = [
+    {
+        path: "/",
+        component: ResidentElectricityDashboard,
+        title: "Dashboard",
+        icon: "zap"
+    },
+    {
+        path: "/purchase",
+        component: ResidentPurchaseMeter,
+        title: "Purchase",
+        icon: "credit-card"
+    }
+];
+
+export default {
+    routes, // Legacy: for backward compatibility
+    adminRoutes,
+    residentRoutes
+};

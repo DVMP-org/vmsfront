@@ -4,26 +4,6 @@
     "version": "1.0.0",
     "icon": "zap",
     "frontend": {
-        "basePath": "/electricity",
-        "routes": [
-            {
-                "path": "/",
-                "component": "ElectricityHome",
-                "title": "Dashboard",
-                "icon": "zap"
-            },
-            {
-                "path": "/validate",
-                "component": "ValidateMeter",
-                "title": "Validate Meter",
-                "icon": "zap"
-            },
-            {
-                "path": "/purchase",
-                "component": "PurchaseMeter",
-                "title": "Purchase",
-                "icon": "zap"
-            }
-        ]
+        "basePath": "/electricity"
     }
 }
