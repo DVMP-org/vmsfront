@@ -1,5 +1,4 @@
 import dynamic from "next/dynamic";
-import { PluginRoute } from "./types";
 
 
 const ElectricityHome = dynamic(() => import("./pages/ElectricityHome"));

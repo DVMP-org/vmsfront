@@ -26,6 +26,7 @@ import {
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins } from "@/lib/plugin_loader";
+import { buildPluginPath } from "@/lib/plugin-utils";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -126,8 +127,9 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   useEffect(() => {
     const activePlugins = new Set<string>();
     plugins.forEach((plugin) => {
-      const hasActive = plugin.manifest.frontend.routes.some((route) => {
-        const fullPath = `/plugins/${plugin.basePath}${route.path === "" ? "" : `/${route.path}`}`;
+      const routes = plugin.manifest.frontend.routes || [];
+      const hasActive = routes.some((route) => {
+        const fullPath = buildPluginPath(plugin.basePath, route.path);
         return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
       });
       if (hasActive) {
@@ -170,13 +172,14 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
   // Check if a plugin route is active
   const isPluginRouteActive = (pluginBasePath: string, routePath: string) => {
-    const fullPath = `/plugins/${pluginBasePath}${routePath === "" ? "" : `/${routePath}`}`;
+    const fullPath = buildPluginPath(pluginBasePath, routePath);
     return pathname === fullPath || (pathname && pathname.startsWith(fullPath + "/"));
   };
 
   // Check if any route in a plugin is active
   const isPluginActive = (plugin: typeof plugins[0]) => {
-    return plugin.manifest.frontend.routes.some((route) =>
+    const routes = plugin.manifest.frontend.routes || [];
+    return routes.some((route) =>
       isPluginRouteActive(plugin.basePath, route.path)
     );
   };
@@ -335,8 +338,9 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 {/* Plugin Routes Submenu */}
                 {isExpanded && (isMobile || !collapsed) && (
                   <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
-                    {plugin.manifest.frontend.routes.map(route => {
+                    {(plugin.manifest.frontend.routes || []).map(route => {
                       const isActive = isPluginRouteActive(plugin.basePath, route.path);
+                      const routeHref = buildPluginPath(plugin.basePath, route.path);
                       return (
                         <li key={route.path}>
                           <Link
@@ -349,7 +353,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                                 ? "bg-[var(--brand-primary,#2563eb)] text-white shadow-sm"
                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             )}
-                            href={`/plugins/${plugin.basePath}${route.path === "" ? "" : `/${route.path}`}`}
+                            href={routeHref}
                           >
                             <i
                               className={cn(
