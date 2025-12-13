@@ -473,6 +473,43 @@ export interface BrandingConfig {
     sms_sender_id: string | null;
 }
 
+export interface BrandingTheme {
+    id: string;
+    name: string;
+    primary_color: string;
+    secondary_color: string;
+    logo_url: string | null;
+    dark_logo_url: string | null;
+    favicon_url: string | null;
+    custom_css: string | null;
+    custom_js: string | null;
+    active: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface CreateBrandingThemeRequest {
+    name: string;
+    primary_color: string;
+    secondary_color: string;
+    logo_url?: string;
+    dark_logo_url?: string;
+    favicon_url?: string;
+    custom_css?: string;
+    custom_js?: string;
+}
+
+export interface UpdateBrandingThemeRequest {
+    name?: string;
+    primary_color?: string;
+    secondary_color?: string;
+    logo_url?: string;
+    dark_logo_url?: string;
+    favicon_url?: string;
+    custom_css?: string;
+    custom_js?: string;
+    active?: boolean;
+}
 
 export interface AdminDashboard {
     houses: House[];

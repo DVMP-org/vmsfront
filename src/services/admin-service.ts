@@ -30,6 +30,9 @@ import {
     ForumPostCreatePayload,
     ForumPostUpdatePayload,
     UpdateAdminRoleRequest,
+    BrandingTheme,
+    CreateBrandingThemeRequest,
+    UpdateBrandingThemeRequest,
 } from "@/types";
 
 export const adminService = {
@@ -357,5 +360,39 @@ export const adminService = {
 
     async getPluginSettings(pluginId: string): Promise<ApiResponse<any>> {
         return apiClient.get(`/admin/plugins/${pluginId}`);
+    },
+
+    // Branding Themes
+    async getBrandingThemes(): Promise<ApiResponse<BrandingTheme[]>> {
+        return apiClient.get("/admin/branding/themes");
+    },
+
+    async getActiveBrandingTheme(): Promise<ApiResponse<BrandingTheme>> {
+        return apiClient.get("/admin/branding/theme/active");
+    },
+
+    async createBrandingTheme(
+        data: CreateBrandingThemeRequest
+    ): Promise<ApiResponse<BrandingTheme>> {
+        return apiClient.post("/admin/branding/theme/create", data);
+    },
+
+    async updateBrandingTheme(
+        themeId: string,
+        data: UpdateBrandingThemeRequest
+    ): Promise<ApiResponse<BrandingTheme>> {
+        return apiClient.put(`/admin/branding/theme/${themeId}/update`, data);
+    },
+
+    async deleteBrandingTheme(
+        themeId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/branding/theme/${themeId}/delete`);
+    },
+
+    async activateBrandingTheme(
+        themeId: string
+    ): Promise<ApiResponse<BrandingTheme>> {
+        return apiClient.post(`/admin/branding/theme/${themeId}/activate`);
     },
 };
