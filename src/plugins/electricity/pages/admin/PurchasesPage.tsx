@@ -6,82 +6,99 @@ import { Input } from "@/components/ui/Input";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Badge } from "@/components/ui/Badge";
 import { CreditCard, Search, DollarSign } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-
-// TODO: Replace with actual API types when available
-interface Purchase {
-    id: string;
-    meterNumber: string;
-    residentName: string;
-    houseAddress: string;
-    amount: number;
-    units: number;
-    status: "success" | "pending" | "failed";
-    transactionId: string;
-    createdAt: string;
-}
-
-// Mock data - replace with API call
-const mockPurchases: Purchase[] = [];
+import { electricityService } from "@/services/electricity-service";
+import { PurchaseToken } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AdminPurchasesPage() {
-    const [purchases, setPurchases] = useState<Purchase[]>(mockPurchases);
-    const [isLoading, setIsLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
     const [searchQuery, setSearchQuery] = useState("");
 
-    // TODO: Replace with actual API call
-    // const { data: purchases, isLoading } = useElectricityPurchases();
+    // Fetch purchases
+    const { data: purchasesData, isLoading, isFetching } = useQuery({
+        queryKey: ["electricity", "purchases", page],
+        queryFn: async () => {
+            const response = await electricityService.getPurchases({
+                page,
+                pageSize,
+            });
+            return response.data;
+        },
+    });
 
+    const purchases = purchasesData?.items || [];
+
+    // Filter purchases by search query (client-side filtering for now)
     const filteredPurchases = purchases.filter(
         (purchase) =>
-            purchase.meterNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.residentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.transactionId.toLowerCase().includes(searchQuery.toLowerCase())
+            purchase.meter?.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            purchase.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            purchase.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const totalRevenue = purchases
         .filter((p) => p.status === "success")
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
 
-    const columns: Column<Purchase>[] = [
+    // Pagination data
+    const totalPages = purchasesData?.total_pages ?? 1;
+    const total = purchasesData?.total ?? 0;
+    const hasNext = purchasesData?.has_next ?? false;
+    const hasPrevious = purchasesData?.has_previous ?? false;
+    const showPagination = totalPages > 1;
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+    };
+
+    const columns: Column<PurchaseToken>[] = [
         {
-            key: "transactionId",
+            key: "transaction_id",
             header: "Transaction ID",
             accessor: (purchase) => (
-                <span className="font-mono text-sm">{purchase.transactionId}</span>
+                <span className="font-mono text-sm">{purchase.transaction_id || "N/A"}</span>
             ),
         },
         {
-            key: "meterNumber",
+            key: "meter",
             header: "Meter",
-            accessor: (purchase) => purchase.meterNumber,
+            accessor: (purchase) => purchase.meter?.meter_number || "N/A",
         },
         {
-            key: "residentName",
-            header: "Resident",
-            accessor: (purchase) => purchase.residentName,
+            key: "email",
+            header: "Email",
+            accessor: (purchase) => purchase.email,
         },
         {
-            key: "houseAddress",
+            key: "house",
             header: "House",
             accessor: (purchase) => (
-                <span className="text-muted-foreground">{purchase.houseAddress}</span>
+                <span className="text-muted-foreground">
+                    {purchase.meter?.house?.name || "N/A"}
+                </span>
             ),
         },
         {
             key: "units",
             header: "Units",
             accessor: (purchase) => (
-                <span className="font-medium">{purchase.units} kWh</span>
+                <span className="font-medium">
+                    {purchase.units ? `${purchase.units} kWh` : "N/A"}
+                </span>
             ),
         },
         {
             key: "amount",
             header: "Amount",
             accessor: (purchase) => (
-                <span className="font-semibold">₦{purchase.amount.toLocaleString()}</span>
+                <span className="font-semibold">
+                    ₦{parseFloat(purchase.amount || "0").toLocaleString()}
+                </span>
             ),
         },
         {
@@ -97,14 +114,14 @@ export default function AdminPurchasesPage() {
                                 : "warning"
                     }
                 >
-                    {purchase.status}
+                    {purchase.status || "pending"}
                 </Badge>
             ),
         },
         {
-            key: "createdAt",
+            key: "created_at",
             header: "Date",
-            accessor: (purchase) => formatDate(purchase.createdAt),
+            accessor: (purchase) => purchase.created_at ? formatDate(purchase.created_at) : "N/A",
         },
     ];
 
@@ -145,7 +162,10 @@ export default function AdminPurchasesPage() {
                             <Input
                                 placeholder="Search purchases..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setPage(1); // Reset to first page on search
+                                }}
                                 className="pl-10"
                             />
                         </div>
@@ -165,12 +185,29 @@ export default function AdminPurchasesPage() {
                             }
                         />
                     ) : (
-                        <DataTable
-                            data={filteredPurchases}
-                            columns={columns}
-                            searchable={false}
-                            emptyMessage="No purchases found"
-                        />
+                                <>
+                                    <DataTable
+                                        data={filteredPurchases}
+                                        columns={columns}
+                                        searchable={false}
+                                        showPagination={false}
+                                        emptyMessage="No purchases found"
+                                    />
+                                    {showPagination && (
+                                        <PaginationBar
+                                            page={page}
+                                            pageSize={pageSize}
+                                            total={total}
+                                            totalPages={totalPages}
+                                            hasNext={hasNext}
+                                            hasPrevious={hasPrevious}
+                                            resourceLabel="purchases"
+                                            onChange={handlePageChange}
+                                            isFetching={isFetching}
+                                            className="mt-6"
+                                        />
+                                    )}
+                                </>
                     )}
                 </CardContent>
             </Card>

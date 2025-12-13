@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -8,118 +8,159 @@ import { Modal } from "@/components/ui/Modal";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Plus, Zap, Search, Building2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
-
-// TODO: Replace with actual API types when available
-interface Meter {
-    id: string;
-    meterNumber: string;
-    residentName: string;
-    houseAddress: string;
-    status: "active" | "inactive" | "pending";
-    createdAt: string;
-    lastPurchase?: string;
-    totalPurchases: number;
-}
-
-// Mock data - replace with API call
-const mockMeters: Meter[] = [];
+import { useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
+import { electricityService } from "@/services/electricity-service";
+import { Meter, MeterCreate } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMetersPage() {
-    const [meters, setMeters] = useState<Meter[]>(mockMeters);
-    const [isLoading, setIsLoading] = useState(false);
+    const queryClient = useQueryClient();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [formData, setFormData] = useState({
-        meterNumber: "",
-        residentId: "",
-        houseId: "",
+    const [formData, setFormData] = useState<MeterCreate & { meter_type: string; disco: string }>({
+        meter_number: "",
+        meter_type: "",
+        disco: "",
+        house_id: "",
     });
 
-    // TODO: Replace with actual API call
-    // const { data: meters, isLoading } = useElectricityMeters();
-    // const createMeterMutation = useCreateElectricityMeter();
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
 
-    const filteredMeters = meters.filter(
-        (meter) =>
-            meter.meterNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            meter.residentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            meter.houseAddress.toLowerCase().includes(searchQuery.toLowerCase())
+    // Fetch meters
+    const { data: metersData, isLoading } = useQuery({
+        queryKey: ["electricity", "meters", page],
+        queryFn: async () => {
+            const response = await electricityService.getMeters({
+                page,
+                pageSize,
+            });
+            return response.data;
+        },
+    });
+
+    // Fetch houses and residents for dropdowns
+    const { data: housesData, isLoading: housesLoading } = useAdminHouses({
+        page: 1,
+        pageSize: 1000,
+    });
+
+    const { data: residentsData, isLoading: residentsLoading } = useAdminResidents({
+        page: 1,
+        pageSize: 1000,
+    });
+
+    // Create meter mutation
+    const createMeterMutation = useMutation({
+        mutationFn: (data: MeterCreate) => electricityService.createMeter(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["electricity", "meters"] });
+            setPage(1); // Reset to first page after creating
+            toast.success("Meter added successfully");
+            setIsAddModalOpen(false);
+            setFormData({
+                meter_number: "",
+                meter_type: "",
+                disco: "",
+                house_id: "",
+            });
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.detail || "Failed to add meter");
+        },
+    });
+
+    const meters = metersData?.items || [];
+    const houses = housesData?.items || [];
+    const residents = residentsData?.items || [];
+
+    // Sort houses and residents for dropdown
+    const sortedHouses = useMemo(
+        () => [...houses].sort((a, b) => a.name.localeCompare(b.name)),
+        [houses]
     );
 
+    const sortedResidents = useMemo(
+        () => [...residents].sort((a, b) => {
+            const nameA = [a.user.first_name, a.user.last_name].filter(Boolean).join(" ") || a.user.email;
+            const nameB = [b.user.first_name, b.user.last_name].filter(Boolean).join(" ") || b.user.email;
+            return nameA.localeCompare(nameB);
+        }),
+        [residents]
+    );
+
+    // Filter meters by search query (client-side filtering for now)
+    const filteredMeters = meters.filter(
+        (meter) =>
+            meter.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            meter.house?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            meter.house?.address.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Pagination data
+    const totalPages = metersData?.total_pages ?? 1;
+    const total = metersData?.total ?? 0;
+    const hasNext = metersData?.has_next ?? false;
+    const hasPrevious = metersData?.has_previous ?? false;
+    const showPagination = totalPages > 1;
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+    };
+
     const handleAddMeter = async () => {
-        if (!formData.meterNumber || !formData.residentId || !formData.houseId) {
+        if (!formData.meter_number || !formData.meter_type || !formData.disco || !formData.house_id) {
             toast.error("Please fill in all fields");
             return;
         }
 
-        // TODO: Replace with actual API call
-        // createMeterMutation.mutate(formData, {
-        //     onSuccess: () => {
-        //         toast.success("Meter added successfully");
-        //         setIsAddModalOpen(false);
-        //         setFormData({ meterNumber: "", residentId: "", houseId: "" });
-        //     },
-        //     onError: (error) => {
-        //         toast.error(error.message || "Failed to add meter");
-        //     },
-        // });
-
-        toast.success("Meter added successfully (mock)");
-        setIsAddModalOpen(false);
-        setFormData({ meterNumber: "", residentId: "", houseId: "" });
+        createMeterMutation.mutate(formData);
     };
 
     const columns: Column<Meter>[] = [
         {
-            key: "meterNumber",
+            key: "meter_number",
             header: "Meter Number",
             accessor: (meter) => (
                 <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{meter.meterNumber}</span>
+                    <span className="font-medium">{meter.meter_number}</span>
                 </div>
             ),
         },
         {
-            key: "residentName",
-            header: "Resident",
-            accessor: (meter) => meter.residentName,
-        },
-        {
-            key: "houseAddress",
-            header: "House Address",
-            accessor: (meter) => meter.houseAddress,
-        },
-        {
-            key: "status",
-            header: "Status",
+            key: "meter_type",
+            header: "Type",
             accessor: (meter) => (
-                <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${meter.status === "active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : meter.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                        }`}
-                >
-                    {meter.status}
-                </span>
+                <span className="text-muted-foreground">{meter.meter_type}</span>
             ),
         },
         {
-            key: "totalPurchases",
-            header: "Purchases",
+            key: "disco",
+            header: "DISCO",
             accessor: (meter) => (
-                <span className="text-muted-foreground">{meter.totalPurchases}</span>
+                <span className="text-muted-foreground">{meter.disco}</span>
             ),
         },
         {
-            key: "createdAt",
+            key: "house",
+            header: "House",
+            accessor: (meter) => (
+                <div>
+                    <div className="font-medium">{meter.house?.name || "N/A"}</div>
+                    <div className="text-xs text-muted-foreground">{meter.house?.address || ""}</div>
+                </div>
+            ),
+        },
+        {
+            key: "created_at",
             header: "Added",
-            accessor: (meter) => formatDate(meter.createdAt),
+            accessor: (meter) => meter.created_at ? formatDate(meter.created_at) : "N/A",
         },
     ];
 
@@ -152,7 +193,10 @@ export default function AdminMetersPage() {
                             <Input
                                 placeholder="Search meters..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setPage(1); // Reset to first page on search
+                                }}
                                 className="pl-10"
                             />
                         </div>
@@ -180,12 +224,29 @@ export default function AdminMetersPage() {
                             }
                         />
                     ) : (
-                        <DataTable
-                            data={filteredMeters}
-                            columns={columns}
-                            searchable={false}
-                            emptyMessage="No meters found"
-                        />
+                                <>
+                                    <DataTable
+                                        data={filteredMeters}
+                                        columns={columns}
+                                        searchable={false}
+                                        showPagination={false}
+                                        emptyMessage="No meters found"
+                                    />
+                                    {showPagination && (
+                                        <PaginationBar
+                                            page={page}
+                                            pageSize={pageSize}
+                                            total={total}
+                                            totalPages={totalPages}
+                                            hasNext={hasNext}
+                                            hasPrevious={hasPrevious}
+                                            resourceLabel="meters"
+                                            onChange={handlePageChange}
+                                            isFetching={isLoading}
+                                            className="mt-6"
+                                        />
+                                    )}
+                                </>
                     )}
                 </CardContent>
             </Card>
@@ -204,42 +265,77 @@ export default function AdminMetersPage() {
                         </label>
                         <Input
                             placeholder="Enter meter number"
-                            value={formData.meterNumber}
+                            value={formData.meter_number}
                             onChange={(e) =>
-                                setFormData({ ...formData, meterNumber: e.target.value })
+                                setFormData({ ...formData, meter_number: e.target.value })
                             }
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-2">
-                            Resident *
+                            Meter Type *
                         </label>
                         <Input
-                            placeholder="Select resident"
-                            value={formData.residentId}
+                            placeholder="e.g., prepaid, postpaid"
+                            value={formData.meter_type}
                             onChange={(e) =>
-                                setFormData({ ...formData, residentId: e.target.value })
+                                setFormData({ ...formData, meter_type: e.target.value })
                             }
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            TODO: Replace with resident selector dropdown
-                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            DISCO *
+                        </label>
+                        <Input
+                            placeholder="e.g., EKEDC, IKEDC"
+                            value={formData.disco}
+                            onChange={(e) =>
+                                setFormData({ ...formData, disco: e.target.value })
+                            }
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-2">
                             House *
                         </label>
-                        <Input
-                            placeholder="Select house"
-                            value={formData.houseId}
+                        <select
+                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            value={formData.house_id}
                             onChange={(e) =>
-                                setFormData({ ...formData, houseId: e.target.value })
+                                setFormData({ ...formData, house_id: e.target.value })
                             }
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            TODO: Replace with house selector dropdown
-                        </p>
+                        >
+                            <option value="">Select house</option>
+                            {sortedHouses.map((house) => (
+                                <option key={house.id} value={house.id}>
+                                    {house.name} - {house.address}
+                                </option>
+                            ))}
+                        </select>
+                        {housesLoading && (
+                            <p className="text-xs text-muted-foreground mt-1">Loading houses...</p>
+                        )}
                     </div>
+                    {formData.house_id && (
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Associated Residents
+                            </label>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                                {sortedResidents
+                                    .filter(r => r.houses.some(h => h.id === formData.house_id))
+                                    .map((resident) => (
+                                        <div key={resident.user.id}>
+                                            {[resident.user.first_name, resident.user.last_name].filter(Boolean).join(" ") || resident.user.email}
+                                        </div>
+                                    ))}
+                                {sortedResidents.filter(r => r.houses.some(h => h.id === formData.house_id)).length === 0 && (
+                                    <p className="text-xs">No residents found for this house</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     <div className="flex gap-2 justify-end pt-4">
                         <Button
                             variant="outline"
@@ -247,7 +343,10 @@ export default function AdminMetersPage() {
                         >
                             Cancel
                         </Button>
-                        <Button onClick={handleAddMeter}>
+                        <Button
+                            onClick={handleAddMeter}
+                            isLoading={createMeterMutation.isPending}
+                        >
                             Add Meter
                         </Button>
                     </div>
