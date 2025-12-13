@@ -65,6 +65,8 @@ interface BackendPlugin {
   enabled: boolean;
   description?: string;
   category?: string;
+  image?: string;
+  details?: PluginDetails;
   [key: string]: any;
 }
 
@@ -682,26 +684,24 @@ export default function PluginsPage() {
     );
 
     // Find matching mock plugin for UI details
-    const mockPlugin = initialPlugins.find(
-      (mp) => mp.name.toLowerCase().replace(/\s+/g, "_") === backendPlugin.name
-    );
+
 
     return {
       id: backendPlugin.id,
       name: backendPlugin.name,
-      description: backendPlugin.description || mockPlugin?.description || "No description available",
-      icon: mockPlugin?.icon || Puzzle,
+      description: backendPlugin.description || "No description available",
+      icon: Puzzle,
       enabled: backendPlugin.enabled,
-      category: backendPlugin.category || mockPlugin?.category || "Other",
-      imageUrl: mockPlugin?.imageUrl || "/api/placeholder/400/300",
-      color: mockPlugin?.color || "from-gray-500/20 to-gray-600/20",
-      details: mockPlugin?.details || {
+      category: backendPlugin.category || "Other",
+      imageUrl: backendPlugin.image,
+      color: "from-gray-500/20 to-gray-600/20",
+      details: backendPlugin.details || {
         useCases: [],
         setupSteps: [],
         requirements: [],
-        configOptions: [],
+        configOptions: []
       },
-      config: mockPlugin?.config || {},
+      config: {},
       backendVersion: backendPlugin.version,
       frontendVersion: frontendPlugin?.manifest.version,
       hasFrontend: !!frontendPlugin,
@@ -840,9 +840,14 @@ export default function PluginsPage() {
                 <div
                   className={`relative h-40 bg-gradient-to-br ${plugin.color} overflow-hidden`}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Icon className="h-20 w-20 text-slate-600/30" />
-                  </div>
+                  {plugin.imageUrl && (
+                    <img src={plugin.imageUrl} alt={plugin.name} className="w-full h-full object-cover" />
+                  )}
+                  {!plugin.imageUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Icon className="h-20 w-20 text-slate-600/30" />
+                    </div>
+                  )}
 
                   {/* Status Badge */}
                   <div className="absolute top-3 right-3">
