@@ -27,7 +27,7 @@ import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
-import { buildPluginPath } from "@/lib/plugin-utils";
+import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
 
 interface SidebarProps {
@@ -134,30 +134,104 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     return match ? match[1] : undefined;
   }, [pathname]);
 
-  // Determine actual type based on pathname if it's a plugin route
-  // This ensures we show the correct sidebar even if type prop is incorrect
-  const actualType = useMemo<"resident" | "admin">(() => {
-    // If pathname starts with /plugins/, check if it's an admin route
-    if (pathname?.startsWith("/plugins/")) {
-      const pathSegments = pathname.split("/").filter(Boolean);
-      // Check if path contains "admin" segment
-      if (pathSegments.includes("admin")) {
-        return "admin";
+  /**
+   * Finds a matching route in the given routes array
+   * @param routePath The route path to match (e.g., "/admin/meters")
+   * @param routes The routes array to search in
+   * @returns The matching route or null
+   */
+  const findMatchingRouteInArray = useMemo(() => {
+    return (routePath: string, routes: any[]): any | null => {
+      if (!routes || routes.length === 0) {
+        return null;
       }
-      // If we have plugins loaded, check more accurately
-      if (plugins.length > 0) {
-        for (const plugin of plugins) {
-          if (pathname.startsWith(`/plugins/${plugin.basePath.replace(/^\//, "")}/admin`)) {
-            return "admin";
-          }
+
+      const normalizedRoutePath = normalizeRoutePath(routePath);
+
+      // Sort routes by path length (longer/more specific first)
+      const sortedRoutes = [...routes].sort((a, b) => {
+        const aPath = normalizeRoutePath(a.path);
+        const bPath = normalizeRoutePath(b.path);
+        // Empty path (root) should be last
+        if (aPath === "") return 1;
+        if (bPath === "") return -1;
+        return bPath.length - aPath.length;
+      });
+
+      // Try to find exact match first
+      let route = sortedRoutes.find(r => {
+        const routePathNormalized = normalizeRoutePath(r.path);
+        return routePathNormalized === normalizedRoutePath;
+      });
+
+      // If no exact match and we're at root, try to find root route
+      if (!route && (normalizedRoutePath === "" || routePath === "/")) {
+        route = sortedRoutes.find(r => normalizeRoutePath(r.path) === "");
+      }
+
+      // If still no match, check for prefix matches (nested routes)
+      if (!route) {
+        route = sortedRoutes.find(r => {
+          const routePathNormalized = normalizeRoutePath(r.path);
+          return normalizedRoutePath.startsWith(routePathNormalized + "/");
+        });
+      }
+
+      return route || null;
+    };
+  }, []);
+
+  // Determine actual type based on which plugin routes array contains the active route
+  // This ensures we show the correct sidebar based on the plugin's route definitions
+  const actualType = useMemo<"resident" | "admin">(() => {
+    // For non-plugin routes, use the type prop
+    if (!pathname?.startsWith("/plugins/")) {
+      return type;
+    }
+
+    // For plugin routes, determine type from which routes array contains the route
+    // If plugins not loaded yet, use the type prop as fallback
+    if (plugins.length === 0) {
+      return type;
+    }
+
+    // Check each plugin to see which routes array contains the active route
+    for (const plugin of plugins) {
+      if (!isPluginPath(pathname, plugin.basePath)) {
+        continue;
+      }
+
+      // Extract the route path from the full path
+      const routePath = extractRoutePath(pathname, plugin.basePath);
+
+      // Check admin routes first
+      if (plugin.adminRoutes && plugin.adminRoutes.length > 0) {
+        const matchingRoute = findMatchingRouteInArray(routePath, plugin.adminRoutes);
+        if (matchingRoute) {
+          return "admin";
         }
       }
-      // Default to resident for plugin routes without admin
-      return "resident";
+
+      // Check resident routes
+      if (plugin.residentRoutes && plugin.residentRoutes.length > 0) {
+        const matchingRoute = findMatchingRouteInArray(routePath, plugin.residentRoutes);
+        if (matchingRoute) {
+          return "resident";
+        }
+      }
+
+      // Check legacy routes (default to resident for legacy)
+      if (plugin.routes && plugin.routes.length > 0) {
+        const matchingRoute = findMatchingRouteInArray(routePath, plugin.routes);
+        if (matchingRoute) {
+          return "resident";
+        }
+      }
     }
-    // For non-plugin routes, use the type prop
+
+    // Default fallback - use the type prop if no matching route found
     return type;
-  }, [pathname, type, plugins]);
+  }, [pathname, type, plugins, findMatchingRouteInArray]);
 
   // Helper function to get routes for a plugin based on user type - memoized
   // Strictly filters by type - no fallback to avoid showing wrong routes

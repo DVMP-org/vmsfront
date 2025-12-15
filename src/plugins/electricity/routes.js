@@ -16,7 +16,7 @@ const routes = [];
 // Admin-specific routes
 const adminRoutes = [
     {
-        path: "/admin",
+        path: "/2/2",
         component: AdminElectricityDashboard,
         title: "Dashboard",
         icon: "zap"
@@ -44,7 +44,7 @@ const adminRoutes = [
 // Resident-specific routes
 const residentRoutes = [
     {
-        path: "/",
+        path: "/admin",
         component: ResidentElectricityDashboard,
         title: "Dashboard",
         icon: "zap"

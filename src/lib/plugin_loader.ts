@@ -1,4 +1,5 @@
 import electricity from "@/plugins/electricity";
+import camera from "@/plugins/camera";
 import { isPluginPath } from "./plugin-utils";
 import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
 import { adminService } from "@/services/admin-service";
@@ -17,7 +18,7 @@ import { adminService } from "@/services/admin-service";
  * const PLUGINS = [electricity, myPlugin];
  * ```
  */
-const FRONTEND_PLUGINS = [electricity];
+const FRONTEND_PLUGINS = [electricity, camera];
 
 /**
  * Backend plugin from API
