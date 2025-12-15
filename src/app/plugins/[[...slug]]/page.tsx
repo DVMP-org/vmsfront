@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { loadPlugins } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
-import { extractRoutePath, normalizeRoutePath, isPluginPath } from "@/lib/plugin-utils";
+import { findPluginRouteAndType } from "@/lib/plugin-utils";
 import { PluginErrorBoundary } from "@/components/PluginErrorBoundary";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -14,43 +14,6 @@ import { FileQuestion } from "lucide-react";
 
 interface Props {
     params: { slug: string[] };
-}
-
-/**
- * Finds a matching route in the given routes array
- * @param routePath The route path to match (e.g., "/admin/meters")
- * @param routes The routes array to search in
- * @returns The matching route or null
- */
-function findMatchingRoute(routePath: string, routes: any[]): any | null {
-    if (!routes || routes.length === 0) {
-        return null;
-    }
-
-    const normalizedRoutePath = normalizeRoutePath(routePath);
-
-    // Sort routes by path length (longer/more specific first)
-    const sortedRoutes = [...routes].sort((a, b) => {
-        const aPath = normalizeRoutePath(a.path);
-        const bPath = normalizeRoutePath(b.path);
-        // Empty path (root) should be last
-        if (aPath === "") return 1;
-        if (bPath === "") return -1;
-        return bPath.length - aPath.length;
-    });
-
-    // Try to find exact match first
-    let route = sortedRoutes.find(r => {
-        const routePathNormalized = normalizeRoutePath(r.path);
-        return routePathNormalized === normalizedRoutePath;
-    });
-
-    // If no exact match and we're at root, try to find root route
-    if (!route && (normalizedRoutePath === "" || routePath === "/")) {
-        route = sortedRoutes.find(r => normalizeRoutePath(r.path) === "");
-    }
-
-    return route || null;
 }
 
 function PluginContent({ params }: Props) {
@@ -97,16 +60,41 @@ function PluginContent({ params }: Props) {
         };
     }, []);
 
-    // Determine layout type based on which routes array the route comes from
-    // This is determined when we find the actual matching route below
+    // Find matching route and determine layout type using optimized utility
+    // This combines route matching with layout type determination for efficiency
+    const matchedRoute = useMemo(() => {
+        if (isLoading || plugins.length === 0) {
+            return null;
+        }
+        for (const plugin of plugins) {
+            const result = findPluginRouteAndType(fullPath, plugin);
+            if (result) {
+                return { ...result, plugin };
+            }
+        }
+        return null;
+    }, [fullPath, plugins, isLoading]);
+
+    // Determine layout type for 404 case (when no route found)
+    const notFoundLayoutType = useMemo<"resident" | "admin">(() => {
+        if (isLoading || plugins.length === 0) {
+            return "resident";
+        }
+        for (const plugin of plugins) {
+            // Check if path belongs to a plugin with admin routes
+            if (plugin.basePath && fullPath.includes(plugin.basePath)) {
+                if (plugin.adminRoutes && plugin.adminRoutes.length > 0) {
+                    return "admin";
+                }
+            }
+        }
+        return "resident";
+    }, [fullPath, plugins, isLoading]);
 
     // Show loading state while plugins are being loaded
-    // Use a default layout type during loading (will be corrected once plugins load)
-    const defaultLayoutType: "resident" | "admin" = "resident";
-
     if (isLoading) {
         return (
-            <DashboardLayout type={defaultLayoutType}>
+            <DashboardLayout type="resident">
                 <div className="p-6 space-y-4">
                     <Skeleton className="h-8 w-64" />
                     <Skeleton className="h-4 w-full" />
@@ -117,52 +105,9 @@ function PluginContent({ params }: Props) {
         );
     }
 
-    // Try to find matching route and determine layout type from which routes array it belongs to
-    for (const plugin of plugins) {
-        // Check if this path belongs to this plugin
-        if (!isPluginPath(fullPath, plugin.basePath)) {
-            continue;
-        }
-
-        // Extract the route path from the full path
-        // e.g., "/electricity/admin/validate" -> "/admin/validate"
-        const routePath = extractRoutePath(fullPath, plugin.basePath);
-
-        // Try to find the route in each routes array and determine layout type
-        // Priority: adminRoutes > residentRoutes > routes (legacy)
-        let route: any = null;
-        let layoutType: "resident" | "admin" = "resident";
-
-        // Check admin routes first
-        if (plugin.adminRoutes && plugin.adminRoutes.length > 0) {
-            route = findMatchingRoute(routePath, plugin.adminRoutes);
-            if (route) {
-                layoutType = "admin";
-            }
-        }
-
-        // If not found in admin routes, check resident routes
-        if (!route && plugin.residentRoutes && plugin.residentRoutes.length > 0) {
-            route = findMatchingRoute(routePath, plugin.residentRoutes);
-            if (route) {
-                layoutType = "resident";
-            }
-        }
-
-        // If still not found, check legacy routes (default to resident for legacy)
-        if (!route && plugin.routes && plugin.routes.length > 0) {
-            route = findMatchingRoute(routePath, plugin.routes);
-            if (route) {
-                // For legacy routes, default to resident layout
-                // (could be enhanced to have a userType field in the future)
-                layoutType = "resident";
-            }
-        }
-
-        if (!route) {
-            continue; // Try next plugin
-        }
-
+    // Render matched route if found
+    if (matchedRoute) {
+        const { route, layoutType, plugin } = matchedRoute;
         const Component = route.component;
         return (
             <DashboardLayout type={layoutType}>
@@ -182,21 +127,6 @@ function PluginContent({ params }: Props) {
                 </PluginErrorBoundary>
             </DashboardLayout>
         );
-    }
-
-    // No plugin or route found - show 404 within layout
-    // Try to determine layout type from plugins even if route not found
-    let notFoundLayoutType: "resident" | "admin" = "resident";
-
-    // Check if any plugin has admin routes that might match (even if exact route not found)
-    for (const plugin of plugins) {
-        if (isPluginPath(fullPath, plugin.basePath)) {
-            // If plugin has admin routes, default to admin layout
-            if (plugin.adminRoutes && plugin.adminRoutes.length > 0) {
-                notFoundLayoutType = "admin";
-                break;
-            }
-        }
     }
 
     return (
