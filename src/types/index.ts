@@ -503,11 +503,11 @@ export interface UpdateBrandingThemeRequest {
     name?: string;
     primary_color?: string;
     secondary_color?: string;
-    logo_url?: string;
-    dark_logo_url?: string;
-    favicon_url?: string;
-    custom_css?: string;
-    custom_js?: string;
+    logo_url?: string | null;
+    dark_logo_url?: string | null;
+    favicon_url?: string | null;
+    custom_css?: string | null;
+    custom_js?: string | null;
     active?: boolean;
 }
 

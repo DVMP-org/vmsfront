@@ -21,15 +21,17 @@ export function Button({
 
   const variants = {
     primary:
-      "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary active:bg-primary/95",
+      "bg-[var(--brand-primary,#1e40af)] text-primary-foreground hover:bg-[var(--brand-primary,#1e40af)] hover:opacity-90 focus-visible:ring-primary active:bg-[var(--brand-primary,#1e40af)] active:opacity-95 active:scale-[0.98]",
     secondary:
-      "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary active:bg-secondary/70",
+      "bg-[var(--brand-secondary,#475569)] text-secondary-foreground hover:bg-[var(--brand-secondary,#475569)] hover:opacity-90 focus-visible:ring-secondary active:bg-[var(--brand-secondary,#475569)] active:opacity-95 active:scale-[0.98]",
     outline:
-      "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
-    ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
+      "border-2 border-[var(--brand-primary,#1e40af)] bg-white hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
+    ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 active:scale-[0.98]",
     destructive:
-      "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive active:bg-destructive/95",
+      "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive active:bg-destructive/95 active:scale-[0.98]",
   };
+
+
 
   const sizes = {
     sm: "h-9 min-h-[36px] px-3 text-xs xs:text-sm",
@@ -39,7 +41,12 @@ export function Button({
 
   return (
     <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
+      className={cn(
+        baseStyles,
+        variants[variant],
+        sizes[size],
+        className
+      )}
       disabled={disabled || isLoading}
       {...props}
     >

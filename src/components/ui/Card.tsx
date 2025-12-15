@@ -7,10 +7,14 @@ export function Card({ className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "w-full min-w-0 rounded-2xl border border-border/80 bg-card/90 text-card-foreground shadow-[0_20px_45px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm",
+        "card-base card-inset",
+        "w-full min-w-0 text-card-foreground",
         "max-w-full overflow-hidden",
         className
       )}
+      style={{
+        borderRadius: "var(--radius-lg)",
+      }}
       {...props}
     />
   );

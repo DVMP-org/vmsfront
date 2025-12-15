@@ -56,7 +56,7 @@ export default function AdminGatePassesPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <p className="text-sm uppercase tracking-wide text-white/80">

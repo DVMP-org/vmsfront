@@ -110,14 +110,16 @@ export default function BrandingThemesPage() {
         if (!editingTheme) return;
 
         const data: UpdateBrandingThemeRequest = {
-            name: formState.name.trim(),
-            primary_color: formState.primary_color,
-            secondary_color: formState.secondary_color,
-            logo_url: formState.logo_url.trim() || undefined,
-            dark_logo_url: formState.dark_logo_url.trim() || undefined,
-            favicon_url: formState.favicon_url.trim() || undefined,
-            custom_css: formState.custom_css.trim() || undefined,
-            custom_js: formState.custom_js.trim() || undefined,
+            name: formState.name.trim() || editingTheme.name,
+            primary_color: formState.primary_color || editingTheme.primary_color,
+            secondary_color: formState.secondary_color || editingTheme.secondary_color,
+            // Optional fields: send null if empty (to clear), otherwise send the trimmed value
+            logo_url: formState.logo_url.trim() || null,
+            dark_logo_url: formState.dark_logo_url.trim() || null,
+            favicon_url: formState.favicon_url.trim() || null,
+            custom_css: formState.custom_css.trim() || null,
+            custom_js: formState.custom_js.trim() || null,
+            active: editingTheme.active, // Preserve active status
         };
 
         updateTheme.mutate(
