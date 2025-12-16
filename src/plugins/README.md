@@ -87,6 +87,7 @@ Create `manifest.json`:
     "basePath": "/my-plugin"
   },
   "details": {
+    "configEndpoint": "/api/my-plugin/config",
     "useCases": ["What your plugin does"],
     "requirements": ["Any requirements"],
     "configOptions": []
@@ -421,17 +422,17 @@ Available icons: https://fontawesome.com/icons
 
 ### Manifest Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Unique plugin identifier |
-| `title` | string | Yes | Display name |
-| `version` | string | No | Plugin version |
-| `icon` | string | No | FontAwesome icon name |
-| `frontend.basePath` | string | Yes | URL path segment |
-| `details.useCases` | string[] | No | Use case descriptions |
-| `details.setupSteps` | string[] | No | Setup instructions |
-| `details.requirements` | string[] | No | Requirements list |
-| `details.configOptions` | object[] | No | Configuration options |
+| Field                   | Type     | Required | Description              |
+| ----------------------- | -------- | -------- | ------------------------ |
+| `name`                  | string   | Yes      | Unique plugin identifier |
+| `title`                 | string   | Yes      | Display name             |
+| `version`               | string   | No       | Plugin version           |
+| `icon`                  | string   | No       | FontAwesome icon name    |
+| `frontend.basePath`     | string   | Yes      | URL path segment         |
+| `details.useCases`      | string[] | No       | Use case descriptions    |
+| `details.setupSteps`    | string[] | No       | Setup instructions       |
+| `details.requirements`  | string[] | No       | Requirements list        |
+| `details.configOptions` | object[] | No       | Configuration options    |
 
 ## Backend Integration
 

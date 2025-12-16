@@ -7,6 +7,7 @@
         "basePath": "/electricity"
     },
     "details": {
+        "configEndpoint": "/api/electricity/config",
         "useCases": [
             "Monitor all gate entry and exit points with live video feeds",
             "Record visitor arrivals for security audits",
@@ -62,4 +63,4 @@
             }
         ]
     }
-    }
+}

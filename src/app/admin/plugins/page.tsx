@@ -45,6 +45,7 @@ interface PluginConfig {
 }
 
 interface PluginDetails {
+  configEndpoint: string | null;
   useCases: string[];
   setupSteps: string[];
   requirements: string[];
@@ -145,6 +146,7 @@ export default function PluginsPage() {
       imageUrl: backendPlugin.image,
       color: "from-gray-500/20 to-gray-600/20",
       details: backendPlugin.details || {
+        configEndpoint: null,
         useCases: [],
         setupSteps: [],
         requirements: [],
@@ -279,132 +281,130 @@ export default function PluginsPage() {
         {!isLoadingPlugins && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredPlugins.map((plugin) => {
-            const Icon = plugin.icon;
-            return (
-              <Card
-                key={plugin.id}
-                className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#2563eb)]/50 hover:shadow-lg"
-              >
-                {/* Plugin Image/Icon Area */}
-                <div
-                  className={`relative h-40 bg-gradient-to-br ${plugin.color} overflow-hidden`}
+              const Icon = plugin.icon;
+              return (
+                <Card
+                  key={plugin.id}
+                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#2563eb)]/50 hover:shadow-lg"
                 >
-                  {plugin.imageUrl && (
-                    <img src={plugin.imageUrl} alt={plugin.name} className="w-full h-full object-cover" />
-                  )}
-                  {!plugin.imageUrl && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Icon className="h-20 w-20 text-slate-600/30" />
-                    </div>
-                  )}
-
-                  {/* Status Badge */}
-                  <div className="absolute top-3 right-3">
-                    <Badge
-                      variant={plugin.enabled ? "default" : "secondary"}
-                      className={
-                        plugin.enabled
-                          ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                          : ""
-                      }
-                    >
-                      {plugin.enabled ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-
-                  {/* Category Badge */}
-                  <div className="absolute bottom-3 left-3">
-                    <Badge
-                      variant="secondary"
-                      className="bg-white/90 backdrop-blur-sm"
-                    >
-                      {plugin.category}
-                    </Badge>
-                  </div>
-                </div>
-
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg truncate">
-                          {titleCase(plugin.title)}
-                        </CardTitle>
-                        {!plugin.hasFrontend && (
-                          <Badge variant="warning" className="text-xs">
-                            No Frontend
-                          </Badge>
-                        )}
-
-                        {plugin.hasFrontend && plugin.backendVersion && plugin.frontendVersion && 
-                         plugin.backendVersion !== plugin.frontendVersion && (
-                          <Badge variant="warning" className="text-xs">
-                            Version Mismatch
-                          </Badge>
-                        )}
+                  {/* Plugin Image/Icon Area */}
+                  <div
+                    className={`relative h-40 bg-gradient-to-br ${plugin.color} overflow-hidden`}
+                  >
+                    {plugin.imageUrl && (
+                      <img src={plugin.imageUrl} alt={plugin.name} className="w-full h-full object-cover" />
+                    )}
+                    {!plugin.imageUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Icon className="h-20 w-20 text-slate-600/30" />
                       </div>
-                      <span className="text-[13px] font-medium truncate text-muted-foreground">
-                        {titleCase(plugin.name)}
+                    )}
+
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3">
+                      <Badge
+                        variant={plugin.enabled ? "default" : "secondary"}
+                        className={
+                          plugin.enabled
+                            ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                            : ""
+                        }
+                      >
+                        {plugin.enabled ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+
+                    {/* Category Badge */}
+                    <div className="absolute bottom-3 left-3">
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/90 backdrop-blur-sm"
+                      >
+                        {plugin.category}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg truncate">
+                            {titleCase(plugin.title)}
+                          </CardTitle>
+                          {!plugin.hasFrontend && (
+                            <Badge variant="warning" className="text-xs">
+                              No Frontend
+                            </Badge>
+                          )}
+
+                          {plugin.hasFrontend && plugin.backendVersion && plugin.frontendVersion &&
+                            plugin.backendVersion !== plugin.frontendVersion && (
+                              <Badge variant="warning" className="text-xs">
+                                Version Mismatch
+                              </Badge>
+                            )}
+                        </div>
+                        <span className="text-[13px] font-medium truncate text-muted-foreground">
+                          {titleCase(plugin.name)}
+                        </span>
+                        <CardDescription className="mt-1.5 line-clamp-2">
+                          {plugin.description}
+                        </CardDescription>
+                        {/* Version Info */}
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          {plugin.backendVersion && (
+                            <span>Backend: v{plugin.backendVersion}</span>
+                          )}
+                          {plugin.frontendVersion && (
+                            <span>Frontend: v{plugin.frontendVersion}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#2563eb)]/10 group-hover:text-[var(--brand-primary,#2563eb)]">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-0 space-y-3">
+                    {/* Toggle Switch */}
+                    <div className="flex items-center justify-between rounded-xl border bg-muted/50 px-4 py-3">
+                      <span className="text-sm font-medium">
+                        {plugin.enabled ? "Enabled" : "Disabled"}
                       </span>
-                      <CardDescription className="mt-1.5 line-clamp-2">
-                        {plugin.description}
-                      </CardDescription>
-                      {/* Version Info */}
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        {plugin.backendVersion && (
-                          <span>Backend: v{plugin.backendVersion}</span>
-                        )}
-                        {plugin.frontendVersion && (
-                          <span>Frontend: v{plugin.frontendVersion}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#2563eb)]/10 group-hover:text-[var(--brand-primary,#2563eb)]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0 space-y-3">
-                  {/* Toggle Switch */}
-                  <div className="flex items-center justify-between rounded-xl border bg-muted/50 px-4 py-3">
-                    <span className="text-sm font-medium">
-                      {plugin.enabled ? "Enabled" : "Disabled"}
-                    </span>
-                    <button
-                      onClick={() => handleTogglePlugin(plugin.id)}
-                      disabled={togglePluginMutation.isPending}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#2563eb)] focus:ring-offset-2 disabled:opacity-50 ${
-                        plugin.enabled
+                      <button
+                        onClick={() => handleTogglePlugin(plugin.id)}
+                        disabled={togglePluginMutation.isPending}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#2563eb)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
                           ? "bg-[var(--brand-primary,#2563eb)]"
                           : "bg-gray-200"
-                      }`}
-                      role="switch"
-                      aria-checked={plugin.enabled}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          plugin.enabled ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
+                          }`}
+                        role="switch"
+                        aria-checked={plugin.enabled}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${plugin.enabled ? "translate-x-6" : "translate-x-1"
+                            }`}
+                        />
+                      </button>
+                    </div>
 
-                  {/* Configure Button */}
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => handleOpenDetails(plugin)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    Configure & Learn More
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    {/* Configure Button */}
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => handleOpenDetails(plugin)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configure & Learn More
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -581,18 +581,16 @@ export default function PluginsPage() {
                               !editedConfig[option.key]
                             )
                           }
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            editedConfig[option.key]
-                              ? "bg-[var(--brand-primary,#2563eb)]"
-                              : "bg-gray-300"
-                          }`}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[option.key]
+                            ? "bg-[var(--brand-primary,#2563eb)]"
+                            : "bg-gray-300"
+                            }`}
                         >
                           <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              editedConfig[option.key]
-                                ? "translate-x-6"
-                                : "translate-x-1"
-                            }`}
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[option.key]
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                              }`}
                           />
                         </button>
                       )}
