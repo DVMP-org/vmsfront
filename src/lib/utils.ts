@@ -86,3 +86,78 @@ export function titleCase(v) {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+/**
+ * Converts a snake_case string to camelCase
+ */
+export function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * Converts a camelCase string to snake_case
+ * Handles acronyms correctly (e.g., defaultStreamFps -> default_stream_fps)
+ */
+export function toSnakeCase(str: string): string {
+  // Handle consecutive uppercase letters (acronyms) as a single unit
+  // First, insert underscore before uppercase letters that follow lowercase or other uppercase
+  return str
+    // Insert underscore before uppercase letters that follow lowercase letters
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    // Insert underscore before uppercase letters that follow other uppercase letters (acronyms)
+    // but only if followed by lowercase (to avoid splitting acronyms)
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .toLowerCase();
+}
+
+/**
+ * Recursively converts object keys from snake_case to camelCase
+ */
+export function keysToCamelCase<T = any>(obj: any): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => keysToCamelCase(item)) as T;
+  }
+
+  if (typeof obj === 'object') {
+    const camelCaseObj: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const camelKey = toCamelCase(key);
+        camelCaseObj[camelKey] = keysToCamelCase(obj[key]);
+      }
+    }
+    return camelCaseObj as T;
+  }
+
+  return obj;
+}
+
+/**
+ * Recursively converts object keys from camelCase to snake_case
+ */
+export function keysToSnakeCase<T = any>(obj: any): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => keysToSnakeCase(item)) as T;
+  }
+
+  if (typeof obj === 'object') {
+    const snakeCaseObj: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const snakeKey = toSnakeCase(key);
+        snakeCaseObj[snakeKey] = keysToSnakeCase(obj[key]);
+      }
+    }
+    return snakeCaseObj as T;
+  }
+
+  return obj;
+}

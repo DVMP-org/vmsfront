@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { adminService } from "@/services/admin-service";
+import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 import { loadPlugins } from "@/lib/plugin_loader";
-import { titleCase } from "@/lib/utils";
+import { titleCase, keysToCamelCase, keysToSnakeCase, toCamelCase } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -21,15 +22,6 @@ import {
   Puzzle,
   Search,
   Sparkles,
-  Shield,
-  Bell,
-  Mail,
-  MessageSquare,
-  Calendar,
-  FileText,
-  BarChart3,
-  Users,
-  Zap,
   X,
   Settings,
   CheckCircle2,
@@ -38,69 +30,21 @@ import {
   ExternalLink,
   Save,
 } from "lucide-react";
-
-// Plugin configuration types
-interface PluginConfig {
-  [key: string]: any;
-}
-
-interface PluginDetails {
-  configEndpoint: string | null;
-  useCases: string[];
-  setupSteps: string[];
-  requirements: string[];
-  configOptions: {
-    key: string;
-    label: string;
-    type: "text" | "toggle" | "select" | "number";
-    description: string;
-    defaultValue?: any;
-    options?: string[];
-  }[];
-}
-
-// Backend plugin from API
-interface BackendPlugin {
-  id: string;
-  name: string;
-  version: string;
-  enabled: boolean;
-  description?: string;
-  category?: string;
-  image?: string;
-  details?: PluginDetails;
-  [key: string]: any;
-}
-
-// Plugin type definition (for UI display)
-interface Plugin {
-  id: string;
-  name: string;
-  title: string;
-  description: string;
-  icon: any;
-  enabled: boolean;
-  category: string;
-  imageUrl: string;
-  color: string;
-  details: PluginDetails;
-  config: PluginConfig;
-  backendVersion?: string;
-  frontendVersion?: string;
-  hasFrontend?: boolean; // Whether frontend plugin exists
-}
+import { Plugin, PluginConfig, BackendPlugin } from "@/types/plugin";
 
 export default function PluginsPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
   const [editedConfig, setEditedConfig] = useState<PluginConfig>({});
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
   // Fetch plugins from API
   const { data: backendPluginsResponse, isLoading: isLoadingPlugins } = useQuery({
     queryKey: ["admin", "plugins"],
     queryFn: async () => {
       const response = await adminService.getPlugins();
+      console.log(response.data);
       return response.data as BackendPlugin[];
     },
   });
@@ -125,6 +69,29 @@ export default function PluginsPage() {
     },
   });
 
+  // Update plugin settings mutation
+  const updateSettingsMutation = useMutation({
+    mutationFn: async ({ configEndpoint, settings }: { configEndpoint: string; settings: any }) => {
+      if (!configEndpoint) {
+        throw new Error("No configuration endpoint available for this plugin");
+      }
+      if (selectedPlugin) {
+        settings.plugin_id = selectedPlugin.id
+        return apiClient.put(configEndpoint, settings);
+      } else {
+        throw new Error("No plugin selected");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "plugins"] });
+      toast.success("Configuration saved successfully");
+      handleCloseDetails();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to save configuration");
+    },
+  });
+
   // Match backend plugins with frontend plugins and mock data
   const plugins: Plugin[] = (backendPluginsResponse || []).map((backendPlugin) => {
     // Find matching frontend plugin
@@ -146,6 +113,7 @@ export default function PluginsPage() {
       imageUrl: backendPlugin.image,
       color: "from-gray-500/20 to-gray-600/20",
       details: backendPlugin.details || {
+        documentationUrl: null,
         configEndpoint: null,
         useCases: [],
         setupSteps: [],
@@ -163,9 +131,57 @@ export default function PluginsPage() {
     togglePluginMutation.mutate(pluginId);
   };
 
-  const handleOpenDetails = (plugin: Plugin) => {
+  const handleOpenDetails = async (plugin: Plugin) => {
     setSelectedPlugin(plugin);
-    setEditedConfig(plugin.config);
+    setIsLoadingSettings(true);
+
+    try {
+      // Fetch current plugin settings from standard endpoint
+      const response = await adminService.getPluginSettings(plugin.id);
+      const pluginData = response.data;
+
+      // Parse settings_json if it exists
+      let currentSettings: PluginConfig = {};
+      if (pluginData.settings_json) {
+        try {
+          const rawSettings = typeof pluginData.settings_json === 'string'
+            ? JSON.parse(pluginData.settings_json)
+            : pluginData.settings_json;
+
+          // Convert from snake_case to camelCase for frontend use
+          currentSettings = keysToCamelCase(rawSettings);
+        } catch (e) {
+          console.error("Failed to parse settings_json:", e);
+        }
+      }
+
+      // Merge with default values from configOptions
+      // Convert option.key to camelCase since we store settings in camelCase
+      const defaultSettings: PluginConfig = {};
+      plugin.details.configOptions.forEach((option) => {
+        if (option.defaultValue !== undefined) {
+          const camelKey = toCamelCase(option.key);
+          defaultSettings[camelKey] = option.defaultValue;
+        }
+      });
+
+      setEditedConfig({ ...defaultSettings, ...currentSettings });
+    } catch (error: any) {
+      console.error("Failed to fetch plugin settings:", error);
+      toast.error("Failed to load plugin settings");
+      // Fall back to default values
+      // Convert option.key to camelCase since we store settings in camelCase
+      const defaultSettings: PluginConfig = {};
+      plugin.details.configOptions.forEach((option) => {
+        if (option.defaultValue !== undefined) {
+          const camelKey = toCamelCase(option.key);
+          defaultSettings[camelKey] = option.defaultValue;
+        }
+      });
+      setEditedConfig(defaultSettings);
+    } finally {
+      setIsLoadingSettings(false);
+    }
   };
 
   const handleCloseDetails = () => {
@@ -174,15 +190,24 @@ export default function PluginsPage() {
   };
 
   const handleConfigChange = (key: string, value: any) => {
-    setEditedConfig((prev) => ({ ...prev, [key]: value }));
+    // Convert key to camelCase for consistent storage
+    const camelKey = toCamelCase(key);
+    setEditedConfig((prev) => ({ ...prev, [camelKey]: value }));
   };
+
+  // Helper to get camelCase key from option.key
+  const getCamelKey = (key: string) => toCamelCase(key);
 
   const handleSaveConfig = () => {
     if (selectedPlugin) {
-      // TODO: Save config to backend API when available
-      // For now, just close the modal
-      handleCloseDetails();
-      toast.success("Configuration saved (mock)");
+      // Convert from camelCase to snake_case for backend
+      const snakeCaseSettings = keysToSnakeCase(editedConfig);
+
+      // Save to the plugin's configEndpoint
+      updateSettingsMutation.mutate({
+        configEndpoint: selectedPlugin.details.configEndpoint || '',
+        settings: snakeCaseSettings,
+      });
     }
   };
 
@@ -477,7 +502,7 @@ export default function PluginsPage() {
                   Use Cases
                 </h3>
                 <ul className="space-y-2">
-                  {selectedPlugin.details.useCases.map((useCase, index) => (
+                  {selectedPlugin.details.useCases?.map((useCase, index) => (
                     <li
                       key={index}
                       className="flex items-start gap-2 text-sm text-slate-600"
@@ -535,86 +560,140 @@ export default function PluginsPage() {
                   <Settings className="h-5 w-5 text-slate-600" />
                   Configuration
                 </h3>
-                <div className="space-y-4">
-                  {selectedPlugin.details.configOptions.map((option) => (
-                    <div
-                      key={option.key}
-                      className="rounded-xl border bg-muted/30 p-4"
-                    >
-                      <label className="block text-sm font-medium text-slate-900 mb-1">
-                        {option.label}
-                      </label>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {option.description}
-                      </p>
-
-                      {option.type === "text" && (
-                        <Input
-                          type="text"
-                          value={editedConfig[option.key] || ""}
-                          onChange={(e) =>
-                            handleConfigChange(option.key, e.target.value)
-                          }
-                          className="bg-white"
-                        />
-                      )}
-
-                      {option.type === "number" && (
-                        <Input
-                          type="number"
-                          value={editedConfig[option.key] || 0}
-                          onChange={(e) =>
-                            handleConfigChange(
-                              option.key,
-                              parseInt(e.target.value)
-                            )
-                          }
-                          className="bg-white"
-                        />
-                      )}
-
-                      {option.type === "toggle" && (
-                        <button
-                          onClick={() =>
-                            handleConfigChange(
-                              option.key,
-                              !editedConfig[option.key]
-                            )
-                          }
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[option.key]
-                            ? "bg-[var(--brand-primary,#2563eb)]"
-                            : "bg-gray-300"
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[option.key]
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                              }`}
-                          />
-                        </button>
-                      )}
-
-                      {option.type === "select" && option.options && (
-                        <select
-                          value={
-                            editedConfig[option.key] || option.defaultValue
-                          }
-                          onChange={(e) =>
-                            handleConfigChange(option.key, e.target.value)
-                          }
-                          className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
-                        >
-                          {option.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                {isLoadingSettings ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary,#2563eb)] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-muted-foreground">Loading settings...</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                    <div className="space-y-4">
+                      {selectedPlugin.details.configOptions.map((option) => {
+                        const camelKey = getCamelKey(option.key);
+                        return (
+                          <div
+                            key={option.key}
+                            className="rounded-xl border bg-muted/30 p-4"
+                          >
+                            <label className="block text-sm font-medium text-slate-900 mb-1">
+                              {option.label}
+                            </label>
+                            <p className="text-xs text-muted-foreground mb-3">
+                              {option.description}
+                            </p>
+
+                            {option.type === "boolean" && (
+                              <button
+                                onClick={() =>
+                                  handleConfigChange(
+                                    option.key,
+                                    !editedConfig[camelKey]
+                                  )
+                                }
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
+                                  ? "bg-[var(--brand-primary,#2563eb)]"
+                                  : "bg-gray-300"
+                                  }`}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                    }`}
+                                />
+                              </button>
+                            )}
+
+                            {option.type === "text" && (
+                              <Input
+                                type="text"
+                                value={editedConfig[camelKey] || ""}
+                                onChange={(e) =>
+                                  handleConfigChange(option.key, e.target.value)
+                                }
+                                className="bg-white"
+                              />
+                            )}
+
+
+                            {option.type === "number" && (
+                              <Input
+                                type="number"
+                                value={editedConfig[camelKey] ?? ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.trim();
+                                  // Only update if we have a valid number
+                                  if (value === "") {
+                                    // Allow clearing the field - set to undefined/null
+                                    handleConfigChange(option.key, undefined);
+                                  } else {
+                                    const numValue = Number(value);
+                                    // Only update if it's a valid number (not NaN)
+                                    if (!isNaN(numValue) && isFinite(numValue)) {
+                                      handleConfigChange(option.key, numValue);
+                                    }
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  // Ensure the value is valid on blur
+                                  const value = e.target.value.trim();
+                                  if (value === "" || isNaN(Number(value))) {
+                                    // Restore previous value or default if invalid
+                                    const currentValue = editedConfig[camelKey];
+                                    if (currentValue === undefined || currentValue === null || isNaN(currentValue)) {
+                                      handleConfigChange(option.key, option.defaultValue ?? 0);
+                                    }
+                                  }
+                                }}
+                                className="bg-white"
+                              />
+                            )}
+
+                            {option.type === "toggle" && (
+                              <button
+                                onClick={() =>
+                                  handleConfigChange(
+                                    option.key,
+                                    !editedConfig[camelKey]
+                                  )
+                                }
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
+                                  ? "bg-[var(--brand-primary,#2563eb)]"
+                                  : "bg-gray-300"
+                                  }`}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                    }`}
+                                />
+                              </button>
+                            )}
+
+                            {option.type === "select" && option.options && (
+                              <select
+                                value={
+                                  editedConfig[camelKey] || option.defaultValue
+                                }
+                                onChange={(e) =>
+                                  handleConfigChange(option.key, e.target.value)
+                                }
+                                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                              >
+                                {option.options.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                )}
               </div>
             </div>
 
@@ -628,7 +707,8 @@ export default function PluginsPage() {
                   <Button
                     variant="outline"
                     className="gap-2"
-                    onClick={() => window.open("#", "_blank")}
+                    onClick={() => window.open(selectedPlugin.details.documentationUrl ?? "", "_blank")}
+                    disabled={!selectedPlugin.details.documentationUrl}
                   >
                     <ExternalLink className="h-4 w-4" />
                     Documentation
@@ -636,9 +716,10 @@ export default function PluginsPage() {
                   <Button
                     className="gap-2 bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/90"
                     onClick={handleSaveConfig}
+                    disabled={updateSettingsMutation.isPending || isLoadingSettings}
                   >
                     <Save className="h-4 w-4" />
-                    Save Configuration
+                    {updateSettingsMutation.isPending ? "Saving..." : "Save Configuration"}
                   </Button>
                 </div>
               </div>

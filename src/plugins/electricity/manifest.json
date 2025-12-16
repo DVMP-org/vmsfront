@@ -8,6 +8,7 @@
     },
     "details": {
         "configEndpoint": "/api/electricity/config",
+        "documentationUrl": "https://docs.example.com/electricity",
         "useCases": [
             "Monitor all gate entry and exit points with live video feeds",
             "Record visitor arrivals for security audits",

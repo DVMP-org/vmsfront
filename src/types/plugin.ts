@@ -17,6 +17,55 @@ export interface PluginManifestRoute {
     icon?: string;
     userType?: PluginUserType; // Optional: defaults to "both" if not specified
 }
+export interface PluginConfig {
+    [key: string]: any;
+}
+
+export interface PluginDetails {
+    configEndpoint: string | null;
+    documentationUrl: string | null;
+    useCases: string[];
+    setupSteps: string[];
+    requirements: string[];
+    configOptions: {
+        key: string;
+        label: string;
+        type: "text" | "toggle" | "select" | "number" | "boolean";
+        description: string;
+        defaultValue?: any;
+        options?: string[];
+    }[];
+}
+
+export interface BackendPlugin {
+    id: string;
+    name: string;
+    version: string;
+    enabled: boolean;
+    description?: string;
+    category?: string;
+    image?: string;
+    details?: PluginDetails;
+    [key: string]: any;
+}
+
+// Plugin type definition (for UI display)
+export interface Plugin {
+    id: string;
+    name: string;
+    title: string;
+    description: string;
+    icon: any;
+    enabled: boolean;
+    category: string;
+    imageUrl: string;
+    color: string;
+    details: PluginDetails;
+    config: PluginConfig;
+    backendVersion?: string;
+    frontendVersion?: string;
+    hasFrontend?: boolean; // Whether frontend plugin exists
+}
 
 export interface PluginManifest {
     name: string;

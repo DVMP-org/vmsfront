@@ -354,4 +354,8 @@ export const adminService = {
     async togglePlugin(pluginId: string): Promise<ApiResponse<any>> {
         return apiClient.put(`/admin/plugins/${pluginId}/enable`);
     },
+
+    async getPluginSettings(pluginId: string): Promise<ApiResponse<any>> {
+        return apiClient.get(`/admin/plugins/${pluginId}`);
+    },
 };
