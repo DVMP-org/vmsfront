@@ -34,7 +34,7 @@ export default function CreateResidentPage() {
 
   const { data: housesData, isLoading: housesLoading } = useAdminHouses({
     page: 1,
-    pageSize: 1000,
+    pageSize: 100,
   });
   const createResident = useCreateResident();
   const { data: users, isLoading: usersLoading } = useAdminUsers();

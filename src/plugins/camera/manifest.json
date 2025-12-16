@@ -1,0 +1,10 @@
+{
+    "name": "camera",
+    "title": "Camera Surveillance",
+    "version": "0.1.0",
+    "icon": "camera",
+    "frontend": {
+        "basePath": "/camera"
+    },
+    "details": {}
+}

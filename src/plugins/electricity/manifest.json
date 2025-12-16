@@ -1,0 +1,67 @@
+{
+    "name": "electricity",
+    "title": "Electricity Purchase",
+    "version": "0.1.0",
+    "icon": "zap",
+    "frontend": {
+        "basePath": "/electricity"
+    },
+    "details": {
+        "configEndpoint": "/api/electricity/config",
+        "documentationUrl": "https://docs.example.com/electricity",
+        "useCases": [
+            "Monitor all gate entry and exit points with live video feeds",
+            "Record visitor arrivals for security audits",
+            "Automatically capture images when gate passes are scanned",
+            "Review historical footage of gate events"
+        ],
+        "setupSteps": [
+            "Connect your camera system's API endpoint",
+            "Configure camera zones for each gate location",
+            "Set up recording schedules and retention policies",
+            "Test camera integration with a sample gate event"
+        ],
+        "requirements": [
+            "IP-enabled security camera system",
+            "Camera API credentials",
+            "Network access to camera system",
+            "Minimum 10 Mbps upload bandwidth"
+        ],
+        "configOptions": [
+            {
+                "key": "apiEndpoint",
+                "label": "Camera API Endpoint",
+                "type": "text",
+                "description": "URL of your camera system's API",
+                "defaultValue": "https://cameras.example.com/api"
+            },
+            {
+                "key": "recordOnScan",
+                "label": "Auto-record on gate scan",
+                "type": "toggle",
+                "description": "Automatically start recording when a gate pass is scanned",
+                "defaultValue": true
+            },
+            {
+                "key": "retentionDays",
+                "label": "Video Retention (days)",
+                "type": "number",
+                "description": "Number of days to keep recorded footage",
+                "defaultValue": 30
+            },
+            {
+                "key": "quality",
+                "label": "Video Quality",
+                "type": "select",
+                "description": "Recording quality setting",
+                "options": [
+                    "Low",
+                    "Medium",
+                    "High",
+                    "Ultra"
+                ],
+                "defaultValue": "High"
+            }
+        ]
+    }
+}
