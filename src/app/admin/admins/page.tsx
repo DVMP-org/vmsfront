@@ -194,7 +194,7 @@ export default function AdminManagementPage() {
               <TableRow key={admin.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold text-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold text-[var(--brand-primary,#2563eb)]">
                       {initials}
                     </div>
                     <div>
@@ -270,7 +270,7 @@ export default function AdminManagementPage() {
               Security team workspace
             </p>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-primary" />
+              <ShieldCheck className="h-6 w-6 text-[var(--brand-primary,#2563eb)]" />
               Admin Management
             </h1>
             <p className="text-muted-foreground text-sm">
@@ -286,7 +286,7 @@ export default function AdminManagementPage() {
               Manage roles
             </Button>
             <Button
-              className="gap-2 bg-[var(--brand-primary,#2563eb)] text-white hover:bg-[var(--brand-primary,#2563eb)/90]"
+              className="gap-2 bg-[var(--brand-primary,#2563eb)] text-white hover:bg-[var(--brand-primary,#2563eb)] hover:opacity-90"
               onClick={() => setCreateModalOpen(true)}
             >
               <UserPlus2 className="h-4 w-4" />

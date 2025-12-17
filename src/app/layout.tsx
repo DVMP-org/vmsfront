@@ -52,6 +52,38 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const cached = localStorage.getItem('active-branding-theme');
+                  if (cached) {
+                    const theme = JSON.parse(cached);
+                    const root = document.documentElement;
+                    if (theme.primary_color) {
+                      root.style.setProperty('--brand-primary', theme.primary_color);
+                    }
+                    if (theme.secondary_color) {
+                      root.style.setProperty('--brand-secondary', theme.secondary_color);
+                    }
+                    if (theme.favicon_url) {
+                      let favicon = document.querySelector("link[rel='icon']");
+                      if (!favicon) {
+                        favicon = document.createElement("link");
+                        favicon.rel = "icon";
+                        document.head.appendChild(favicon);
+                      }
+                      favicon.href = theme.favicon_url;
+                    }
+                  }
+                } catch (e) {
+                  // Ignore errors
+                }
+              })();
+            `,
+          }}
+        />
         <Suspense fallback={<div>Loading...</div>}>
           <Providers>{children}</Providers>
         </Suspense>

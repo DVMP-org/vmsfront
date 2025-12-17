@@ -366,7 +366,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Ticket className="h-5 w-5 text-primary" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
               </div>
             </CardContent>
@@ -381,7 +381,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Across all passes</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <UsersIcon className="h-5 w-5 text-primary" />
+                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
               </div>
             </CardContent>
@@ -398,7 +398,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Activity className="h-5 w-5 text-primary" />
+                  <Activity className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
               </div>
             </CardContent>
@@ -413,7 +413,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Next 48 hours</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Clock3 className="h-5 w-5 text-primary" />
+                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
               </div>
             </CardContent>
@@ -426,7 +426,7 @@ export default function ResidentDashboardPage() {
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <CalendarClock className="h-5 w-5 text-primary" />
+                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Last gate activity</p>
@@ -435,7 +435,7 @@ export default function ResidentDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <Ticket className="h-5 w-5 text-primary" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Expiring soon</p>
@@ -452,7 +452,7 @@ export default function ResidentDashboardPage() {
         <Card className="border border-primary/20 bg-primary/5">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
+              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
               <CardTitle>Community Forum</CardTitle>
             </div>
             <CardDescription>
@@ -466,7 +466,7 @@ export default function ResidentDashboardPage() {
                   key={option.label}
                   className="flex gap-3 rounded-lg border border-dashed border-primary/30 bg-background/80 p-3"
                 >
-                  <option.icon className="h-5 w-5 text-primary" />
+                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{option.label}</p>
                     <p className="text-sm text-muted-foreground">{option.description}</p>

@@ -38,7 +38,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-primary/10">
-              <Home className="h-8 w-8 text-primary" />
+              <Home className="h-8 w-8 text-[var(--brand-primary)]" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
@@ -72,14 +72,14 @@ export default function LoginPage() {
             <div className="flex justify-end text-sm">
               <Link
                 href="/auth/forgot-password"
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-[var(--brand-primary)] hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[var(--brand-primary)]"
               isLoading={isLoggingIn}
             >
               Sign In
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
-            <Link href="/auth/register" className="text-primary hover:underline font-medium">
+            <Link href="/auth/register" className="text-[var(--brand-secondary)] hover:underline font-medium">
               Sign up
             </Link>
           </div>

@@ -423,7 +423,7 @@ export default function AnalyticsPage() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {card.title}
                   </CardTitle>
-                  <span className="rounded-full bg-white/70 p-2 text-primary shadow-sm dark:bg-white/10">
+                  <span className="rounded-full bg-white/70 p-2 text-[var(--brand-primary,#2563eb)] shadow-sm dark:bg-white/10">
                     <Icon className="h-5 w-5" />
                   </span>
                 </CardHeader>
