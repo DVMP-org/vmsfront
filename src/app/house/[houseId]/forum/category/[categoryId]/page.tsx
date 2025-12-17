@@ -161,7 +161,7 @@ export default function ForumCategoryPage() {
   return (
     <DashboardLayout type="resident">
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3 max-w-2xl">
               <button
@@ -185,7 +185,7 @@ export default function ForumCategoryPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[var(--brand-primary,#2563eb)] hover:bg-white/90"
+                  className="bg-white text-[var(--brand-primary,#213928)] hover:bg-white/90"
                   onClick={() => setTopicModalOpen(true)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -304,7 +304,7 @@ export default function ForumCategoryPage() {
               }
               className={cn(
                 "min-h-[160px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               )}
               placeholder="Share some context to kick-start the discussion."
               required
@@ -361,10 +361,29 @@ function TopicCard({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full flex-col gap-3 rounded-2xl border border-transparent bg-gradient-to-r from-white to-slate-50/80 p-4 text-left shadow-sm transition hover:border-[var(--brand-primary,#2563eb)]/40 hover:shadow-md"
+      className="flex w-full flex-col gap-3 rounded-2xl border border-muted bg-gradient-to-r from-white to-slate-50/80 p-4 text-left shadow-md transition hover:border-[var(--brand-primary,#213928)]/40 hover:shadow-md"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          {/* Profile image (user avatar) */}
+          {topic.author && topic.author.avatar_url ? (
+            <img
+              src={topic.author.avatar_url}
+              alt={topic.author.first_name + " " + topic.author.last_name}
+              className="h-8 w-8 rounded-full border border-muted object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+              {topic.author && topic.author.first_name + " " + topic.author.last_name
+                ? (topic.author.first_name + " " + topic.author.last_name)
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()
+                : ""}
+            </div>
+          )}
           <p className="text-lg font-semibold text-foreground">{topic.title}</p>
           {topic.is_pinned && (
             <Badge variant="secondary" className="bg-amber-50 text-amber-700">

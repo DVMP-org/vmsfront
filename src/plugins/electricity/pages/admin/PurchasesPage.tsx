@@ -9,7 +9,7 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Badge } from "@/components/ui/Badge";
 import { CreditCard, Search, DollarSign } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, titleCase } from "@/lib/utils";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
@@ -42,8 +42,8 @@ export default function AdminPurchasesPage() {
     );
 
     const totalRevenue = purchases
-        .filter((p) => p.status === "success")
-        .reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
+        .filter((p) => p.transaction?.status === "success")
+        .reduce((sum, p) => sum + p.amount, 0);
 
     // Pagination data
     const totalPages = purchasesData?.total_pages ?? 1;
@@ -58,10 +58,10 @@ export default function AdminPurchasesPage() {
 
     const columns: Column<PurchaseToken>[] = [
         {
-            key: "transaction_id",
-            header: "Transaction ID",
+            key: "transaction_reference",
+            header: "Reference",
             accessor: (purchase) => (
-                <span className="font-mono text-sm">{purchase.transaction_id || "N/A"}</span>
+                <span className="font-mono text-sm">{purchase.transaction?.reference || "N/A"}</span>
             ),
         },
         {
@@ -79,7 +79,7 @@ export default function AdminPurchasesPage() {
             header: "House",
             accessor: (purchase) => (
                 <span className="text-muted-foreground">
-                    {purchase.meter?.house?.name || "N/A"}
+                    {purchase?.house?.name || "N/A"}
                 </span>
             ),
         },
@@ -97,7 +97,7 @@ export default function AdminPurchasesPage() {
             header: "Amount",
             accessor: (purchase) => (
                 <span className="font-semibold">
-                    ₦{parseFloat(purchase.amount || "0").toLocaleString()}
+                    ₦{purchase.amount.toLocaleString()}
                 </span>
             ),
         },
@@ -107,14 +107,14 @@ export default function AdminPurchasesPage() {
             accessor: (purchase) => (
                 <Badge
                     variant={
-                        purchase.status === "success"
+                        purchase.transaction?.status === "success"
                             ? "success"
-                            : purchase.status === "pending"
-                                ? "secondary"
-                                : "warning"
+                            : purchase.transaction?.status === "pending"
+                                ? "warning"
+                                : "danger"
                     }
                 >
-                    {purchase.status || "pending"}
+                    {titleCase(purchase.transaction?.status || "pending").replace("_", " ")}
                 </Badge>
             ),
         },
@@ -136,7 +136,7 @@ export default function AdminPurchasesPage() {
                     </p>
                 </div>
                 {totalRevenue > 0 && (
-                    <Card className="border-none bg-gradient-to-br from-green-500 to-green-600">
+                    <Card className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 text-white">
                                 <DollarSign className="h-5 w-5" />

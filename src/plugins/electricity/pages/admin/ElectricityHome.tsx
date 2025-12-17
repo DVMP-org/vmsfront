@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,71 +14,86 @@ import {
     TrendingUp,
     DollarSign
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, titleCase } from "@/lib/utils";
+import { electricityService } from "../../services/electricity-service";
+import { ElectricityStats } from "../../types";
 
-// TODO: Replace with actual API calls when available
-interface ElectricityStats {
-    totalMeters: number;
-    activeMeters: number;
-    totalPurchases: number;
-    totalRevenue: number;
-    recentPurchases: Array<{
-        id: string;
-        meterNumber: string;
-        residentName: string;
-        amount: number;
-        units: number;
-        date: string;
-        status: "success" | "pending" | "failed";
-    }>;
-}
-
-// Mock data - replace with API call
-const mockStats: ElectricityStats = {
-    totalMeters: 0,
-    activeMeters: 0,
-    totalPurchases: 0,
-    totalRevenue: 0,
-    recentPurchases: []
+const defaultStats: ElectricityStats = {
+    total_meters: 0,
+    active_meters: 0,
+    total_purchases: 0,
+    total_revenue: 0,
+    houses: [],
+    recent_purchases: []
 };
 
 export default function AdminElectricityDashboard() {
-    const [stats, setStats] = useState<ElectricityStats>(mockStats);
-    const isLoading = false; // TODO: Replace with actual loading state from API
+    const { data: statsResponse, isLoading } = useQuery({
+        queryKey: ["electricity", "stats"],
+        queryFn: async () => {
+            const response = await electricityService.getStats();
+            return response.data;
+        },
+    });
 
-    // TODO: Replace with actual API call
-    // const { data, isLoading } = useElectricityStats();
+    const stats = statsResponse || defaultStats;
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Electricity Management</h1>
+                        <p className="text-muted-foreground">
+                            Manage meters, purchases, and residents
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+            </div>
+        );
+    }
 
     const statCards = [
         {
             title: "Total Meters",
-            value: stats.totalMeters,
-            description: `${stats.activeMeters} active`,
+            value: stats.total_meters,
+            description: `${stats.active_meters} active`,
             icon: Zap,
             accent: "from-blue-500 to-blue-600",
         },
         {
             title: "Total Purchases",
-            value: stats.totalPurchases,
+            value: stats.total_purchases,
             description: "All time",
             icon: CreditCard,
             accent: "from-green-500 to-green-600",
         },
         {
             title: "Total Revenue",
-            value: `₦${stats.totalRevenue.toLocaleString()}`,
+            value: `₦${stats.total_revenue?.toLocaleString()}`,
             description: "All time",
             icon: DollarSign,
             accent: "from-purple-500 to-purple-600",
         },
         {
-            title: "Active Residents",
-            value: stats.recentPurchases.length,
+            title: "Active Houses",
+            value: Array.from(
+                new Set(
+                    (stats.houses || [])
+                        .filter((house) => Array.isArray(house.meters) && house.meters.length > 0)
+                        .map((house) => house.id)
+                        .filter(Boolean)
+                )
+            ).length,
             description: "With meters",
             icon: Users,
             accent: "from-orange-500 to-orange-600",
         },
     ];
+
 
     return (
         <div className="space-y-6">
@@ -93,7 +108,6 @@ export default function AdminElectricityDashboard() {
                 <div className="flex gap-2">
                     <Button
                         onClick={() => {
-                            // TODO: Navigate to add meter page
                             window.location.href = "/plugins/electricity/admin/meters";
                         }}
                         className="gap-2"
@@ -183,30 +197,6 @@ export default function AdminElectricityDashboard() {
                         </Button>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Users className="h-5 w-5" />
-                            Residents
-                        </CardTitle>
-                        <CardDescription>
-                            Manage residents and their meters
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                                window.location.href = "/plugins/electricity/admin/residents";
-                            }}
-                        >
-                            View Residents
-                            <ArrowUpRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Recent Purchases */}
@@ -218,7 +208,7 @@ export default function AdminElectricityDashboard() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {stats.recentPurchases.length === 0 ? (
+                    {stats.recent_purchases.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                             <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No purchases yet</p>
@@ -228,28 +218,27 @@ export default function AdminElectricityDashboard() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {stats.recentPurchases.map((purchase) => (
+                                {stats.recent_purchases.map((purchase) => (
                                 <div
                                     key={purchase.id}
                                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <p className="font-medium">{purchase.residentName}</p>
+                                                <p className="font-medium">{purchase.house_name}</p>
                                             <Badge
                                                 variant={
                                                     purchase.status === "success"
-                                                        ? "default"
+                                                            ? "success"
                                                         : purchase.status === "pending"
-                                                            ? "secondary"
+                                                                ? "warning"
                                                             : "danger"
-                                                }
-                                            >
-                                                {purchase.status}
+                                                }>
+                                                    {titleCase(purchase.status?.replace("_", " "))}
                                             </Badge>
                                         </div>
                                         <p className="text-sm text-muted-foreground">
-                                            Meter: {purchase.meterNumber} • {purchase.units} units
+                                                Meter: {purchase.meter_number} • {purchase.units} units
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-1">
                                             {formatDate(purchase.date)}

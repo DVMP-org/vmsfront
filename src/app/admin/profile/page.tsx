@@ -92,7 +92,7 @@ export default function AdminProfilePage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/15 text-xl font-semibold uppercase shadow">
@@ -157,7 +157,7 @@ export default function AdminProfilePage() {
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-muted-foreground">Office address</label>
                     <textarea
-                      className="min-h-[98px] rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+                      className="min-h-[98px] rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
                       value={formState.address}
                       onChange={(event) =>
                         setFormState((prev) => ({ ...prev, address: event.target.value }))
@@ -326,7 +326,7 @@ function FootprintTile({
   return (
     <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Icon className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+        <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
         {label}
       </div>
       <p className="mt-1 text-2xl font-semibold text-foreground">{value ?? "N/A"}</p>

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 const AdminElectricityDashboard = dynamic(() => import("./pages/admin/ElectricityHome"));
 const AdminMetersPage = dynamic(() => import("./pages/admin/MetersPage"));
 const AdminPurchasesPage = dynamic(() => import("./pages/admin/PurchasesPage"));
-const AdminResidentsPage = dynamic(() => import("./pages/admin/ResidentsPage"));
+
 
 // Resident-specific components
 const ResidentElectricityDashboard = dynamic(() => import("./pages/resident/ElectricityHome"));
@@ -33,12 +33,6 @@ const adminRoutes = [
         title: "Purchases",
         icon: "credit-card"
     },
-    {
-        path: "/admin/residents",
-        component: AdminResidentsPage,
-        title: "Residents",
-        icon: "users"
-    }
 ];
 
 // Resident-specific routes

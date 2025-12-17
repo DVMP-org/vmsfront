@@ -41,10 +41,10 @@ export default function AdminDashboardPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Control Tower
               </div>
@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
               </Button>
               <Button
                 type="button"
-                className="border-[var(--brand-primary,#2563eb)] gap-2 text-white bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)/90]"
+                className="border-[var(--brand-primary,#213928)] gap-2 text-white bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)/90]"
                 onClick={() => router.push("/admin/admins/create")}
               >
                 Onboard admin
@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
-                    <span className="rounded-full bg-white/80 p-2 text-[var(--brand-primary,#2563eb)] shadow-sm">
+                    <span className="rounded-full bg-white/80 p-2 text-[var(--brand-primary,#213928)] shadow-sm">
                       <Icon className="h-4 w-4" />
                     </span>
                   </CardHeader>
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
                   {houses.slice(0, 5).map((house) => (
                     <article
                       key={house.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
+                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)]/50"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
                         <Building2 className="h-5 w-5" />
@@ -244,9 +244,9 @@ export default function AdminDashboardPage() {
                   {residents.slice(0, 5).map((resident) => (
                     <article
                       key={resident.user.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
+                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)]/50"
                     >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)] font-semibold">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)] font-semibold">
                         {getInitials(resident.user.first_name, resident.user.last_name)}
                       </div>
                       <div className="min-w-0 flex-1">

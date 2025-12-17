@@ -15,6 +15,7 @@ import { Meter, PurchaseTokenCreate } from "@/plugins/electricity/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
+import { titleCase } from "@/lib/utils";
 
 export default function ResidentPurchaseMeter() {
     const searchParams = useSearchParams();
@@ -137,7 +138,7 @@ export default function ResidentPurchaseMeter() {
 
         const purchaseData: PurchaseTokenCreate = {
             meter_id: meterId,
-            amount: formData.amount.toString(),
+            amount: formData.amount,
             house_id: currentHouseId,
             email: userEmail,
         };
@@ -267,14 +268,14 @@ export default function ResidentPurchaseMeter() {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Zap className="h-5 w-5 text-muted-foreground" />
                                                 <span className="font-semibold">
-                                                    {meter.meter_number}
+                                                    {titleCase(meter.meter_number)}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">
+                                            {/* <p className="text-sm text-muted-foreground">
                                                 {meter.house?.name || meter.house?.address || "N/A"}
-                                            </p>
+                                            </p> */}
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Type: {meter.meter_type} | DISCO: {meter.disco}
+                                                Type: {titleCase(meter.meter_type)} | DISCO: {titleCase(meter.disco.replace(/-/g, " "))}
                                             </p>
                                         </div>
                                         {selectedMeter?.id === meter.id && (

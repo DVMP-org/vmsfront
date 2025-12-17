@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
-import { Meter, MeterCreate, PurchaseTokenCreate, PurchaseToken } from "../types";
+import { Meter, MeterCreate, PurchaseTokenCreate, PurchaseToken, ElectricityStats } from "../types";
 
 export const electricityService = {
     // Get all meters (paginated)
@@ -46,6 +46,11 @@ export const electricityService = {
                 house_id: params?.house_id ?? undefined,
             },
         });
+    },
+
+    // Get electricity statistics
+    async getStats(): Promise<ApiResponse<ElectricityStats>> {
+        return apiClient.get("/electricity/stats");
     },
 };
 
