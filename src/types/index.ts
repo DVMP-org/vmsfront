@@ -480,3 +480,42 @@ export interface AdminDashboard {
     gate_passes: GatePass[];
     gate_events: GateEvent[];
 }
+
+// Wallet Types
+export interface Wallet {
+    id: string;
+    resident_id: string;
+    balance: number;
+    balance_in_naira: number;
+    status: "active" | "frozen" | "closed";
+    created_at: string;
+    updated_at: string;
+}
+
+export interface FundWalletRequest {
+    amount: number;
+    description: string;
+}
+
+export interface FundWalletResponse {
+    access_code: string;
+    reference: string;
+    authorization_url: string;
+    status: string;
+}
+
+export interface WalletTransaction {
+    id: string;
+    wallet_id: string;
+    reference: string;
+    amount: number;
+    balance_before: number;
+    amount_in_naira: number;
+    balance_after: number;
+    type: "credit" | "debit";
+    status: "pending" | "success" | "failed";
+    description: string | null;
+    metadata: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+}

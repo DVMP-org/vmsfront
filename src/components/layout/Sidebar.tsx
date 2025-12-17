@@ -22,6 +22,7 @@ import {
   MessageSquare,
   UserCog,
   Puzzle,
+  Wallet,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -54,6 +55,7 @@ function buildResidentLinks(houseId?: string) {
       label: "Forum",
       icon: MessageSquare,
     },
+    { href: "/wallet", label: "Wallet", icon: Wallet },
     { href: "/profile", label: "Profile", icon: Settings },
   ];
 }
