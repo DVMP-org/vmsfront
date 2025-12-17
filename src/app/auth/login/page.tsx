@@ -49,7 +49,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-primary/10">
+            <div className="">
               <LogoFull width={200} height={80} />
               {/* <Home className="h-8 w-8 text-primary" /> */}
             </div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <div className="flex justify-end text-sm">
               <Link
                 href="/auth/forgot-password"
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-[var(--brand-primary)] hover:underline"
               >
                 Forgot password?
               </Link>
@@ -96,7 +96,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
             </span>
             <Link
               href="/auth/register"

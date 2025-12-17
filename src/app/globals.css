@@ -4,50 +4,89 @@
 
 @layer base {
   :root {
-    --background: 210 40% 97%;
-    --foreground: 222.2 34% 12%;
+    /* Base colors - warmer, more natural tones */
+    --background: 240 20% 99%;
+    --foreground: 240 10% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 34% 12%;
+    --card-foreground: 240 10% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 34% 12%;
-    --primary: 138, 27%, 18%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 34% 12%;
-    --muted: 210 25% 94%;
-    --muted-foreground: 216 15% 45%;
-    --accent: 210 25% 94%;
-    --accent-foreground: 222.2 34% 12%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 221 83% 53%;
-    --radius: 1rem;
+    --popover-foreground: 240 10% 4%;
+
+    /* Primary - deeper, more confident blue */
+    --primary: 220 90% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - warmer gray with subtle warmth */
+    --secondary: 240 6% 90%;
+    --secondary-foreground: 240 10% 4%;
+
+    /* Muted - softer, more refined */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    /* Accent - complementary warm tone */
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 4%;
+
+    /* Destructive - more vibrant, less generic */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs - sharper definition */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 220 90% 56%;
+
+    /* Border radius - varied, more organic values */
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1.125rem;
+    --radius: 0.875rem; /* Default */
+
+    /* Brand colors - more distinctive */
     --brand-primary: #213928;
+    --brand-secondary: #475569;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-    --brand-primary: #60a5fa;
+    /* Dark mode - richer, deeper tones */
+    --background: 240 10% 4%;
+    --foreground: 240 5% 96%;
+    --card: 240 6% 10%;
+    --card-foreground: 240 5% 96%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 240 5% 96%;
+
+    /* Primary - brighter for contrast */
+    --primary: 220 90% 61%;
+    --primary-foreground: 240 10% 4%;
+
+    /* Secondary - more defined */
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 240 5% 96%;
+
+    /* Muted - better contrast */
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+
+    /* Accent */
+    --accent: 240 4% 16%;
+    --accent-foreground: 240 5% 96%;
+
+    /* Destructive - softer in dark mode */
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders - more visible */
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 220 90% 61%;
+
+    /* Brand colors - adjusted for dark */
+    --brand-primary: #3b82f6;
+    --brand-secondary: #64748b;
   }
 }
 
@@ -59,5 +98,45 @@
     @apply min-h-screen bg-background text-foreground antialiased;
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer components {
+  /* Custom card styles - more distinctive, less generic */
+  .card-base {
+    @apply border border-border/60 bg-card;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.06),
+      0 2px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+  }
+
+  .card-base:hover {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 4px 8px 0 rgba(0, 0, 0, 0.06),
+      0 8px 16px -2px rgba(0, 0, 0, 0.08);
+    border-color: hsl(var(--border));
+  }
+
+  /* Subtle inset effect for depth */
+  .card-inset {
+    position: relative;
+  }
+
+  .card-inset::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0)
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 }

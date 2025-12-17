@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { apiClient } from "@/lib/api-client";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore();
@@ -35,8 +36,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-right" richColors />
+      <ThemeProvider>
+        {children}
+        <Toaster position="top-right" richColors />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
+import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
 import { Button } from "../ui/Button";
 import { cn, getFullName, getInitials } from "@/lib/utils";
 import { LogoFull } from "../LogoFull";
@@ -26,6 +27,7 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const { selectedHouse, branding } = useAppStore();
+  const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -40,6 +42,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const dashboardHref = isAdminUser ? "/admin" : "/select";
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -52,6 +55,28 @@ export function Header({ onMenuClick }: HeaderProps) {
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, [menuOpen]);
+
+  useEffect(() => {
+    // Check for dark mode class on html element
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    checkDarkMode();
+    // Watch for changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const logoUrl = useMemo(() => {
+    if (!activeTheme) return null;
+    return isDarkMode && activeTheme.dark_logo_url
+      ? activeTheme.dark_logo_url
+      : activeTheme.logo_url;
+  }, [activeTheme, isDarkMode]);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur">
@@ -75,7 +100,16 @@ export function Header({ onMenuClick }: HeaderProps) {
             <span className="truncate">
               {branding?.app_name || "VMSCORE"}
             </span> */}
-            <LogoFull />
+            {/* <LogoFull /> */}
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={activeTheme?.name || "Logo"}
+                className="h-5 w-auto max-w-[120px] object-contain"
+              />
+            ) : (
+              <LogoFull />
+            )}
           </Link>
 
           {selectedHouse && !isAdminRoute && isHouseRoute && (

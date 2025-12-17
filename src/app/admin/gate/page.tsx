@@ -236,14 +236,14 @@ function GateConsoleContent() {
               <Button
                 variant={scanType === "checkin" ? "primary" : "outline"}
                 onClick={() => setScanType("checkin")}
-                className="flex-1"
+                className="flex-1 rounded-md"
               >
                 Check In
               </Button>
               <Button
                 variant={scanType === "checkout" ? "primary" : "outline"}
                 onClick={() => setScanType("checkout")}
-                className="flex-1"
+                className="flex-1 rounded-md"
               >
                 Check Out
               </Button>

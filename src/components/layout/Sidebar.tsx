@@ -22,6 +22,7 @@ import {
   MessageSquare,
   UserCog,
   Puzzle,
+  Palette,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -67,6 +68,7 @@ const adminLinks = [
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
+  { href: "/admin/branding", label: "Branding", icon: Palette },
   { href: "/admin/plugins", label: "Plugins", icon: Puzzle },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },
