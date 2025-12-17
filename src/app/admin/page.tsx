@@ -144,15 +144,15 @@ export default function AdminDashboardPage() {
                 <ShieldCheck className="h-10 w-10 text-emerald-500" />
               </div>
               <div className="grid gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Total gate passes issued</span>
                   <strong className="text-base text-foreground">{totalGatePasses}</strong>
                 </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Active check-ins</span>
                   <strong className="text-base text-foreground">{activeGatePasses}</strong>
                 </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Residents per house</span>
                   <strong className="text-base text-foreground">
                     {totalHouses ? Math.round(totalResidents / totalHouses) : 0}
@@ -176,7 +176,7 @@ export default function AdminDashboardPage() {
                 <Button
                   key={cta.label}
                   variant="outline"
-                  className="justify-between text-left py-6 rounded-md hover:text-white/80"
+                  className="justify-between text-left  hover:text-white/80"
                   onClick={cta.action}
                 >
                   <span className="">
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
                   {houses.slice(0, 5).map((house) => (
                     <article
                       key={house.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)]/50"
+                      className="flex items-center gap-3  border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)] opacity-80 hover:opacity-100 rounded-sm"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
                         <Building2 className="h-5 w-5" />
@@ -244,7 +244,7 @@ export default function AdminDashboardPage() {
                   {residents.slice(0, 5).map((resident) => (
                     <article
                       key={resident.user.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)]/50"
+                      className="flex items-center gap-3  border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)] opacity-80 hover:opacity-100 rounded-sm"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)] font-semibold">
                         {getInitials(resident.user.first_name, resident.user.last_name)}

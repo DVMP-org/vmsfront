@@ -228,13 +228,7 @@ export default function AdminProfilePage() {
                   Enabled on {adminUser.updated_at ? new Date(adminUser.updated_at).toLocaleDateString() : "N/A"}
                 </p>
               </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="outline">Generate API token</Button>
-                <Button variant="destructive">
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Disable account
-                </Button>
-              </div>
+
             </CardContent>
           </Card>
         </div>
