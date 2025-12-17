@@ -568,131 +568,131 @@ export default function PluginsPage() {
                     </div>
                   </div>
                 ) : (
-                    <div className="space-y-4">
-                      {selectedPlugin.details.configOptions.map((option) => {
-                        const camelKey = getCamelKey(option.key);
-                        return (
-                          <div
-                            key={option.key}
-                            className="rounded-xl border bg-muted/30 p-4"
-                          >
-                            <label className="block text-sm font-medium text-slate-900 mb-1">
-                              {option.label}
-                            </label>
-                            <p className="text-xs text-muted-foreground mb-3">
-                              {option.description}
-                            </p>
+                  <div className="space-y-4">
+                    {selectedPlugin.details.configOptions.map((option) => {
+                      const camelKey = getCamelKey(option.key);
+                      return (
+                        <div
+                          key={option.key}
+                          className="rounded-xl border bg-muted/30 p-4"
+                        >
+                          <label className="block text-sm font-medium text-slate-900 mb-1">
+                            {option.label}
+                          </label>
+                          <p className="text-xs text-muted-foreground mb-3">
+                            {option.description}
+                          </p>
 
-                            {option.type === "boolean" && (
-                              <button
-                                onClick={() =>
-                                  handleConfigChange(
-                                    option.key,
-                                    !editedConfig[camelKey]
-                                  )
-                                }
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                  ? "bg-[var(--brand-primary,#2563eb)]"
-                                  : "bg-gray-300"
+                          {option.type === "boolean" && (
+                            <button
+                              onClick={() =>
+                                handleConfigChange(
+                                  option.key,
+                                  !editedConfig[camelKey]
+                                )
+                              }
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
+                                ? "bg-[var(--brand-primary,#2563eb)]"
+                                : "bg-gray-300"
+                                }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
                                   }`}
-                              >
-                                <span
-                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
-                                    ? "translate-x-6"
-                                    : "translate-x-1"
-                                    }`}
-                                />
-                              </button>
-                            )}
-
-                            {option.type === "text" && (
-                              <Input
-                                type="text"
-                                value={editedConfig[camelKey] || ""}
-                                onChange={(e) =>
-                                  handleConfigChange(option.key, e.target.value)
-                                }
-                                className="bg-white"
                               />
-                            )}
+                            </button>
+                          )}
+
+                          {option.type === "text" && (
+                            <Input
+                              type="text"
+                              value={editedConfig[camelKey] || ""}
+                              onChange={(e) =>
+                                handleConfigChange(option.key, e.target.value)
+                              }
+                              className="bg-white"
+                            />
+                          )}
 
 
-                            {option.type === "number" && (
-                              <Input
-                                type="number"
-                                value={editedConfig[camelKey] ?? ""}
-                                onChange={(e) => {
-                                  const value = e.target.value.trim();
-                                  // Only update if we have a valid number
-                                  if (value === "") {
-                                    // Allow clearing the field - set to undefined/null
-                                    handleConfigChange(option.key, undefined);
-                                  } else {
-                                    const numValue = Number(value);
-                                    // Only update if it's a valid number (not NaN)
-                                    if (!isNaN(numValue) && isFinite(numValue)) {
-                                      handleConfigChange(option.key, numValue);
-                                    }
+                          {option.type === "number" && (
+                            <Input
+                              type="number"
+                              value={editedConfig[camelKey] ?? ""}
+                              onChange={(e) => {
+                                const value = e.target.value.trim();
+                                // Only update if we have a valid number
+                                if (value === "") {
+                                  // Allow clearing the field - set to undefined/null
+                                  handleConfigChange(option.key, undefined);
+                                } else {
+                                  const numValue = Number(value);
+                                  // Only update if it's a valid number (not NaN)
+                                  if (!isNaN(numValue) && isFinite(numValue)) {
+                                    handleConfigChange(option.key, numValue);
                                   }
-                                }}
-                                onBlur={(e) => {
-                                  // Ensure the value is valid on blur
-                                  const value = e.target.value.trim();
-                                  if (value === "" || isNaN(Number(value))) {
-                                    // Restore previous value or default if invalid
-                                    const currentValue = editedConfig[camelKey];
-                                    if (currentValue === undefined || currentValue === null || isNaN(currentValue)) {
-                                      handleConfigChange(option.key, option.defaultValue ?? 0);
-                                    }
-                                  }
-                                }}
-                                className="bg-white"
-                              />
-                            )}
-
-                            {option.type === "toggle" && (
-                              <button
-                                onClick={() =>
-                                  handleConfigChange(
-                                    option.key,
-                                    !editedConfig[camelKey]
-                                  )
                                 }
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                  ? "bg-[var(--brand-primary,#2563eb)]"
-                                  : "bg-gray-300"
+                              }}
+                              onBlur={(e) => {
+                                // Ensure the value is valid on blur
+                                const value = e.target.value.trim();
+                                if (value === "" || isNaN(Number(value))) {
+                                  // Restore previous value or default if invalid
+                                  const currentValue = editedConfig[camelKey];
+                                  if (currentValue === undefined || currentValue === null || isNaN(currentValue)) {
+                                    handleConfigChange(option.key, option.defaultValue ?? 0);
+                                  }
+                                }
+                              }}
+                              className="bg-white"
+                            />
+                          )}
+
+                          {option.type === "toggle" && (
+                            <button
+                              onClick={() =>
+                                handleConfigChange(
+                                  option.key,
+                                  !editedConfig[camelKey]
+                                )
+                              }
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
+                                ? "bg-[var(--brand-primary,#2563eb)]"
+                                : "bg-gray-300"
+                                }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
                                   }`}
-                              >
-                                <span
-                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
-                                    ? "translate-x-6"
-                                    : "translate-x-1"
-                                    }`}
-                                />
-                              </button>
-                            )}
+                              />
+                            </button>
+                          )}
 
-                            {option.type === "select" && option.options && (
-                              <select
-                                value={
-                                  editedConfig[camelKey] || option.defaultValue
-                                }
-                                onChange={(e) =>
-                                  handleConfigChange(option.key, e.target.value)
-                                }
-                                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
-                              >
-                                {option.options.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                          {option.type === "select" && option.options && (
+                            <select
+                              value={
+                                editedConfig[camelKey] || option.defaultValue
+                              }
+                              onChange={(e) =>
+                                handleConfigChange(option.key, e.target.value)
+                              }
+                              className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                            >
+                              {option.options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>

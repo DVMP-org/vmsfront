@@ -2,6 +2,8 @@
  * Utility functions for plugin path handling and normalization
  */
 
+import { LoadedPlugin } from "@/types/plugin";
+
 /**
  * Normalizes a path by removing leading/trailing slashes
  * @param path The path to normalize
