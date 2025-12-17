@@ -291,7 +291,7 @@ export default function ForumTopicPage() {
   return (
     <DashboardLayout type="resident">
       <div className="space-y-6 pb-24">
-        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center gap-1 text-xs text-white/70" aria-label="Breadcrumb">
@@ -464,7 +464,7 @@ export default function ForumTopicPage() {
                         className={cn(
                           "mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase shadow",
                           isOwnPost
-                            ? "border-[var(--brand-primary,#2563eb)] bg-white text-[var(--brand-primary,#2563eb)]"
+                            ? "border-[var(--brand-primary,#213928)] bg-white text-[var(--brand-primary,#213928)]"
                             : "border-border bg-muted/70 text-muted-foreground"
                         )}
                       >
@@ -474,7 +474,7 @@ export default function ForumTopicPage() {
                         className={cn(
                           "relative w-full max-w-3xl rounded-3xl border px-5 py-4 shadow-sm transition sm:px-6",
                           isOwnPost
-                            ? "border-[var(--brand-primary,#2563eb)]/40 bg-gradient-to-r from-[var(--brand-primary,#2563eb)]/12 via-sky-100/60 to-white text-foreground shadow-[0_18px_32px_rgba(37,99,235,0.18)]"
+                            ? "border-[var(--brand-primary,#213928)]/40 bg-gradient-to-r from-[var(--brand-primary,#213928)]/12 via-sky-100/60 to-white text-foreground shadow-[0_18px_32px_rgba(37,99,235,0.18)]"
                             : alternatingNeutral
                             ? "border-border/50 bg-slate-50 text-foreground"
                             : "border-border/70 bg-white text-foreground",
@@ -493,7 +493,7 @@ export default function ForumTopicPage() {
                                 <p
                                   className={cn(
                                     "text-sm font-semibold",
-                                    isOwnPost ? "text-[var(--brand-primary,#2563eb)]" : "text-foreground"
+                                    isOwnPost ? "text-[var(--brand-primary,#213928)]" : "text-foreground"
                                   )}
                                 >
                                   {displayName}
@@ -507,7 +507,7 @@ export default function ForumTopicPage() {
                               <div
                                 className={cn(
                                   "mt-1 flex flex-wrap items-center gap-2 text-xs",
-                                  isOwnPost ? "text-[var(--brand-primary,#2563eb)]/70" : "text-muted-foreground"
+                                  isOwnPost ? "text-[var(--brand-primary,#213928)]/70" : "text-muted-foreground"
                                 )}
                               >
                                 <span className="inline-flex items-center gap-1">
@@ -528,7 +528,7 @@ export default function ForumTopicPage() {
                                     className={cn(
                                       "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide",
                                       isOwnPost
-                                        ? "bg-white text-[var(--brand-primary,#2563eb)]"
+                                        ? "bg-white text-[var(--brand-primary,#213928)]"
                                         : "bg-muted text-muted-foreground"
                                     )}
                                   >
@@ -548,7 +548,7 @@ export default function ForumTopicPage() {
                                   className={cn(
                                     "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium",
                                     isOwnPost
-                                      ? "bg-white text-[var(--brand-primary,#2563eb)]"
+                                      ? "bg-white text-[var(--brand-primary,#213928)]"
                                       : "bg-muted text-muted-foreground"
                                   )}
                                 >
@@ -589,7 +589,7 @@ export default function ForumTopicPage() {
                                 className={cn(
                                   "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition",
                                   isOwnPost
-                                    ? "border-[var(--brand-primary,#2563eb)] text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
+                                    ? "border-[var(--brand-primary,#213928)] text-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/10"
                                     : "border-border/70 text-muted-foreground hover:bg-muted/60"
                                 )}
                               >
@@ -632,14 +632,14 @@ export default function ForumTopicPage() {
                               className={cn(
                                 "space-y-2 rounded-2xl border border-dashed p-3",
                                 isOwnPost
-                                  ? "border-[var(--brand-primary,#2563eb)]/30 bg-white"
+                                  ? "border-[var(--brand-primary,#213928)]/30 bg-white"
                                   : "border-border/70 bg-muted/40"
                               )}
                             >
                               <p
                                 className={cn(
                                   "text-xs font-semibold uppercase tracking-wide",
-                                  isOwnPost ? "text-[var(--brand-primary,#2563eb)]" : "text-muted-foreground"
+                                  isOwnPost ? "text-[var(--brand-primary,#213928)]" : "text-muted-foreground"
                                 )}
                               >
                                 Attachments
@@ -654,7 +654,7 @@ export default function ForumTopicPage() {
                                     className={cn(
                                       "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm transition",
                                       isOwnPost
-                                        ? "border-[var(--brand-primary,#2563eb)]/40 text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
+                                        ? "border-[var(--brand-primary,#213928)]/40 text-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/10"
                                         : "border-border/60 text-foreground hover:bg-muted/50"
                                     )}
                                   >
@@ -662,7 +662,7 @@ export default function ForumTopicPage() {
                                       className={cn(
                                         "h-4 w-4",
                                         isOwnPost
-                                          ? "text-[var(--brand-primary,#2563eb)]"
+                                          ? "text-[var(--brand-primary,#213928)]"
                                           : "text-muted-foreground"
                                       )}
                                     />
@@ -678,7 +678,7 @@ export default function ForumTopicPage() {
                               type="button"
                               onClick={() => togglePostExpansion(post.id)}
                               className={cn(
-                                "text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)] transition hover:underline",
+                                "text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)] transition hover:underline",
                                 isOwnPost ? "self-end" : "self-start"
                               )}
                             >
@@ -744,7 +744,7 @@ export default function ForumTopicPage() {
                   className={cn(
                     "rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition",
                     isDragging
-                      ? "border-[var(--brand-primary,#2563eb)] bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]"
+                      ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
                       : "border-border/80 text-muted-foreground"
                   )}
                 >
@@ -752,7 +752,7 @@ export default function ForumTopicPage() {
                   Drag & drop files here or{" "}
                   <button
                     type="button"
-                    className="font-semibold text-[var(--brand-primary,#2563eb)] underline-offset-2 hover:underline"
+                      className="font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
                     onClick={() => attachmentInputRef.current?.click()}
                   >
                     browse
@@ -825,7 +825,7 @@ export default function ForumTopicPage() {
               onClick={handleFloatingSubmit}
               disabled={!canSubmit || createPost.isPending}
               className={cn(
-                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)] text-white shadow-2xl transition lg:hidden",
+                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)] text-white shadow-2xl transition lg:hidden",
                 canSubmit
                   ? "translate-y-0 opacity-100"
                   : "pointer-events-none translate-y-3 opacity-0"

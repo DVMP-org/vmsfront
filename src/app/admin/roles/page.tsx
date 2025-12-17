@@ -56,7 +56,7 @@ export default function RolesPage() {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <Shield className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                        <Shield className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                         <div>
                           <p className="font-medium text-lg">{role.name}</p>
                           {role.description && (

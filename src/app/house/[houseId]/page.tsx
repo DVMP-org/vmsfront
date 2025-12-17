@@ -344,7 +344,7 @@ export default function ResidentDashboardPage() {
                       currency: "NGN",
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
-                    }).format(wallet.balance_in_naira) : "₦0"}
+                    }).format(wallet.balance) : "₦0"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">Click to manage</p>
                 </div>
@@ -366,7 +366,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -381,7 +381,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Across all passes</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -398,7 +398,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Activity className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Activity className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -413,7 +413,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Next 48 hours</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -426,7 +426,7 @@ export default function ResidentDashboardPage() {
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Last gate activity</p>
@@ -435,7 +435,7 @@ export default function ResidentDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Expiring soon</p>
@@ -452,7 +452,7 @@ export default function ResidentDashboardPage() {
         <Card className="border border-primary/20 bg-primary/5">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
               <CardTitle>Community Forum</CardTitle>
             </div>
             <CardDescription>
@@ -466,7 +466,7 @@ export default function ResidentDashboardPage() {
                   key={option.label}
                   className="flex gap-3 rounded-lg border border-dashed border-primary/30 bg-background/80 p-3"
                 >
-                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{option.label}</p>
                     <p className="text-sm text-muted-foreground">{option.description}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   usePathname,
   useRouter,
@@ -146,12 +146,23 @@ export default function AdminForumsPage() {
           ...prev,
           ...patch,
         };
-        syncFiltersToUrl(merged);
         return merged;
       });
     },
-    [syncFiltersToUrl]
+    []
   );
+
+  // Add a useEffect to sync URL when filters change
+  // But only sync if the change didn't come from URL params (to avoid loops)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    // Skip on initial mount to avoid syncing URL params back
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    syncFiltersToUrl(filters);
+  }, [filters, syncFiltersToUrl]);
 
   useEffect(() => {
     setFilters((prev) => ({
@@ -166,6 +177,8 @@ export default function AdminForumsPage() {
       startDate: searchParams.get("startDate") ?? DEFAULT_FILTERS.startDate,
       endDate: searchParams.get("endDate") ?? DEFAULT_FILTERS.endDate,
     }));
+    // Reset initial mount flag when searchParams change
+    isInitialMount.current = true;
   }, [searchParams]);
 
   useEffect(() => {
@@ -407,10 +420,10 @@ export default function AdminForumsPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <div className="rounded-3xl border border-dashed border-border/60 bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-dashed border-border/60 bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
                 <MessageSquare className="h-4 w-4" />
                 Forums
               </div>
@@ -474,7 +487,7 @@ export default function AdminForumsPage() {
                       {stat.label}
                     </p>
                     <span className="rounded-xl bg-muted/60 p-2">
-                      <Icon className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+                      <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
                     </span>
                   </div>
                   <div className="mt-2 text-2xl font-bold text-slate-900">
@@ -681,7 +694,7 @@ export default function AdminForumsPage() {
                                 onClick={() =>
                                   router.push(`/admin/forums/topic/${topic.id}`)
                                 }
-                                className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary,#2563eb)]"
+                                className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary,#213928)]"
                               >
                                 {topic.title}
                               </button>
@@ -961,7 +974,7 @@ function CategoryCard({
           <button
             type="button"
             onClick={onOpen}
-            className="text-left text-base font-semibold text-foreground hover:text-[var(--brand-primary,#2563eb)]"
+            className="text-left text-base font-semibold text-foreground hover:text-[var(--brand-primary,#213928)]"
           >
             {category.name}
           </button>

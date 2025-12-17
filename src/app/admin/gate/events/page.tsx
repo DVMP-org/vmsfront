@@ -42,18 +42,18 @@ export default function AdminGateEventsPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <section className="rounded-3xl border border-border/60 bg-muted/60 p-6 shadow-sm">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-wide text-muted-foreground">
+              <p className="text-sm uppercase tracking-wide text-muted">
                 Gate telemetry
               </p>
               <h1 className="text-3xl font-semibold">Gate Events</h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted">
                 Every scan at the community gate, grouped across houses and passes.
               </p>
             </div>
-            <div className="grid gap-3 text-center text-sm md:grid-cols-3 md:text-left">
+            <div className="grid w-full gap-3 text-center text-sm md:w-auto md:grid-cols-3">
               <SummaryPill label="Events logged" value={breakdown.total} />
               <SummaryPill label="Entries" value={breakdown.entries} />
               <SummaryPill label="Exits" value={breakdown.exits} />
@@ -175,9 +175,9 @@ export default function AdminGateEventsPage() {
 
 function SummaryPill({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-background px-4 py-3 shadow-sm">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold text-foreground">{value}</p>
+    <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-left text-muted">
+      <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
+      <p className="text-2xl font-semibold text-white">{value}</p>
     </div>
   );
 }

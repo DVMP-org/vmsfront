@@ -35,7 +35,7 @@ interface ThemeFormState {
 
 const initialFormState: ThemeFormState = {
     name: "",
-    primary_color: "#2563eb",
+    primary_color: "#213928",
     secondary_color: "#64748b",
     logo_url: "",
     dark_logo_url: "",
@@ -68,7 +68,7 @@ export default function BrandingThemesPage() {
         setEditingTheme(theme);
         setFormState({
             name: theme.name || "",
-            primary_color: theme.primary_color || "#2563eb",
+            primary_color: theme.primary_color || "#213928",
             secondary_color: theme.secondary_color || "#64748b",
             logo_url: theme.logo_url || "",
             dark_logo_url: theme.dark_logo_url || "",
@@ -271,7 +271,7 @@ export default function BrandingThemesPage() {
                             Customization workspace
                         </p>
                         <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Palette className="h-6 w-6 text-[var(--brand-primary,#2563eb)]" />
+                            <Palette className="h-6 w-6 text-[var(--brand-primary,#213928)]" />
                             Branding Themes
                         </h1>
                         <p className="text-muted-foreground text-sm">
@@ -279,7 +279,7 @@ export default function BrandingThemesPage() {
                         </p>
                     </div>
                     <Button
-                        className="gap-2 bg-[var(--brand-primary,#2563eb)] text-white hover:bg-[var(--brand-primary,#2563eb)/90]"
+                        className="gap-2 bg-[var(--brand-primary,#213928)] text-white hover:bg-[var(--brand-primary,#213928)/90]"
                         onClick={handleOpenCreateModal}
                     >
                         <Plus className="h-4 w-4" />
@@ -345,7 +345,7 @@ export default function BrandingThemesPage() {
                                 <Input
                                     value={formState.primary_color}
                                     onChange={(e) => setFormState((prev) => ({ ...prev, primary_color: e.target.value }))}
-                                    placeholder="#2563eb"
+                                    placeholder="#213928"
                                     required
                                 />
                             </div>
@@ -467,7 +467,7 @@ export default function BrandingThemesPage() {
                                 <Input
                                     value={formState.primary_color}
                                     onChange={(e) => setFormState((prev) => ({ ...prev, primary_color: e.target.value }))}
-                                    placeholder="#2563eb"
+                                    placeholder="#213928"
                                     required
                                 />
                             </div>

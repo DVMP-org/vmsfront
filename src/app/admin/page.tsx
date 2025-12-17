@@ -41,10 +41,10 @@ export default function AdminDashboardPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Control Tower
               </div>
@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
               </Button>
               <Button
                 type="button"
-                className="border-[var(--brand-primary,#2563eb)] gap-2 text-white bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)/90]"
+                className="border-[var(--brand-primary,#213928)] gap-2 text-white bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)/90]"
                 onClick={() => router.push("/admin/admins/create")}
               >
                 Onboard admin
@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
-                    <span className="rounded-full bg-white/80 p-2 text-[var(--brand-primary,#2563eb)] shadow-sm">
+                    <span className="rounded-full bg-white/80 p-2 text-[var(--brand-primary,#213928)] shadow-sm">
                       <Icon className="h-4 w-4" />
                     </span>
                   </CardHeader>
@@ -144,15 +144,15 @@ export default function AdminDashboardPage() {
                 <ShieldCheck className="h-10 w-10 text-emerald-500" />
               </div>
               <div className="grid gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Total gate passes issued</span>
                   <strong className="text-base text-foreground">{totalGatePasses}</strong>
                 </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Active check-ins</span>
                   <strong className="text-base text-foreground">{activeGatePasses}</strong>
                 </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <span className="flex items-center justify-between rounded-sm border px-3 py-2">
                   <span>Residents per house</span>
                   <strong className="text-base text-foreground">
                     {totalHouses ? Math.round(totalResidents / totalHouses) : 0}
@@ -176,12 +176,12 @@ export default function AdminDashboardPage() {
                 <Button
                   key={cta.label}
                   variant="outline"
-                  className="justify-between text-left py-6 rounded-md"
+                  className="justify-between text-left  hover:text-white/80"
                   onClick={cta.action}
                 >
                   <span className="">
                     <span className="block font-semibold">{cta.label}</span>
-                    <span className="text-xs text-muted-foreground">{cta.hint}</span>
+                    <span className="text-xs text-muted-foreground hover:text-white/80">{cta.hint}</span>
                   </span>
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
                   {houses.slice(0, 5).map((house) => (
                     <article
                       key={house.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
+                      className="flex items-center gap-3  border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)] opacity-80 hover:opacity-100 rounded-sm"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
                         <Building2 className="h-5 w-5" />
@@ -244,9 +244,9 @@ export default function AdminDashboardPage() {
                   {residents.slice(0, 5).map((resident) => (
                     <article
                       key={resident.user.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
+                      className="flex items-center gap-3  border px-3 py-3 transition hover:border-[var(--brand-primary,#213928)] opacity-80 hover:opacity-100 rounded-sm"
                     >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)] font-semibold">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)] font-semibold">
                         {getInitials(resident.user.first_name, resident.user.last_name)}
                       </div>
                       <div className="min-w-0 flex-1">

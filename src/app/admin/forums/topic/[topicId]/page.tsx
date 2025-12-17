@@ -536,7 +536,7 @@ function PostItem({
   const bubbleClasses = cn(
     "rounded-2xl border px-4 py-3 shadow-sm space-y-3 max-w-xl",
     isOwn
-      ? "bg-[var(--brand-primary,#2563eb)] text-white border-transparent"
+      ? "bg-[var(--brand-primary,#213928)] text-white border-transparent"
       : "bg-white text-foreground border-border/70"
   );
   const metaRowClasses = cn(

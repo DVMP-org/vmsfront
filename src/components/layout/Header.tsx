@@ -96,7 +96,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             href={dashboardHref}
             className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold"
           >
-            {/* <Home className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+            {/* <Home className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
             <span className="truncate">
               {branding?.app_name || "VMSCORE"}
             </span> */}
@@ -114,7 +114,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           {selectedHouse && !isAdminRoute && isHouseRoute && (
             <div className="hidden md:flex items-center gap-2 rounded-full px-3 py-1 text-xs text-muted-foreground">
-              <Building2 className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+              <Building2 className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
               <span className="font-semibold text-foreground">
                 {selectedHouse.name}
               </span>
@@ -129,7 +129,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               onClick={() => setMenuOpen((prev) => !prev)}
               className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
             >
-              {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#2563eb)]/10 text-[var(--primary,#2563eb)] uppercase">
+              {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#213928)]/10 text-[var(--primary,#213928)] uppercase">
                 {getInitials(user.first_name, user.last_name)}
               </div> */}
               <div className="hidden sm:flex flex-col text-left leading-tight">
@@ -206,7 +206,7 @@ function MenuAction({
       onClick={onClick}
       className="flex w-full items-start gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-muted/50"
     >
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]">
+      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
         <Icon className="h-4 w-4" />
       </div>
       <div>

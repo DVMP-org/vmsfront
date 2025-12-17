@@ -27,6 +27,7 @@ export interface User {
     phone: string | null;
     address: string | null;
     is_active: boolean;
+    avatar_url: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -523,7 +524,6 @@ export interface Wallet {
     id: string;
     resident_id: string;
     balance: number;
-    balance_in_naira: number;
     status: "active" | "frozen" | "closed";
     created_at: string;
     updated_at: string;
@@ -547,7 +547,7 @@ export interface WalletTransaction {
     reference: string;
     amount: number;
     balance_before: number;
-    amount_in_naira: number;
+    amount: number;
     balance_after: number;
     type: "credit" | "debit";
     status: "pending" | "success" | "failed";

@@ -120,7 +120,7 @@ export default function ResidentProfilePage() {
   return (
     <DashboardLayout type="resident">
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-indigo-700 text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-xl font-semibold uppercase shadow-inner">
@@ -178,7 +178,7 @@ export default function ResidentProfilePage() {
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-muted-foreground">Address</label>
                     <textarea
-                      className="min-h-[98px] rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+                      className="min-h-[98px] rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
                       placeholder="Your address"
                       value={contactForm.address}
                       onChange={(event) =>
@@ -352,7 +352,7 @@ function PreferenceToggle({
       className={cn(
         "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition",
         active
-          ? "border-[var(--brand-primary,#2563eb)] bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]"
+          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
           : "border-border/70 text-muted-foreground hover:bg-muted/40"
       )}
     >

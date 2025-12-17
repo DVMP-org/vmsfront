@@ -109,7 +109,7 @@ export default function VisitorDetailPage() {
           </Button>
         </div>
 
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-indigo-700 text-white shadow-xl">
           <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-wide text-white/70">Visitor</p>
@@ -202,7 +202,7 @@ function InfoTile({
   return (
     <div className="rounded-2xl border border-border/60 p-4">
       <p className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+        <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
         {label}
       </p>
       <p className="mt-1 text-base font-semibold text-foreground break-all">{value}</p>

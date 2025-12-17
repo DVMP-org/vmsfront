@@ -40,7 +40,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/70 bg-background shadow-inner transition focus-within:border-[var(--brand-primary,#2563eb)]",
+        "rounded-2xl border border-border/70 bg-background shadow-inner transition focus-within:border-[var(--brand-primary,#213928)]",
         className
       )}
     >

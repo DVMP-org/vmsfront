@@ -279,7 +279,6 @@ function GateConsoleContent() {
               <Button
                 onClick={() => handleScan()}
                 isLoading={isLoading}
-                size="lg"
               >
                 <Scan className="h-5 w-5 mr-2" />
                 Scan

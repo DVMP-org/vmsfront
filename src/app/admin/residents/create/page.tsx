@@ -182,7 +182,7 @@ export default function CreateResidentPage() {
                       className={cn(
                         "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
                         mode === value
-                          ? "border-[var(--brand-primary,#2563eb)] bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]"
+                          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
                           : "border-border text-muted-foreground hover:text-foreground"
                       )}
                     >

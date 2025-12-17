@@ -107,11 +107,11 @@ export default function AdminGateEventDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                   <p className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+                        <MapPin className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
                         {data?.gate_pass?.house_id ?? "No house ID"}
                   </p>
                   <p className="flex items-center gap-2">
-                    <Fingerprint className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+                        <Fingerprint className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
                         Owner type: {titleCase(data.owner_type) ?? "Unknown"}
                   </p>
                 </CardContent>
@@ -162,7 +162,7 @@ function ButtonRow({ onBack }: { onBack: () => void }) {
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-primary,#2563eb)] transition hover:text-[var(--brand-primary,#2563eb)]/80"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-primary,#213928)] transition hover:text-[var(--brand-primary,#213928)]/80"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to events

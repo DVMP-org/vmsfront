@@ -226,7 +226,7 @@ export default function ResidentOnboardingPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card/80 px-8 py-6 text-center shadow-xl">
-          <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-primary,#2563eb)]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-primary,#213928)]" />
           <p className="text-sm text-muted-foreground">
             Preparing your onboarding experience...
           </p>
@@ -257,10 +257,10 @@ export default function ResidentOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-[var(--brand-primary,#2563eb)]/5 px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-[var(--brand-primary,#213928)]/5 px-4 py-10">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
             <Home className="h-6 w-6" />
           </div>
           <h1 className="text-3xl font-semibold text-foreground">Resident onboarding</h1>
@@ -270,11 +270,11 @@ export default function ResidentOnboardingPage() {
           </p>
         </div>
 
-        <Card className="border-[var(--brand-primary,#2563eb)]/10">
+        <Card className="border-[var(--brand-primary,#213928)]/10">
           {alreadyOnboarded ? (
             <>
               <CardHeader className="text-center space-y-3">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <CardTitle>You're already onboarded</CardTitle>
@@ -314,7 +314,7 @@ export default function ResidentOnboardingPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-[var(--brand-primary,#2563eb)] text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
+                        className="border-[var(--brand-primary,#213928)] text-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/10"
                       onClick={handleAddSlug}
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -333,7 +333,7 @@ export default function ResidentOnboardingPage() {
                       selectedSlugs.map((slug) => (
                         <span
                           key={slug}
-                          className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary,#2563eb)]/40 bg-[var(--brand-primary,#2563eb)]/10 px-3 py-1 text-xs font-semibold text-[var(--brand-primary,#2563eb)]"
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary,#213928)]/40 bg-[var(--brand-primary,#213928)]/10 px-3 py-1 text-xs font-semibold text-[var(--brand-primary,#213928)]"
                         >
                           {slug}
                           <button
@@ -366,7 +366,7 @@ export default function ResidentOnboardingPage() {
                         <button
                           type="button"
                           key={house.slug}
-                          className="rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition hover:border-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/5"
+                          className="rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition hover:border-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/5"
                           onClick={() => {
                             setSelectedSlugs((prev) => {
                               const exists = prev.some(
@@ -435,7 +435,7 @@ export default function ResidentOnboardingPage() {
                   />
                 </div>
 
-                <div className="rounded-2xl border border-dashed border-[var(--brand-primary,#2563eb)]/40 bg-[var(--brand-primary,#2563eb)]/5 p-4 text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-dashed border-[var(--brand-primary,#213928)]/40 bg-[var(--brand-primary,#213928)]/5 p-4 text-sm text-muted-foreground">
                   <p className="font-semibold text-foreground">
                     Need your house slug?
                   </p>
@@ -448,7 +448,7 @@ export default function ResidentOnboardingPage() {
               <CardFooter>
                 <Button
                   type="submit"
-                  className="w-full bg-[var(--brand-primary,#2563eb)] text-white hover:bg-[var(--brand-primary,#2563eb)]/90"
+                    className="w-full bg-[var(--brand-primary,#213928)] text-white hover:bg-[var(--brand-primary,#213928)]/90"
                   disabled={selectedSlugs.length === 0}
                   isLoading={onboardingMutation.isPending}
                 >
