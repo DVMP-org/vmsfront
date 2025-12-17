@@ -100,7 +100,7 @@ export default function LoginPage() {
             </span>
             <Link
               href="/auth/register"
-              className="text-primary hover:underline font-medium"
+              className="text-[var(--brand-primary)] hover:underline font-medium"
             >
               Sign up
             </Link>

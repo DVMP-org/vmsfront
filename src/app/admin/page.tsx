@@ -176,12 +176,12 @@ export default function AdminDashboardPage() {
                 <Button
                   key={cta.label}
                   variant="outline"
-                  className="justify-between text-left py-6 rounded-md"
+                  className="justify-between text-left py-6 rounded-md hover:text-white/80"
                   onClick={cta.action}
                 >
                   <span className="">
                     <span className="block font-semibold">{cta.label}</span>
-                    <span className="text-xs text-muted-foreground">{cta.hint}</span>
+                    <span className="text-xs text-muted-foreground hover:text-white/80">{cta.hint}</span>
                   </span>
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>
