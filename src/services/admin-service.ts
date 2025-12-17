@@ -396,12 +396,5 @@ export const adminService = {
         return apiClient.post(`/admin/branding/theme/${themeId}/activate`);
     },
 
-    // Plugins
-    async getPlugins(): Promise<ApiResponse<any[]>> {
-        return apiClient.get("/admin/plugins");
-    },
 
-    async togglePlugin(pluginId: string): Promise<ApiResponse<any>> {
-        return apiClient.put(`/admin/plugins/${pluginId}/enable`);
-    },
 };
