@@ -28,7 +28,7 @@ function determineIsAdmin(admin?: DashboardSelect["admin"] | null): boolean {
 
 export default function SelectPage() {
   const router = useRouter();
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
   const { data, isLoading, isFetching } = useProfile();
   const { setSelectedHouse } = useAppStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -63,8 +63,8 @@ export default function SelectPage() {
       <Header />
       <div className="max-w-md mx-auto py-10 px-4 space-y-6">
         <div className="text-center space-y-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand-primary,theme(colors.blue.500))]/10">
-            <Sparkles className="h-6 w-6 text-[var(--brand-primary,theme(colors.blue.500))]" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary,theme(colors.blue.500))]/10">
+            <Sparkles className="h-10 w-10 text-[var(--primary,theme(colors.blue.500))]" />
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -86,71 +86,70 @@ export default function SelectPage() {
             <CardSkeleton />
           </div>
         ) : (
-            <div className="space-y-8">
+          <div className="space-y-8">
             {houses.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    My Houses
-                  </p>
-                  <div className="space-y-4">
-                    {houses.map((house) => {
-                      const cardId = `house-${house.id}`;
-                      return (
-                        <DashboardCard
-                          key={cardId}
-                          icon={
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--brand-primary,theme(colors.blue.500))] ">
-                              <Home className="h-5 w-5" />
-                            </div>
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  My Houses
+                </p>
+                <div className="space-y-4">
+                  {houses.map((house) => {
+                    const cardId = `house-${house.id}`;
+                    return (
+                      <DashboardCard
+                        key={cardId}
+                        icon={
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--primary,theme(colors.blue.500))] ">
+                            <Home className="h-5 w-5" />
+                          </div>
                         }
-                          title={house.name}
-                          subtitle={house.address}
-                          badge="Resident"
-                          selected={selectedCard === cardId}
-                          onClick={() => handleSelectHouse(house)}
-                        />
-                      );
-                    })}
+                        title={house.name}
+                        subtitle={house.address}
+                        badge="Resident"
+                        selected={selectedCard === cardId}
+                        onClick={() => handleSelectHouse(house)}
+                      />
+                    );
+                  })}
                 </div>
               </div>
-
             )}
 
-              <AddNewCard onClick={() => router.push("resident/onboard/new/house")} />
+            <AddNewCard
+              onClick={() => router.push("resident/onboard/new/house")}
+            />
 
             {isAdmin && (
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Admin Dashboard
-                  </p>
-                  <DashboardCard
-                    icon={
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--brand-primary,theme(colors.blue.500))] ">
-                        <Shield className="h-5 w-5" />
-                      </div>
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Admin Dashboard
+                </p>
+                <DashboardCard
+                  icon={
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--primary,theme(colors.blue.500))] ">
+                      <Shield className="h-5 w-5" />
+                    </div>
                   }
-                    title="Admin Console"
-                    subtitle="Manage houses, residents, passes, and analytics."
-                    badge="Full access"
-                    selected={selectedCard === "admin"}
+                  title="Admin Console"
+                  subtitle="Manage houses, residents, passes, and analytics."
+                  badge="Full access"
+                  selected={selectedCard === "admin"}
                   onClick={handleSelectAdmin}
                 >
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <ShieldCheck className="h-4 w-4" />
-                      <span>Role detected</span>
-                    </div>
-                  </DashboardCard>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>Role detected</span>
+                  </div>
+                </DashboardCard>
               </div>
             )}
 
-
-
-              {noDestinations && (
-                <EmptyState
-                  icon={KeyRound}
-                  title="No dashboard options available yet"
-                  description="We don't see any house memberships or admin roles assigned yet. Please contact your estate administrator for access."
-                />
+            {noDestinations && (
+              <EmptyState
+                icon={KeyRound}
+                title="No dashboard options available yet"
+                description="We don't see any house memberships or admin roles assigned yet. Please contact your estate administrator for access."
+              />
             )}
           </div>
         )}
@@ -186,32 +185,29 @@ function DashboardCard({
         "w-full text-left",
         "flex items-center justify-between rounded-2xl border border-gray-200 bg-white shadow-sm p-4",
         "transition-all duration-200",
-        "dark:bg-[color:var(--brand-primary,#0f172a)] dark:border-[color:var(--brand-primary,#0f172a)]/30",
-        selected &&
-        "border-2 bg-[var(--brand-primary,theme(colors.blue.500))]/5"
+        "dark:bg-[color:var(--primary,#0f172a)] dark:border-[color:var(--primary,#0f172a)]/30",
+        selected && "border-2 bg-[var(--primary,theme(colors.blue.500))]/5"
       )}
     >
-      <div className="flex items-center gap-4">
-        {icon}
+      <div className="flex gap-4">
+        <div className="h-full">
+          <div className="h-full">{icon}</div>
+        </div>
         <div>
           <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
             {title}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {subtitle}
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
           {children && <div className="mt-2">{children}</div>}
+          {/* {badge && (
+            <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              {badge}
+            </span>
+          )} */}
         </div>
       </div>
       <div className="flex flex-col items-end gap-2">
-        {badge && (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-            {badge}
-          </span>
-        )}
-        {selected && (
-          <CheckCircle2 className="h-5 w-5" />
-        )}
+        {selected && <CheckCircle2 className="h-5 w-5" />}
       </div>
     </button>
   );

@@ -11,32 +11,32 @@
     --card-foreground: 240 10% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 4%;
-    
+
     /* Primary - deeper, more confident blue */
     --primary: 220 90% 56%;
     --primary-foreground: 0 0% 100%;
-    
+
     /* Secondary - warmer gray with subtle warmth */
     --secondary: 240 6% 90%;
     --secondary-foreground: 240 10% 4%;
-    
+
     /* Muted - softer, more refined */
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
-    
+
     /* Accent - complementary warm tone */
     --accent: 240 5% 96%;
     --accent-foreground: 240 10% 4%;
-    
+
     /* Destructive - more vibrant, less generic */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Borders and inputs - sharper definition */
     --border: 240 6% 90%;
     --input: 240 6% 90%;
     --ring: 220 90% 56%;
-    
+
     /* Border radius - varied, more organic values */
     --radius-xs: 0.25rem;
     --radius-sm: 0.5rem;
@@ -44,9 +44,9 @@
     --radius-lg: 0.875rem;
     --radius-xl: 1.125rem;
     --radius: 0.875rem; /* Default */
-    
+
     /* Brand colors - more distinctive */
-    --brand-primary: #1e40af;
+    --brand-primary: #213928;
     --brand-secondary: #475569;
   }
 
@@ -58,32 +58,32 @@
     --card-foreground: 240 5% 96%;
     --popover: 240 6% 10%;
     --popover-foreground: 240 5% 96%;
-    
+
     /* Primary - brighter for contrast */
     --primary: 220 90% 61%;
     --primary-foreground: 240 10% 4%;
-    
+
     /* Secondary - more defined */
     --secondary: 240 5% 15%;
     --secondary-foreground: 240 5% 96%;
-    
+
     /* Muted - better contrast */
     --muted: 240 4% 16%;
     --muted-foreground: 240 5% 65%;
-    
+
     /* Accent */
     --accent: 240 4% 16%;
     --accent-foreground: 240 5% 96%;
-    
+
     /* Destructive - softer in dark mode */
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Borders - more visible */
     --border: 240 4% 16%;
     --input: 240 4% 16%;
     --ring: 220 90% 61%;
-    
+
     /* Brand colors - adjusted for dark */
     --brand-primary: #3b82f6;
     --brand-secondary: #64748b;
@@ -106,34 +106,35 @@
   .card-base {
     @apply border border-border/60 bg-card;
     border-radius: var(--radius-lg);
-    box-shadow: 
-      0 1px 2px 0 rgba(0, 0, 0, 0.03),
-      0 1px 3px 0 rgba(0, 0, 0, 0.06),
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.06),
       0 2px 6px -1px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
   }
-  
+
   .card-base:hover {
-    box-shadow: 
-      0 2px 4px 0 rgba(0, 0, 0, 0.04),
-      0 4px 8px 0 rgba(0, 0, 0, 0.06),
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 4px 8px 0 rgba(0, 0, 0, 0.06),
       0 8px 16px -2px rgba(0, 0, 0, 0.08);
     border-color: hsl(var(--border));
   }
-  
+
   /* Subtle inset effect for depth */
   .card-inset {
     position: relative;
   }
-  
+
   .card-inset::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0)
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

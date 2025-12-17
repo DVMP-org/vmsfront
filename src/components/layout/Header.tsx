@@ -11,12 +11,14 @@ import {
   Settings,
   User,
   ChevronDown,
+  ChevronsUpDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
 import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
 import { Button } from "../ui/Button";
 import { cn, getFullName, getInitials } from "@/lib/utils";
+import { LogoFull } from "../LogoFull";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -92,8 +94,13 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           <Link
             href={dashboardHref}
-            className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1.5 text-sm font-semibold"
+            className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold"
           >
+            {/* <Home className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
+            <span className="truncate">
+              {branding?.app_name || "VMSCORE"}
+            </span> */}
+            {/* <LogoFull /> */}
             {logoUrl ? (
               <img
                 src={logoUrl}
@@ -101,19 +108,16 @@ export function Header({ onMenuClick }: HeaderProps) {
                 className="h-5 w-auto max-w-[120px] object-contain"
               />
             ) : (
-                <Home className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
-            )}
-            {!logoUrl && (
-              <span className="truncate">
-                {branding?.app_name || "VMSCORE"}
-              </span>
+              <LogoFull />
             )}
           </Link>
 
           {selectedHouse && !isAdminRoute && isHouseRoute && (
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
+            <div className="hidden md:flex items-center gap-2 rounded-full px-3 py-1 text-xs text-muted-foreground">
               <Building2 className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
-              <span className="font-semibold text-foreground">{selectedHouse.name}</span>
+              <span className="font-semibold text-foreground">
+                {selectedHouse.name}
+              </span>
             </div>
           )}
         </div>
@@ -123,22 +127,22 @@ export function Header({ onMenuClick }: HeaderProps) {
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-full border border-border/60 bg-card px-2 py-1 text-sm font-medium"
+              className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)] font-semibold uppercase">
+              {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#2563eb)]/10 text-[var(--primary,#2563eb)] uppercase">
                 {getInitials(user.first_name, user.last_name)}
-              </div>
+              </div> */}
               <div className="hidden sm:flex flex-col text-left leading-tight">
-                <span className="text-[11px] uppercase text-muted-foreground">
-                  {isAdminUser ? "Admin" : "Resident"}
-                </span>
-                <span className="text-sm font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
+                <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
                   {getFullName(user.first_name, user.last_name)}
                 </span>
+                <span className="text-[9px] uppercase text-muted-foreground">
+                  {isAdminUser ? "Admin" : "Resident"}
+                </span>
               </div>
-              <ChevronDown
+              <ChevronsUpDown
                 className={cn(
-                  "h-4 w-4 text-muted-foreground transition",
+                  "h-6 w-6 text-muted-foreground transition",
                   menuOpen && "rotate-180 text-foreground"
                 )}
               />
