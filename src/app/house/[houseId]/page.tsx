@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { differenceInHours, formatDistanceToNow } from "date-fns";
-import { useResidentDashboard } from "@/hooks/use-resident";
+import { useResidentDashboard, useWallet } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -23,6 +23,7 @@ import {
   Sparkles,
   Ticket,
   Users as UsersIcon,
+  Wallet,
 } from "lucide-react";
 import { formatDateTime, getPassStatusColor } from "@/lib/utils";
 import { GatePassStatus, type GateEvent, type GatePass } from "@/types";
@@ -35,6 +36,7 @@ export default function ResidentDashboardPage() {
   const { selectedHouse, setSelectedHouse } = useAppStore();
   const effectiveHouseId = routeHouseId ?? selectedHouse?.id ?? null;
   const { data: dashboard, isLoading } = useResidentDashboard(effectiveHouseId);
+  const { data: wallet } = useWallet();
 
   useEffect(() => {
     if (dashboard?.house) {
@@ -327,7 +329,32 @@ export default function ResidentDashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <Card
+            className="border border-primary/10 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => router.push("/wallet")}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                  <p className="text-3xl font-semibold mt-1">
+                    {wallet ? new Intl.NumberFormat("en-NG", {
+                      style: "currency",
+                      currency: "NGN",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(wallet.balance_in_naira) : "₦0"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">Click to manage</p>
+                </div>
+                <div className="rounded-full bg-primary/10 p-3">
+                  <Wallet className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border border-primary/10 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center justify-between gap-4">

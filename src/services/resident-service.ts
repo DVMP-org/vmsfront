@@ -20,6 +20,10 @@ import {
   ForumPostCreatePayload,
   ForumPostUpdatePayload,
   ResidentProfileUpdatePayload,
+  Wallet,
+  FundWalletRequest,
+  FundWalletResponse,
+  WalletTransaction,
 } from "@/types";
 
 export const residentService = {
@@ -233,5 +237,30 @@ export const residentService = {
       `/resident/house/${houseId}/forum/topic${topicId}/post/${postId}/update`,
       data
     );
+  },
+
+  // Wallet
+  async getWallet(): Promise<ApiResponse<Wallet>> {
+    return apiClient.get("/resident/wallet");
+  },
+
+  async fundWallet(data: FundWalletRequest): Promise<ApiResponse<FundWalletResponse>> {
+    return apiClient.post("/resident/wallet/fund", data);
+  },
+
+  async getWalletHistory(
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<ApiResponse<PaginatedResponse<WalletTransaction>>> {
+    return apiClient.get("/resident/wallet/history", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+    });
+  },
+
+  async getWalletTransaction(reference: string): Promise<ApiResponse<WalletTransaction>> {
+    return apiClient.get(`/resident/wallet/transaction/${reference}`);
   },
 };

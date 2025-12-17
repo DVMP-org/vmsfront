@@ -5,6 +5,9 @@ import {
   GatePass,
   PaginatedResponse,
   ResidentUserCreate,
+  Wallet,
+  FundWalletRequest,
+  WalletTransaction,
 } from "@/types";
 import { toast } from "sonner";
 
@@ -176,6 +179,61 @@ export function useResidentOnboarding() {
       toast.error(
         error.response?.data?.detail || "Failed to complete onboarding"
       );
+    },
+  });
+}
+
+export function useWallet() {
+  return useQuery({
+    queryKey: ["resident", "wallet"],
+    queryFn: async () => {
+      const response = await residentService.getWallet();
+      return response.data;
+    },
+  });
+}
+
+export function useWalletHistory(page: number = 1, pageSize: number = 20) {
+  return useQuery<PaginatedResponse<WalletTransaction>>({
+    queryKey: ["resident", "wallet", "history", page, pageSize],
+    queryFn: async () => {
+      const response = await residentService.getWalletHistory(page, pageSize);
+      return response.data;
+    },
+  });
+}
+
+export function useWalletTransaction(reference: string | null) {
+  return useQuery<WalletTransaction>({
+    queryKey: ["resident", "wallet", "transaction", reference],
+    queryFn: async () => {
+      if (!reference) throw new Error("Reference is required");
+      const response = await residentService.getWalletTransaction(reference);
+      return response.data;
+    },
+    enabled: !!reference,
+    refetchInterval: (query) => {
+      // Poll every 3 seconds if transaction is pending
+      const data = query.state.data;
+      if (data?.status === "pending") {
+        return 3000;
+      }
+      return false;
+    },
+  });
+}
+
+export function useFundWallet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: FundWalletRequest) => residentService.fundWallet(data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "wallet"] });
+      return response.data;
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to fund wallet");
     },
   });
 }
