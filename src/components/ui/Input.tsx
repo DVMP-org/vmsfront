@@ -219,7 +219,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ) : null}
         </div>
         {description && (
-          <FormDescription className="text-gray-400 text-sm !font-normal">
+          <FormDescription className="text-muted-foreground text-sm !font-normal">
             {description}
           </FormDescription>
         )}

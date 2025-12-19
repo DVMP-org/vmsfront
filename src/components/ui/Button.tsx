@@ -43,12 +43,12 @@ const buttonVariants = cva(
         // outline: "border border-primary text-primary disabled:opacity-60",
         // "destructive-outlined":
         outline:
-          "border-2 border-[var(--brand-primary,#1e40af)] bg-white hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
+          "border-2 border-[var(--brand-primary,#1e40af)] bg-background dark:bg-background hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
         "destructive-outlined":
           "border border-red-600 text-red-600 disabled:opacity-60",
         "light-outlined": "border-white text-white disabled:opacity-60",
         "dark-text":
-          "border-transparent bg-transparent hover:bg-opacity-70 disabled:bg-opacity-70  text-black font-medium",
+          "border-transparent bg-transparent hover:bg-opacity-70 disabled:bg-opacity-70 text-foreground dark:text-foreground font-medium",
         light:
           "border-white bg-white hover:bg-opacity-70 disabled:bg-opacity-70  text-primary font-semibold",
         ghost:

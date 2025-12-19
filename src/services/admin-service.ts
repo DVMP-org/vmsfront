@@ -1,7 +1,10 @@
 import { apiClient } from "@/lib/api-client";
 import {
     House,
+    HouseGroup,
     CreateHouseRequest,
+    CreateHouseGroupRequest,
+    UpdateHouseGroupRequest,
     Admin,
     CreateAdminRequest,
     AdminRole,
@@ -70,6 +73,40 @@ export const adminService = {
 
     async createHouse(data: CreateHouseRequest): Promise<ApiResponse<House>> {
         return apiClient.post("/admin/house/create", data);
+    },
+
+    // House Groups
+    async getHouseGroups(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<HouseGroup>>> {
+        return apiClient.get("/admin/house/group/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async getHouseGroup(groupId: string): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.get(`/admin/house/groups/${groupId}`);
+    },
+
+    async createHouseGroup(data: CreateHouseGroupRequest): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.post("/admin/house/groups", data);
+    },
+
+    async updateHouseGroup(
+        groupId: string,
+        data: UpdateHouseGroupRequest
+    ): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.put(`/admin/house/groups/${groupId}/update`, data);
+    },
+
+    async deleteHouseGroup(groupId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/house/groups/${groupId}`);
     },
 
     // Residents

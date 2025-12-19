@@ -24,6 +24,7 @@ import {
   Puzzle,
   Wallet,
   Palette,
+  FolderTree,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -67,6 +68,7 @@ const adminLinks = [
   { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard },
   { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
   { href: "/admin/houses", label: "Houses", icon: Building2 },
+  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree },
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
@@ -451,7 +453,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 <span className="flex-1 truncate">{link.label}</span>
               )}
               {collapsed && !isMobile && (
-                <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
                   {link.label}
                 </span>
               )}
@@ -507,7 +509,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                     </div>
                   )}
                   {collapsed && !isMobile && (
-                    <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                    <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
                       {plugin.manifest.title}
                     </span>
                   )}
