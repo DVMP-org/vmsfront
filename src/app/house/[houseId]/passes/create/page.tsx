@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCreateGatePass } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
@@ -8,11 +8,10 @@ import { useAuthStore } from "@/store/auth-store";
 import { useResident } from "@/hooks/use-resident";
 import { useProfile } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Plus, Trash2, Home as HomeIcon } from "lucide-react";
+import { Home as HomeIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Visitor {
   name: string;
@@ -41,13 +40,21 @@ export default function CreatePassPage() {
     }
   }, [routeHouseId, profile?.houses, selectedHouse?.id, setSelectedHouse]);
 
+  // Autofocus first field
+  useEffect(() => {
+    nameInputRef.current?.focus();
+  }, []);
+
+  const [visitorName, setVisitorName] = useState("");
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [maxUses, setMaxUses] = useState("");
   const [visitors, setVisitors] = useState<Visitor[]>([
     { name: "", email: "", phone: "" },
   ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const addVisitor = () => {
     setVisitors([...visitors, { name: "", email: "", phone: "" }]);
@@ -70,16 +77,20 @@ export default function CreatePassPage() {
 
     // Validation
     const newErrors: Record<string, string> = {};
+    if (!visitorName.trim()) newErrors.visitorName = "Visitor name is required";
     if (!validFrom) newErrors.validFrom = "Start date is required";
     if (!validTo) newErrors.validTo = "End date is required";
     if (validFrom && validTo && new Date(validFrom) >= new Date(validTo)) {
       newErrors.validTo = "End date must be after start date";
     }
 
-    visitors.forEach((visitor, index) => {
-      if (!visitor.name) newErrors[`visitor_${index}_name`] = "Name is required";
-      if (!visitor.email) newErrors[`visitor_${index}_email`] = "Email is required";
-    });
+    // Advanced mode validation
+    if (showAdvanced) {
+      visitors.forEach((visitor, index) => {
+        if (!visitor.name) newErrors[`visitor_${index}_name`] = "Name is required";
+        if (!visitor.email) newErrors[`visitor_${index}_email`] = "Email is required";
+      });
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -90,6 +101,11 @@ export default function CreatePassPage() {
       return;
     }
 
+    // Use fast mode data or advanced mode data
+    const visitorData = showAdvanced
+      ? visitors.filter(v => v.name && v.email)
+      : [{ name: visitorName, email: "", phone: "" }];
+
     createPassMutation.mutate(
       {
         resident_id: resident.id,
@@ -97,7 +113,7 @@ export default function CreatePassPage() {
         valid_from: new Date(validFrom).toISOString(),
         valid_to: new Date(validTo).toISOString(),
         max_uses: maxUses ? parseInt(maxUses) : undefined,
-        visitors: visitors.filter(v => v.name && v.email),
+        visitors: visitorData,
       },
       {
         onSuccess: (response) => {
@@ -115,100 +131,136 @@ export default function CreatePassPage() {
   if (!houseId) {
     return (
       <DashboardLayout type="resident">
-        <Card>
-          <CardContent className="p-10">
-            <EmptyState
-              icon={HomeIcon}
-              title="Select a house to continue"
-              description="Choose a house from the dashboard selector before creating a pass."
-              action={{
-                label: "Choose House",
-                onClick: () => router.push("/select"),
-              }}
-            />
-          </CardContent>
-        </Card>
+        <div className="border border-zinc-200 rounded bg-white p-8">
+          <EmptyState
+            icon={HomeIcon}
+            title="Select a house to continue"
+            description="Choose a house from the dashboard selector before creating a pass."
+            action={{
+              label: "Choose House",
+              onClick: () => router.push("/select"),
+            }}
+          />
+        </div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout type="resident">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Create Visitor Pass</h1>
-          <p className="text-muted-foreground">
-            Generate a new pass for your visitors
-          </p>
+      <div className="max-w-2xl mx-auto">
+        {/* Compact Header */}
+        <div className="border-b border-zinc-200 pb-3 mb-4">
+          <h1 className="text-lg font-semibold text-zinc-900">Create Visitor Pass</h1>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Pass Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Fast Mode: Essential Fields Only */}
+          <div className="border border-zinc-200 rounded bg-white">
+            <div className="p-4 space-y-3">
+              <Input
+                ref={nameInputRef}
+                label="Visitor Name"
+                placeholder="Enter visitor name"
+                value={visitorName}
+                onChange={(e) => setVisitorName(e.target.value)}
+                error={errors.visitorName}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    document.getElementById("validFrom")?.focus();
+                  }
+                }}
+              />
+              <div className="grid grid-cols-2 gap-3">
                 <Input
+                  id="validFrom"
                   type="datetime-local"
                   label="Valid From"
                   value={validFrom}
                   onChange={(e) => setValidFrom(e.target.value)}
                   error={errors.validFrom}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      document.getElementById("validTo")?.focus();
+                    }
+                  }}
                 />
                 <Input
+                  id="validTo"
                   type="datetime-local"
                   label="Valid To"
                   value={validTo}
                   onChange={(e) => setValidTo(e.target.value)}
                   error={errors.validTo}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      document.getElementById("submitBtn")?.click();
+                    }
+                  }}
                 />
               </div>
+            </div>
+          </div>
 
-              {/* Max Uses */}
-              <Input
-                type="number"
-                label="Max Uses (Optional)"
-                placeholder="Unlimited if not specified"
-                value={maxUses}
-                onChange={(e) => setMaxUses(e.target.value)}
-                min="1"
-              />
-
-              {/* Visitors */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Visitors</h3>
-                  <Button type="button" size="sm" onClick={addVisitor}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Visitor
-                  </Button>
-                </div>
-
-                {visitors.map((visitor, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">Visitor {index + 1}</h4>
+          {/* Advanced Options (Collapsed) */}
+          <div className="border border-zinc-200 rounded bg-zinc-50/30">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
+            >
+              <span className="font-medium">Advanced Options</span>
+              {showAdvanced ? (
+                <ChevronUp className="h-4 w-4 text-zinc-400" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-zinc-400" />
+              )}
+            </button>
+            {showAdvanced && (
+              <div className="border-t border-zinc-200 p-4 space-y-4">
+                <Input
+                  type="number"
+                  label="Max Uses"
+                  placeholder="Unlimited if empty"
+                  value={maxUses}
+                  onChange={(e) => setMaxUses(e.target.value)}
+                  min="1"
+                />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-zinc-700">Multiple Visitors</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addVisitor}
+                      className="h-7 text-xs"
+                    >
+                      Add Visitor
+                    </Button>
+                  </div>
+                  {visitors.map((visitor, index) => (
+                    <div key={index} className="border border-zinc-200 rounded p-3 space-y-2 bg-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-zinc-600">Visitor {index + 1}</span>
                         {visitors.length > 1 && (
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
                             onClick={() => removeVisitor(index)}
+                            className="text-xs text-zinc-400 hover:text-zinc-600"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            Remove
+                          </button>
                         )}
                       </div>
                       <Input
                         label="Name"
                         placeholder="John Doe"
                         value={visitor.name}
-                        onChange={(e) =>
-                          updateVisitor(index, "name", e.target.value)
-                        }
+                        onChange={(e) => updateVisitor(index, "name", e.target.value)}
                         error={errors[`visitor_${index}_name`]}
                       />
                       <Input
@@ -216,40 +268,44 @@ export default function CreatePassPage() {
                         label="Email"
                         placeholder="john@example.com"
                         value={visitor.email}
-                        onChange={(e) =>
-                          updateVisitor(index, "email", e.target.value)
-                        }
+                        onChange={(e) => updateVisitor(index, "email", e.target.value)}
                         error={errors[`visitor_${index}_email`]}
                       />
                       <Input
                         type="tel"
-                        label="Phone (Optional)"
+                        label="Phone"
                         placeholder="+1234567890"
                         value={visitor.phone}
-                        onChange={(e) =>
-                          updateVisitor(index, "phone", e.target.value)
-                        }
+                        onChange={(e) => updateVisitor(index, "phone", e.target.value)}
                       />
                     </div>
-                  </Card>
-                ))}
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
 
-              {/* Actions */}
-              <div className="flex gap-4 justify-end pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" isLoading={createPassMutation.isPending}>
-                  Create Pass
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => router.back()}
+              className="h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              id="submitBtn"
+              type="submit"
+              size="sm"
+              isLoading={createPassMutation.isPending}
+              className="h-9"
+            >
+              Create Pass
+            </Button>
+          </div>
         </form>
       </div>
     </DashboardLayout>
