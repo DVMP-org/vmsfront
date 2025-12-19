@@ -42,6 +42,28 @@ export interface House {
     updated_at: string;
 }
 
+export interface HouseGroup {
+    id: string;
+    name: string;
+    description: string | null;
+    house_ids: string[];
+    houses?: House[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateHouseGroupRequest {
+    name: string;
+    description?: string | null;
+    house_ids: string[];
+}
+
+export interface UpdateHouseGroupRequest {
+    name?: string;
+    description?: string | null;
+    house_ids?: string[];
+}
+
 export interface UserHouseMembership {
     id: string;
     house: House;
@@ -545,7 +567,6 @@ export interface WalletTransaction {
     id: string;
     wallet_id: string;
     reference: string;
-    amount: number;
     balance_before: number;
     amount: number;
     balance_after: number;

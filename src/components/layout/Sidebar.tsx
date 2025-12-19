@@ -24,6 +24,7 @@ import {
   Puzzle,
   Wallet,
   Palette,
+  FolderTree,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -67,6 +68,7 @@ const adminLinks = [
   { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard },
   { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
   { href: "/admin/houses", label: "Houses", icon: Building2 },
+  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree },
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
