@@ -12,6 +12,9 @@ import {
   User,
   ChevronDown,
   ChevronsUpDown,
+  Moon,
+  Sun,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
@@ -45,6 +48,21 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
+  const toggleDarkMode = () => {
+    const root = document.documentElement;
+    const newDarkMode = !root.classList.contains("dark");
+
+    if (newDarkMode) {
+      root.classList.add("dark");
+      localStorage.setItem("darkMode", "true");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("darkMode", "false");
+    }
+
+    setIsDarkMode(newDarkMode);
+  };
+
   useEffect(() => {
     if (!menuOpen) return;
     const handleClick = (event: MouseEvent) => {
@@ -57,14 +75,36 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, [menuOpen]);
 
   useEffect(() => {
+    // Initialize dark mode from localStorage or system preference
+    const root = document.documentElement;
+    const stored = localStorage.getItem("darkMode");
+
+    if (stored === "true") {
+      root.classList.add("dark");
+      setIsDarkMode(true);
+    } else if (stored === "false") {
+      root.classList.remove("dark");
+      setIsDarkMode(false);
+    } else {
+      // Check system preference if no stored preference
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        root.classList.add("dark");
+        setIsDarkMode(true);
+      } else {
+        root.classList.remove("dark");
+        setIsDarkMode(false);
+      }
+    }
+
     // Check for dark mode class on html element
     const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains("dark"));
+      setIsDarkMode(root.classList.contains("dark"));
     };
-    checkDarkMode();
+
     // Watch for changes
     const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
+    observer.observe(root, {
       attributes: true,
       attributeFilter: ["class"],
     });
@@ -123,7 +163,33 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {user && (
-          <div className="relative" ref={menuRef}>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleDarkMode}
+              className="h-9 w-9 p-0"
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0 relative"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {/* Notification badge can be added here later */}
+              {/* <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span> */}
+            </Button>
+
+            <div className="relative" ref={menuRef}>
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -182,6 +248,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </button>
               </div>
             )}
+            </div>
           </div>
         )}
       </div>

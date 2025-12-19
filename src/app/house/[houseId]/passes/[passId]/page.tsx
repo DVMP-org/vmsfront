@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { QRCodeSVG } from "qrcode.react";
-import { formatDateTime, getPassStatusColor } from "@/lib/utils";
+import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
 import { ArrowLeft, Ban, Home as HomeIcon, Copy, Check } from "lucide-react";
 import { GatePassStatus } from "@/types";
 
@@ -112,7 +112,7 @@ export default function PassDetailPage() {
             </Button>
             <h1 className="text-lg font-semibold text-zinc-900">Gate Pass Details</h1>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPassStatusColor(pass.status)}`}>
-              {pass.status}
+              {titleCase(pass.status)}
             </span>
           </div>
         </div>

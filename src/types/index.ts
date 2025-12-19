@@ -180,6 +180,7 @@ export interface ForumPost {
     deleted_at?: string | null;
     restored_at?: string | null;
     posted_by_admin?: boolean;
+    updated_at?: string | null;
 }
 
 export interface ForumTopic {

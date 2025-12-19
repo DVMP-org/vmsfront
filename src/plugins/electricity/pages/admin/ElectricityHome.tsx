@@ -62,21 +62,21 @@ export default function AdminElectricityDashboard() {
             value: stats.total_meters,
             description: `${stats.active_meters} active`,
             icon: Zap,
-            accent: "from-blue-500 to-blue-600",
+            accent: "",
         },
         {
             title: "Total Purchases",
             value: stats.total_purchases,
             description: "All time",
             icon: CreditCard,
-            accent: "from-green-500 to-green-600",
+            accent: "f",
         },
         {
             title: "Total Revenue",
             value: `₦${stats.total_revenue?.toLocaleString()}`,
             description: "All time",
             icon: DollarSign,
-            accent: "from-purple-500 to-purple-600",
+            accent: "",
         },
         {
             title: "Active Houses",
@@ -90,7 +90,7 @@ export default function AdminElectricityDashboard() {
             ).length,
             description: "With meters",
             icon: Users,
-            accent: "from-orange-500 to-orange-600",
+            accent: "",
         },
     ];
 

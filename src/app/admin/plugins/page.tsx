@@ -233,7 +233,7 @@ export default function PluginsPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Extend Functionality
               </div>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-slate-900">
+              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-foreground">
                 Plugins
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
@@ -243,7 +243,7 @@ export default function PluginsPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-slate-900">
+                  <div className="text-2xl font-bold text-foreground">
                     {enabledCount}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -252,7 +252,7 @@ export default function PluginsPage() {
                 </div>
                 <div className="h-10 w-px bg-border" />
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-slate-900">
+                  <div className="text-2xl font-bold text-foreground">
                     {plugins.length}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
