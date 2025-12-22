@@ -212,14 +212,18 @@ export function useWalletTransaction(reference: string | null) {
       return response.data;
     },
     enabled: !!reference,
+    retry: 5, // Retry up to 5 times before giving up
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     refetchInterval: (query) => {
-      // Poll every 3 seconds if transaction is pending
+      // Poll every 3 seconds if transaction is pending or if we don't have data yet
       const data = query.state.data;
-      if (data?.status === "pending") {
+      if (data?.status === "pending" || !data) {
         return 3000;
       }
       return false;
     },
+    // Continue polling for up to 60 seconds
+    refetchIntervalInBackground: true,
   });
 }
 

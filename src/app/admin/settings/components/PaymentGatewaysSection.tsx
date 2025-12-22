@@ -10,19 +10,57 @@ import { Modal } from "@/components/ui/Modal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "sonner";
-import { Edit, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
+import { Edit, CheckCircle2, XCircle, Loader2, AlertCircle, Copy, Check, Webhook } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 
 export function PaymentGatewaysSection() {
     const queryClient = useQueryClient();
     const [editingGateway, setEditingGateway] = useState<PaymentGateway | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [copiedWebhook, setCopiedWebhook] = useState<string | null>(null);
     const [formState, setFormState] = useState<UpdatePaymentGatewayRequest>({
         name: "",
         description: "",
         sandbox_mode: false,
         active: false,
     });
+
+    // Get base URL for webhook generation (uses API URL since webhooks go to backend)
+    const getBaseUrl = () => {
+        if (typeof window === "undefined") return "";
+        // Use API URL from environment variable (webhooks go to backend API)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+        try {
+            // Handle both full URLs and hostname-only strings
+            if (apiUrl.startsWith("http://") || apiUrl.startsWith("https://")) {
+                const url = new URL(apiUrl);
+                return `${url.protocol}//${url.host}`;
+            } else {
+                // If it's a hostname only (like "api.gatekeeperhq.cfd"), add protocol
+                const protocol = window.location.protocol;
+                return `${protocol}//${apiUrl.replace(/^\/+/, "")}`;
+            }
+        } catch {
+            // Fallback to current origin if parsing fails
+            return window.location.origin;
+        }
+    };
+
+    // Generate webhook URL for a gateway
+    const getWebhookUrl = (gatewayName: string) => {
+        const baseUrl = getBaseUrl();
+        const gatewaySlug = gatewayName.toLowerCase().replace(/\s+/g, "-");
+        return `${baseUrl}/webhooks/${gatewaySlug}`;
+    };
+
+    const copyWebhookUrl = (gatewayName: string) => {
+        const webhookUrl = getWebhookUrl(gatewayName);
+        navigator.clipboard.writeText(webhookUrl);
+        setCopiedWebhook(gatewayName);
+        toast.success("Webhook URL copied to clipboard");
+        setTimeout(() => setCopiedWebhook(null), 2000);
+    };
 
     const { data: gateways, isLoading } = useQuery<PaymentGateway[]>({
         queryKey: ["admin", "payment-gateways"],
@@ -62,6 +100,9 @@ export function PaymentGatewaysSection() {
         }
         if (gateway.secret_key !== null) {
             initialFormState.secret_key = gateway.secret_key;
+        }
+        if (gateway.secret_hash !== null) {
+            initialFormState.secret_hash = gateway.secret_hash;
         }
         if (gateway.contract_code !== null) {
             initialFormState.contract_code = gateway.contract_code;
@@ -104,6 +145,9 @@ export function PaymentGatewaysSection() {
         }
         if (editingGateway.secret_key !== null) {
             data.secret_key = formState.secret_key?.trim() || null;
+        }
+        if (editingGateway.secret_hash !== null) {
+            data.secret_hash = formState.secret_hash?.trim() || null;
         }
         if (editingGateway.contract_code !== null) {
             data.contract_code = formState.contract_code?.trim() || null;
@@ -169,52 +213,80 @@ export function PaymentGatewaysSection() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">Gateway</TableHead>
+                            <TableHead className="w-[180px]">Gateway</TableHead>
                             <TableHead>Description</TableHead>
+                            <TableHead className="w-[280px]">Webhook URL</TableHead>
                             <TableHead className="w-[100px]">Mode</TableHead>
                             <TableHead className="w-[100px]">Status</TableHead>
                             <TableHead className="w-[80px] text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {gateways.map((gateway, index) => (
-                            <TableRow key={index}>
-                                <TableCell>
-                                    <div className="font-medium text-sm text-foreground">{gateway.name}</div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="text-xs text-muted-foreground">{gateway.description || "—"}</div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={gateway.sandbox_mode ? "secondary" : "default"} className="text-xs">
-                                        {gateway.sandbox_mode ? "Sandbox" : "Live"}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {gateway.active ? (
-                                        <Badge className="bg-green-500 text-white text-xs">
-                                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                                            Active
+                        {gateways.map((gateway, index) => {
+                            const webhookUrl = getWebhookUrl(gateway.name);
+                            const isCopied = copiedWebhook === gateway.name;
+                            return (
+                                <TableRow key={index}>
+                                    <TableCell>
+                                        <div className="font-medium text-sm text-foreground">{gateway.name}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="text-xs text-muted-foreground">{gateway.description || "—"}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 bg-muted/50 rounded px-2 py-1.5 border border-zinc-200">
+                                                    <Webhook className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                                    <code className="text-xs font-mono text-foreground truncate">
+                                                        {webhookUrl}
+                                                    </code>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => copyWebhookUrl(gateway.name)}
+                                                className="p-1.5 hover:bg-muted rounded transition-colors flex-shrink-0"
+                                                title="Copy webhook URL"
+                                            >
+                                                {isCopied ? (
+                                                    <Check className="h-3.5 w-3.5 text-green-600" />
+                                                ) : (
+                                                    <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={gateway.sandbox_mode ? "secondary" : "default"} className="text-xs">
+                                            {gateway.sandbox_mode ? "Sandbox" : "Live"}
                                         </Badge>
-                                    ) : (
-                                        <Badge variant="secondary" className="text-xs">
-                                            <XCircle className="h-3 w-3 mr-1" />
-                                            Inactive
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleOpenEditModal(gateway)}
-                                        className="h-7 px-2"
-                                    >
-                                        <Edit className="h-3.5 w-3.5" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+                                    <TableCell>
+                                        {gateway.active ? (
+                                            <Badge className="bg-green-500 text-white text-xs">
+                                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                Active
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="text-xs">
+                                                <XCircle className="h-3 w-3 mr-1" />
+                                                Inactive
+                                            </Badge>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleOpenEditModal(gateway)}
+                                            className="h-7 px-2"
+                                        >
+                                            <Edit className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>
@@ -289,6 +361,15 @@ export function PaymentGatewaysSection() {
                             value={formState.secret_key || ""}
                             onChange={(e) => setFormState((prev) => ({ ...prev, secret_key: e.target.value }))}
                             placeholder="Enter secret key"
+                        />
+                    )}
+
+                    {editingGateway?.secret_hash !== null && (
+                        <PasswordInput
+                            label="Secret Hash"
+                            value={formState.secret_hash || ""}
+                            onChange={(e) => setFormState((prev) => ({ ...prev, secret_hash: e.target.value }))}
+                            placeholder="Enter secret hash"
                         />
                     )}
 

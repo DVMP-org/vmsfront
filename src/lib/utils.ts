@@ -41,6 +41,14 @@ export function getFullName(firstName?: string | null, lastName?: string | null)
   return parts.length > 0 ? parts.join(" ") : "Unknown User";
 }
 
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+  }).format(value);
+}
+
 export function isPassValid(validFrom: string, validTo: string): boolean {
   const now = new Date();
   const from = new Date(validFrom);
