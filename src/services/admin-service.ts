@@ -36,6 +36,8 @@ import {
     BrandingTheme,
     CreateBrandingThemeRequest,
     UpdateBrandingThemeRequest,
+    PaymentGateway,
+    UpdatePaymentGatewayRequest,
 } from "@/types";
 
 export const adminService = {
@@ -433,5 +435,15 @@ export const adminService = {
         return apiClient.post(`/admin/branding/theme/${themeId}/activate`);
     },
 
+    // Payment Gateways
+    async getPaymentGateways(): Promise<ApiResponse<PaymentGateway[]>> {
+        return apiClient.get("/admin/config/payment/list");
+    },
 
+    async updatePaymentGateway(
+        gatewayName: string,
+        data: UpdatePaymentGatewayRequest
+    ): Promise<ApiResponse<PaymentGateway>> {
+        return apiClient.put(`/admin/config/payment/gateway/${gatewayName}/update`, data);
+    },
 };

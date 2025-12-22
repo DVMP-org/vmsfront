@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
 
   if (tokenMissing && !resetPassword.isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/10 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/5 via-background to-var(--brand-secondary)/10 px-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader className="space-y-2">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-600">
@@ -86,10 +86,10 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/10 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/5 via-background to-var(--brand-secondary)/10 px-4 py-8">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-var(--brand-primary)/10 text-var(--brand-primary)">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-semibold">
@@ -164,7 +164,7 @@ export default function ResetPasswordPage() {
               href="/auth/login"
               className="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 text-var(--brand-primary)" />
               Back to login
             </Link>
           </form>

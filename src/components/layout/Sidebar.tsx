@@ -72,11 +72,11 @@ const adminLinks = [
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
-  { href: "/admin/branding", label: "Branding", icon: Palette },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/plugins", label: "Plugins", icon: Puzzle },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },
-  { href: "/admin/profile", label: "Profile", icon: Settings },
+  { href: "/admin/profile", label: "Profile", icon: UserCog },
 ];
 
 export function Sidebar({ type, onMobileClose }: SidebarProps) {

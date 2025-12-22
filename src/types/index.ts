@@ -578,3 +578,34 @@ export interface WalletTransaction {
     created_at: string;
     updated_at: string;
 }
+
+// Payment Gateway Types
+export interface PaymentGateway {
+    name: string;
+    description?: string | null;
+    api_key?: string | null;
+    secret_key?: string | null;
+    contract_code?: string | null;
+    client_id?: string | null;
+    client_secret?: string | null;
+    public_key?: string | null;
+    base_url?: string | null;
+    redirect_url?: string | null;
+    sandbox_mode: boolean;
+    active: boolean;
+}
+
+export interface UpdatePaymentGatewayRequest {
+    name: string;
+    description?: string | null;
+    api_key?: string | null;
+    secret_key?: string | null;
+    contract_code?: string | null;
+    client_id?: string | null;
+    client_secret?: string | null;
+    public_key?: string | null;
+    base_url?: string | null;
+    redirect_url?: string | null;
+    sandbox_mode?: boolean;
+    active?: boolean;
+}
