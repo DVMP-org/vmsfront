@@ -585,6 +585,7 @@ export interface PaymentGateway {
     description?: string | null;
     api_key?: string | null;
     secret_key?: string | null;
+    secret_hash?: string | null;
     contract_code?: string | null;
     client_id?: string | null;
     client_secret?: string | null;
@@ -600,6 +601,7 @@ export interface UpdatePaymentGatewayRequest {
     description?: string | null;
     api_key?: string | null;
     secret_key?: string | null;
+    secret_hash?: string | null;
     contract_code?: string | null;
     client_id?: string | null;
     client_secret?: string | null;
