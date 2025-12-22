@@ -59,12 +59,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/10 via-background to-var(--brand-secondary)/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-primary/10">
-              <Home className="h-8 w-8 text-primary" />
+              <Home className="h-8 w-8 text-var(--brand-primary)" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -150,7 +150,7 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/auth/login" className="text-primary hover:underline font-medium">
+            <Link href="/auth/login" className="text-var(--brand-primary) hover:underline font-medium">
               Sign in
             </Link>
           </div>

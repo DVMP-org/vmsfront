@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
       <DashboardLayout type="admin">
         <div className="space-y-4">
           <div className="h-16 border border-zinc-200 bg-zinc-50 animate-pulse rounded" />
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-24 border border-zinc-200 bg-zinc-50 animate-pulse rounded" />
             ))}
@@ -176,10 +176,10 @@ export default function AdminDashboardPage() {
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-            <div>
+          <div>
             <h1 className="text-lg font-semibold text-foreground">Admin Dashboard</h1>
             <p className="text-xs text-muted-foreground mt-0.5">System overview and operations</p>
-              </div>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -188,19 +188,19 @@ export default function AdminDashboardPage() {
               className="text-xs h-8"
             >
               Analytics
-              </Button>
-              <Button
+            </Button>
+            <Button
               size="sm"
-                onClick={() => router.push("/admin/admins/create")}
+              onClick={() => router.push("/admin/admins/create")}
               className="text-xs h-8"
-              >
+            >
               Onboard Admin
-              </Button>
+            </Button>
           </div>
         </div>
 
         {/* Enhanced Stat Cards with Icons */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="border border-zinc-200 rounded-lg   p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-zinc-500 uppercase tracking-wide">Houses</div>
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Gate Pass Status Distribution */}
           <div className="border border-foreground/20 rounded-lg ">
             <div className="border-b  px-4 py-3 rounded-t-lg">
@@ -304,7 +304,7 @@ export default function AdminDashboardPage() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                  <div className="h-[200px] flex items-center justify-center text-xs text-foreground">
+                <div className="h-[200px] flex items-center justify-center text-xs text-foreground">
                   No activity data available
                 </div>
               )}
@@ -335,7 +335,7 @@ export default function AdminDashboardPage() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                  <div className="h-[200px] flex items-center justify-center text-xs text-foreground">
+                <div className="h-[200px] flex items-center justify-center text-xs text-foreground">
                   No event data available
                 </div>
               )}
@@ -344,7 +344,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Operational Metrics with Progress Bar */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="border border-foreground/20 rounded-lg ">
             <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
               <h2 className="text-sm font-semibold text-foreground">Operational Metrics</h2>
@@ -439,39 +439,39 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Recent Activity Tables */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent houses table */}
           <div className="border border-foreground/20 rounded-lg ">
             <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
               <h2 className="text-sm font-semibold text-foreground">Recent Houses</h2>
             </div>
-              {!houses || houses.length === 0 ? (
+            {!houses || houses.length === 0 ? (
               <div className="px-4 py-8 text-center text-xs text-foreground">
-                  No houses yet
+                No houses yet
               </div>
-              ) : (
-                <div className="divide-y divide-zinc-100">
-                  {houses.slice(0, 5).map((house) => (
-                    <div
-                      key={house.id}
-                      className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/admin/houses/${house.id}`)}
-                    >
-                      <div className="flex items-center justify-between">
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {houses.slice(0, 5).map((house) => (
+                  <div
+                    key={house.id}
+                    className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/houses/${house.id}`)}
+                  >
+                    <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-foreground truncate">{house.name}</div>
-                          <div className="text-xs text-muted-foreground truncate mt-0.5">{house.address}</div>
+                        <div className="text-sm font-medium text-foreground truncate">{house.name}</div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{house.address}</div>
                       </div>
                       {house.created_at && (
-                          <div className="text-right ml-4 flex-shrink-0">
-                            <div className="text-xs text-zinc-500">{formatDate(house.created_at)}</div>
+                        <div className="text-right ml-4 flex-shrink-0">
+                          <div className="text-xs text-zinc-500">{formatDate(house.created_at)}</div>
                         </div>
                       )}
-                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Recent residents table */}
@@ -479,35 +479,35 @@ export default function AdminDashboardPage() {
             <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
               <h2 className="text-sm font-semibold text-foreground">Recent Residents</h2>
             </div>
-              {!residents || residents.length === 0 ? (
+            {!residents || residents.length === 0 ? (
               <div className="px-4 py-8 text-center text-xs text-foreground">
-                  No residents yet
+                No residents yet
               </div>
-              ) : (
-                <div className="divide-y divide-zinc-100">
-                  {residents.slice(0, 5).map((resident) => (
-                    <div
-                      key={resident.user.id}
-                      className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/admin/residents/${resident.user.id}`)}
-                    >
-                      <div className="flex items-center justify-between">
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {residents.slice(0, 5).map((resident) => (
+                  <div
+                    key={resident.user.id}
+                    className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/residents/${resident.user.id}`)}
+                  >
+                    <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-foreground truncate">
-                            {getFullName(resident.user.first_name, resident.user.last_name)}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {getFullName(resident.user.first_name, resident.user.last_name)}
                         </div>
-                        <div className="ml-4 flex-shrink-0">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--brand-primary,#213928)] text-muted-foreground">
-                            {resident.houses?.length || 0} {resident.houses?.length === 1 ? 'house' : 'houses'}
-                          </span>
-                        </div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
+                      </div>
+                      <div className="ml-4 flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--brand-primary,#213928)] text-muted-foreground">
+                          {resident.houses?.length || 0} {resident.houses?.length === 1 ? 'house' : 'houses'}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
