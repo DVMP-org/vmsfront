@@ -7,14 +7,14 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterableField } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Users } from "lucide-react";
 import { getFullName } from "@/lib/utils";
+import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
 const PAGE_SIZE = 10;
@@ -26,12 +26,30 @@ export default function ResidentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | undefined>(undefined);
+  const [sort, setSort] = useState<string | null>(null);
+
+  // Build filterable fields from payload
+  const filterableFields = useMemo(() => {
+    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
+    if (status) {
+      fields.push({ field: "status", operator: "eq", value: status });
+    }
+    return fields;
+  }, [status]);
 
   const { data, isLoading, isFetching } = useAdminResidents({
     page,
     pageSize: PAGE_SIZE,
     search: search.trim() || undefined,
     status,
+    filters: formatFiltersForAPI(
+      filterableFields.map((f) => ({
+        field: f.field,
+        operator: f.operator || "eq",
+        value: f.value!,
+      }))
+    ),
+    sort: sort || undefined,
   });
   const importResidentsMutation = useImportResidents();
   const router = useRouter();
@@ -140,23 +158,15 @@ export default function ResidentsPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-                placeholder="Search residents by name, email, or phone..."
-                className="md:w-1/2"
-              />
+            {/* Status Filter */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <select
                 value={status ?? ""}
                 onChange={(event) => {
                   setPage(1);
                   setStatus(event.target.value || undefined);
                 }}
-                className="rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {STATUS_FILTERS.map((filter) => (
                   <option key={filter.label} value={filter.value ?? ""}>
@@ -178,30 +188,32 @@ export default function ResidentsPage() {
                   onClick: () => router.push("/admin/residents/create"),
                 }}
               />
-            ) : (
-              <>
-                <DataTable
-                  data={residents}
-                  columns={columns}
-                  searchable={false}
-                  showPagination={false}
-                  emptyMessage="No residents found"
-                />
-                {showPagination && (
-                  <PaginationBar
-                    page={page}
-                    pageSize={pageSize}
+              ) : (
+                  <DataTable
+                    data={residents}
+                    columns={columns}
+                    searchable={true}
+                    searchPlaceholder="Search residents by name, email, or phone..."
+                    pageSize={PAGE_SIZE}
+                    showPagination={true}
+                    emptyMessage="No residents found"
+                    serverSide={true}
                     total={data?.total ?? residents.length}
-                    totalPages={totalPages}
-                    hasNext={data?.has_next}
-                    hasPrevious={data?.has_previous}
-                    resourceLabel="residents"
-                    onChange={handlePageChange}
-                    isFetching={isFetching}
-                    className="mt-6"
+                    currentPage={page}
+                    onPageChange={handlePageChange}
+                    externalSearch={search}
+                    onSearchChange={(value) => {
+                      setPage(1);
+                      setSearch(value);
+                    }}
+                    filterableFields={filterableFields}
+                    onSortChange={(newSort) => {
+                      setPage(1);
+                      setSort(newSort);
+                    }}
+                    disableClientSideFiltering={true}
+                    disableClientSideSorting={true}
                   />
-                )}
-              </>
             )}
           </CardContent>
         </Card>

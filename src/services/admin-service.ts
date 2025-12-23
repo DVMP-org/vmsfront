@@ -63,12 +63,16 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<House>>> {
         return apiClient.get("/admin/house/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -117,6 +121,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<ResidentUser>>> {
         return apiClient.get("/admin/resident/list", {
             params: {
@@ -124,6 +130,8 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -209,6 +217,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
         return apiClient.get("/admin/gate-passes/", {
             params: {
@@ -216,6 +226,8 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -229,6 +241,9 @@ export const adminService = {
         pageSize?: number;
         passId?: string;
         houseId?: string;
+        search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GateEvent>>> {
         return apiClient.get("/admin/gate-events/", {
             params: {
@@ -236,6 +251,9 @@ export const adminService = {
                 page_size: params?.pageSize ?? 15,
                 pass_id: params?.passId ?? undefined,
                 house_id: params?.houseId ?? undefined,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },

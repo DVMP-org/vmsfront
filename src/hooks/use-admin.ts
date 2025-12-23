@@ -22,6 +22,8 @@ export function useAdminHouses(params: {
   page: number;
   pageSize: number;
   search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<House>>({
     queryKey: ["admin", "houses", params],
@@ -53,6 +55,8 @@ export function useAdminResidents(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<ResidentUser>>({
     queryKey: ["admin", "residents", params],
@@ -210,6 +214,8 @@ export function useAdminGatePasses(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<GatePass>>({
     queryKey: ["admin", "gate-passes", params],
@@ -237,6 +243,9 @@ export function useAdminGateEvents(params: {
   pageSize: number;
   passId?: string;
   houseId?: string;
+  search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<GateEvent>>({
     queryKey: ["admin", "gate-events", params],

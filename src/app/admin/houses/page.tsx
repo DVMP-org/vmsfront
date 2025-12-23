@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useAdminHouses, useCreateHouse, useImportHouses } from "@/hooks/use-admin";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
-import { PaginationBar } from "@/components/ui/PaginationBar";
+import { DataTable, Column, FilterableField } from "@/components/ui/DataTable";
 import { Plus, Building2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { ImportResponse } from "@/types";
 import { House } from "@/types";
@@ -22,6 +22,7 @@ const PAGE_SIZE = 10;
 export default function HousesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -39,10 +40,26 @@ export default function HousesPage() {
     importFormRef.current?.reset();
   };
 
+  // Build filterable fields from payload (currently none for houses, but can add house_id, category_id, etc.)
+  const filterableFields = useMemo(() => {
+    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
+    // Add filters here as needed, e.g.:
+    // if (categoryId) fields.push({ field: "category_id", operator: "eq", value: categoryId });
+    return fields;
+  }, []);
+
   const { data, isLoading, isFetching } = useAdminHouses({
     page,
     pageSize: PAGE_SIZE,
     search: search.trim() || undefined,
+    filters: formatFiltersForAPI(
+      filterableFields.map((f) => ({
+        field: f.field,
+        operator: f.operator || "eq",
+        value: f.value!,
+      }))
+    ),
+    sort: sort || undefined,
   });
   const createHouseMutation = useCreateHouse();
   const importHousesMutation = useImportHouses();
@@ -133,18 +150,6 @@ export default function HousesPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-                placeholder="Search houses..."
-                className="md:w-1/2"
-              />
-            </div>
-
             {isLoading ? (
               <TableSkeleton />
             ) : !houses || houses.length === 0 ? (
@@ -157,30 +162,32 @@ export default function HousesPage() {
                   onClick: () => setIsCreateModalOpen(true),
                 }}
               />
-            ) : (
-              <>
-                <DataTable
-                  data={houses}
-                  columns={columns}
-                  searchable={false}
-                  showPagination={false}
-                  emptyMessage="No houses found"
-                />
-                {showPagination && (
-                  <PaginationBar
-                    page={page}
-                    pageSize={pageSize}
+              ) : (
+                  <DataTable
+                    data={houses}
+                    columns={columns}
+                    searchable={true}
+                    searchPlaceholder="Search houses..."
+                    pageSize={PAGE_SIZE}
+                    showPagination={true}
+                    emptyMessage="No houses found"
+                    serverSide={true}
                     total={data?.total ?? houses.length}
-                    totalPages={totalPages}
-                    hasNext={data?.has_next}
-                    hasPrevious={data?.has_previous}
-                    resourceLabel="houses"
-                    onChange={handlePageChange}
-                    isFetching={isFetching}
-                    className="mt-6"
+                    currentPage={page}
+                    onPageChange={handlePageChange}
+                    externalSearch={search}
+                    onSearchChange={(value) => {
+                      setPage(1);
+                      setSearch(value);
+                    }}
+                    filterableFields={filterableFields}
+                    onSortChange={(newSort) => {
+                      setPage(1);
+                      setSort(newSort);
+                    }}
+                    disableClientSideFiltering={true}
+                    disableClientSideSorting={true}
                   />
-                )}
-              </>
             )}
           </CardContent>
         </Card>
