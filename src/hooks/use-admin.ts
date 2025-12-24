@@ -89,7 +89,10 @@ export function useAdmins() {
     queryKey: ["admin", "admins"],
     queryFn: async () => {
       const response = await adminService.getAdmins();
-      return response.data;
+      // Handle both array and paginated response
+      const data = response.data as any;
+      if (Array.isArray(data)) return data;
+      return data?.items || [];
     },
   });
 }
@@ -386,6 +389,8 @@ export function useAdminHouseGroups(params: {
   page: number;
   pageSize: number;
   search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<HouseGroup>>({
     queryKey: ["admin", "house-groups", params],
@@ -395,6 +400,7 @@ export function useAdminHouseGroups(params: {
     },
   });
 }
+
 
 export function useAdminHouseGroup(groupId: string | null) {
   return useQuery<HouseGroup>({

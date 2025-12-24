@@ -38,6 +38,7 @@ export interface House {
     description: string | null;
     address: string;
     slug?: string | null;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -48,6 +49,7 @@ export interface HouseGroup {
     description: string | null;
     house_ids: string[];
     houses?: House[];
+    is_active: boolean;
     created_at: string;
     updated_at: string;
 }

@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useMemo, useCallback, ReactNode, useEffect, useRef } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "./Table";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowUpDown,
   ArrowUp,
@@ -420,76 +420,76 @@ export function DataTable<T extends Record<string, any>>({
               </TableHead>
             )}
             {safeColumns.map((column) => (
-                <TableHead
-                  key={column.key}
-                  className={column.className}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{column.header}</span>
-                  {column.sortable && !disableClientSideSorting && (
-                      <button
-                        onClick={() => handleSort(column.key)}
-                        className="hover:text-foreground transition-colors"
-                        aria-label={`Sort by ${column.header}`}
-                      >
-                        {sortState.column === column.key ? (
-                          sortState.direction === "asc" ? (
-                            <ArrowUp className="h-4 w-4" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4" />
-                          )
+              <TableHead
+                key={column.key}
+                className={column.className}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{column.header}</span>
+                  {column.sortable && (
+                    <button
+                      onClick={() => handleSort(column.key)}
+                      className="hover:text-foreground transition-colors"
+                      aria-label={`Sort by ${column.header}`}
+                    >
+                      {sortState.column === column.key ? (
+                        sortState.direction === "asc" ? (
+                          <ArrowUp className="h-4 w-4" />
                         ) : (
-                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                          <ArrowDown className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={safeColumns.length + (selectable ? 1 : 0)}
+                className="h-24 text-center"
+              >
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <p className="text-muted-foreground">{emptyMessage}</p>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                    >
+                      Clear filters to see all results
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            paginatedData.map((row, index) => {
+              const rowId = getRowId(row);
+              const isSelected = selected.has(rowId);
+              return (
+                <TableRow key={rowId || index}>
+                  {selectable && (
+                    <TableCell>
+                      <button
+                        onClick={() => toggleRowSelection(rowId)}
+                        className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                        aria-label={isSelected ? "Deselect row" : "Select row"}
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4 text-muted-foreground" />
                         )}
                       </button>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                colSpan={safeColumns.length + (selectable ? 1 : 0)}
-                  className="h-24 text-center"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <p className="text-muted-foreground">{emptyMessage}</p>
-                    {hasActiveFilters && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                      >
-                        Clear filters to see all results
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row, index) => {
-                const rowId = getRowId(row);
-                const isSelected = selected.has(rowId);
-                return (
-                  <TableRow key={rowId || index}>
-                    {selectable && (
-                      <TableCell>
-                        <button
-                          onClick={() => toggleRowSelection(rowId)}
-                          className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                          aria-label={isSelected ? "Deselect row" : "Select row"}
-                        >
-                          {isSelected ? (
-                            <CheckSquare className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Square className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      </TableCell>
-                    )}
+                    </TableCell>
+                  )}
                   {safeColumns.map((column) => (
                     <TableCell key={column.key} className={column.className}>
                       {column.accessor
@@ -497,12 +497,12 @@ export function DataTable<T extends Record<string, any>>({
                         : String(row[column.key] ?? "-")}
                     </TableCell>
                   ))}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
 
       {/* Pagination */}
       {showPagination && totalPages > 1 && (

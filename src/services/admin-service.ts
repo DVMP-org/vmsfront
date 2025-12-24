@@ -86,12 +86,16 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<HouseGroup>>> {
         return apiClient.get("/admin/house/group/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
