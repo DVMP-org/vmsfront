@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses } from "@/hooks/use-admin";
+import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses, useBulkDeleteHouseGroups, useBulkToggleHouseGroupActive } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
-import { Plus, Building2, Edit, Trash2 } from "lucide-react";
+import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { Plus, Building2, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -53,6 +53,14 @@ export default function HouseGroupsPage() {
         house_ids: [] as string[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+
+    // Mutations
+    const createMutation = useCreateHouseGroup();
+    const updateMutation = useUpdateHouseGroup();
+    const deleteMutation = useDeleteHouseGroup();
+    const bulkDeleteMutation = useBulkDeleteHouseGroups();
+    const bulkToggleActiveMutation = useBulkToggleHouseGroupActive();
 
     // Sync state to URL
     useEffect(() => {
@@ -93,9 +101,39 @@ export default function HouseGroupsPage() {
         pageSize: 100,
     });
 
-    const createMutation = useCreateHouseGroup();
-    const updateMutation = useUpdateHouseGroup();
-    const deleteMutation = useDeleteHouseGroup();
+
+    // Bulk actions
+    const handleBulkDelete = (selectedIds: string[]) => {
+        bulkDeleteMutation.mutate(selectedIds, {
+            onSuccess: () => {
+                setSelectedGroups(new Set());
+            },
+        });
+    };
+
+    const handleBulkToggleActive = (selectedIds: string[]) => {
+        bulkToggleActiveMutation.mutate(selectedIds, {
+            onSuccess: () => {
+                setSelectedGroups(new Set());
+            },
+        });
+    };
+
+    const bulkActions: BulkAction[] = [
+        {
+            label: "Toggle Active",
+            icon: CheckCircle,
+            onClick: handleBulkToggleActive,
+            variant: "outline",
+        },
+        {
+            label: "Delete",
+            icon: Trash2,
+            onClick: handleBulkDelete,
+            variant: "destructive",
+            requiresConfirmation: true,
+        },
+    ];
 
     const houseGroups = data?.items ?? [];
     const totalPages = data?.total_pages ?? 1;
@@ -354,23 +392,6 @@ export default function HouseGroupsPage() {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="px-6 py-4">
-                        {/* Filters */}
-                        <div className="flex gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-                            <select
-                                value={status ?? ""}
-                                onChange={(event) => {
-                                    setPage(1);
-                                    setStatus(event.target.value || undefined);
-                                }}
-                                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                {STATUS_FILTERS.map((option) => (
-                                    <option key={option.label} value={option.value ?? ""}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
                         {/* Table */}
                         {isLoading ? (
                             <TableSkeleton />
@@ -415,6 +436,10 @@ export default function HouseGroupsPage() {
                                 disableClientSideFiltering={true}
                                 disableClientSideSorting={false}
                                 className="border border-zinc-200 rounded"
+                                selectable={true}
+                                selectedRows={selectedGroups}
+                                onSelectionChange={setSelectedGroups}
+                                bulkActions={bulkActions}
                             />
                         )}
                     </div>

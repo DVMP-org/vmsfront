@@ -50,6 +50,15 @@ export interface FilterableField {
   value?: string | number | boolean | string[] | null;
 }
 
+export interface BulkAction {
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  onClick: (selectedIds: string[]) => void;
+  variant?: "primary" | "destructive" | "outline" | "secondary" | "ghost";
+  requiresConfirmation?: boolean;
+  confirmationMessage?: string;
+}
+
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
@@ -80,6 +89,11 @@ interface DataTableProps<T> {
   // Disable client-side operations when using API-level
   disableClientSideFiltering?: boolean;
   disableClientSideSorting?: boolean;
+  // Bulk actions
+  bulkActions?: BulkAction[];
+  // Row styling
+  rowClassName?: (row: T) => string;
+  enableRowStriping?: boolean;
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -112,6 +126,9 @@ export function DataTable<T extends Record<string, any>>({
   filterableFields = [],
   disableClientSideFiltering = false,
   disableClientSideSorting = false,
+  bulkActions = [],
+  rowClassName,
+  enableRowStriping = true,
 }: DataTableProps<T>) {
   // Validate and normalize inputs to prevent runtime errors
   const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
@@ -122,6 +139,7 @@ export function DataTable<T extends Record<string, any>>({
 
   const [searchTerm, setSearchTerm] = useState(externalSearch || "");
   const [localSearchTerm, setLocalSearchTerm] = useState(externalSearch || "");
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [sortState, setSortState] = useState<SortState>({
     column: "",
     direction: null,
@@ -161,6 +179,22 @@ export function DataTable<T extends Record<string, any>>({
       }));
   }, [filterableFields]);
 
+  // Build filters from column filters
+  const columnFiltersList = useMemo(() => {
+    return Object.entries(columnFilters)
+      .filter(([_, value]) => value !== "" && value !== undefined)
+      .map(([field, value]) => ({
+        field,
+        operator: "eq" as const,
+        value,
+      }));
+  }, [columnFilters]);
+
+  // Combine API filters and column filters
+  const allFilters = useMemo(() => {
+    return [...apiFilters, ...columnFiltersList];
+  }, [apiFilters, columnFiltersList]);
+
   // Use ref to store the latest onFiltersChange callback to avoid re-renders
   const onFiltersChangeRef = useRef(onFiltersChange);
   useEffect(() => {
@@ -170,9 +204,9 @@ export function DataTable<T extends Record<string, any>>({
   // Notify parent when filters change
   useEffect(() => {
     if (onFiltersChangeRef.current) {
-      onFiltersChangeRef.current(apiFilters);
+      onFiltersChangeRef.current(allFilters);
     }
-  }, [apiFilters]);
+  }, [allFilters]);
 
   // Use external page if provided (server-side), otherwise use internal
   const currentPage = externalPage !== undefined ? externalPage : internalPage;
@@ -364,7 +398,32 @@ export function DataTable<T extends Record<string, any>>({
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = apiFilters.length > 0 || searchValueForFiltering;
+  const handleColumnFilterChange = (columnKey: string, value: string) => {
+    setColumnFilters(prev => {
+      if (value === "" || value === undefined) {
+        const newFilters = { ...prev };
+        delete newFilters[columnKey];
+        return newFilters;
+      }
+      return { ...prev, [columnKey]: value };
+    });
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const hasActiveFilters = allFilters.length > 0 || searchValueForFiltering;
+  const hasSelectedRows = selected.size > 0;
+
+  const handleBulkAction = (action: BulkAction) => {
+    const selectedIds = Array.from(selected);
+
+    if (action.requiresConfirmation) {
+      const message = action.confirmationMessage ||
+        `Are you sure you want to ${action.label.toLowerCase()} ${selectedIds.length} item(s)?`;
+      if (!window.confirm(message)) return;
+    }
+
+    action.onClick(selectedIds);
+  };
 
   return (
     <div className={cn("space-y-3 xs:space-y-4", className)}>
@@ -398,111 +457,197 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Table */}
-      <Table className="min-w-full text-xs sm:text-sm">
-        <TableHeader>
-          <TableRow>
-            {selectable && (
-              <TableHead className="w-12">
-                <button
-                  onClick={toggleSelectAll}
-                  className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                  aria-label={allSelected ? "Deselect all" : "Select all"}
+      {/* Column Filters Bar */}
+      {safeColumns.some(col => col.filterable && col.filterOptions) && (
+        <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+          <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+          {safeColumns
+            .filter(col => col.filterable && col.filterType === "select" && col.filterOptions)
+            .map((column) => (
+              <div key={column.key} className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground whitespace-nowrap">{column.header}:</label>
+                <select
+                  value={columnFilters[column.key] || ""}
+                  onChange={(e) => handleColumnFilterChange(column.key, e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
                 >
-                  {allSelected ? (
-                    <CheckSquare className="h-4 w-4 text-primary" />
-                  ) : someSelected ? (
-                    <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
-                  ) : (
-                    <Square className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-              </TableHead>
-            )}
-            {safeColumns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={column.className}
-              >
-                <div className="flex items-center gap-2">
-                  <span>{column.header}</span>
-                  {column.sortable && (
-                    <button
-                      onClick={() => handleSort(column.key)}
-                      className="hover:text-foreground transition-colors"
-                      aria-label={`Sort by ${column.header}`}
-                    >
-                      {sortState.column === column.key ? (
-                        sortState.direction === "asc" ? (
-                          <ArrowUp className="h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </TableHead>
+                  <option value="">All</option>
+                  {column.filterOptions!.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedData.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={safeColumns.length + (selectable ? 1 : 0)}
-                className="h-24 text-center"
+          {Object.keys(columnFilters).length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="h-9 ml-auto"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Bulk Actions Toolbar */}
+      {selectable && hasSelectedRows && bulkActions.length > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">
+              {selected.size} {selected.size === 1 ? "item" : "items"} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {bulkActions.map((action, index) => (
+              <Button
+                key={index}
+                variant={action.variant || "outline"}
+                size="sm"
+                onClick={() => handleBulkAction(action)}
+                className="gap-2"
               >
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <p className="text-muted-foreground">{emptyMessage}</p>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearAllFilters}
-                    >
-                      Clear filters to see all results
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ) : (
-            paginatedData.map((row, index) => {
-              const rowId = getRowId(row);
-              const isSelected = selected.has(rowId);
-              return (
-                <TableRow key={rowId || index}>
-                  {selectable && (
-                    <TableCell>
+                {action.icon && <action.icon className="h-4 w-4" />}
+                {action.label}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected(new Set())}
+              className="gap-2"
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <Table className="min-w-full text-xs sm:text-sm">
+          <TableHeader>
+            <TableRow>
+              {selectable && (
+                <TableHead className="w-12">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                    aria-label={allSelected ? "Deselect all" : "Select all"}
+                  >
+                    {allSelected ? (
+                      <CheckSquare className="h-4 w-4 text-primary" />
+                    ) : someSelected ? (
+                      <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
+                    ) : (
+                      <Square className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </TableHead>
+              )}
+              {safeColumns.map((column) => (
+                <TableHead
+                  key={column.key}
+                  className={column.className}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{column.header}</span>
+                    {column.sortable && (
                       <button
-                        onClick={() => toggleRowSelection(rowId)}
-                        className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                        aria-label={isSelected ? "Deselect row" : "Select row"}
+                        onClick={() => handleSort(column.key)}
+                        className="hover:text-foreground transition-colors"
+                        aria-label={`Sort by ${column.header}`}
                       >
-                        {isSelected ? (
-                          <CheckSquare className="h-4 w-4 text-primary" />
+                        {sortState.column === column.key ? (
+                          sortState.direction === "asc" ? (
+                            <ArrowUp className="h-4 w-4" />
+                          ) : (
+                            <ArrowDown className="h-4 w-4" />
+                          )
                         ) : (
-                          <Square className="h-4 w-4 text-muted-foreground" />
+                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                         )}
                       </button>
-                    </TableCell>
-                  )}
-                  {safeColumns.map((column) => (
-                    <TableCell key={column.key} className={column.className}>
-                      {column.accessor
-                        ? column.accessor(row)
-                        : String(row[column.key] ?? "-")}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedData.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={safeColumns.length + (selectable ? 1 : 0)}
+                  className="h-24 text-center"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <p className="text-muted-foreground">{emptyMessage}</p>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                      >
+                        Clear filters to see all results
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedData.map((row, index) => {
+                const rowId = getRowId(row);
+                const isSelected = selected.has(rowId);
+                const isEven = index % 2 === 0;
+                const customClassName = rowClassName ? rowClassName(row) : "";
+                const stripingClassName = enableRowStriping && isEven ? "bg-muted/30" : "";
+
+                return (
+                  <TableRow
+                    key={rowId || index}
+                    className={cn(
+                      "hover:bg-muted/50 transition-colors",
+                      stripingClassName,
+                      customClassName,
+                      isSelected && "bg-primary/10"
+                    )}
+                  >
+                    {selectable && (
+                      <TableCell>
+                        <button
+                          onClick={() => toggleRowSelection(rowId)}
+                          className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                          aria-label={isSelected ? "Deselect row" : "Select row"}
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Square className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                      </TableCell>
+                    )}
+                    {safeColumns.map((column) => (
+                      <TableCell key={column.key} className={column.className}>
+                        {column.accessor
+                          ? column.accessor(row)
+                          : String(row[column.key] ?? "-")}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Pagination */}
       {showPagination && totalPages > 1 && (

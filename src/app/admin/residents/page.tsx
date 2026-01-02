@@ -1,32 +1,50 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminResidents, useImportResidents } from "@/hooks/use-admin";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterableField, BulkAction } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { Users } from "lucide-react";
+import { Users, Trash2, Download } from "lucide-react";
 import { getFullName } from "@/lib/utils";
 import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
 const PAGE_SIZE = 10;
-const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
-  { label: "All Residents", value: undefined },
-  { label: "Super User", value: "super_user" },
-];
+
 export default function ResidentsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | undefined>(undefined);
-  const [sort, setSort] = useState<string | null>(null);
+  // URL query sync
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config: {
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      status: { defaultValue: undefined },
+      sort: { defaultValue: null },
+    },
+    skipInitialSync: true,
+  });
+
+  // Initialize state from URL
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
+  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [selectedResidents, setSelectedResidents] = useState<Set<string>>(new Set());
+
+  // Sync state to URL
+  useEffect(() => {
+    syncToUrl({ page, pageSize, search, status, sort });
+  }, [page, pageSize, search, status, sort, syncToUrl]);
 
   // Build filterable fields from payload
   const filterableFields = useMemo(() => {
@@ -39,7 +57,7 @@ export default function ResidentsPage() {
 
   const { data, isLoading, isFetching } = useAdminResidents({
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     search: search.trim() || undefined,
     status,
     filters: formatFiltersForAPI(
@@ -51,8 +69,36 @@ export default function ResidentsPage() {
     ),
     sort: sort || undefined,
   });
+
   const importResidentsMutation = useImportResidents();
   const router = useRouter();
+
+  // Bulk actions
+  const handleBulkDelete = (selectedIds: string[]) => {
+    toast.info(`Deleting ${selectedIds.length} resident(s)...`);
+    setSelectedResidents(new Set());
+  };
+
+  const handleBulkExport = (selectedIds: string[]) => {
+    toast.info(`Exporting ${selectedIds.length} resident(s)...`);
+    // TODO: Implement export functionality
+  };
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Export",
+      icon: Download,
+      onClick: handleBulkExport,
+      variant: "outline",
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: "destructive",
+      requiresConfirmation: true,
+    },
+  ];
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
@@ -65,14 +111,9 @@ export default function ResidentsPage() {
 
   const residents = useMemo(() => data?.items ?? [], [data]);
   const totalPages = data?.total_pages ?? 1;
-  const pageSize = data?.page_size ?? PAGE_SIZE;
-  const showPagination = (data?.total_pages ?? 0) > 1;
+  const total = data?.total ?? 0;
 
-  const handlePageChange = (nextPage: number) => {
-    const safeMax = Math.max(totalPages, 1);
-    const safePage = Math.min(Math.max(nextPage, 1), safeMax);
-    setPage(safePage);
-  };
+
   const columns: Column<ResidentUser>[] = [
     {
       key: "name",
@@ -158,24 +199,6 @@ export default function ResidentsPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-            {/* Status Filter */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <select
-                value={status ?? ""}
-                onChange={(event) => {
-                  setPage(1);
-                  setStatus(event.target.value || undefined);
-                }}
-                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {STATUS_FILTERS.map((filter) => (
-                  <option key={filter.label} value={filter.value ?? ""}>
-                    {filter.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {isLoading ? (
               <TableSkeleton />
             ) : !residents || residents.length === 0 ? (
@@ -188,32 +211,36 @@ export default function ResidentsPage() {
                   onClick: () => router.push("/admin/residents/create"),
                 }}
               />
-              ) : (
-                  <DataTable
-                    data={residents}
-                    columns={columns}
-                    searchable={true}
-                    searchPlaceholder="Search residents by name, email, or phone..."
-                    pageSize={PAGE_SIZE}
-                    showPagination={true}
-                    emptyMessage="No residents found"
-                    serverSide={true}
-                    total={data?.total ?? residents.length}
-                    currentPage={page}
-                    onPageChange={handlePageChange}
-                    externalSearch={search}
-                    onSearchChange={(value) => {
-                      setPage(1);
-                      setSearch(value);
-                    }}
-                    filterableFields={filterableFields}
-                    onSortChange={(newSort) => {
-                      setPage(1);
-                      setSort(newSort);
-                    }}
-                    disableClientSideFiltering={true}
-                    disableClientSideSorting={true}
-                  />
+            ) : (
+              <DataTable
+                data={residents}
+                columns={columns}
+                searchable={true}
+                searchPlaceholder="Search residents by name, email, or phone..."
+                pageSize={pageSize}
+                showPagination={true}
+                emptyMessage="No residents found"
+                serverSide={true}
+                total={total}
+                currentPage={page}
+                onPageChange={setPage}
+                externalSearch={search}
+                onSearchChange={(value) => {
+                  setPage(1);
+                  setSearch(value);
+                }}
+                filterableFields={filterableFields}
+                onSortChange={(newSort) => {
+                  setPage(1);
+                  setSort(newSort);
+                }}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
+                selectable={true}
+                selectedRows={selectedResidents}
+                onSelectionChange={setSelectedResidents}
+                bulkActions={bulkActions}
+              />
             )}
           </CardContent>
         </Card>

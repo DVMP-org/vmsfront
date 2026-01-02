@@ -45,8 +45,8 @@ const COLORS = {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-lg">
-      <p className="font-semibold text-zinc-900 mb-1">{label}</p>
+    <div className="rounded-lg border border-[var(--brand-primary)] bg-white px-3 py-2 text-sm shadow-lg">
+      <p className="font-semibold text-[var(--brand-primary)] mb-1">{label}</p>
       {payload.map((item: any, idx: number) => (
         <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
           <span className="flex items-center gap-2">
@@ -56,7 +56,7 @@ function ChartTooltip({ active, payload, label }: any) {
             />
             {item.name}
           </span>
-          <span className="font-medium text-zinc-900">{item.value}</span>
+          <span className="font-medium text-[var(--brand-primary)]">{item.value}</span>
         </div>
       ))}
     </div>
@@ -149,10 +149,10 @@ export default function AdminDashboardPage() {
     return (
       <DashboardLayout type="admin">
         <div className="space-y-4">
-          <div className="h-16 border border-zinc-200 bg-zinc-50 animate-pulse rounded" />
+          <div className="h-16 border border-[var(--brand-primary)] bg-foreground animate-pulse rounded" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 border border-zinc-200 bg-zinc-50 animate-pulse rounded" />
+              <div key={i} className="h-24 border border-[var(--brand-primary)] bg-foreground animate-pulse rounded" />
             ))}
           </div>
         </div>
