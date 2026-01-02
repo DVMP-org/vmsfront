@@ -464,7 +464,7 @@ export default function AdminGatePassesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

@@ -362,7 +362,7 @@ export default function HouseGroupsPage() {
     ];
 
     return (
-        <DashboardLayout type="admin">
+        <>
             <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="flex-shrink-0 border-b border-border bg-background">
@@ -716,6 +716,6 @@ export default function HouseGroupsPage() {
                     </div>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </>
     );
 }

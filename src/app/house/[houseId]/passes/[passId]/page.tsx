@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useGatePass, useRevokeGatePass } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,7 +25,7 @@ export default function PassDetailPage() {
   const { data: profile } = useProfile();
   const houseId = routeHouseId ?? selectedHouse?.id ?? null;
   const passId = routePassId ?? null;
-  
+
   const { data: pass, isLoading } = useGatePass(houseId, passId);
   const revokePassMutation = useRevokeGatePass(houseId);
   const [copied, setCopied] = useState(false);
@@ -62,7 +61,7 @@ export default function PassDetailPage() {
 
   if (!houseId || !passId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="border border-zinc-200 rounded bg-white p-8">
           <EmptyState
             icon={HomeIcon}
@@ -74,30 +73,30 @@ export default function PassDetailPage() {
             }}
           />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <CardSkeleton />
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!pass) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="text-center py-12">
           <p className="text-sm text-zinc-500">Pass not found</p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="max-w-4xl mx-auto">
         {/* Compact Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-4">
@@ -269,6 +268,6 @@ export default function PassDetailPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

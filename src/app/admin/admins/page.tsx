@@ -70,7 +70,14 @@ export default function AdminManagementPage() {
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
 
-  const { data: admins, isLoading: adminsLoading } = useAdmins();
+  const { data: paginatedAdmins, isLoading: adminsLoading } = useAdmins({
+    page: 1,
+    pageSize: 100,
+  });
+
+  const admins = paginatedAdmins?.items;
+
+
   const { data: roles, isLoading: rolesLoading } = useAdminRoles();
   const createAdmin = useCreateAdmin();
   const updateAdminRole = useUpdateAdminRole();
@@ -137,7 +144,7 @@ export default function AdminManagementPage() {
   const total = filteredAdmins.length;
 
   const stats = useMemo(() => {
-    if (!admins) {
+    if (!admins || !Array.isArray(admins)) {
       return {
         total: 0,
         withCustomPermissions: 0,
@@ -146,9 +153,9 @@ export default function AdminManagementPage() {
       };
     }
     const total = admins.length;
-    const withCustomPermissions = admins.filter((admin) => admin.permissions && admin.permissions !== "").length;
-    const allAccess = admins.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
-    const uniqueRoles = new Set(admins.map((admin) => admin.role_id).filter(Boolean)).size;
+    const withCustomPermissions = admins?.filter((admin) => admin.permissions && admin.permissions !== "").length;
+    const allAccess = admins?.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
+    const uniqueRoles = new Set(admins?.map((admin) => admin.role_id).filter(Boolean)).size;
     return { total, withCustomPermissions, allAccess, uniqueRoles };
   }, [admins]);
 
@@ -322,7 +329,7 @@ export default function AdminManagementPage() {
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -500,6 +507,6 @@ export default function AdminManagementPage() {
           </div>
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

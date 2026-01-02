@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -229,7 +228,7 @@ export default function HouseForumPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -243,7 +242,7 @@ export default function HouseForumPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -253,7 +252,7 @@ export default function HouseForumPage() {
   const showPagination = !hasCategoryFilter && hasPagination;
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
@@ -391,7 +390,7 @@ export default function HouseForumPage() {
                     onClick: () =>
                       handleOpenTopicModal(
                         activeCategoryMeta?.id ??
-                          (categoryFilter !== "all" ? categoryFilter : undefined)
+                        (categoryFilter !== "all" ? categoryFilter : undefined)
                       ),
                   }}
                 />
@@ -454,8 +453,8 @@ export default function HouseForumPage() {
                           Created{" "}
                           {topic.created_at
                             ? formatDistanceToNow(new Date(topic.created_at), {
-                                addSuffix: true,
-                              })
+                              addSuffix: true,
+                            })
                             : "recently"}
                         </p>
                       </div>
@@ -646,7 +645,7 @@ export default function HouseForumPage() {
           )}
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }
 

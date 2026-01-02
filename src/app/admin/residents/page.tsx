@@ -177,7 +177,7 @@ export default function ResidentsPage() {
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -328,6 +328,6 @@ bob@example.com,Bob,Wilson,,,"House B"`}
           )}
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

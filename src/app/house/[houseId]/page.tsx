@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { differenceInHours, formatDistanceToNow } from "date-fns";
 import { useResidentDashboard, useWallet } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
@@ -46,7 +46,7 @@ export default function ResidentDashboardPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -60,29 +60,29 @@ export default function ResidentDashboardPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="grid gap-4 md:grid-cols-3">
           <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!dashboard) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="text-center py-12">
           <p className="text-muted-foreground">No data available</p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -283,7 +283,7 @@ export default function ResidentDashboardPage() {
   ];
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -549,7 +549,7 @@ export default function ResidentDashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

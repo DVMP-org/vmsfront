@@ -45,8 +45,10 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
       <div
         className={cn(
           "fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
-          isMobile && !sidebarOpen && "-translate-x-full",
-          isMobile && sidebarOpen && "translate-x-0"
+          // Base state: Hidden on mobile (translated left), Visible on desktop (reset transform)
+          "-translate-x-full lg:translate-x-0",
+          // Mobile Open state: Visible (slide in)
+          sidebarOpen && "translate-x-0"
         )}
       >
         <Sidebar type={type} onMobileClose={() => setSidebarOpen(false)} />
@@ -54,7 +56,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col w-full lg:w-auto min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} type={type} />
         <main
           className={cn(
             "flex-1 overflow-y-auto",

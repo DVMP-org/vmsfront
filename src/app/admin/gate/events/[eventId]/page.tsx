@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowLeft, Activity, Clock3, MapPin, Fingerprint } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -38,7 +37,7 @@ export default function AdminGateEventDetailPage() {
   }, [data]);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <ButtonRow onBack={() => router.push("/admin/gate/events")} />
 
@@ -107,12 +106,12 @@ export default function AdminGateEventDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                   <p className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
-                        {data?.gate_pass?.house_id ?? "No house ID"}
+                    <MapPin className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                    {data?.gate_pass?.house_id ?? "No house ID"}
                   </p>
                   <p className="flex items-center gap-2">
-                        <Fingerprint className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
-                        Owner type: {titleCase(data.owner_type) ?? "Unknown"}
+                    <Fingerprint className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                    Owner type: {titleCase(data.owner_type) ?? "Unknown"}
                   </p>
                 </CardContent>
               </Card>
@@ -152,7 +151,7 @@ export default function AdminGateEventDetailPage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

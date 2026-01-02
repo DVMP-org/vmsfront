@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "HOST=dashboard.vmscore.test next dev --experimental-https",
     "build": "next build",
     "start": "next start -p $PORT",
     "gcp-build": "node --max_old_space_size=8192 node_modules/.bin/next build",

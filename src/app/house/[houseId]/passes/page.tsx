@@ -6,7 +6,6 @@ import { differenceInHours } from "date-fns";
 import { useGatePasses } from "@/hooks/use-resident";
 import { useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -183,7 +182,7 @@ export default function PassesPage() {
 
   if (!houseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -197,12 +196,12 @@ export default function PassesPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -214,7 +213,6 @@ export default function PassesPage() {
             Create Pass
           </Button>
         </div>
-
         <Card>
           <CardContent className="p-6">
             {isLoading ? (
@@ -230,37 +228,37 @@ export default function PassesPage() {
                 }}
               />
             ) : (
-                  <>
-                    <DataTable
-                      data={passRows}
-                      columns={passColumns}
-                      searchable
-                      showPagination={false}
-                      searchPlaceholder="Search passes..."
-                      emptyMessage="No passes match your filters"
-                    />
-                    <PaginationBar
-                      page={page}
-                      pageSize={pageSize}
-                      total={paginatedPasses?.total ?? passRows.length}
-                      totalPages={paginatedPasses?.total_pages ?? 1}
-                      hasNext={
-                        paginatedPasses?.has_next ??
-                        page < (paginatedPasses?.total_pages ?? 0)
-                      }
-                      hasPrevious={
-                        paginatedPasses?.has_previous ?? page > 1
-                      }
-                      isFetching={isFetching}
-                      resourceLabel="passes"
-                      onChange={(next) => setPage(next)}
-                    />
-                  </>
+              <>
+                <DataTable
+                  data={passRows}
+                  columns={passColumns}
+                  searchable
+                  showPagination={false}
+                  searchPlaceholder="Search passes..."
+                  emptyMessage="No passes match your filters"
+                />
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={paginatedPasses?.total ?? passRows.length}
+                  totalPages={paginatedPasses?.total_pages ?? 1}
+                  hasNext={
+                    paginatedPasses?.has_next ??
+                    page < (paginatedPasses?.total_pages ?? 0)
+                  }
+                  hasPrevious={
+                    paginatedPasses?.has_previous ?? page > 1
+                  }
+                  isFetching={isFetching}
+                  resourceLabel="passes"
+                  onChange={(next) => setPage(next)}
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

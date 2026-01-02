@@ -236,6 +236,7 @@ export interface GateEvent {
     checkin_time: string;
     checkout_time: string | null;
     created_at: string;
+    house_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
     gate_pass?: GatePass;

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { adminService } from "@/services/admin-service";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -223,7 +222,7 @@ export default function PluginsPage() {
   const categories = Array.from(new Set(plugins.map((p) => p.category)));
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         {/* Header Section */}
         <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
@@ -727,6 +726,6 @@ export default function PluginsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </ >
   );
 }

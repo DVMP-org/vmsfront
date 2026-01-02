@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 export interface Column<T> {
   key: string;
-  header: string;
+  header: string | ReactNode;
   accessor?: (row: T) => ReactNode;
   sortable?: boolean;
   filterable?: boolean;
@@ -352,7 +352,7 @@ export function DataTable<T extends Record<string, any>>({
     return result;
   }, [safeData, localSearchTerm, safeColumns, getComparableValue, serverSide, disableClientSideFiltering]);
 
-  // Sort data
+  // Sort data (only if NOT controlled)
   const sortedData = useMemo(() => {
     if (disableClientSideSorting) {
       // Server-side sorting: return data as-is
@@ -363,7 +363,7 @@ export function DataTable<T extends Record<string, any>>({
       return filteredData;
     }
 
-    const column = safeColumns.find((col) => col.key === sortState.column);
+    const column = safeColumns.find((col) => col.key === internalSortState.column);
     if (!column) return filteredData;
 
     return [...filteredData].sort((a, b) => {
@@ -375,7 +375,7 @@ export function DataTable<T extends Record<string, any>>({
         sensitivity: "base",
       });
 
-      return sortState.direction === "asc" ? comparison : -comparison;
+      return internalSortState.direction === "asc" ? comparison : -comparison;
     });
   }, [filteredData, sortState, safeColumns, getComparableValue, disableClientSideSorting]);
 
@@ -648,10 +648,10 @@ export function DataTable<T extends Record<string, any>>({
                       <button
                         onClick={() => handleSort(column.key)}
                         className="hover:text-foreground transition-colors"
-                        aria-label={`Sort by ${column.header}`}
+                        aria-label={`Sort by ${typeof column.header === 'string' ? column.header : column.key}`}
                       >
-                        {sortState.column === column.key ? (
-                          sortState.direction === "asc" ? (
+                        {currentSortColumn === column.key ? (
+                          currentSortDirection === "asc" ? (
                             <ArrowUp className="h-4 w-4" />
                           ) : (
                             <ArrowDown className="h-4 w-4" />

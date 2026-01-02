@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Settings, CreditCard, Palette } from "lucide-react";
 import { PaymentGatewaysSection } from "./components/PaymentGatewaysSection";
 import { BrandingSection } from "./components/BrandingSection";
@@ -12,7 +11,7 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<SettingsTab>("payment");
 
     return (
-        <DashboardLayout type="admin">
+        <>
             <div className="space-y-4">
                 {/* Header */}
                 <div className="border-b border-zinc-200 pb-3">
@@ -28,8 +27,8 @@ export default function SettingsPage() {
                     <button
                         onClick={() => setActiveTab("payment")}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "payment"
-                                ? "border-zinc-900 text-foreground"
-                                : "border-transparent text-muted-foreground hover:text-foreground"
+                            ? "border-zinc-900 text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -40,8 +39,8 @@ export default function SettingsPage() {
                     <button
                         onClick={() => setActiveTab("branding")}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "branding"
-                                ? "border-zinc-900 text-foreground"
-                                : "border-transparent text-muted-foreground hover:text-foreground"
+                            ? "border-zinc-900 text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -57,7 +56,7 @@ export default function SettingsPage() {
                     {activeTab === "branding" && <BrandingSection />}
                 </div>
             </div>
-        </DashboardLayout>
+        </ >
     );
 }
 
