@@ -18,6 +18,7 @@ import { getFullName } from "@/lib/utils";
 import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function ResidentsPage() {
@@ -218,6 +219,8 @@ export default function ResidentsPage() {
                 searchable={true}
                 searchPlaceholder="Search residents by name, email, or phone..."
                 pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
                 showPagination={true}
                 emptyMessage="No residents found"
                 serverSide={true}

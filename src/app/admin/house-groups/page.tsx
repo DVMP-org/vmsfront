@@ -16,7 +16,8 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { HouseGroup, House } from "@/types";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const PAGE_SIZE = 10;
 const STATUS_FILTERS: Array<{ value: string, label: string }> = [
     { value: "all", label: "All" },
     { value: "true", label: "Active" },
@@ -417,6 +418,8 @@ export default function HouseGroupsPage() {
                                 searchable={true}
                                 searchPlaceholder="Search house groups..."
                                 pageSize={pageSize}
+                                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                onPageSizeChange={setPageSize}
                                 showPagination={true}
                                 emptyMessage="No house groups found"
                                 serverSide={true}

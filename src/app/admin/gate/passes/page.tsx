@@ -6,16 +6,16 @@ import { formatDistanceToNow } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField } from "@/components/ui/DataTable";
-import { User, X } from "lucide-react";
+import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import { X } from "lucide-react";
 import { GatePassStatus, GatePass } from "@/types";
 import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/Card";
 
-const PAGE_SIZE_OPTIONS = [20, 50, 100];
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const DEFAULT_PAGE_SIZE = 20;
 const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
   { label: "All statuses", value: undefined },
@@ -145,17 +145,6 @@ export default function AdminGatePassesPage() {
     syncToUrl({ page, pageSize, search, status, houseId, residentId, sort });
   }, [page, pageSize, search, status, houseId, residentId, sort, syncToUrl]);
 
-  // Clear all filters
-  const handleClearFilters = useCallback(() => {
-    setSearch("");
-    setStatus(undefined);
-    setHouseId(undefined);
-    setResidentId(undefined);
-    setSort(null);
-    setPage(1);
-  // URL will be updated via the useEffect above
-  }, []);
-
   // Fetch houses and residents for filter dropdowns
   const { data: housesData } = useAdminHouses({
     page: 1,
@@ -169,32 +158,93 @@ export default function AdminGatePassesPage() {
   const houses = useMemo(() => housesData?.items ?? [], [housesData]);
   const residents = useMemo(() => residentsData?.items ?? [], [residentsData]);
 
-  // Build filterable fields from payload
-  const filterableFields = useMemo(() => {
-    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
+  // Build initial filters from URL state
+  const initialFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
     if (status) {
-      fields.push({ field: "status", operator: "eq", value: status });
+      filters.push({ field: "status", operator: "eq", value: status });
     }
     if (houseId) {
-      fields.push({ field: "house_id", operator: "eq", value: houseId });
+      filters.push({ field: "house_id", operator: "eq", value: houseId });
     }
     if (residentId) {
-      fields.push({ field: "resident_id", operator: "eq", value: residentId });
+      filters.push({ field: "resident_id", operator: "eq", value: residentId });
     }
-    return fields;
+    return filters;
+  }, [status, houseId, residentId]);
+
+  // Define available filters for DataTable
+  const availableFilters: FilterDefinition[] = useMemo(() => {
+    const filters: FilterDefinition[] = [
+      {
+        field: "status",
+        label: "Status",
+        type: "select",
+        options: STATUS_FILTERS.map((f) => ({
+          value: f.value || "",
+          label: f.label,
+        })),
+        operator: "eq",
+      },
+    ];
+
+    // Add house filter if houses are loaded
+    if (houses.length > 0) {
+      filters.push({
+        field: "house_id",
+        label: "House",
+        type: "select",
+        options: [
+          { value: "", label: "All Houses" },
+          ...houses.map((house) => ({
+            value: house.id,
+            label: house.name,
+          })),
+        ],
+        operator: "eq",
+      });
+    }
+
+    // Add resident filter if residents are loaded
+    if (residents.length > 0) {
+      filters.push({
+        field: "resident_id",
+        label: "Resident",
+        type: "select",
+        options: [
+          { value: "", label: "All Residents" },
+          ...residents.map((resident) => ({
+            value: resident.resident.id,
+            label: `${resident.user?.first_name || ""} ${resident.user?.last_name || ""} ${resident.user?.email ? `(${resident.user.email})` : ""}`.trim() || "Unknown",
+          })),
+        ],
+        operator: "eq",
+      });
+    }
+
+    return filters;
+  }, [houses, residents]);
+
+  // Build filters for API from current state
+  const filtersForAPI = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (status) {
+      filters.push({ field: "status", operator: "eq", value: status });
+    }
+    if (houseId) {
+      filters.push({ field: "house_id", operator: "eq", value: houseId });
+    }
+    if (residentId) {
+      filters.push({ field: "resident_id", operator: "eq", value: residentId });
+    }
+    return filters;
   }, [status, houseId, residentId]);
 
   const { data, isLoading, isFetching } = useAdminGatePasses({
     page,
     pageSize,
     search: search.trim() || undefined,
-    filters: formatFiltersForAPI(
-      filterableFields.map((f) => ({
-        field: f.field,
-        operator: f.operator || "eq",
-        value: f.value!,
-      }))
-    ),
+    filters: formatFiltersForAPI(filtersForAPI),
     sort: sort || undefined,
   });
 
@@ -265,7 +315,7 @@ export default function AdminGatePassesPage() {
               {new Date(row.valid_to).toLocaleDateString()}
             </>
           ) : (
-              "Flexible"
+            "Flexible"
           )}
         </span>
       ),
@@ -313,11 +363,11 @@ export default function AdminGatePassesPage() {
   return (
     <DashboardLayout type="admin">
       <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
+        <div className="flex items-center justify-between">
+          <div>
             <h1 className="text-2xl font-bold">Gate Passes</h1>
             <p className="text-muted-foreground">
-                  {total > 0 ? `${total} total pass${total !== 1 ? "es" : ""}` : "All issued gate passes"}
+              {total > 0 ? `${total} total pass${total !== 1 ? "es" : ""}` : "All issued gate passes"}
             </p>
           </div>
         </div>
@@ -355,88 +405,11 @@ export default function AdminGatePassesPage() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-          <select
-            value={status ?? ""}
-            onChange={(event) => {
-              setPage(1);
-              setStatus(event.target.value || undefined);
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {STATUS_FILTERS.map((option) => (
-              <option key={option.label} value={option.value ?? ""}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={houseId ?? ""}
-            onChange={(event) => {
-              setPage(1);
-              setHouseId(event.target.value || undefined);
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">All Houses</option>
-            {houses.map((house) => (
-              <option key={house.id} value={house.id}>
-                {house.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={residentId ?? ""}
-            onChange={(event) => {
-              setPage(1);
-              setResidentId(event.target.value || undefined);
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">All Residents</option>
-            {residents.map((resident) => (
-              <option key={resident.resident.id} value={resident.resident.id}>
-                {resident.user?.first_name} {resident.user?.last_name} {resident.user?.email ? `(${resident.user.email})` : ""}
-              </option>
-            ))}
-          </select>
-          <select
-            value={pageSize}
-            onChange={(event) => {
-              setPage(1);
-              setPageSize(Number(event.target.value));
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size} per page
-              </option>
-            ))}
-          </select>
-          {(search || status || houseId || residentId || sort) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-              className="h-10 gap-2"
-            >
-              <X className="h-4 w-4" />
-              Clear Filters
-            </Button>
-          )}
-        </div>
-
-            {/* Table */}
+        <Card>
+          {/* Table */}
+          <CardContent className="p-6">
             {isLoading ? (
               <TableSkeleton />
-            ) : passes.length === 0 ? (
-              <EmptyState
-                icon={User}
-                title="No passes yet"
-                description="Once visitors or residents generate passes, they will appear here."
-              />
             ) : (
               <DataTable
                 data={passes}
@@ -444,8 +417,13 @@ export default function AdminGatePassesPage() {
                 searchable={true}
                 searchPlaceholder="Search pass code, resident or visitor..."
                 pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={(newPageSize) => {
+                  setPage(1);
+                  setPageSize(newPageSize);
+                }}
                 showPagination={true}
-                emptyMessage="No passes found"
+                emptyMessage="No passes found. Once visitors or residents generate passes, they will appear here."
                 selectable={true}
                 getRowId={(row) => row.id}
                 selectedRows={selectedPasses}
@@ -454,23 +432,35 @@ export default function AdminGatePassesPage() {
                 total={total}
                 currentPage={page}
                 onPageChange={setPage}
-                externalSearch={search}
+                initialSearch={search}
                 onSearchChange={(value) => {
                   setPage(1);
                   setSearch(value);
-                  // URL will be updated via useEffect
                 }}
-                filterableFields={filterableFields}
+                availableFilters={availableFilters}
+                initialFilters={initialFilters}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  // Extract filter values from filters
+                  const statusFilter = filters.find((f) => f.field === "status");
+                  const houseIdFilter = filters.find((f) => f.field === "house_id");
+                  const residentIdFilter = filters.find((f) => f.field === "resident_id");
+                  setStatus(statusFilter?.value as string | undefined);
+                  setHouseId(houseIdFilter?.value as string | undefined);
+                  setResidentId(residentIdFilter?.value as string | undefined);
+                }}
+                initialSort={sort}
                 onSortChange={(newSort) => {
                   setPage(1);
                   setSort(newSort);
-                  // URL will be updated via useEffect
                 }}
                 disableClientSideFiltering={true}
-                disableClientSideSorting={false}
-                className="border border-zinc-200 rounded"
+                disableClientSideSorting={true}
+                className=" rounded"
               />
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

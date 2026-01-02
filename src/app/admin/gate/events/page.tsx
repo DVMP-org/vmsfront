@@ -3,21 +3,18 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Search, X } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { useAdminGateEvents } from "@/hooks/use-admin";
 import { GateEvent } from "@/types";
-import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 import { titleCase } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/Card";
 
-const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
-const DEFAULT_PAGE_SIZE = 15;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const DEFAULT_PAGE_SIZE = 10;
 const OWNER_TYPE_FILTERS: Array<{ label: string; value: string | undefined }> = [
   { label: "All types", value: undefined },
   { label: "Visitor", value: "visitor" },
@@ -115,35 +112,43 @@ export default function AdminGateEventsPage() {
     syncToUrl({ page, pageSize, search, ownerType, sort });
   }, [page, pageSize, search, ownerType, sort, syncToUrl]);
 
-  // Clear all filters
-  const handleClearFilters = useCallback(() => {
-    setSearch("");
-    setOwnerType(undefined);
-    setSort(null);
-    setPage(1);
-    // URL will be updated via the useEffect above
-  }, []);
-
-  // Build filterable fields from payload
-  const filterableFields = useMemo(() => {
-    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
+  // Build initial filters from URL state
+  const initialFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
     if (ownerType) {
-      fields.push({ field: "owner_type", operator: "eq", value: ownerType });
+      filters.push({ field: "owner_type", operator: "eq", value: ownerType });
     }
-    return fields;
+    return filters;
+  }, [ownerType]);
+
+  // Define available filters for DataTable
+  const availableFilters: FilterDefinition[] = useMemo(() => [
+    {
+      field: "owner_type",
+      label: "Owner Type",
+      type: "select",
+      options: OWNER_TYPE_FILTERS.map((f) => ({
+        value: f.value || "",
+        label: f.label,
+      })),
+      operator: "eq",
+    },
+  ], []);
+
+  // Build filters for API from current state
+  const filtersForAPI = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (ownerType) {
+      filters.push({ field: "owner_type", operator: "eq", value: ownerType });
+    }
+    return filters;
   }, [ownerType]);
 
   const { data, isLoading, isFetching } = useAdminGateEvents({
     page,
     pageSize,
     search: search.trim() || undefined,
-    filters: formatFiltersForAPI(
-      filterableFields.map((f) => ({
-        field: f.field,
-        operator: f.operator || "eq",
-        value: f.value!,
-      }))
-    ),
+    filters: formatFiltersForAPI(filtersForAPI),
     sort: sort || undefined,
   });
 
@@ -236,88 +241,55 @@ export default function AdminGateEventsPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-          <select
-            value={ownerType ?? ""}
-            onChange={(event) => {
-              setPage(1);
-              setOwnerType(event.target.value || undefined);
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {OWNER_TYPE_FILTERS.map((option) => (
-              <option key={option.label} value={option.value ?? ""}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={pageSize}
-              onChange={(event) => {
-                setPage(1);
-                setPageSize(Number(event.target.value));
-              }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size} per page
-              </option>
-            ))}
-          </select>
-          {(search || ownerType || sort) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-              className="h-10 gap-2"
-            >
-              <X className="h-4 w-4" />
-              Clear Filters
-            </Button>
-          )}
-        </div>
 
         {/* Table */}
-        {isLoading ? (
-          <TableSkeleton />
-        ) : events.length === 0 ? (
-          <EmptyState
-            icon={Search}
-            title="No events match these filters"
-            description="Try removing filters or check back after the next scan."
-          />
-        ) : (
+        <Card>
+          <CardContent>
+            {isLoading ? (
+              <TableSkeleton />
+            ) : (
               <DataTable
                 data={events}
                 columns={columns}
                 searchable={true}
                 searchPlaceholder="Search events..."
                 pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={(newPageSize) => {
+                  setPage(1);
+                  setPageSize(newPageSize);
+                }}
                 showPagination={true}
-                emptyMessage="No events found"
+                emptyMessage="No events match these filters. Try removing filters or check back after the next scan."
                 serverSide={true}
                 total={total}
                 currentPage={page}
                 onPageChange={setPage}
-                externalSearch={search}
+                initialSearch={search}
                 onSearchChange={(value) => {
                   setPage(1);
                   setSearch(value);
-                  // URL will be updated via useEffect
                 }}
-                filterableFields={filterableFields}
+                availableFilters={availableFilters}
+                initialFilters={initialFilters}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  // Extract owner_type from filters
+                  const ownerTypeFilter = filters.find((f) => f.field === "owner_type");
+                  setOwnerType(ownerTypeFilter?.value as string | undefined);
+                }}
+                initialSort={sort}
                 onSortChange={(newSort) => {
                   setPage(1);
                   setSort(newSort);
-                  // URL will be updated via useEffect
                 }}
                 disableClientSideFiltering={true}
                 disableClientSideSorting={true}
-                className="border border-zinc-200 rounded"
+                className=" rounded"
               />
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

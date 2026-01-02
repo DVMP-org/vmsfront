@@ -26,6 +26,7 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { ImportResponse, House } from "@/types";
 
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function HousesPage() {
@@ -411,6 +412,8 @@ export default function HousesPage() {
                 searchable={true}
                 searchPlaceholder="Search houses..."
                 pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
                 showPagination={true}
                 emptyMessage="No houses found"
                 serverSide={true}

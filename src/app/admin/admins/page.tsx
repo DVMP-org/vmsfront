@@ -39,7 +39,8 @@ const initialFormState: CreateAdminFormState = {
   role_id: "",
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const PAGE_SIZE = 10;
 
 export default function AdminManagementPage() {
   const router = useRouter();
@@ -400,6 +401,8 @@ export default function AdminManagementPage() {
                 searchable={true}
                 searchPlaceholder="Search admins by name, email, or role..."
                 pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
                 showPagination={true}
                 emptyMessage="No admins found"
                 serverSide={false}

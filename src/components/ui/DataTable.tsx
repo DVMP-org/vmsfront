@@ -50,6 +50,14 @@ export interface FilterableField {
   value?: string | number | boolean | string[] | null;
 }
 
+export interface FilterDefinition {
+  field: string;
+  label: string;
+  type: "select";
+  options: Array<{ value: string; label: string }>;
+  operator?: FilterConfig["operator"];
+}
+
 export interface BulkAction {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
@@ -65,6 +73,8 @@ interface DataTableProps<T> {
   searchable?: boolean;
   searchPlaceholder?: string;
   pageSize?: number;
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (pageSize: number) => void;
   showPagination?: boolean;
   emptyMessage?: string;
   className?: string;
@@ -78,13 +88,18 @@ interface DataTableProps<T> {
   total?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
-  // External search/filter (for server-side)
-  externalSearch?: string;
+  // Search - now fully managed internally
+  initialSearch?: string;
   onSearchChange?: (search: string) => void;
-  // API-level operations
+  // Filters - now fully managed internally
+  availableFilters?: FilterDefinition[];
+  initialFilters?: FilterConfig[];
   onFiltersChange?: (filters: FilterConfig[]) => void;
+  // Sort - now fully managed internally
+  initialSort?: string | null;
   onSortChange?: (sort: string | null) => void;
-  // Filterable fields from payload (e.g., status, house_id, category_id)
+  // Legacy props for backward compatibility
+  externalSearch?: string;
   filterableFields?: FilterableField[];
   // Disable client-side operations when using API-level
   disableClientSideFiltering?: boolean;
@@ -108,6 +123,8 @@ export function DataTable<T extends Record<string, any>>({
   searchable = true,
   searchPlaceholder = "Search...",
   pageSize = 10,
+  pageSizeOptions = [10, 20, 30, 50, 100],
+  onPageSizeChange,
   showPagination = true,
   emptyMessage = "No data available",
   className,
@@ -119,10 +136,15 @@ export function DataTable<T extends Record<string, any>>({
   total,
   currentPage: externalPage,
   onPageChange,
-  externalSearch,
+  initialSearch: propInitialSearch = "",
   onSearchChange,
+  availableFilters = [],
+  initialFilters: propInitialFilters = [],
   onFiltersChange,
+  initialSort: propInitialSort = null,
   onSortChange,
+  // Legacy props for backward compatibility
+  externalSearch,
   filterableFields = [],
   disableClientSideFiltering = false,
   disableClientSideSorting = false,
@@ -137,63 +159,110 @@ export function DataTable<T extends Record<string, any>>({
     [columns]
   );
 
-  const [searchTerm, setSearchTerm] = useState(externalSearch || "");
-  const [localSearchTerm, setLocalSearchTerm] = useState(externalSearch || "");
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  const [sortState, setSortState] = useState<SortState>({
-    column: "",
-    direction: null,
-  });
-  const [internalPage, setInternalPage] = useState(1);
+  // Use new props if provided, fall back to legacy props for backward compatibility
+  const effectiveInitialSearch = useMemo(() => propInitialSearch || externalSearch || "", [propInitialSearch, externalSearch]);
+  const effectiveInitialFilters = useMemo(() => {
+    if (propInitialFilters.length > 0) {
+      return propInitialFilters;
+    }
+    if (filterableFields.length > 0) {
+      return filterableFields
+        .filter(f => f.value !== undefined && f.value !== null && f.value !== "")
+        .map(f => ({
+          field: f.field,
+          operator: (f.operator || "eq") as FilterConfig["operator"],
+          value: f.value!,
+        }));
+    }
+    return [];
+  }, [propInitialFilters, filterableFields]);
+
+  // Internal state for search
+  const [localSearchTerm, setLocalSearchTerm] = useState(effectiveInitialSearch);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isUserTypingRef = useRef(false);
-  const lastLocalValueRef = useRef(externalSearch || "");
+  const lastLocalValueRef = useRef(effectiveInitialSearch);
 
-  // Sync local search term with external search when it changes externally (not from user typing)
+  // Internal state for filters - map field to value
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    effectiveInitialFilters.forEach((filter) => {
+      if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
+        initial[filter.field] = String(filter.value);
+      }
+    });
+    return initial;
+  });
+
+  // Internal state for sort
+  const [sortState, setSortState] = useState<SortState>(() => {
+    if (propInitialSort) {
+      const [column, direction] = propInitialSort.split(":");
+      return {
+        column: column || "",
+        direction: (direction === "asc" || direction === "desc" ? direction : null) as SortDirection,
+      };
+    }
+    return { column: "", direction: null };
+  });
+
+  const [internalPage, setInternalPage] = useState(1);
+
+  // Sync local search with external initialSearch
   useEffect(() => {
-    // Only sync if:
-    // 1. externalSearch is defined (controlled mode)
-    // 2. externalSearch actually changed
-    // 3. We're not currently typing (user input takes precedence)
-    // 4. The external value is different from what we last set locally
-    if (externalSearch !== undefined &&
-      externalSearch !== lastLocalValueRef.current &&
+    if (effectiveInitialSearch !== undefined &&
+      effectiveInitialSearch !== lastLocalValueRef.current &&
       !isUserTypingRef.current) {
-      setLocalSearchTerm(externalSearch);
-      lastLocalValueRef.current = externalSearch;
+      setLocalSearchTerm(effectiveInitialSearch);
+      lastLocalValueRef.current = effectiveInitialSearch;
     }
-  }, [externalSearch]);
+  }, [effectiveInitialSearch]);
 
-  // Build filters from filterableFields
-  const apiFilters = useMemo(() => {
-    if (!filterableFields || filterableFields.length === 0) {
-      return [];
+  // Sync filter values with external initialFilters
+  useEffect(() => {
+    const newFilterValues: Record<string, string> = {};
+    effectiveInitialFilters.forEach((filter) => {
+      if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
+        newFilterValues[filter.field] = String(filter.value);
+      }
+    });
+
+    // Only update if values actually changed
+    const hasChanged =
+      Object.keys(newFilterValues).length !== Object.keys(filterValues).length ||
+      Object.keys(newFilterValues).some(key => newFilterValues[key] !== filterValues[key]);
+
+    if (hasChanged) {
+      setFilterValues(newFilterValues);
     }
+  }, [effectiveInitialFilters, filterValues]);
 
-    return filterableFields
-      .filter((field) => field.value !== undefined && field.value !== null && field.value !== "")
-      .map((field) => ({
-        field: field.field,
-        operator: field.operator || "eq",
-        value: field.value!,
+  // Sync sort state with external initialSort
+  useEffect(() => {
+    if (propInitialSort) {
+      const [column, direction] = propInitialSort.split(":");
+      setSortState({
+        column: column || "",
+        direction: (direction === "asc" || direction === "desc" ? direction : null) as SortDirection,
+      });
+    } else {
+      setSortState({ column: "", direction: null });
+    }
+  }, [propInitialSort]);
+
+  // Build filters from internal filterValues
+  const currentFilters = useMemo(() => {
+    return availableFilters
+      .filter((filterDef) => {
+        const value = filterValues[filterDef.field];
+        return value !== undefined && value !== null && value !== "";
+      })
+      .map((filterDef) => ({
+        field: filterDef.field,
+        operator: filterDef.operator || "eq",
+        value: filterValues[filterDef.field],
       }));
-  }, [filterableFields]);
-
-  // Build filters from column filters
-  const columnFiltersList = useMemo(() => {
-    return Object.entries(columnFilters)
-      .filter(([_, value]) => value !== "" && value !== undefined)
-      .map(([field, value]) => ({
-        field,
-        operator: "eq" as const,
-        value,
-      }));
-  }, [columnFilters]);
-
-  // Combine API filters and column filters
-  const allFilters = useMemo(() => {
-    return [...apiFilters, ...columnFiltersList];
-  }, [apiFilters, columnFiltersList]);
+  }, [availableFilters, filterValues]);
 
   // Use ref to store the latest onFiltersChange callback to avoid re-renders
   const onFiltersChangeRef = useRef(onFiltersChange);
@@ -201,20 +270,31 @@ export function DataTable<T extends Record<string, any>>({
     onFiltersChangeRef.current = onFiltersChange;
   }, [onFiltersChange]);
 
-  // Notify parent when filters change
+  // Use ref to track previous filters to avoid infinite loops
+  const prevFiltersRef = useRef<FilterConfig[]>([]);
+
+  // Notify parent when filters change (only if they actually changed)
   useEffect(() => {
-    if (onFiltersChangeRef.current) {
-      onFiltersChangeRef.current(allFilters);
+    // Deep compare to check if filters actually changed
+    const filtersChanged =
+      currentFilters.length !== prevFiltersRef.current.length ||
+      currentFilters.some((filter, idx) => {
+        const prevFilter = prevFiltersRef.current[idx];
+        return !prevFilter ||
+          filter.field !== prevFilter.field ||
+          filter.operator !== prevFilter.operator ||
+          filter.value !== prevFilter.value;
+      });
+
+    if (filtersChanged && onFiltersChangeRef.current) {
+      onFiltersChangeRef.current(currentFilters);
+      prevFiltersRef.current = currentFilters;
     }
-  }, [allFilters]);
+  }, [currentFilters]);
 
   // Use external page if provided (server-side), otherwise use internal
   const currentPage = externalPage !== undefined ? externalPage : internalPage;
   const setCurrentPage = onPageChange || setInternalPage;
-
-  // Use local search term for input value to prevent focus loss, external search for filtering
-  const effectiveSearch = externalSearch !== undefined ? localSearchTerm : searchTerm;
-  const searchValueForFiltering = externalSearch !== undefined ? externalSearch : searchTerm;
 
   // Internal selection state if not controlled
   const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
@@ -255,8 +335,8 @@ export function DataTable<T extends Record<string, any>>({
     let result = [...safeData];
 
     // Apply search
-    if (searchValueForFiltering) {
-      const searchLower = searchValueForFiltering.toLowerCase();
+    if (localSearchTerm) {
+      const searchLower = localSearchTerm.toLowerCase();
       result = result.filter((row) =>
         safeColumns.some((col) => {
           const value = getComparableValue(row, col);
@@ -266,7 +346,7 @@ export function DataTable<T extends Record<string, any>>({
     }
 
     return result;
-  }, [safeData, searchValueForFiltering, safeColumns, getComparableValue, serverSide, disableClientSideFiltering]);
+  }, [safeData, localSearchTerm, safeColumns, getComparableValue, serverSide, disableClientSideFiltering]);
 
   // Sort data
   const sortedData = useMemo(() => {
@@ -348,20 +428,31 @@ export function DataTable<T extends Record<string, any>>({
     setLocalSearchTerm(value);
     lastLocalValueRef.current = value;
 
-    // Update parent state (triggers API call) - but don't block on it
+    // Update parent state (triggers API call)
     if (onSearchChange) {
       onSearchChange(value);
-    } else {
-      setSearchTerm(value);
     }
     setCurrentPage(1);
 
     // Reset typing flag after a delay to allow external updates to sync
-    // This prevents the useEffect from overwriting our local state while typing
     setTimeout(() => {
       isUserTypingRef.current = false;
     }, 300);
   }, [onSearchChange, setCurrentPage]);
+
+  // Handle filter change
+  const handleFilterChange = (field: string, value: string) => {
+    setFilterValues((prev) => {
+      const newValues = { ...prev };
+      if (value === "" || value === undefined) {
+        delete newValues[field];
+      } else {
+        newValues[field] = value;
+      }
+      return newValues;
+    });
+    setCurrentPage(1);
+  };
 
   // Selection handlers
   const toggleRowSelection = (rowId: string) => {
@@ -392,25 +483,12 @@ export function DataTable<T extends Record<string, any>>({
     lastLocalValueRef.current = "";
     if (onSearchChange) {
       onSearchChange("");
-    } else {
-      setSearchTerm("");
     }
+    setFilterValues({});
     setCurrentPage(1);
   };
 
-  const handleColumnFilterChange = (columnKey: string, value: string) => {
-    setColumnFilters(prev => {
-      if (value === "" || value === undefined) {
-        const newFilters = { ...prev };
-        delete newFilters[columnKey];
-        return newFilters;
-      }
-      return { ...prev, [columnKey]: value };
-    });
-    setCurrentPage(1); // Reset to first page when filter changes
-  };
-
-  const hasActiveFilters = allFilters.length > 0 || searchValueForFiltering;
+  const hasActiveFilters = currentFilters.length > 0 || localSearchTerm;
   const hasSelectedRows = selected.size > 0;
 
   const handleBulkAction = (action: BulkAction) => {
@@ -427,69 +505,74 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className={cn("space-y-3 xs:space-y-4", className)}>
-      {/* Search */}
-      {searchable && (
-        <div className="flex flex-col gap-2 xs:gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              key="search-input"
-              ref={searchInputRef}
-              placeholder={searchPlaceholder}
-              value={effectiveSearch}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearAllFilters}
-              className="gap-2 w-full sm:w-auto"
-            >
-              <X className="h-4 w-4" />
-              <span className="hidden xs:inline">Clear Filters</span>
-              <span className="xs:hidden">Clear</span>
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Column Filters Bar */}
-      {safeColumns.some(col => col.filterable && col.filterOptions) && (
-        <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-          <span className="text-sm font-medium text-muted-foreground">Filters:</span>
-          {safeColumns
-            .filter(col => col.filterable && col.filterType === "select" && col.filterOptions)
-            .map((column) => (
-              <div key={column.key} className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground whitespace-nowrap">{column.header}:</label>
-                <select
-                  value={columnFilters[column.key] || ""}
-                  onChange={(e) => handleColumnFilterChange(column.key, e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
-                >
-                  <option value="">All</option>
-                  {column.filterOptions!.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+      {/* Search and Filters */}
+      {(searchable || availableFilters.length > 0) && (
+        <div className="space-y-3">
+          {/* Search */}
+          {searchable && (
+            <div className="flex flex-col gap-2 xs:gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  key="search-input"
+                  ref={searchInputRef}
+                  placeholder={searchPlaceholder}
+                  value={localSearchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            ))}
-          {Object.keys(columnFilters).length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="h-9 ml-auto"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Clear Filters
-            </Button>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="hidden xs:inline">Clear Filters</span>
+                  <span className="xs:hidden">Clear</span>
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Filters Bar */}
+          {availableFilters.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+              <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+              {availableFilters.map((filterDef) => (
+                <div key={filterDef.field} className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground whitespace-nowrap">
+                    {filterDef.label}:
+                  </label>
+                  <select
+                    value={filterValues[filterDef.field] || ""}
+                    onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
+                  >
+                    <option value="">All</option>
+                    {filterDef.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              {Object.keys(filterValues).length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="h-9 ml-auto"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -650,102 +733,126 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination */}
-      {showPagination && totalPages > 1 && (
-        <div className="flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
-          <div className="text-xs xs:text-sm text-muted-foreground text-center xs:text-left">
-            <span className="hidden sm:inline">
-              Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, displayTotal)} of{" "}
-              {displayTotal} results
-            </span>
-            <span className="sm:hidden">
-              Page {currentPage} of {totalPages}
-            </span>
-          </div>
-          <div className="flex items-center justify-center gap-1 xs:gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="h-9 w-9 p-0"
-              aria-label="First page"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="h-9 w-9 p-0"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "primary" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
-                    className="min-w-[2.25rem] h-9 text-xs xs:text-sm"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
+      {
+        showPagination && (
+          <div className="flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
+            <div className="flex items-center gap-4 text-xs xs:text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="whitespace-nowrap">Rows per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+                  className="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  disabled={!onPageSizeChange}
+                >
+                  {pageSizeOptions.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className="hidden sm:inline">
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, displayTotal)} of{" "}
+                  {displayTotal} results
+                </span>
+                <span className="sm:hidden">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="h-9 w-9 p-0"
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="h-9 w-9 p-0"
-              aria-label="Last page"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
+
+            <div className="flex items-center justify-center gap-1 xs:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="h-9 w-9 p-0"
+                aria-label="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="h-9 w-9 p-0"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "primary" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="min-w-[2.25rem] h-9 text-xs xs:text-sm"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="h-9 w-9 p-0"
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="h-9 w-9 p-0"
+                aria-label="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Results Info */}
-      {!showPagination && (
-        <div className="text-xs xs:text-sm text-muted-foreground text-center">
-          Showing {displayTotal} result{displayTotal !== 1 ? "s" : ""}
-        </div>
-      )}
+      {
+        !showPagination && (
+          <div className="text-xs xs:text-sm text-muted-foreground text-center">
+            Showing {displayTotal} result{displayTotal !== 1 ? "s" : ""}
+          </div>
+        )
+      }
 
       {/* Selection Info */}
-      {selectable && selected.size > 0 && (
-        <div className="text-xs text-muted-foreground border-t border-zinc-200 pt-3">
-          {selected.size} row{selected.size !== 1 ? "s" : ""} selected
-        </div>
-      )}
-    </div>
+      {
+        selectable && selected.size > 0 && (
+          <div className="text-xs text-muted-foreground border-t border-zinc-200 pt-3">
+            {selected.size} row{selected.size !== 1 ? "s" : ""} selected
+          </div>
+        )
+      }
+    </div >
   );
 }
