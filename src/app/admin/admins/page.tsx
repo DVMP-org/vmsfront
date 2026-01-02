@@ -414,6 +414,11 @@ export default function AdminManagementPage() {
                   setPage(1);
                   setSearch(value);
                 }}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  const roleFilter = filters.find((f) => f.field === "role_id");
+                  setRoleId(roleFilter?.value as string | undefined || undefined);
+                }}
                 filterableFields={filterableFields}
                 onSortChange={(newSort) => {
                   setPage(1);

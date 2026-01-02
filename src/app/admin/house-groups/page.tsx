@@ -432,6 +432,11 @@ export default function HouseGroupsPage() {
                                     setSearch(value);
                                 }}
                                 filterableFields={filterableFields}
+                                onFiltersChange={(filters) => {
+                                    setPage(1);
+                                    const statusFilter = filters.find((f) => f.field === "is_active");
+                                    setStatus(statusFilter?.value as string | undefined || undefined);
+                                }}
                                 onSortChange={(newSort) => {
                                     setPage(1);
                                     setSort(newSort);

@@ -219,7 +219,18 @@ export function DataTable<T extends Record<string, any>>({
   }, [effectiveInitialSearch]);
 
   // Sync filter values with external initialFilters
+  // Use ref to avoid circular dependency that causes infinite loops
+  const prevInitialFiltersStringRef = useRef<string>("");
+
   useEffect(() => {
+    // Serialize to check for actual changes
+    const currentFiltersString = JSON.stringify(effectiveInitialFilters);
+
+    // Skip if filters haven't actually changed
+    if (currentFiltersString === prevInitialFiltersStringRef.current) return;
+
+    prevInitialFiltersStringRef.current = currentFiltersString;
+
     const newFilterValues: Record<string, string> = {};
     effectiveInitialFilters.forEach((filter) => {
       if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
@@ -227,15 +238,8 @@ export function DataTable<T extends Record<string, any>>({
       }
     });
 
-    // Only update if values actually changed
-    const hasChanged =
-      Object.keys(newFilterValues).length !== Object.keys(filterValues).length ||
-      Object.keys(newFilterValues).some(key => newFilterValues[key] !== filterValues[key]);
-
-    if (hasChanged) {
-      setFilterValues(newFilterValues);
-    }
-  }, [effectiveInitialFilters, filterValues]);
+    setFilterValues(newFilterValues);
+  }, [effectiveInitialFilters]);
 
   // Sync sort state with external initialSort
   useEffect(() => {
@@ -440,8 +444,8 @@ export function DataTable<T extends Record<string, any>>({
     }, 300);
   }, [onSearchChange, setCurrentPage]);
 
-  // Handle filter change
-  const handleFilterChange = (field: string, value: string) => {
+  // Handle filter change - memoized to prevent re-renders
+  const handleFilterChange = useCallback((field: string, value: string) => {
     setFilterValues((prev) => {
       const newValues = { ...prev };
       if (value === "" || value === undefined) {
@@ -452,7 +456,7 @@ export function DataTable<T extends Record<string, any>>({
       return newValues;
     });
     setCurrentPage(1);
-  };
+  }, [setCurrentPage]);
 
   // Selection handlers
   const toggleRowSelection = (rowId: string) => {
@@ -514,7 +518,6 @@ export function DataTable<T extends Record<string, any>>({
               <div className="relative w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  key="search-input"
                   ref={searchInputRef}
                   placeholder={searchPlaceholder}
                   value={localSearchTerm}

@@ -441,13 +441,15 @@ export default function AdminGatePassesPage() {
                 initialFilters={initialFilters}
                 onFiltersChange={(filters) => {
                   setPage(1);
-                  // Extract filter values from filters
+                  // Extract filter values from filters and explicitly clear if not found
                   const statusFilter = filters.find((f) => f.field === "status");
                   const houseIdFilter = filters.find((f) => f.field === "house_id");
                   const residentIdFilter = filters.find((f) => f.field === "resident_id");
-                  setStatus(statusFilter?.value as string | undefined);
-                  setHouseId(houseIdFilter?.value as string | undefined);
-                  setResidentId(residentIdFilter?.value as string | undefined);
+
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setStatus(statusFilter?.value as string | undefined || undefined);
+                  setHouseId(houseIdFilter?.value as string | undefined || undefined);
+                  setResidentId(residentIdFilter?.value as string | undefined || undefined);
                 }}
                 initialSort={sort}
                 onSortChange={(newSort) => {

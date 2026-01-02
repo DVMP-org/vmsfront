@@ -428,20 +428,13 @@ export default function HousesPage() {
                 filterableFields={filterableFields}
                 onFiltersChange={(filters) => {
                   setPage(1);
-                  // Handle is_active filter
+                  // Extract filter values from filters and explicitly clear if not found
                   const isActiveFilter = filters.find(f => f.field === "is_active");
-                  if (isActiveFilter) {
-                    setStatus(isActiveFilter.value as string);
-                  } else {
-                    setStatus(undefined);
-                  }
-                  // Handle house_group_id filter
                   const houseGroupFilter = filters.find(f => f.field === "house_group_id");
-                  if (houseGroupFilter) {
-                    setHouseGroupId(houseGroupFilter.value as string);
-                  } else {
-                    setHouseGroupId(undefined);
-                  }
+
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setStatus(isActiveFilter?.value as string | undefined || undefined);
+                  setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
                 }}
                 onSortChange={(newSort) => {
                   setPage(1);

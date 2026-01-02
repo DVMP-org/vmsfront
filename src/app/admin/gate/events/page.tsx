@@ -274,9 +274,10 @@ export default function AdminGateEventsPage() {
                 initialFilters={initialFilters}
                 onFiltersChange={(filters) => {
                   setPage(1);
-                  // Extract owner_type from filters
+                  // Extract owner_type from filters and explicitly clear if not found
                   const ownerTypeFilter = filters.find((f) => f.field === "owner_type");
-                  setOwnerType(ownerTypeFilter?.value as string | undefined);
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setOwnerType(ownerTypeFilter?.value as string | undefined || undefined);
                 }}
                 initialSort={sort}
                 onSortChange={(newSort) => {
