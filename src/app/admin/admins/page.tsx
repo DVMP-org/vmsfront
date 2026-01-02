@@ -70,13 +70,12 @@ export default function AdminManagementPage() {
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
 
-  const { data: paginatedAdmins, isLoading: adminsLoading } = useAdmins({
+  const { data: adminsData, isLoading: adminsLoading } = useAdmins({
     page: 1,
     pageSize: 100,
   });
 
-  const admins = paginatedAdmins?.items;
-
+  const admins = adminsData?.items;
 
   const { data: roles, isLoading: rolesLoading } = useAdminRoles();
   const createAdmin = useCreateAdmin();

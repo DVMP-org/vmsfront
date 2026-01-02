@@ -61,21 +61,17 @@ export function useAuth() {
       setLoginFieldErrors({});
     },
     onSuccess: (response) => {
-      console.log("Login response:", response);
       const { user, token } = response.data;
-      console.log("User:", user, "Token:", token);
 
       // Set auth state
       setAuth(user, token);
       apiClient.setToken(token);
-      console.log("Auth state set, isAuthenticated:", isAuthenticated);
 
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
 
       // Navigate immediately without setTimeout
-      console.log("Attempting to navigate to /select...");
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();

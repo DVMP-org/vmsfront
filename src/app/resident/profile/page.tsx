@@ -11,12 +11,15 @@ import {
   Calendar,
   UserCheck,
   Hash,
+  Save,
+  RotateCcw,
+  ExternalLink,
+  Check,
+  Copy,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { getFullName, getInitials, cn } from "@/lib/utils";
@@ -69,6 +72,15 @@ export default function ResidentProfilePage() {
     smsUpdates: false,
   });
 
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyPassCode = () => {
+    if (!residentProfile?.pass_code) return;
+    navigator.clipboard.writeText(residentProfile.pass_code);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   useEffect(() => {
     if (residentUser) {
       setContactForm({
@@ -81,9 +93,8 @@ export default function ResidentProfilePage() {
   }, [residentUser]);
 
   const fullName = residentUser ? getFullName(residentUser.first_name, residentUser.last_name) : "Resident";
-  const initials = getInitials(residentUser?.first_name, residentUser?.last_name);
-  const membershipStatus = residentProfile?.onboarded ? "Active member" : "Pending activation";
-  const passCode = residentProfile?.pass_code ?? "Not issued yet";
+  const membershipStatus = residentProfile?.onboarded ? "Active" : "Pending";
+  const passCode = residentProfile?.pass_code ?? "—";
   const memberSince = residentProfile?.created_at
     ? formatDistanceToNow(new Date(residentProfile.created_at), { addSuffix: true })
     : "N/A";
@@ -106,11 +117,21 @@ export default function ResidentProfilePage() {
   if (isLoading || !residentUser) {
     return (
       <DashboardLayout type="resident">
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-3xl" />
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Skeleton className="h-72 rounded-2xl" />
-            <Skeleton className="h-72 rounded-2xl lg:col-span-2" />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b pb-4">
+            <div className="space-y-1">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <Skeleton className="h-64 w-full rounded-lg" />
+              <Skeleton className="h-48 w-full rounded-lg" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-48 w-full rounded-lg" />
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -120,34 +141,68 @@ export default function ResidentProfilePage() {
   return (
     <DashboardLayout type="resident">
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-indigo-700 text-white shadow-xl">
-          <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-xl font-semibold uppercase shadow-inner">
-                {initials}
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Resident account</p>
-                <h1 className="text-3xl font-semibold">{fullName}</h1>
-                <p className="text-white/80">{residentUser.email}</p>
-              </div>
+        {/* Header */}
+        <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-lg font-medium text-muted-foreground">
+              {getInitials(residentUser.first_name, residentUser.last_name)}
             </div>
-            <div className="flex flex-wrap items-center gap-4 md:justify-end">
-              <StatChip label="Linked homes" value={houses.length} icon={Home} />
-              <StatChip label="Status" value={membershipStatus} icon={UserCheck} />
-              <StatChip label="Member since" value={memberSince} icon={Calendar} />
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{fullName}</h1>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="h-3.5 w-3.5" />
+                <span>{residentUser.email}</span>
+                <span className="text-border">|</span>
+                <span className={cn(
+                  "flex items-center gap-1.5",
+                  residentProfile?.onboarded ? "text-emerald-600" : "text-amber-600"
+                )}>
+                  <UserCheck className="h-3.5 w-3.5" />
+                  {membershipStatus}
+                </span>
+              </div>
             </div>
           </div>
-        </section>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (residentUser) {
+                  setContactForm({
+                    first_name: residentUser.first_name ?? "",
+                    last_name: residentUser.last_name ?? "",
+                    phone: residentUser.phone ?? "",
+                    address: residentUser.address ?? "",
+                  });
+                }
+              }}
+              disabled={updateProfileMutation.isPending}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset Changes
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleContactSubmit}
+              isLoading={updateProfileMutation.isPending}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Profile
+            </Button>
+          </div>
+        </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Contact & Personal Information</CardTitle>
-              <CardDescription>Update how the community can reach you.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleContactSubmit} className="space-y-4">
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Content Column */}
+          <div className="space-y-8 lg:col-span-2">
+
+            {/* Contact Information */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-foreground">Contact Information</h2>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Input
                     label="First name"
@@ -155,6 +210,7 @@ export default function ResidentProfilePage() {
                     onChange={(event) =>
                       setContactForm((prev) => ({ ...prev, first_name: event.target.value }))
                     }
+                    className="h-9 text-sm"
                   />
                   <Input
                     label="Last name"
@@ -162,24 +218,29 @@ export default function ResidentProfilePage() {
                     onChange={(event) =>
                       setContactForm((prev) => ({ ...prev, last_name: event.target.value }))
                     }
+                    className="h-9 text-sm"
                   />
-                </div>
-                <Input label="Email" value={residentUser.email} disabled />
-                <div className="grid gap-4 md:grid-cols-2">
                   <Input
-                    label="Phone"
+                    label="Email address"
+                    value={residentUser.email}
+                    disabled
+                    className="bg-muted/50 h-9 text-sm"
+                  />
+                  <Input
+                    label="Phone number"
                     type="tel"
-                    placeholder="+1234567890"
+                    placeholder="+1 (555) 000-0000"
                     value={contactForm.phone}
                     onChange={(event) =>
                       setContactForm((prev) => ({ ...prev, phone: event.target.value }))
                     }
+                    className="h-9 text-sm"
                   />
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-muted-foreground">Address</label>
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Address</label>
                     <textarea
-                      className="min-h-[98px] rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
-                      placeholder="Your address"
+                      className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Enter your residential address"
                       value={contactForm.address}
                       onChange={(event) =>
                         setContactForm((prev) => ({ ...prev, address: event.target.value }))
@@ -187,177 +248,187 @@ export default function ResidentProfilePage() {
                     />
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 border-t border-dashed border-border/60 pt-4 md:flex-row">
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    isLoading={updateProfileMutation.isPending}
-                  >
-                    Save changes
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="flex-1"
-                    onClick={() => {
-                      if (residentUser) {
-                        setContactForm({
-                          first_name: residentUser.first_name ?? "",
-                          last_name: residentUser.last_name ?? "",
-                          phone: residentUser.phone ?? "",
-                          address: residentUser.address ?? "",
-                        });
-                      }
-                    }}
-                    disabled={updateProfileMutation.isPending}
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+            </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Snapshot</CardTitle>
-              <CardDescription>Your membership identifiers and device preferences.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/30 p-4">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  Resident pass code
-                </p>
-                <p className="mt-1 text-2xl font-semibold tracking-wider">{passCode}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Share this only with trusted building staff.
-                </p>
+            {/* Linked Homes */}
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium text-foreground">Linked Residences</h2>
+              <div className="rounded-lg border border-border bg-card overflow-hidden">
+                {houses.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    No residences linked to this account.
+                  </div>
+                ) : (
+                  <div className="relative w-full overflow-auto">
+                    <table className="w-full caption-bottom text-sm text-left">
+                      <thead className="[&_tr]:border-b">
+                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Residence</th>
+                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Address</th>
+                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Role</th>
+                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="[&_tr:last-child]:border-0">
+                        {houses.map((house) => (
+                          <tr key={house.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            <td className="p-4 align-middle font-medium text-foreground">
+                              <div className="flex items-center gap-2">
+                                <Home className="h-4 w-4 text-muted-foreground" />
+                                {house.name}
+                              </div>
+                            </td>
+                            <td className="p-4 align-middle text-muted-foreground">{house.address}</td>
+                            <td className="p-4 align-middle">
+                              <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                                Resident
+                              </div>
+                            </td>
+                            <td className="p-4 align-middle text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => router.push(`/house/${house.id}/forum`)}
+                                title="Open House Portal"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                <span className="sr-only">Open</span>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Notifications</p>
-                <div className="flex flex-wrap gap-2">
-                  <PreferenceToggle
-                    label="Email updates"
-                    active={preferences.emailUpdates}
-                    onClick={() =>
-                      setPreferences((prev) => ({ ...prev, emailUpdates: !prev.emailUpdates }))
-                    }
-                    icon={Mail}
-                  />
-                  <PreferenceToggle
-                    label="SMS alerts"
-                    active={preferences.smsUpdates}
-                    onClick={() =>
-                      setPreferences((prev) => ({ ...prev, smsUpdates: !prev.smsUpdates }))
-                    }
-                    icon={Phone}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Notification preferences are stored locally for now — server-side sync coming soon.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </section>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Linked homes</CardTitle>
-            <CardDescription>Memberships and roles across your residences.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            {houses.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-muted-foreground">
-                You are not linked to any homes yet. Choose a house from the dashboard to get started.
-              </div>
-            ) : (
-              houses.map((house) => (
-                <div
-                  key={house.id}
-                  className="rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">{house.name}</p>
-                      <p className="text-sm text-muted-foreground">{house.address}</p>
+          {/* Sidebar Column */}
+          <div className="space-y-8">
+
+            {/* Account Metadata */}
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium text-foreground">Account Details</h2>
+              <div className="rounded-lg border border-border bg-card">
+                {residentProfile?.badge_url && (
+                  <div className="border-b border-border p-6 text-center">
+                    <div className="mx-auto mb-2 aspect-square w-48 overflow-hidden rounded-xl bg-white p-2 shadow-sm">
+                      <img
+                        src={residentProfile.badge_url}
+                        alt="Resident QR Badge"
+                        className="h-full w-full object-contain"
+                      />
                     </div>
-                    {/* <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
-                      Primary
-                    </Badge> */}
-                  </div>
-                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
-                      <Home className="h-4 w-4" />
-                      {house?.address ?? "No Address Provided"}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Access level: Resident
+                    <p className="text-xs text-muted-foreground">
+                      Scan this QR code at the gate for quick access.
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    className="mt-4 w-full"
-                    onClick={() => router.push(`/house/${house.id}/forum`)}
+                )}
+                <div className="border-b border-border p-4">
+                  <div className="text-xs font-medium text-muted-foreground mb-1">Pass Code</div>
+                  <button
+                    onClick={handleCopyPassCode}
+                    className="group flex w-full items-center gap-2 rounded-md py-1 text-left transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    title="Click to copy pass code"
                   >
-                    Open house space
-                  </Button>
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-mono text-lg font-medium tracking-wide">{passCode}</span>
+                    <div className="ml-auto flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                      {isCopied ? (
+                        <>
+                          <Check className="h-3 w-3 text-emerald-600" />
+                          <span className="text-emerald-600">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </div>
+                  </button>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">Member Since</div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      {memberSince}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">Account ID</div>
+                    <div className="text-xs font-mono text-muted-foreground truncate">
+                      {residentUser?.id}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Preferences */}
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium text-foreground">Preferences</h2>
+              <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                <div className="flex items-center justify-between p-4">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium">Email Notifications</div>
+                    <div className="text-xs text-muted-foreground">Receive updates via email</div>
+                  </div>
+                  <PreferenceToggle
+                    active={preferences.emailUpdates}
+                    onChange={() => setPreferences(p => ({ ...p, emailUpdates: !p.emailUpdates }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium">SMS Alerts</div>
+                    <div className="text-xs text-muted-foreground">Urgent alerts to phone</div>
+                  </div>
+                  <PreferenceToggle
+                    active={preferences.smsUpdates}
+                    onChange={() => setPreferences(p => ({ ...p, smsUpdates: !p.smsUpdates }))}
+                  />
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
 }
 
-function StatChip({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/30 bg-white/10 px-4 py-3 shadow-inner backdrop-blur">
-      <div className="flex items-center gap-2 text-sm text-white/80">
-        <Icon className="h-4 w-4" />
-        {label}
-      </div>
-      <p className="text-xl font-semibold">{value}</p>
-    </div>
-  );
-}
-
 function PreferenceToggle({
-  label,
   active,
-  onClick,
-  icon: Icon,
+  onChange,
 }: {
-  label: string;
   active: boolean;
-  onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
+  onChange: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      role="switch"
+      aria-checked={active}
+      onClick={onChange}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition",
-        active
-          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
-          : "border-border/70 text-muted-foreground hover:bg-muted/40"
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        active ? "bg-primary" : "bg-input"
       )}
     >
-      <Icon className="h-4 w-4" />
-      {label}
+      <span
+        className={cn(
+          "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
+          active ? "translate-x-4" : "translate-x-0"
+        )}
+      />
     </button>
   );
 }
+
