@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -138,7 +138,7 @@ export default function ForumCategoryPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -152,14 +152,14 @@ export default function ForumCategoryPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   const loading = isCategoryLoading || isTopicsLoading;
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
@@ -246,7 +246,7 @@ export default function ForumCategoryPage() {
               />
             ) : (
               <div className="grid gap-3">
-                    {paginatedTopics.map((topic) => (
+                {paginatedTopics.map((topic) => (
                   <TopicCard
                     key={topic.id}
                     topic={topic}
@@ -328,7 +328,7 @@ export default function ForumCategoryPage() {
           </div>
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }
 

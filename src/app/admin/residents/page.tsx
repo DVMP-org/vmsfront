@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminResidents, useImportResidents } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -117,7 +116,7 @@ export default function ResidentsPage() {
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -281,6 +280,6 @@ bob@example.com,Bob,Wilson,,,"House B"`}
           )}
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

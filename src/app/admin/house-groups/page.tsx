@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -257,7 +256,7 @@ export default function HouseGroupsPage() {
     ];
 
     return (
-        <DashboardLayout type="admin">
+        <>
             <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="flex-shrink-0 border-b border-border bg-background">
@@ -621,6 +620,6 @@ export default function HouseGroupsPage() {
                     </div>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </>
     );
 }

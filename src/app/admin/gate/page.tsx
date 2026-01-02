@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCheckinPass, useCheckoutPass, useVisitorsByPassCode } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -210,7 +209,7 @@ function GateConsoleContent() {
     !!selectedPassCode && !shouldDirectScan(selectedPassCode);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Gate Console</h1>
@@ -314,7 +313,7 @@ function GateConsoleContent() {
                         <TableRow>
                           <TableHead>Name</TableHead>
                           <TableHead>Email</TableHead>
-                            <TableHead>Pass Code</TableHead>
+                          <TableHead>Pass Code</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -483,14 +482,14 @@ function GateConsoleContent() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
 export default function GateConsolePage() {
   return (
     <Suspense fallback={
-      <DashboardLayout type="admin">
+      < >
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
@@ -498,7 +497,7 @@ export default function GateConsolePage() {
             <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     }>
       <GateConsoleContent />
     </Suspense>

@@ -129,7 +129,7 @@ export default function WalletPage() {
     }, [transaction, paymentReference, queryClient]);
 
     const handleViewHistory = useCallback(() => {
-        router.push("/wallet/history");
+        router.push("/resident/wallet/history");
     }, [router]);
 
     const handleFundWallet = useCallback(async (e: React.FormEvent) => {

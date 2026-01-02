@@ -9,7 +9,6 @@ import {
   useDeleteAdmin,
   useUpdateAdminRole,
 } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -44,17 +43,24 @@ export default function AdminManagementPage() {
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
 
-  const { data: admins, isLoading: adminsLoading } = useAdmins();
+  const { data: paginatedAdmins, isLoading: adminsLoading } = useAdmins({
+    page: 1,
+    pageSize: 100,
+  });
+
+  const admins = paginatedAdmins?.items;
+
+
   const { data: roles, isLoading: rolesLoading } = useAdminRoles();
   const createAdmin = useCreateAdmin();
   const updateAdminRole = useUpdateAdminRole();
   const deleteAdmin = useDeleteAdmin();
 
   const filteredAdmins = useMemo(() => {
-    if (!admins) return [];
+    if (!admins || !Array.isArray(admins)) return [];
     if (!searchQuery.trim()) return admins;
     const q = searchQuery.toLowerCase();
-    return admins.filter((admin) => {
+    return admins?.filter((admin) => {
       const name = admin.name?.toLowerCase() || "";
       const firstName = admin.user?.first_name?.toLowerCase() || "";
       const lastName = admin.user?.last_name?.toLowerCase() || "";
@@ -71,7 +77,7 @@ export default function AdminManagementPage() {
   }, [admins, searchQuery]);
 
   const stats = useMemo(() => {
-    if (!admins) {
+    if (!admins || !Array.isArray(admins)) {
       return {
         total: 0,
         withCustomPermissions: 0,
@@ -80,9 +86,9 @@ export default function AdminManagementPage() {
       };
     }
     const total = admins.length;
-    const withCustomPermissions = admins.filter((admin) => admin.permissions && admin.permissions !== "").length;
-    const allAccess = admins.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
-    const uniqueRoles = new Set(admins.map((admin) => admin.role_id).filter(Boolean)).size;
+    const withCustomPermissions = admins?.filter((admin) => admin.permissions && admin.permissions !== "").length;
+    const allAccess = admins?.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
+    const uniqueRoles = new Set(admins?.map((admin) => admin.role_id).filter(Boolean)).size;
     return { total, withCustomPermissions, allAccess, uniqueRoles };
   }, [admins]);
 
@@ -187,8 +193,8 @@ export default function AdminManagementPage() {
               admin.permissions === "*"
                 ? "All access"
                 : admin.permissions
-                ? `${admin.permissions.split(",").length} override(s)`
-                : "Inherit role";
+                  ? `${admin.permissions.split(",").length} override(s)`
+                  : "Inherit role";
 
             return (
               <TableRow key={admin.id}>
@@ -262,7 +268,7 @@ export default function AdminManagementPage() {
   };
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -404,6 +410,6 @@ export default function AdminManagementPage() {
           </div>
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

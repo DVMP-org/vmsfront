@@ -12,7 +12,6 @@ import {
   Shield,
   Unlock,
 } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -188,7 +187,7 @@ export default function AdminForumCategoryDetailPage() {
   );
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         {breadcrumb}
         <Card className="rounded-3xl border border-dashed">
@@ -408,8 +407,8 @@ export default function AdminForumCategoryDetailPage() {
                         <TableCell className="text-xs text-muted-foreground">
                           {topic.last_post_at
                             ? formatDistanceToNow(new Date(topic.last_post_at), {
-                                addSuffix: true,
-                              })
+                              addSuffix: true,
+                            })
                             : "—"}
                         </TableCell>
                         <TableCell>
@@ -488,12 +487,12 @@ export default function AdminForumCategoryDetailPage() {
         initialValues={
           category
             ? {
-                houseId: category.house_id || "",
-                name: category.name,
-                description: category.description ?? "",
-                isDefault: category.is_default,
-                isLocked: Boolean(category.is_locked),
-              }
+              houseId: category.house_id || "",
+              name: category.name,
+              description: category.description ?? "",
+              isDefault: category.is_default,
+              isLocked: Boolean(category.is_locked),
+            }
             : undefined
         }
         onClose={() => setCategoryModalOpen(false)}
@@ -526,15 +525,15 @@ export default function AdminForumCategoryDetailPage() {
         initialValues={
           topicToEdit
             ? {
-                houseId: topicToEdit.house_id || category?.house_id || "",
-                categoryId: topicToEdit.category_id,
-                title: topicToEdit.title,
-                content: topicToEdit.initial_post?.content ?? "",
-                isPinned: topicToEdit.is_pinned,
-                isLocked: topicToEdit.is_locked,
-              }
+              houseId: topicToEdit.house_id || category?.house_id || "",
+              categoryId: topicToEdit.category_id,
+              title: topicToEdit.title,
+              content: topicToEdit.initial_post?.content ?? "",
+              isPinned: topicToEdit.is_pinned,
+              isLocked: topicToEdit.is_locked,
+            }
             : category
-            ? {
+              ? {
                 houseId: category.house_id || "",
                 categoryId: category.id,
                 title: "",
@@ -542,7 +541,7 @@ export default function AdminForumCategoryDetailPage() {
                 isPinned: false,
                 isLocked: false,
               }
-            : undefined
+              : undefined
         }
         onClose={() => {
           setTopicModalOpen(false);
@@ -624,6 +623,6 @@ export default function AdminForumCategoryDetailPage() {
         onCancel={() => setTopicToDelete(null)}
         isLoading={deleteTopic.isPending}
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -11,7 +11,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -65,7 +64,7 @@ export default function AdminProfilePage() {
 
   if (isLoading || !adminUser) {
     return (
-      <DashboardLayout type="admin">
+      <>
         <div className="space-y-4">
           <Skeleton className="h-48 w-full rounded-3xl" />
           <div className="grid gap-4 lg:grid-cols-3">
@@ -73,7 +72,7 @@ export default function AdminProfilePage() {
             <Skeleton className="h-72 rounded-2xl" />
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -90,7 +89,7 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
@@ -263,7 +262,7 @@ export default function AdminProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

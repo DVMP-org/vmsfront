@@ -20,14 +20,7 @@ import {
   Shield,
   Unlock,
 } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -419,7 +412,7 @@ export default function AdminForumsPage() {
   );
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         {/* Compact Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 border-b border-foreground/20 pb-3">
@@ -961,7 +954,7 @@ export default function AdminForumsPage() {
         onCancel={() => setTopicToDelete(null)}
         isLoading={deleteTopic.isPending}
       />
-    </DashboardLayout>
+    </>
   );
 }
 

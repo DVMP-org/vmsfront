@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Search } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PaginationBar } from "@/components/ui/PaginationBar";
@@ -39,7 +38,7 @@ export default function AdminGateEventsPage() {
   }, [data?.total, events]);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-col gap-3 border-b border-border pb-3 md:flex-row md:items-center md:justify-between">
@@ -89,53 +88,53 @@ export default function AdminGateEventsPage() {
           />
         ) : (
           <>
-                <div className="overflow-x-auto border border-border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="h-9 text-xs font-medium">Event</TableHead>
-                        <TableHead className="h-9 text-xs font-medium">Pass</TableHead>
-                        <TableHead className="h-9 text-xs font-medium">House</TableHead>
-                        <TableHead className="h-9 text-xs font-medium">Owner</TableHead>
-                        <TableHead className="h-9 text-xs font-medium">Scanner</TableHead>
-                        <TableHead className="h-9 text-right text-xs font-medium">Timestamp</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((event) => (
-                        <TableRow
-                          key={event.id}
-                          className="cursor-pointer hover:bg-muted/30"
-                          onClick={() => router.push(`/admin/gate/events/${event.id}`)}
-                        >
-                          <TableCell className="h-9 py-1.5">
-                            <Badge variant="secondary" className="h-5 text-xs font-normal">
-                              {titleCase(event.owner_type) ?? "Scan"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="h-9 py-1.5 text-xs">{event?.gate_pass?.code ?? "—"}</TableCell>
-                          <TableCell className="h-9 py-1.5 text-xs">{event?.gate_pass?.house_id ?? "—"}</TableCell>
-                          <TableCell className="h-9 py-1.5 text-xs">
-                            {event.owner && "name" in event.owner
-                              ? event.owner.name ?? event.owner.email ?? "—"
-                              : "—"}
-                          </TableCell>
-                          <TableCell className="h-9 py-1.5 text-xs">{event?.scanned_by?.name ?? "—"}</TableCell>
-                          <TableCell className="h-9 py-1.5 text-right text-xs text-muted-foreground">
-                            {event.created_at
-                              ? formatDistanceToNow(new Date(event.created_at), {
-                                addSuffix: true,
-                              })
-                              : "—"}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+            <div className="overflow-x-auto border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="h-9 text-xs font-medium">Event</TableHead>
+                    <TableHead className="h-9 text-xs font-medium">Pass</TableHead>
+                    <TableHead className="h-9 text-xs font-medium">House</TableHead>
+                    <TableHead className="h-9 text-xs font-medium">Owner</TableHead>
+                    <TableHead className="h-9 text-xs font-medium">Scanner</TableHead>
+                    <TableHead className="h-9 text-right text-xs font-medium">Timestamp</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {events.map((event) => (
+                    <TableRow
+                      key={event.id}
+                      className="cursor-pointer hover:bg-muted/30"
+                      onClick={() => router.push(`/admin/gate/events/${event.id}`)}
+                    >
+                      <TableCell className="h-9 py-1.5">
+                        <Badge variant="secondary" className="h-5 text-xs font-normal">
+                          {titleCase(event.owner_type) ?? "Scan"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="h-9 py-1.5 text-xs">{event?.gate_pass?.code ?? "—"}</TableCell>
+                      <TableCell className="h-9 py-1.5 text-xs">{event?.gate_pass?.house_id ?? "—"}</TableCell>
+                      <TableCell className="h-9 py-1.5 text-xs">
+                        {event.owner && "name" in event.owner
+                          ? event.owner.name ?? event.owner.email ?? "—"
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="h-9 py-1.5 text-xs">{event?.scanned_by?.name ?? "—"}</TableCell>
+                      <TableCell className="h-9 py-1.5 text-right text-xs text-muted-foreground">
+                        {event.created_at
+                          ? formatDistanceToNow(new Date(event.created_at), {
+                            addSuffix: true,
+                          })
+                          : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-                <div className="flex flex-col gap-2 border-t border-border pt-2 md:flex-row md:items-center md:justify-between">
-                  <p className="text-xs text-muted-foreground">
+            <div className="flex flex-col gap-2 border-t border-border pt-2 md:flex-row md:items-center md:justify-between">
+              <p className="text-xs text-muted-foreground">
                 {isFetching ? "Refreshing..." : `${events.length} of ${data?.total ?? 0} events`}
               </p>
               {totalPages > 1 && (
@@ -152,6 +151,6 @@ export default function AdminGateEventsPage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

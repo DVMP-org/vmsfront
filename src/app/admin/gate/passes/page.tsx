@@ -3,7 +3,6 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -167,7 +166,7 @@ export default function AdminGatePassesPage() {
   };
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex-shrink-0 border-b border-border bg-background">
@@ -275,112 +274,112 @@ export default function AdminGatePassesPage() {
               />
             ) : (
               <>
-                    <div className="border border-border rounded-sm">
+                <div className="border border-border rounded-sm">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                            <TableHead className="w-12">
-                              <input
-                                type="checkbox"
-                                checked={allSelected}
-                                ref={(input) => {
-                                  if (input) input.indeterminate = someSelected;
-                                }}
-                                onChange={(e) => handleSelectAll(e.target.checked)}
-                                className="h-4 w-4 rounded border-input cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </TableHead>
-                            <SortableHeader field="code">Pass code</SortableHeader>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            ref={(input) => {
+                              if (input) input.indeterminate = someSelected;
+                            }}
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                            className="h-4 w-4 rounded border-input cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </TableHead>
+                        <SortableHeader field="code">Pass code</SortableHeader>
                         <TableHead>Resident</TableHead>
-                            <SortableHeader field="status">Status</SortableHeader>
+                        <SortableHeader field="status">Status</SortableHeader>
                         <TableHead>Validity</TableHead>
                         <TableHead>Uses</TableHead>
-                            <SortableHeader field="updated_at">Last updated</SortableHeader>
+                        <SortableHeader field="updated_at">Last updated</SortableHeader>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                          {passes.map((pass) => {
-                            const isSelected = selectedPasses.has(pass.id);
-                            return (
-                              <TableRow
-                                key={pass.id}
-                                className={isSelected ? "bg-muted/50" : ""}
-                                onClick={(e) => {
-                                  // Don't navigate if clicking checkbox
-                                  if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
-                                    return;
-                                  }
+                      {passes.map((pass) => {
+                        const isSelected = selectedPasses.has(pass.id);
+                        return (
+                          <TableRow
+                            key={pass.id}
+                            className={isSelected ? "bg-muted/50" : ""}
+                            onClick={(e) => {
+                              // Don't navigate if clicking checkbox
+                              if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
+                                return;
+                              }
                               router.push(`/admin/gate/passes/${pass.id}`);
                             }}
-                              >
-                                <TableCell onClick={(e) => e.stopPropagation()}>
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => togglePassSelection(pass.id)}
-                                    className="h-4 w-4 rounded border-input cursor-pointer"
-                                  />
-                                </TableCell>
-                                <TableCell className="font-medium text-sm">
-                                  {pass.code}
-                                </TableCell>
-                                <TableCell className="text-sm">
-                                  {pass.visitors?.[0]?.name ??
-                                    pass.visitors?.[0]?.email ??
-                                    "—"}
-                                </TableCell>
-                                <TableCell>
-                                  <StatusBadge status={pass.status} />
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {pass.valid_from && pass.valid_to ? (
-                                    <>
-                                      {new Date(pass.valid_from).toLocaleDateString()} –{" "}
-                                      {new Date(pass.valid_to).toLocaleDateString()}
-                                    </>
-                                  ) : (
-                                    "Flexible"
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-sm">
-                                  {pass.uses_count}/{pass.max_uses ?? "∞"}
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {pass.updated_at
-                                    ? formatDistanceToNow(new Date(pass.updated_at), {
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => togglePassSelection(pass.id)}
+                                className="h-4 w-4 rounded border-input cursor-pointer"
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium text-sm">
+                              {pass.code}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {pass.visitors?.[0]?.name ??
+                                pass.visitors?.[0]?.email ??
+                                "—"}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={pass.status} />
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {pass.valid_from && pass.valid_to ? (
+                                <>
+                                  {new Date(pass.valid_from).toLocaleDateString()} –{" "}
+                                  {new Date(pass.valid_to).toLocaleDateString()}
+                                </>
+                              ) : (
+                                "Flexible"
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {pass.uses_count}/{pass.max_uses ?? "∞"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {pass.updated_at
+                                ? formatDistanceToNow(new Date(pass.updated_at), {
                                   addSuffix: true,
                                 })
-                                    : "—"}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
+                                : "—"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
 
-                    {totalPages > 1 && (
-                      <div className="mt-4">
+                {totalPages > 1 && (
+                  <div className="mt-4">
                     <PaginationBar
                       page={page}
-                          pageSize={pageSize}
-                          total={total}
+                      pageSize={pageSize}
+                      total={total}
                       totalPages={totalPages}
-                          hasNext={data?.has_next}
-                          hasPrevious={data?.has_previous}
+                      hasNext={data?.has_next}
+                      hasPrevious={data?.has_previous}
                       resourceLabel="passes"
                       onChange={setPage}
-                          isFetching={isFetching}
-                        />
-                      </div>
-                    )}
+                      isFetching={isFetching}
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

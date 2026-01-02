@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -81,23 +80,23 @@ function ChartTooltip({
     <div className="rounded-lg border bg-background/95 backdrop-blur-sm px-3 py-2 text-xs shadow-lg">
       <p className="mb-2 font-semibold text-foreground">{label}</p>
       <div className="space-y-1.5">
-      {payload.map((item) => (
-        <div
-          key={item.name}
+        {payload.map((item) => (
+          <div
+            key={item.name}
             className="flex items-center justify-between gap-6"
-        >
+          >
             <span className="flex items-center gap-2 text-muted-foreground">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            {item.name}
-          </span>
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              {item.name}
+            </span>
             <span className="font-semibold text-foreground">
-            {formatNumber(item.value)}
-          </span>
-        </div>
-      ))}
+              {formatNumber(item.value)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -370,7 +369,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout type="admin">
+      <>
         <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
@@ -378,13 +377,13 @@ export default function AnalyticsPage() {
           />
           <AnalyticsSkeleton />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isError) {
     return (
-      <DashboardLayout type="admin">
+      <>
         <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
@@ -409,13 +408,13 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!analytics) {
     return (
-      <DashboardLayout type="admin">
+      <>
         <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
@@ -430,12 +429,12 @@ export default function AnalyticsPage() {
             }}
           />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-8">
         <PageHeader onRefresh={() => refetch()} isRefreshing={isFetching} />
 
@@ -444,7 +443,7 @@ export default function AnalyticsPage() {
             {summaryMetrics.map((metric) => {
               const Icon = metric.icon;
               return (
-              <Card
+                <Card
                   key={metric.label}
                   className={`group relative overflow-hidden border-2 transition-all hover:shadow-md hover:scale-[1.02] ${metric.borderColor}`}
                 >
@@ -459,7 +458,7 @@ export default function AnalyticsPage() {
                             className={`rounded-lg p-2 ${metric.bgColor} ${metric.color}`}
                           >
                             <Icon className="h-4 w-4" />
-                  </div>
+                          </div>
                           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                             {metric.label}
                           </p>
@@ -469,8 +468,8 @@ export default function AnalyticsPage() {
                         </p>
                       </div>
                     </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -487,11 +486,11 @@ export default function AnalyticsPage() {
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <TrendingUp className="h-5 w-5 text-primary" />
-                  Activity overview
-                </CardTitle>
+                      Activity overview
+                    </CardTitle>
                     <CardDescription className="mt-1">
-                  Smooth trendlines make it easy to spot spikes across metrics.
-                </CardDescription>
+                      Smooth trendlines make it easy to spot spikes across metrics.
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -563,14 +562,14 @@ export default function AnalyticsPage() {
                         </div>
                         <div className="flex-1">
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Busiest visitor day
-                        </p>
+                            Busiest visitor day
+                          </p>
                           <p className="mt-1 text-lg font-bold text-foreground">
-                          {formatDate(visitorSpike.date)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatNumber(visitorSpike.count)} visitors processed
-                        </p>
+                            {formatDate(visitorSpike.date)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatNumber(visitorSpike.count)} visitors processed
+                          </p>
                         </div>
                       </div>
                     )}
@@ -581,14 +580,14 @@ export default function AnalyticsPage() {
                         </div>
                         <div className="flex-1">
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Gate pass spike
-                        </p>
+                            Gate pass spike
+                          </p>
                           <p className="mt-1 text-lg font-bold text-foreground">
-                          {formatDate(topGateDays[0].date)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatNumber(topGateDays[0].count)} passes issued
-                        </p>
+                            {formatDate(topGateDays[0].date)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatNumber(topGateDays[0].count)} passes issued
+                          </p>
                         </div>
                       </div>
                     )}
@@ -671,8 +670,8 @@ export default function AnalyticsPage() {
                     </p>
                     <span className="text-muted-foreground">/</span>
                     <p className="text-3xl font-bold text-foreground">
-                    {formatNumber(analytics.total_gate_events_denied)}
-                  </p>
+                      {formatNumber(analytics.total_gate_events_denied)}
+                    </p>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Out of {formatNumber(analytics.total_gate_events)} total gate
@@ -686,8 +685,8 @@ export default function AnalyticsPage() {
                         <UserCheck className="h-3.5 w-3.5 text-purple-600" />
                       </div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Busiest visitor day
-                    </p>
+                        Busiest visitor day
+                      </p>
                     </div>
                     <p className="mt-2 text-xl font-bold text-foreground">
                       {formatDate(visitorSpike.date)}
@@ -721,21 +720,20 @@ export default function AnalyticsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                            index === 0
+                          className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${index === 0
                               ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
                               : "bg-muted text-muted-foreground"
-                          }`}
+                            }`}
                         >
                           {index + 1}
                         </div>
-                      <div>
+                        <div>
                           <p className="font-semibold text-foreground">
-                          {formatDate(day.date)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {index === 0 ? "Busiest day" : `Top ${index + 1}`}
-                        </p>
+                            {formatDate(day.date)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {index === 0 ? "Busiest day" : `Top ${index + 1}`}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -800,7 +798,7 @@ export default function AnalyticsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {movementStats.averageCheckins.toFixed(1)} avg / day
                     </p>
-                </div>
+                  </div>
                   <div className="rounded-lg border-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-4 dark:from-indigo-950/20 dark:to-indigo-900/10">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Total check-outs
@@ -843,7 +841,7 @@ export default function AnalyticsPage() {
           </div>
         </Section>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

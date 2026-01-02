@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/app-store";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Home as HomeIcon } from "lucide-react";
@@ -19,7 +18,7 @@ export default function HouseIndexPage() {
   }, [selectedHouse?.id, router]);
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <Card>
         <CardContent className="p-10">
           <EmptyState
@@ -33,6 +32,6 @@ export default function HouseIndexPage() {
           />
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 }

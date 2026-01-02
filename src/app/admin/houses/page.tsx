@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useAdminHouses, useCreateHouse, useImportHouses } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -113,7 +112,7 @@ export default function HousesPage() {
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -221,7 +220,7 @@ export default function HousesPage() {
             template below as a guide.
           </p>
           <pre className="rounded-lg bg-muted p-3 text-xs">
-{`name,address,description
+            {`name,address,description
 Oak Villa,12 Creek Lane,Luxury duplex
 Maple Court,44 Sunset Ave,`}
           </pre>
@@ -310,6 +309,6 @@ Maple Court,44 Sunset Ave,`}
           </div>
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

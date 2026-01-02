@@ -13,6 +13,7 @@ import {
   HouseGroup,
   CreateHouseGroupRequest,
   UpdateHouseGroupRequest,
+  Admin,
 } from "@/types";
 import { toast } from "sonner";
 import { AdminDashboard } from "@/types";
@@ -80,11 +81,16 @@ export function useCreateResident() {
 }
 
 // Admins
-export function useAdmins() {
-  return useQuery({
-    queryKey: ["admin", "admins"],
+export function useAdmins(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+}) {
+  return useQuery<PaginatedResponse<Admin>>({
+    queryKey: ["admin", "admins", params],
     queryFn: async () => {
-      const response = await adminService.getAdmins();
+      const response = await adminService.getAdmins(params);
       return response.data;
     },
   });

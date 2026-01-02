@@ -137,8 +137,20 @@ export const adminService = {
     },
 
     // Admins
-    async getAdmins(): Promise<ApiResponse<Admin[]>> {
-        return apiClient.get("/admin/list");
+    async getAdmins(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
+        return apiClient.get("/admin/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                status: params?.status ?? undefined,
+            },
+        });
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {

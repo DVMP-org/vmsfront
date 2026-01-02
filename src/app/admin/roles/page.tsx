@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useAdminRoles } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -16,7 +15,7 @@ export default function RolesPage() {
   const router = useRouter();
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -95,6 +94,6 @@ export default function RolesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -6,16 +6,13 @@ import { formatDistanceToNow, format, isToday, isYesterday, differenceInDays } f
 import {
   AlertTriangle,
   ArrowLeft,
-  Building2,
   Lock,
   MessageSquare,
   Paperclip,
   Pin,
   Shield,
-  Unlock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PaginationBar } from "@/components/ui/PaginationBar";
@@ -192,7 +189,7 @@ export default function AdminForumTopicDetailPage() {
   ].filter(Boolean) as { label: string; value: string; action?: () => void }[];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-4">
         {breadcrumbs}
 
@@ -214,7 +211,7 @@ export default function AdminForumTopicDetailPage() {
                     {topic?.title ?? "Loading topic..."}
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
-                  {topicStatusChips}
+                    {topicStatusChips}
                     <span className="text-xs text-muted-foreground">
                       {topic?.posts_count ?? 0} posts
                     </span>
@@ -286,59 +283,59 @@ export default function AdminForumTopicDetailPage() {
 
           {/* Topic Metadata */}
           <div className="divide-y divide-foreground/20">
-              {metaRows.length === 0 ? (
+            {metaRows.length === 0 ? (
               <div className="px-4 py-3 text-sm text-muted-foreground">
                 No metadata available
               </div>
-              ) : (
-                metaRows.map((meta) => (
-                  <div key={meta.label} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                      {meta.label}
+            ) : (
+              metaRows.map((meta) => (
+                <div key={meta.label} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                    {meta.label}
+                  </span>
+                  {meta.action ? (
+                    <button
+                      type="button"
+                      onClick={meta.action}
+                      className="text-sm font-medium text-foreground hover:text-muted-foreground hover:underline"
+                    >
+                      {meta.value}
+                    </button>
+                  ) : (
+                    <span className="text-sm font-medium text-foreground">
+                      {meta.value}
                     </span>
-                    {meta.action ? (
-                      <button
-                        type="button"
-                        onClick={meta.action}
-                        className="text-sm font-medium text-foreground hover:text-muted-foreground hover:underline"
-                      >
-                        {meta.value}
-                      </button>
-                    ) : (
-                        <span className="text-sm font-medium text-foreground">
-                        {meta.value}
-                      </span>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
 
           {/* Deleted Warning */}
-            {topic?.is_deleted && (
+          {topic?.is_deleted && (
             <div className="border-t border-foreground/20 bg-red-50 px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-red-700">
                   <AlertTriangle className="h-4 w-4" />
                   <span>This topic is hidden from residents</span>
                 </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      topicId &&
-                      updateTopic.mutate({
-                        topicId,
-                        data: { is_deleted: false },
-                      })
-                    }
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    topicId &&
+                    updateTopic.mutate({
+                      topicId,
+                      data: { is_deleted: false },
+                    })
+                  }
                   className="h-7 text-xs"
-                  >
-                    Restore
+                >
+                  Restore
                 </Button>
               </div>
-              </div>
-            )}
+            </div>
+          )}
         </div>
 
         {/* Posts Section */}
@@ -352,58 +349,58 @@ export default function AdminForumTopicDetailPage() {
           <div className="p-0 bg-gradient-to-br from-muted to-foreground/10 min-h-[400px] max-h-[600px] overflow-y-auto">
             {postsQuery.isLoading ? (
               <div className="p-4">
-              <TableSkeleton />
+                <TableSkeleton />
               </div>
             ) : posts.length === 0 ? (
-                <div className="p-8">
-              <EmptyState
-                icon={MessageSquare}
-                title="No posts yet"
-                description="Use the composer to seed this discussion."
-              />
-                </div>
-            ) : (
-                  <>
-                    <div className="space-y-2 p-3">
-                {posts.map((post) => (
-                  <PostItem
-                    key={post.id}
-                    post={post}
-                    viewerId={viewerId}
-                    topicHouseName={topic?.house?.name}
-                    onUpdate={(data) =>
-                      topicId &&
-                      updatePost.mutate({
-                        topicId,
-                        postId: post.id,
-                        data,
-                      })
-                    }
-                    onToggleDelete={() =>
-                      topicId &&
-                      updatePost.mutate({
-                        topicId,
-                        postId: post.id,
-                        data: { is_deleted: !post.is_deleted },
-                      })
-                    }
-                    topicLocked={Boolean(topic?.is_locked)}
-                  />
-                ))}
-                    </div>
-                <div ref={postsEndRef} />
-                    <div className="border-t border-foreground/20 bg-foreground/10 px-4 py-3 sticky bottom-0">
-                <PaginationBar
-                  page={postsPage}
-                  totalPages={totalPostPages}
-                  total={totalPosts}
-                  pageSize={10}
-                  resourceLabel="posts"
-                  onChange={setPostsPage}
-                  isFetching={postsQuery.isFetching}
+              <div className="p-8">
+                <EmptyState
+                  icon={MessageSquare}
+                  title="No posts yet"
+                  description="Use the composer to seed this discussion."
                 />
               </div>
-                  </>
+            ) : (
+              <>
+                <div className="space-y-2 p-3">
+                  {posts.map((post) => (
+                    <PostItem
+                      key={post.id}
+                      post={post}
+                      viewerId={viewerId}
+                      topicHouseName={topic?.house?.name}
+                      onUpdate={(data) =>
+                        topicId &&
+                        updatePost.mutate({
+                          topicId,
+                          postId: post.id,
+                          data,
+                        })
+                      }
+                      onToggleDelete={() =>
+                        topicId &&
+                        updatePost.mutate({
+                          topicId,
+                          postId: post.id,
+                          data: { is_deleted: !post.is_deleted },
+                        })
+                      }
+                      topicLocked={Boolean(topic?.is_locked)}
+                    />
+                  ))}
+                </div>
+                <div ref={postsEndRef} />
+                <div className="border-t border-foreground/20 bg-foreground/10 px-4 py-3 sticky bottom-0">
+                  <PaginationBar
+                    page={postsPage}
+                    totalPages={totalPostPages}
+                    total={totalPosts}
+                    pageSize={10}
+                    resourceLabel="posts"
+                    onChange={setPostsPage}
+                    isFetching={postsQuery.isFetching}
+                  />
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -411,50 +408,50 @@ export default function AdminForumTopicDetailPage() {
         {/* Reply Composer */}
         <div className="border border-foreground/20 rounded-lg shadow-sm">
           <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
                 Post Reply
-                </h3>
-                {topic?.is_locked && (
+              </h3>
+              {topic?.is_locked && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
                   <Lock className="h-3 w-3 mr-0.5" />
-                    Locked
+                  Locked
                 </span>
-                )}
-              </div>
+              )}
+            </div>
           </div>
           <form onSubmit={handleComposerSubmit} className="p-4 space-y-3 bg-gradient-to-br from-muted to-foreground/10">
             <div className="rounded-xl border border-dashed border-foreground/20 bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
               Formatting supported — use bold, italics, lists, quotes, code blocks, and links.
             </div>
             <RichTextEditor
-                  value={composerValue}
+              value={composerValue}
               onChange={setComposerValue}
-                  placeholder={
-                    topic?.is_locked
-                      ? "Replies are disabled when locked."
-                      : "Share updates, decisions, or action items..."
-                  }
+              placeholder={
+                topic?.is_locked
+                  ? "Replies are disabled when locked."
+                  : "Share updates, decisions, or action items..."
+              }
               minHeight={150}
               className={topic?.is_locked ? "opacity-60 pointer-events-none" : ""}
-                />
+            />
             <div className="flex items-center justify-end gap-2">
-                  <Button
-                    type="submit"
+              <Button
+                type="submit"
                 size="sm"
-                    disabled={
-                      topic?.is_locked ||
-                      !hasMeaningfulContent(composerValue) ||
-                      createPost.isPending
-                    }
-                    isLoading={createPost.isPending}
+                disabled={
+                  topic?.is_locked ||
+                  !hasMeaningfulContent(composerValue) ||
+                  createPost.isPending
+                }
+                isLoading={createPost.isPending}
                 className="h-8 text-xs"
-                  >
+              >
                 Post Reply
-                  </Button>
-                </div>
-              </form>
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -467,13 +464,13 @@ export default function AdminForumTopicDetailPage() {
         initialValues={
           topic
             ? {
-                houseId: topic.house_id || topic.house?.id || "",
-                categoryId: topic.category_id,
-                title: topic.title,
-                content: topic.initial_post?.content ?? "",
-                isPinned: topic.is_pinned,
-                isLocked: topic.is_locked,
-              }
+              houseId: topic.house_id || topic.house?.id || "",
+              categoryId: topic.category_id,
+              title: topic.title,
+              content: topic.initial_post?.content ?? "",
+              isPinned: topic.is_pinned,
+              isLocked: topic.is_locked,
+            }
             : undefined
         }
         onClose={() => setTopicModalOpen(false)}
@@ -670,7 +667,7 @@ export default function AdminForumTopicDetailPage() {
           color: var(--brand-primary, #213928);
         }
       `}</style>
-    </DashboardLayout>
+    </>
   );
 }
 
@@ -733,7 +730,7 @@ function PostItem({
     <div className={cn("flex w-full mb-2 group", isOwn ? "justify-end" : "justify-start")}>
       <div className={cn("flex max-w-[70%] gap-2", isOwn ? "flex-row-reverse" : "flex-row")}>
         {/* Avatar/Icon */}
-          {!isOwn && (
+        {!isOwn && (
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-muted to-muted-foreground flex items-center justify-center border border-foreground/20">
             <span className="text-xs font-semibold text-muted-foreground">
               {displayName.charAt(0).toUpperCase()}
@@ -766,7 +763,7 @@ function PostItem({
                   )}
                 >
                   Admin
-            </span>
+                </span>
               )}
               <span
                 className={cn("text-[10px]", isOwn ? "text-white/70" : "text-zinc-500")}
@@ -774,125 +771,125 @@ function PostItem({
               >
                 {timestamp.display}
               </span>
-          <ActionMenu
-            size="sm"
-            triggerClassName={cn(
-              "opacity-0 group-hover:opacity-100 transition-opacity",
-              isOwn &&
-                "bg-white/20 text-white border-white/20 hover:bg-white/30 hover:text-white"
-            )}
-            options={[
-              {
-                label: isEditing ? "Cancel edit" : "Edit",
-                onClick: () => setIsEditing((prev) => !prev),
-                disabled: post.is_deleted || topicLocked,
-              },
-              {
-                label: post.is_deleted ? "Restore" : "Soft delete",
-                icon: Shield,
-                onClick: onToggleDelete,
-              },
-            ]}
-          />
-        </div>
+              <ActionMenu
+                size="sm"
+                triggerClassName={cn(
+                  "opacity-0 group-hover:opacity-100 transition-opacity",
+                  isOwn &&
+                  "bg-white/20 text-white border-white/20 hover:bg-white/30 hover:text-white"
+                )}
+                options={[
+                  {
+                    label: isEditing ? "Cancel edit" : "Edit",
+                    onClick: () => setIsEditing((prev) => !prev),
+                    disabled: post.is_deleted || topicLocked,
+                  },
+                  {
+                    label: post.is_deleted ? "Restore" : "Soft delete",
+                    icon: Shield,
+                    onClick: onToggleDelete,
+                  },
+                ]}
+              />
+            </div>
 
             {/* Post Content */}
-          {isEditing ? (
+            {isEditing ? (
               <div className="space-y-2 pt-1">
-              <textarea
+                <textarea
                   rows={3}
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
                   className="w-full border border-zinc-200 rounded-lg bg-white px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    onUpdate({ content: draft });
-                    setIsEditing(false);
-                  }}
-                  disabled={draft.trim().length === 0}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      onUpdate({ content: draft });
+                      setIsEditing(false);
+                    }}
+                    disabled={draft.trim().length === 0}
                     className="h-6 text-xs px-2"
-                >
-                  Save
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setDraft(post.content);
-                    setIsEditing(false);
-                  }}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setDraft(post.content);
+                      setIsEditing(false);
+                    }}
                     className="h-6 text-xs px-2"
-                >
-                  Cancel
-                </Button>
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-                <div className="pt-0.5">
+            ) : (
+              <div className="pt-0.5">
+                <div
+                  className={cn(
+                    "text-sm leading-relaxed break-words forum-content",
+                    isOwn ? "text-white forum-content-own" : "text-zinc-900 forum-content-other",
+                    post.is_deleted && "line-through opacity-60"
+                  )}
+                >
                   <div
                     className={cn(
-                      "text-sm leading-relaxed break-words forum-content",
-                      isOwn ? "text-white forum-content-own" : "text-zinc-900 forum-content-other",
-                      post.is_deleted && "line-through opacity-60"
+                      "max-w-none break-words text-sm forum-html-content",
+                      isOwn ? "forum-content-own" : "forum-content-other"
                     )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-none break-words text-sm forum-html-content",
-                        isOwn ? "forum-content-own" : "forum-content-other"
-                      )}
-                      dangerouslySetInnerHTML={{ __html: toRenderableHtml(post.content ?? "") }}
-                    />
+                    dangerouslySetInnerHTML={{ __html: toRenderableHtml(post.content ?? "") }}
+                  />
+                </div>
+                {post.attachments && post.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {post.attachments.map((attachment) => (
+                      <a
+                        key={attachment.url}
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          "inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs transition-colors",
+                          isOwn
+                            ? "border-white/30 text-white hover:bg-white/20"
+                            : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                        )}
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        {attachment.name || "Attachment"}
+                      </a>
+                    ))}
                   </div>
-          {post.attachments && post.attachments.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {post.attachments.map((attachment) => (
-                <a
-                  key={attachment.url}
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs transition-colors",
-                    isOwn
-                      ? "border-white/30 text-white hover:bg-white/20"
-                      : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-                  )}
-                >
-                  <Paperclip className="h-3 w-3" />
-                  {attachment.name || "Attachment"}
-                </a>
-              ))}
-            </div>
-          )}
-                  {editedTimestamp && (
-                    <span 
-                      className={cn("text-[10px] block mt-1", isOwn ? "text-white/70" : "text-zinc-500")}
-                      title={`Edited: ${editedTimestamp.full}`}
-                    >
-                      Edited {editedTimestamp.display}
-                    </span>
-                  )}
-                  {post.is_deleted && (
-                    <span className={cn("text-[10px] block mt-1 font-medium", isOwn ? "text-red-200" : "text-red-600")}>
-                      Deleted
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+                )}
+                {editedTimestamp && (
+                  <span
+                    className={cn("text-[10px] block mt-1", isOwn ? "text-white/70" : "text-zinc-500")}
+                    title={`Edited: ${editedTimestamp.full}`}
+                  >
+                    Edited {editedTimestamp.display}
+                  </span>
+                )}
+                {post.is_deleted && (
+                  <span className={cn("text-[10px] block mt-1 font-medium", isOwn ? "text-red-200" : "text-red-600")}>
+                    Deleted
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Status Messages */}
           {post.is_deleted && !isOwn && (
             <p className="text-[10px] text-red-600 font-medium mt-0.5 px-1">
-            Deleted · visible to admins only
-          </p>
-        )}
+              Deleted · visible to admins only
+            </p>
+          )}
         </div>
 
         {/* Right side avatar for own messages */}

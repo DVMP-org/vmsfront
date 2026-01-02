@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import {
   Card,
   CardContent,
@@ -70,7 +70,7 @@ export default function CreateAdminPage() {
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      role_id: form.role_id,  
+      role_id: form.role_id,
       email: form.email.trim(),
       permissions: useCustomPermissions
         ? grantAll
@@ -92,7 +92,7 @@ export default function CreateAdminPage() {
   );
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -272,6 +272,6 @@ export default function CreateAdminPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

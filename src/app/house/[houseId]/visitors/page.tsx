@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useVisitors } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -110,7 +110,7 @@ export default function VisitorsPage() {
 
   if (!houseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -124,12 +124,12 @@ export default function VisitorsPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Visitors</h1>
@@ -147,36 +147,36 @@ export default function VisitorsPage() {
                 description="Visitors from your passes will appear here"
               />
             ) : (
-                  <>
-                    <DataTable
-                      data={Array.isArray(visitors) ? visitors : []}
-                      columns={visitorColumns}
-                      searchable
-                      showPagination={false}
-                      emptyMessage="No visitors found"
-                      searchPlaceholder="Search visitors..."
-                    />
-                    <PaginationBar
-                      page={page}
-                      pageSize={pageSize}
-                      total={paginatedVisitors?.total ?? visitors.length}
-                      totalPages={paginatedVisitors?.total_pages ?? 1}
-                      hasNext={
-                        paginatedVisitors?.has_next ??
-                        page < (paginatedVisitors?.total_pages ?? 0)
-                      }
-                      hasPrevious={
-                        paginatedVisitors?.has_previous ?? page > 1
-                      }
-                      isFetching={isFetching}
-                      resourceLabel="visitors"
-                      onChange={(next) => setPage(next)}
-                    />
-                  </>
+              <>
+                <DataTable
+                  data={Array.isArray(visitors) ? visitors : []}
+                  columns={visitorColumns}
+                  searchable
+                  showPagination={false}
+                  emptyMessage="No visitors found"
+                  searchPlaceholder="Search visitors..."
+                />
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={paginatedVisitors?.total ?? visitors.length}
+                  totalPages={paginatedVisitors?.total_pages ?? 1}
+                  hasNext={
+                    paginatedVisitors?.has_next ??
+                    page < (paginatedVisitors?.total_pages ?? 0)
+                  }
+                  hasPrevious={
+                    paginatedVisitors?.has_previous ?? page > 1
+                  }
+                  isFetching={isFetching}
+                  resourceLabel="visitors"
+                  onChange={(next) => setPage(next)}
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
