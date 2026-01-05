@@ -148,6 +148,58 @@ export function useCreateResident() {
   });
 }
 
+export function useAdminResident(residentId: string | null) {
+  return useQuery<ResidentUser>({
+    queryKey: ["admin", "resident", residentId],
+    queryFn: async () => {
+      if (!residentId) throw new Error("Resident ID is required");
+      const response = await adminService.getResident(residentId);
+      return response.data;
+    },
+    enabled: !!residentId,
+  });
+}
+
+export function useUpdateResident() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      residentId,
+      data,
+    }: {
+      residentId: string;
+      data: any; // Using any to match component usage, or ResidentProfileUpdatePayload
+    }) => adminService.updateResident(residentId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      // Also invalidate single resident query if it exists
+      if (response.data?.resident?.id) {
+        queryClient.invalidateQueries({ queryKey: ["admin", "resident", response.data.resident.id] });
+      }
+      toast.success("Resident updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update resident");
+    },
+  });
+}
+
+export function useDeleteResident() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (residentId: string) => adminService.deleteResident(residentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      toast.success("Resident deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete resident");
+    },
+  });
+}
+
 // Admins
 export function useAdmins(params: {
   page: number;

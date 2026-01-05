@@ -2,9 +2,8 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminResidents, useImportResidents } from "@/hooks/use-admin";
+import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -13,7 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { Users, Trash2, Download } from "lucide-react";
+import { Users, Trash2, Download, Eye, Pencil } from "lucide-react";
 import { getFullName } from "@/lib/utils";
 import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
@@ -85,6 +84,69 @@ export default function ResidentsPage() {
     // TODO: Implement export functionality
   };
 
+  // Mutations
+  const updateResidentMutation = useUpdateResident();
+  const deleteResidentMutation = useDeleteResident();
+
+  // Edit State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<ResidentUser | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    address: "",
+  });
+
+  // Delete State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [residentToDelete, setResidentToDelete] = useState<ResidentUser | null>(null);
+
+  const handleEdit = (resident: ResidentUser) => {
+    setSelectedResident(resident);
+    setEditFormData({
+      first_name: resident.user.first_name || "",
+      last_name: resident.user.last_name || "",
+      phone: resident.user.phone || "",
+      address: resident.user.address || "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (resident: ResidentUser) => {
+    setResidentToDelete(resident);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedResident) return;
+
+    updateResidentMutation.mutate(
+      {
+        residentId: selectedResident.resident.id,
+        data: editFormData,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setSelectedResident(null);
+        },
+      }
+    );
+  };
+
+  const confirmDelete = () => {
+    if (residentToDelete) {
+      deleteResidentMutation.mutate(residentToDelete.resident.id, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setResidentToDelete(null);
+        },
+      });
+    }
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Export",
@@ -148,11 +210,14 @@ export default function ResidentsPage() {
       accessor: (row) =>
         row.houses && row?.houses?.length > 0 ? (
           <div className="flex flex-wrap gap-1">
-            {row.houses.map((house) => (
+            {row.houses.slice(0, 3).map((house) => (
               <Badge key={house.id} variant="secondary">
                 {house.name}
               </Badge>
             ))}
+            {row.houses.length > 3 && (
+              <Badge variant="secondary">+ {row.houses.length - 3}</Badge>
+            )}
           </div>
         ) : (
           "-"
@@ -173,7 +238,41 @@ export default function ResidentsPage() {
           {row.user.is_active ? "Active" : "Inactive"}
         </Badge>
       ),
-    },
+    }, {
+      key: "actions",
+      header: "Actions",
+      sortable: false,
+      accessor: (row) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/residents/${row.resident.id}`)}
+            title="View Details"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(row)}
+            title="Edit Resident"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row)}
+            title="Delete Resident"
+            disabled={deleteResidentMutation.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }
   ];
 
   return (
@@ -327,6 +426,93 @@ bob@example.com,Bob,Wilson,,,"House B"`}
             </div>
           )}
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedResident(null);
+        }}
+        title="Edit Resident"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="First Name"
+              value={editFormData.first_name}
+              onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+            />
+            <Input
+              label="Last Name"
+              value={editFormData.last_name}
+              onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+            />
+          </div>
+          <Input
+            label="Phone"
+            value={editFormData.phone}
+            onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+          />
+          <Input
+            label="Address"
+            value={editFormData.address}
+            onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+          />
+          <div className="flex gap-4 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setSelectedResident(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={updateResidentMutation.isPending}>
+              Update Resident
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setResidentToDelete(null);
+        }}
+        title="Delete Resident"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete <strong>{residentToDelete ? getFullName(residentToDelete.user.first_name, residentToDelete.user.last_name) : "this resident"}</strong>?
+            This action cannot be undone.
+          </p>
+          <div className="flex gap-4 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setResidentToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              isLoading={deleteResidentMutation.isPending}
+            >
+              Delete Resident
+            </Button>
+          </div>
+        </div>
       </Modal>
     </>
   );

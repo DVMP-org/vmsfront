@@ -24,6 +24,8 @@ import {
   FundWalletRequest,
   FundWalletResponse,
   WalletTransaction,
+  ResidentHouse,
+  ResidentCreate,
 } from "@/types";
 
 export const residentService = {
@@ -33,6 +35,10 @@ export const residentService = {
 
   async getResident(): Promise<ApiResponse<Resident>> {
     return apiClient.get("/resident/me");
+  },
+
+  async getResidentHouse(houseID: string): Promise<ApiResponse<ResidentHouse>> {
+    return apiClient.get(`/resident/house/${houseID}`);
   },
 
   async updateResidentProfile(
@@ -262,5 +268,45 @@ export const residentService = {
 
   async getWalletTransaction(reference: string): Promise<ApiResponse<WalletTransaction>> {
     return apiClient.get(`/resident/wallet/transaction/${reference}`);
+  },
+
+  // House Residents Management (Super User)
+  async getHouseResidents(
+    houseId: string,
+    params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<ResidentHouse>>> {
+    return apiClient.get(`/resident/house/${houseId}/residents`, {
+      params: {
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 10,
+        search: params?.search ?? undefined,
+      },
+    });
+  },
+
+  async addHouseResident(
+    houseId: string,
+    data: ResidentCreate
+  ): Promise<ApiResponse<ResidentUser>> {
+    return apiClient.post(`/resident/house/${houseId}/residents/create`, data);
+  },
+
+  async updateHouseResident(
+    houseId: string,
+    residentId: string,
+    data: ResidentProfileUpdatePayload
+  ): Promise<ApiResponse<ResidentUser>> {
+    return apiClient.put(`/resident/house/${houseId}/residents/${residentId}`, data);
+  },
+
+  async deleteHouseResident(
+    houseId: string,
+    residentId: string
+  ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
+    return apiClient.delete(`/resident/house/${houseId}/residents/${residentId}`);
   },
 };

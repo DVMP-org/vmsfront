@@ -10,6 +10,7 @@ import {
     AdminRole,
     ResidentUser,
     ResidentUserCreate,
+    ResidentProfileUpdatePayload,
     GatePass,
     GatePassCheckinRequest,
     GatePassCheckinResponse,
@@ -173,6 +174,23 @@ export const adminService = {
                 sort: params?.sort ?? undefined,
             },
         });
+    },
+
+    async getResident(residentId: string): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.get(`/admin/resident/${residentId}`);
+    },
+
+    async updateResident(
+        residentId: string,
+        data: ResidentProfileUpdatePayload
+    ): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.put(`/admin/resident/update/${residentId}`, data);
+    },
+
+    async deleteResident(
+        residentId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/resident/delete/${residentId}`);
     },
 
     async createResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {

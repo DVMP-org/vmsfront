@@ -111,7 +111,7 @@ export interface Resident {
 export interface ResidentUser {
     user: User;
     resident: Resident;
-    houses: House[];
+    houses?: House[] | null;
 }
 
 export interface ResidentUserCreate {
@@ -613,4 +613,23 @@ export interface UpdatePaymentGatewayRequest {
     redirect_url?: string | null;
     sandbox_mode?: boolean;
     active?: boolean;
+}
+
+
+
+export interface ResidentHouse {
+    resident: Resident;
+    house: House;
+    is_super_user: boolean;
+    is_active: boolean;
+}
+
+export interface ResidentCreate {
+
+    email: string;
+    house_id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address: string;
 }

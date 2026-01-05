@@ -32,15 +32,16 @@ import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
 import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath, findMatchingRoute, findPluginRouteAndType } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
+import { useResidentHouse } from "@/hooks/use-resident";
 
 interface SidebarProps {
   type: "resident" | "admin";
   onMobileClose?: () => void;
 }
 
-function buildResidentLinks(houseId?: string) {
+function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
   const base = houseId ? `/house/${houseId}` : "/select";
-  return [
+  const links = [
     { href: houseId ? base : "/select", label: "Dashboard", icon: Home },
     {
       href: houseId ? `${base}/passes` : "/select",
@@ -58,8 +59,18 @@ function buildResidentLinks(houseId?: string) {
       icon: MessageSquare,
     },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-    { href: "/resident/profile", label: "Profile", icon: Settings },
+    { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
+
+  if (isSuperUser) {
+    links.push({
+      href: houseId ? `${base}/settings` : "/select",
+      label: "Settings",
+      icon: Settings,
+    });
+  }
+
+  return links;
 }
 
 const adminLinks = [
@@ -205,8 +216,11 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     return selectedHouse?.id ?? routeHouseId;
   }, [actualType, selectedHouse?.id, routeHouseId]);
 
+  const { data: residentHouse } = useResidentHouse(effectiveHouseId ?? null);
+  const isSuperUser = residentHouse?.is_super_user ?? false;
+
   const links = useMemo(() => {
-    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks;
+    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId, isSuperUser) : adminLinks;
 
     // Deduplicate links by href AND label to prevent duplicates
     // Use Map to track both href and label for better deduplication
@@ -237,7 +251,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     }
 
     return finalLinks;
-  }, [actualType, effectiveHouseId]);
+  }, [actualType, effectiveHouseId, isSuperUser]);
   const mostSpecificMatch = useMemo(() => {
     const sortedLinks = [...links].sort(
       (a, b) => b.href.length - a.href.length

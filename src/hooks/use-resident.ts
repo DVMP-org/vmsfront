@@ -33,6 +33,19 @@ export function useResidentDashboard(houseId: string | null) {
   });
 }
 
+
+export function useResidentHouse(houseId: string | null) {
+  return useQuery({
+    queryKey: ["resident", "house", houseId],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required")
+      const response = await residentService.getResidentHouse(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
 export function useGatePasses(
   houseId: string | null,
   page: number = 1,
