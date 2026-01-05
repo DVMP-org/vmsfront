@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Column, DataTable } from "@/components/ui/DataTable";
 import { Plus, CreditCard, ArrowRight, Home as HomeIcon } from "lucide-react";
-import { formatDate, formatDateTime, getPassStatusColor } from "@/lib/utils";
+import { formatDate, formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
 import type { GatePass } from "@/types";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 
@@ -139,7 +139,7 @@ export default function PassesPage() {
       ],
       accessor: (row) => (
         <Badge className={getPassStatusColor(row.status)}>
-          {row.statusLabel}
+          {titleCase(row.statusLabel.replace("_", " "))}
         </Badge>
       ),
     },
