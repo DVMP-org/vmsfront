@@ -41,6 +41,14 @@ export const residentService = {
     return apiClient.get(`/resident/house/${houseID}`);
   },
 
+  async updateHouse(houseId: string, data: { name: string; description?: string; address: string }): Promise<ApiResponse<House>> {
+    return apiClient.put(`/resident/house/${houseId}`, data);
+  },
+
+  async getHouseGroups(houseId: string): Promise<ApiResponse<ResidentHouse[]>> {
+    return apiClient.get(`/resident/house/${houseId}/groups`);
+  },
+
   async updateResidentProfile(
     data: ResidentProfileUpdatePayload
   ): Promise<ApiResponse<Resident>> {
@@ -307,6 +315,13 @@ export const residentService = {
     houseId: string,
     residentId: string
   ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
-    return apiClient.delete(`/resident/house/${houseId}/residents/${residentId}`);
+    return apiClient.delete(`/resident/house/${houseId}/residents/${residentId}/delete`);
+  },
+
+  async toggleResidentStatus(
+    houseId: string,
+    residentId: string
+  ): Promise<ApiResponse<ResidentHouse>> {
+    return apiClient.put(`/resident/house/${houseId}/residents/${residentId}/toggle-status`);
   },
 };

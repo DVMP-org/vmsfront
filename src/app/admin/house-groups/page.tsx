@@ -443,7 +443,7 @@ export default function HouseGroupsPage() {
                                 }}
                                 disableClientSideFiltering={true}
                                 disableClientSideSorting={false}
-                                className="border border-zinc-200 rounded"
+                                className=" rounded"
                                 selectable={true}
                                 selectedRows={selectedGroups}
                                 onSelectionChange={setSelectedGroups}

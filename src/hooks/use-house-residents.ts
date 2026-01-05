@@ -49,6 +49,18 @@ export function useAddHouseResident(houseId: string | null) {
     });
 }
 
+export function useGetHouseGroups(houseId: string | null) {
+    return useQuery({
+        queryKey: ["resident", "house-groups", houseId],
+        queryFn: async () => {
+            if (!houseId) throw new Error("House ID is required");
+            const response = await residentService.getHouseGroups(houseId);
+            return response.data;
+        },
+        enabled: !!houseId,
+    });
+}
+
 export function useUpdateHouseResident(houseId: string | null) {
     const queryClient = useQueryClient();
 
@@ -81,6 +93,24 @@ export function useDeleteHouseResident(houseId: string | null) {
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.detail || "Failed to delete resident");
+        },
+    });
+}
+
+export function useToggleHouseResidentStatus(houseId: string | null) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (residentId: string) => {
+            if (!houseId) throw new Error("House ID is required");
+            return residentService.toggleResidentStatus(houseId, residentId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resident", "house-residents", houseId] });
+            toast.success("Resident status toggled successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.detail || "Failed to toggle resident status");
         },
     });
 }

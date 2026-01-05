@@ -25,7 +25,7 @@ import {
   Users as UsersIcon,
   Wallet,
 } from "lucide-react";
-import { formatDateTime, getPassStatusColor } from "@/lib/utils";
+import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
 import { GatePassStatus, type GateEvent, type GatePass } from "@/types";
 
 export default function ResidentDashboardPage() {
@@ -175,7 +175,7 @@ export default function ResidentDashboardPage() {
       ],
       accessor: (row) => (
         <Badge className={getPassStatusColor(row.status)}>
-          {row.statusLabel}
+          {titleCase(row.statusLabel.replace("_", " "))}
         </Badge>
       ),
     },
@@ -239,6 +239,7 @@ export default function ResidentDashboardPage() {
       header: "Person",
       sortable: true,
       filterable: true,
+      accessor: (row) => <span>{titleCase(row.actor)}</span>
     },
     {
       key: "checkIn",

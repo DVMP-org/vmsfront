@@ -7,13 +7,14 @@ import {
     useAddHouseResident,
     useUpdateHouseResident,
     useDeleteHouseResident,
+    useToggleHouseResidentStatus,
 } from "@/hooks/use-house-residents";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ResidentUser, ResidentUserCreate, ResidentProfileUpdatePayload, ResidentHouse, ResidentCreate } from "@/types";
-import { Plus, Search, Edit, Trash2, MoreVertical, Loader2, Star } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MoreVertical, Loader2, Star, RefreshCcw, Power } from "lucide-react";
 import { ResidentModal } from "./ResidentModal";
 
 import { Modal } from "@/components/ui/Modal";
@@ -27,6 +28,7 @@ export function ResidentsSection() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingResident, setEditingResident] = useState<ResidentHouse | null>(null);
     const [deletingResident, setDeletingResident] = useState<ResidentHouse | null>(null);
+    const [togglingResident, setTogglingResident] = useState<ResidentHouse | null>(null);
 
     const { data: residentsData, isLoading } = useHouseResidents(houseId, {
         page,
@@ -36,6 +38,7 @@ export function ResidentsSection() {
     const addResident = useAddHouseResident(houseId);
     const updateResident = useUpdateHouseResident(houseId);
     const deleteResident = useDeleteHouseResident(houseId);
+    const toggleStatus = useToggleHouseResidentStatus(houseId);
 
     const handleAddResident = async (data: ResidentCreate) => {
         // Transform form data to match API expectation if needed
@@ -64,6 +67,11 @@ export function ResidentsSection() {
         if (!deletingResident) return;
         await deleteResident.mutateAsync(deletingResident.resident.id);
         setDeletingResident(null);
+    };
+    const handleToggleStatus = async () => {
+        if (!togglingResident) return;
+        await toggleStatus.mutateAsync(togglingResident.resident.id);
+        setTogglingResident(null);
     };
 
     if (isLoading) {
@@ -132,6 +140,9 @@ export function ResidentsSection() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
+                                            <Button variant="ghost" size="icon" className={item.is_active ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"} title={item.is_active ? "Deactivate" : "Activate"} onClick={() => setTogglingResident(item)}>
+                                                <Power className="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => setEditingResident(item)}>
                                                 <Edit className="h-4 w-4" />
                                             </Button>
@@ -180,6 +191,34 @@ export function ResidentsSection() {
                         <Button variant="ghost" onClick={() => setDeletingResident(null)}>Cancel</Button>
                         <Button variant="destructive" onClick={handleDeleteResident} isLoading={deleteResident.isPending}>
                             Remove
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Status Toggle Confirmation */}
+            <Modal
+                isOpen={!!togglingResident}
+                onClose={() => setTogglingResident(null)}
+                title={`${togglingResident?.is_active ? 'Deactivate' : 'Activate'} Resident`}
+            >
+                <div className="space-y-4">
+                    <p>
+                        Are you sure you want to <strong>{togglingResident?.is_active ? 'deactivate' : 'activate'}</strong> <strong>{togglingResident?.resident.user.first_name} {togglingResident?.resident.user.last_name}</strong>?
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        {togglingResident?.is_active
+                            ? "Deactivating a resident will prevent them from creating gate passes or accessing the house services until they are reactivated."
+                            : "Activating a resident will restore their access to house services."}
+                    </p>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="ghost" onClick={() => setTogglingResident(null)}>Cancel</Button>
+                        <Button
+                            variant={togglingResident?.is_active ? "destructive" : "primary"}
+                            onClick={handleToggleStatus}
+                            isLoading={toggleStatus.isPending}
+                        >
+                            {togglingResident?.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
                     </div>
                 </div>

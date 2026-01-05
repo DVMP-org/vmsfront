@@ -341,6 +341,12 @@ export interface CreateGatePassRequest {
     }[];
 }
 
+export interface UpdateHouseRequest {
+    name: string;
+    description?: string;
+    address: string;
+}
+
 export interface CreateHouseRequest {
     name: string;
     description?: string;
@@ -614,8 +620,6 @@ export interface UpdatePaymentGatewayRequest {
     sandbox_mode?: boolean;
     active?: boolean;
 }
-
-
 
 export interface ResidentHouse {
     resident: Resident;

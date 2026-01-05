@@ -41,4 +41,8 @@ export const authService = {
   async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<{ ok: boolean; message: string }>> {
     return apiClient.post("/auth/reset-password", data);
   },
+
+  async onboard(data: any): Promise<ApiResponse<AuthResponse>> {
+    return apiClient.post("/auth/onboard", data);
+  },
 };

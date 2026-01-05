@@ -209,3 +209,27 @@ export function useResetPassword(onSuccess?: () => void) {
     },
   });
 }
+
+export function useOnboard() {
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => authService.onboard(data),
+    onSuccess: (response) => {
+      const { user, token } = response.data;
+      setAuth(user, token);
+      apiClient.setToken(token);
+      queryClient.invalidateQueries({ queryKey: ["resident", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
+
+      toast.success("Onboarding complete! Welcome.");
+      router.push("/select");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to complete onboarding");
+    },
+  });
+}
