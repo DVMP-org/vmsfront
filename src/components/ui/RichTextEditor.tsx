@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import "react-quill/dist/quill.snow.css";
+import "quill/dist/quill.snow.css";
 import { cn } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/safe-html";
 
