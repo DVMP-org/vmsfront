@@ -24,16 +24,16 @@ const formatCurrency = (value: number) => {
 };
 
 // Memoized status color getter
-const getStatusColor = (status: string) => {
+const getStatusStyles = (status: string) => {
     switch (status) {
         case "success":
-            return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+            return "border-green-500/50 text-green-600";
         case "failed":
-            return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
+            return "border-red-500/50 text-red-600";
         case "pending":
-            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
+            return "border-amber-500/50 text-amber-600";
         default:
-            return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
+            return "border-border text-muted-foreground";
     }
 };
 
@@ -44,7 +44,7 @@ export default function WalletHistoryPage() {
     const { data: history, isLoading } = useWalletHistory(page, pageSize);
 
     const handleBack = useCallback(() => {
-        router.push("/wallet");
+        router.push("/resident/wallet");
     }, [router]);
 
     type TransactionRow = WalletTransaction & {
@@ -64,10 +64,10 @@ export default function WalletHistoryPage() {
                 transaction.type === "credit" ? (
                     <ArrowDownRight className="h-4 w-4 text-green-600" />
                 ) : (
-                    <ArrowUpRight className="h-4 w-4 text-red-600" />
+                    <ArrowUpRight className="h-4 w-4 text-red-700" />
                 ),
             statusBadge: (
-                <Badge className={getStatusColor(transaction.status)}>
+                <Badge variant="outline" className={`text-[10px] px-1.5 uppercase font-bold ${getStatusStyles(transaction.status)}`}>
                     {transaction.status}
                 </Badge>
             ),
@@ -77,12 +77,14 @@ export default function WalletHistoryPage() {
     // Memoize columns to avoid recreating on every render
     const columns: Column<TransactionRow>[] = useMemo(() => [
         {
-            key: "typeIcon",
+            key: "type",
             header: "Type",
             accessor: (row) => (
                 <div className="flex items-center gap-2">
-                    {row.typeIcon}
-                    <span className="capitalize font-medium">{row.type}</span>
+                    <div className="p-1 rounded bg-muted/50">
+                        {row.typeIcon}
+                    </div>
+                    <span className="capitalize font-medium text-xs">{row.type}</span>
                 </div>
             ),
         },
@@ -92,7 +94,7 @@ export default function WalletHistoryPage() {
             sortable: true,
             accessor: (row) => (
                 <span
-                    className={`font-semibold ${row.type === "credit" ? "text-green-600" : "text-red-600"
+                    className={`font-semibold tabular-nums text-xs ${row.type === "credit" ? "text-green-600" : "text-red-700"
                         }`}
                 >
                     {row.type === "credit" ? "+" : "-"}
@@ -104,9 +106,14 @@ export default function WalletHistoryPage() {
             key: "description",
             header: "Description",
             accessor: (row) => (
-                <span className="text-sm text-muted-foreground">
-                    {row.description || "No description"}
-                </span>
+                <div className="flex flex-col">
+                    <span className="text-[13px] font-medium max-w-[300px] truncate">
+                        {row.description || "No description"}
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                        {row.reference}
+                    </span>
+                </div>
             ),
         },
         {
@@ -127,15 +134,8 @@ export default function WalletHistoryPage() {
             header: "Date",
             sortable: true,
             accessor: (row) => (
-                <span className="text-sm">{formatDateTime(row.created_at)}</span>
-            ),
-        },
-        {
-            key: "reference",
-            header: "Reference",
-            accessor: (row) => (
-                <span className="font-mono text-xs text-muted-foreground">
-                    {row.reference}
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {formatDateTime(row.created_at)}
                 </span>
             ),
         },
@@ -153,35 +153,38 @@ export default function WalletHistoryPage() {
 
     return (
         <DashboardLayout type="resident">
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex items-center gap-3">
                         <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={handleBack}
-                            className="mb-4"
+                            className="h-8 w-8 rounded-full border"
                         >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Wallet
+                            <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-3xl font-bold">Wallet History</h1>
-                        <p className="text-muted-foreground">
-                            View all your wallet transactions
-                        </p>
+                        <div>
+                            <h1 className="text-xl font-bold tracking-tight">Transaction History</h1>
+                            <p className="text-xs text-muted-foreground">
+                                Detailed view of all your wallet activities
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Transactions Table */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Transactions</CardTitle>
-                        <CardDescription>
-                            {history?.total ? `${history.total} total transaction${history.total !== 1 ? "s" : ""}` : "No transactions"}
-                        </CardDescription>
+                <Card className="border-border/50 shadow-none">
+                    <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
+                        <div className="space-y-0.5">
+                            <CardTitle className="text-sm font-semibold">Transactions</CardTitle>
+                        </div>
+                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-medium text-muted-foreground">
+                            {history?.total || 0} Total
+                        </span>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0">
                         {history && history.items.length > 0 ? (
                             <>
                                 <DataTable
