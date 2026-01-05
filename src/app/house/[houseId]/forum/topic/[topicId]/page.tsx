@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow, format, isToday, isYesterday, differenceInDays } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -127,10 +127,10 @@ export default function ForumTopicPage() {
     const attachmentsPayload =
       pendingAttachments.length > 0
         ? pendingAttachments.map((attachment) => ({
-            name: attachment.name,
-            mime: attachment.type,
-            url: attachment.dataUrl,
-          }))
+          name: attachment.name,
+          mime: attachment.type,
+          url: attachment.dataUrl,
+        }))
         : undefined;
     createPost.mutate(
       {
@@ -270,7 +270,7 @@ export default function ForumTopicPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -284,12 +284,12 @@ export default function ForumTopicPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6 pb-24">
         <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
           <div className="flex flex-col gap-5 p-6">
@@ -413,23 +413,22 @@ export default function ForumTopicPage() {
                 <Skeleton className="h-24 w-full rounded-2xl" />
               </div>
             ) : posts.length === 0 ? (
-                <div className="p-8">
-                  <EmptyState
-                    icon={MessageSquare}
-                    title="No replies yet"
-                    description="Kick off the conversation with the first response."
-                  />
-                </div>
+              <div className="p-8">
+                <EmptyState
+                  icon={MessageSquare}
+                  title="No replies yet"
+                  description="Kick off the conversation with the first response."
+                />
+              </div>
             ) : (
               <div
                 ref={repliesContainerRef}
-                    className="bg-gradient-to-br from-slate-50 via-zinc-50 to-slate-50 min-h-[400px] max-h-[600px] overflow-y-auto p-3 space-y-2"
+                className="bg-gradient-to-br from-slate-50 via-zinc-50 to-slate-50 min-h-[400px] max-h-[600px] overflow-y-auto p-3 space-y-2"
               >
                 {posts.map((post, index) => {
                   const authorName =
                     post.author?.first_name || post.author?.last_name
-                      ? `${post.author?.first_name ?? ""} ${
-                          post.author?.last_name ?? ""
+                      ? `${post.author?.first_name ?? ""} ${post.author?.last_name ?? ""
                         }`.trim()
                       : post.author?.email ?? "Resident";
                   const isOwnPost = viewerId ? post.author_id === viewerId : false;
@@ -532,7 +531,7 @@ export default function ForumTopicPage() {
                               {timestamp.display}
                             </span>
                             {editedTimestamp && (
-                              <span 
+                              <span
                                 className={cn("text-[10px]", isOwnPost ? "text-white/70" : "text-zinc-500")}
                                 title={`Edited: ${editedTimestamp.full}`}
                               >
@@ -688,14 +687,14 @@ export default function ForumTopicPage() {
                 className="space-y-4"
                 onSubmit={handleCreatePost}
               >
-                  <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-2 text-xs text-zinc-600">
-                    Formatting supported — use bold, italics, lists, quotes, code blocks, and links to keep conversations clear.
+                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-2 text-xs text-zinc-600">
+                  Formatting supported — use bold, italics, lists, quotes, code blocks, and links to keep conversations clear.
                 </div>
-                  <RichTextEditor
+                <RichTextEditor
                   value={content}
                   onChange={setContent}
                   placeholder="Share an update, ask a follow-up question, or tag a neighbour."
-                    minHeight={180}
+                  minHeight={180}
                 />
                 <div
                   onDragOver={handleDragOver}
@@ -712,7 +711,7 @@ export default function ForumTopicPage() {
                   Drag & drop files here or{" "}
                   <button
                     type="button"
-                      className="font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
+                    className="font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
                     onClick={() => attachmentInputRef.current?.click()}
                   >
                     browse
@@ -771,8 +770,8 @@ export default function ForumTopicPage() {
                   <Button
                     type="submit"
                     isLoading={createPost.isPending}
-                      disabled={!canSubmit}
-                      className="hidden lg:inline-flex"
+                    disabled={!canSubmit}
+                    className="hidden lg:inline-flex"
                   >
                     Post reply
                   </Button>
@@ -955,6 +954,6 @@ export default function ForumTopicPage() {
           color: var(--brand-primary, #213928);
         }
       `}</style>
-    </DashboardLayout>
+    </>
   );
 }

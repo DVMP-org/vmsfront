@@ -32,15 +32,16 @@ import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
 import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath, findMatchingRoute, findPluginRouteAndType } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
+import { useResidentHouse } from "@/hooks/use-resident";
 
 interface SidebarProps {
   type: "resident" | "admin";
   onMobileClose?: () => void;
 }
 
-function buildResidentLinks(houseId?: string) {
+function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
   const base = houseId ? `/house/${houseId}` : "/select";
-  return [
+  const links = [
     { href: houseId ? base : "/select", label: "Dashboard", icon: Home },
     {
       href: houseId ? `${base}/passes` : "/select",
@@ -57,9 +58,19 @@ function buildResidentLinks(houseId?: string) {
       label: "Forum",
       icon: MessageSquare,
     },
-    { href: "/wallet", label: "Wallet", icon: Wallet },
-    { href: "/profile", label: "Profile", icon: Settings },
+    { href: "/resident/wallet", label: "Wallet", icon: Wallet },
+    { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
+
+  if (isSuperUser) {
+    links.push({
+      href: houseId ? `${base}/settings` : "/select",
+      label: "Settings",
+      icon: Settings,
+    });
+  }
+
+  return links;
 }
 
 const adminLinks = [
@@ -205,8 +216,11 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     return selectedHouse?.id ?? routeHouseId;
   }, [actualType, selectedHouse?.id, routeHouseId]);
 
+  const { data: residentHouse } = useResidentHouse(effectiveHouseId ?? null);
+  const isSuperUser = residentHouse?.is_super_user ?? false;
+
   const links = useMemo(() => {
-    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId) : adminLinks;
+    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId, isSuperUser) : adminLinks;
 
     // Deduplicate links by href AND label to prevent duplicates
     // Use Map to track both href and label for better deduplication
@@ -237,7 +251,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     }
 
     return finalLinks;
-  }, [actualType, effectiveHouseId]);
+  }, [actualType, effectiveHouseId, isSuperUser]);
   const mostSpecificMatch = useMemo(() => {
     const sortedLinks = [...links].sort(
       (a, b) => b.href.length - a.href.length
@@ -294,37 +308,39 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     });
   };
 
-  // Find the most specific active route for a plugin
-  // Returns the route path if active, null otherwise
-  // Optimized: uses shared utility function and checks routes for current type only
-  const findActivePluginRoute = useMemo(() => {
-    return (plugin: typeof plugins[0]): string | null => {
-      if (!pathname || !isPluginPath(pathname, plugin.basePath)) {
-        return null;
+  // Pre-calculate active routes for all plugins to avoid redundant checks during render
+  // returns Map<PluginName, ActiveRoutePath | null>
+  const activeRoutesMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    if (!pathname) return map;
+
+    for (const plugin of plugins) {
+      if (!isPluginPath(pathname, plugin.basePath)) {
+        continue;
       }
 
-      // Get routes for current type only (already filtered)
       const routes = getPluginRoutesMemoized(plugin);
-      if (routes.length === 0) return null;
+      if (routes.length === 0) continue;
 
       const routePath = extractRoutePath(pathname, plugin.basePath);
-
-      // Use shared utility with prefix matching for nested routes
       const matchingRoute = findMatchingRoute(routePath, routes, { checkPrefix: true });
 
-      return matchingRoute ? matchingRoute.path : null;
-    };
-  }, [pathname, getPluginRoutesMemoized]);
+      if (matchingRoute) {
+        map.set(plugin.name, matchingRoute.path);
+      }
+    }
+    return map;
+  }, [pathname, plugins, getPluginRoutesMemoized]);
 
   // Check if a specific plugin route is active (strict matching)
-  const isPluginRouteActive = (plugin: typeof plugins[0], routePath: string): boolean => {
-    const activeRoute = findActivePluginRoute(plugin);
+  const isPluginRouteActive = (pluginName: string, routePath: string): boolean => {
+    const activeRoute = activeRoutesMap.get(pluginName);
     return activeRoute === routePath;
   };
 
   // Check if any route in a plugin is active
-  const isPluginActive = (plugin: typeof plugins[0]) => {
-    return findActivePluginRoute(plugin) !== null;
+  const isPluginActive = (pluginName: string) => {
+    return activeRoutesMap.has(pluginName);
   };
 
   // Auto-expand plugins with active routes
@@ -335,9 +351,9 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
     const activePlugins = new Set<string>();
     filteredPlugins.forEach((plugin) => {
-      // Use the same strict matching logic
-      const activeRoute = findActivePluginRoute(plugin);
-      if (activeRoute !== null) {
+      // Use the memoized map
+      const activeRoute = activeRoutesMap.get(plugin.name);
+      if (activeRoute) {
         activePlugins.add(plugin.name);
       }
     });
@@ -360,7 +376,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         return newSet;
       });
     }
-  }, [pathname, actualType, filteredPlugins, findActivePluginRoute]);
+  }, [pathname, actualType, filteredPlugins, activeRoutesMap]);
 
   return (
     <aside
@@ -465,7 +481,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
           {filteredPlugins.map(plugin => {
             const isExpanded = expandedPlugins.has(plugin.name);
-            const hasActiveRoute = isPluginActive(plugin);
+            const hasActiveRoute = isPluginActive(plugin.name);
             const pluginIcon = plugin.manifest.icon
               ? `fa fa-${plugin.manifest.icon}`
               : 'fa fa-cube';
@@ -519,7 +535,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                 {isExpanded && (isMobile || !collapsed) && (
                   <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
                     {getPluginRoutesMemoized(plugin).map(route => {
-                      const isActive = isPluginRouteActive(plugin, route.path);
+                      const isActive = isPluginRouteActive(plugin.name, route.path);
                       const routeHref = buildPluginPath(plugin.basePath, route.path);
                       // Get title and icon from route (routes.js) or fallback to path
                       const routeTitle = route.title || route.path || "Route";

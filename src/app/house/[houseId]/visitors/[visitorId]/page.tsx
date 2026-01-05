@@ -9,10 +9,9 @@ import {
   Phone,
   Clock3,
   QrCode,
-  IdCard,
 } from "lucide-react";
 import Image from "next/image";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -47,11 +46,11 @@ export default function VisitorDetailPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
-              icon={IdCard}
+              icon={QrCode}
               title="Select a house to continue"
               description="Choose a house from the dashboard selector to view visitor details."
               action={{
@@ -61,26 +60,26 @@ export default function VisitorDetailPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="space-y-4">
           <Skeleton className="h-48 w-full rounded-3xl" />
           <Skeleton className="h-64 w-full rounded-3xl" />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!visitor) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <EmptyState
-          icon={IdCard}
+          icon={QrCode}
           title="Visitor not found"
           description="We couldn't load this visitor. They might have been removed."
           action={{
@@ -88,7 +87,7 @@ export default function VisitorDetailPage() {
             onClick: () => router.push(`/house/${effectiveHouseId}/visitors`),
           }}
         />
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -96,7 +95,7 @@ export default function VisitorDetailPage() {
   const passCode = visitor.pass_code ?? visitor.gate_pass_code ?? "—";
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Button
@@ -186,7 +185,7 @@ export default function VisitorDetailPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

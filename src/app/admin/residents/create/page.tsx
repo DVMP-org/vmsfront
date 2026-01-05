@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -135,7 +134,7 @@ export default function CreateResidentPage() {
   }, [selectedUser, mode]);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -163,15 +162,15 @@ export default function CreateResidentPage() {
           </Button>
         </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Resident details</CardTitle>
-          <CardDescription>
-            Provide the user identifier and optional profile updates. Houses will determine their access.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Resident details</CardTitle>
+            <CardDescription>
+              Provide the user identifier and optional profile updates. Houses will determine their access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="flex flex-wrap gap-3">
                   {(["existing", "new"] as const).map((value) => (
@@ -271,68 +270,68 @@ export default function CreateResidentPage() {
                     setForm((prev) => ({ ...prev, phone: event.target.value }))
                   }
                 />
-              <Input
-                label="Address"
-                placeholder="Apartment 5B, Riverside"
-                value={form.address}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, address: event.target.value }))
-                }
-              />
+                <Input
+                  label="Address"
+                  placeholder="Apartment 5B, Riverside"
+                  value={form.address}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, address: event.target.value }))
+                  }
+                />
               </div>
 
-            <div className="space-y-4 rounded-lg border p-4">
-              <div className="flex items-center gap-2">
-                <Home className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm font-medium">Associate houses</p>
-                  <p className="text-xs text-muted-foreground">
-                    Select one or more houses that the resident should belong to.
+              <div className="space-y-4 rounded-lg border p-4">
+                <div className="flex items-center gap-2">
+                  <Home className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Associate houses</p>
+                    <p className="text-xs text-muted-foreground">
+                      Select one or more houses that the resident should belong to.
+                    </p>
+                  </div>
+                </div>
+                {housesLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading houses...</p>
+                ) : sortedHouses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No houses found. Create a house first.
                   </p>
-                </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {sortedHouses.map((house) => {
+                      const slug = house.slug;
+                      const isSelectable = Boolean(slug);
+                      return (
+                        <Checkbox
+                          key={house.id}
+                          label={house.name}
+                          description={house.address}
+                          checked={slug ? selectedHouseSlugs.includes(slug) : false}
+                          disabled={!isSelectable}
+                          onChange={() => slug && handleHouseToggle(slug)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              {housesLoading ? (
-                <p className="text-sm text-muted-foreground">Loading houses...</p>
-              ) : sortedHouses.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No houses found. Create a house first.
-                </p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                        {sortedHouses.map((house) => {
-                          const slug = house.slug;
-                          const isSelectable = Boolean(slug);
-                          return (
-                            <Checkbox
-                              key={house.id}
-                              label={house.name}
-                              description={house.address}
-                        checked={slug ? selectedHouseSlugs.includes(slug) : false}
-                        disabled={!isSelectable}
-                        onChange={() => slug && handleHouseToggle(slug)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
 
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/residents")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" isLoading={createResident.isPending}>
-                Create resident
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/admin/residents")}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" isLoading={createResident.isPending}>
+                  Create resident
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,25 +1,48 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses } from "@/hooks/use-admin";
+import { useState, useMemo, useEffect } from "react";
+import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses, useBulkDeleteHouseGroups, useBulkToggleHouseGroupActive } from "@/hooks/use-admin";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import { Plus, Building2, Edit, Trash2 } from "lucide-react";
+import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { Plus, Building2, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { HouseGroup, House } from "@/types";
 
-const PAGE_SIZE = 20;
-
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const PAGE_SIZE = 10;
+const STATUS_FILTERS: Array<{ value: string, label: string }> = [
+    { value: "all", label: "All" },
+    { value: "true", label: "Active" },
+    { value: "false", label: "Inactive" },
+]
 export default function HouseGroupsPage() {
-    const [page, setPage] = useState(1);
-    const [search, setSearch] = useState("");
+    // URL query sync
+    const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+        config: {
+            page: { defaultValue: 1 },
+            pageSize: { defaultValue: PAGE_SIZE },
+            search: { defaultValue: "" },
+            status: { defaultValue: undefined },
+            sort: { defaultValue: null },
+        },
+        skipInitialSync: true,
+    });
+
+    // Initialize state from URL
+    const [page, setPage] = useState(() => initializeFromUrl("page"));
+    const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+    const [search, setSearch] = useState(() => initializeFromUrl("search"));
+    const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("is_active"));
+    const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -31,12 +54,46 @@ export default function HouseGroupsPage() {
         house_ids: [] as string[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+
+    // Mutations
+    const createMutation = useCreateHouseGroup();
+    const updateMutation = useUpdateHouseGroup();
+    const deleteMutation = useDeleteHouseGroup();
+    const bulkDeleteMutation = useBulkDeleteHouseGroups();
+    const bulkToggleActiveMutation = useBulkToggleHouseGroupActive();
+
+    // Sync state to URL
+    useEffect(() => {
+        syncToUrl({ page, pageSize, search, status, sort });
+    }, [page, pageSize, search, status, sort, syncToUrl]);
+
+    // Build filters
+    const filterableFields = useMemo(() => {
+        const fields: Array<{ field: string; operator?: "eq"; value?: string | boolean }> = [];
+        if (status) {
+            fields.push({
+                field: "is_active",
+                operator: "eq",
+                value: status === "true"
+            });
+        }
+        return fields;
+    }, [status]);
 
     // Fetch house groups
     const { data, isLoading, isFetching } = useAdminHouseGroups({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         search: search.trim() || undefined,
+        filters: formatFiltersForAPI(
+            filterableFields.map((f) => ({
+                field: f.field,
+                operator: f.operator || "eq",
+                value: f.value!,
+            }))
+        ),
+        sort: sort || undefined,
     });
 
     // Fetch all houses for selection
@@ -45,20 +102,46 @@ export default function HouseGroupsPage() {
         pageSize: 100,
     });
 
-    const createMutation = useCreateHouseGroup();
-    const updateMutation = useUpdateHouseGroup();
-    const deleteMutation = useDeleteHouseGroup();
+
+    // Bulk actions
+    const handleBulkDelete = (selectedIds: string[]) => {
+        bulkDeleteMutation.mutate(selectedIds, {
+            onSuccess: () => {
+                setSelectedGroups(new Set());
+            },
+        });
+    };
+
+    const handleBulkToggleActive = (selectedIds: string[]) => {
+        bulkToggleActiveMutation.mutate(selectedIds, {
+            onSuccess: () => {
+                setSelectedGroups(new Set());
+            },
+        });
+    };
+
+    const bulkActions: BulkAction[] = [
+        {
+            label: "Toggle Active",
+            icon: CheckCircle,
+            onClick: handleBulkToggleActive,
+            variant: "outline",
+        },
+        {
+            label: "Delete",
+            icon: Trash2,
+            onClick: handleBulkDelete,
+            variant: "destructive",
+            requiresConfirmation: true,
+        },
+    ];
 
     const houseGroups = data?.items ?? [];
     const totalPages = data?.total_pages ?? 1;
-    const pageSize = data?.page_size ?? PAGE_SIZE;
+    const total = data?.total ?? 0;
     const allHouses = housesData?.items ?? [];
 
-    const handlePageChange = (nextPage: number) => {
-        const safeMax = Math.max(totalPages, 1);
-        const safePage = Math.min(Math.max(nextPage, 1), safeMax);
-        setPage(safePage);
-    };
+
 
     const handleCreateSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -189,9 +272,12 @@ export default function HouseGroupsPage() {
     const columns: Column<HouseGroup>[] = [
         {
             key: "name",
-            header: "Name",
+            header: "Group Name",
             sortable: true,
-            className: "font-medium",
+            filterable: true,
+            accessor: (row) => (
+                <span className="font-medium">{row.name}</span>
+            ),
         },
         {
             key: "description",
@@ -200,6 +286,25 @@ export default function HouseGroupsPage() {
             accessor: (row) => row.description || (
                 <span className="text-muted-foreground">—</span>
             ),
+        },
+        {
+            key: "is_active",
+            header: "Status",
+            sortable: true,
+            filterable: true,
+            filterType: "select",
+            filterOptions: STATUS_FILTERS.filter(f => f.value !== "all").map((f) => ({
+                value: f.value,
+                label: f.label,
+            })),
+            accessor: (row) => {
+                const isActive = (row as any).is_active;
+                return (
+                    <span className={`text-sm ${isActive ? "text-green-600" : "text-muted-foreground"}`}>
+                        {isActive ? "Active" : "Inactive"}
+                    </span>
+                );
+            },
         },
         {
             key: "houses",
@@ -257,7 +362,7 @@ export default function HouseGroupsPage() {
     ];
 
     return (
-        <DashboardLayout type="admin">
+        <>
             <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="flex-shrink-0 border-b border-border bg-background">
@@ -288,72 +393,62 @@ export default function HouseGroupsPage() {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="px-6 py-4">
-                        {/* Search */}
-                        <div className="mb-4">
-                            <Input
-                                value={search}
-                                onChange={(e) => {
-                                    setPage(1);
-                                    setSearch(e.target.value);
-                                }}
-                                placeholder="Search house groups..."
-                                className="max-w-sm"
-                            />
-                        </div>
-
                         {/* Table */}
                         {isLoading ? (
                             <TableSkeleton />
-                        ) : houseGroups.length === 0 ? (
+                        ) : houseGroups.length === 0 && !search && !status ? (
                             <EmptyState
                                 icon={Building2}
                                 title="No house groups"
-                                description={
-                                    search
-                                        ? "No house groups match your search"
-                                        : "Create your first house group to organize houses"
-                                }
-                                action={
-                                    !search
-                                        ? {
-                                            label: "Create House Group",
-                                            onClick: () => {
-                                                setIsCreateModalOpen(true);
-                                                setFormData({ name: "", description: "", house_ids: [] });
-                                                setSelectedHouses(new Set());
-                                                setErrors({});
-                                            },
-                                        }
-                                        : undefined
-                                }
+                                description="Create your first house group to organize houses"
+                                action={{
+                                    label: "Create House Group",
+                                    onClick: () => {
+                                        setIsCreateModalOpen(true);
+                                        setFormData({ name: "", description: "", house_ids: [] });
+                                        setSelectedHouses(new Set());
+                                        setErrors({});
+                                    },
+                                }}
                             />
                         ) : (
-                            <>
-                                <div className="border border-border rounded-sm">
-                                    <DataTable
-                                        data={houseGroups}
-                                        columns={columns}
-                                        searchable={false}
-                                        showPagination={false}
-                                        emptyMessage="No house groups found"
-                                    />
-                                </div>
-                                {totalPages > 1 && (
-                                    <div className="mt-4">
-                                        <PaginationBar
-                                            page={page}
-                                            pageSize={pageSize}
-                                            total={data?.total ?? houseGroups.length}
-                                            totalPages={totalPages}
-                                            hasNext={data?.has_next}
-                                            hasPrevious={data?.has_previous}
-                                            resourceLabel="house groups"
-                                            onChange={handlePageChange}
-                                            isFetching={isFetching}
-                                        />
-                                    </div>
-                                )}
-                            </>
+                            <DataTable
+                                data={houseGroups}
+                                columns={columns}
+                                searchable={true}
+                                searchPlaceholder="Search house groups..."
+                                pageSize={pageSize}
+                                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                onPageSizeChange={setPageSize}
+                                showPagination={true}
+                                emptyMessage="No house groups found"
+                                serverSide={true}
+                                total={total}
+                                currentPage={page}
+                                onPageChange={setPage}
+                                externalSearch={search}
+                                onSearchChange={(value) => {
+                                    setPage(1);
+                                    setSearch(value);
+                                }}
+                                filterableFields={filterableFields}
+                                onFiltersChange={(filters) => {
+                                    setPage(1);
+                                    const statusFilter = filters.find((f) => f.field === "is_active");
+                                    setStatus(statusFilter?.value as string | undefined || undefined);
+                                }}
+                                onSortChange={(newSort) => {
+                                    setPage(1);
+                                    setSort(newSort);
+                                }}
+                                disableClientSideFiltering={true}
+                                disableClientSideSorting={false}
+                                className=" rounded"
+                                selectable={true}
+                                selectedRows={selectedGroups}
+                                onSelectionChange={setSelectedGroups}
+                                bulkActions={bulkActions}
+                            />
                         )}
                     </div>
                 </div>
@@ -621,6 +716,6 @@ export default function HouseGroupsPage() {
                     </div>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </>
     );
 }

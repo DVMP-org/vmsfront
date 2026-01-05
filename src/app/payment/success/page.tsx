@@ -186,10 +186,10 @@ export default function PaymentSuccessPage() {
                                 </Button>
                             ) : (
                                 <>
-                                    <Button variant="outline" onClick={() => router.push("/wallet")}>
+                                    <Button variant="outline" onClick={() => router.push("/resident/wallet")}>
                                         Go to Wallet
                                     </Button>
-                                    <Button onClick={() => router.push("/wallet/history")}>
+                                    <Button onClick={() => router.push("/resident/wallet/history")}>
                                         View History
                                     </Button>
                                 </>

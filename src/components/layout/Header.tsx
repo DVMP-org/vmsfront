@@ -25,17 +25,18 @@ import { LogoFull } from "../LogoFull";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  type: "resident" | "admin";
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, type }: HeaderProps) {
   const { user, logout } = useAuth();
   const { selectedHouse, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
 
-  const isAdminRoute = pathname?.startsWith("/admin");
-  const isHouseRoute = pathname?.startsWith("/house");
+  const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
+  const isHouseRoute = type == 'resident' || pathname?.startsWith("/house");
   const isAdminUser = useMemo(() => {
     if (!user) return false;
     const type = `${user.user_type ?? ""}`.toLowerCase();
@@ -190,64 +191,64 @@ export function Header({ onMenuClick }: HeaderProps) {
             </Button>
 
             <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
-            >
-              {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#213928)]/10 text-[var(--primary,#213928)] uppercase">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
+              >
+                {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#213928)]/10 text-[var(--primary,#213928)] uppercase">
                 {getInitials(user.first_name, user.last_name)}
               </div> */}
-              <div className="hidden sm:flex flex-col text-left leading-tight">
-                <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
-                  {getFullName(user.first_name, user.last_name)}
-                </span>
-                <span className="text-[9px] uppercase text-muted-foreground">
-                  {isAdminUser ? "Admin" : "Resident"}
-                </span>
-              </div>
-              <ChevronsUpDown
-                className={cn(
-                  "h-6 w-6 text-muted-foreground transition",
-                  menuOpen && "rotate-180 text-foreground"
-                )}
-              />
-            </button>
+                <div className="hidden sm:flex flex-col text-left leading-tight">
+                  <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
+                    {getFullName(user.first_name, user.last_name)}
+                  </span>
+                  <span className="text-[9px] uppercase text-muted-foreground">
+                    {isAdminUser ? "Admin" : "Resident"}
+                  </span>
+                </div>
+                <ChevronsUpDown
+                  className={cn(
+                    "h-6 w-6 text-muted-foreground transition",
+                    menuOpen && "rotate-180 text-foreground"
+                  )}
+                />
+              </button>
 
-            {menuOpen && (
-              <div className="absolute right-0 mt-3 w-60 rounded-xl border border-border/60 bg-background p-3 text-sm shadow-lg">
-                <MenuAction
-                  icon={User}
-                  label="Profile settings"
-                  onClick={() => {
-                    router.push(profileHref);
-                    setMenuOpen(false);
-                  }}
-                  description={user.email}
-                />
-                <MenuAction
-                  icon={Settings}
-                  label="Dashboard preferences"
-                  onClick={() => {
-                    router.push(dashboardHref);
-                    setMenuOpen(false);
-                  }}
-                  description="Your dashboard prefs"
-                />
-                <div className="border-t border-border/60 my-2" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setMenuOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-destructive transition hover:bg-muted/50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </button>
-              </div>
-            )}
+              {menuOpen && (
+                <div className="absolute right-0 mt-3 w-60 rounded-xl border border-border/60 bg-background p-3 text-sm shadow-lg">
+                  <MenuAction
+                    icon={User}
+                    label="Profile settings"
+                    onClick={() => {
+                      router.push(profileHref);
+                      setMenuOpen(false);
+                    }}
+                    description={user.email}
+                  />
+                  <MenuAction
+                    icon={Settings}
+                    label="Dashboard preferences"
+                    onClick={() => {
+                      router.push(dashboardHref);
+                      setMenuOpen(false);
+                    }}
+                    description="Your dashboard prefs"
+                  />
+                  <div className="border-t border-border/60 my-2" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-destructive transition hover:bg-muted/50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

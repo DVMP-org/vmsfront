@@ -65,7 +65,7 @@ export const inputVariants = cva(
 
 export interface BaseInnerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
-    VariantProps<typeof inputVariants> {}
+  VariantProps<typeof inputVariants> { }
 
 const BaseInnerInput = React.forwardRef<HTMLInputElement, BaseInnerInputProps>(
   ({ className, status, type, ...props }, ref) => {
@@ -131,7 +131,7 @@ export const sideVariants = cva(
 
 export interface InputProps
   extends BaseInnerInputProps,
-    VariantProps<typeof inputContainerVariants> {
+  VariantProps<typeof inputContainerVariants> {
   isLoading?: boolean;
   error?: string;
   leftNode?: React.ReactNode;
@@ -139,6 +139,7 @@ export interface InputProps
   sideNodeClassName?: string;
   label?: string;
   showAsterisk?: boolean;
+  icon?: React.ElementType;
   description?: React.ReactNode;
   isContentSensitive?: boolean;
 }
@@ -155,6 +156,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       showAsterisk,
       label,
       description,
+      icon: Icon,
       ...props
     },
     ref
@@ -194,11 +196,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               {props.leftNode}
             </div>
           ) : null}
+
+          {Icon && !props.leftNode && (
+            <div className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 items-center text-muted-foreground">
+              <Icon className="h-4 w-4" />
+            </div>
+          )}
+
           <BaseInnerInput
             ref={ref}
             disabled={isLoading || disabled}
             className={cn({
               "!pl-3": props.leftNode && status !== "neutral",
+              "!pl-9": !!Icon && !props.leftNode,
               "!pr-3": props.rightNode && status !== "neutral",
               "sentry-mask": !!props?.isContentSensitive,
             })}

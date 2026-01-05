@@ -8,6 +8,7 @@ import {
   Wallet,
   FundWalletRequest,
   WalletTransaction,
+  UpdateHouseRequest,
 } from "@/types";
 import { toast } from "sonner";
 
@@ -30,6 +31,37 @@ export function useResidentDashboard(houseId: string | null) {
       return response.data;
     },
     enabled: !!houseId,
+  });
+}
+
+
+export function useResidentHouse(houseId: string | null) {
+  return useQuery({
+    queryKey: ["resident", "house", houseId],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required")
+      const response = await residentService.getResidentHouse(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
+export function useUpdateHouse(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateHouseRequest) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.updateHouse(houseId, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "house", houseId] });
+      toast.success("House details updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update house details");
+    },
   });
 }
 

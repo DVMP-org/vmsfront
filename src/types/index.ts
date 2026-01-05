@@ -38,6 +38,7 @@ export interface House {
     description: string | null;
     address: string;
     slug?: string | null;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -48,6 +49,7 @@ export interface HouseGroup {
     description: string | null;
     house_ids: string[];
     houses?: House[];
+    is_active: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -109,7 +111,7 @@ export interface Resident {
 export interface ResidentUser {
     user: User;
     resident: Resident;
-    houses: House[];
+    houses?: House[] | null;
 }
 
 export interface ResidentUserCreate {
@@ -234,6 +236,7 @@ export interface GateEvent {
     checkin_time: string;
     checkout_time: string | null;
     created_at: string;
+    house_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
     gate_pass?: GatePass;
@@ -336,6 +339,12 @@ export interface CreateGatePassRequest {
         name: string;
         phone?: string;
     }[];
+}
+
+export interface UpdateHouseRequest {
+    name: string;
+    description?: string;
+    address: string;
 }
 
 export interface CreateHouseRequest {
@@ -610,4 +619,21 @@ export interface UpdatePaymentGatewayRequest {
     redirect_url?: string | null;
     sandbox_mode?: boolean;
     active?: boolean;
+}
+
+export interface ResidentHouse {
+    resident: Resident;
+    house: House;
+    is_super_user: boolean;
+    is_active: boolean;
+}
+
+export interface ResidentCreate {
+
+    email: string;
+    house_id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address: string;
 }

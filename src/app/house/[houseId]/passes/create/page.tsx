@@ -7,7 +7,6 @@ import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useResident } from "@/hooks/use-resident";
 import { useProfile } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -130,7 +129,7 @@ export default function CreatePassPage() {
 
   if (!houseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="border border-zinc-200 rounded bg-white p-8">
           <EmptyState
             icon={HomeIcon}
@@ -142,12 +141,12 @@ export default function CreatePassPage() {
             }}
           />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="max-w-2xl mx-auto">
         {/* Compact Header */}
         <div className="border-b border-zinc-200 pb-3 mb-4">
@@ -308,6 +307,6 @@ export default function CreatePassPage() {
           </div>
         </form>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,40 +1,167 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminResidents, useImportResidents } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident } from "@/hooks/use-admin";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterableField, BulkAction } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import { Users } from "lucide-react";
+import { Users, Trash2, Download, Eye, Pencil } from "lucide-react";
 import { getFullName } from "@/lib/utils";
+import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
-const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
-  { label: "All Residents", value: undefined },
-  { label: "Super User", value: "super_user" },
-];
+
 export default function ResidentsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | undefined>(undefined);
+  // URL query sync
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config: {
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      status: { defaultValue: undefined },
+      sort: { defaultValue: null },
+    },
+    skipInitialSync: true,
+  });
+
+  // Initialize state from URL
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
+  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [selectedResidents, setSelectedResidents] = useState<Set<string>>(new Set());
+
+  // Sync state to URL
+  useEffect(() => {
+    syncToUrl({ page, pageSize, search, status, sort });
+  }, [page, pageSize, search, status, sort, syncToUrl]);
+
+  // Build filterable fields from payload
+  const filterableFields = useMemo(() => {
+    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
+    if (status) {
+      fields.push({ field: "status", operator: "eq", value: status });
+    }
+    return fields;
+  }, [status]);
 
   const { data, isLoading, isFetching } = useAdminResidents({
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     search: search.trim() || undefined,
     status,
+    filters: formatFiltersForAPI(
+      filterableFields.map((f) => ({
+        field: f.field,
+        operator: f.operator || "eq",
+        value: f.value!,
+      }))
+    ),
+    sort: sort || undefined,
   });
+
   const importResidentsMutation = useImportResidents();
   const router = useRouter();
+
+  // Bulk actions
+  const handleBulkDelete = (selectedIds: string[]) => {
+    toast.info(`Deleting ${selectedIds.length} resident(s)...`);
+    setSelectedResidents(new Set());
+  };
+
+  const handleBulkExport = (selectedIds: string[]) => {
+    toast.info(`Exporting ${selectedIds.length} resident(s)...`);
+    // TODO: Implement export functionality
+  };
+
+  // Mutations
+  const updateResidentMutation = useUpdateResident();
+  const deleteResidentMutation = useDeleteResident();
+
+  // Edit State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<ResidentUser | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    address: "",
+  });
+
+  // Delete State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [residentToDelete, setResidentToDelete] = useState<ResidentUser | null>(null);
+
+  const handleEdit = (resident: ResidentUser) => {
+    setSelectedResident(resident);
+    setEditFormData({
+      first_name: resident.user.first_name || "",
+      last_name: resident.user.last_name || "",
+      phone: resident.user.phone || "",
+      address: resident.user.address || "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (resident: ResidentUser) => {
+    setResidentToDelete(resident);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedResident) return;
+
+    updateResidentMutation.mutate(
+      {
+        residentId: selectedResident.resident.id,
+        data: editFormData,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setSelectedResident(null);
+        },
+      }
+    );
+  };
+
+  const confirmDelete = () => {
+    if (residentToDelete) {
+      deleteResidentMutation.mutate(residentToDelete.resident.id, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setResidentToDelete(null);
+        },
+      });
+    }
+  };
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Export",
+      icon: Download,
+      onClick: handleBulkExport,
+      variant: "outline",
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: "destructive",
+      requiresConfirmation: true,
+    },
+  ];
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
@@ -47,14 +174,9 @@ export default function ResidentsPage() {
 
   const residents = useMemo(() => data?.items ?? [], [data]);
   const totalPages = data?.total_pages ?? 1;
-  const pageSize = data?.page_size ?? PAGE_SIZE;
-  const showPagination = (data?.total_pages ?? 0) > 1;
+  const total = data?.total ?? 0;
 
-  const handlePageChange = (nextPage: number) => {
-    const safeMax = Math.max(totalPages, 1);
-    const safePage = Math.min(Math.max(nextPage, 1), safeMax);
-    setPage(safePage);
-  };
+
   const columns: Column<ResidentUser>[] = [
     {
       key: "name",
@@ -88,11 +210,14 @@ export default function ResidentsPage() {
       accessor: (row) =>
         row.houses && row?.houses?.length > 0 ? (
           <div className="flex flex-wrap gap-1">
-            {row.houses.map((house) => (
+            {row.houses.slice(0, 3).map((house) => (
               <Badge key={house.id} variant="secondary">
                 {house.name}
               </Badge>
             ))}
+            {row.houses.length > 3 && (
+              <Badge variant="secondary">+ {row.houses.length - 3}</Badge>
+            )}
           </div>
         ) : (
           "-"
@@ -113,11 +238,45 @@ export default function ResidentsPage() {
           {row.user.is_active ? "Active" : "Inactive"}
         </Badge>
       ),
-    },
+    }, {
+      key: "actions",
+      header: "Actions",
+      sortable: false,
+      accessor: (row) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/residents/${row.resident.id}`)}
+            title="View Details"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(row)}
+            title="Edit Resident"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row)}
+            title="Delete Resident"
+            disabled={deleteResidentMutation.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -140,32 +299,6 @@ export default function ResidentsPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-                placeholder="Search residents by name, email, or phone..."
-                className="md:w-1/2"
-              />
-              <select
-                value={status ?? ""}
-                onChange={(event) => {
-                  setPage(1);
-                  setStatus(event.target.value || undefined);
-                }}
-                className="rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
-              >
-                {STATUS_FILTERS.map((filter) => (
-                  <option key={filter.label} value={filter.value ?? ""}>
-                    {filter.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {isLoading ? (
               <TableSkeleton />
             ) : !residents || residents.length === 0 ? (
@@ -179,29 +312,42 @@ export default function ResidentsPage() {
                 }}
               />
             ) : (
-              <>
-                <DataTable
-                  data={residents}
-                  columns={columns}
-                  searchable={false}
-                  showPagination={false}
-                  emptyMessage="No residents found"
-                />
-                {showPagination && (
-                  <PaginationBar
-                    page={page}
-                    pageSize={pageSize}
-                    total={data?.total ?? residents.length}
-                    totalPages={totalPages}
-                    hasNext={data?.has_next}
-                    hasPrevious={data?.has_previous}
-                    resourceLabel="residents"
-                    onChange={handlePageChange}
-                    isFetching={isFetching}
-                    className="mt-6"
-                  />
-                )}
-              </>
+              <DataTable
+                data={residents}
+                columns={columns}
+                searchable={true}
+                searchPlaceholder="Search residents by name, email, or phone..."
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
+                showPagination={true}
+                emptyMessage="No residents found"
+                serverSide={true}
+                total={total}
+                currentPage={page}
+                onPageChange={setPage}
+                externalSearch={search}
+                onSearchChange={(value) => {
+                  setPage(1);
+                  setSearch(value);
+                }}
+                filterableFields={filterableFields}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  const statusFilter = filters.find((f) => f.field === "status");
+                  setStatus(statusFilter?.value as string | undefined || undefined);
+                }}
+                onSortChange={(newSort) => {
+                  setPage(1);
+                  setSort(newSort);
+                }}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
+                selectable={true}
+                selectedRows={selectedResidents}
+                onSelectionChange={setSelectedResidents}
+                bulkActions={bulkActions}
+              />
             )}
           </CardContent>
         </Card>
@@ -281,6 +427,93 @@ bob@example.com,Bob,Wilson,,,"House B"`}
           )}
         </form>
       </Modal>
-    </DashboardLayout>
+
+      {/* Delete Confirmation Modal */}
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedResident(null);
+        }}
+        title="Edit Resident"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="First Name"
+              value={editFormData.first_name}
+              onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+            />
+            <Input
+              label="Last Name"
+              value={editFormData.last_name}
+              onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+            />
+          </div>
+          <Input
+            label="Phone"
+            value={editFormData.phone}
+            onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+          />
+          <Input
+            label="Address"
+            value={editFormData.address}
+            onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+          />
+          <div className="flex gap-4 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setSelectedResident(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={updateResidentMutation.isPending}>
+              Update Resident
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setResidentToDelete(null);
+        }}
+        title="Delete Resident"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete <strong>{residentToDelete ? getFullName(residentToDelete.user.first_name, residentToDelete.user.last_name) : "this resident"}</strong>?
+            This action cannot be undone.
+          </p>
+          <div className="flex gap-4 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setResidentToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              isLoading={deleteResidentMutation.isPending}
+            >
+              Delete Resident
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

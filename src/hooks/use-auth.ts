@@ -61,21 +61,17 @@ export function useAuth() {
       setLoginFieldErrors({});
     },
     onSuccess: (response) => {
-      console.log("Login response:", response);
       const { user, token } = response.data;
-      console.log("User:", user, "Token:", token);
 
       // Set auth state
       setAuth(user, token);
       apiClient.setToken(token);
-      console.log("Auth state set, isAuthenticated:", isAuthenticated);
 
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
 
       // Navigate immediately without setTimeout
-      console.log("Attempting to navigate to /select...");
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();
@@ -210,6 +206,30 @@ export function useResetPassword(onSuccess?: () => void) {
     onError: (error: any) => {
       const parsedError = parseApiError(error);
       toast.error(parsedError.message || "Unable to reset password");
+    },
+  });
+}
+
+export function useOnboard() {
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => authService.onboard(data),
+    onSuccess: (response) => {
+      const { user, token } = response.data;
+      setAuth(user, token);
+      apiClient.setToken(token);
+      queryClient.invalidateQueries({ queryKey: ["resident", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
+
+      toast.success("Onboarding complete! Welcome.");
+      router.push("/select");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to complete onboarding");
     },
   });
 }

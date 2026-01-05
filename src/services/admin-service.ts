@@ -10,6 +10,7 @@ import {
     AdminRole,
     ResidentUser,
     ResidentUserCreate,
+    ResidentProfileUpdatePayload,
     GatePass,
     GatePassCheckinRequest,
     GatePassCheckinResponse,
@@ -63,18 +64,45 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<House>>> {
         return apiClient.get("/admin/house/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
 
-    async createHouse(data: CreateHouseRequest): Promise<ApiResponse<House>> {
+    async createHouse(data: { name: string; description?: string; address: string }): Promise<ApiResponse<House>> {
         return apiClient.post("/admin/house/create", data);
+    },
+
+    async updateHouse(
+        houseId: string,
+        data: { name?: string; description?: string; address?: string; house_group_id?: string }
+    ): Promise<ApiResponse<House>> {
+        return apiClient.put(`/admin/house/${houseId}/update`, data);
+    },
+
+    async deleteHouse(houseId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/house/${houseId}/delete`);
+    },
+
+    async bulkDeleteHouses(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/delete/bulk", houseIds);
+    },
+
+    async toggleHouseActive(houseId: string): Promise<ApiResponse<House>> {
+        return apiClient.post(`/admin/house/${houseId}/toggle-active`);
+    },
+
+    async bulkToggleHouseActive(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/toggle-active/bulk", houseIds);
     },
 
     // House Groups
@@ -82,12 +110,16 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<HouseGroup>>> {
         return apiClient.get("/admin/house/group/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -104,11 +136,23 @@ export const adminService = {
         groupId: string,
         data: UpdateHouseGroupRequest
     ): Promise<ApiResponse<HouseGroup>> {
-        return apiClient.put(`/admin/house/groups/${groupId}/update`, data);
+        return apiClient.put(`/admin/house/group/${groupId}/update`, data);
     },
 
     async deleteHouseGroup(groupId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.delete(`/admin/house/groups/${groupId}`);
+        return apiClient.delete(`/admin/house/group/${groupId}/delete`);
+    },
+
+    async bulkDeleteHouseGroups(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/group/delete/bulk", groupIds);
+    },
+
+    async toggleHouseGroupActive(groupId: string): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.post(`/admin/house/group/${groupId}/toggle-active`);
+    },
+
+    async bulkToggleHouseGroupActive(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/group/toggle-active/bulk", groupIds);
     },
 
     // Residents
@@ -117,6 +161,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<ResidentUser>>> {
         return apiClient.get("/admin/resident/list", {
             params: {
@@ -124,8 +170,27 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
+    },
+
+    async getResident(residentId: string): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.get(`/admin/resident/${residentId}`);
+    },
+
+    async updateResident(
+        residentId: string,
+        data: ResidentProfileUpdatePayload
+    ): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.put(`/admin/resident/update/${residentId}`, data);
+    },
+
+    async deleteResident(
+        residentId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/resident/delete/${residentId}`);
     },
 
     async createResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {
@@ -137,8 +202,20 @@ export const adminService = {
     },
 
     // Admins
-    async getAdmins(): Promise<ApiResponse<Admin[]>> {
-        return apiClient.get("/admin/list");
+    async getAdmins(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
+        return apiClient.get("/admin/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                status: params?.status ?? undefined,
+            },
+        });
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
@@ -209,6 +286,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
         return apiClient.get("/admin/gate-passes/", {
             params: {
@@ -216,6 +295,8 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -229,6 +310,9 @@ export const adminService = {
         pageSize?: number;
         passId?: string;
         houseId?: string;
+        search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GateEvent>>> {
         return apiClient.get("/admin/gate-events/", {
             params: {
@@ -236,6 +320,9 @@ export const adminService = {
                 page_size: params?.pageSize ?? 15,
                 pass_id: params?.passId ?? undefined,
                 house_id: params?.houseId ?? undefined,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
