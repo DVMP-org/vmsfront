@@ -15,16 +15,16 @@ import {
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField, BulkAction } from "@/components/ui/DataTable";
-import { Plus, Building2, Trash2, Edit, CheckCircle, Eye } from "lucide-react";
+import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { Plus, Building2, Trash2, Edit, CheckCircle, Eye, Upload } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { ImportResponse, House } from "@/types";
+import { HouseForm, HouseFormData } from "./components/HouseForm";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -60,13 +60,6 @@ export default function HousesPage() {
   const [houseToDelete, setHouseToDelete] = useState<House | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    address: "",
-    house_group_ids: [] as string[],
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedHouses, setSelectedHouses] = useState<Set<string>>(new Set());
   const importFormRef = useRef<HTMLFormElement>(null);
 
@@ -124,7 +117,6 @@ export default function HousesPage() {
   });
 
   const houses = data?.items ?? [];
-  const totalPages = data?.total_pages ?? 1;
   const total = data?.total ?? 0;
   const houseGroups = houseGroupsData?.items ?? [];
 
@@ -134,61 +126,29 @@ export default function HousesPage() {
     importFormRef.current?.reset();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.address) {
-      setErrors({
-        name: !formData.name ? "Name is required" : "",
-        address: !formData.address ? "Address is required" : "",
-      });
-      return;
-    }
-
+  const handleCreateSubmit = (data: HouseFormData) => {
     createHouseMutation.mutate(
-      {
-        name: formData.name,
-        description: formData.description,
-        address: formData.address,
-        house_group_ids: formData.house_group_ids,
-      } as any,
+      data as any,
       {
         onSuccess: () => {
-          setFormData({ name: "", description: "", address: "", house_group_ids: [] });
           setIsCreateModalOpen(false);
-          setErrors({});
         },
       }
     );
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedHouse || !formData.name || !formData.address) {
-      setErrors({
-        name: !formData.name ? "Name is required" : "",
-        address: !formData.address ? "Address is required" : "",
-      });
-      return;
-    }
+  const handleEditSubmit = (data: HouseFormData) => {
+    if (!selectedHouse) return;
 
     updateHouseMutation.mutate(
       {
         houseId: selectedHouse.id,
-        data: {
-          name: formData.name,
-          description: formData.description,
-          address: formData.address,
-          house_group_ids: formData.house_group_ids,
-        } as any,
+        data: data as any,
       },
       {
         onSuccess: () => {
-          setFormData({ name: "", description: "", address: "", house_group_ids: [] });
           setIsEditModalOpen(false);
           setSelectedHouse(null);
-          setErrors({});
         },
       }
     );
@@ -196,13 +156,6 @@ export default function HousesPage() {
 
   const handleEdit = (house: House) => {
     setSelectedHouse(house);
-    const houseGroupIds = (house as any).house_group_ids || [];
-    setFormData({
-      name: house.name,
-      description: house.description || "",
-      address: house.address || "",
-      house_group_ids: Array.isArray(houseGroupIds) ? houseGroupIds : [],
-    });
     setIsEditModalOpen(true);
   };
 
@@ -255,15 +208,6 @@ export default function HousesPage() {
         setSelectedHouses(new Set());
       },
     });
-  };
-
-  const toggleHouseGroupSelection = (groupId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      house_group_ids: prev.house_group_ids.includes(groupId)
-        ? prev.house_group_ids.filter(id => id !== groupId)
-        : [...prev.house_group_ids, groupId]
-    }));
   };
 
   const bulkActions: BulkAction[] = [
@@ -398,6 +342,7 @@ export default function HousesPage() {
               variant="outline"
               onClick={() => setIsImportModalOpen(true)}
             >
+              <Upload className="mr-2 h-4 w-4" />
               Import Houses
             </Button>
             <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -473,68 +418,15 @@ export default function HousesPage() {
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
-          setFormData({ name: "", description: "", address: "", house_group_ids: [] });
-          setErrors({});
         }}
         title="Add New House"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            error={errors.name}
-            required
-          />
-          <Input
-            label="Address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            error={errors.address}
-            required
-          />
-          <Input
-            label="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-          <div>
-            <label className="block text-sm font-medium mb-2">House Groups (Optional)</label>
-            <div className="max-h-48 overflow-y-auto border border-input rounded-md p-3 space-y-2">
-              {houseGroups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No house groups available</p>
-              ) : (
-                houseGroups.map((group) => (
-                  <label key={group.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                    <input
-                      type="checkbox"
-                      checked={formData.house_group_ids.includes(group.id)}
-                      onChange={() => toggleHouseGroupSelection(group.id)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm">{group.name}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="flex gap-4 justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                setFormData({ name: "", description: "", address: "", house_group_ids: [] });
-                setErrors({});
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={createHouseMutation.isPending}>
-              Create House
-            </Button>
-          </div>
-        </form>
+        <HouseForm
+          onSubmit={handleCreateSubmit}
+          onCancel={() => setIsCreateModalOpen(false)}
+          isLoading={createHouseMutation.isPending}
+          houseGroups={houseGroups}
+        />
       </Modal>
 
       {/* Edit Modal */}
@@ -543,69 +435,26 @@ export default function HousesPage() {
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedHouse(null);
-          setFormData({ name: "", description: "", address: "", house_group_ids: [] });
-          setErrors({});
         }}
         title="Edit House"
       >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
-          <Input
-            label="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            error={errors.name}
-            required
+        {selectedHouse && (
+          <HouseForm
+            initialData={{
+              name: selectedHouse.name,
+              address: selectedHouse.address || "",
+              description: selectedHouse.description || "",
+              house_group_ids: Array.isArray((selectedHouse as any).house_group_ids) ? (selectedHouse as any).house_group_ids : [],
+            }}
+            onSubmit={handleEditSubmit}
+            onCancel={() => {
+              setIsEditModalOpen(false);
+              setSelectedHouse(null);
+            }}
+            isLoading={updateHouseMutation.isPending}
+            houseGroups={houseGroups}
           />
-          <Input
-            label="Address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            error={errors.address}
-            required
-          />
-          <Input
-            label="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-          <div>
-            <label className="block text-sm font-medium mb-2">House Groups (Optional)</label>
-            <div className="max-h-48 overflow-y-auto border border-input rounded-md p-3 space-y-2">
-              {houseGroups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No house groups available</p>
-              ) : (
-                houseGroups.map((group) => (
-                  <label key={group.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                    <input
-                      type="checkbox"
-                      checked={formData.house_group_ids.includes(group.id)}
-                      onChange={() => toggleHouseGroupSelection(group.id)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm">{group.name}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="flex gap-4 justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsEditModalOpen(false);
-                setSelectedHouse(null);
-                setFormData({ name: "", description: "", address: "", house_group_ids: [] });
-                setErrors({});
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={updateHouseMutation.isPending}>
-              Update House
-            </Button>
-          </div>
-        </form>
+        )}
       </Modal>
 
       {/* Delete Confirmation Modal */}

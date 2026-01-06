@@ -12,11 +12,23 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { Users, Trash2, Download, Eye, Pencil } from "lucide-react";
+import { Users, Trash2, Download, Eye, Pencil, Upload, Plug, Plus } from "lucide-react";
 import { getFullName } from "@/lib/utils";
 import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const editResidentSchema = z.object({
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
+  phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+  address: z.string().min(5, "Address must be at least 5 characters"),
+});
+
+type EditResidentFormData = z.infer<typeof editResidentSchema>;
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
@@ -91,11 +103,14 @@ export default function ResidentsPage() {
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState<ResidentUser | null>(null);
-  const [editFormData, setEditFormData] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    address: "",
+
+  const {
+    register,
+    handleSubmit: handleHookSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<EditResidentFormData>({
+    resolver: zodResolver(editResidentSchema),
   });
 
   // Delete State
@@ -104,7 +119,7 @@ export default function ResidentsPage() {
 
   const handleEdit = (resident: ResidentUser) => {
     setSelectedResident(resident);
-    setEditFormData({
+    reset({
       first_name: resident.user.first_name || "",
       last_name: resident.user.last_name || "",
       phone: resident.user.phone || "",
@@ -118,14 +133,13 @@ export default function ResidentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onEditSubmit = (data: EditResidentFormData) => {
     if (!selectedResident) return;
 
     updateResidentMutation.mutate(
       {
         residentId: selectedResident.resident.id,
-        data: editFormData,
+        data: data,
       },
       {
         onSuccess: () => {
@@ -285,6 +299,7 @@ export default function ResidentsPage() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+              <Upload className="h-4 w-4" />
               Bulk Import
             </Button>
             <Button
@@ -292,6 +307,7 @@ export default function ResidentsPage() {
               className="w-full sm:w-auto"
               onClick={() => router.push("/admin/residents/create")}
             >
+              <Plus className="h-4 w-4" />
               Add resident
             </Button>
           </div>
@@ -344,6 +360,7 @@ export default function ResidentsPage() {
                 disableClientSideFiltering={true}
                 disableClientSideSorting={true}
                 selectable={true}
+                getRowId={(row) => row.resident.id}
                 selectedRows={selectedResidents}
                 onSelectionChange={setSelectedResidents}
                 bulkActions={bulkActions}
@@ -438,28 +455,28 @@ bob@example.com,Bob,Wilson,,,"House B"`}
         }}
         title="Edit Resident"
       >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
+        <form onSubmit={handleHookSubmit(onEditSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"
-              value={editFormData.first_name}
-              onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+              {...register("first_name")}
+              error={errors.first_name?.message}
             />
             <Input
               label="Last Name"
-              value={editFormData.last_name}
-              onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+              {...register("last_name")}
+              error={errors.last_name?.message}
             />
           </div>
           <Input
             label="Phone"
-            value={editFormData.phone}
-            onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+            {...register("phone")}
+            error={errors.phone?.message}
           />
           <Input
             label="Address"
-            value={editFormData.address}
-            onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+            {...register("address")}
+            error={errors.address?.message}
           />
           <div className="flex gap-4 justify-end pt-4">
             <Button
