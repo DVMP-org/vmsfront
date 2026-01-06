@@ -11,6 +11,8 @@ import { GateEvent } from "@/types";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { titleCase } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Eye } from "lucide-react";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const DEFAULT_PAGE_SIZE = 10;
@@ -187,7 +189,7 @@ export default function AdminGateEventsPage() {
       sortable: false,
       filterable: true,
       accessor: (row) => (
-        <span className="text-xs">{row?.gate_pass?.house?.name ?? "—"}</span>
+        <span className="text-xs">{row?.house?.name ?? "—"}</span>
       ),
     },
     {
@@ -207,7 +209,7 @@ export default function AdminGateEventsPage() {
       header: "Scanner",
       sortable: false,
       accessor: (row) => (
-        <span className="text-xs">{row?.scanned_by?.name ?? "—"}</span>
+        <span className="text-xs">{row?.scanned_by?.user?.name ?? "—"}</span>
       ),
     },
     {
@@ -225,6 +227,22 @@ export default function AdminGateEventsPage() {
       ),
       className: "text-right",
     },
+    {
+      "key": "actions",
+      "header": "Actions",
+      "sortable": false,
+      "accessor": (row) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push(`/admin/gate/events/${row.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }
   ];
 
   return (

@@ -25,7 +25,7 @@ import { LogoFull } from "../LogoFull";
 
 interface HeaderProps {
   onMenuClick?: () => void;
-  type: "resident" | "admin";
+  type: "resident" | "admin" | "select";
 }
 
 export function Header({ onMenuClick, type }: HeaderProps) {
@@ -37,14 +37,14 @@ export function Header({ onMenuClick, type }: HeaderProps) {
 
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
   const isHouseRoute = type == 'resident' || pathname?.startsWith("/house");
+  const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
   const isAdminUser = useMemo(() => {
     if (!user) return false;
     const type = `${user.user_type ?? ""}`.toLowerCase();
     return user.is_admin || type === "admin";
   }, [user]);
-  const profileHref = isAdminUser ? "/admin/profile" : "/profile";
-  const dashboardHref = isAdminUser ? "/admin" : "/select";
-
+  const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
+  const dashboardHref = "/select";
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -203,9 +203,11 @@ export function Header({ onMenuClick, type }: HeaderProps) {
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
                     {getFullName(user.first_name, user.last_name)}
                   </span>
-                  <span className="text-[9px] uppercase text-muted-foreground">
-                    {isAdminUser ? "Admin" : "Resident"}
-                  </span>
+                  {!isSelectRoute && (
+                    <span className="text-[9px] uppercase text-muted-foreground">
+                      {isAdminUser ? "Admin" : "Resident"}
+                    </span>
+                  )}
                 </div>
                 <ChevronsUpDown
                   className={cn(

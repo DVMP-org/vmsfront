@@ -1,12 +1,12 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useAdminResident } from "@/hooks/use-admin";
+import { useAdminResident, useAdminResidentHouses } from "@/hooks/use-admin";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
-import { ArrowLeft, Mail, Phone, MapPin, Hash, Home, Calendar, User, Shield } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Hash, Home, Calendar, User, Shield, Star } from "lucide-react";
 import { getFullName, getInitials, cn, formatDate } from "@/lib/utils";
 
 export default function ResidentDetailPage() {
@@ -14,8 +14,9 @@ export default function ResidentDetailPage() {
     const router = useRouter();
     const residentId = params?.id as string;
     const { data: residentData, isLoading, error } = useAdminResident(residentId);
+    const { data: residentHouses, isLoading: housesLoading, error: housesError } = useAdminResidentHouses(residentId);
 
-    if (isLoading) {
+    if (isLoading || housesLoading) {
         return (
             <>
                 <div className="space-y-6">
@@ -43,7 +44,8 @@ export default function ResidentDetailPage() {
         );
     }
 
-    const { user, resident, houses } = residentData;
+    const resident = residentData;
+    const user = resident.user;
     const fullName = getFullName(user.first_name, user.last_name);
     const initials = getInitials(user.first_name, user.last_name);
 
@@ -151,23 +153,31 @@ export default function ResidentDetailPage() {
                                 <div className="p-6 border-b border-border bg-muted/5">
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <Home className="h-4 w-4 text-muted-foreground" />
-                                        Linked Residences ({houses.length})
+                                        Linked Residences ({residentHouses.length})
                                     </h3>
                                 </div>
-                                {houses.length === 0 ? (
+                                {residentHouses.length === 0 ? (
                                     <div className="p-6 text-center text-muted-foreground text-sm">
                                         No houses linked to this resident yet.
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-border">
-                                        {houses.map(house => (
-                                            <div key={house.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                        {residentHouses.map(residentHouse => (
+                                            <div key={residentHouse.house.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                                                 <div className="space-y-1">
-                                                    <div className="font-medium">{house.name}</div>
-                                                    <div className="text-xs text-muted-foreground">{house.address}</div>
+                                                    <div className="flex flex-row">
+                                                        <span className="font-medium">{residentHouse.house.name}</span>
+                                                        <span className="font-medium"> {residentHouse.is_super_user && (
+                                                            <Badge variant="outline" className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                                Super User
+                                                            </Badge>
+                                                        )}</span>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">{residentHouse.house.address}</div>
                                                 </div>
-                                                <Badge variant="outline" className={cn("text-xs font-normal", house.is_active ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-muted-foreground")}>
-                                                    {house.is_active ? "Active" : "Inactive"}
+                                                <Badge variant="outline" className={cn("text-xs font-normal", residentHouse.house.is_active ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-muted-foreground")}>
+                                                    {residentHouse.house.is_active ? "Active" : "Inactive"}
                                                 </Badge>
                                             </div>
                                         ))}

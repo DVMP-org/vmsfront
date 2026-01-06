@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   useAdminHouses,
   useCreateHouse,
@@ -19,7 +20,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column, FilterableField, BulkAction } from "@/components/ui/DataTable";
-import { Plus, Building2, Trash2, Edit, CheckCircle } from "lucide-react";
+import { Plus, Building2, Trash2, Edit, CheckCircle, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function HousesPage() {
+  const router = useRouter();
   // URL query sync
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
     config: {
@@ -285,7 +287,14 @@ export default function HousesPage() {
       key: "name",
       header: "Name",
       sortable: true,
-      accessor: (row) => row.name,
+      accessor: (row) => (
+        <button
+          onClick={() => router.push(`/admin/houses/${row.id}`)}
+          className="font-medium text-primary hover:underline text-left"
+        >
+          {row.name}
+        </button>
+      ),
     },
     {
       key: "address",
@@ -300,8 +309,8 @@ export default function HousesPage() {
       accessor: (row) => row.description || "-",
     },
     {
-      key: "house_group",
-      header: "House Group",
+      key: "house_groups",
+      header: "Groups",
       sortable: false,
       filterable: true,
       filterType: "select",
@@ -310,12 +319,12 @@ export default function HousesPage() {
         label: group.name,
       })),
       accessor: (row) => {
-        const houseGroupIds = (row as any).house_group_ids || [];
-        if (!Array.isArray(houseGroupIds) || houseGroupIds.length === 0) return "-";
-        const groupNames = houseGroupIds
-          .map((id: string) => houseGroups.find(g => g.id === id)?.name)
-          .filter(Boolean);
-        return groupNames.length > 0 ? groupNames.join(", ") : "-";
+        const count = row.house_groups?.length || 0;
+        return (
+          <span className="text-sm">
+            {count} groups{count !== 1 ? "s" : ""}
+          </span>
+        )
       },
     },
     {
@@ -346,6 +355,14 @@ export default function HousesPage() {
       sortable: false,
       accessor: (row) => (
         <div className="flex gap-2 justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/houses/${row.id}`)}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"

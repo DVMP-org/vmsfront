@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses, useBulkDeleteHouseGroups, useBulkToggleHouseGroupActive } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -10,7 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
-import { Plus, Building2, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Building2, Edit, Trash2, CheckCircle, XCircle, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ const STATUS_FILTERS: Array<{ value: string, label: string }> = [
     { value: "false", label: "Inactive" },
 ]
 export default function HouseGroupsPage() {
+    const router = useRouter();
     // URL query sync
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
         config: {
@@ -276,7 +278,12 @@ export default function HouseGroupsPage() {
             sortable: true,
             filterable: true,
             accessor: (row) => (
-                <span className="font-medium">{row.name}</span>
+                <button
+                    onClick={() => router.push(`/admin/house-groups/${row.id}`)}
+                    className="font-medium text-primary hover:underline text-left"
+                >
+                    {row.name}
+                </button>
             ),
         },
         {
@@ -334,6 +341,17 @@ export default function HouseGroupsPage() {
             className: "w-24 text-right",
             accessor: (row) => (
                 <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/admin/house-groups/${row.id}`);
+                        }}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                    </Button>
                     <Button
                         variant="ghost"
                         size="sm"

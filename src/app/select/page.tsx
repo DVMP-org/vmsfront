@@ -60,7 +60,7 @@ export default function SelectPage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-950">
-      <Header />
+      <Header type="select" />
       <div className="max-w-md mx-auto py-10 px-4 space-y-6">
         <div className="text-center space-y-2">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary,theme(colors.blue.500))]/10">
@@ -115,9 +115,7 @@ export default function SelectPage() {
               </div>
             )}
 
-            <AddNewCard
-              onClick={() => router.push("resident/onboard/new/house")}
-            />
+
 
             {isAdmin && (
               <div className="space-y-3">
@@ -213,15 +211,4 @@ function DashboardCard({
   );
 }
 
-function AddNewCard({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 text-gray-400 py-3 px-4 justify-center transition-all duration-200"
-    >
-      <Plus className="h-5 w-5" />
-      <span className="text-sm font-medium">Add a new house</span>
-    </button>
-  );
-}
+

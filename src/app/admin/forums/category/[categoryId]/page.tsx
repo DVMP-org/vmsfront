@@ -63,7 +63,7 @@ export default function AdminForumCategoryDetailPage() {
   const router = useRouter();
   const { data: housesData } = useAdminHouses({
     page: 1,
-    pageSize: 500,
+    pageSize: 100,
   });
   const houses = housesData?.items ?? [];
 
