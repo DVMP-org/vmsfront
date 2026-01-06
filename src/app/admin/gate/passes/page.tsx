@@ -13,6 +13,7 @@ import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/u
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/Card";
+import { formatPassWindow, getTimeRemaining } from "@/lib/utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const DEFAULT_PAGE_SIZE = 20;
@@ -251,6 +252,8 @@ export default function AdminGatePassesPage() {
   const totalPages = data?.total_pages ?? 1;
   const total = data?.total ?? 0;
 
+
+
   const handleBulkRevoke = useCallback(async () => {
     if (selectedPasses.size === 0) return;
     // TODO: Implement bulk revoke API call
@@ -306,18 +309,27 @@ export default function AdminGatePassesPage() {
       key: "validity",
       header: "Validity",
       sortable: false,
-      accessor: (row) => (
-        <span className="text-sm text-muted-foreground">
-          {row.valid_from && row.valid_to ? (
-            <>
-              {new Date(row.valid_from).toLocaleDateString()} –{" "}
-              {new Date(row.valid_to).toLocaleDateString()}
-            </>
-          ) : (
-            "Flexible"
-          )}
-        </span>
-      ),
+      accessor: (row) => {
+        const remaining = getTimeRemaining(row.valid_to);
+        return (
+          <div className="flex flex-col text-sm leading-5">
+            <span >
+              {
+                row.valid_from && row.valid_to ? (
+                  <>
+                    {formatPassWindow(row.valid_from, row.valid_to)}
+                  </>
+                ) : (
+                  "Flexible"
+                )
+              }
+            </span >
+            {remaining && (
+              <span className="text-xs text-amber-600 font-medium">{remaining}</span>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: "uses",
@@ -471,27 +483,27 @@ function StatusBadge({ status }: { status: string }) {
   const statusMap: Record<string, { label: string; className: string }> = {
     [GatePassStatus.CHECKED_IN]: {
       label: "Checked in",
-      className: "bg-muted text-foreground border border-border",
+      className: "bg-green-50 text-green-600 border border-green-600",
     },
     [GatePassStatus.CHECKED_OUT]: {
       label: "Checked out",
-      className: "bg-muted text-muted-foreground border border-border",
+      className: "bg-indigo-50 text-indigo-600 border border-indigo-600",
     },
     [GatePassStatus.PENDING]: {
       label: "Pending",
-      className: "bg-muted text-foreground border border-border",
+      className: "bg-amber-50 text-amber-600 border border-amber-600",
     },
     [GatePassStatus.REVOKED]: {
       label: "Revoked",
-      className: "bg-muted text-destructive border border-border",
+      className: "bg-red-50 text-red-600 border border-red-600",
     },
     [GatePassStatus.EXPIRED]: {
       label: "Expired",
-      className: "bg-muted text-muted-foreground border border-border",
+      className: "bg-red-50 text-red-600 border border-red-600",
     },
     [GatePassStatus.COMPLETED]: {
       label: "Completed",
-      className: "bg-muted text-muted-foreground border border-border",
+      className: "bg-red-50 text-red-600 border border-red-600",
     },
   };
 

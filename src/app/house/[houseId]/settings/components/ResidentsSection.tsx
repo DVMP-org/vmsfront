@@ -124,7 +124,7 @@ export function ResidentsSection() {
                                         <div className="flex items-center gap-2">
                                             {item.resident.user.first_name} {item.resident.user.last_name}
                                             {item.is_super_user && (
-                                                <Badge variant="outline" className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
+                                                <Badge variant="outline" className="flex items-center text-muted-foreground gap-1 text-[10px] font-bold uppercase tracking-wider">
                                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                     Super User
                                                 </Badge>

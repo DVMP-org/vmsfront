@@ -14,6 +14,9 @@ import {
   CreateHouseGroupRequest,
   UpdateHouseGroupRequest,
   Admin,
+  HouseDetail,
+  Resident,
+  ResidentHouse,
 } from "@/types";
 import { toast } from "sonner";
 import { AdminDashboard } from "@/types";
@@ -32,6 +35,30 @@ export function useAdminHouses(params: {
       const response = await adminService.getHouses(params);
       return response.data;
     },
+  });
+}
+
+export function useAdminHouse(houseId: string | null) {
+  return useQuery<House>({
+    queryKey: ["admin", "house", houseId],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required");
+      const response = await adminService.getHouse(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
+export function useAdminHouseResidents(houseId: string | null) {
+  return useQuery<ResidentHouse[]>({
+    queryKey: ["admin", "house", houseId, "residents"],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required");
+      const response = await adminService.getHouseResidents(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
   });
 }
 
@@ -149,11 +176,23 @@ export function useCreateResident() {
 }
 
 export function useAdminResident(residentId: string | null) {
-  return useQuery<ResidentUser>({
+  return useQuery<Resident>({
     queryKey: ["admin", "resident", residentId],
     queryFn: async () => {
       if (!residentId) throw new Error("Resident ID is required");
       const response = await adminService.getResident(residentId);
+      return response.data;
+    },
+    enabled: !!residentId,
+  });
+}
+
+export function useAdminResidentHouses(residentId: string | null) {
+  return useQuery<ResidentHouse[]>({
+    queryKey: ["admin", "resident", residentId, "houses"],
+    queryFn: async () => {
+      if (!residentId) throw new Error("Resident ID is required");
+      const response = await adminService.getResidentHouses(residentId);
       return response.data;
     },
     enabled: !!residentId,

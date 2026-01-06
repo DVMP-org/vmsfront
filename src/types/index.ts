@@ -30,6 +30,7 @@ export interface User {
     avatar_url: string | null;
     created_at: string;
     updated_at: string;
+    name?: string | null
 }
 
 export interface House {
@@ -41,6 +42,8 @@ export interface House {
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    house_groups?: HouseGroup[] | null;
+
 }
 
 export interface HouseGroup {
@@ -112,6 +115,12 @@ export interface ResidentUser {
     user: User;
     resident: Resident;
     houses?: House[] | null;
+}
+
+export interface HouseDetail {
+    house: House;
+    house_groups?: HouseGroup[];
+    residents?: ResidentUser[];
 }
 
 export interface ResidentUserCreate {
@@ -239,8 +248,9 @@ export interface GateEvent {
     house_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
-    gate_pass?: GatePass;
-    scanned_by?: Admin
+    gate_pass?: GatePass | null;
+    scanned_by?: Admin | null;
+    house?: House | null;
 
 }
 

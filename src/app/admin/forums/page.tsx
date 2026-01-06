@@ -81,7 +81,7 @@ export default function AdminForumsPage() {
   const searchParams = useSearchParams();
   const { data: housesData } = useAdminHouses({
     page: 1,
-    pageSize: 500,
+    pageSize: 100,
   });
   const houses = useMemo(
     () => housesData?.items ?? [],
