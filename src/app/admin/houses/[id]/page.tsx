@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAdminHouse, useAdminHouseResidents } from "@/hooks/use-admin";
+import { useAdminHouse, useAdminHouseResidents, useUpdateHouse, useAdminHouseGroups } from "@/hooks/use-admin";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { ArrowLeft, Building2, Calendar, Info, Users, Home, MapPin, Shield, Star } from "lucide-react";
 import { formatDate, getFullName, getInitials } from "@/lib/utils";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { ResidentHouse, ResidentUser } from "@/types";
+import { HouseForm, HouseFormData } from "../components/HouseForm";
 
 export default function HouseDetailPage() {
     const params = useParams();
@@ -17,6 +20,15 @@ export default function HouseDetailPage() {
     const houseId = params?.id as string;
     const { data: house, isLoading, error } = useAdminHouse(houseId);
     const { data: residents, isLoading: residentsLoading } = useAdminHouseResidents(houseId)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Mutations and data for edit
+    const updateHouseMutation = useUpdateHouse();
+    const { data: houseGroupsData } = useAdminHouseGroups({
+        page: 1,
+        pageSize: 100,
+    });
+    const houseGroups = houseGroupsData?.items ?? [];
 
     if (isLoading || residentsLoading) {
         return (
@@ -43,6 +55,20 @@ export default function HouseDetailPage() {
             </div>
         );
     }
+
+    const handleEditSubmit = (data: HouseFormData) => {
+        updateHouseMutation.mutate(
+            {
+                houseId,
+                data: data as any,
+            },
+            {
+                onSuccess: () => {
+                    setIsEditModalOpen(false);
+                },
+            }
+        );
+    };
 
     const { house_groups = [] } = house;
 
@@ -144,7 +170,7 @@ export default function HouseDetailPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/admin/houses?search=${house?.name}`)}>
+                    <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
                         Edit House
                     </Button>
                 </div>
@@ -199,7 +225,7 @@ export default function HouseDetailPage() {
                                         <Badge
                                             key={group.id}
                                             variant="outline"
-                                            className="cursor-pointer hover:bg-muted transition-colors px-3 py-1"
+                                            className="cursor-pointer text-muted-foreground hover:bg-muted transition-colors px-3 py-1"
                                             onClick={() => router.push(`/admin/house-groups/${group.id}`)}
                                         >
                                             {group.name}
@@ -263,6 +289,25 @@ export default function HouseDetailPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit House"
+            >
+                <HouseForm
+                    initialData={{
+                        name: house.name,
+                        address: house.address || "",
+                        description: house.description || "",
+                        house_group_ids: Array.isArray((house as any).house_group_ids) ? (house as any).house_group_ids : [],
+                    }}
+                    onSubmit={handleEditSubmit}
+                    onCancel={() => setIsEditModalOpen(false)}
+                    isLoading={updateHouseMutation.isPending}
+                    houseGroups={houseGroups}
+                />
+            </Modal>
         </div>
     );
 }

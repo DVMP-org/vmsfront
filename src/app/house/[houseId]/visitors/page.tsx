@@ -75,6 +75,7 @@ export default function VisitorsPage() {
       header: "Email",
       sortable: true,
       filterable: true,
+      accessor: (row) => row.email || "-",
     },
     {
       key: "phone",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,86 +15,102 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { useAdminHouses, useAdminUsers, useCreateResident } from "@/hooks/use-admin";
 import { toast } from "sonner";
-import { Users, Home } from "lucide-react";
+import { Users, Home, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const createResidentSchema = z.discriminatedUnion("mode", [
+  z.object({
+    mode: z.literal("existing"),
+    user_id: z.string().min(1, "Please select an existing user"),
+    email: z.string().optional(),
+    first_name: z.string().min(2, "First name must be at least 2 characters"),
+    last_name: z.string().min(2, "Last name must be at least 2 characters"),
+    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    address: z.string().min(5, "Address must be at least 5 characters"),
+    house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
+  }),
+  z.object({
+    mode: z.literal("new"),
+    user_id: z.string().optional(),
+    email: z.string().email("Please enter a valid email address"),
+    first_name: z.string().min(2, "First name must be at least 2 characters"),
+    last_name: z.string().min(2, "Last name must be at least 2 characters"),
+    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    address: z.string().min(5, "Address must be at least 5 characters"),
+    house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
+  }),
+]);
+
+type CreateResidentFormData = z.infer<typeof createResidentSchema>;
 
 export default function CreateResidentPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    user_id: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    address: "",
-    email: "",
-  });
-  const [mode, setMode] = useState<"existing" | "new">("existing");
-  const [selectedHouseSlugs, setselectedHouseSlugs] = useState<string[]>([]);
-
+  const createResident = useCreateResident();
+  const { data: users, isLoading: usersLoading } = useAdminUsers();
   const { data: housesData, isLoading: housesLoading } = useAdminHouses({
     page: 1,
     pageSize: 100,
   });
-  const createResident = useCreateResident();
-  const { data: users, isLoading: usersLoading } = useAdminUsers();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CreateResidentFormData>({
+    resolver: zodResolver(createResidentSchema),
+    defaultValues: {
+      mode: "existing",
+      user_id: "",
+      email: "",
+      first_name: "",
+      last_name: "",
+      phone: "",
+      address: "",
+      house_slugs: [],
+    },
+  });
+
+  const mode = watch("mode");
+  const userId = watch("user_id");
+  const selectedHouseSlugs = watch("house_slugs") || [];
 
   const handleHouseToggle = (houseSlug: string) => {
-    setselectedHouseSlugs((prev) =>
-      prev.includes(houseSlug)
-        ? prev.filter((slug) => slug !== houseSlug)
-        : [...prev, houseSlug]
-    );
+    const nextSlugs = selectedHouseSlugs.includes(houseSlug)
+      ? selectedHouseSlugs.filter((slug) => slug !== houseSlug)
+      : [...selectedHouseSlugs, houseSlug];
+    setValue("house_slugs", nextSlugs, { shouldValidate: true, shouldDirty: true });
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (mode === "existing" && !form.user_id.trim()) {
-      toast.error("Select an existing user.");
-      return;
-    }
-
-    if (mode === "new" && !form.email.trim()) {
-      toast.error("Email is required for a new resident.");
-      return;
-    }
-
-    if (selectedHouseSlugs.length === 0) {
-      toast.error("Select at least one house.");
-      return;
-    }
-
+  const onSubmit = (data: CreateResidentFormData) => {
     const payload = {
-      ...form,
-      user_id: mode === "existing" ? form.user_id.trim() : "",
+      ...data,
+      user_id: data.mode === "existing" ? data.user_id : "",
       email:
-        mode === "existing"
-          ? sortedUsers.find((user) => user.id === form.user_id)?.email
-          : form.email.trim(),
-      house_slugs: selectedHouseSlugs,
-      first_name: form.first_name || undefined,
-      last_name: form.last_name || undefined,
-      phone: form.phone || undefined,
-      address: form.address || undefined,
+        data.mode === "existing"
+          ? sortedUsers.find((user) => user.id === data.user_id)?.email
+          : data.email,
+      first_name: data.first_name || undefined,
+      last_name: data.last_name || undefined,
+      phone: data.phone || undefined,
+      address: data.address || undefined,
+      house_slugs: data.house_slugs || [],
     };
 
-    createResident.mutate(
-      payload,
-      {
-        onSuccess: () => {
-          router.push("/admin/residents");
-        },
-      }
-    );
+    createResident.mutate(payload, {
+      onSuccess: () => {
+        router.push("/admin/residents");
+      },
+    });
   };
 
-  const houses = useMemo(
-    () => housesData?.items ?? [],
-    [housesData?.items]
-  );
+  const houses = useMemo(() => housesData?.items ?? [], [housesData?.items]);
   const sortedHouses = useMemo(
-    () =>
-      houses.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    () => houses.slice().sort((a, b) => a.name.localeCompare(b.name)),
     [houses]
   );
 
@@ -110,28 +126,21 @@ export default function CreateResidentPage() {
   }, [users]);
 
   const selectedUser = useMemo(() => {
-    if (!form.user_id) return null;
-    return sortedUsers.find((user) => user.id === form.user_id) || null;
-  }, [form.user_id, sortedUsers]);
+    if (!userId) return null;
+    return sortedUsers.find((user) => user.id === userId) || null;
+  }, [userId, sortedUsers]);
 
   useEffect(() => {
     if (mode === "existing" && selectedUser) {
-      setForm((prev) => ({
-        ...prev,
-        first_name: selectedUser.first_name || "",
-        last_name: selectedUser.last_name || "",
-        email: selectedUser.email || "",
-      }));
+      setValue("first_name", selectedUser.first_name || "");
+      setValue("last_name", selectedUser.last_name || "");
+      setValue("email", selectedUser.email || "");
     } else if (mode === "new") {
-      setForm((prev) => ({
-        ...prev,
-        user_id: "",
-        first_name: "",
-        last_name: "",
-      }));
+      setValue("user_id", "");
+      setValue("first_name", "");
+      setValue("last_name", "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, mode]);
+  }, [selectedUser, mode, setValue]);
 
   return (
     <>
@@ -139,14 +148,14 @@ export default function CreateResidentPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin/residents" className="text-primary hover:underline">
+              <Link href="/admin/residents" className="text-[var(--brand-primary,#213928)] hover:underline">
                 Residents
               </Link>
               <span>/</span>
               <span>Create</span>
             </p>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="h-6 w-6 text-primary" />
+              <Users className="h-6 w-6 text-[var(--brand-primary,#213928)]" />
               Add Resident
             </h1>
             <p className="text-muted-foreground">
@@ -156,9 +165,10 @@ export default function CreateResidentPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/admin/residents")}
+            onClick={() => router.back()}
           >
-            Back to residents
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
         </div>
 
@@ -170,14 +180,19 @@ export default function CreateResidentPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="flex flex-wrap gap-3">
                   {(["existing", "new"] as const).map((value) => (
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setMode(value)}
+                      onClick={() => {
+                        setValue("mode", value);
+                        if (value === "new") {
+                          setValue("user_id", "");
+                        }
+                      }}
                       className={cn(
                         "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
                         mode === value
@@ -202,27 +217,31 @@ export default function CreateResidentPage() {
                         No users available. Onboard a user first.
                       </p>
                     ) : (
-                      <select
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        value={form.user_id}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, user_id: event.target.value }))
-                        }
-                        required
-                      >
-                        <option value="" disabled>
-                          Choose an existing user
-                        </option>
-                        {sortedUsers.map((userOption) => (
-                          <option key={userOption.id} value={userOption.id}>
-                            {([userOption.first_name, userOption.last_name]
-                              .filter(Boolean)
-                              .join(" ") || userOption.email) +
-                              " • " +
-                              userOption.email}
+                      <div className="space-y-1">
+                        <select
+                          className={cn(
+                            "w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            errors.mode === undefined && (errors as any).user_id && "border-destructive text-destructive"
+                          )}
+                          {...register("user_id")}
+                        >
+                          <option value="" disabled>
+                            Choose an existing user
                           </option>
-                        ))}
-                      </select>
+                          {sortedUsers.map((userOption) => (
+                            <option key={userOption.id} value={userOption.id}>
+                              {([userOption.first_name, userOption.last_name]
+                                .filter(Boolean)
+                                .join(" ") || userOption.email) +
+                                " • " +
+                                userOption.email}
+                            </option>
+                          ))}
+                        </select>
+                        {mode === "existing" && (errors as any).user_id && (
+                          <p className="text-xs text-destructive">{(errors as any).user_id?.message}</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 ) : null}
@@ -233,30 +252,22 @@ export default function CreateResidentPage() {
                   label="Resident email"
                   type="email"
                   placeholder="resident@example.com"
-                  value={form.email}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, email: event.target.value }))
-                  }
-                  required
+                  {...register("email")}
+                  error={(errors as any).email?.message}
                 />
-
               )}
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
                   label="First name"
                   placeholder="Optional override"
-                  value={form.first_name}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, first_name: event.target.value }))
-                  }
+                  {...register("first_name")}
+                  error={errors.first_name?.message}
                 />
                 <Input
                   label="Last name"
                   placeholder="Optional override"
-                  value={form.last_name}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, last_name: event.target.value }))
-                  }
+                  {...register("last_name")}
+                  error={errors.last_name?.message}
                 />
               </div>
 
@@ -265,26 +276,31 @@ export default function CreateResidentPage() {
                 <Input
                   label="Phone"
                   placeholder="+234 810 000 0000"
-                  value={form.phone}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, phone: event.target.value }))
-                  }
+                  {...register("phone")}
+                  error={errors.phone?.message}
                 />
                 <Input
                   label="Address"
                   placeholder="Apartment 5B, Riverside"
-                  value={form.address}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, address: event.target.value }))
-                  }
+                  {...register("address")}
+                  error={errors.address?.message}
                 />
               </div>
 
-              <div className="space-y-4 rounded-lg border p-4">
+              <div className={cn(
+                "space-y-4 rounded-lg border p-4 transition-colors",
+                errors.house_slugs ? "border-destructive bg-destructive/5" : "border-border"
+              )}>
                 <div className="flex items-center gap-2">
-                  <Home className="h-5 w-5 text-primary" />
+                  <Home className={cn(
+                    "h-5 w-5",
+                    errors.house_slugs ? "text-destructive" : "text-[var(--brand-primary,#213928)]"
+                  )} />
                   <div>
-                    <p className="text-sm font-medium">Associate houses</p>
+                    <p className={cn(
+                      "text-sm font-medium",
+                      errors.house_slugs ? "text-destructive" : "text-foreground"
+                    )}>Associate houses</p>
                     <p className="text-xs text-muted-foreground">
                       Select one or more houses that the resident should belong to.
                     </p>
@@ -297,21 +313,26 @@ export default function CreateResidentPage() {
                     No houses found. Create a house first.
                   </p>
                 ) : (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {sortedHouses.map((house) => {
-                      const slug = house.slug;
-                      const isSelectable = Boolean(slug);
-                      return (
-                        <Checkbox
-                          key={house.id}
-                          label={house.name}
-                          description={house.address}
-                          checked={slug ? selectedHouseSlugs.includes(slug) : false}
-                          disabled={!isSelectable}
-                          onChange={() => slug && handleHouseToggle(slug)}
-                        />
-                      );
-                    })}
+                  <div className="space-y-2">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {sortedHouses.map((house) => {
+                        const slug = house.slug;
+                        const isSelectable = Boolean(slug);
+                        return (
+                          <Checkbox
+                            key={house.id}
+                            label={house.name}
+                            description={house.address}
+                            checked={slug ? selectedHouseSlugs.includes(slug) : false}
+                            disabled={!isSelectable}
+                            onChange={() => slug && handleHouseToggle(slug)}
+                          />
+                        );
+                      })}
+                    </div>
+                    {errors.house_slugs && (
+                      <p className="text-xs text-destructive">{errors.house_slugs.message}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -331,7 +352,7 @@ export default function CreateResidentPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+      </div >
     </>
   );
 }

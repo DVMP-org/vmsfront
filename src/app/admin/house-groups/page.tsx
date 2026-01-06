@@ -4,18 +4,17 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminHouseGroups, useCreateHouseGroup, useUpdateHouseGroup, useDeleteHouseGroup, useAdminHouses, useBulkDeleteHouseGroups, useBulkToggleHouseGroupActive } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
-import { Plus, Building2, Edit, Trash2, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Plus, Building2, Edit, Trash2, CheckCircle, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
-import { toast } from "sonner";
 import { HouseGroup, House } from "@/types";
+import { HouseGroupForm, HouseGroupFormData } from "./components/HouseGroupForm";
+import { Card, CardContent } from "@/components/ui/Card";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -24,6 +23,7 @@ const STATUS_FILTERS: Array<{ value: string, label: string }> = [
     { value: "true", label: "Active" },
     { value: "false", label: "Inactive" },
 ]
+
 export default function HouseGroupsPage() {
     const router = useRouter();
     // URL query sync
@@ -49,13 +49,6 @@ export default function HouseGroupsPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<HouseGroup | null>(null);
-    const [selectedHouses, setSelectedHouses] = useState<Set<string>>(new Set());
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        house_ids: [] as string[],
-    });
-    const [errors, setErrors] = useState<Record<string, string>>({});
     const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
 
     // Mutations
@@ -104,7 +97,6 @@ export default function HouseGroupsPage() {
         pageSize: 100,
     });
 
-
     // Bulk actions
     const handleBulkDelete = (selectedIds: string[]) => {
         bulkDeleteMutation.mutate(selectedIds, {
@@ -139,74 +131,40 @@ export default function HouseGroupsPage() {
     ];
 
     const houseGroups = data?.items ?? [];
-    const totalPages = data?.total_pages ?? 1;
     const total = data?.total ?? 0;
     const allHouses = housesData?.items ?? [];
 
-
-
-    const handleCreateSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const newErrors: Record<string, string> = {};
-        if (!formData.name.trim()) newErrors.name = "Name is required";
-        if (formData.house_ids.length === 0) {
-            newErrors.house_ids = "At least one house must be selected";
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
+    const handleCreateSubmit = (data: HouseGroupFormData) => {
         createMutation.mutate(
             {
-                name: formData.name.trim(),
-                description: formData.description.trim() || null,
-                house_ids: formData.house_ids,
+                name: data.name.trim(),
+                description: data.description?.trim() || null,
+                house_ids: data.house_ids,
             },
             {
                 onSuccess: () => {
                     setIsCreateModalOpen(false);
-                    setFormData({ name: "", description: "", house_ids: [] });
-                    setSelectedHouses(new Set());
-                    setErrors({});
                 },
             }
         );
     };
 
-    const handleEditSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleEditSubmit = (data: HouseGroupFormData) => {
         if (!selectedGroup) return;
-
-        const newErrors: Record<string, string> = {};
-        if (!formData.name.trim()) newErrors.name = "Name is required";
-        if (formData.house_ids.length === 0) {
-            newErrors.house_ids = "At least one house must be selected";
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
 
         updateMutation.mutate(
             {
                 groupId: selectedGroup.id,
                 data: {
-                    name: formData.name.trim(),
-                    description: formData.description.trim() || null,
-                    house_ids: formData.house_ids,
+                    name: data.name.trim(),
+                    description: data.description?.trim() || null,
+                    house_ids: data.house_ids,
                 },
             },
             {
                 onSuccess: () => {
                     setIsEditModalOpen(false);
                     setSelectedGroup(null);
-                    setFormData({ name: "", description: "", house_ids: [] });
-                    setSelectedHouses(new Set());
-                    setErrors({});
                 },
             }
         );
@@ -224,51 +182,12 @@ export default function HouseGroupsPage() {
 
     const openEditModal = (group: HouseGroup) => {
         setSelectedGroup(group);
-        const houseIds = group.house_ids || [];
-        setFormData({
-            name: group.name,
-            description: group.description || "",
-            house_ids: houseIds,
-        });
-        setSelectedHouses(new Set(houseIds));
-        setErrors({});
         setIsEditModalOpen(true);
     };
 
     const openDeleteModal = (group: HouseGroup) => {
         setSelectedGroup(group);
         setIsDeleteModalOpen(true);
-    };
-
-    const toggleHouseSelection = (houseId: string) => {
-        const newSelected = new Set(selectedHouses);
-        if (newSelected.has(houseId)) {
-            newSelected.delete(houseId);
-        } else {
-            newSelected.add(houseId);
-        }
-        setSelectedHouses(newSelected);
-        setFormData({
-            ...formData,
-            house_ids: Array.from(newSelected),
-        });
-        if (errors.house_ids) {
-            setErrors({ ...errors, house_ids: "" });
-        }
-    };
-
-    const toggleAllHouses = () => {
-        if (selectedHouses.size === allHouses.length) {
-            setSelectedHouses(new Set());
-            setFormData({ ...formData, house_ids: [] });
-        } else {
-            const allIds = new Set(allHouses.map((h) => h.id));
-            setSelectedHouses(allIds);
-            setFormData({ ...formData, house_ids: Array.from(allIds) });
-        }
-        if (errors.house_ids) {
-            setErrors({ ...errors, house_ids: "" });
-        }
     };
 
     const columns: Column<HouseGroup>[] = [
@@ -395,9 +314,6 @@ export default function HouseGroupsPage() {
                             <Button
                                 onClick={() => {
                                     setIsCreateModalOpen(true);
-                                    setFormData({ name: "", description: "", house_ids: [] });
-                                    setSelectedHouses(new Set());
-                                    setErrors({});
                                 }}
                                 size="sm"
                             >
@@ -412,62 +328,63 @@ export default function HouseGroupsPage() {
                 <div className="flex-1 overflow-y-auto">
                     <div className="px-6 py-4">
                         {/* Table */}
-                        {isLoading ? (
-                            <TableSkeleton />
-                        ) : houseGroups.length === 0 && !search && !status ? (
-                            <EmptyState
-                                icon={Building2}
-                                title="No house groups"
-                                description="Create your first house group to organize houses"
-                                action={{
-                                    label: "Create House Group",
-                                    onClick: () => {
-                                        setIsCreateModalOpen(true);
-                                        setFormData({ name: "", description: "", house_ids: [] });
-                                        setSelectedHouses(new Set());
-                                        setErrors({});
-                                    },
-                                }}
-                            />
-                        ) : (
-                            <DataTable
-                                data={houseGroups}
-                                columns={columns}
-                                searchable={true}
-                                searchPlaceholder="Search house groups..."
-                                pageSize={pageSize}
-                                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                                onPageSizeChange={setPageSize}
-                                showPagination={true}
-                                emptyMessage="No house groups found"
-                                serverSide={true}
-                                total={total}
-                                currentPage={page}
-                                onPageChange={setPage}
-                                externalSearch={search}
-                                onSearchChange={(value) => {
-                                    setPage(1);
-                                    setSearch(value);
-                                }}
-                                filterableFields={filterableFields}
-                                onFiltersChange={(filters) => {
-                                    setPage(1);
-                                    const statusFilter = filters.find((f) => f.field === "is_active");
-                                    setStatus(statusFilter?.value as string | undefined || undefined);
-                                }}
-                                onSortChange={(newSort) => {
-                                    setPage(1);
-                                    setSort(newSort);
-                                }}
-                                disableClientSideFiltering={true}
-                                disableClientSideSorting={false}
-                                className=" rounded"
-                                selectable={true}
-                                selectedRows={selectedGroups}
-                                onSelectionChange={setSelectedGroups}
-                                bulkActions={bulkActions}
-                            />
-                        )}
+                        <Card>
+                            <CardContent className="p-6">
+                                {isLoading ? (
+                                    <TableSkeleton />
+                                ) : houseGroups.length === 0 && !search && !status ? (
+                                    <EmptyState
+                                        icon={Building2}
+                                        title="No house groups"
+                                        description="Create your first house group to organize houses"
+                                        action={{
+                                            label: "Create House Group",
+                                            onClick: () => {
+                                                setIsCreateModalOpen(true);
+                                            },
+                                        }}
+                                    />
+                                ) : (
+                                    <DataTable
+                                        data={houseGroups}
+                                        columns={columns}
+                                        searchable={true}
+                                        searchPlaceholder="Search house groups..."
+                                        pageSize={pageSize}
+                                        pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                        onPageSizeChange={setPageSize}
+                                        showPagination={true}
+                                        emptyMessage="No house groups found"
+                                        serverSide={true}
+                                        total={total}
+                                        currentPage={page}
+                                        onPageChange={setPage}
+                                        externalSearch={search}
+                                        onSearchChange={(value) => {
+                                            setPage(1);
+                                            setSearch(value);
+                                        }}
+                                        filterableFields={filterableFields}
+                                        onFiltersChange={(filters) => {
+                                            setPage(1);
+                                            const statusFilter = filters.find((f) => f.field === "is_active");
+                                            setStatus(statusFilter?.value as string | undefined || undefined);
+                                        }}
+                                        onSortChange={(newSort) => {
+                                            setPage(1);
+                                            setSort(newSort);
+                                        }}
+                                        disableClientSideFiltering={true}
+                                        disableClientSideSorting={false}
+                                        className=" rounded"
+                                        selectable={true}
+                                        selectedRows={selectedGroups}
+                                        onSelectionChange={setSelectedGroups}
+                                        bulkActions={bulkActions}
+                                    />
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>
@@ -477,110 +394,15 @@ export default function HouseGroupsPage() {
                 isOpen={isCreateModalOpen}
                 onClose={() => {
                     setIsCreateModalOpen(false);
-                    setFormData({ name: "", description: "", house_ids: [] });
-                    setSelectedHouses(new Set());
-                    setErrors({});
                 }}
                 title="Create House Group"
             >
-                <form onSubmit={handleCreateSubmit} className="space-y-4">
-                    <Input
-                        label="Group Name"
-                        placeholder="e.g., Building A, East Wing"
-                        value={formData.name}
-                        onChange={(e) => {
-                            setFormData({ ...formData, name: e.target.value });
-                            if (errors.name) setErrors({ ...errors, name: "" });
-                        }}
-                        error={errors.name}
-                        required
-                    />
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Description (Optional)
-                        </label>
-                        <textarea
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            placeholder="Brief description of this group"
-                            value={formData.description}
-                            onChange={(e) =>
-                                setFormData({ ...formData, description: e.target.value })
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-medium">
-                                Houses <span className="text-destructive">*</span>
-                            </label>
-                            {allHouses.length > 0 && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={toggleAllHouses}
-                                    className="h-7 text-xs"
-                                >
-                                    {selectedHouses.size === allHouses.length
-                                        ? "Deselect All"
-                                        : "Select All"}
-                                </Button>
-                            )}
-                        </div>
-                        <div className="border border-border rounded-md max-h-64 overflow-y-auto p-2">
-                            {allHouses.length === 0 ? (
-                                <p className="text-sm text-muted-foreground p-2">
-                                    No houses available
-                                </p>
-                            ) : (
-                                <div className="space-y-1">
-                                    {allHouses.map((house) => (
-                                        <label
-                                            key={house.id}
-                                            className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 cursor-pointer"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedHouses.has(house.id)}
-                                                onChange={() => toggleHouseSelection(house.id)}
-                                                className="h-4 w-4 rounded border-input"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium">{house.name}</div>
-                                                <div className="text-xs text-muted-foreground truncate">
-                                                    {house.address}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        {errors.house_ids && (
-                            <p className="text-xs text-destructive mt-1">{errors.house_ids}</p>
-                        )}
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-2 border-t border-border">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                setIsCreateModalOpen(false);
-                                setFormData({ name: "", description: "", house_ids: [] });
-                                setSelectedHouses(new Set());
-                                setErrors({});
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" isLoading={createMutation.isPending}>
-                            Create Group
-                        </Button>
-                    </div>
-                </form>
+                <HouseGroupForm
+                    onSubmit={handleCreateSubmit}
+                    onCancel={() => setIsCreateModalOpen(false)}
+                    isLoading={createMutation.isPending}
+                    allHouses={allHouses}
+                />
             </Modal>
 
             {/* Edit Modal */}
@@ -589,111 +411,25 @@ export default function HouseGroupsPage() {
                 onClose={() => {
                     setIsEditModalOpen(false);
                     setSelectedGroup(null);
-                    setFormData({ name: "", description: "", house_ids: [] });
-                    setSelectedHouses(new Set());
-                    setErrors({});
                 }}
                 title="Edit House Group"
             >
-                <form onSubmit={handleEditSubmit} className="space-y-4">
-                    <Input
-                        label="Group Name"
-                        placeholder="e.g., Building A, East Wing"
-                        value={formData.name}
-                        onChange={(e) => {
-                            setFormData({ ...formData, name: e.target.value });
-                            if (errors.name) setErrors({ ...errors, name: "" });
+                {selectedGroup && (
+                    <HouseGroupForm
+                        initialData={{
+                            name: selectedGroup.name,
+                            description: selectedGroup.description || "",
+                            house_ids: selectedGroup.house_ids || [],
                         }}
-                        error={errors.name}
-                        required
+                        onSubmit={handleEditSubmit}
+                        onCancel={() => {
+                            setIsEditModalOpen(false);
+                            setSelectedGroup(null);
+                        }}
+                        isLoading={updateMutation.isPending}
+                        allHouses={allHouses}
                     />
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Description (Optional)
-                        </label>
-                        <textarea
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            placeholder="Brief description of this group"
-                            value={formData.description}
-                            onChange={(e) =>
-                                setFormData({ ...formData, description: e.target.value })
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-medium">
-                                Houses <span className="text-destructive">*</span>
-                            </label>
-                            {allHouses.length > 0 && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={toggleAllHouses}
-                                    className="h-7 text-xs"
-                                >
-                                    {selectedHouses.size === allHouses.length
-                                        ? "Deselect All"
-                                        : "Select All"}
-                                </Button>
-                            )}
-                        </div>
-                        <div className="border border-border rounded-md max-h-64 overflow-y-auto p-2">
-                            {allHouses.length === 0 ? (
-                                <p className="text-sm text-muted-foreground p-2">
-                                    No houses available
-                                </p>
-                            ) : (
-                                <div className="space-y-1">
-                                    {allHouses.map((house) => (
-                                        <label
-                                            key={house.id}
-                                            className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 cursor-pointer"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedHouses.has(house.id)}
-                                                onChange={() => toggleHouseSelection(house.id)}
-                                                className="h-4 w-4 rounded border-input"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium">{house.name}</div>
-                                                <div className="text-xs text-muted-foreground truncate">
-                                                    {house.address}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        {errors.house_ids && (
-                            <p className="text-xs text-destructive mt-1">{errors.house_ids}</p>
-                        )}
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-2 border-t border-border">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                setIsEditModalOpen(false);
-                                setSelectedGroup(null);
-                                setFormData({ name: "", description: "", house_ids: [] });
-                                setSelectedHouses(new Set());
-                                setErrors({});
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" isLoading={updateMutation.isPending}>
-                            Save Changes
-                        </Button>
-                    </div>
-                </form>
+                )}
             </Modal>
 
             {/* Delete Confirmation Modal */}

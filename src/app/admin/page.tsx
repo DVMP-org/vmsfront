@@ -13,6 +13,8 @@ import {
   CreditCard,
   Activity,
   ArrowUpRight,
+  PieChartIcon,
+  UserPlus,
 } from "lucide-react";
 
 // Lazy load the charts component
@@ -184,6 +186,7 @@ export default function AdminDashboardPage() {
               onClick={() => router.push("/admin/analytics")}
               className="text-xs h-8"
             >
+              <PieChartIcon className="h-4 w-4 mr-2" />
               Analytics
             </Button>
             <Button
@@ -191,6 +194,7 @@ export default function AdminDashboardPage() {
               onClick={() => router.push("/admin/admins/create")}
               className="text-xs h-8"
             >
+              <UserPlus className="h-4 w-4 mr-2" />
               Onboard Admin
             </Button>
           </div>
@@ -391,7 +395,7 @@ export default function AdminDashboardPage() {
                         <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
                       </div>
                       <div className="ml-4 flex-shrink-0">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--brand-primary,#213928)] text-muted-foreground">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[var(--brand-primary,#213928)] text-muted">
                           {resident.houses?.length || 0} {resident.houses?.length === 1 ? 'house' : 'houses'}
                         </span>
                       </div>

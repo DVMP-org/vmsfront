@@ -11,6 +11,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { QRScanner } from "@/components/ui/QRScanner";
 import { Scan, CheckCircle, XCircle, LogIn, LogOut, QrCode } from "lucide-react";
 import { Visitor } from "@/types";
+import { titleCase } from "@/lib/utils";
+import { title } from "process";
 
 // Helper function to check if pass code is 2-part or 3-part
 function getPassCodeParts(code: string): { baseCode: string; suffix: string | null; isThreePart: boolean } {
@@ -425,13 +427,13 @@ function GateConsoleContent() {
                                 : "danger"
                             }
                           >
-                            {lastResult.gate_pass.status}
+                            {titleCase(lastResult.gate_pass.status.replace("_", " "))}
                           </Badge>
                         </p>
                         {lastResult.owner && (
                           <p>
                             <span className="font-medium">Owner:</span>{" "}
-                            {lastResult.owner.name}
+                            {titleCase(lastResult.owner.name)}
                           </p>
                         )}
                         {lastResult.uses_count && (
