@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
+import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  useRequireEmailVerification(true);
   useRequireResidentOnboarding(type === "resident");
 
   useEffect(() => {

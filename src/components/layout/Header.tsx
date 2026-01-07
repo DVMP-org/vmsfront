@@ -25,7 +25,7 @@ import { LogoFull } from "../LogoFull";
 
 interface HeaderProps {
   onMenuClick?: () => void;
-  type: "resident" | "admin" | "select";
+  type: "resident" | "admin" | "select" | "auth";
 }
 
 export function Header({ onMenuClick, type }: HeaderProps) {
