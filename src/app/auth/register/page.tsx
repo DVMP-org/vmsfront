@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
-import { Home } from "lucide-react";
+import { Home, Lock, Mail, Phone, User2Icon } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -33,7 +34,7 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const newErrors: Record<string, string> = {};
     if (!formData.email) newErrors.email = "Email is required";
@@ -46,7 +47,7 @@ export default function RegisterPage() {
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -85,6 +86,7 @@ export default function RegisterPage() {
                 name="first_name"
                 label="First Name"
                 placeholder="John"
+                icon={User2Icon}
                 value={formData.first_name}
                 onChange={handleChange}
                 error={errors.first_name || registerFieldErrors.first_name}
@@ -94,6 +96,7 @@ export default function RegisterPage() {
                 name="last_name"
                 label="Last Name"
                 placeholder="Doe"
+                icon={User2Icon}
                 value={formData.last_name}
                 onChange={handleChange}
                 error={errors.last_name || registerFieldErrors.last_name}
@@ -105,6 +108,7 @@ export default function RegisterPage() {
               label="Email"
               placeholder="name@example.com"
               value={formData.email}
+              icon={Mail}
               onChange={handleChange}
               error={errors.email || registerFieldErrors.email}
             />
@@ -112,27 +116,28 @@ export default function RegisterPage() {
               type="tel"
               name="phone"
               label="Phone (Optional)"
+              icon={Phone}
               placeholder="+1234567890"
               value={formData.phone}
               onChange={handleChange}
               error={registerFieldErrors.phone}
             />
-            <Input
-              type="password"
+            <PasswordInput
               name="password"
               label="Password"
               placeholder="••••••••"
+              icon={Lock}
               value={formData.password}
               onChange={handleChange}
               error={errors.password || registerFieldErrors.password}
             />
-            <Input
-              type="password"
+            <PasswordInput
               name="confirmPassword"
               label="Confirm Password"
               placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={handleChange}
+              icon={Lock}
               error={
                 errors.confirmPassword ||
                 registerFieldErrors.confirmPassword ||

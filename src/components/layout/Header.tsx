@@ -276,7 +276,7 @@ function MenuAction({
       onClick={onClick}
       className="flex w-full items-start gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-muted/50"
     >
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
+      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
         <Icon className="h-4 w-4" />
       </div>
       <div>

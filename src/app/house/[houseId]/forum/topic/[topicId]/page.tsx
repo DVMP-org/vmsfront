@@ -116,7 +116,8 @@ export default function ForumTopicPage() {
   const repliesEndRef = useRef<HTMLDivElement | null>(null);
 
   const createPost = useCreateForumPost();
-  const viewerId = profile?.user?.id ?? null;
+  const viewerId = profile?.id ?? null;
+  console.log(profile)
   const canSubmit = hasMeaningfulContent(content);
 
   const handleCreatePost = (event: FormEvent<HTMLFormElement>) => {
@@ -291,7 +292,7 @@ export default function ForumTopicPage() {
   return (
     <>
       <div className="space-y-6 pb-24">
-        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
+        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
           <div className="flex flex-col gap-5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center gap-1 text-xs text-white/70" aria-label="Breadcrumb">
@@ -402,9 +403,6 @@ export default function ForumTopicPage() {
               {/* @ts-expect-error – PaginatedResponse may be array in this branch */}
               {postsResponse?.total === 1 ? "reply" : "replies"}
             </CardTitle>
-            <CardDescription>
-              Stay courteous and keep feedback action-oriented.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
@@ -492,7 +490,7 @@ export default function ForumTopicPage() {
                           className={cn(
                             "flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border text-xs font-semibold uppercase",
                             isOwnPost
-                              ? "bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] border-[var(--brand-primary,#213928)] text-white"
+                              ? "bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] border-[rgb(var(--brand-primary))] text-white"
                               : "bg-gradient-to-br from-zinc-200 to-zinc-300 border-zinc-300 text-zinc-600"
                           )}
                         >
@@ -502,7 +500,7 @@ export default function ForumTopicPage() {
                           className={cn(
                             "flex-1 min-w-0 rounded-xl px-3 py-2 shadow-sm",
                             isOwnPost
-                              ? "bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white"
+                              ? "bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white"
                               : "bg-white border border-zinc-200/80 text-zinc-900",
                             isRecentlyCreated && "ring-2 ring-amber-300"
                           )}

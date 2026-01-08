@@ -62,7 +62,7 @@ export default function ResidentDetailPage() {
 
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary ring-4 ring-background shadow-lg">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgb(var(--brand-primary)/0.2)] text-2xl font-bold text-[rgb(var(--brand-primary))] ring-4 ring-[rgb(var(--brand-primary)/0.6)] shadow-lg">
                             {initials}
                         </div>
                         <div>
@@ -192,7 +192,7 @@ export default function ResidentDetailPage() {
                     <div className="space-y-6">
                         {resident.badge_url && (
                             <Card className="overflow-hidden">
-                                <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-b border-border p-6 flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="bg-gradient-to-br from-[rgb(var(--brand-primary)/0.2)] to-[rgb(var(--brand-primary)/0.1)] border-b border-border p-6 flex flex-col items-center justify-center text-center space-y-4">
                                     <div className="h-48 w-48 bg-white rounded-xl shadow-sm p-4">
                                         <img src={resident.badge_url} alt="Badge" className="h-full w-full object-contain" />
                                     </div>

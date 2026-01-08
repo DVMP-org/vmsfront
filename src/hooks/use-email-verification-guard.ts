@@ -12,7 +12,6 @@ export function useRequireEmailVerification(enabled: boolean = true) {
     const pathname = usePathname();
     const { user, isAuthenticated } = useAuthStore();
 
-    console.log("Verify", user)
 
     useEffect(() => {
         if (!enabled || !isAuthenticated || !user) return;

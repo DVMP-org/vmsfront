@@ -254,7 +254,7 @@ export default function HouseForumPage() {
   return (
     <>
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary)] text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary,#213928))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-4 max-w-2xl">
               <p className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
@@ -271,7 +271,7 @@ export default function HouseForumPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[var(--brand-primary,#213928)] hover:bg-white/90"
+                  className="bg-white text-[rgb(var(--brand-primary,#213928))] hover:bg-white/90"
                   onClick={() =>
                     handleOpenTopicModal(
                       activeCategoryMeta?.id ?? (categoryFilter !== "all" ? categoryFilter : undefined)

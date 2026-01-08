@@ -144,7 +144,7 @@ export default function ResidentProfilePage() {
         {/* Header */}
         <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-lg font-medium text-muted-foreground">
+            <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-[rgb(var(--brand-primary)/0.2)] text-lg font-medium text-[rgb(var(--brand-primary))]">
               {getInitials(residentUser.first_name, residentUser.last_name)}
             </div>
             <div>
@@ -419,7 +419,7 @@ function PreferenceToggle({
       onClick={onChange}
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        active ? "bg-primary" : "bg-input"
+        active ? "bg-[rgb(var(--brand-primary))]" : "bg-input"
       )}
     >
       <span

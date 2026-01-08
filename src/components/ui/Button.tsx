@@ -33,17 +33,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-[var(--brand-primary,#1e40af)] bg-[var(--brand-primary,#1e40af)] disabled:bg-[var(--brand-primary,#1e40af)]/70 text-white font-bold border-2",
+          "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
         // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
         destructive:
           "border-red-600 bg-red-600 disabled:bg-red-600/70 text-white font-bold",
         // secondary: "!border-0 bg-transparent text-primary disabled:opacity-60",
         secondary:
-          "bg-[var(--brand-secondary,#475569)] text-secondary-foreground hover:bg-[var(--brand-secondary,#475569)] hover:opacity-90 focus-visible:ring-secondary active:bg-[var(--brand-secondary,#475569)] active:opacity-95 active:scale-[0.98]",
+          "bg-[rgb(var(--brand-secondary,#475569))] text-secondary-foreground hover:bg-[rgb(var(--brand-secondary,#475569))] hover:opacity-90 focus-visible:ring-secondary active:bg-[rgb(var(--brand-secondary,#475569))] active:opacity-95 active:scale-[0.98]",
         // outline: "border border-primary text-primary disabled:opacity-60",
         // "destructive-outlined":
         outline:
-          "border-2 border-[var(--brand-primary,#1e40af)] bg-background dark:bg-background hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
+          "border-2 border-[rgb(var(--brand-primary,#1e40af))] bg-background dark:bg-background hover:bg-[rgb(var(--brand-primary,#1e40af))] hover:text-white active:bg-[rgb(var(--brand-primary,#1e40af))] active:text-white active:scale-[0.98]",
         "destructive-outlined":
           "border border-red-600 text-red-600 disabled:opacity-60",
         "light-outlined": "border-white text-white disabled:opacity-60",
@@ -80,10 +80,10 @@ export type ButtonVariant = VariantProps<typeof buttonVariants>["variant"];
 export interface ButtonProps
   // extends React.ButtonHTMLAttributes<HTMLButtonElement>,
   extends DetailedHTMLProps<
-      ButtonHTMLAttributes<HTMLButtonElement>,
-      HTMLButtonElement
-    >,
-    VariantProps<typeof buttonVariants> {
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    HTMLButtonElement
+  >,
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;
   leftNode?: React.ReactNode;

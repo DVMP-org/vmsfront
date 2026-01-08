@@ -57,6 +57,7 @@ export function useUpdateHouse(houseId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resident", "house", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "houses"] });
       toast.success("House details updated successfully");
     },
     onError: (error: any) => {
@@ -140,6 +141,7 @@ export function useRevokeGatePass(houseId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
       queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", houseId] });
       queryClient.invalidateQueries({ queryKey: ["resident", "visitors", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "gate-passes"] });
       toast.success("Gate pass revoked successfully!");
     },
     onError: (error: any) => {

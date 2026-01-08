@@ -158,7 +158,7 @@ export default function HouseGroupDetailPage() {
                 <Card className="md:col-span-2 shadow-sm border-border/50">
                     <div className="p-6 border-b border-border/50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                            <div className="p-2 bg-[rgb(var(--brand-primary)/0.2)] rounded-lg text-[rgb(var(--brand-primary))]">
                                 <Home className="h-5 w-5" />
                             </div>
                             <div>

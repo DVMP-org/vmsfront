@@ -107,7 +107,7 @@ export default function AdminProfilePage() {
         <div className="sticky top-0 z-10 -mx-6 -mt-6 bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-medium text-primary ring-2 ring-background shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(var(--brand-primary)/0.2)] text-lg font-medium text-[rgb(var(--brand-primary))] ring-2 ring-[rgb(var(--brand-primary)/0.8)] shadow-sm">
                 {initials}
               </div>
               <div className="space-y-0.5">
@@ -267,7 +267,7 @@ export default function AdminProfilePage() {
                 <div className="p-5 border-b border-border bg-muted/10">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium">Role Permissions</span>
-                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal">Read-only</Badge>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">Read-only</Badge>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {permissions.length === 0 ? (

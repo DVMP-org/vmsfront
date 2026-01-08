@@ -150,14 +150,14 @@ export function HouseDetailsSection({ houseId }: HouseDetailsSectionProps) {
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm border-zinc-200 bg-blue-50/30">
+                <Card className="shadow-sm border-zinc-200 bg-[rgb(var(--brand-primary)/0.2)]">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
-                            <Info className="h-4 w-4 text-blue-600" />
-                            <CardTitle className="text-sm font-semibold text-blue-900">Information</CardTitle>
+                            <Info className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
+                            <CardTitle className="text-sm font-semibold text-[rgb(var(--brand-primary))]">Information</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="text-xs text-blue-800/80 leading-relaxed">
+                    <CardContent className="text-xs text-[rgb(var(--brand-primary)/0.8)] leading-relaxed">
                         Changing the house name or address will affect how your house is identified by security and visitors.
                     </CardContent>
                 </Card>
