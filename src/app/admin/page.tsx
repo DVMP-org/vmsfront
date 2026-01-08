@@ -105,14 +105,20 @@ export default function AdminDashboardPage() {
     const eventsByHour = hours.map((hour) => {
       const hourStart = hour.getTime();
       const hourEnd = hourStart + 3600000;
-      const count = gateEvents.filter((event) => {
+      const checkins = gateEvents.filter((event) => {
         const eventTime = new Date(event.checkin_time).getTime();
+        return eventTime >= hourStart && eventTime < hourEnd;
+      }).length;
+      const checkouts = gateEvents.filter((event) => {
+        if (!event.checkout_time) return false;
+        const eventTime = new Date(event.checkout_time).getTime();
         return eventTime >= hourStart && eventTime < hourEnd;
       }).length;
       return {
         hour: hour.getHours(),
         label: hour.toLocaleTimeString("en-US", { hour: "numeric", hour12: true }),
-        count,
+        checkins,
+        checkouts,
       };
     });
 
@@ -127,13 +133,19 @@ export default function AdminDashboardPage() {
     const activityTrend = days.map((date) => {
       const dateStart = date.getTime();
       const dateEnd = dateStart + 86400000;
-      const events = gateEvents.filter((event) => {
+      const checkins = gateEvents.filter((event) => {
         const eventTime = new Date(event.checkin_time).getTime();
+        return eventTime >= dateStart && eventTime < dateEnd;
+      }).length;
+      const checkouts = gateEvents.filter((event) => {
+        if (!event.checkout_time) return false;
+        const eventTime = new Date(event.checkout_time).getTime();
         return eventTime >= dateStart && eventTime < dateEnd;
       }).length;
       return {
         date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        events,
+        checkins,
+        checkouts,
       };
     });
 
@@ -165,7 +177,9 @@ export default function AdminDashboardPage() {
   const totalResidents = dashboard?.residents?.length || 0;
   const totalHouses = dashboard?.houses?.length || 0;
   const totalGatePasses = dashboard?.gate_passes?.length || 0;
-  const totalGateEvents = dashboard?.gate_events?.length || 0;
+  const totalCheckins = dashboard?.gate_events?.length || 0;
+  const totalCheckouts = dashboard?.gate_events?.filter((e) => e.checkout_time).length || 0;
+  const totalGateScans = totalCheckins + totalCheckouts;
   const activeGatePasses = dashboard?.gate_passes?.filter((p) => p.status === GatePassStatus.CHECKED_IN).length || 0;
   const passUtilization = totalGatePasses ? Math.round((activeGatePasses / totalGatePasses) * 100) : 0;
   const avgResidentsPerHouse = totalHouses ? Math.round(totalResidents / totalHouses) : 0;
@@ -231,7 +245,7 @@ export default function AdminDashboardPage() {
               <div className="text-xs text-zinc-500 uppercase tracking-wide">Gate Events</div>
               <Activity className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
             </div>
-            <div className="text-2xl font-bold text-foreground mb-1">{totalGateEvents}</div>
+            <div className="text-2xl font-bold text-foreground mb-1">{totalGateScans}</div>
             <div className="text-xs text-zinc-500">Total scans</div>
           </div>
         </div>

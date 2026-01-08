@@ -120,11 +120,20 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
                                 <YAxis tick={{ fontSize: 11 }} stroke="#71717a" />
                                 <Tooltip content={<ChartTooltip />} />
                                 <Line
+                                    name="Check-ins"
                                     type="monotone"
-                                    dataKey="events"
+                                    dataKey="checkins"
                                     stroke={COLORS.primary}
                                     strokeWidth={2}
                                     dot={{ fill: COLORS.primary, r: 3 }}
+                                />
+                                <Line
+                                    name="Check-outs"
+                                    type="monotone"
+                                    dataKey="checkouts"
+                                    stroke={COLORS.success}
+                                    strokeWidth={2}
+                                    dot={{ fill: COLORS.success, r: 3 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -150,13 +159,14 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
                             <BarChart data={chartData.eventsByHour.slice(-12)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                                 <XAxis
-                                    dataKey="hour"
+                                    dataKey="label"
                                     tick={{ fontSize: 10 }}
                                     stroke="#71717a"
                                 />
                                 <YAxis tick={{ fontSize: 10 }} stroke="#71717a" />
                                 <Tooltip content={<ChartTooltip />} />
-                                <Bar dataKey="count" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
+                                <Bar name="Check-ins" dataKey="checkins" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
+                                <Bar name="Check-outs" dataKey="checkouts" fill={COLORS.success} radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
