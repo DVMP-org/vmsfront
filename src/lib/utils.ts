@@ -92,7 +92,7 @@ export function titleCase(v) {
 
   // Normalize whitespace and lowercase first
   v = v.trim().replace(/\s+/g, " ").toLowerCase();
-
+  v = v.replace(/_/g, " ");
   // Convert to title case
   return v
     .split(" ")

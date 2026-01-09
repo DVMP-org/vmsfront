@@ -10,7 +10,7 @@ import { useProfile } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Home as HomeIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Home as HomeIcon, ChevronDown, ChevronUp, Users, User, Hash, User2, Mail, Phone } from "lucide-react";
 
 interface Visitor {
   name: string;
@@ -219,18 +219,18 @@ export default function CreatePassPage() {
         {/* Compact Header */}
         <div className="border-b border-zinc-200 pb-3 mb-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-zinc-900">Create Pass</h1>
-          <span className="text-xs text-zinc-500 font-medium bg-zinc-100 px-2 py-0.5 rounded">Fast Create</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Fast Mode: Essential Fields Only */}
-          <div className="border border-zinc-200 rounded-lg bg-white shadow-sm overflow-hidden">
+          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
             <div className="p-4 space-y-4">
               {!showAdvanced && (
                 <Input
                   ref={nameInputRef}
                   label="Visitor Name"
                   placeholder="e.g. John Doe"
+                  icon={Users}
                   value={visitorName}
                   onChange={(e) => setVisitorName(e.target.value)}
                   error={errors.visitorName}
@@ -245,8 +245,8 @@ export default function CreatePassPage() {
                       key={d.value}
                       type="button"
                       onClick={() => handleDurationSelect(d)}
-                      className={`py-2 px-3 text-sm font-medium rounded-md border transition-all ${selectedDuration === d.value
-                        ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                      className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${selectedDuration === d.value
+                        ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
                         : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                         }`}
                     >
@@ -256,8 +256,8 @@ export default function CreatePassPage() {
                   <button
                     type="button"
                     onClick={() => handleDurationSelect(null)}
-                    className={`py-2 px-3 text-sm font-medium rounded-md border transition-all ${showCustomDates
-                      ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                    className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${showCustomDates
+                      ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
                       : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                       }`}
                   >
@@ -290,7 +290,7 @@ export default function CreatePassPage() {
           </div>
 
           {/* Advanced Options (Collapsed) */}
-          <div className="border border-zinc-200 rounded-lg bg-white shadow-sm overflow-hidden">
+          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={toggleAdvanced}
@@ -311,6 +311,7 @@ export default function CreatePassPage() {
                     type="number"
                     label="Max Uses"
                     placeholder="Unlimited"
+                    icon={Hash}
                     value={maxUses}
                     onChange={(e) => setMaxUses(e.target.value)}
                     min="1"
@@ -351,6 +352,7 @@ export default function CreatePassPage() {
                             label="Name"
                             placeholder="Full Name"
                             value={visitor.name}
+                            icon={User2}
                             onChange={(e) => updateVisitor(index, "name", e.target.value)}
                             error={errors[`visitor_${index}_name`]}
                           />
@@ -359,6 +361,7 @@ export default function CreatePassPage() {
                               type="email"
                               label="Email"
                               placeholder="email@example.com"
+                              icon={Mail}
                               value={visitor.email}
                               onChange={(e) => updateVisitor(index, "email", e.target.value)}
                               error={errors[`visitor_${index}_email`]}
@@ -366,6 +369,7 @@ export default function CreatePassPage() {
                             <Input
                               type="tel"
                               label="Phone"
+                              icon={Phone}
                               placeholder="Optional"
                               value={visitor.phone}
                               onChange={(e) => updateVisitor(index, "phone", e.target.value)}
@@ -394,7 +398,7 @@ export default function CreatePassPage() {
               id="submitBtn"
               type="submit"
               isLoading={createPassMutation.isPending}
-              className="px-8 h-10 bg-zinc-900 text-white font-medium shadow-md hover:bg-zinc-800 transition-all ring-offset-2 active:scale-[0.98]"
+              className="px-8 h-10 bg-[rgb(var(--brand-primary))] text-white font-medium shadow-md hover:bg-zinc-800 transition-all ring-offset-2 active:scale-[0.98]"
             >
               Create Pass
             </Button>

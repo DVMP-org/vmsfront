@@ -153,7 +153,7 @@ export default function HouseDetailPage() {
 
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-xl text-[var(--brand-primary)] ring-1 ring-[var(--brand-primary)] ring-opacity-10">
+                    <div className="p-3 bg-[rgb(var(--brand-primary)/0.2)] rounded-xl text-[rgb(var(--brand-primary))] ring-1 ring-[rgb(var(--brand-primary))] ring-opacity-10">
                         <Home className="h-8 w-8" />
                     </div>
                     <div>
@@ -245,7 +245,7 @@ export default function HouseDetailPage() {
                 <Card className="lg:col-span-2 shadow-sm border-border/50">
                     <div className="p-6 border-b border-border/50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/10 rounded-lg text-[var(--brand-primary)]">
+                            <div className="p-2 bg-[rgb(var(--brand-primary)/0.2)] rounded-lg text-[rgb(var(--brand-primary))]">
                                 <Users className="h-5 w-5" />
                             </div>
                             <div>

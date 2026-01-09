@@ -454,7 +454,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                   ? "gap-3 px-3 py-2.5"
                   : "justify-center px-2 py-2.5",
                 isActive
-                  ? "bg-[var(--brand-primary,#213928)] text-white shadow-sm"
+                  ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
               title={collapsed && !isMobile ? link.label : undefined}
@@ -498,7 +498,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                       ? "gap-3 px-3 py-2.5 justify-between"
                       : "justify-center px-2 py-2.5",
                     hasActiveRoute
-                      ? "bg-[var(--brand-primary,#213928)] text-white shadow-sm"
+                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                   title={collapsed && !isMobile ? plugin.manifest.title : undefined}
@@ -549,7 +549,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                               "group relative",
                               "gap-3 px-3 py-2.5",
                               isActive
-                                ? "bg-[var(--brand-primary,#213928)] text-white shadow-sm"
+                                ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             )}
                             href={routeHref}

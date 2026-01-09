@@ -713,7 +713,7 @@ export default function PluginsPage() {
                     Documentation
                   </Button>
                   <Button
-                    className="gap-2 bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/90"
+                    className="gap-2 bg-[rgb(var(--brand-primary))] hover:bg-[rgb(var(--brand-primary)/0.9)]0"
                     onClick={handleSaveConfig}
                     disabled={updateSettingsMutation.isPending || isLoadingSettings}
                   >

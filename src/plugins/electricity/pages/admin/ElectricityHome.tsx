@@ -62,21 +62,21 @@ export default function AdminElectricityDashboard() {
             value: stats.total_meters,
             description: `${stats.active_meters} active`,
             icon: Zap,
-            accent: "",
+            accent: "text-red-500",
         },
         {
             title: "Total Purchases",
             value: stats.total_purchases,
             description: "All time",
             icon: CreditCard,
-            accent: "f",
+            accent: "text-primary",
         },
         {
             title: "Total Revenue",
             value: `₦${stats.total_revenue?.toLocaleString()}`,
             description: "All time",
             icon: DollarSign,
-            accent: "",
+            accent: "text-blue-500",
         },
         {
             title: "Active Houses",
@@ -90,7 +90,7 @@ export default function AdminElectricityDashboard() {
             ).length,
             description: "With meters",
             icon: Users,
-            accent: "",
+            accent: "text-red-500",
         },
     ];
 
@@ -125,21 +125,21 @@ export default function AdminElectricityDashboard() {
                     return (
                         <Card
                             key={card.title}
-                            className={`overflow-hidden border-none bg-gradient-to-br ${card.accent}`}
+                            className={`overflow-hidden border-none `}
                         >
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted/90">
+                                <CardTitle className="text-sm font-medium ">
                                     {card.title}
                                 </CardTitle>
-                                <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
-                                    <Icon className="h-5 w-5" />
+                                <span className="rounded-full bg-[rgb(var(--brand-primary)/0.2)] p-2 text-muted-foreground shadow-sm">
+                                    <Icon className="h-5 w-5 p-3 rounded-full text-[rgb(var(--brand-primary))]" />
                                 </span>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-muted-foreground">
+                                <div className="text-3xl font-bold">
                                     {card.value}
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="text-sm mt-1">
                                     {card.description}
                                 </p>
                             </CardContent>
@@ -218,27 +218,27 @@ export default function AdminElectricityDashboard() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                                {stats.recent_purchases.map((purchase) => (
+                            {stats.recent_purchases.map((purchase) => (
                                 <div
                                     key={purchase.id}
                                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                                <p className="font-medium">{purchase.house_name}</p>
+                                            <p className="font-medium">{purchase.house_name}</p>
                                             <Badge
                                                 variant={
                                                     purchase.status === "success"
-                                                            ? "success"
+                                                        ? "success"
                                                         : purchase.status === "pending"
-                                                                ? "warning"
+                                                            ? "warning"
                                                             : "danger"
                                                 }>
-                                                    {titleCase(purchase.status?.replace("_", " "))}
+                                                {titleCase(purchase.status?.replace("_", " "))}
                                             </Badge>
                                         </div>
                                         <p className="text-sm text-muted-foreground">
-                                                Meter: {purchase.meter_number} • {purchase.units} units
+                                            Meter: {purchase.meter_number} • {purchase.units} units
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-1">
                                             {formatDate(purchase.date)}

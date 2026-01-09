@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
 export function middleware(request: NextRequest) {
   // Since we're using client-side authentication with localStorage/Zustand,
   // we let all requests pass through and handle auth checks in client components

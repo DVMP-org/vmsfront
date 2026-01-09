@@ -22,11 +22,11 @@ export default function ResidentPurchaseMeter() {
     const router = useRouter();
     const selectedMeterId = searchParams.get("meter");
     const { selectedHouse } = useAppStore();
-    const { data: profile } = useProfile();
+    const { data: user } = useProfile();
 
     // Get current house ID from selected house or first house from profile
     const currentHouseId = selectedHouse?.id || null;
-    const userEmail = profile?.user?.email || "";
+    const userEmail = user?.email || "";
 
     const queryClient = useQueryClient();
 
@@ -148,13 +148,13 @@ export default function ResidentPurchaseMeter() {
     };
 
     // Show loading state
-    if (isLoadingMeters) {
-        return (
-            <div className="space-y-6">
-                <TableSkeleton />
-            </div>
-        );
-    }
+    // if (isLoadingMeters) {
+    //     return (
+    //         <div className="space-y-6">
+    //             <TableSkeleton />
+    //         </div>
+    //     );
+    // }
 
     // Show error if no house selected
     if (!currentHouseId) {
@@ -258,9 +258,9 @@ export default function ResidentPurchaseMeter() {
                                 <button
                                     key={meter.id}
                                     onClick={() => handleMeterSelect(meter)}
-                                    className={`w-full text-left p-4 border rounded-lg transition-colors ${selectedMeter?.id === meter.id
-                                            ? "border-primary bg-primary/5"
-                                            : "hover:bg-accent"
+                                    className={`w-full text-left p-4 border rounded-lg  ${selectedMeter?.id === meter.id
+                                        ? "border-[var(--brand-primary)] bg-[rgb(var(--brand-primary)/0.2)]"
+                                        : "hover:bg-accent"
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">
@@ -271,15 +271,13 @@ export default function ResidentPurchaseMeter() {
                                                     {titleCase(meter.meter_number)}
                                                 </span>
                                             </div>
-                                            {/* <p className="text-sm text-muted-foreground">
-                                                {meter.house?.name || meter.house?.address || "N/A"}
-                                            </p> */}
+
                                             <p className="text-xs text-muted-foreground mt-1">
                                                 Type: {titleCase(meter.meter_type)} | DISCO: {titleCase(meter.disco.replace(/-/g, " "))}
                                             </p>
                                         </div>
                                         {selectedMeter?.id === meter.id && (
-                                            <CheckCircle2 className="h-5 w-5 text-primary" />
+                                            <CheckCircle2 className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
                                         )}
                                     </div>
                                 </button>

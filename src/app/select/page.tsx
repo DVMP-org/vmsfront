@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,7 +18,9 @@ import { Header } from "@/components/layout/Header";
 import type { DashboardSelect, House } from "@/types";
 import { cn } from "@/lib/utils";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
+import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { useAuthStore } from "@/store/auth-store";
+import { authService } from "@/services/auth-service";
 
 function determineIsAdmin(admin?: DashboardSelect["admin"] | null): boolean {
   if (!admin) return false;
@@ -29,14 +30,37 @@ function determineIsAdmin(admin?: DashboardSelect["admin"] | null): boolean {
 export default function SelectPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { data, isLoading, isFetching } = useProfile();
+  const [data, setData] = useState<DashboardSelect | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { setSelectedHouse } = useAppStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  useRequireEmailVerification(true);
   useRequireResidentOnboarding(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await authService.getDashboardSelect();
+        setData(response.data);
+      } catch (error: any) {
+        console.error("Error fetching dashboard data:", error);
+        if (error.response?.status === 404) {
+          router.replace("/resident/onboarding");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, router]);
 
   const houses = useMemo<House[]>(() => data?.houses ?? [], [data]);
   const isAdmin = useMemo(() => determineIsAdmin(data?.admin), [data]);
-  const loading = isLoading || isFetching || !data;
+  const loading = isLoading || !data;
 
   const houseSummary = useMemo(() => {
     if (!houses.length) return "No houses assigned yet";

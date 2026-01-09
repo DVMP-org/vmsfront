@@ -170,11 +170,29 @@ export function useAuth() {
 }
 
 export function useProfile() {
+  const { setAuth, token } = useAuthStore();
+  return useQuery<AuthResponse["user"]>({
+    queryKey: ["auth", "profile"],
+    queryFn: async () => {
+      const response = await authService.getUser();
+      const user = response.data;
+      if (user && token) {
+        setAuth(user, token);
+      }
+      return user;
+    },
+    enabled: !!token,
+  });
+}
+
+export function useDashboardSelect() {
   return useQuery<DashboardSelect>({
-    queryKey: ["dashboard", "select"],
+    queryKey: ["auth", "dashboard-select"],
     queryFn: async () => {
       const response = await authService.getDashboardSelect();
-      return response.data;
+      const user = response.data;
+
+      return user;
     },
     enabled: useAuthStore.getState().isAuthenticated,
   });
@@ -246,5 +264,15 @@ export function useOnboard() {
   });
 }
 
-
-
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: () => authService.resendVerification(),
+    onSuccess: (response) => {
+      toast.success(response.message || "Verification email sent!");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to resend verification email");
+    },
+  });
+}

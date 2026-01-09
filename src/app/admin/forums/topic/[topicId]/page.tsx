@@ -664,7 +664,7 @@ export default function AdminForumTopicDetailPage() {
         }
         
         .forum-content-other a {
-          color: var(--brand-primary, #213928);
+          color: rgb(var(--brand-primary));
         }
       `}</style>
     </>
@@ -744,7 +744,7 @@ function PostItem({
             className={cn(
               "rounded-xl px-3 py-2 shadow-sm",
               isOwn
-                ? "bg-gradient-to-br from-[var(--brand-primary,#213928)_10%] to-[var(--brand-secondary,#64748b)_80%] text-white"
+                ? "bg-[rgb(var(--brand-primary)/0.8)] text-white"
                 : "bg-white border border-zinc-200/80 text-zinc-900"
             )}
           >
@@ -759,7 +759,7 @@ function PostItem({
                     "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium",
                     isOwn
                       ? "bg-white/20 text-white"
-                      : "bg-blue-100 text--[vare(--brand-primary,#213928)]"
+                      : "bg-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))]"
                   )}
                 >
                   Admin
@@ -894,7 +894,7 @@ function PostItem({
 
         {/* Right side avatar for own messages */}
         {isOwn && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary,#213928)_80%] to-[var(--brand-primary,#213928)_30%] flex items-center justify-center border border-[var(--brand-primary,#213928)_90%]">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgb(var(--brand-primary)/0.8)] flex items-center justify-center border border-[rgb(var(--brand-primary)/0.9)]">
             <span className="text-xs font-semibold text-white">
               {displayName.charAt(0).toUpperCase()}
             </span>

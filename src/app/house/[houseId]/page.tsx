@@ -349,8 +349,8 @@ export default function ResidentDashboardPage() {
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">Click to manage</p>
                 </div>
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Wallet className="h-5 w-5 text-primary" />
+                <div className="rounded-full bg-primary/10  p-3">
+                  <Wallet className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -450,7 +450,7 @@ export default function ResidentDashboardPage() {
         </Card>
 
         {/* Forum CTA */}
-        <Card className="border border-primary/20 bg-primary/5">
+        <Card className="border border-[rgb(var(--brand-primary)/0.2)] bg-[rgb(var(--brand-primary)/0.2)]">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#213928)]" />

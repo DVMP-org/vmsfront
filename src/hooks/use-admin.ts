@@ -70,6 +70,7 @@ export function useCreateHouse() {
       adminService.createHouse(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("House created successfully!");
     },
     onError: (error: any) => {
@@ -88,6 +89,7 @@ export function useUpdateHouse() {
     }) => adminService.updateHouse(houseId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("House updated successfully!");
     },
     onError: (error: any) => {
@@ -103,6 +105,7 @@ export function useDeleteHouse() {
     mutationFn: (houseId: string) => adminService.deleteHouse(houseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("House deleted successfully!");
     },
     onError: (error: any) => {
@@ -167,6 +170,7 @@ export function useCreateResident() {
       adminService.createResident(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("Resident created successfully!");
     },
     onError: (error: any) => {
@@ -231,6 +235,7 @@ export function useDeleteResident() {
     mutationFn: (residentId: string) => adminService.deleteResident(residentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("Resident deleted successfully!");
     },
     onError: (error: any) => {
@@ -488,6 +493,7 @@ export function useCreateRole() {
     }) => adminService.createRole(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("Role created successfully!");
     },
     onError: (error: any) => {

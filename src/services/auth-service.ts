@@ -48,4 +48,7 @@ export const authService = {
   async onboard(data: any): Promise<ApiResponse<AuthResponse>> {
     return apiClient.post("/auth/onboard", data);
   },
+  async resendVerification(): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post("/auth/verify-email-resent");
+  },
 };
