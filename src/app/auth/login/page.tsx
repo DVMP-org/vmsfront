@@ -89,7 +89,12 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
-            <Button type="submit" className="w-full" isLoading={isLoggingIn}>
+            <Button
+              disabled
+              type="submit"
+              className="w-full"
+              isLoading={isLoggingIn}
+            >
               Sign In
             </Button>
           </form>
