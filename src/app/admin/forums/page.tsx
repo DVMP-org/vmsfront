@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   usePathname,
   useRouter,
@@ -8,6 +8,7 @@ import {
 } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
+  Building2,
   Calendar,
   Filter,
   FolderOpen,
@@ -19,14 +20,7 @@ import {
   Shield,
   Unlock,
 } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -40,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { PaginationBar } from "@/components/ui/PaginationBar";
-import { TableSkeleton } from "@/components/ui/Skeleton";
+import { TableSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { useAdminHouses } from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
@@ -87,7 +81,7 @@ export default function AdminForumsPage() {
   const searchParams = useSearchParams();
   const { data: housesData } = useAdminHouses({
     page: 1,
-    pageSize: 500,
+    pageSize: 100,
   });
   const houses = useMemo(
     () => housesData?.items ?? [],
@@ -146,12 +140,23 @@ export default function AdminForumsPage() {
           ...prev,
           ...patch,
         };
-        syncFiltersToUrl(merged);
         return merged;
       });
     },
-    [syncFiltersToUrl]
+    []
   );
+
+  // Add a useEffect to sync URL when filters change
+  // But only sync if the change didn't come from URL params (to avoid loops)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    // Skip on initial mount to avoid syncing URL params back
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    syncFiltersToUrl(filters);
+  }, [filters, syncFiltersToUrl]);
 
   useEffect(() => {
     setFilters((prev) => ({
@@ -166,6 +171,8 @@ export default function AdminForumsPage() {
       startDate: searchParams.get("startDate") ?? DEFAULT_FILTERS.startDate,
       endDate: searchParams.get("endDate") ?? DEFAULT_FILTERS.endDate,
     }));
+    // Reset initial mount flag when searchParams change
+    isInitialMount.current = true;
   }, [searchParams]);
 
   useEffect(() => {
@@ -405,99 +412,88 @@ export default function AdminForumsPage() {
   );
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
-        <div className="rounded-3xl border border-dashed border-border/60 bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
-                <MessageSquare className="h-4 w-4" />
-                Forums
-              </div>
-              <h1 className="mt-3 text-2xl font-semibold text-slate-900">
-                Admin Forums Control
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Create, organize, moderate, and analyze conversations across houses.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <select
-                className="w-full rounded-2xl border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:min-w-[200px]"
-                value={filters.houseId}
-                onChange={(event) => {
-                  updateFilters({ houseId: event.target.value, page: 1 });
-                }}
-              >
-                <option value="all">All houses</option>
-                {houses?.map((house) => (
-                  <option key={house.id} value={house.id}>
-                    {house.name}
-                  </option>
-                ))}
-              </select>
-              <div className="flex gap-2">
-                <Button
-                  className="w-full rounded-2xl sm:w-auto px-10 py-4 text-xs font-semibold uppercase tracking-wide"
-                  onClick={() => {
-                    setCategoryModalMode("create");
-                    setActiveCategory(null);
-                    setCategoryModalOpen(true);
-                  }}
-                >
-                  Create category
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-2xl sm:w-auto px-10 py-4 sm:w-auto"
-                  onClick={() => {
-                    setTopicModalMode("create");
-                    setActiveTopic(null);
-                    setTopicModalOpen(true);
-                  }}
-                >
-                  Start topic
-                </Button>
-              </div>
-            </div>
+        {/* Compact Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 border-b border-foreground/20 pb-3">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Forum Management</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Moderate and organize estate conversations</p>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-white/60 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <span className="rounded-xl bg-muted/60 p-2">
-                      <Icon className="h-4 w-4 text-[var(--brand-primary,#2563eb)]" />
-                    </span>
-                  </div>
-                  <div className="mt-2 text-2xl font-bold text-slate-900">
-                    {stat.value}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
-                </div>
-              );
-            })}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+            <select
+              className="rounded border border-foreground/20  px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground h-8 bg-foreground/10"
+              value={filters.houseId}
+              onChange={(event) => {
+                updateFilters({ houseId: event.target.value, page: 1 });
+              }}
+            >
+              <option value="all">All houses</option>
+              {houses?.map((house) => (
+                <option key={house.id} value={house.id}>
+                  {house.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              onClick={() => {
+                setCategoryModalMode("create");
+                setActiveCategory(null);
+                setCategoryModalOpen(true);
+              }}
+              className="h-8 text-xs"
+            >
+              New Category
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTopicModalMode("create");
+                setActiveTopic(null);
+                setTopicModalOpen(true);
+              }}
+              className="h-8 text-xs"
+            >
+              New Topic
+            </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-white px-4 py-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Filter className="h-4 w-4" />
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className="border border-foreground/20 rounded-l p-4 hover:muted-foreground transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</div>
+                  <div className="p-1.5 rounded-md bg-muted">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="text-xs text-muted-foreground">{stat.description}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border border-foreground/20 rounded bg-foreground/10 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+            <Filter className="h-3.5 w-3.5" />
             Filters
           </div>
-          <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
-            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border px-3 py-2">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center w-full md:w-auto">
+            <div className="flex flex-1 items-center gap-2 border border-zinc-200 rounded px-3 py-1.5">
               <SearchField value={searchInput} onChange={setSearchInput} />
             </div>
             <select
-              className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:w-48"
+              className="border border-foreground/20 rounded bg-foreground/10 px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground w-full md:w-48 h-8"
               value={filters.categoryId}
               onChange={(event) =>
                 updateFilters({ categoryId: event.target.value, page: 1 })
@@ -510,17 +506,17 @@ export default function AdminForumsPage() {
                 </option>
               ))}
             </select>
-            <div className="flex gap-1 rounded-2xl border border-border bg-muted/40 p-1">
+            <div className="flex gap-1 border border-foreground/20 rounded bg-muted p-0.5">
               {(["all", "pinned", "locked", "deleted"] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => updateFilters({ status: value, page: 1 })}
                   className={cn(
-                    "rounded-xl px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
+                    "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
                     filters.status === value
-                      ? "bg-white text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-foreground/10 text-foreground shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
                   {value}
@@ -545,124 +541,195 @@ export default function AdminForumsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            className="gap-2 text-xs h-8"
             onClick={handleResetFilters}
           >
-            <RefreshCcw className="h-4 w-4" />
+            <RefreshCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[2fr,3fr]">
-          <Card className="h-full rounded-3xl border border-dashed">
-            <CardHeader className="flex flex-wrap items-start gap-4">
-              <div className="space-y-1">
-                <CardTitle>Categories</CardTitle>
-                <CardDescription>Organize topics per house</CardDescription>
-              </div>
-              {categoryFutureHook}
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[2fr,3fr]">
+          {/* Categories List */}
+          <div className="border border-foreground/20 rounded-lg shadow-sm">
+            <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                Categories
+              </h2>
+            </div>
+            <div className="divide-y divide-foreground/20">
               {categoryFetcher.isLoading ? (
-                <CategorySkeleton />
-              ) : categoriesByHouse.length === 0 ? (
-                <EmptyState
-                  icon={FolderOpen}
-                  title="No categories yet"
-                  description="Create the first category to organize conversations."
-                  action={{
-                    label: "Create category",
-                    onClick: () => {
-                      setCategoryModalMode("create");
-                      setActiveCategory(null);
-                      setCategoryModalOpen(true);
-                    },
-                  }}
-                />
-              ) : (
-                <div className="grid gap-3">
-                  {categoriesWithCounts.map(({ category, topicCount }) => (
-                    <CategoryCard
-                      key={category.id}
-                      category={category}
-                      topicCount={topicCount}
-                      onOpen={() =>
-                        router.push(`/admin/forums/category/${category.id}`)
-                      }
-                      onEdit={() => {
-                        setCategoryModalMode("edit");
-                        setActiveCategory(category);
-                        setCategoryModalOpen(true);
-                      }}
-                      onToggleLock={() =>
-                        updateCategory.mutate({
-                          categoryId: category.id,
-                          data: {
-                            is_locked: !category.is_locked,
-                            house_id: category.house_id,
-                          },
-                        })
-                      }
-                      onSetDefault={() =>
-                        updateCategory.mutate({
-                          categoryId: category.id,
-                          data: {
-                            is_default: true,
-                            house_id: category.house_id,
-                          },
-                        })
-                      }
-                      onDelete={() => setCategoryToDelete(category)}
-                    />
+                <div className="p-4 space-y-2">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <Skeleton key={index} className="h-16 w-full" />
                   ))}
                 </div>
+              ) : categoriesByHouse.length === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="No categories yet"
+                    description="Create the first category to organize conversations."
+                    action={{
+                      label: "Create category",
+                      onClick: () => {
+                        setCategoryModalMode("create");
+                        setActiveCategory(null);
+                        setCategoryModalOpen(true);
+                      },
+                    }}
+                  />
+                </div>
+              ) : (
+                categoriesWithCounts.map(({ category, topicCount }) => (
+                  <div
+                    key={category.id}
+                    className="px-4 py-3 hover:bg-muted transition-colors border-l-2 border-transparent hover:border-foreground/20"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(`/admin/forums/category/${category.id}`)
+                            }
+                            className="text-sm font-medium text-foreground hover:text-muted-foreground"
+                          >
+                            {category.name}
+                          </button>
+                          {category.is_default && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                              Default
+                            </span>
+                          )}
+                          {category.is_locked && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                              Locked
+                            </span>
+                          )}
+                        </div>
+                        {category.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-1 mb-1.5">
+                            {category.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="font-medium text-muted-foreground">{topicCount} topics</span>
+                          {category.house?.name && (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {category.house.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ActionMenu
+                        size="sm"
+                        options={[
+                          {
+                            label: "View topics",
+                            onClick: () =>
+                              router.push(`/admin/forums/category/${category.id}`),
+                          },
+                          {
+                            label: "Edit",
+                            onClick: () => {
+                              setCategoryModalMode("edit");
+                              setActiveCategory(category);
+                              setCategoryModalOpen(true);
+                            },
+                          },
+                          {
+                            label: category.is_locked ? "Unlock" : "Lock",
+                            icon: category.is_locked ? Unlock : Lock,
+                            onClick: () =>
+                              updateCategory.mutate({
+                                categoryId: category.id,
+                                data: {
+                                  is_locked: !category.is_locked,
+                                  house_id: category.house_id,
+                                },
+                              }),
+                          },
+                          {
+                            label: "Set as default",
+                            icon: Pin,
+                            onClick: () =>
+                              updateCategory.mutate({
+                                categoryId: category.id,
+                                data: {
+                                  is_default: true,
+                                  house_id: category.house_id,
+                                },
+                              }),
+                          },
+                          {
+                            label: "Delete",
+                            tone: "destructive",
+                            onClick: () => setCategoryToDelete(category),
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="rounded-3xl border border-dashed">
-            <CardHeader className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Topics Table */}
+          <div className="border border-foreground/20 rounded-lg shadow-sm">
+            <div className="border-b border-foreground/20 bg-foreground/10 px-4 py-3">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Recent topics</CardTitle>
-                  <CardDescription>
+                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    Topics
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
                     {selectedHouse
                       ? `Scoped to ${selectedHouse.name}`
                       : "All houses"}
-                  </CardDescription>
+                  </p>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="gap-2 text-xs font-semibold uppercase tracking-wide"
+                  className="gap-2 text-xs h-8"
                   onClick={() => topicFetcher.refetch()}
                 >
-                  <RefreshCcw className="h-4 w-4" />
+                  <RefreshCcw className="h-3.5 w-3.5" />
                   Refresh
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </div>
+            <div className="p-0 overflow-x-auto">
               {topicFetcher.isLoading ? (
-                <TableSkeleton />
+                <div className="p-4">
+                  <TableSkeleton />
+                </div>
               ) : topics.length === 0 ? (
-                <EmptyState
-                  icon={MessageSquare}
-                  title="No topics match these filters"
-                  description="Try adjusting filters or create a new topic."
-                  action={{
-                    label: "Create topic",
-                    onClick: () => {
-                      setTopicModalMode("create");
-                      setActiveTopic(null);
-                      setTopicModalOpen(true);
-                    },
-                  }}
-                />
+                <div className="p-8">
+                  <EmptyState
+                    icon={MessageSquare}
+                    title="No topics match these filters"
+                    description="Try adjusting filters or create a new topic."
+                    action={{
+                      label: "Create topic",
+                      onClick: () => {
+                        setTopicModalMode("create");
+                        setActiveTopic(null);
+                        setTopicModalOpen(true);
+                      },
+                    }}
+                  />
+                </div>
               ) : (
                 <>
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="rounded-none transition-colors">
                       <TableRow>
                         <TableHead>Topic</TableHead>
                         <TableHead>Category</TableHead>
@@ -673,7 +740,7 @@ export default function AdminForumsPage() {
                     </TableHeader>
                     <TableBody>
                       {topics.map((topic) => (
-                        <TableRow key={topic.id}>
+                        <TableRow key={topic.id} className="hover:bg-muted transition-colors border-b border-foreground/20">
                           <TableCell>
                             <div className="flex flex-col">
                               <button
@@ -681,27 +748,34 @@ export default function AdminForumsPage() {
                                 onClick={() =>
                                   router.push(`/admin/forums/topic/${topic.id}`)
                                 }
-                                className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary,#2563eb)]"
+                                className="text-left text-sm font-medium text-foreground transition hover:text-muted-foreground"
                               >
                                 {topic.title}
                               </button>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-zinc-500 mt-0.5">
                                 {topic.author_name || "System"} ·{" "}
-                                {topic.posts_count} posts
+                                <span className="font-medium">{topic.posts_count}</span> posts
                               </p>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{topic.category?.name || "—"}</Badge>
+                            {topic.category ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                                {topic.category.name}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                             {topic.house?.name && (
-                              <p className="text-[11px] text-muted-foreground">
+                              <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                                <Building2 className="h-3 w-3" />
                                 {topic.house.name}
                               </p>
                             )}
                           </TableCell>
                           <TableCell>
                             {topic.last_post_at ? (
-                              <span className="text-xs text-foreground">
+                              <span className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(
                                   new Date(topic.last_post_at),
                                   { addSuffix: true }
@@ -721,6 +795,7 @@ export default function AdminForumsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="h-7 text-xs"
                                 onClick={() =>
                                   router.push(`/admin/forums/topic/${topic.id}`)
                                 }
@@ -778,19 +853,21 @@ export default function AdminForumsPage() {
                       ))}
                     </TableBody>
                   </Table>
-                  <PaginationBar
-                    page={filters.page}
-                    totalPages={topicsTotalPages}
-                    total={topicsTotal}
-                    pageSize={10}
-                    resourceLabel="topics"
-                    onChange={(page) => updateFilters({ page })}
-                    isFetching={topicFetcher.isFetching}
-                  />
+                  <div className="border-t border-foreground/20 px-4 py-3">
+                    <PaginationBar
+                      page={filters.page}
+                      totalPages={topicsTotalPages}
+                      total={topicsTotal}
+                      pageSize={10}
+                      resourceLabel="topics"
+                      onChange={(page) => updateFilters({ page })}
+                      isFetching={topicFetcher.isFetching}
+                    />
+                  </div>
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -804,12 +881,12 @@ export default function AdminForumsPage() {
         initialValues={
           activeCategory
             ? {
-                houseId: activeCategory.house_id || "",
-                name: activeCategory.name,
-                description: activeCategory.description ?? "",
-                isDefault: activeCategory.is_default,
-                isLocked: Boolean(activeCategory.is_locked),
-              }
+              houseId: activeCategory.house_id || "",
+              name: activeCategory.name,
+              description: activeCategory.description ?? "",
+              isDefault: activeCategory.is_default,
+              isLocked: Boolean(activeCategory.is_locked),
+            }
             : undefined
         }
         onClose={() => setCategoryModalOpen(false)}
@@ -830,13 +907,13 @@ export default function AdminForumsPage() {
         initialValues={
           activeTopic
             ? {
-                houseId: activeTopic.house_id || "",
-                categoryId: activeTopic.category_id,
-                title: activeTopic.title,
-                content: activeTopic.initial_post?.content ?? "",
-                isPinned: activeTopic.is_pinned,
-                isLocked: activeTopic.is_locked,
-              }
+              houseId: activeTopic.house_id || "",
+              categoryId: activeTopic.category_id,
+              title: activeTopic.title,
+              content: activeTopic.initial_post?.content ?? "",
+              isPinned: activeTopic.is_pinned,
+              isLocked: activeTopic.is_locked,
+            }
             : undefined
         }
         onClose={() => setTopicModalOpen(false)}
@@ -877,7 +954,7 @@ export default function AdminForumsPage() {
         onCancel={() => setTopicToDelete(null)}
         isLoading={deleteTopic.isPending}
       />
-    </DashboardLayout>
+    </>
   );
 }
 
@@ -911,128 +988,38 @@ function DateInput({
   onChange: (next: string) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-2xl border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      <Calendar className="h-4 w-4" />
+    <label className="flex items-center gap-2 border border-foreground/20 rounded px-3 py-1.5 text-xs font-medium text-muted-foreground h-8">
+      <Calendar className="h-3.5 w-3.5" />
       {label}
       <input
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-xl border border-transparent bg-transparent text-foreground focus-visible:outline-none"
+        className="border border-transparent bg-transparent text-foreground text-xs focus-visible:outline-none"
       />
     </label>
   );
 }
 
-function CategorySkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div
-          key={index}
-          className="h-24 animate-pulse rounded-2xl border border-dashed border-border/70 bg-muted/40"
-        />
-      ))}
-    </div>
-  );
-}
 
-function CategoryCard({
-  category,
-  topicCount,
-  onOpen,
-  onEdit,
-  onToggleLock,
-  onSetDefault,
-  onDelete,
-}: {
-  category: ForumCategory;
-  topicCount: number;
-  onOpen: () => void;
-  onEdit: () => void;
-  onToggleLock: () => void;
-  onSetDefault: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <button
-            type="button"
-            onClick={onOpen}
-            className="text-left text-base font-semibold text-foreground hover:text-[var(--brand-primary,#2563eb)]"
-          >
-            {category.name}
-          </button>
-          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-            {category.description || "No description provided."}
-          </p>
-        </div>
-        <ActionMenu
-          size="sm"
-          options={[
-            { label: "View topics", onClick: onOpen },
-            { label: "Edit", onClick: onEdit },
-            {
-              label: category.is_locked ? "Unlock" : "Lock",
-              icon: category.is_locked ? Unlock : Lock,
-              onClick: onToggleLock,
-            },
-            {
-              label: "Set as default",
-              icon: Pin,
-              onClick: onSetDefault,
-            },
-            {
-              label: "Delete",
-              tone: "destructive",
-              onClick: onDelete,
-            },
-          ]}
-        />
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <Badge variant="secondary">
-          {topicCount} topics
-        </Badge>
-        {category.is_default && (
-          <Badge variant="success">Default</Badge>
-        )}
-        {category.is_locked && <Badge variant="warning">Locked</Badge>}
-        <span className="text-[11px]">
-          Updated{" "}
-          {category.updated_at
-            ? formatDistanceToNow(new Date(category.updated_at), {
-                addSuffix: true,
-              })
-            : "—"}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function TopicStatusChips({ topic }: { topic: ForumTopic }) {
   return (
     <div className="flex flex-wrap gap-1">
       {topic.is_pinned && (
-        <Badge variant="warning" className="gap-1">
-          <Pin className="h-3 w-3" />
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
           Pinned
-        </Badge>
+        </span>
       )}
       {topic.is_locked && (
-        <Badge variant="secondary" className="gap-1">
-          <Lock className="h-3 w-3" />
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-600">
           Locked
-        </Badge>
+        </span>
       )}
       {topic.is_deleted && (
-        <Badge variant="danger" className="gap-1">
-          <Shield className="h-3 w-3" />
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
           Deleted
-        </Badge>
+        </span>
       )}
     </div>
   );

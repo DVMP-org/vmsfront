@@ -1,20 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGatePass, useRevokeGatePass } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { QRCodeSVG } from "qrcode.react";
-import { formatDateTime, getPassStatusColor } from "@/lib/utils";
-import { ArrowLeft, Ban, Home as HomeIcon } from "lucide-react";
+import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
+import { ArrowLeft, Ban, Home as HomeIcon, Copy, Check } from "lucide-react";
 import { GatePassStatus } from "@/types";
 
 export default function PassDetailPage() {
@@ -28,9 +25,10 @@ export default function PassDetailPage() {
   const { data: profile } = useProfile();
   const houseId = routeHouseId ?? selectedHouse?.id ?? null;
   const passId = routePassId ?? null;
-  
+
   const { data: pass, isLoading } = useGatePass(houseId, passId);
   const revokePassMutation = useRevokeGatePass(houseId);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!routeHouseId || !profile?.houses) return;
@@ -53,175 +51,223 @@ export default function PassDetailPage() {
     }
   };
 
+  const handleCopyCode = async () => {
+    if (pass?.code) {
+      await navigator.clipboard.writeText(pass.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (!houseId || !passId) {
     return (
-      <DashboardLayout type="resident">
-        <Card>
-          <CardContent className="p-10">
-            <EmptyState
-              icon={HomeIcon}
-              title="Select a house to continue"
-              description="Choose a house from the dashboard selector to view pass details."
-              action={{
-                label: "Choose House",
-                onClick: () => router.push("/select"),
-              }}
-            />
-          </CardContent>
-        </Card>
-      </DashboardLayout>
+      <>
+        <div className="border border-zinc-200 rounded bg-white p-8">
+          <EmptyState
+            icon={HomeIcon}
+            title="Select a house to continue"
+            description="Choose a house from the dashboard selector to view pass details."
+            action={{
+              label: "Choose House",
+              onClick: () => router.push("/select"),
+            }}
+          />
+        </div>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <CardSkeleton />
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!pass) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Pass not found</p>
+          <p className="text-sm text-zinc-500">Pass not found</p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+    <>
+      <div className="max-w-4xl mx-auto">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-4">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="h-8 px-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-semibold text-zinc-900">Gate Pass Details</h1>
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPassStatusColor(pass.status)}`}>
+              {titleCase(pass.status)}
+            </span>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Pass Information */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Pass Details</CardTitle>
-                <Badge className={getPassStatusColor(pass.status)}>
-                  {pass.status}
-                </Badge>
+        <div className="grid grid-cols-3 gap-4">
+          {/* Left Column: Pass Information */}
+          <div className="col-span-2 space-y-4">
+            {/* Visitor Info */}
+            <div className="border border-zinc-200 rounded bg-white">
+              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900">Visitor Information</h2>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Pass Code
-                </label>
-                <p className="text-2xl font-mono font-bold">{pass.code}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Valid Period
-                </label>
-                <p className="text-sm">
-                  {formatDateTime(pass.valid_from || "")}
-                  <br />
-                  to {formatDateTime(pass.valid_to || "")}
-                </p>
-              </div>
-
-              {pass.max_uses && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Usage
-                  </label>
-                  <p className="text-sm">
-                    {pass.uses_count} / {pass.max_uses} uses
-                  </p>
-                </div>
-              )}
-
-              {pass.status === GatePassStatus.CHECKED_IN && (
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={handleRevoke}
-                  isLoading={revokePassMutation.isPending}
-                >
-                  <Ban className="h-4 w-4 mr-2" />
-                  Revoke Pass
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* QR Code */}
-          <Card>
-            <CardHeader>
-              <CardTitle>QR Code</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center py-8">
-              {pass.qr_code_url ? (
-                <Image
-                  src={pass.qr_code_url}
-                  alt="Pass QR Code"
-                  width={256}
-                  height={256}
-                  unoptimized
-                  className="h-64 w-64 object-contain"
-                />
-              ) : (
-                <div className="bg-white p-4 rounded-lg">
-                  <QRCodeSVG value={pass.code} size={256} />
-                </div>
-              )}
-              <p className="text-sm text-muted-foreground mt-4 text-center">
-                Share this QR code with visitors
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Visitors */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Visitors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pass.visitors.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No visitors assigned
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {pass.visitors.map((visitor) => (
-                  <div
-                    key={visitor.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{visitor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {visitor.email}
-                      </p>
+              <div className="divide-y divide-zinc-100">
+                {pass.visitors.length === 0 ? (
+                  <div className="px-3 py-4 text-sm text-zinc-500">No visitors assigned</div>
+                ) : (
+                  pass.visitors.map((visitor) => (
+                    <div key={visitor.id} className="px-3 py-2.5">
+                      <div className="text-sm font-medium text-zinc-900">{visitor.name}</div>
+                      {visitor.email && (
+                        <div className="text-xs text-zinc-500 mt-0.5">{visitor.email}</div>
+                      )}
                       {visitor.phone && (
-                        <p className="text-sm text-muted-foreground">
-                          {visitor.phone}
-                        </p>
+                        <div className="text-xs text-zinc-500">{visitor.phone}</div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+
+            {/* Access Rules */}
+            <div className="border border-zinc-200 rounded bg-white">
+              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900">Access Rules</h2>
+              </div>
+              <div className="divide-y divide-zinc-100">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm text-zinc-600">Pass Code</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm font-mono font-semibold text-zinc-900">{pass.code}</code>
+                    <button
+                      onClick={handleCopyCode}
+                      className="p-1 hover:bg-zinc-100 rounded transition-colors"
+                      title="Copy code"
+                    >
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5 text-zinc-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-zinc-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                {pass.max_uses && (
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm text-zinc-600">Usage Limit</span>
+                    <span className="text-sm font-medium text-zinc-900">
+                      {pass.uses_count} / {pass.max_uses} uses
+                    </span>
+                  </div>
+                )}
+                {!pass.max_uses && (
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm text-zinc-600">Usage Limit</span>
+                    <span className="text-sm font-medium text-zinc-900">Unlimited</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm text-zinc-600">Current Usage</span>
+                  <span className="text-sm font-medium text-zinc-900">{pass.uses_count} scans</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Validity Window */}
+            <div className="border border-zinc-200 rounded bg-white">
+              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900">Validity Window</h2>
+              </div>
+              <div className="divide-y divide-zinc-100">
+                <div className="px-3 py-2">
+                  <div className="text-xs text-zinc-500 mb-0.5">Valid From</div>
+                  <div className="text-sm font-medium text-zinc-900">
+                    {formatDateTime(pass.valid_from || "")}
+                  </div>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-xs text-zinc-500 mb-0.5">Valid To</div>
+                  <div className="text-sm font-medium text-zinc-900">
+                    {formatDateTime(pass.valid_to || "")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: QR Code & Actions */}
+          <div className="space-y-4">
+            {/* QR Code */}
+            <div className="border border-zinc-200 rounded bg-white">
+              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900">QR Code</h2>
+              </div>
+              <div className="p-4 flex flex-col items-center">
+                {pass.qr_code_url ? (
+                  <Image
+                    src={pass.qr_code_url}
+                    alt="Pass QR Code"
+                    width={200}
+                    height={200}
+                    unoptimized
+                    className="w-full max-w-[200px] h-auto object-contain"
+                  />
+                ) : (
+                  <div className="bg-white p-2 rounded">
+                    <QRCodeSVG value={pass.code} size={200} />
+                  </div>
+                )}
+                <p className="text-xs text-zinc-500 mt-3 text-center">
+                  Share with visitors for gate access
+                </p>
+              </div>
+            </div>
+
+            {/* Primary Actions */}
+            <div className="border border-zinc-200 rounded bg-white">
+              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900">Actions</h2>
+              </div>
+              <div className="p-3 space-y-2">
+                {pass.status === GatePassStatus.CHECKED_IN && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full h-9"
+                    onClick={handleRevoke}
+                    isLoading={revokePassMutation.isPending}
+                  >
+                    <Ban className="h-3.5 w-3.5 mr-2" />
+                    Revoke Pass
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-9"
+                  onClick={() => router.push(`${houseBase}/passes`)}
+                >
+                  Back to Passes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

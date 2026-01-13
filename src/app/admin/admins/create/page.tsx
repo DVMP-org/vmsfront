@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import {
   Card,
   CardContent,
@@ -70,7 +70,7 @@ export default function CreateAdminPage() {
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      role_id: form.role_id,  
+      role_id: form.role_id,
       email: form.email.trim(),
       permissions: useCustomPermissions
         ? grantAll
@@ -92,19 +92,19 @@ export default function CreateAdminPage() {
   );
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin" className="text-[var(--brand-primary,#2563eb)] hover:underline">
+              <Link href="/admin" className="text-[var(--brand-primary,#213928)] hover:underline">
                 Admin dashboard
               </Link>
               <span>/</span>
               <span>Onboard admin</span>
             </p>
             <h1 className="text-2xl sm:text-xl font-bold flex items-center gap-2">
-              <UserPlus2 className="h-6 w-6 text-[var(--brand-primary,#2563eb)]" />
+              <UserPlus2 className="h-6 w-6 text-[var(--brand-primary,#213928)]" />
               Onboard Admin
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
@@ -263,7 +263,7 @@ export default function CreateAdminPage() {
                   Cancel
                 </Button>
                 <Button type="submit"
-                  className="border-[var(--brand-primary,#2563eb)] gap-2 text-white bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)/90]"
+                  className="border-[var(--brand-primary,#213928)] gap-2 text-white bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)/90]"
                   isLoading={createAdmin.isPending}>
                   Onboard admin
                 </Button>
@@ -272,6 +272,6 @@ export default function CreateAdminPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

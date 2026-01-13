@@ -2,11 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { differenceInHours } from "date-fns";
+import { differenceInHours, formatDistanceToNow } from "date-fns";
 import { useGatePasses } from "@/hooks/use-resident";
 import { useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Column, DataTable } from "@/components/ui/DataTable";
 import { Plus, CreditCard, ArrowRight, Home as HomeIcon } from "lucide-react";
-import { formatDate, formatDateTime, getPassStatusColor } from "@/lib/utils";
+import { formatDate, formatDateTime, formatPassWindow, getPassStatusColor, getTimeRemaining, titleCase } from "@/lib/utils";
 import type { GatePass } from "@/types";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 
@@ -50,14 +49,6 @@ export default function PassesPage() {
 
   const houseBase = houseId ? `/house/${houseId}` : "/select";
 
-  function isExpiringSoon(validTo?: string | null): boolean {
-    if (!validTo) return false;
-    const target = new Date(validTo);
-    if (Number.isNaN(target.getTime())) return false;
-
-    const hoursUntil = differenceInHours(target, new Date());
-    return hoursUntil >= 0 && hoursUntil <= 48;
-  }
 
   type PassRow = GatePass & {
     visitorNames: string;
@@ -78,7 +69,7 @@ export default function PassesPage() {
           pass.visitors?.map((visitor) => visitor.name).join(", ") ||
           "No visitors",
         validWindow: formatPassWindow(pass.valid_from, pass.valid_to),
-        statusLabel: pass.status?.toUpperCase?.() ?? pass.status,
+        statusLabel: titleCase(pass.status.replace("_", " ")),
         usesSummary:
           pass.max_uses !== null && pass.max_uses !== undefined
             ? `${pass.uses_count}/${pass.max_uses}`
@@ -103,7 +94,7 @@ export default function PassesPage() {
         row.visitors && row.visitors.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {row.visitors.map((visitor) => (
-              <Badge key={visitor.id} variant="secondary">
+              <Badge key={visitor.id} variant="secondary" className="px-2 py-0.5">
                 {visitor.name}
               </Badge>
             ))}
@@ -116,14 +107,17 @@ export default function PassesPage() {
       key: "validWindow",
       header: "Validity",
       sortable: true,
-      accessor: (row) => (
-        <div className="flex flex-col text-sm leading-5">
-          <span>{row.validWindow}</span>
-          {isExpiringSoon(row.valid_to) && (
-            <span className="text-xs text-amber-600">Expiring soon</span>
-          )}
-        </div>
-      ),
+      accessor: (row) => {
+        const remaining = getTimeRemaining(row.valid_to);
+        return (
+          <div className="flex flex-col text-sm leading-5">
+            <span>{row.validWindow}</span>
+            {remaining && (
+              <span className="text-xs text-amber-600 font-medium">{remaining}</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "statusLabel",
@@ -139,7 +133,7 @@ export default function PassesPage() {
         { value: "expired", label: "Expired" },
       ],
       accessor: (row) => (
-        <Badge className={getPassStatusColor(row.status)}>
+        <Badge className={`${getPassStatusColor(row.status)} px-2 py-0.5`}>
           {row.statusLabel}
         </Badge>
       ),
@@ -183,7 +177,7 @@ export default function PassesPage() {
 
   if (!houseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -197,12 +191,12 @@ export default function PassesPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -214,7 +208,6 @@ export default function PassesPage() {
             Create Pass
           </Button>
         </div>
-
         <Card>
           <CardContent className="p-6">
             {isLoading ? (
@@ -230,66 +223,38 @@ export default function PassesPage() {
                 }}
               />
             ) : (
-                  <>
-                    <DataTable
-                      data={passRows}
-                      columns={passColumns}
-                      searchable
-                      showPagination={false}
-                      searchPlaceholder="Search passes..."
-                      emptyMessage="No passes match your filters"
-                    />
-                    <PaginationBar
-                      page={page}
-                      pageSize={pageSize}
-                      total={paginatedPasses?.total ?? passRows.length}
-                      totalPages={paginatedPasses?.total_pages ?? 1}
-                      hasNext={
-                        paginatedPasses?.has_next ??
-                        page < (paginatedPasses?.total_pages ?? 0)
-                      }
-                      hasPrevious={
-                        paginatedPasses?.has_previous ?? page > 1
-                      }
-                      isFetching={isFetching}
-                      resourceLabel="passes"
-                      onChange={(next) => setPage(next)}
-                    />
-                  </>
+              <>
+                <DataTable
+                  data={passRows}
+                  columns={passColumns}
+                  searchable
+                  showPagination={false}
+                  searchPlaceholder="Search passes..."
+                  emptyMessage="No passes match your filters"
+                />
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={paginatedPasses?.total ?? passRows.length}
+                  totalPages={paginatedPasses?.total_pages ?? 1}
+                  hasNext={
+                    paginatedPasses?.has_next ??
+                    page < (paginatedPasses?.total_pages ?? 0)
+                  }
+                  hasPrevious={
+                    paginatedPasses?.has_previous ?? page > 1
+                  }
+                  isFetching={isFetching}
+                  resourceLabel="passes"
+                  onChange={(next) => setPage(next)}
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
-function safeFormatDateTime(value?: string | null): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return formatDateTime(parsed);
-}
-
-function formatPassWindow(
-  validFrom?: string | null,
-  validTo?: string | null
-): string {
-  const from = safeFormatDateTime(validFrom);
-  const to = safeFormatDateTime(validTo);
-
-  if (!from && !to) {
-    return "No time limit";
-  }
-
-  if (from && to) {
-    return `${from} – ${to}`;
-  }
-
-  if (from) {
-    return `Starts ${from}`;
-  }
-
-  return `Ends ${to}`;
-}
 

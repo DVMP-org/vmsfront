@@ -60,7 +60,7 @@ const TransactionItem = React.memo(({ transaction, onViewAll }: { transaction: W
                 <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="font-medium text-sm truncate">{transaction.description || "Transaction"}</p>
                     <span className={`font-semibold text-sm ${amountColor}`}>
-                        {isCredit ? "+" : "-"}{formatCurrency(Math.abs(transaction.amount_in_naira))}
+                        {isCredit ? "+" : "-"}{formatCurrency(Math.abs(transaction.amount))}
                     </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -101,10 +101,10 @@ export default function WalletPage() {
         const transactions = recentHistory.items;
         const totalCredits = transactions
             .filter(t => t.type === "credit" && t.status === "success")
-            .reduce((sum, t) => sum + t.amount_in_naira, 0);
+            .reduce((sum, t) => sum + t.amount, 0);
         const totalDebits = transactions
             .filter(t => t.type === "debit" && t.status === "success")
-            .reduce((sum, t) => sum + Math.abs(t.amount_in_naira), 0);
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
         const pendingCount = transactions.filter(t => t.status === "pending").length;
 
         return { totalCredits, totalDebits, pendingCount };
@@ -129,7 +129,7 @@ export default function WalletPage() {
     }, [transaction, paymentReference, queryClient]);
 
     const handleViewHistory = useCallback(() => {
-        router.push("/wallet/history");
+        router.push("/resident/wallet/history");
     }, [router]);
 
     const handleFundWallet = useCallback(async (e: React.FormEvent) => {
@@ -216,7 +216,7 @@ export default function WalletPage() {
                     <CardContent>
                         <div className="flex items-baseline gap-2 mb-6">
                             <span className="text-5xl font-bold tracking-tight">
-                                {wallet ? formatCurrency(wallet.balance_in_naira) : formatCurrency(0)}
+                                {wallet ? formatCurrency(wallet.balance) : formatCurrency(0)}
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-3">

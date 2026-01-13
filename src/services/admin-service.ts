@@ -1,12 +1,16 @@
 import { apiClient } from "@/lib/api-client";
 import {
     House,
+    HouseGroup,
     CreateHouseRequest,
+    CreateHouseGroupRequest,
+    UpdateHouseGroupRequest,
     Admin,
     CreateAdminRequest,
     AdminRole,
     ResidentUser,
     ResidentUserCreate,
+    ResidentProfileUpdatePayload,
     GatePass,
     GatePassCheckinRequest,
     GatePassCheckinResponse,
@@ -33,6 +37,11 @@ import {
     BrandingTheme,
     CreateBrandingThemeRequest,
     UpdateBrandingThemeRequest,
+    PaymentGateway,
+    UpdatePaymentGatewayRequest,
+    HouseDetail,
+    Resident,
+    ResidentHouse,
 } from "@/types";
 
 export const adminService = {
@@ -58,18 +67,103 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<House>>> {
-        return apiClient.get("/admin/house/list", {
+        return apiClient.get("/admin/houses", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
 
-    async createHouse(data: CreateHouseRequest): Promise<ApiResponse<House>> {
-        return apiClient.post("/admin/house/create", data);
+    async createHouse(data: { name: string; description?: string; address: string }): Promise<ApiResponse<House>> {
+        return apiClient.post("/admin/houses/create", data);
+    },
+
+    async getHouse(houseId: string): Promise<ApiResponse<House>> {
+        return apiClient.get(`/admin/houses/${houseId}`);
+    },
+
+    async getHouseResidents(houseId: string): Promise<ApiResponse<ResidentHouse[]>> {
+        return apiClient.get(`/admin/houses/${houseId}/residents`);
+    },
+
+    async updateHouse(
+        houseId: string,
+        data: { name?: string; description?: string; address?: string; house_group_id?: string }
+    ): Promise<ApiResponse<House>> {
+        return apiClient.put(`/admin/houses/${houseId}/update`, data);
+    },
+
+    async deleteHouse(houseId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/houses/${houseId}/delete`);
+    },
+
+    async bulkDeleteHouses(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/houses/delete/bulk", houseIds);
+    },
+
+    async toggleHouseActive(houseId: string): Promise<ApiResponse<House>> {
+        return apiClient.post(`/admin/houses/${houseId}/toggle-active`);
+    },
+
+    async bulkToggleHouseActive(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/houses/toggle-active/bulk", houseIds);
+    },
+
+    // House Groups
+    async getHouseGroups(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<HouseGroup>>> {
+        return apiClient.get("/admin/house/group/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
+            },
+        });
+    },
+
+    async getHouseGroup(groupId: string): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.get(`/admin/house/group/${groupId}`);
+    },
+
+    async createHouseGroup(data: CreateHouseGroupRequest): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.post("/admin/house/groups", data);
+    },
+
+    async updateHouseGroup(
+        groupId: string,
+        data: UpdateHouseGroupRequest
+    ): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.put(`/admin/house/group/${groupId}/update`, data);
+    },
+
+    async deleteHouseGroup(groupId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/house/group/${groupId}/delete`);
+    },
+
+    async bulkDeleteHouseGroups(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/group/delete/bulk", groupIds);
+    },
+
+    async toggleHouseGroupActive(groupId: string): Promise<ApiResponse<HouseGroup>> {
+        return apiClient.post(`/admin/house/group/${groupId}/toggle-active`);
+    },
+
+    async bulkToggleHouseGroupActive(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/house/group/toggle-active/bulk", groupIds);
     },
 
     // Residents
@@ -78,6 +172,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<ResidentUser>>> {
         return apiClient.get("/admin/resident/list", {
             params: {
@@ -85,8 +181,31 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
+    },
+
+    async getResident(residentId: string): Promise<ApiResponse<Resident>> {
+        return apiClient.get(`/admin/resident/${residentId}`);
+    },
+
+    async getResidentHouses(residentId: string): Promise<ApiResponse<ResidentHouse[]>> {
+        return apiClient.get(`/admin/resident/${residentId}/houses`);
+    },
+
+    async updateResident(
+        residentId: string,
+        data: ResidentProfileUpdatePayload
+    ): Promise<ApiResponse<ResidentUser>> {
+        return apiClient.put(`/admin/resident/update/${residentId}`, data);
+    },
+
+    async deleteResident(
+        residentId: string
+    ): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/resident/delete/${residentId}`);
     },
 
     async createResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {
@@ -98,8 +217,20 @@ export const adminService = {
     },
 
     // Admins
-    async getAdmins(): Promise<ApiResponse<Admin[]>> {
-        return apiClient.get("/admin/list");
+    async getAdmins(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
+        return apiClient.get("/admin/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                status: params?.status ?? undefined,
+            },
+        });
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
@@ -170,6 +301,8 @@ export const adminService = {
         pageSize?: number;
         search?: string;
         status?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
         return apiClient.get("/admin/gate-passes/", {
             params: {
@@ -177,6 +310,8 @@ export const adminService = {
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
                 status: params?.status ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -190,6 +325,9 @@ export const adminService = {
         pageSize?: number;
         passId?: string;
         houseId?: string;
+        search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<GateEvent>>> {
         return apiClient.get("/admin/gate-events/", {
             params: {
@@ -197,6 +335,9 @@ export const adminService = {
                 page_size: params?.pageSize ?? 15,
                 pass_id: params?.passId ?? undefined,
                 house_id: params?.houseId ?? undefined,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -396,5 +537,15 @@ export const adminService = {
         return apiClient.post(`/admin/branding/theme/${themeId}/activate`);
     },
 
+    // Payment Gateways
+    async getPaymentGateways(): Promise<ApiResponse<PaymentGateway[]>> {
+        return apiClient.get("/admin/config/payment/list");
+    },
 
+    async updatePaymentGateway(
+        gatewayName: string,
+        data: UpdatePaymentGatewayRequest
+    ): Promise<ApiResponse<PaymentGateway>> {
+        return apiClient.put(`/admin/config/payment/gateway/${gatewayName}/update`, data);
+    },
 };

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -229,7 +228,7 @@ export default function HouseForumPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -243,7 +242,7 @@ export default function HouseForumPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -253,9 +252,9 @@ export default function HouseForumPage() {
   const showPagination = !hasCategoryFilter && hasPagination;
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] via-indigo-600 to-slate-900 text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary,#213928))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-4 max-w-2xl">
               <p className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
@@ -272,7 +271,7 @@ export default function HouseForumPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[var(--brand-primary,#2563eb)] hover:bg-white/90"
+                  className="bg-white text-[rgb(var(--brand-primary,#213928))] hover:bg-white/90"
                   onClick={() =>
                     handleOpenTopicModal(
                       activeCategoryMeta?.id ?? (categoryFilter !== "all" ? categoryFilter : undefined)
@@ -340,7 +339,7 @@ export default function HouseForumPage() {
                 {hasCategoryFilter && (
                   <button
                     type="button"
-                    className="text-xs font-semibold text-[var(--brand-primary,#2563eb)] underline-offset-2 hover:underline"
+                    className="text-xs font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
                     onClick={() => setCategoryFilter("all")}
                   >
                     Clear category filter
@@ -391,7 +390,7 @@ export default function HouseForumPage() {
                     onClick: () =>
                       handleOpenTopicModal(
                         activeCategoryMeta?.id ??
-                          (categoryFilter !== "all" ? categoryFilter : undefined)
+                        (categoryFilter !== "all" ? categoryFilter : undefined)
                       ),
                   }}
                 />
@@ -408,11 +407,34 @@ export default function HouseForumPage() {
                       }
                       className={cn(
                         "flex w-full flex-col gap-3 rounded-2xl border border-border/60 bg-gradient-to-r from-white to-slate-50/80 p-4 text-left shadow-sm shadow-slate-200 transition",
-                        "hover:-translate-y-0.5 hover:border-[var(--brand-primary,#2563eb)]/40 hover:shadow-lg"
+                        "hover:-translate-y-0.5 hover:border-[var(--brand-primary,#213928)]/40 hover:shadow-lg"
                       )}
                     >
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* Profile image (user avatar) */}
+                          {topic.author && topic.author.avatar_url ? (
+                            <img
+                              src={topic.author.avatar_url}
+                              alt={
+                                topic.author.first_name && topic.author.last_name
+                                  ? topic.author.first_name + " " + topic.author.last_name
+                                  : "User avatar"
+                              }
+                              className="h-8 w-8 rounded-full border border-muted object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                              {topic.author && topic.author.first_name && topic.author.last_name
+                                ? (topic.author.first_name + " " + topic.author.last_name)
+                                  .split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase()
+                                : ""}
+                            </div>
+                          )}
                           <p className="text-lg font-semibold text-foreground">
                             {topic.title}
                           </p>
@@ -431,14 +453,14 @@ export default function HouseForumPage() {
                           Created{" "}
                           {topic.created_at
                             ? formatDistanceToNow(new Date(topic.created_at), {
-                                addSuffix: true,
-                              })
+                              addSuffix: true,
+                            })
                             : "recently"}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-muted-foreground">
                         {topic.category && (
-                          <span className="rounded-full bg-[var(--brand-primary,#2563eb)]/10 px-3 py-1 text-[var(--brand-primary,#2563eb)]">
+                          <span className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 text-[var(--brand-primary,#213928)]">
                             {topic.category.name}
                           </span>
                         )}
@@ -513,7 +535,7 @@ export default function HouseForumPage() {
               }
               className={cn(
                 "min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               )}
               placeholder="Share a short summary or the type of updates that belong here."
             />
@@ -556,7 +578,7 @@ export default function HouseForumPage() {
                   categoryId: event.target.value,
                 }))
               }
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               required
             >
               <option value="">Select a category</option>
@@ -590,7 +612,7 @@ export default function HouseForumPage() {
               }
               className={cn(
                 "min-h-[160px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#2563eb)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               )}
               placeholder="Share details or context to kick-start the discussion."
               required
@@ -623,7 +645,7 @@ export default function HouseForumPage() {
           )}
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }
 
@@ -738,8 +760,8 @@ function CategorySidebarItem({
       className={cn(
         "rounded-2xl border px-4 py-3 transition",
         isActive
-          ? "border-[var(--brand-primary,#2563eb)] bg-[var(--brand-primary,#2563eb)]/5"
-          : "border-border/40 bg-muted/30 hover:border-[var(--brand-primary,#2563eb)]/40"
+          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5"
+          : "border-border/40 bg-muted/30 hover:border-[var(--brand-primary,#213928)]/40"
       )}
     >
       <button
@@ -759,11 +781,11 @@ function CategorySidebarItem({
           {count}
         </span>
       </button>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--brand-primary,#2563eb)]">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--brand-primary,#213928)]">
         {onView && (
           <button
             type="button"
-            className="rounded-full bg-[var(--brand-primary,#2563eb)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#2563eb)]/15"
+            className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#213928)]/15"
             onClick={onView}
           >
             View
@@ -772,7 +794,7 @@ function CategorySidebarItem({
         {onStartTopic && (
           <button
             type="button"
-            className="rounded-full bg-[var(--brand-primary,#2563eb)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#2563eb)]/15"
+            className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#213928)]/15"
             onClick={onStartTopic}
           >
             Start topic

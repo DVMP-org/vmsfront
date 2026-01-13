@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Plus, Zap, Search, Building2 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, titleCase } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
@@ -122,6 +122,8 @@ export default function AdminMetersPage() {
         createMeterMutation.mutate(formData);
     };
 
+    console.log(meters);
+
     const columns: Column<Meter>[] = [
         {
             key: "meter_number",
@@ -137,14 +139,14 @@ export default function AdminMetersPage() {
             key: "meter_type",
             header: "Type",
             accessor: (meter) => (
-                <span className="text-muted-foreground">{meter.meter_type}</span>
+                <span className="text-muted-foreground">{titleCase(meter.meter_type.replace(/-/g, " "))}</span>
             ),
         },
         {
             key: "disco",
             header: "DISCO",
             accessor: (meter) => (
-                <span className="text-muted-foreground">{meter.disco}</span>
+                <span className="text-muted-foreground">{titleCase(meter.disco.replace(/-/g, " "))}</span>
             ),
         },
         {

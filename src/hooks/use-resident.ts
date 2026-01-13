@@ -8,6 +8,7 @@ import {
   Wallet,
   FundWalletRequest,
   WalletTransaction,
+  UpdateHouseRequest,
 } from "@/types";
 import { toast } from "sonner";
 
@@ -30,6 +31,38 @@ export function useResidentDashboard(houseId: string | null) {
       return response.data;
     },
     enabled: !!houseId,
+  });
+}
+
+
+export function useResidentHouse(houseId: string | null) {
+  return useQuery({
+    queryKey: ["resident", "house", houseId],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required")
+      const response = await residentService.getResidentHouse(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
+export function useUpdateHouse(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateHouseRequest) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.updateHouse(houseId, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "house", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "houses"] });
+      toast.success("House details updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update house details");
+    },
   });
 }
 
@@ -108,6 +141,7 @@ export function useRevokeGatePass(houseId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
       queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", houseId] });
       queryClient.invalidateQueries({ queryKey: ["resident", "visitors", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "gate-passes"] });
       toast.success("Gate pass revoked successfully!");
     },
     onError: (error: any) => {
@@ -212,14 +246,18 @@ export function useWalletTransaction(reference: string | null) {
       return response.data;
     },
     enabled: !!reference,
+    retry: 5, // Retry up to 5 times before giving up
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     refetchInterval: (query) => {
-      // Poll every 3 seconds if transaction is pending
+      // Poll every 3 seconds if transaction is pending or if we don't have data yet
       const data = query.state.data;
-      if (data?.status === "pending") {
+      if (data?.status === "pending" || !data) {
         return 3000;
       }
       return false;
     },
+    // Continue polling for up to 60 seconds
+    refetchIntervalInBackground: true,
   });
 }
 

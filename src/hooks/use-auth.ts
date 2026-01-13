@@ -11,6 +11,7 @@ import {
   DashboardSelect,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  AuthResponse,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -61,21 +62,17 @@ export function useAuth() {
       setLoginFieldErrors({});
     },
     onSuccess: (response) => {
-      console.log("Login response:", response);
       const { user, token } = response.data;
-      console.log("User:", user, "Token:", token);
 
       // Set auth state
       setAuth(user, token);
       apiClient.setToken(token);
-      console.log("Auth state set, isAuthenticated:", isAuthenticated);
 
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
 
       // Navigate immediately without setTimeout
-      console.log("Attempting to navigate to /select...");
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();
@@ -173,10 +170,39 @@ export function useAuth() {
 }
 
 export function useProfile() {
+  const { setAuth, token } = useAuthStore();
+  return useQuery<AuthResponse["user"]>({
+    queryKey: ["auth", "profile"],
+    queryFn: async () => {
+      const response = await authService.getUser();
+      const user = response.data;
+      if (user && token) {
+        setAuth(user, token);
+      }
+      return user;
+    },
+    enabled: !!token,
+  });
+}
+
+export function useDashboardSelect() {
   return useQuery<DashboardSelect>({
-    queryKey: ["dashboard", "select"],
+    queryKey: ["auth", "dashboard-select"],
     queryFn: async () => {
       const response = await authService.getDashboardSelect();
+      const user = response.data;
+
+      return user;
+    },
+    enabled: useAuthStore.getState().isAuthenticated,
+  });
+}
+
+export function useVerifyToken() {
+  return useQuery<AuthResponse>({
+    queryKey: ["auth", "verify"],
+    queryFn: async () => {
+      const response = await authService.verifyToken();
       return response.data;
     },
     enabled: useAuthStore.getState().isAuthenticated,
@@ -210,6 +236,43 @@ export function useResetPassword(onSuccess?: () => void) {
     onError: (error: any) => {
       const parsedError = parseApiError(error);
       toast.error(parsedError.message || "Unable to reset password");
+    },
+  });
+}
+
+export function useOnboard() {
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => authService.onboard(data),
+    onSuccess: (response) => {
+      const { user, token } = response.data;
+      setAuth(user, token);
+      apiClient.setToken(token);
+      queryClient.invalidateQueries({ queryKey: ["resident", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
+
+      toast.success("Onboarding complete! Welcome.");
+      router.push("/select");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to complete onboarding");
+    },
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: () => authService.resendVerification(),
+    onSuccess: (response) => {
+      toast.success(response.message || "Verification email sent!");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to resend verification email");
     },
   });
 }

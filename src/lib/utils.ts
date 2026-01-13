@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { formatDistanceToNow } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -41,6 +42,14 @@ export function getFullName(firstName?: string | null, lastName?: string | null)
   return parts.length > 0 ? parts.join(" ") : "Unknown User";
 }
 
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+  }).format(value);
+}
+
 export function isPassValid(validFrom: string, validTo: string): boolean {
   const now = new Date();
   const from = new Date(validFrom);
@@ -51,15 +60,19 @@ export function isPassValid(validFrom: string, validTo: string): boolean {
 export function getPassStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case "active":
-      return "text-green-600 bg-green-50";
+      return "text-blue-600 bg-blue-50 border border-blue-600";
     case "expired":
-      return "text-red-600 bg-red-50";
+      return "text-red-600 bg-red-50 border border-red-600";
     case "revoked":
-      return "text-gray-600 bg-gray-50";
-    case "draft":
-      return "text-yellow-600 bg-yellow-50";
+      return "text-slate-600 bg-slate-50 border border-slate-600";
+    case "checked_in":
+      return "text-green-600 bg-green-50 border border-green-600";
+    case "checked_out":
+      return "text-indigo-600 bg-indigo-50 border border-indigo-600";
+    case "pending":
+      return "text-amber-600 bg-amber-50 border border-amber-600";
     default:
-      return "text-gray-600 bg-gray-50";
+      return "text-gray-600 bg-gray-50 border border-gray-600";
   }
 }
 
@@ -79,7 +92,7 @@ export function titleCase(v) {
 
   // Normalize whitespace and lowercase first
   v = v.trim().replace(/\s+/g, " ").toLowerCase();
-
+  v = v.replace(/_/g, " ");
   // Convert to title case
   return v
     .split(" ")
@@ -160,4 +173,47 @@ export function keysToSnakeCase<T = any>(obj: any): T {
   }
 
   return obj;
+}
+
+
+export function getTimeRemaining(validTo?: string | null): string | null {
+  if (!validTo) return null;
+  const target = new Date(validTo);
+  if (isNaN(target.getTime())) return null;
+
+  const now = new Date();
+  // Show countdown for all future passes
+  if (target > now) {
+    return `Expires ${formatDistanceToNow(target, { addSuffix: true })}`;
+  }
+  return null;
+}
+
+export function formatPassWindow(
+  validFrom?: string | null,
+  validTo?: string | null
+): string {
+  const from = safeFormatDateTime(validFrom);
+  const to = safeFormatDateTime(validTo);
+
+  if (!from && !to) {
+    return "No time limit";
+  }
+
+  if (from && to) {
+    return `${from} – ${to}`;
+  }
+
+  if (from) {
+    return `Starts ${from}`;
+  }
+
+  return `Ends ${to}`;
+}
+
+export function safeFormatDateTime(value?: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return formatDateTime(parsed);
 }

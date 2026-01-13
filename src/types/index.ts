@@ -27,8 +27,11 @@ export interface User {
     phone: string | null;
     address: string | null;
     is_active: boolean;
+    email_verified_at: string | null;
+    avatar_url: string | null;
     created_at: string;
     updated_at: string;
+    name?: string | null
 }
 
 export interface House {
@@ -37,8 +40,34 @@ export interface House {
     description: string | null;
     address: string;
     slug?: string | null;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
+    house_groups?: HouseGroup[] | null;
+
+}
+
+export interface HouseGroup {
+    id: string;
+    name: string;
+    description: string | null;
+    house_ids: string[];
+    houses?: House[];
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateHouseGroupRequest {
+    name: string;
+    description?: string | null;
+    house_ids: string[];
+}
+
+export interface UpdateHouseGroupRequest {
+    name?: string;
+    description?: string | null;
+    house_ids?: string[];
 }
 
 export interface UserHouseMembership {
@@ -86,7 +115,13 @@ export interface Resident {
 export interface ResidentUser {
     user: User;
     resident: Resident;
-    houses: House[];
+    houses?: House[] | null;
+}
+
+export interface HouseDetail {
+    house: House;
+    house_groups?: HouseGroup[];
+    residents?: ResidentUser[];
 }
 
 export interface ResidentUserCreate {
@@ -157,6 +192,7 @@ export interface ForumPost {
     deleted_at?: string | null;
     restored_at?: string | null;
     posted_by_admin?: boolean;
+    updated_at?: string | null;
 }
 
 export interface ForumTopic {
@@ -210,10 +246,12 @@ export interface GateEvent {
     checkin_time: string;
     checkout_time: string | null;
     created_at: string;
+    house_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
-    gate_pass?: GatePass;
-    scanned_by?: Admin
+    gate_pass?: GatePass | null;
+    scanned_by?: Admin | null;
+    house?: House | null;
 
 }
 
@@ -312,6 +350,12 @@ export interface CreateGatePassRequest {
         name: string;
         phone?: string;
     }[];
+}
+
+export interface UpdateHouseRequest {
+    name: string;
+    description?: string;
+    address: string;
 }
 
 export interface CreateHouseRequest {
@@ -523,7 +567,6 @@ export interface Wallet {
     id: string;
     resident_id: string;
     balance: number;
-    balance_in_naira: number;
     status: "active" | "frozen" | "closed";
     created_at: string;
     updated_at: string;
@@ -545,9 +588,8 @@ export interface WalletTransaction {
     id: string;
     wallet_id: string;
     reference: string;
-    amount: number;
     balance_before: number;
-    amount_in_naira: number;
+    amount: number;
     balance_after: number;
     type: "credit" | "debit";
     status: "pending" | "success" | "failed";
@@ -555,4 +597,54 @@ export interface WalletTransaction {
     metadata: Record<string, any> | null;
     created_at: string;
     updated_at: string;
+}
+
+// Payment Gateway Types
+export interface PaymentGateway {
+    name: string;
+    description?: string | null;
+    api_key?: string | null;
+    secret_key?: string | null;
+    secret_hash?: string | null;
+    contract_code?: string | null;
+    client_id?: string | null;
+    client_secret?: string | null;
+    public_key?: string | null;
+    base_url?: string | null;
+    redirect_url?: string | null;
+    sandbox_mode: boolean;
+    active: boolean;
+}
+
+export interface UpdatePaymentGatewayRequest {
+    name: string;
+    description?: string | null;
+    api_key?: string | null;
+    secret_key?: string | null;
+    secret_hash?: string | null;
+    contract_code?: string | null;
+    client_id?: string | null;
+    client_secret?: string | null;
+    public_key?: string | null;
+    base_url?: string | null;
+    redirect_url?: string | null;
+    sandbox_mode?: boolean;
+    active?: boolean;
+}
+
+export interface ResidentHouse {
+    resident: Resident;
+    house: House;
+    is_super_user: boolean;
+    is_active: boolean;
+}
+
+export interface ResidentCreate {
+
+    email: string;
+    house_id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address: string;
 }

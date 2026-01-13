@@ -1,22 +1,186 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminRoles } from "@/hooks/use-admin";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Shield } from "lucide-react";
+import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { Shield, Trash2, Edit } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
+import { AdminRole } from "@/types";
+
+const PAGE_SIZE = 20;
 
 export default function RolesPage() {
   const { data: roles, isLoading } = useAdminRoles();
   const router = useRouter();
 
+  // URL query sync
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config: {
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      sort: { defaultValue: null },
+    },
+    skipInitialSync: true,
+  });
+
+  // Initialize state from URL
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
+
+  // Sync state to URL
+  useEffect(() => {
+    syncToUrl({ page, pageSize, search, sort });
+  }, [page, pageSize, search, sort, syncToUrl]);
+
+  // Filter roles client-side
+  const filteredRoles = useMemo(() => {
+    if (!roles) return [];
+    if (!search.trim()) return roles;
+
+    const q = search.toLowerCase();
+    return roles.filter((role) => {
+      const name = role.name?.toLowerCase() || "";
+      const code = role.code?.toLowerCase() || "";
+      const description = role.description?.toLowerCase() || "";
+      return name.includes(q) || code.includes(q) || description.includes(q);
+    });
+  }, [roles, search]);
+
+  // Pagination
+  const paginatedRoles = useMemo(() => {
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredRoles.slice(startIndex, endIndex);
+  }, [filteredRoles, page, pageSize]);
+
+  const totalPages = Math.ceil(filteredRoles.length / pageSize);
+  const total = filteredRoles.length;
+
+  // Bulk actions
+  const handleBulkDelete = (selectedIds: string[]) => {
+    toast.info(`Deleting ${selectedIds.length} role(s)...`);
+    // TODO: Implement bulk delete
+    setSelectedRoles(new Set());
+  };
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: "destructive",
+      requiresConfirmation: true,
+    },
+  ];
+
+  // Define columns
+  const columns: Column<AdminRole>[] = [
+    {
+      key: "name",
+      header: "Role Name",
+      sortable: true,
+      accessor: (row) => (
+        <div className="flex items-center gap-3">
+          <Shield className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+          <div>
+            <p className="font-medium text-lg">{row.name}</p>
+            {row.description && (
+              <p className="text-sm text-muted-foreground">
+                {row.description}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "code",
+      header: "Code",
+      sortable: true,
+      accessor: (row) => (
+        <Badge variant="secondary">{row.code}</Badge>
+      ),
+    },
+    {
+      key: "permissions",
+      header: "Permissions",
+      sortable: false,
+      accessor: (row) => {
+        if (!row.permissions_parsed || row.permissions_parsed.length === 0) {
+          return <span className="text-sm text-muted-foreground">No permissions</span>;
+        }
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {row.permissions_parsed.slice(0, 3).map((perm, idx) => (
+              <Badge key={idx} variant="secondary" className="text-xs">
+                {perm}
+              </Badge>
+            ))}
+            {row.permissions_parsed.length > 3 && (
+              <Badge variant="secondary" className="text-xs">
+                +{row.permissions_parsed.length - 3} more
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      sortable: true,
+      accessor: (row) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.created_at)}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sortable: false,
+      accessor: (row) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/roles/${row.id}/edit`)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete the role "${row.name}"?`)) {
+                toast.info(`Deleting role "${row.name}"...`);
+                // TODO: Implement delete
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -37,7 +201,7 @@ export default function RolesPage() {
           <CardContent className="p-6">
             {isLoading ? (
               <TableSkeleton />
-            ) : !roles || roles.length === 0 ? (
+            ) : !roles || roles.length === 0 && !search ? (
               <EmptyState
                 icon={Shield}
                 title="No roles defined"
@@ -48,53 +212,38 @@ export default function RolesPage() {
                 }}
               />
             ) : (
-              <div className="space-y-3">
-                {roles.map((role) => (
-                  <div
-                    key={role.id}
-                    className="p-4 border rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <Shield className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
-                        <div>
-                          <p className="font-medium text-lg">{role.name}</p>
-                          {role.description && (
-                            <p className="text-sm text-muted-foreground">
-                              {role.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <Badge variant="secondary">{role.code}</Badge>
-                    </div>
-                    {role.permissions_parsed && role.permissions_parsed.length > 0 && (
-                      <div className="ml-8 mt-2">
-                        <p className="text-sm font-medium mb-1">Permissions:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {role.permissions_parsed.slice(0, 5).map((perm, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {perm}
-                            </Badge>
-                          ))}
-                          {role.permissions_parsed.length > 5 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{role.permissions_parsed.length - 5} more
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground ml-8 mt-2">
-                      Created: {formatDate(role.created_at)}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <DataTable
+                data={paginatedRoles}
+                columns={columns}
+                searchable={true}
+                searchPlaceholder="Search roles by name, code, or description..."
+                pageSize={pageSize}
+                showPagination={true}
+                emptyMessage="No roles found"
+                serverSide={false}
+                total={total}
+                currentPage={page}
+                onPageChange={setPage}
+                externalSearch={search}
+                onSearchChange={(value) => {
+                  setPage(1);
+                  setSearch(value);
+                }}
+                onSortChange={(newSort) => {
+                  setPage(1);
+                  setSort(newSort);
+                }}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={false}
+                selectable={true}
+                selectedRows={selectedRoles}
+                onSelectionChange={setSelectedRoles}
+                bulkActions={bulkActions}
+              />
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

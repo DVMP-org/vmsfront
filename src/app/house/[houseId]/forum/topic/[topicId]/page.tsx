@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { formatDistanceToNow, format, isToday, isYesterday, differenceInDays } from "date-fns";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -116,7 +116,8 @@ export default function ForumTopicPage() {
   const repliesEndRef = useRef<HTMLDivElement | null>(null);
 
   const createPost = useCreateForumPost();
-  const viewerId = profile?.user?.id ?? null;
+  const viewerId = profile?.id ?? null;
+  console.log(profile)
   const canSubmit = hasMeaningfulContent(content);
 
   const handleCreatePost = (event: FormEvent<HTMLFormElement>) => {
@@ -127,10 +128,10 @@ export default function ForumTopicPage() {
     const attachmentsPayload =
       pendingAttachments.length > 0
         ? pendingAttachments.map((attachment) => ({
-            name: attachment.name,
-            mime: attachment.type,
-            url: attachment.dataUrl,
-          }))
+          name: attachment.name,
+          mime: attachment.type,
+          url: attachment.dataUrl,
+        }))
         : undefined;
     createPost.mutate(
       {
@@ -270,7 +271,7 @@ export default function ForumTopicPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -284,14 +285,14 @@ export default function ForumTopicPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6 pb-24">
-        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#2563eb)] to-indigo-700 text-white shadow-xl">
+        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
           <div className="flex flex-col gap-5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center gap-1 text-xs text-white/70" aria-label="Breadcrumb">
@@ -394,7 +395,7 @@ export default function ForumTopicPage() {
           </div>
         </section>
 
-        <Card className="border-none shadow-lg shadow-slate-200/60">
+        <Card className="border-none shadow-lg shadow-slate-200/60 overflow-hidden">
           <CardHeader>
             <CardTitle>
               {/* @ts-expect-error – PaginatedResponse may be array in this branch */}
@@ -402,32 +403,30 @@ export default function ForumTopicPage() {
               {/* @ts-expect-error – PaginatedResponse may be array in this branch */}
               {postsResponse?.total === 1 ? "reply" : "replies"}
             </CardTitle>
-            <CardDescription>
-              Stay courteous and keep feedback action-oriented.
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-0">
             {isLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-4 p-6">
                 <Skeleton className="h-24 w-full rounded-2xl" />
                 <Skeleton className="h-24 w-full rounded-2xl" />
               </div>
             ) : posts.length === 0 ? (
-              <EmptyState
-                icon={MessageSquare}
-                title="No replies yet"
-                description="Kick off the conversation with the first response."
-              />
+              <div className="p-8">
+                <EmptyState
+                  icon={MessageSquare}
+                  title="No replies yet"
+                  description="Kick off the conversation with the first response."
+                />
+              </div>
             ) : (
               <div
                 ref={repliesContainerRef}
-                className="max-h-[70vh] space-y-6 overflow-y-auto pr-1"
+                className="bg-gradient-to-br from-slate-50 via-zinc-50 to-slate-50 min-h-[400px] max-h-[600px] overflow-y-auto p-3 space-y-2"
               >
                 {posts.map((post, index) => {
                   const authorName =
                     post.author?.first_name || post.author?.last_name
-                      ? `${post.author?.first_name ?? ""} ${
-                          post.author?.last_name ?? ""
+                      ? `${post.author?.first_name ?? ""} ${post.author?.last_name ?? ""
                         }`.trim()
                       : post.author?.email ?? "Resident";
                   const isOwnPost = viewerId ? post.author_id === viewerId : false;
@@ -449,202 +448,167 @@ export default function ForumTopicPage() {
                     post.created_at &&
                     Date.now() - new Date(post.created_at).getTime() < 1000 * 60 * 60 * 6;
                   const alternatingNeutral = index % 2 === 0;
+                  const houseLabel = isAdminPost ? "" : "| " + (post.house?.name || "| " + (selectedHouse?.name || "House"));
 
+                  // Format timestamp
+                  const formatTimestamp = (dateString: string | null | undefined): { display: string; full: string } => {
+                    if (!dateString) return { display: "Just now", full: "—" };
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const daysDiff = differenceInDays(now, date);
+
+                    let display: string;
+                    if (isToday(date)) {
+                      display = format(date, "h:mm a");
+                    } else if (isYesterday(date)) {
+                      display = `Yesterday ${format(date, "h:mm a")}`;
+                    } else if (daysDiff < 7) {
+                      display = format(date, "EEE h:mm a");
+                    } else if (daysDiff < 365) {
+                      display = format(date, "MMM d, h:mm a");
+                    } else {
+                      display = format(date, "MMM d, yyyy h:mm a");
+                    }
+
+                    const full = format(date, "PPpp");
+                    return { display, full };
+                  };
+
+                  const timestamp = formatTimestamp(post.created_at);
+                  const editedTimestamp = post.edited_at ? formatTimestamp(post.edited_at) : null;
                   return (
                     <div
                       key={post.id}
                       className={cn(
-                        "flex w-full gap-3",
-                        isOwnPost
-                          ? "flex-row-reverse pl-4 sm:pl-16"
-                          : "flex-row pr-4 sm:pr-16"
+                        "flex w-full mb-2 group",
+                        isOwnPost ? "justify-end" : "justify-start"
                       )}
                     >
-                      <div
-                        className={cn(
-                          "mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase shadow",
-                          isOwnPost
-                            ? "border-[var(--brand-primary,#2563eb)] bg-white text-[var(--brand-primary,#2563eb)]"
-                            : "border-border bg-muted/70 text-muted-foreground"
-                        )}
-                      >
-                        {avatarLabel}
-                      </div>
-                      <article
-                        className={cn(
-                          "relative w-full max-w-3xl rounded-3xl border px-5 py-4 shadow-sm transition sm:px-6",
-                          isOwnPost
-                            ? "border-[var(--brand-primary,#2563eb)]/40 bg-gradient-to-r from-[var(--brand-primary,#2563eb)]/12 via-sky-100/60 to-white text-foreground shadow-[0_18px_32px_rgba(37,99,235,0.18)]"
-                            : alternatingNeutral
-                            ? "border-border/50 bg-slate-50 text-foreground"
-                            : "border-border/70 bg-white text-foreground",
-                          isRecentlyCreated && "ring-2 ring-amber-300"
-                        )}
-                      >
-                        <div className="flex flex-col gap-4">
-                          <div
-                            className={cn(
-                              "flex flex-wrap items-start gap-4",
-                              isOwnPost ? "justify-end text-right" : "justify-between text-left"
-                            )}
-                          >
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p
-                                  className={cn(
-                                    "text-sm font-semibold",
-                                    isOwnPost ? "text-[var(--brand-primary,#2563eb)]" : "text-foreground"
-                                  )}
-                                >
-                                  {displayName}
-                                </p>
-                                {isAdminPost && (
-                                  <Badge variant="warning" className="text-[10px] uppercase tracking-wide">
-                                    Admin
-                                  </Badge>
-                                )}
-                              </div>
-                              <div
+                      <div className={cn("flex max-w-[70%] gap-2", isOwnPost ? "flex-row-reverse" : "flex-row")}>
+                        {/* Avatar */}
+                        <div
+                          className={cn(
+                            "flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border text-xs font-semibold uppercase",
+                            isOwnPost
+                              ? "bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] border-[rgb(var(--brand-primary))] text-white"
+                              : "bg-gradient-to-br from-zinc-200 to-zinc-300 border-zinc-300 text-zinc-600"
+                          )}
+                        >
+                          {avatarLabel}
+                        </div>
+                        <article
+                          className={cn(
+                            "flex-1 min-w-0 rounded-xl px-3 py-2 shadow-sm",
+                            isOwnPost
+                              ? "bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white"
+                              : "bg-white border border-zinc-200/80 text-zinc-900",
+                            isRecentlyCreated && "ring-2 ring-amber-300"
+                          )}
+                        >
+                          {/* Post Header - Compact Inline */}
+                          <div className={cn("flex items-center gap-2 mb-1", isOwnPost ? "justify-end" : "justify-start")}>
+                            <span className={cn("text-xs font-semibold", isOwnPost ? "text-white" : "text-zinc-900")}>
+                              {displayName}  {houseLabel}
+                            </span>
+                            {isAdminPost && (
+                              <span
                                 className={cn(
-                                  "mt-1 flex flex-wrap items-center gap-2 text-xs",
-                                  isOwnPost ? "text-[var(--brand-primary,#2563eb)]/70" : "text-muted-foreground"
+                                  "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium",
+                                  isOwnPost
+                                    ? "bg-white/20 text-white"
+                                    : "bg-blue-100 text-blue-700"
                                 )}
                               >
-                                <span className="inline-flex items-center gap-1">
-                                  <Clock4 className="h-3 w-3" />
-                                  {post.created_at
-                                    ? formatDistanceToNow(new Date(post.created_at), {
-                                        addSuffix: true,
-                                      })
-                                    : "Just now"}
-                                </span>
-                                {isAdminPost && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                    Posted by admin
-                                  </span>
+                                Admin
+                              </span>
+                            )}
+                            <span
+                              className={cn("text-[10px]", isOwnPost ? "text-white/70" : "text-zinc-500")}
+                              title={timestamp.full}
+                            >
+                              {timestamp.display}
+                            </span>
+                            {editedTimestamp && (
+                              <span
+                                className={cn("text-[10px]", isOwnPost ? "text-white/70" : "text-zinc-500")}
+                                title={`Edited: ${editedTimestamp.full}`}
+                              >
+                                · Edited {editedTimestamp.display}
+                              </span>
+                            )}
+                            {hasAttachments && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 text-[10px]",
+                                  isOwnPost ? "text-white/70" : "text-zinc-500"
                                 )}
-                                {post.edited_at && (
-                                  <span
-                                    className={cn(
-                                      "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                                      isOwnPost
-                                        ? "bg-white text-[var(--brand-primary,#2563eb)]"
-                                        : "bg-muted text-muted-foreground"
-                                    )}
-                                  >
-                                    Edited
-                                  </span>
-                                )}
-                                {isRecent && (
-                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                    New
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {hasAttachments && (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium",
-                                    isOwnPost
-                                      ? "bg-white text-[var(--brand-primary,#2563eb)]"
-                                      : "bg-muted text-muted-foreground"
-                                  )}
-                                >
-                                  <Paperclip className="h-3 w-3" />
-                                  {attachments.length}
-                                </span>
-                              )}
-                              <div className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setActiveActionPostId((prev) => (prev === post.id ? null : post.id))
-                                  }
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                                {activeActionPostId === post.id && (
-                                  <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-border/60 bg-white p-2 shadow-xl">
-                                    {["Edit", "Report", "Delete", "Copy link"].map((action) => (
-                                      <button
-                                        key={action}
-                                        type="button"
-                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted/40"
-                                        onClick={() => setActiveActionPostId(null)}
-                                      >
-                                        {action}
-                                        <ChevronRight className="h-3 w-3" />
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                              >
+                                <Paperclip className="h-3 w-3" />
+                                {attachments.length}
+                              </span>
+                            )}
+                            <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 type="button"
-                                onClick={() => togglePostExpansion(post.id)}
-                                aria-expanded={isExpanded}
+                                onClick={() =>
+                                  setActiveActionPostId((prev) => (prev === post.id ? null : post.id))
+                                }
                                 className={cn(
-                                  "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition",
+                                  "inline-flex h-6 w-6 items-center justify-center rounded-full border transition",
                                   isOwnPost
-                                    ? "border-[var(--brand-primary,#2563eb)] text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
-                                    : "border-border/70 text-muted-foreground hover:bg-muted/60"
+                                    ? "border-white/30 text-white hover:bg-white/20"
+                                    : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
                                 )}
                               >
-                                {isExpanded ? "Collapse" : "Expand"}
-                                <ChevronDown
-                                  className={cn(
-                                    "h-4 w-4 transition",
-                                    isExpanded && "rotate-180 text-foreground"
-                                  )}
-                                />
+                                <MoreVertical className="h-3 w-3" />
                               </button>
+                              {activeActionPostId === post.id && (
+                                <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl z-10">
+                                  {["Edit", "Report", "Delete", "Copy link"].map((action) => (
+                                    <button
+                                      key={action}
+                                      type="button"
+                                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50"
+                                      onClick={() => setActiveActionPostId(null)}
+                                    >
+                                      {action}
+                                      <ChevronRight className="h-3 w-3" />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          <div
-                            className={cn(
-                              "relative text-sm leading-relaxed",
-                              isOwnPost ? "text-slate-700" : "text-foreground",
-                              shouldClamp && "max-h-48 overflow-hidden pr-1"
-                            )}
-                          >
-                            <div
-                              className="max-w-none space-y-3 break-words text-sm text-foreground"
-                              dangerouslySetInnerHTML={{ __html: renderableContent }}
-                            />
-                            {shouldClamp && (
-                              <div
-                                className={cn(
-                                  "pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t",
-                                  isOwnPost
-                                    ? "from-white via-white/70 to-transparent"
-                                    : "from-white via-white/60 to-transparent dark:from-background"
-                                )}
-                              />
-                            )}
-                          </div>
-
-                          {hasAttachments && (
+                          {/* Post Content */}
+                          <div className="pt-0.5">
                             <div
                               className={cn(
-                                "space-y-2 rounded-2xl border border-dashed p-3",
-                                isOwnPost
-                                  ? "border-[var(--brand-primary,#2563eb)]/30 bg-white"
-                                  : "border-border/70 bg-muted/40"
+                                "text-sm leading-relaxed break-words forum-content",
+                                isOwnPost ? "text-white" : "text-zinc-900",
+                                shouldClamp && "max-h-32 overflow-hidden relative"
                               )}
                             >
-                              <p
+                              <div
                                 className={cn(
-                                  "text-xs font-semibold uppercase tracking-wide",
-                                  isOwnPost ? "text-[var(--brand-primary,#2563eb)]" : "text-muted-foreground"
+                                  "max-w-none break-words text-sm forum-html-content",
+                                  isOwnPost ? "forum-content-own" : "forum-content-other"
                                 )}
-                              >
-                                Attachments
-                              </p>
-                              <div className="flex flex-wrap gap-2">
+                                dangerouslySetInnerHTML={{ __html: renderableContent }}
+                              />
+                              {shouldClamp && !isExpanded && (
+                                <div
+                                  className={cn(
+                                    "pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t",
+                                    isOwnPost
+                                      ? "from-blue-600 via-blue-600/70 to-transparent"
+                                      : "from-white via-white/60 to-transparent"
+                                  )}
+                                />
+                              )}
+                            </div>
+                            {hasAttachments && (
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
                                 {attachments.map((attachment, index) => (
                                   <a
                                     key={`${post.id}-attachment-${index}`}
@@ -652,61 +616,53 @@ export default function ForumTopicPage() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={cn(
-                                      "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm transition",
+                                      "inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs transition-colors",
                                       isOwnPost
-                                        ? "border-[var(--brand-primary,#2563eb)]/40 text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
-                                        : "border-border/60 text-foreground hover:bg-muted/50"
+                                        ? "border-white/30 text-white hover:bg-white/20"
+                                        : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
                                     )}
                                   >
-                                    <Paperclip
-                                      className={cn(
-                                        "h-4 w-4",
-                                        isOwnPost
-                                          ? "text-[var(--brand-primary,#2563eb)]"
-                                          : "text-muted-foreground"
-                                      )}
-                                    />
+                                    <Paperclip className="h-3 w-3" />
                                     {attachment.name || "Attachment"}
                                   </a>
                                 ))}
                               </div>
-                            </div>
-                          )}
-
-                          {approximateLength > 420 && (
-                            <button
-                              type="button"
-                              onClick={() => togglePostExpansion(post.id)}
-                              className={cn(
-                                "text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)] transition hover:underline",
-                                isOwnPost ? "self-end" : "self-start"
-                              )}
-                            >
-                              {isExpanded ? "Show less" : "Read full reply"}
-                            </button>
-                          )}
-                        </div>
-                      </article>
+                            )}
+                            {approximateLength > 420 && (
+                              <button
+                                type="button"
+                                onClick={() => togglePostExpansion(post.id)}
+                                className={cn(
+                                  "text-[10px] font-medium mt-1 transition hover:underline",
+                                  isOwnPost ? "text-white/80" : "text-zinc-500"
+                                )}
+                              >
+                                {isExpanded ? "Show less" : "Read more"}
+                              </button>
+                            )}
+                          </div>
+                        </article>
+                      </div>
                     </div>
                   );
                 })}
                 <div ref={repliesEndRef} />
               </div>
             )}
+            {totalPages > 1 && (
+              <div className="border-t border-zinc-200 bg-white px-4 py-3 sticky bottom-0">
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  // @ts-expect-error – PaginatedResponse may be array in this branch
+                  total={postsResponse?.total ?? posts.length}
+                  totalPages={totalPages}
+                  resourceLabel="replies"
+                  onChange={setPage}
+                />
+              </div>
+            )}
           </CardContent>
-          {totalPages > 1 && (
-            <div className="border-t border-dashed border-border/60 px-6 py-4">
-              <PaginationBar
-                page={page}
-                pageSize={pageSize}
-                // @ts-expect-error – PaginatedResponse may be array in this branch
-                total={postsResponse?.total ?? posts.length}
-                totalPages={totalPages}
-                resourceLabel="replies"
-                onChange={setPage}
-              />
-            </div>
-          )}
         </Card>
 
         <Card className="border-none shadow-lg shadow-slate-200/60 lg:sticky lg:bottom-4">
@@ -729,13 +685,14 @@ export default function ForumTopicPage() {
                 className="space-y-4"
                 onSubmit={handleCreatePost}
               >
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-2 text-xs text-muted-foreground">
-                    Formatting supported — use bold, italics, lists, quotes, and links to keep conversations clear.
+                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-2 text-xs text-zinc-600">
+                  Formatting supported — use bold, italics, lists, quotes, code blocks, and links to keep conversations clear.
                 </div>
-                  <RichTextEditor
+                <RichTextEditor
                   value={content}
                   onChange={setContent}
                   placeholder="Share an update, ask a follow-up question, or tag a neighbour."
+                  minHeight={180}
                 />
                 <div
                   onDragOver={handleDragOver}
@@ -744,7 +701,7 @@ export default function ForumTopicPage() {
                   className={cn(
                     "rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition",
                     isDragging
-                      ? "border-[var(--brand-primary,#2563eb)] bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]"
+                      ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
                       : "border-border/80 text-muted-foreground"
                   )}
                 >
@@ -752,7 +709,7 @@ export default function ForumTopicPage() {
                   Drag & drop files here or{" "}
                   <button
                     type="button"
-                    className="font-semibold text-[var(--brand-primary,#2563eb)] underline-offset-2 hover:underline"
+                    className="font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
                     onClick={() => attachmentInputRef.current?.click()}
                   >
                     browse
@@ -811,8 +768,8 @@ export default function ForumTopicPage() {
                   <Button
                     type="submit"
                     isLoading={createPost.isPending}
-                      disabled={!canSubmit}
-                      className="hidden lg:inline-flex"
+                    disabled={!canSubmit}
+                    className="hidden lg:inline-flex"
                   >
                     Post reply
                   </Button>
@@ -825,7 +782,7 @@ export default function ForumTopicPage() {
               onClick={handleFloatingSubmit}
               disabled={!canSubmit || createPost.isPending}
               className={cn(
-                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)] text-white shadow-2xl transition lg:hidden",
+                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)] text-white shadow-2xl transition lg:hidden",
                 canSubmit
                   ? "translate-y-0 opacity-100"
                   : "pointer-events-none translate-y-3 opacity-0"
@@ -840,6 +797,161 @@ export default function ForumTopicPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+      <style jsx global>{`
+        /* Forum HTML Content Styling */
+        .forum-html-content {
+          line-height: 1.6;
+        }
+        
+        .forum-html-content p {
+          margin: 0.5em 0;
+        }
+        
+        .forum-html-content p:first-child {
+          margin-top: 0;
+        }
+        
+        .forum-html-content p:last-child {
+          margin-bottom: 0;
+        }
+        
+        .forum-html-content h1,
+        .forum-html-content h2,
+        .forum-html-content h3,
+        .forum-html-content h4,
+        .forum-html-content h5,
+        .forum-html-content h6 {
+          font-weight: 600;
+          margin: 0.75em 0 0.5em 0;
+          line-height: 1.3;
+        }
+        
+        .forum-html-content h1 {
+          font-size: 1.5em;
+        }
+        
+        .forum-html-content h2 {
+          font-size: 1.3em;
+        }
+        
+        .forum-html-content h3 {
+          font-size: 1.1em;
+        }
+        
+        .forum-html-content h4,
+        .forum-html-content h5,
+        .forum-html-content h6 {
+          font-size: 1em;
+        }
+        
+        .forum-html-content ul,
+        .forum-html-content ol {
+          margin: 0.5em 0;
+          padding-left: 1.5em;
+        }
+        
+        .forum-html-content li {
+          margin: 0.25em 0;
+        }
+        
+        .forum-html-content blockquote {
+          margin: 0.75em 0;
+          padding: 0.5em 1em;
+          border-left: 3px solid;
+          font-style: italic;
+        }
+        
+        .forum-html-content code {
+          padding: 0.2em 0.4em;
+          border-radius: 0.25rem;
+          font-size: 0.9em;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .forum-html-content pre {
+          margin: 0.75em 0;
+          padding: 0.75em;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          font-size: 0.9em;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .forum-html-content pre code {
+          padding: 0;
+          background: transparent;
+        }
+        
+        .forum-html-content a {
+          text-decoration: underline;
+          text-underline-offset: 2px;
+          transition: opacity 0.2s;
+        }
+        
+        .forum-html-content a:hover {
+          opacity: 0.8;
+        }
+        
+        /* Own message styling (white text) */
+        .forum-content-own h1,
+        .forum-content-own h2,
+        .forum-content-own h3,
+        .forum-content-own h4,
+        .forum-content-own h5,
+        .forum-content-own h6 {
+          color: white;
+        }
+        
+        .forum-content-own blockquote {
+          border-left-color: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .forum-content-own code {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+        }
+        
+        .forum-content-own pre {
+          background: rgba(255, 255, 255, 0.15);
+          color: white;
+        }
+        
+        .forum-content-own a {
+          color: rgba(255, 255, 255, 0.95);
+        }
+        
+        /* Other messages styling (dark text) */
+        .forum-content-other h1,
+        .forum-content-other h2,
+        .forum-content-other h3,
+        .forum-content-other h4,
+        .forum-content-other h5,
+        .forum-content-other h6 {
+          color: #18181b;
+        }
+        
+        .forum-content-other blockquote {
+          border-left-color: #d4d4d8;
+          background: #f4f4f5;
+          color: #3f3f46;
+        }
+        
+        .forum-content-other code {
+          background: #f4f4f5;
+          color: #18181b;
+        }
+        
+        .forum-content-other pre {
+          background: #f4f4f5;
+          color: #18181b;
+        }
+        
+        .forum-content-other a {
+          color: var(--brand-primary, #213928);
+        }
+      `}</style>
+    </>
   );
 }

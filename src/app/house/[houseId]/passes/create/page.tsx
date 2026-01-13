@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCreateGatePass } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useResident } from "@/hooks/use-resident";
 import { useProfile } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Plus, Trash2, Home as HomeIcon } from "lucide-react";
+import { Home as HomeIcon, ChevronDown, ChevronUp, Users, User, Hash, User2, Mail, Phone } from "lucide-react";
 
 interface Visitor {
   name: string;
@@ -41,13 +39,89 @@ export default function CreatePassPage() {
     }
   }, [routeHouseId, profile?.houses, selectedHouse?.id, setSelectedHouse]);
 
+  // Autofocus first field
+  useEffect(() => {
+    nameInputRef.current?.focus();
+  }, []);
+
+  const [visitorName, setVisitorName] = useState("");
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showCustomDates, setShowCustomDates] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<string | null>("30m");
   const [maxUses, setMaxUses] = useState("");
-  const [visitors, setVisitors] = useState<Visitor[]>([
-    { name: "", email: "", phone: "" },
-  ]);
+  const [visitors, setVisitors] = useState<Visitor[]>([{ name: "", email: "", phone: "" }]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const durations = [
+    { label: "30m", value: "30m", minutes: 30 },
+    { label: "1h", value: "1h", minutes: 60 },
+    { label: "4h", value: "4h", minutes: 240 },
+    { label: "12h", value: "12h", minutes: 720 },
+    { label: "1d", value: "1d", minutes: 1440 },
+  ];
+
+  const formatDateTimeLocal = (date: Date) => {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    return localISOTime;
+  };
+
+  const handleDurationSelect = (duration: { label: string; value: string; minutes: number } | null) => {
+    if (!duration) {
+      setSelectedDuration(null);
+      setShowCustomDates(true);
+      return;
+    }
+
+    setSelectedDuration(duration.value);
+    setShowCustomDates(false);
+
+    const now = new Date();
+    const end = new Date(now.getTime() + duration.minutes * 60000);
+
+    setValidFrom(formatDateTimeLocal(now));
+    setValidTo(formatDateTimeLocal(end));
+    console.log(validFrom, validTo);
+    // Clear date errors when selecting a duration
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next.validFrom;
+      delete next.validTo;
+      return next;
+    });
+  };
+
+  // Initialize default duration on mount
+  useEffect(() => {
+    const defaultDuration = durations[0];
+    handleDurationSelect(defaultDuration);
+  }, []);
+
+  const toggleAdvanced = () => {
+    const nextShowAdvanced = !showAdvanced;
+    setShowAdvanced(nextShowAdvanced);
+
+    if (nextShowAdvanced) {
+      if (visitorName.trim()) {
+        // Prefill the first visitor's name if advanced mode is turned on
+        setVisitors((prev) => {
+          const updated = [...prev];
+          if (updated.length > 0 && !updated[0].name) {
+            updated[0] = { ...updated[0], name: visitorName.trim() };
+          }
+          return updated;
+        });
+      }
+    } else {
+      // Sync back the first visitor's name to the fast-create field when closing advanced mode
+      if (visitors.length > 0 && visitors[0].name) {
+        setVisitorName(visitors[0].name);
+      }
+    }
+  };
 
   const addVisitor = () => {
     setVisitors([...visitors, { name: "", email: "", phone: "" }]);
@@ -70,16 +144,20 @@ export default function CreatePassPage() {
 
     // Validation
     const newErrors: Record<string, string> = {};
+    if (!showAdvanced && !visitorName.trim()) newErrors.visitorName = "Visitor name is required";
     if (!validFrom) newErrors.validFrom = "Start date is required";
     if (!validTo) newErrors.validTo = "End date is required";
     if (validFrom && validTo && new Date(validFrom) >= new Date(validTo)) {
       newErrors.validTo = "End date must be after start date";
     }
 
-    visitors.forEach((visitor, index) => {
-      if (!visitor.name) newErrors[`visitor_${index}_name`] = "Name is required";
-      if (!visitor.email) newErrors[`visitor_${index}_email`] = "Email is required";
-    });
+    // Advanced mode validation
+    if (showAdvanced) {
+      visitors.forEach((visitor, index) => {
+        if (!visitor.name) newErrors[`visitor_${index}_name`] = "Name is required";
+        if (!visitor.email) newErrors[`visitor_${index}_email`] = "Email is required";
+      });
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -90,6 +168,11 @@ export default function CreatePassPage() {
       return;
     }
 
+    // Use fast mode data or advanced mode data
+    const visitorData = showAdvanced
+      ? visitors.filter(v => v.name && v.email)
+      : [{ name: visitorName, email: "", phone: "" }];
+
     createPassMutation.mutate(
       {
         resident_id: resident.id,
@@ -97,7 +180,7 @@ export default function CreatePassPage() {
         valid_from: new Date(validFrom).toISOString(),
         valid_to: new Date(validTo).toISOString(),
         max_uses: maxUses ? parseInt(maxUses) : undefined,
-        visitors: visitors.filter(v => v.name && v.email),
+        visitors: visitorData,
       },
       {
         onSuccess: (response) => {
@@ -114,144 +197,214 @@ export default function CreatePassPage() {
 
   if (!houseId) {
     return (
-      <DashboardLayout type="resident">
-        <Card>
-          <CardContent className="p-10">
-            <EmptyState
-              icon={HomeIcon}
-              title="Select a house to continue"
-              description="Choose a house from the dashboard selector before creating a pass."
-              action={{
-                label: "Choose House",
-                onClick: () => router.push("/select"),
-              }}
-            />
-          </CardContent>
-        </Card>
-      </DashboardLayout>
+      <>
+        <div className="border border-zinc-200 rounded bg-white p-8">
+          <EmptyState
+            icon={HomeIcon}
+            title="Select a house to continue"
+            description="Choose a house from the dashboard selector before creating a pass."
+            action={{
+              label: "Choose House",
+              onClick: () => router.push("/select"),
+            }}
+          />
+        </div>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="resident">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Create Visitor Pass</h1>
-          <p className="text-muted-foreground">
-            Generate a new pass for your visitors
-          </p>
+    <>
+      <div className="max-w-2xl mx-auto px-4 md:px-0">
+        {/* Compact Header */}
+        <div className="border-b border-zinc-200 pb-3 mb-4 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-zinc-900">Create Pass</h1>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Pass Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Fast Mode: Essential Fields Only */}
+          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
+            <div className="p-4 space-y-4">
+              {!showAdvanced && (
                 <Input
-                  type="datetime-local"
-                  label="Valid From"
-                  value={validFrom}
-                  onChange={(e) => setValidFrom(e.target.value)}
-                  error={errors.validFrom}
+                  ref={nameInputRef}
+                  label="Visitor Name"
+                  placeholder="e.g. John Doe"
+                  icon={Users}
+                  value={visitorName}
+                  onChange={(e) => setVisitorName(e.target.value)}
+                  error={errors.visitorName}
                 />
-                <Input
-                  type="datetime-local"
-                  label="Valid To"
-                  value={validTo}
-                  onChange={(e) => setValidTo(e.target.value)}
-                  error={errors.validTo}
-                />
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Pass Duration</label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {durations.map((d) => (
+                    <button
+                      key={d.value}
+                      type="button"
+                      onClick={() => handleDurationSelect(d)}
+                      className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${selectedDuration === d.value
+                        ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
+                        : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                        }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleDurationSelect(null)}
+                    className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${showCustomDates
+                      ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
+                      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                      }`}
+                  >
+                    Custom
+                  </button>
+                </div>
               </div>
 
-              {/* Max Uses */}
-              <Input
-                type="number"
-                label="Max Uses (Optional)"
-                placeholder="Unlimited if not specified"
-                value={maxUses}
-                onChange={(e) => setMaxUses(e.target.value)}
-                min="1"
-              />
+              {showCustomDates && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-zinc-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <Input
+                    id="validFrom"
+                    type="datetime-local"
+                    label="Valid From"
+                    value={validFrom}
+                    onChange={(e) => setValidFrom(e.target.value)}
+                    error={errors.validFrom}
+                  />
+                  <Input
+                    id="validTo"
+                    type="datetime-local"
+                    label="Valid To"
+                    value={validTo}
+                    onChange={(e) => setValidTo(e.target.value)}
+                    error={errors.validTo}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
-              {/* Visitors */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Visitors</h3>
-                  <Button type="button" size="sm" onClick={addVisitor}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Visitor
-                  </Button>
+          {/* Advanced Options (Collapsed) */}
+          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleAdvanced}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-50/50 transition-colors font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded bg-zinc-100 text-zinc-500">
+                  {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </span>
+                <span>Advanced Options</span>
+                {!showAdvanced && <span className="text-[10px] text-zinc-400 font-normal ml-1">(multiple visitors, uses)</span>}
+              </div>
+            </button>
+            {showAdvanced && (
+              <div className="border-t border-zinc-100 p-4 space-y-6 bg-zinc-50/30">
+                <div className="max-w-xs">
+                  <Input
+                    type="number"
+                    label="Max Uses"
+                    placeholder="Unlimited"
+                    icon={Hash}
+                    value={maxUses}
+                    onChange={(e) => setMaxUses(e.target.value)}
+                    min="1"
+                  />
                 </div>
 
-                {visitors.map((visitor, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">Visitor {index + 1}</h4>
-                        {visitors.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeVisitor(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      <Input
-                        label="Name"
-                        placeholder="John Doe"
-                        value={visitor.name}
-                        onChange={(e) =>
-                          updateVisitor(index, "name", e.target.value)
-                        }
-                        error={errors[`visitor_${index}_name`]}
-                      />
-                      <Input
-                        type="email"
-                        label="Email"
-                        placeholder="john@example.com"
-                        value={visitor.email}
-                        onChange={(e) =>
-                          updateVisitor(index, "email", e.target.value)
-                        }
-                        error={errors[`visitor_${index}_email`]}
-                      />
-                      <Input
-                        type="tel"
-                        label="Phone (Optional)"
-                        placeholder="+1234567890"
-                        value={visitor.phone}
-                        onChange={(e) =>
-                          updateVisitor(index, "phone", e.target.value)
-                        }
-                      />
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Visitor Details</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addVisitor}
+                      className="h-8 text-xs font-medium border-zinc-300"
+                    >
+                      + Add Visitor
+                    </Button>
+                  </div>
 
-              {/* Actions */}
-              <div className="flex gap-4 justify-end pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" isLoading={createPassMutation.isPending}>
-                  Create Pass
-                </Button>
+                  <div className="space-y-4">
+                    {visitors.map((visitor, index) => (
+                      <div key={index} className="border border-zinc-200 rounded-lg p-4 space-y-4 bg-white shadow-sm relative group">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-zinc-400">VISITOR #{index + 1}</span>
+                          {visitors.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeVisitor(index)}
+                              className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors bg-red-50 px-2 py-1 rounded"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                          <Input
+                            label="Name"
+                            placeholder="Full Name"
+                            value={visitor.name}
+                            icon={User2}
+                            onChange={(e) => updateVisitor(index, "name", e.target.value)}
+                            error={errors[`visitor_${index}_name`]}
+                          />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Input
+                              type="email"
+                              label="Email"
+                              placeholder="email@example.com"
+                              icon={Mail}
+                              value={visitor.email}
+                              onChange={(e) => updateVisitor(index, "email", e.target.value)}
+                              error={errors[`visitor_${index}_email`]}
+                            />
+                            <Input
+                              type="tel"
+                              label="Phone"
+                              icon={Phone}
+                              placeholder="Optional"
+                              value={visitor.phone}
+                              onChange={(e) => updateVisitor(index, "phone", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              className="px-6 h-10 text-zinc-600 font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              id="submitBtn"
+              type="submit"
+              isLoading={createPassMutation.isPending}
+              className="px-8 h-10 bg-[rgb(var(--brand-primary))] text-white font-medium shadow-md hover:bg-zinc-800 transition-all ring-offset-2 active:scale-[0.98]"
+            >
+              Create Pass
+            </Button>
+          </div>
         </form>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

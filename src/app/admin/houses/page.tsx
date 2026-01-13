@@ -1,315 +1,552 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useAdminHouses, useCreateHouse, useImportHouses } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useRef, useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useAdminHouses,
+  useCreateHouse,
+  useUpdateHouse,
+  useDeleteHouse,
+  useBulkDeleteHouses,
+  useBulkToggleHouseActive,
+  useImportHouses,
+  useAdminHouseGroups
+} from "@/hooks/use-admin";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import { Plus, Building2 } from "lucide-react";
+import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { Plus, Building2, Trash2, Edit, CheckCircle, Eye, Upload } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
-import { ImportResponse } from "@/types";
-import { House } from "@/types";
+import { ImportResponse, House } from "@/types";
+import { HouseForm, HouseFormData } from "./components/HouseForm";
 
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function HousesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  // URL query sync
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config: {
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      status: { defaultValue: undefined },
+      houseGroupId: { defaultValue: undefined },
+      sort: { defaultValue: null },
+    },
+    skipInitialSync: true,
+  });
+
+  // Initialize state from URL
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
+  const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() => initializeFromUrl("houseGroupId"));
+  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
+  const [houseToDelete, setHouseToDelete] = useState<House | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    address: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedHouses, setSelectedHouses] = useState<Set<string>>(new Set());
   const importFormRef = useRef<HTMLFormElement>(null);
+
+  // Mutations
+  const createHouseMutation = useCreateHouse();
+  const updateHouseMutation = useUpdateHouse();
+  const deleteHouseMutation = useDeleteHouse();
+  const bulkDeleteMutation = useBulkDeleteHouses();
+  const bulkToggleActiveMutation = useBulkToggleHouseActive();
+  const importHousesMutation = useImportHouses();
+
+  // Sync state to URL
+  useEffect(() => {
+    syncToUrl({ page, pageSize, search, status, houseGroupId, sort });
+  }, [page, pageSize, search, status, houseGroupId, sort, syncToUrl]);
+
+  // Build filterable fields from payload
+  const filterableFields = useMemo(() => {
+    const fields: Array<{ field: string; operator?: "eq"; value?: string | boolean }> = [];
+    if (status) {
+      fields.push({
+        field: "is_active",
+        operator: "eq",
+        value: status === "true"
+      });
+    }
+    if (houseGroupId) {
+      fields.push({
+        field: "house_group_id",
+        operator: "eq",
+        value: houseGroupId
+      });
+    }
+    return fields;
+  }, [status, houseGroupId]);
+
+  const { data, isLoading, isFetching } = useAdminHouses({
+    page,
+    pageSize,
+    search: search.trim() || undefined,
+    filters: formatFiltersForAPI(
+      filterableFields.map((f) => ({
+        field: f.field,
+        operator: f.operator || "eq",
+        value: f.value!,
+      }))
+    ),
+    sort: sort || undefined,
+  });
+
+  // Fetch house groups for filter
+  const { data: houseGroupsData } = useAdminHouseGroups({
+    page: 1,
+    pageSize: 100,
+  });
+
+  const houses = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const houseGroups = houseGroupsData?.items ?? [];
+
   const handleCloseImportModal = () => {
     setIsImportModalOpen(false);
     setImportFile(null);
     importFormRef.current?.reset();
   };
 
-  const { data, isLoading, isFetching } = useAdminHouses({
-    page,
-    pageSize: PAGE_SIZE,
-    search: search.trim() || undefined,
-  });
-  const createHouseMutation = useCreateHouse();
-  const importHousesMutation = useImportHouses();
-  const houses = data?.items ?? [];
-  const totalPages = data?.total_pages ?? 1;
-  const pageSize = data?.page_size ?? PAGE_SIZE;
-  const showPagination = (data?.total_pages ?? 0) > 1;
-
-  const handlePageChange = (nextPage: number) => {
-    const safeMax = Math.max(totalPages, 1);
-    const safePage = Math.min(Math.max(nextPage, 1), safeMax);
-    setPage(safePage);
+  const handleCreateSubmit = (data: HouseFormData) => {
+    createHouseMutation.mutate(
+      data as any,
+      {
+        onSuccess: () => {
+          setIsCreateModalOpen(false);
+        },
+      }
+    );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = (data: HouseFormData) => {
+    if (!selectedHouse) return;
+
+    updateHouseMutation.mutate(
+      {
+        houseId: selectedHouse.id,
+        data: data as any,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setSelectedHouse(null);
+        },
+      }
+    );
+  };
+
+  const handleEdit = (house: House) => {
+    setSelectedHouse(house);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (house: House) => {
+    setHouseToDelete(house);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (houseToDelete) {
+      deleteHouseMutation.mutate(houseToDelete.id, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setHouseToDelete(null);
+        },
+      });
+    }
+  };
+
+  const handleImportSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
-    const newErrors: Record<string, string> = {};
-    if (!formData.name) newErrors.name = "Name is required";
-    if (!formData.address) newErrors.address = "Address is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!importFile) {
+      toast.error("Please select a file to import");
       return;
     }
 
-    createHouseMutation.mutate(formData, {
-      onSuccess: () => {
-        setIsCreateModalOpen(false);
-        setFormData({ name: "", description: "", address: "" });
-        setErrors({});
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    importHousesMutation.mutate(formData, {
+      onSuccess: (response) => {
+        setImportSummary(response.data);
+        toast.success("Houses imported successfully!");
       },
     });
   };
+
+  // Bulk actions
+  const handleBulkDelete = (selectedIds: string[]) => {
+    bulkDeleteMutation.mutate(selectedIds, {
+      onSuccess: () => {
+        setSelectedHouses(new Set());
+      },
+    });
+  };
+
+  const handleBulkToggleActive = (selectedIds: string[]) => {
+    bulkToggleActiveMutation.mutate(selectedIds, {
+      onSuccess: () => {
+        setSelectedHouses(new Set());
+      },
+    });
+  };
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Toggle Active",
+      icon: CheckCircle,
+      onClick: handleBulkToggleActive,
+      variant: "outline",
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: "destructive",
+      requiresConfirmation: true,
+    },
+  ];
 
   const columns: Column<House>[] = [
     {
       key: "name",
       header: "Name",
       sortable: true,
-      filterable: true,
-      className: "font-medium",
+      accessor: (row) => (
+        <button
+          onClick={() => router.push(`/admin/houses/${row.id}`)}
+          className="font-medium text-primary hover:underline text-left"
+        >
+          {row.name}
+        </button>
+      ),
     },
     {
       key: "address",
       header: "Address",
       sortable: true,
-      filterable: true,
+      accessor: (row) => row.address || "-",
     },
     {
       key: "description",
       header: "Description",
+      sortable: false,
+      accessor: (row) => row.description || "-",
+    },
+    {
+      key: "house_groups",
+      header: "Groups",
+      sortable: false,
+      filterable: true,
+      filterType: "select",
+      filterOptions: houseGroups.map((group) => ({
+        value: group.id,
+        label: group.name,
+      })),
+      accessor: (row) => {
+        const count = row.house_groups?.length || 0;
+        return (
+          <span className="text-sm">
+            {count} groups{count !== 1 ? "s" : ""}
+          </span>
+        )
+      },
+    },
+    {
+      key: "is_active",
+      header: "Status",
       sortable: true,
       filterable: true,
-      accessor: (row) => row.description || "-",
+      filterType: "select",
+      filterOptions: [
+        { value: "true", label: "Active" },
+        { value: "false", label: "Inactive" },
+      ],
+      accessor: (row) => (
+        <span className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}>
+          {(row as any).is_active ? "Active" : "Inactive"}
+        </span>
+      ),
     },
     {
       key: "created_at",
       header: "Created",
       sortable: true,
+      accessor: (row) => formatDate(row.created_at),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sortable: false,
       accessor: (row) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(row.created_at)}
-        </span>
+        <div className="flex gap-2 justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/houses/${row.id}`)}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(row)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row)}
+            disabled={deleteHouseMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Houses</h1>
-            <p className="text-muted-foreground">Manage properties in your estate</p>
+            <h1 className="text-2xl font-bold">Houses</h1>
+            <p className="text-muted-foreground">
+              Manage houses in the system
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
-              Bulk Import
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsImportModalOpen(true)}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import Houses
             </Button>
             <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create House
+              <Plus className="mr-2 h-4 w-4" />
+              Add House
             </Button>
           </div>
         </div>
 
         <Card>
-          <CardContent className="space-y-6 p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-                placeholder="Search houses..."
-                className="md:w-1/2"
-              />
-            </div>
-
+          <CardContent className="p-6">
             {isLoading ? (
               <TableSkeleton />
-            ) : !houses || houses.length === 0 ? (
+            ) : !houses || houses.length === 0 && !search && !status && !houseGroupId ? (
               <EmptyState
                 icon={Building2}
                 title="No houses yet"
-                description="Create your first house to get started"
+                description="Get started by adding your first house"
                 action={{
-                  label: "Create House",
+                  label: "Add House",
                   onClick: () => setIsCreateModalOpen(true),
                 }}
               />
             ) : (
-              <>
-                <DataTable
-                  data={houses}
-                  columns={columns}
-                  searchable={false}
-                  showPagination={false}
-                  emptyMessage="No houses found"
-                />
-                {showPagination && (
-                  <PaginationBar
-                    page={page}
-                    pageSize={pageSize}
-                    total={data?.total ?? houses.length}
-                    totalPages={totalPages}
-                    hasNext={data?.has_next}
-                    hasPrevious={data?.has_previous}
-                    resourceLabel="houses"
-                    onChange={handlePageChange}
-                    isFetching={isFetching}
-                    className="mt-6"
-                  />
-                )}
-              </>
+              <DataTable
+                data={houses}
+                columns={columns}
+                searchable={true}
+                searchPlaceholder="Search houses..."
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
+                showPagination={true}
+                emptyMessage="No houses found"
+                serverSide={true}
+                total={total}
+                currentPage={page}
+                onPageChange={setPage}
+                externalSearch={search}
+                onSearchChange={(value) => {
+                  setPage(1);
+                  setSearch(value);
+                }}
+                filterableFields={filterableFields}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  // Extract filter values from filters and explicitly clear if not found
+                  const isActiveFilter = filters.find(f => f.field === "is_active");
+                  const houseGroupFilter = filters.find(f => f.field === "house_group_id");
+
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setStatus(isActiveFilter?.value as string | undefined || undefined);
+                  setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
+                }}
+                onSortChange={(newSort) => {
+                  setPage(1);
+                  setSort(newSort);
+                }}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
+                selectable={true}
+                selectedRows={selectedHouses}
+                onSelectionChange={setSelectedHouses}
+                bulkActions={bulkActions}
+              />
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Import Houses Modal */}
-      <Modal
-        isOpen={isImportModalOpen}
-        onClose={handleCloseImportModal}
-        title="Bulk Import Houses"
-      >
-        <form
-          ref={importFormRef}
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!importFile) {
-              toast.error("Please select a CSV file to import.");
-              return;
-            }
-            const formData = new FormData();
-            formData.append("file", importFile);
-            importHousesMutation.mutate(formData, {
-              onSuccess: (response) => {
-                setImportSummary(response.data);
-                setImportFile(null);
-                importFormRef.current?.reset();
-                setIsImportModalOpen(false);
-              },
-            });
-          }}
-        >
-          <p className="text-sm text-muted-foreground">
-            Upload a CSV file with columns{" "}
-            <code className="rounded bg-muted px-1">name</code>,{" "}
-            <code className="rounded bg-muted px-1">address</code>, and optional{" "}
-            <code className="rounded bg-muted px-1">description</code>. You can use the
-            template below as a guide.
-          </p>
-          <pre className="rounded-lg bg-muted p-3 text-xs">
-{`name,address,description
-Oak Villa,12 Creek Lane,Luxury duplex
-Maple Court,44 Sunset Ave,`}
-          </pre>
-          <Input
-            type="file"
-            accept=".csv"
-            onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
-          />
-          {importFile && (
-            <p className="text-xs text-muted-foreground">
-              Selected file: {importFile.name}
-            </p>
-          )}
-          <div className="flex items-center justify-between">
-            <Button type="button" variant="ghost" onClick={handleCloseImportModal}>
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={importHousesMutation.isPending}>
-              Import Houses
-            </Button>
-          </div>
-          {importSummary && (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm">
-              <p className="font-semibold text-foreground">Last import</p>
-              <p>
-                {importSummary.successful} of {importSummary.total} succeeded.
-              </p>
-              {importSummary.failed > 0 && (
-                <p className="text-destructive">
-                  {importSummary.failed} item(s) failed. Review the server logs for
-                  details.
-                </p>
-              )}
-            </div>
-          )}
-        </form>
-      </Modal>
-
-      {/* Create House Modal */}
+      {/* Create Modal */}
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Create New House"
+        onClose={() => {
+          setIsCreateModalOpen(false);
+        }}
+        title="Add New House"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="House Name"
-            placeholder="Villa 123"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            error={errors.name}
+        <HouseForm
+          onSubmit={handleCreateSubmit}
+          onCancel={() => setIsCreateModalOpen(false)}
+          isLoading={createHouseMutation.isPending}
+          houseGroups={houseGroups}
+        />
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedHouse(null);
+        }}
+        title="Edit House"
+      >
+        {selectedHouse && (
+          <HouseForm
+            initialData={{
+              name: selectedHouse.name,
+              address: selectedHouse.address || "",
+              description: selectedHouse.description || "",
+              house_group_ids: Array.isArray((selectedHouse as any).house_group_ids) ? (selectedHouse as any).house_group_ids : [],
+            }}
+            onSubmit={handleEditSubmit}
+            onCancel={() => {
+              setIsEditModalOpen(false);
+              setSelectedHouse(null);
+            }}
+            isLoading={updateHouseMutation.isPending}
+            houseGroups={houseGroups}
           />
-          <Input
-            label="Address"
-            placeholder="123 Main Street"
-            value={formData.address}
-            onChange={(e) =>
-              setFormData({ ...formData, address: e.target.value })
-            }
-            error={errors.address}
-          />
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Description (Optional)
-            </label>
-            <textarea
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="Additional details about the house"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-            />
-          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setHouseToDelete(null);
+        }}
+        title="Delete House"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete <strong>{houseToDelete?.name}</strong>?
+            This action cannot be undone.
+          </p>
           <div className="flex gap-4 justify-end pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreateModalOpen(false)}
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setHouseToDelete(null);
+              }}
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={createHouseMutation.isPending}>
-              Create House
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              isLoading={deleteHouseMutation.isPending}
+            >
+              Delete House
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Import Modal */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={handleCloseImportModal}
+        title="Import Houses"
+      >
+        <form ref={importFormRef} onSubmit={handleImportSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Upload CSV File
+            </label>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              className="w-full"
+            />
+          </div>
+
+          {importSummary && (
+            <div className="p-4 bg-muted rounded-md">
+              <p className="text-sm">
+                <strong>Import Summary:</strong>
+              </p>
+              <p className="text-sm">Total: {importSummary.total}</p>
+              <p className="text-sm text-green-600">
+                Success: {importSummary.successful}
+              </p>
+              {importSummary.failed > 0 && (
+                <p className="text-sm text-destructive">
+                  Failed: {importSummary.failed}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-4 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseImportModal}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={importHousesMutation.isPending}
+              disabled={!importFile}
+            >
+              Import
             </Button>
           </div>
         </form>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

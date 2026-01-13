@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { adminService } from "@/services/admin-service";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -223,17 +222,17 @@ export default function PluginsPage() {
   const categories = Array.from(new Set(plugins.map((p) => p.category)));
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Extend Functionality
               </div>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-slate-900">
+              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-foreground">
                 Plugins
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
@@ -243,7 +242,7 @@ export default function PluginsPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-slate-900">
+                  <div className="text-2xl font-bold text-foreground">
                     {enabledCount}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -252,7 +251,7 @@ export default function PluginsPage() {
                 </div>
                 <div className="h-10 w-px bg-border" />
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-slate-900">
+                  <div className="text-2xl font-bold text-foreground">
                     {plugins.length}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -310,7 +309,7 @@ export default function PluginsPage() {
               return (
                 <Card
                   key={plugin.id}
-                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#2563eb)]/50 hover:shadow-lg"
+                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#213928)]/50 hover:shadow-lg"
                 >
                   {/* Plugin Image/Icon Area */}
                   <div
@@ -387,7 +386,7 @@ export default function PluginsPage() {
                         </div>
                       </div>
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#2563eb)]/10 group-hover:text-[var(--brand-primary,#2563eb)]">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#213928)]/10 group-hover:text-[var(--brand-primary,#213928)]">
                           <Icon className="h-5 w-5" />
                         </div>
                       </div>
@@ -403,8 +402,8 @@ export default function PluginsPage() {
                       <button
                         onClick={() => handleTogglePlugin(plugin.id)}
                         disabled={togglePluginMutation.isPending}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#2563eb)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
-                          ? "bg-[var(--brand-primary,#2563eb)]"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#213928)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
+                          ? "bg-[var(--brand-primary,#213928)]"
                           : "bg-gray-200"
                           }`}
                         role="switch"
@@ -507,7 +506,7 @@ export default function PluginsPage() {
                       key={index}
                       className="flex items-start gap-2 text-sm text-slate-600"
                     >
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary,#2563eb)] flex-shrink-0" />
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary,#213928)] flex-shrink-0" />
                       {useCase}
                     </li>
                   ))}
@@ -563,7 +562,7 @@ export default function PluginsPage() {
                 {isLoadingSettings ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
-                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary,#2563eb)] border-t-transparent rounded-full animate-spin" />
+                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary,#213928)] border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-muted-foreground">Loading settings...</p>
                     </div>
                   </div>
@@ -592,7 +591,7 @@ export default function PluginsPage() {
                                 )
                               }
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                ? "bg-[var(--brand-primary,#2563eb)]"
+                                ? "bg-[var(--brand-primary,#213928)]"
                                 : "bg-gray-300"
                                 }`}
                             >
@@ -659,7 +658,7 @@ export default function PluginsPage() {
                                 )
                               }
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                ? "bg-[var(--brand-primary,#2563eb)]"
+                                ? "bg-[var(--brand-primary,#213928)]"
                                 : "bg-gray-300"
                                 }`}
                             >
@@ -714,7 +713,7 @@ export default function PluginsPage() {
                     Documentation
                   </Button>
                   <Button
-                    className="gap-2 bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/90"
+                    className="gap-2 bg-[rgb(var(--brand-primary))] hover:bg-[rgb(var(--brand-primary)/0.9)]0"
                     onClick={handleSaveConfig}
                     disabled={updateSettingsMutation.isPending || isLoadingSettings}
                   >
@@ -727,6 +726,6 @@ export default function PluginsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </ >
   );
 }

@@ -1,31 +1,173 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAdminDashboard } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
-import { CardSkeleton } from "@/components/ui/Skeleton";
-import { Building2, Users, CreditCard, Activity, ArrowUpRight, ShieldCheck, Sparkles } from "lucide-react";
 import { GatePassStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { formatDate, getFullName, getInitials } from "@/lib/utils";
+import { formatDate, getFullName } from "@/lib/utils";
+import {
+  Building2,
+  Users,
+  CreditCard,
+  Activity,
+  ArrowUpRight,
+  PieChartIcon,
+  UserPlus,
+} from "lucide-react";
+
+// Lazy load the charts component
+const DashboardCharts = dynamic(
+  () => import("./components/DashboardCharts"),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border border-zinc-200 rounded-lg h-[280px] bg-zinc-50 animate-pulse" />
+        ))}
+      </div>
+    ),
+    ssr: false, // Charts are client-side only
+  }
+);
+
+const COLORS = {
+  primary: "#3b82f6",
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+  purple: "#8b5cf6",
+  zinc: "#71717a",
+};
+
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-[var(--brand-primary)] bg-white px-3 py-2 text-sm shadow-lg">
+      <p className="font-semibold text-[var(--brand-primary)] mb-1">{label}</p>
+      {payload.map((item: any, idx: number) => (
+        <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
+          <span className="flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: item.color }}
+            />
+            {item.name}
+          </span>
+          <span className="font-medium text-[var(--brand-primary)]">{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   const { data: dashboard, isLoading } = useAdminDashboard();
   const router = useRouter();
 
+  // Process data for charts
+  const chartData = useMemo(() => {
+    if (!dashboard) return null;
+
+    const gatePasses = dashboard.gate_passes || [];
+    const gateEvents = dashboard.gate_events || [];
+
+    // Gate pass status distribution
+    const statusCounts = {
+      [GatePassStatus.CHECKED_IN]: gatePasses.filter((p) => p.status === GatePassStatus.CHECKED_IN).length,
+      [GatePassStatus.CHECKED_OUT]: gatePasses.filter((p) => p.status === GatePassStatus.CHECKED_OUT).length,
+      [GatePassStatus.PENDING]: gatePasses.filter((p) => p.status === GatePassStatus.PENDING).length,
+      [GatePassStatus.EXPIRED]: gatePasses.filter((p) => p.status === GatePassStatus.EXPIRED).length,
+      [GatePassStatus.COMPLETED]: gatePasses.filter((p) => p.status === GatePassStatus.COMPLETED).length,
+      [GatePassStatus.REVOKED]: gatePasses.filter((p) => p.status === GatePassStatus.REVOKED).length,
+    };
+
+    const statusChartData = [
+      { name: "Checked In", value: statusCounts[GatePassStatus.CHECKED_IN], color: COLORS.success },
+      { name: "Checked Out", value: statusCounts[GatePassStatus.CHECKED_OUT], color: COLORS.zinc },
+      { name: "Pending", value: statusCounts[GatePassStatus.PENDING], color: COLORS.warning },
+      { name: "Expired", value: statusCounts[GatePassStatus.EXPIRED], color: COLORS.danger },
+      { name: "Completed", value: statusCounts[GatePassStatus.COMPLETED], color: COLORS.primary },
+      { name: "Revoked", value: statusCounts[GatePassStatus.REVOKED], color: "#6b7280" },
+    ].filter((item) => item.value > 0);
+
+    // Gate events by hour (last 24 hours)
+    const now = new Date();
+    const hours = Array.from({ length: 24 }, (_, i) => {
+      const hour = new Date(now);
+      hour.setHours(hour.getHours() - (23 - i));
+      hour.setMinutes(0);
+      hour.setSeconds(0);
+      return hour;
+    });
+
+    const eventsByHour = hours.map((hour) => {
+      const hourStart = hour.getTime();
+      const hourEnd = hourStart + 3600000;
+      const checkins = gateEvents.filter((event) => {
+        const eventTime = new Date(event.checkin_time).getTime();
+        return eventTime >= hourStart && eventTime < hourEnd;
+      }).length;
+      const checkouts = gateEvents.filter((event) => {
+        if (!event.checkout_time) return false;
+        const eventTime = new Date(event.checkout_time).getTime();
+        return eventTime >= hourStart && eventTime < hourEnd;
+      }).length;
+      return {
+        hour: hour.getHours(),
+        label: hour.toLocaleTimeString("en-US", { hour: "numeric", hour12: true }),
+        checkins,
+        checkouts,
+      };
+    });
+
+    // Recent activity trend (last 7 days)
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      date.setHours(0, 0, 0, 0);
+      return date;
+    });
+
+    const activityTrend = days.map((date) => {
+      const dateStart = date.getTime();
+      const dateEnd = dateStart + 86400000;
+      const checkins = gateEvents.filter((event) => {
+        const eventTime = new Date(event.checkin_time).getTime();
+        return eventTime >= dateStart && eventTime < dateEnd;
+      }).length;
+      const checkouts = gateEvents.filter((event) => {
+        if (!event.checkout_time) return false;
+        const eventTime = new Date(event.checkout_time).getTime();
+        return eventTime >= dateStart && eventTime < dateEnd;
+      }).length;
+      return {
+        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        checkins,
+        checkouts,
+      };
+    });
+
+    return {
+      statusChartData,
+      eventsByHour,
+      activityTrend,
+    };
+  }, [dashboard]);
 
   if (isLoading) {
     return (
-      <DashboardLayout type="admin">
-        <div className="grid gap-4 md:grid-cols-4">
-          <CardSkeleton />
-          <CardSkeleton />
-          <CardSkeleton />
-          <CardSkeleton />
+      <>
+        <div className="space-y-4">
+          <div className="h-16 border border-[var(--brand-primary)] bg-foreground animate-pulse rounded" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 border border-[var(--brand-primary)] bg-foreground animate-pulse rounded" />
+            ))}
+          </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -35,237 +177,250 @@ export default function AdminDashboardPage() {
   const totalResidents = dashboard?.residents?.length || 0;
   const totalHouses = dashboard?.houses?.length || 0;
   const totalGatePasses = dashboard?.gate_passes?.length || 0;
-  const totalGateEvents = dashboard?.gate_events?.length || 0;
-  const activeGatePasses = dashboard?.gate_passes?.filter(p => p.status === GatePassStatus.CHECKED_IN).length || 0;
+  const totalCheckins = dashboard?.gate_events?.length || 0;
+  const totalCheckouts = dashboard?.gate_events?.filter((e) => e.checkout_time).length || 0;
+  const totalGateScans = totalCheckins + totalCheckouts;
+  const activeGatePasses = dashboard?.gate_passes?.filter((p) => p.status === GatePassStatus.CHECKED_IN).length || 0;
+  const passUtilization = totalGatePasses ? Math.round((activeGatePasses / totalGatePasses) * 100) : 0;
+  const avgResidentsPerHouse = totalHouses ? Math.round(totalResidents / totalHouses) : 0;
 
   return (
-    <DashboardLayout type="admin">
-      <div className="space-y-6">
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/10 via-white to-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#2563eb)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#2563eb)]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Control Tower
-              </div>
-              <h1 className="mt-3 text-2xl sm:text-xl font-bold text-slate-900">Admin Dashboard</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Monitor occupancy, visitor activity, and admin operations in real time.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 xs:flex-row">
-              <Button variant="outline" onClick={() => router.push("/admin/analytics")}>
-                View analytics
-              </Button>
-              <Button
-                type="button"
-                className="border-[var(--brand-primary,#2563eb)] gap-2 text-white bg-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)/90]"
-                onClick={() => router.push("/admin/admins/create")}
-              >
-                Onboard admin
-                <ArrowUpRight className="h-4 w-4" />
-              </Button>
-            </div>
+    < >
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Admin Dashboard</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">System overview and operations</p>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                title: "Houses",
-                value: totalHouses,
-                description: "Managed properties",
-                icon: Building2,
-                accentStart: "rgba(56,189,248,0.22)",
-                accentEnd: "rgba(56,189,248,0.08)",
-              },
-              {
-                title: "Residents",
-                value: totalResidents,
-                description: "Active profiles",
-                icon: Users,
-                accentStart: "rgba(167,139,250,0.22)",
-                accentEnd: "rgba(167,139,250,0.08)",
-              },
-              {
-                title: "Active Passes",
-                value: activeGatePasses,
-                description: `${totalGatePasses} total issued`,
-                icon: CreditCard,
-                accentStart: "rgba(251,191,36,0.22)",
-                accentEnd: "rgba(251,191,36,0.08)",
-              },
-              {
-                title: "Gate Events",
-                value: totalGateEvents,
-                description: "Latest scans",
-                icon: Activity,
-                accentStart: "rgba(16,185,129,0.22)",
-                accentEnd: "rgba(16,185,129,0.08)",
-              },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <Card
-                  key={item.title}
-                  className="border-none bg-gradient-to-br shadow-none"
-                  style={{
-                    backgroundImage: `linear-gradient(135deg, ${item.accentStart}, ${item.accentEnd})`,
-                  }}
-                >
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
-                    <span className="rounded-full bg-white/80 p-2 text-[var(--brand-primary,#2563eb)] shadow-sm">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-semibold text-slate-900">{item.value}</div>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/admin/analytics")}
+              className="text-xs h-8"
+            >
+              <PieChartIcon className="h-4 w-4 mr-2" />
+              Analytics
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => router.push("/admin/admins/create")}
+              className="text-xs h-8"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Onboard Admin
+            </Button>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-dashed">
-            <CardHeader className="space-y-1">
-              <CardTitle>Operational insight</CardTitle>
-              <CardDescription>Live snapshot of access flow</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center justify-between rounded-2xl border bg-muted/60 px-4 py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Pass utilization</p>
-                  <p className="text-2xl font-semibold">{totalGatePasses ? Math.round((activeGatePasses / totalGatePasses) * 100) : 0}%</p>
-                  <p className="text-xs text-muted-foreground">Currently checked-in vs issued</p>
+        {/* Enhanced Stat Cards with Icons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="border border-zinc-200 rounded-lg   p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-zinc-500 uppercase tracking-wide">Houses</div>
+              <Building2 className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{totalHouses}</div>
+            <div className="text-xs text-zinc-500">Managed properties</div>
+          </div>
+          <div className="border border-zinc-200 rounded-lg  to-white p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-zinc-500 uppercase tracking-wide">Residents</div>
+              <Users className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{totalResidents}</div>
+            <div className="text-xs text-zinc-500">Active profiles</div>
+          </div>
+          <div className="border border-zinc-200 rounded-lg  to-white p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-zinc-500 uppercase tracking-wide">Active Passes</div>
+              <CreditCard className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{activeGatePasses}</div>
+            <div className="text-xs text-zinc-500">{totalGatePasses} total issued</div>
+          </div>
+          <div className="border border-zinc-200 rounded-lg  to-white p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-zinc-500 uppercase tracking-wide">Gate Events</div>
+              <Activity className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{totalGateScans}</div>
+            <div className="text-xs text-zinc-500">Total scans</div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <DashboardCharts chartData={chartData} />
+
+        {/* Operational Metrics with Progress Bar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="border border-foreground/20 rounded-lg ">
+            <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
+              <h2 className="text-sm font-semibold text-foreground">Operational Metrics</h2>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-foreground">Pass utilization</span>
+                  <span className="text-sm font-semibold text-muted-foreground">{passUtilization}%</span>
                 </div>
-                <ShieldCheck className="h-10 w-10 text-emerald-500" />
+                <div className="w-full bg-muted-foreground rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all"
+                    style={{ width: `${passUtilization}%` }}
+                  />
+                </div>
               </div>
-              <div className="grid gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
-                  <span>Total gate passes issued</span>
-                  <strong className="text-base text-foreground">{totalGatePasses}</strong>
-                </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
-                  <span>Active check-ins</span>
-                  <strong className="text-base text-foreground">{activeGatePasses}</strong>
-                </span>
-                <span className="flex items-center justify-between rounded-xl border px-3 py-2">
-                  <span>Residents per house</span>
-                  <strong className="text-base text-foreground">
-                    {totalHouses ? Math.round(totalResidents / totalHouses) : 0}
-                  </strong>
-                </span>
+              <div className="flex items-center justify-between py-2 border-t border-zinc-100">
+                <span className="text-sm text-foreground">Total gate passes</span>
+                <span className="text-sm font-semibold text-muted-foreground">{totalGatePasses}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between py-2 border-t border-zinc-100">
+                <span className="text-sm text-foreground">Active check-ins</span>
+                <span className="text-sm font-semibold text-muted-foreground">{activeGatePasses}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-t border-zinc-100">
+                <span className="text-sm text-foreground">Residents per house</span>
+                <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerHouse}</span>
+              </div>
+            </div>
+          </div>
 
-          <Card className="border border-dashed">
-            <CardHeader className="space-y-1">
-              <CardTitle>Quick actions</CardTitle>
-              <CardDescription>Jump into common admin tasks</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              {[
-                { label: "Create house", action: () => router.push("/admin/houses"), hint: "Add a property profile" },
-                { label: "Add resident", action: () => router.push("/admin/residents/create"), hint: "Link a user to houses" },
-                { label: "Issue gate pass", action: () => router.push("/admin/gate"), hint: "Manage visitor access" },
-              ].map((cta) => (
-                <Button
-                  key={cta.label}
-                  variant="outline"
-                  className="justify-between text-left py-6 rounded-md"
-                  onClick={cta.action}
-                >
-                  <span className="">
-                    <span className="block font-semibold">{cta.label}</span>
-                    <span className="text-xs text-muted-foreground">{cta.hint}</span>
-                  </span>
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
+          {/* Quick Actions */}
+          <div className="border border-foreground/20 rounded-lg ">
+            <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
+              <h2 className="text-sm font-semibold text-foreground">Quick Actions</h2>
+            </div>
+            <div className="p-3 space-y-2">
+              <button
+                onClick={() => router.push("/admin/houses")}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-foreground/20 rounded-md transition-colors border border-transparent hover:border-foreground/20"
+              >
+                <div>
+                  <div className="font-medium text-foreground">Create house</div>
+                  <div className="text-xs text-zinc-500">Add a property profile</div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-zinc-400" />
+              </button>
+              <button
+                onClick={() => router.push("/admin/residents/create")}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-foreground/20 rounded-md transition-colors border border-transparent hover:border-foreground/20"
+              >
+                <div>
+                  <div className="font-medium text-foreground">Add resident</div>
+                  <div className="text-xs text-zinc-500">Link a user to houses</div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-zinc-400" />
+              </button>
+              <button
+                onClick={() => router.push("/admin/gate")}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-foreground/20 rounded-md transition-colors border border-transparent hover:border-foreground/20"
+              >
+                <div>
+                  <div className="font-medium text-foreground">Issue gate pass</div>
+                  <div className="text-xs text-zinc-500">Manage visitor access</div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-zinc-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Activity Summary */}
+          <div className="border border-foreground/20 rounded-lg ">
+            <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
+              <h2 className="text-sm font-semibold text-foreground">Activity Summary</h2>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Recent houses</span>
+                <span className="text-sm font-semibold text-muted-foreground">{houses.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Recent residents</span>
+                <span className="text-sm font-semibold text-muted-foreground">{residents.length}</span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-foreground/20">
+                <span className="text-sm text-foreground">Avg. residents/house</span>
+                <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerHouse}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-col gap-1">
-              <CardTitle>Recent houses</CardTitle>
-              <CardDescription>Latest properties added</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!houses || houses.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No houses yet
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {houses.slice(0, 5).map((house) => (
-                    <article
-                      key={house.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
-                        <Building2 className="h-5 w-5" />
-                      </div>
+        {/* Recent Activity Tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Recent houses table */}
+          <div className="border border-foreground/20 rounded-lg ">
+            <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
+              <h2 className="text-sm font-semibold text-foreground">Recent Houses</h2>
+            </div>
+            {!houses || houses.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-foreground">
+                No houses yet
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {houses.slice(0, 5).map((house) => (
+                  <div
+                    key={house.id}
+                    className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/houses/${house.id}`)}
+                  >
+                    <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-slate-900">{house.name}</p>
-                        <p className="truncate text-sm text-muted-foreground">{house.address}</p>
+                        <div className="text-sm font-medium text-foreground truncate">{house.name}</div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{house.address}</div>
                       </div>
                       {house.created_at && (
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Added</p>
-                          <p className="text-xs font-medium text-foreground">{formatDate(house.created_at)}</p>
+                        <div className="text-right ml-4 flex-shrink-0">
+                          <div className="text-xs text-zinc-500">{formatDate(house.created_at)}</div>
                         </div>
                       )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-col gap-1">
-              <CardTitle>Recent residents</CardTitle>
-              <CardDescription>Latest residents added</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!residents || residents.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No residents yet
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {residents.slice(0, 5).map((resident) => (
-                    <article
-                      key={resident.user.id}
-                      className="flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:border-[var(--brand-primary,#2563eb)]/50"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)] font-semibold">
-                        {getInitials(resident.user.first_name, resident.user.last_name)}
-                      </div>
+          {/* Recent residents table */}
+          <div className="border border-foreground/20 rounded-lg ">
+            <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
+              <h2 className="text-sm font-semibold text-foreground">Recent Residents</h2>
+            </div>
+            {!residents || residents.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-foreground">
+                No residents yet
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {residents.slice(0, 5).map((resident) => (
+                  <div
+                    key={resident.user.id}
+                    className="px-4 py-3 hover:bg-foreground/10 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/residents/${resident.user.id}`)}
+                  >
+                    <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-slate-900">
+                        <div className="text-sm font-medium text-foreground truncate">
                           {getFullName(resident.user.first_name, resident.user.last_name)}
-                        </p>
-                        <p className="truncate text-sm text-muted-foreground">{resident.user.email}</p>
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
                       </div>
-                      <Badge variant="secondary">
-                        {resident.houses?.length || 0} houses
-                      </Badge>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      <div className="ml-4 flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[var(--brand-primary,#213928)] text-muted">
+                          {resident.houses?.length || 0} {resident.houses?.length === 1 ? 'house' : 'houses'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </DashboardLayout>
+    </ >
   );
 }

@@ -43,11 +43,12 @@
     --radius-md: 0.625rem;
     --radius-lg: 0.875rem;
     --radius-xl: 1.125rem;
-    --radius: 0.875rem; /* Default */
+    --radius: 0.875rem;
+    /* Default */
 
-    /* Brand colors - more distinctive */
-    --brand-primary: #213928;
-    --brand-secondary: #475569;
+    /* Brand colors - more distinctive (using RGB format for opacity support) */
+    --brand-primary: 33 57 10;
+    --brand-secondary: 71 85 105;
   }
 
   .dark {
@@ -94,6 +95,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply min-h-screen bg-background text-foreground antialiased;
     padding-top: env(safe-area-inset-top);
@@ -102,6 +104,7 @@
 }
 
 @layer components {
+
   /* Custom card styles - more distinctive, less generic */
   .card-base {
     @apply border border-border/60 bg-card;
@@ -128,11 +131,9 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(255, 255, 255, 0)
-    );
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0));
     -webkit-mask: linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

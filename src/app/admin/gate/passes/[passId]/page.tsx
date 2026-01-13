@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowLeft, User, Mail, Phone, Clock3, QrCode, ChevronDown } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -68,7 +67,7 @@ export default function AdminGatePassDetailPage() {
   }, [data]);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.push("/admin/gate/passes")}>
@@ -94,7 +93,7 @@ export default function AdminGatePassDetailPage() {
           />
         ) : (
           <>
-            <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-[var(--brand-primary,#2563eb)]/90 to-indigo-700 text-white shadow-xl">
+            <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-[var(--brand-primary,#213928)]/90 to-indigo-700 text-white shadow-xl">
               <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm uppercase tracking-wide text-white/80">Gate pass</p>
@@ -189,52 +188,52 @@ export default function AdminGatePassDetailPage() {
                       {timeline.map((event) => {
                         const isExpanded = expandedEventId === event.id;
                         return (
-                        <div
-                          key={event.id}
-                          className="rounded-2xl border border-border/60 p-4 transition hover:border-[var(--brand-primary,#2563eb)]/50"
-                          onClick={() =>
-                            setExpandedEventId((prev) =>
-                              prev === event.id ? null : event.id
-                            )
-                          }
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold capitalize text-foreground">
-                                {event.owner_type ?? "scan"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Scanner: {event.scanned_by_id ?? "—"}
-                              </p>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {event.created_at
-                                ? format(new Date(event.created_at), "PPpp")
-                                : "—"}
-                            </span>
-                            <ChevronDown
-                              className={cn(
-                                "h-4 w-4 text-muted-foreground transition",
-                                isExpanded && "rotate-180 text-foreground"
-                              )}
-                            />
-                          </div>
-                          {isExpanded && (
-                            <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                              {event.owner && (
-                                <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-3 py-2">
-                                  {event.owner.name ?? event.owner.email ?? "—"}
-                                </div>
-                              )}
-                              {event.house_id && (
-                                <p className="text-xs uppercase tracking-wide">
-                                  House: {event.house_id}
+                          <div
+                            key={event.id}
+                            className="rounded-2xl border border-border/60 p-4 transition hover:border-[var(--brand-primary,#213928)]/50"
+                            onClick={() =>
+                              setExpandedEventId((prev) =>
+                                prev === event.id ? null : event.id
+                              )
+                            }
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold capitalize text-foreground">
+                                  {event.owner_type ?? "scan"}
                                 </p>
-                              )}
+                                <p className="text-xs text-muted-foreground">
+                                  Scanner: {event.scanned_by_id ?? "—"}
+                                </p>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {event.created_at
+                                  ? format(new Date(event.created_at), "PPpp")
+                                  : "—"}
+                              </span>
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 text-muted-foreground transition",
+                                  isExpanded && "rotate-180 text-foreground"
+                                )}
+                              />
                             </div>
-                          )}
-                        </div>
-                      );
+                            {isExpanded && (
+                              <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                {event.owner && (
+                                  <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-3 py-2">
+                                    {event.owner.name ?? event.owner.email ?? "—"}
+                                  </div>
+                                )}
+                                {event.house_id && (
+                                  <p className="text-xs uppercase tracking-wide">
+                                    House: {event.house_id}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                     <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -266,7 +265,7 @@ export default function AdminGatePassDetailPage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </ >
   );
 }
 

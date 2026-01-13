@@ -1,183 +1,314 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Activity, Search } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { TableSkeleton } from "@/components/ui/Skeleton";
+import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { useAdminGateEvents } from "@/hooks/use-admin";
+import { GateEvent } from "@/types";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 import { titleCase } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Eye } from "lucide-react";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const DEFAULT_PAGE_SIZE = 10;
+const OWNER_TYPE_FILTERS: Array<{ label: string; value: string | undefined }> = [
+  { label: "All types", value: undefined },
+  { label: "Visitor", value: "visitor" },
+  { label: "Resident", value: "resident" },
+];
 
 export default function AdminGateEventsPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [passFilter, setPassFilter] = useState("");
-  const [houseFilter, setHouseFilter] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isInitialMount = useRef(true);
+
+  // Initialize state from URL params
+  const [page, setPage] = useState(() => {
+    const pageParam = searchParams.get("page");
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
+  const [pageSize, setPageSize] = useState(() => {
+    const pageSizeParam = searchParams.get("pageSize");
+    return pageSizeParam ? parseInt(pageSizeParam, 10) : DEFAULT_PAGE_SIZE;
+  });
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [ownerType, setOwnerType] = useState<string | undefined>(() => {
+    const ownerTypeParam = searchParams.get("owner_type");
+    return ownerTypeParam || undefined;
+  });
+  const [sort, setSort] = useState<string | null>(() => {
+    const sortParam = searchParams.get("sort");
+    return sortParam || null;
+  });
+
+  // Sync state to URL query parameters
+  const syncToUrl = useCallback((updates: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    ownerType?: string | undefined;
+    sort?: string | null;
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (updates.page !== undefined) {
+      if (updates.page > 1) {
+        params.set("page", String(updates.page));
+      } else {
+        params.delete("page");
+      }
+    }
+
+    if (updates.pageSize !== undefined) {
+      if (updates.pageSize !== DEFAULT_PAGE_SIZE) {
+        params.set("pageSize", String(updates.pageSize));
+      } else {
+        params.delete("pageSize");
+      }
+    }
+
+    if (updates.search !== undefined) {
+      if (updates.search.trim()) {
+        params.set("search", updates.search.trim());
+      } else {
+        params.delete("search");
+      }
+    }
+
+    if (updates.ownerType !== undefined) {
+      if (updates.ownerType) {
+        params.set("owner_type", updates.ownerType);
+      } else {
+        params.delete("owner_type");
+      }
+    }
+
+    if (updates.sort !== undefined) {
+      if (updates.sort) {
+        params.set("sort", updates.sort);
+      } else {
+        params.delete("sort");
+      }
+    }
+
+    const queryString = params.toString();
+    router.replace(
+      queryString ? `${pathname}?${queryString}` : pathname,
+      { scroll: false }
+    );
+  }, [pathname, router, searchParams]);
+
+  // Sync state changes to URL (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    syncToUrl({ page, pageSize, search, ownerType, sort });
+  }, [page, pageSize, search, ownerType, sort, syncToUrl]);
+
+  // Build initial filters from URL state
+  const initialFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (ownerType) {
+      filters.push({ field: "owner_type", operator: "eq", value: ownerType });
+    }
+    return filters;
+  }, [ownerType]);
+
+  // Define available filters for DataTable
+  const availableFilters: FilterDefinition[] = useMemo(() => [
+    {
+      field: "owner_type",
+      label: "Owner Type",
+      type: "select",
+      options: OWNER_TYPE_FILTERS.map((f) => ({
+        value: f.value || "",
+        label: f.label,
+      })),
+      operator: "eq",
+    },
+  ], []);
+
+  // Build filters for API from current state
+  const filtersForAPI = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (ownerType) {
+      filters.push({ field: "owner_type", operator: "eq", value: ownerType });
+    }
+    return filters;
+  }, [ownerType]);
 
   const { data, isLoading, isFetching } = useAdminGateEvents({
     page,
-    pageSize: PAGE_SIZE,
-    passId: passFilter.trim() || undefined,
-    houseId: houseFilter.trim() || undefined,
+    pageSize,
+    search: search.trim() || undefined,
+    filters: formatFiltersForAPI(filtersForAPI),
+    sort: sort || undefined,
   });
 
   const events = useMemo(() => data?.items ?? [], [data?.items]);
   const totalPages = data?.total_pages ?? 1;
+  const total = data?.total ?? 0;
 
   const breakdown = useMemo(() => {
-    const total = data?.total ?? 0;
     const entries = events.filter((event) => event.checkout_time === null).length;
     const exits = events.filter((event) => !!event.checkout_time).length;
     return { total, entries, exits };
-  }, [data?.total, events]);
+  }, [total, events]);
+
+  const columns: Column<GateEvent>[] = [
+    {
+      key: "event",
+      header: "Event",
+      sortable: false,
+      accessor: (row) => (
+        <Badge variant="secondary" className="h-5 text-xs font-normal">
+          {titleCase(row.owner_type) ?? "Scan"}
+        </Badge>
+      ),
+    },
+    {
+      key: "pass",
+      header: "Pass",
+      sortable: true,
+      filterable: true,
+      accessor: (row) => (
+        <span className="text-xs">{row?.gate_pass?.code ?? "—"}</span>
+      ),
+    },
+    {
+      key: "house",
+      header: "House",
+      sortable: false,
+      filterable: true,
+      accessor: (row) => (
+        <span className="text-xs">{row?.house?.name ?? "—"}</span>
+      ),
+    },
+    {
+      key: "owner",
+      header: "Owner",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">
+          {row.owner && "name" in row.owner
+            ? row.owner.name ?? row.owner.email ?? "—"
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "scanner",
+      header: "Scanner",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">{row?.scanned_by?.user?.name ?? "—"}</span>
+      ),
+    },
+    {
+      key: "timestamp",
+      header: "Timestamp",
+      sortable: true,
+      accessor: (row) => (
+        <span className="text-xs text-muted-foreground text-right">
+          {row.created_at
+            ? formatDistanceToNow(new Date(row.created_at), {
+              addSuffix: true,
+            })
+            : "—"}
+        </span>
+      ),
+      className: "text-right",
+    },
+    {
+      "key": "actions",
+      "header": "Actions",
+      "sortable": false,
+      "accessor": (row) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push(`/admin/gate/events/${row.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }
+  ];
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-6">
-        <section className="rounded-3xl border border-border/60 bg-muted/60 p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-muted-foreground">
-                Gate telemetry
-              </p>
-              <h1 className="text-3xl font-semibold">Gate Events</h1>
-              <p className="text-muted-foreground">
-                Every scan at the community gate, grouped across houses and passes.
-              </p>
-            </div>
-            <div className="grid gap-3 text-center text-sm md:grid-cols-3 md:text-left">
-              <SummaryPill label="Events logged" value={breakdown.total} />
-              <SummaryPill label="Entries" value={breakdown.entries} />
-              <SummaryPill label="Exits" value={breakdown.exits} />
-            </div>
+        {/* Header */}
+        <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Gate Events</h1>
+            <p className="text-sm text-muted-foreground">
+              Total: {breakdown.total} | Entries: {breakdown.entries} | Exits: {breakdown.exits}
+            </p>
           </div>
-        </section>
+        </div>
 
+
+        {/* Table */}
         <Card>
-          <CardHeader className="gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Live event stream</CardTitle>
-              <CardDescription>Filter by pass or house to investigate anomalies.</CardDescription>
-            </div>
-            <div className="grid w-full gap-3 md:w-auto md:grid-cols-2">
-              <Input
-                placeholder="Filter by pass ID"
-                value={passFilter}
-                onChange={(event) => {
-                  setPage(1);
-                  setPassFilter(event.target.value);
-                }}
-              />
-              <Input
-                placeholder="Filter by house ID"
-                value={houseFilter}
-                onChange={(event) => {
-                  setPage(1);
-                  setHouseFilter(event.target.value);
-                }}
-              />
-            </div>
-          </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-12 animate-pulse rounded-xl bg-muted/60"
-                  />
-                ))}
-              </div>
-            ) : events.length === 0 ? (
-              <EmptyState
-                icon={Search}
-                title="No events match these filters"
-                description="Try removing filters or check back after the next scan."
-              />
+              <TableSkeleton />
             ) : (
-              <>
-                <div className="overflow-x-auto rounded-2xl border border-border/60">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Event</TableHead>
-                        <TableHead>Pass</TableHead>
-                        <TableHead>House</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Scanner</TableHead>
-                        <TableHead className="text-right">Timestamp</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((event) => (
-                        <TableRow
-                          key={event.id}
-                          className="cursor-pointer hover:bg-muted/40"
-                          onClick={() => router.push(`/admin/gate/events/${event.id}`)}
-                        >
-                          <TableCell>
-                            <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">
-                              {titleCase(event.owner_type) ?? "Scan"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{event?.gate_pass?.code ?? "—"}</TableCell>
-                          <TableCell>{event?.gate_pass?.house_id ?? "—"}</TableCell>
-                          <TableCell>
-                            {event.owner && "name" in event.owner
-                              ? event.owner.name ?? event.owner.email ?? "—"
-                              : "—"}
-                          </TableCell>
-                          <TableCell>{event?.scanned_by?.name ?? "—"}</TableCell>
-                          <TableCell className="text-right text-xs text-muted-foreground">
-                            {event.created_at
-                              ? formatDistanceToNow(new Date(event.created_at), {
-                                addSuffix: true,
-                              })
-                              : "—"}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    {isFetching ? "Refreshing..." : `${events.length} events on this page`}
-                  </p>
-                  {totalPages > 1 && (
-                    <PaginationBar
-                      page={page}
-                      pageSize={PAGE_SIZE}
-                      total={data?.total ?? events.length}
-                      totalPages={totalPages}
-                      resourceLabel="events"
-                      onChange={setPage}
-                    />
-                  )}
-                </div>
-              </>
+              <DataTable
+                data={events}
+                columns={columns}
+                searchable={true}
+                searchPlaceholder="Search events..."
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageSizeChange={(newPageSize) => {
+                  setPage(1);
+                  setPageSize(newPageSize);
+                }}
+                showPagination={true}
+                emptyMessage="No events match these filters. Try removing filters or check back after the next scan."
+                serverSide={true}
+                total={total}
+                currentPage={page}
+                onPageChange={setPage}
+                initialSearch={search}
+                onSearchChange={(value) => {
+                  setPage(1);
+                  setSearch(value);
+                }}
+                availableFilters={availableFilters}
+                initialFilters={initialFilters}
+                onFiltersChange={(filters) => {
+                  setPage(1);
+                  // Extract owner_type from filters and explicitly clear if not found
+                  const ownerTypeFilter = filters.find((f) => f.field === "owner_type");
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setOwnerType(ownerTypeFilter?.value as string | undefined || undefined);
+                }}
+                initialSort={sort}
+                onSortChange={(newSort) => {
+                  setPage(1);
+                  setSort(newSort);
+                }}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
+                className=" rounded"
+              />
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
-  );
-}
-
-function SummaryPill({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-background px-4 py-3 shadow-sm">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold text-foreground">{value}</p>
-    </div>
+    </>
   );
 }

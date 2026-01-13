@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -12,6 +11,14 @@ import {
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 import { useAdminAnalyticsSummary } from "@/hooks/use-admin";
 import { formatDate } from "@/lib/utils";
 import {
@@ -30,12 +37,15 @@ import {
   RefreshCcw,
   Users,
   Home,
-  BadgeCheck,
+  Ticket,
   UserCheck,
-  ShieldCheck,
-  ShieldAlert,
-  UserCog,
   Activity,
+  ShieldCheck,
+  ShieldX,
+  UserCog,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -67,51 +77,54 @@ function ChartTooltip({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-md border bg-background/90 px-3 py-2 text-sm shadow-lg backdrop-blur">
-      <p className="font-semibold">{label}</p>
-      {payload.map((item) => (
-        <div
-          key={item.name}
-          className="flex items-center justify-between gap-6 text-muted-foreground"
-        >
-          <span className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            {item.name}
-          </span>
-          <span className="font-medium text-foreground">
-            {formatNumber(item.value)}
-          </span>
-        </div>
-      ))}
+    <div className="rounded-lg border bg-background/95 backdrop-blur-sm px-3 py-2 text-xs shadow-lg">
+      <p className="mb-2 font-semibold text-foreground">{label}</p>
+      <div className="space-y-1.5">
+        {payload.map((item) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between gap-6"
+          >
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              {item.name}
+            </span>
+            <span className="font-semibold text-foreground">
+              {formatNumber(item.value)}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function AnalyticsSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index}>
-            <CardContent className="space-y-4 pt-6">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-4 w-40" />
+    <div className="space-y-8">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Card key={index} className="border-2">
+            <CardContent className="p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-8 w-24" />
             </CardContent>
           </Card>
         ))}
       </div>
-
-      <Card className="h-[360px]">
-        <CardHeader>
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-3 w-40" />
+      <Card className="h-[360px] shadow-sm">
+        <CardHeader className="border-b pb-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-2 h-4 w-64" />
         </CardHeader>
-        <CardContent className="h-full">
-          <div className="h-full rounded-md border border-dashed border-muted-foreground/20" />
+        <CardContent className="h-full p-6">
+          <div className="h-full rounded border border-dashed border-muted-foreground/20" />
         </CardContent>
       </Card>
     </div>
@@ -141,65 +154,81 @@ export default function AnalyticsPage() {
     );
   }, [analytics]);
 
-  const summaryCards = useMemo(() => {
+  const summaryMetrics = useMemo(() => {
     if (!analytics) return [];
 
     return [
       {
-        title: "Residents",
+        label: "Residents",
         value: analytics.total_residents,
-        description: "Active residents on file",
         icon: Users,
-        accent: "from-sky-500/10 via-sky-500/5 to-transparent",
+        color: "text-blue-600",
+        bgColor: "bg-blue-50 dark:bg-blue-950/20",
+        borderColor: "border-blue-200 dark:border-blue-800",
       },
       {
-        title: "Houses",
+        label: "Houses",
         value: analytics.total_houses,
-        description: "Homes linked to residents",
         icon: Home,
-        accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+        color: "text-emerald-600",
+        bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+        borderColor: "border-emerald-200 dark:border-emerald-800",
       },
       {
-        title: "Gate Passes",
+        label: "Gate Passes",
         value: analytics.total_gate_passes,
-        description: "Passes ever issued",
-        icon: BadgeCheck,
-        accent: "from-amber-500/10 via-amber-500/5 to-transparent",
+        icon: Ticket,
+        color: "text-amber-600",
+        bgColor: "bg-amber-50 dark:bg-amber-950/20",
+        borderColor: "border-amber-200 dark:border-amber-800",
       },
       {
-        title: "Visitors",
+        label: "Visitors",
         value: analytics.total_visitors,
-        description: "Unique visitor profiles",
         icon: UserCheck,
-        accent: "from-fuchsia-500/10 via-fuchsia-500/5 to-transparent",
+        color: "text-purple-600",
+        bgColor: "bg-purple-50 dark:bg-purple-950/20",
+        borderColor: "border-purple-200 dark:border-purple-800",
       },
       {
-        title: "Gate Events",
+        label: "Gate Events",
         value: analytics.total_gate_events,
-        description: "Check-ins & approvals",
         icon: Activity,
-        accent: "from-indigo-500/10 via-indigo-500/5 to-transparent",
+        color: "text-indigo-600",
+        bgColor: "bg-indigo-50 dark:bg-indigo-950/20",
+        borderColor: "border-indigo-200 dark:border-indigo-800",
       },
       {
-        title: "Approved Events",
+        label: "Approved",
         value: analytics.total_gate_events_approved,
-        description: "Cleared at security",
         icon: ShieldCheck,
-        accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+        color: "text-green-600",
+        bgColor: "bg-green-50 dark:bg-green-950/20",
+        borderColor: "border-green-200 dark:border-green-800",
       },
       {
-        title: "Denied Events",
+        label: "Denied",
         value: analytics.total_gate_events_denied,
-        description: "Flagged for review",
-        icon: ShieldAlert,
-        accent: "from-rose-500/10 via-rose-500/5 to-transparent",
+        icon: ShieldX,
+        color: "text-red-600",
+        bgColor: "bg-red-50 dark:bg-red-950/20",
+        borderColor: "border-red-200 dark:border-red-800",
       },
       {
-        title: "Admins / Roles",
-        value: `${analytics.total_admins} / ${analytics.total_roles}`,
-        description: "Security leadership footprint",
+        label: "Admins",
+        value: analytics.total_admins,
         icon: UserCog,
-        accent: "from-purple-500/10 via-purple-500/5 to-transparent",
+        color: "text-slate-600",
+        bgColor: "bg-slate-50 dark:bg-slate-950/20",
+        borderColor: "border-slate-200 dark:border-slate-800",
+      },
+      {
+        label: "Roles",
+        value: analytics.total_roles,
+        icon: UserCog,
+        color: "text-slate-600",
+        bgColor: "bg-slate-50 dark:bg-slate-950/20",
+        borderColor: "border-slate-200 dark:border-slate-800",
       },
     ];
   }, [analytics]);
@@ -340,27 +369,27 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout type="admin">
-        <div className="space-y-6">
+      <>
+        <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
           />
           <AnalyticsSkeleton />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isError) {
     return (
-      <DashboardLayout type="admin">
-        <div className="space-y-6">
+      <>
+        <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
           />
-          <Card>
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>Unable to load analytics</CardTitle>
               <CardDescription>
@@ -379,66 +408,70 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!analytics) {
     return (
-      <DashboardLayout type="admin">
-        <div className="space-y-6">
+      <>
+        <div className="space-y-8">
           <PageHeader
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
           />
           <EmptyState
             title="No analytics yet"
-            description="We could not find analytics for your estate yet. Once activity starts flowing through the gate, you’ll see trends and usage details here."
+            description="We could not find analytics for your estate yet. Once activity starts flowing through the gate, you'll see trends and usage details here."
             action={{
               label: "Reload",
               onClick: () => refetch(),
             }}
           />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="space-y-8">
         <PageHeader onRefresh={() => refetch()} isRefreshing={isFetching} />
 
-        <Section
-          title="Estate overview"
-          description="Snapshot of residents, housing, passes, and staffing footprint."
-        >
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {summaryCards.map(({ icon: Icon, accent, ...card }) => (
-              <Card
-                key={card.title}
-                className={`overflow-hidden border-none bg-gradient-to-br ${accent}`}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </CardTitle>
-                  <span className="rounded-full bg-white/70 p-2 text-[var(--brand-primary,#2563eb)] shadow-sm dark:bg-white/10">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {typeof card.value === "number"
-                      ? formatNumber(card.value)
-                      : card.value}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {card.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+        <Section title="Overview">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {summaryMetrics.map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <Card
+                  key={metric.label}
+                  className={`group relative overflow-hidden border-2 transition-all hover:shadow-md hover:scale-[1.02] ${metric.borderColor}`}
+                >
+                  <div
+                    className={`absolute inset-0 ${metric.bgColor} opacity-0 transition-opacity group-hover:opacity-100`}
+                  />
+                  <CardContent className="relative p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="mb-3 flex items-center gap-2">
+                          <div
+                            className={`rounded-lg p-2 ${metric.bgColor} ${metric.color}`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            {metric.label}
+                          </p>
+                        </div>
+                        <p className="text-2xl font-bold text-foreground">
+                          {formatNumber(metric.value)}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </Section>
 
@@ -446,17 +479,22 @@ export default function AnalyticsPage() {
           title="Engagement timeline"
           description="Gate passes, housing, and visitor trends over the selected period."
         >
-          <div className="grid gap-4 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  Activity overview
-                </CardTitle>
-                <CardDescription>
-                  Smooth trendlines make it easy to spot spikes across metrics.
-                </CardDescription>
+          <div className="grid gap-6 xl:grid-cols-3">
+            <Card className="xl:col-span-2 shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      Activity overview
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Smooth trendlines make it easy to spot spikes across metrics.
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="h-[360px]">
+              <CardContent className="h-[360px] p-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendSeries}>
                     <defs>
@@ -507,40 +545,50 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Activity highlights</CardTitle>
-                <CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">Activity highlights</CardTitle>
+                <CardDescription className="mt-1">
                   Key callouts pulled from the current observation window.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-6">
                 {(visitorSpike || topGateDays[0]) && (
-                  <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+                  <div className="space-y-3 rounded-lg border-2 bg-gradient-to-br from-primary/5 to-primary/10 p-4">
                     {visitorSpike && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Busiest visitor day
-                        </p>
-                        <p className="text-lg font-semibold">
-                          {formatDate(visitorSpike.date)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatNumber(visitorSpike.count)} visitors processed
-                        </p>
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-primary/10 p-2">
+                          <ArrowUpRight className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Busiest visitor day
+                          </p>
+                          <p className="mt-1 text-lg font-bold text-foreground">
+                            {formatDate(visitorSpike.date)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatNumber(visitorSpike.count)} visitors processed
+                          </p>
+                        </div>
                       </div>
                     )}
                     {topGateDays[0] && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Gate pass spike
-                        </p>
-                        <p className="text-lg font-semibold">
-                          {formatDate(topGateDays[0].date)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatNumber(topGateDays[0].count)} passes issued
-                        </p>
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-amber-500/10 p-2">
+                          <TrendingUp className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Gate pass spike
+                          </p>
+                          <p className="mt-1 text-lg font-bold text-foreground">
+                            {formatDate(topGateDays[0].date)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatNumber(topGateDays[0].count)} passes issued
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -571,62 +619,76 @@ export default function AnalyticsPage() {
           title="Access control health"
           description="Decision quality and high-volume touch points."
         >
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Gate decision quality</CardTitle>
-                <CardDescription>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">Gate decision quality</CardTitle>
+                <CardDescription className="mt-1">
                   Approval vs denial rate across all recorded events
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Approval rate</span>
-                    <span className="font-semibold">
+              <CardContent className="space-y-6 p-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-muted-foreground">
+                      Approval rate
+                    </span>
+                    <span className="font-bold text-emerald-600">
                       {approvalRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-muted">
+                  <div className="h-3 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-2 rounded-full bg-emerald-500"
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500"
                       style={{ width: `${Math.min(approvalRate, 100)}%` }}
                     />
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Denials</span>
-                    <span className="font-semibold">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-muted-foreground">
+                      Denial rate
+                    </span>
+                    <span className="font-bold text-red-600">
                       {denialRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-muted">
+                  <div className="h-3 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-2 rounded-full bg-rose-500"
+                      className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500"
                       style={{ width: `${Math.min(denialRate, 100)}%` }}
                     />
                   </div>
                 </div>
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">
+                <div className="rounded-lg border-2 bg-gradient-to-br from-slate-50 to-slate-100/50 p-5 dark:from-slate-900/50 dark:to-slate-800/30">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Approvals vs denials
                   </p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {formatNumber(analytics.total_gate_events_approved)} /{" "}
-                    {formatNumber(analytics.total_gate_events_denied)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <p className="text-3xl font-bold text-foreground">
+                      {formatNumber(analytics.total_gate_events_approved)}
+                    </p>
+                    <span className="text-muted-foreground">/</span>
+                    <p className="text-3xl font-bold text-foreground">
+                      {formatNumber(analytics.total_gate_events_denied)}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Out of {formatNumber(analytics.total_gate_events)} total gate
                     events
                   </p>
                 </div>
                 {visitorSpike && (
-                  <div className="rounded-lg border bg-background p-4">
-                    <p className="text-sm text-muted-foreground">
-                      Busiest visitor day
-                    </p>
-                    <p className="text-lg font-semibold">
+                  <div className="rounded-lg border-2 bg-gradient-to-br from-purple-50 to-purple-100/50 p-4 dark:from-purple-950/20 dark:to-purple-900/10">
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-purple-500/10 p-1.5">
+                        <UserCheck className="h-3.5 w-3.5 text-purple-600" />
+                      </div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Busiest visitor day
+                      </p>
+                    </div>
+                    <p className="mt-2 text-xl font-bold text-foreground">
                       {formatDate(visitorSpike.date)}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -637,14 +699,14 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>High-velocity days</CardTitle>
-                <CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">High-velocity days</CardTitle>
+                <CardDescription className="mt-1">
                   Dates with the most gate pass creations
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 p-6">
                 {topGateDays.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Gate pass volume data is not available yet. Activity will
@@ -654,22 +716,32 @@ export default function AnalyticsPage() {
                   topGateDays.map((day, index) => (
                     <div
                       key={day.date}
-                      className="flex items-center justify-between rounded-lg border p-3"
+                      className="group flex items-center justify-between rounded-lg border-2 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
                     >
-                      <div>
-                        <p className="text-sm font-medium">
-                          {formatDate(day.date)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {index === 0 ? "Busiest day" : `Top ${index + 1}`}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${index === 0
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+                              : "bg-muted text-muted-foreground"
+                            }`}
+                        >
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {formatDate(day.date)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {index === 0 ? "Busiest day" : `Top ${index + 1}`}
+                          </p>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-semibold">
+                        <p className="text-2xl font-bold text-foreground">
                           {formatNumber(day.count)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Gate passes issued
+                          passes issued
                         </p>
                       </div>
                     </div>
@@ -684,15 +756,15 @@ export default function AnalyticsPage() {
           title="Gate flow"
           description="Balance of check-ins and check-outs for visitors."
         >
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Check-ins vs check-outs</CardTitle>
-                <CardDescription>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">Check-ins vs check-outs</CardTitle>
+                <CardDescription className="mt-1">
                   Daily balance of visitor movements
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-[320px]">
+              <CardContent className="h-[360px] p-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={gateFlowSeries}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -707,36 +779,57 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Movement snapshot</CardTitle>
-                <CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">Movement snapshot</CardTitle>
+                <CardDescription className="mt-1">
                   Aggregate check-ins and check-outs across the period
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5 p-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <MovementStat
-                    label="Total check-ins"
-                    value={formatNumber(movementStats.totalCheckins)}
-                    helper={`${movementStats.averageCheckins.toFixed(1)} avg / day`}
-                    accent="from-sky-500/10 via-sky-500/5 to-transparent"
-                  />
-                  <MovementStat
-                    label="Total check-outs"
-                    value={formatNumber(movementStats.totalCheckouts)}
-                    helper={`${movementStats.averageCheckouts.toFixed(1)} avg / day`}
-                    accent="from-indigo-500/10 via-indigo-500/5 to-transparent"
-                  />
+                  <div className="rounded-lg border-2 bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 dark:from-blue-950/20 dark:to-blue-900/10">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Total check-ins
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-foreground">
+                      {formatNumber(movementStats.totalCheckins)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {movementStats.averageCheckins.toFixed(1)} avg / day
+                    </p>
+                  </div>
+                  <div className="rounded-lg border-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-4 dark:from-indigo-950/20 dark:to-indigo-900/10">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Total check-outs
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-foreground">
+                      {formatNumber(movementStats.totalCheckouts)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {movementStats.averageCheckouts.toFixed(1)} avg / day
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-lg border bg-background p-4">
-                  <p className="text-sm text-muted-foreground">Net flow</p>
-                  <p className="text-3xl font-semibold">
+                <div className="rounded-lg border-2 bg-gradient-to-br from-slate-50 to-slate-100/50 p-5 dark:from-slate-900/50 dark:to-slate-800/30">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full bg-primary/10 p-1.5">
+                      {movementStats.totalCheckins - movementStats.totalCheckouts >= 0 ? (
+                        <ArrowUpRight className="h-4 w-4 text-primary" />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4 text-red-600" />
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Net flow
+                    </p>
+                  </div>
+                  <p className="mt-2 text-3xl font-bold text-foreground">
                     {formatSignedNumber(
                       movementStats.totalCheckins - movementStats.totalCheckouts
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Difference between entries and exits
                   </p>
                 </div>
@@ -748,7 +841,7 @@ export default function AnalyticsPage() {
           </div>
         </Section>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
@@ -762,8 +855,8 @@ function PageHeader({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 className="text-3xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Monitor residents, visitors, and gate efficiency in real time.
         </p>
       </div>
@@ -771,7 +864,7 @@ function PageHeader({
         variant="outline"
         onClick={onRefresh}
         isLoading={isRefreshing}
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 shadow-sm transition-all hover:shadow"
       >
         <RefreshCcw className="h-4 w-4" />
         Refresh data
@@ -792,9 +885,9 @@ function Section({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
         )}
       </div>
       {children}
@@ -812,36 +905,13 @@ function HighlightStat({
   helper: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card/40 p-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-lg border-2 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="text-xl font-semibold">{value}</p>
-      <p className="text-xs text-muted-foreground">{helper}</p>
+      <p className="mt-1.5 text-xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
     </div>
   );
 }
 
-function MovementStat({
-  label,
-  value,
-  helper,
-  accent,
-}: {
-  label: string;
-  value: string;
-  helper: string;
-  accent: string;
-}) {
-  return (
-    <div
-      className={`rounded-xl border bg-gradient-to-br ${accent} p-4 shadow-sm`}
-    >
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="text-2xl font-semibold">{value}</p>
-      <p className="text-xs text-muted-foreground">{helper}</p>
-    </div>
-  );
-}

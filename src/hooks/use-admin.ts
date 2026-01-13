@@ -8,9 +8,15 @@ import {
   GateEvent,
   ResidentUser,
   ResidentUserCreate,
-  ImportResponse,
   PaginatedResponse,
   House,
+  HouseGroup,
+  CreateHouseGroupRequest,
+  UpdateHouseGroupRequest,
+  Admin,
+  HouseDetail,
+  Resident,
+  ResidentHouse,
 } from "@/types";
 import { toast } from "sonner";
 import { AdminDashboard } from "@/types";
@@ -20,6 +26,8 @@ export function useAdminHouses(params: {
   page: number;
   pageSize: number;
   search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<House>>({
     queryKey: ["admin", "houses", params],
@@ -30,17 +38,108 @@ export function useAdminHouses(params: {
   });
 }
 
+export function useAdminHouse(houseId: string | null) {
+  return useQuery<House>({
+    queryKey: ["admin", "house", houseId],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required");
+      const response = await adminService.getHouse(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
+export function useAdminHouseResidents(houseId: string | null) {
+  return useQuery<ResidentHouse[]>({
+    queryKey: ["admin", "house", houseId, "residents"],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required");
+      const response = await adminService.getHouseResidents(houseId);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
 export function useCreateHouse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateHouseRequest) => adminService.createHouse(data),
+    mutationFn: (data: { name: string; description?: string; address: string }) =>
+      adminService.createHouse(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("House created successfully!");
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || "Failed to create house");
+    },
+  });
+}
+
+export function useUpdateHouse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ houseId, data }: {
+      houseId: string;
+      data: { name?: string; description?: string; address?: string; house_group_id?: string };
+    }) => adminService.updateHouse(houseId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+      toast.success("House updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update house");
+    },
+  });
+}
+
+export function useDeleteHouse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (houseId: string) => adminService.deleteHouse(houseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+      toast.success("House deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete house");
+    },
+  });
+}
+
+export function useBulkDeleteHouses() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (houseIds: string[]) => adminService.bulkDeleteHouses(houseIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      toast.success("Houses deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete houses");
+    },
+  });
+}
+
+export function useBulkToggleHouseActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (houseIds: string[]) => adminService.bulkToggleHouseActive(houseIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      toast.success("Houses status updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update houses status");
     },
   });
 }
@@ -51,6 +150,8 @@ export function useAdminResidents(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<ResidentUser>>({
     queryKey: ["admin", "residents", params],
@@ -69,6 +170,7 @@ export function useCreateResident() {
       adminService.createResident(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("Resident created successfully!");
     },
     onError: (error: any) => {
@@ -77,12 +179,82 @@ export function useCreateResident() {
   });
 }
 
-// Admins
-export function useAdmins() {
-  return useQuery({
-    queryKey: ["admin", "admins"],
+export function useAdminResident(residentId: string | null) {
+  return useQuery<Resident>({
+    queryKey: ["admin", "resident", residentId],
     queryFn: async () => {
-      const response = await adminService.getAdmins();
+      if (!residentId) throw new Error("Resident ID is required");
+      const response = await adminService.getResident(residentId);
+      return response.data;
+    },
+    enabled: !!residentId,
+  });
+}
+
+export function useAdminResidentHouses(residentId: string | null) {
+  return useQuery<ResidentHouse[]>({
+    queryKey: ["admin", "resident", residentId, "houses"],
+    queryFn: async () => {
+      if (!residentId) throw new Error("Resident ID is required");
+      const response = await adminService.getResidentHouses(residentId);
+      return response.data;
+    },
+    enabled: !!residentId,
+  });
+}
+
+export function useUpdateResident() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      residentId,
+      data,
+    }: {
+      residentId: string;
+      data: any; // Using any to match component usage, or ResidentProfileUpdatePayload
+    }) => adminService.updateResident(residentId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      // Also invalidate single resident query if it exists
+      if (response.data?.resident?.id) {
+        queryClient.invalidateQueries({ queryKey: ["admin", "resident", response.data.resident.id] });
+      }
+      toast.success("Resident updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to update resident");
+    },
+  });
+}
+
+export function useDeleteResident() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (residentId: string) => adminService.deleteResident(residentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+      toast.success("Resident deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete resident");
+    },
+  });
+}
+
+// Admins
+export function useAdmins(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+}) {
+  return useQuery<PaginatedResponse<Admin>>({
+    queryKey: ["admin", "admins", params],
+    queryFn: async () => {
+      const response = await adminService.getAdmins(params);
       return response.data;
     },
   });
@@ -208,6 +380,8 @@ export function useAdminGatePasses(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<GatePass>>({
     queryKey: ["admin", "gate-passes", params],
@@ -235,6 +409,9 @@ export function useAdminGateEvents(params: {
   pageSize: number;
   passId?: string;
   houseId?: string;
+  search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<GateEvent>>({
     queryKey: ["admin", "gate-events", params],
@@ -316,6 +493,7 @@ export function useCreateRole() {
     }) => adminService.createRole(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       toast.success("Role created successfully!");
     },
     onError: (error: any) => {
@@ -365,6 +543,145 @@ export function useImportResidents() {
     onError: (error: any) => {
       toast.error(
         error.response?.data?.detail || "Failed to import residents"
+      );
+    },
+  });
+}
+
+// House Groups
+export function useAdminHouseGroups(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery<PaginatedResponse<HouseGroup>>({
+    queryKey: ["admin", "house-groups", params],
+    queryFn: async () => {
+      const response = await adminService.getHouseGroups(params);
+      return response.data;
+    },
+  });
+}
+
+
+export function useAdminHouseGroup(groupId: string | null) {
+  return useQuery<HouseGroup>({
+    queryKey: ["admin", "house-group", groupId],
+    queryFn: async () => {
+      if (!groupId) throw new Error("House group ID is required");
+      const response = await adminService.getHouseGroup(groupId);
+      return response.data;
+    },
+    enabled: !!groupId,
+  });
+}
+
+export function useCreateHouseGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateHouseGroupRequest) =>
+      adminService.createHouseGroup(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House group created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to create house group"
+      );
+    },
+  });
+}
+
+export function useUpdateHouseGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      groupId,
+      data,
+    }: {
+      groupId: string;
+      data: UpdateHouseGroupRequest;
+    }) => adminService.updateHouseGroup(groupId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House group updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to update house group"
+      );
+    },
+  });
+}
+
+export function useDeleteHouseGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupId: string) => adminService.deleteHouseGroup(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House group deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to delete house group"
+      );
+    },
+  });
+}
+
+export function useBulkDeleteHouseGroups() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupIds: string[]) => adminService.bulkDeleteHouseGroups(groupIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House groups deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to delete house groups"
+      );
+    },
+  });
+}
+
+export function useToggleHouseGroupActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupId: string) => adminService.toggleHouseGroupActive(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House group status updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to update house group status"
+      );
+    },
+  });
+}
+
+export function useBulkToggleHouseGroupActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupIds: string[]) => adminService.bulkToggleHouseGroupActive(groupIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
+      toast.success("House groups status updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Failed to update house groups status"
       );
     },
   });

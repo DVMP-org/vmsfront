@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import Link from "next/link";
-import { Home } from "lucide-react";
+import { Home, Lock, Mail } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Logo } from "@/components/Logo";
 import { LogoFull } from "@/components/LogoFull";
@@ -70,6 +70,7 @@ export default function LoginPage() {
               type="email"
               label="Email"
               placeholder="name@example.com"
+              icon={Mail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={errors.email || loginFieldErrors.email}
@@ -78,6 +79,7 @@ export default function LoginPage() {
               label="Password"
               placeholder="••••••••"
               value={password}
+              icon={Lock}
               onChange={(e) => setPassword(e.target.value)}
               error={errors.password || loginFieldErrors.password}
             />
@@ -105,7 +107,7 @@ export default function LoginPage() {
             </span>
             <Link
               href="/auth/register"
-              className="text-primary hover:underline font-medium"
+              className="text-[var(--brand-primary)] hover:underline font-medium"
             >
               Sign up
             </Link>

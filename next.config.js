@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', 'api.boxharbor.cfd', "storage.googleapis.com"],
+    domains: ['localhost', "storage.googleapis.com"],
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -18,9 +18,10 @@ const nextConfig = {
     'http://127.0.0.1:3000',
     'http://192.168.100.20:3000',
     'http://192.168.100.20',
+    "dashboard.vmscore.test"
   ],
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
     return [
       {
         source: '/api/:path*',

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Zap, CreditCard, ArrowUpRight, TrendingUp, Activity } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, titleCase } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
@@ -14,6 +14,7 @@ import { Meter, PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 
 export default function ResidentElectricityDashboard() {
     const router = useRouter();
@@ -59,8 +60,7 @@ export default function ResidentElectricityDashboard() {
 
     const totalSpent = useMemo(() => {
         return recentPurchases
-            .filter((p) => p.status === "success")
-            .reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
+            .reduce((sum, p) => sum + p.amount || 0, 0);
     }, [recentPurchases]);
 
     const isLoading = isLoadingMeters || isLoadingPurchases;
@@ -129,7 +129,7 @@ export default function ResidentElectricityDashboard() {
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-muted">
+                        <div className="text-3xl font-bold text-muted-foreground">
                             {meters.length}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -148,7 +148,7 @@ export default function ResidentElectricityDashboard() {
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-muted">
+                        <div className="text-3xl font-bold text-muted-foreground">
                             {totalPurchases}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">All time</p>
@@ -165,7 +165,7 @@ export default function ResidentElectricityDashboard() {
                         </span>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-muted">
+                        <div className="text-3xl font-bold text-muted-foreground">
                             ₦{totalSpent.toLocaleString()}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">All time</p>
@@ -203,15 +203,15 @@ export default function ResidentElectricityDashboard() {
                                                             {meter.meter_number}
                                                         </span>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground">
-                                                        {meter.house?.name || meter.house?.address || "N/A"}
-                                                </p>
+                                                    {/* <p className="text-sm text-muted-foreground">
+                                                        {titleCase(meter.house?.name ?? meter.house?.address) || "N/A"}
+                                                </p> */}
                                                     <div className="flex gap-2 mt-1">
                                                         <Badge variant="secondary" className="text-xs">
-                                                            {meter.meter_type}
+                                                            {titleCase(meter.meter_type)}
                                                         </Badge>
                                                         <Badge variant="secondary" className="text-xs">
-                                                            {meter.disco}
+                                                            {titleCase(meter.disco.replace(/-/g, " "))}
                                                         </Badge>
                                                     </div>
                                                 </div>
@@ -253,53 +253,42 @@ export default function ResidentElectricityDashboard() {
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Meter Number</TableHead>
+                                        <TableHead>Units</TableHead>
+                                        <TableHead>Token</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead className="text-right">Date</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                 {recentPurchases.map((purchase) => (
-                                <div
-                                    key={purchase.id}
-                                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                                >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="font-medium">
-                                                    Meter: {purchase.meter?.meter_number || "N/A"}
-                                            </p>
-                                            <Badge
-                                                variant={
-                                                    purchase.status === "success"
-                                                        ? "default"
-                                                        : purchase.status === "pending"
-                                                            ? "secondary"
-                                                                : "warning"
-                                                }
-                                            >
-                                                    {purchase.status || "pending"}
-                                            </Badge>
-                                        </div>
-                                            {purchase.units !== undefined && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    {purchase.units} units purchased
-                                                </p>
+                                    <TableRow key={purchase.id}>
+                                        <TableCell className="font-medium">
+                                            {purchase.meter?.meter_number || "N/A"}
+                                        </TableCell>
+                                        <TableCell>
+                                            {purchase.units !== undefined ? `${purchase.units} units` : "—"}
+                                        </TableCell>
+                                        <TableCell>
+                                            {purchase.token ? (
+                                                <span className="font-mono text-xs">{purchase.token}</span>
+                                            ) : (
+                                                "—"
                                             )}
-                                            {purchase.token && (
-                                                <p className="text-xs font-mono text-muted-foreground mt-1">
-                                                    Token: {purchase.token}
-                                                </p>
-                                            )}
-                                            {purchase.created_at && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatDate(purchase.created_at)}
-                                                </p>
-                                            )}
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold">
-                                                ₦{parseFloat(purchase.amount || "0").toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                        </TableCell>
+                                        <TableCell className="font-semibold">
+                                            ₦{purchase.amount.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-right text-muted-foreground">
+                                            {purchase.created_at ? formatDate(purchase.created_at) : "—"}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                </TableBody>
+                            </Table>
                     )}
                 </CardContent>
             </Card>

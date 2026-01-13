@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { differenceInHours, formatDistanceToNow } from "date-fns";
 import { useResidentDashboard, useWallet } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
@@ -25,7 +25,7 @@ import {
   Users as UsersIcon,
   Wallet,
 } from "lucide-react";
-import { formatDateTime, getPassStatusColor } from "@/lib/utils";
+import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
 import { GatePassStatus, type GateEvent, type GatePass } from "@/types";
 
 export default function ResidentDashboardPage() {
@@ -46,7 +46,7 @@ export default function ResidentDashboardPage() {
 
   if (!effectiveHouseId) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <Card>
           <CardContent className="p-10">
             <EmptyState
@@ -60,29 +60,29 @@ export default function ResidentDashboardPage() {
             />
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="grid gap-4 md:grid-cols-3">
           <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!dashboard) {
     return (
-      <DashboardLayout type="resident">
+      <>
         <div className="text-center py-12">
           <p className="text-muted-foreground">No data available</p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -175,7 +175,7 @@ export default function ResidentDashboardPage() {
       ],
       accessor: (row) => (
         <Badge className={getPassStatusColor(row.status)}>
-          {row.statusLabel}
+          {titleCase(row.statusLabel.replace("_", " "))}
         </Badge>
       ),
     },
@@ -239,6 +239,7 @@ export default function ResidentDashboardPage() {
       header: "Person",
       sortable: true,
       filterable: true,
+      accessor: (row) => <span>{titleCase(row.actor)}</span>
     },
     {
       key: "checkIn",
@@ -283,7 +284,7 @@ export default function ResidentDashboardPage() {
   ];
 
   return (
-    <DashboardLayout type="resident">
+    <>
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -344,12 +345,12 @@ export default function ResidentDashboardPage() {
                       currency: "NGN",
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
-                    }).format(wallet.balance_in_naira) : "₦0"}
+                    }).format(wallet.balance) : "₦0"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">Click to manage</p>
                 </div>
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Wallet className="h-5 w-5 text-primary" />
+                <div className="rounded-full bg-primary/10  p-3">
+                  <Wallet className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -366,7 +367,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -381,7 +382,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Across all passes</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -398,7 +399,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Activity className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Activity className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -413,7 +414,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Next 48 hours</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
               </div>
             </CardContent>
@@ -426,7 +427,7 @@ export default function ResidentDashboardPage() {
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Last gate activity</p>
@@ -435,7 +436,7 @@ export default function ResidentDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Expiring soon</p>
@@ -449,10 +450,10 @@ export default function ResidentDashboardPage() {
         </Card>
 
         {/* Forum CTA */}
-        <Card className="border border-primary/20 bg-primary/5">
+        <Card className="border border-[rgb(var(--brand-primary)/0.2)] bg-[rgb(var(--brand-primary)/0.2)]">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
               <CardTitle>Community Forum</CardTitle>
             </div>
             <CardDescription>
@@ -466,7 +467,7 @@ export default function ResidentDashboardPage() {
                   key={option.label}
                   className="flex gap-3 rounded-lg border border-dashed border-primary/30 bg-background/80 p-3"
                 >
-                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#2563eb)]" />
+                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{option.label}</p>
                     <p className="text-sm text-muted-foreground">{option.description}</p>
@@ -549,7 +550,7 @@ export default function ResidentDashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

@@ -2,47 +2,66 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Loader2, Home, Plus, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
-import { generalService } from "@/services/general-service";
 import { authService } from "@/services/auth-service";
 import { apiClient } from "@/lib/api-client";
 import { useResidentOnboarding } from "@/hooks/use-resident";
 import { useAuthStore } from "@/store/auth-store";
-import type { DashboardSelect, House } from "@/types";
+import type { UserProfile } from "@/types";
 import { useAllHouses } from "@/hooks/use-general";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const onboardingSchema = z.object({
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 characters"),
+  address: z.string().min(5, "Address must be at least 5 characters"),
+});
+
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 export default function ResidentOnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams(
-
-  );
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((state) => state.setAuth);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const storedToken = useAuthStore((state) => state.token);
-  const [profile, setProfile] = useState<DashboardSelect | null>(null);
+  const [profile, setProfile] = useState<{ user: UserProfile } | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(storedToken || null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [slugInput, setSlugInput] = useState("");
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    address: "",
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<OnboardingFormData>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      phone: "",
+      address: "",
+    },
   });
 
   const tokenFromQuery = searchParams.get("token");
-  const effectiveToken = tokenFromQuery || authToken || storedToken || null;
+  const effectiveToken = tokenFromQuery || authToken;
 
-  const housesQuery = useAllHouses()
+  const housesQuery = useAllHouses();
   const onboardingMutation = useResidentOnboarding();
+
   const handleSwitchAccount = () => {
     clearAuth();
     apiClient.clearToken();
@@ -55,7 +74,7 @@ export default function ResidentOnboardingPage() {
       setInitializing(false);
       return;
     }
-    if (profileLoaded && authToken === effectiveToken) {
+    if (profileLoaded) {
       setInitializing(false);
       return;
     }
@@ -66,13 +85,14 @@ export default function ResidentOnboardingPage() {
     const syncProfile = async () => {
       try {
         apiClient.setToken(effectiveToken);
-        const response = await authService.getDashboardSelect();
+        const response = await authService.getUser();
+        const userProfile = response.data;
         if (!active) return;
-        setAuth(response.data.user, effectiveToken);
-        setProfile(response.data);
+        setAuth(userProfile, effectiveToken);
+        setProfile({ user: userProfile });
         setAuthToken(effectiveToken);
         setProfileLoaded(true);
-        queryClient.setQueryData(["dashboard", "select"], response.data);
+        queryClient.setQueryData(["dashboard", "select"], { user: userProfile });
       } catch (error: any) {
         if (!active) return;
         const message =
@@ -107,14 +127,11 @@ export default function ResidentOnboardingPage() {
 
   useEffect(() => {
     if (!profile?.user) return;
-    setFormData((prev) => ({
-      first_name: prev.first_name || profile.user.first_name || "",
-      last_name: prev.last_name || profile.user.last_name || "",
-      phone: prev.phone || profile.user.phone || "",
-      address: prev.address || profile.user.address || "",
-    }));
-  }, [profile]);
-
+    setValue("first_name", profile.user.first_name || "");
+    setValue("last_name", profile.user.last_name || "");
+    setValue("phone", profile.user.phone || "");
+    setValue("address", profile.user.address || "");
+  }, [profile, setValue]);
 
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -183,8 +200,7 @@ export default function ResidentOnboardingPage() {
     setSlugInput("");
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = (data: OnboardingFormData) => {
     if (!profile?.user?.id) {
       toast.error("We couldn't verify your account. Please login again.");
       router.replace("/auth/login");
@@ -195,19 +211,17 @@ export default function ResidentOnboardingPage() {
       const { slugs: houseSlugs, unresolved } = resolveHouseSlugs();
       if (unresolved.length > 0) {
         toast.info(
-          `We'll submit ${unresolved.join(
-            ", "
-          )} as provided. Your admin will still be able to validate the request.`
+          `We'll submit ${unresolved.join(", ")} as provided. Your admin will still be able to validate the request.`
         );
       }
       onboardingMutation.mutate(
         {
           user_id: profile.user.id,
           house_slugs: houseSlugs,
-          first_name: formData.first_name || undefined,
-          last_name: formData.last_name || undefined,
-          phone: formData.phone || undefined,
-          address: formData.address || undefined,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone,
+          address: data.address,
           email: profile.user.email,
         },
         {
@@ -226,7 +240,7 @@ export default function ResidentOnboardingPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card/80 px-8 py-6 text-center shadow-xl">
-          <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-primary,#2563eb)]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-primary,#213928)]" />
           <p className="text-sm text-muted-foreground">
             Preparing your onboarding experience...
           </p>
@@ -257,10 +271,10 @@ export default function ResidentOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-[var(--brand-primary,#2563eb)]/5 px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-[var(--brand-primary,#213928)]/5 px-4 py-10">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
             <Home className="h-6 w-6" />
           </div>
           <h1 className="text-3xl font-semibold text-foreground">Resident onboarding</h1>
@@ -270,18 +284,18 @@ export default function ResidentOnboardingPage() {
           </p>
         </div>
 
-        <Card className="border-[var(--brand-primary,#2563eb)]/10">
+        <Card className="border-[var(--brand-primary,#213928)]/10">
           {alreadyOnboarded ? (
             <>
               <CardHeader className="text-center space-y-3">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#2563eb)]/10 text-[var(--brand-primary,#2563eb)]">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <CardTitle>You're already onboarded</CardTitle>
                 <CardDescription>
                   Your account is linked to{" "}
-                  {profile?.houses?.length || profile?.user?.houses?.length || 0}{" "}
-                  house{((profile?.houses?.length || profile?.user?.houses?.length || 0) ?? 0) === 1 ? "" : "s"}.
+                  {profile?.user?.houses?.length || 0}{" "}
+                  house{(profile?.user?.houses?.length ?? 0) === 1 ? "" : "s"}.
                   Jump back into your dashboard to manage passes and visitors.
                 </CardDescription>
               </CardHeader>
@@ -292,7 +306,7 @@ export default function ResidentOnboardingPage() {
               </CardFooter>
             </>
           ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <CardHeader className="space-y-2">
                 <CardTitle>Link your houses</CardTitle>
                 <CardDescription>
@@ -314,7 +328,7 @@ export default function ResidentOnboardingPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-[var(--brand-primary,#2563eb)] text-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/10"
+                      className="border-[var(--brand-primary,#213928)] text-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/10"
                       onClick={handleAddSlug}
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -333,7 +347,7 @@ export default function ResidentOnboardingPage() {
                       selectedSlugs.map((slug) => (
                         <span
                           key={slug}
-                          className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary,#2563eb)]/40 bg-[var(--brand-primary,#2563eb)]/10 px-3 py-1 text-xs font-semibold text-[var(--brand-primary,#2563eb)]"
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary,#213928)]/40 bg-[var(--brand-primary,#213928)]/10 px-3 py-1 text-xs font-semibold text-[var(--brand-primary,#213928)]"
                         >
                           {slug}
                           <button
@@ -366,7 +380,7 @@ export default function ResidentOnboardingPage() {
                         <button
                           type="button"
                           key={house.slug}
-                          className="rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition hover:border-[var(--brand-primary,#2563eb)] hover:bg-[var(--brand-primary,#2563eb)]/5"
+                          className="rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition hover:border-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/5"
                           onClick={() => {
                             setSelectedSlugs((prev) => {
                               const exists = prev.some(
@@ -395,47 +409,27 @@ export default function ResidentOnboardingPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input
                     label="First name"
-                    value={formData.first_name}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        first_name: event.target.value,
-                      }))
-                    }
+                    {...register("first_name")}
+                    error={errors.first_name?.message}
                   />
                   <Input
                     label="Last name"
-                    value={formData.last_name}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        last_name: event.target.value,
-                      }))
-                    }
+                    {...register("last_name")}
+                    error={errors.last_name?.message}
                   />
                   <Input
                     label="Phone number"
-                    value={formData.phone}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        phone: event.target.value,
-                      }))
-                    }
+                    {...register("phone")}
+                    error={errors.phone?.message}
                   />
                   <Input
                     label="Address"
-                    value={formData.address}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        address: event.target.value,
-                      }))
-                    }
+                    {...register("address")}
+                    error={errors.address?.message}
                   />
                 </div>
 
-                <div className="rounded-2xl border border-dashed border-[var(--brand-primary,#2563eb)]/40 bg-[var(--brand-primary,#2563eb)]/5 p-4 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-[var(--brand-primary,#213928)]/40 bg-[var(--brand-primary,#213928)]/5 p-4 text-sm text-muted-foreground">
                   <p className="font-semibold text-foreground">
                     Need your house slug?
                   </p>
@@ -448,7 +442,7 @@ export default function ResidentOnboardingPage() {
               <CardFooter>
                 <Button
                   type="submit"
-                  className="w-full bg-[var(--brand-primary,#2563eb)] text-white hover:bg-[var(--brand-primary,#2563eb)]/90"
+                  className="w-full bg-[var(--brand-primary,#213928)] text-white hover:bg-[var(--brand-primary,#213928)]/90"
                   disabled={selectedSlugs.length === 0}
                   isLoading={onboardingMutation.isPending}
                 >

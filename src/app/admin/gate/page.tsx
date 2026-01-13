@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCheckinPass, useCheckoutPass, useVisitorsByPassCode } from "@/hooks/use-admin";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -12,6 +11,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { QRScanner } from "@/components/ui/QRScanner";
 import { Scan, CheckCircle, XCircle, LogIn, LogOut, QrCode } from "lucide-react";
 import { Visitor } from "@/types";
+import { titleCase } from "@/lib/utils";
+import { title } from "process";
 
 // Helper function to check if pass code is 2-part or 3-part
 function getPassCodeParts(code: string): { baseCode: string; suffix: string | null; isThreePart: boolean } {
@@ -210,7 +211,7 @@ function GateConsoleContent() {
     !!selectedPassCode && !shouldDirectScan(selectedPassCode);
 
   return (
-    <DashboardLayout type="admin">
+    <>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Gate Console</h1>
@@ -279,7 +280,6 @@ function GateConsoleContent() {
               <Button
                 onClick={() => handleScan()}
                 isLoading={isLoading}
-                size="lg"
               >
                 <Scan className="h-5 w-5 mr-2" />
                 Scan
@@ -315,7 +315,7 @@ function GateConsoleContent() {
                         <TableRow>
                           <TableHead>Name</TableHead>
                           <TableHead>Email</TableHead>
-                            <TableHead>Pass Code</TableHead>
+                          <TableHead>Pass Code</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -427,13 +427,13 @@ function GateConsoleContent() {
                                 : "danger"
                             }
                           >
-                            {lastResult.gate_pass.status}
+                            {titleCase(lastResult.gate_pass.status.replace("_", " "))}
                           </Badge>
                         </p>
                         {lastResult.owner && (
                           <p>
                             <span className="font-medium">Owner:</span>{" "}
-                            {lastResult.owner.name}
+                            {titleCase(lastResult.owner.name)}
                           </p>
                         )}
                         {lastResult.uses_count && (
@@ -484,14 +484,14 @@ function GateConsoleContent() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
 export default function GateConsolePage() {
   return (
     <Suspense fallback={
-      <DashboardLayout type="admin">
+      < >
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
@@ -499,7 +499,7 @@ export default function GateConsolePage() {
             <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     }>
       <GateConsoleContent />
     </Suspense>
