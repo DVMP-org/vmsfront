@@ -6,16 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Zap, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
+import { Zap, CreditCard, CheckCircle2, AlertCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
+import { useWallet } from "@/hooks/use-resident";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { Meter, PurchaseTokenCreate } from "@/plugins/electricity/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { titleCase } from "@/lib/utils";
+import { titleCase, formatCurrency } from "@/lib/utils";
+import { parseApiError } from "@/lib/error-utils";
+import { cleanToken } from "../../utils";
 
 export default function ResidentPurchaseMeter() {
     const searchParams = useSearchParams();
@@ -23,6 +26,7 @@ export default function ResidentPurchaseMeter() {
     const selectedMeterId = searchParams.get("meter");
     const { selectedHouse } = useAppStore();
     const { data: user } = useProfile();
+    const { data: wallet } = useWallet();
 
     // Get current house ID from selected house or first house from profile
     const currentHouseId = selectedHouse?.id || null;
@@ -68,7 +72,7 @@ export default function ResidentPurchaseMeter() {
             setFormData({ amount: 0 });
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to purchase electricity");
+            toast.error(parseApiError(error).message);
         },
     });
 
@@ -100,6 +104,14 @@ export default function ResidentPurchaseMeter() {
     const handleAmountChange = (amount: number) => {
         setFormData({ amount });
     };
+
+    const handleCopyToken = (token: string) => {
+        const cleanedToken = cleanToken(token);
+        navigator.clipboard.writeText(cleanedToken);
+        toast.success("Token copied to clipboard!");
+    };
+
+
 
     const handlePurchase = async () => {
         if (!selectedMeter) {
@@ -185,10 +197,17 @@ export default function ResidentPurchaseMeter() {
                                 Your electricity purchase has been processed successfully.
                             </p>
                             {purchaseResult.token && (
-                                <div className="w-full max-w-md p-4 bg-white dark:bg-gray-900 rounded-lg border mb-6">
-                                    <p className="text-sm text-muted-foreground mb-2">Token:</p>
+                                <div
+                                    className="w-full max-w-md p-4 bg-white dark:bg-gray-900 rounded-lg border mb-6 cursor-pointer hover:border-[rgb(var(--brand-primary))] transition-colors group"
+                                    onClick={() => handleCopyToken(purchaseResult.token!)}
+                                    title="Click to copy token"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-sm text-muted-foreground">Token</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground group-hover:text-[rgb(var(--brand-primary))]" />
+                                    </div>
                                     <p className="text-xl font-mono font-bold text-center break-all">
-                                        {purchaseResult.token}
+                                        {cleanToken(purchaseResult.token)}
                                     </p>
                                 </div>
                             )}
@@ -289,10 +308,22 @@ export default function ResidentPurchaseMeter() {
                 {/* Purchase Form */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Purchase Details</CardTitle>
-                        <CardDescription>
-                            Enter the amount you want to purchase
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Purchase Details</CardTitle>
+                                <CardDescription>
+                                    Enter the amount you want to purchase
+                                </CardDescription>
+                            </div>
+                            {wallet && (
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">Available Balance</p>
+                                    <p className="text-sm font-bold text-[rgb(var(--brand-primary))]">
+                                        {formatCurrency(wallet.balance)}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {selectedMeter ? (

@@ -19,6 +19,7 @@ import {
   ResidentHouse,
 } from "@/types";
 import { toast } from "sonner";
+import { parseApiError } from "@/lib/error-utils";
 import { AdminDashboard } from "@/types";
 
 // Houses
@@ -74,7 +75,7 @@ export function useCreateHouse() {
       toast.success("House created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -93,7 +94,7 @@ export function useUpdateHouse() {
       toast.success("House updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -109,7 +110,7 @@ export function useDeleteHouse() {
       toast.success("House deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -124,7 +125,7 @@ export function useBulkDeleteHouses() {
       toast.success("Houses deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete houses");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -139,7 +140,7 @@ export function useBulkToggleHouseActive() {
       toast.success("Houses status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update houses status");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -174,7 +175,7 @@ export function useCreateResident() {
       toast.success("Resident created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -223,7 +224,7 @@ export function useUpdateResident() {
       toast.success("Resident updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -239,7 +240,7 @@ export function useDeleteResident() {
       toast.success("Resident deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -270,7 +271,7 @@ export function useCreateAdmin() {
       toast.success("Admin created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create admin");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -286,7 +287,7 @@ export function useUpdateAdminRole() {
       toast.success("Admin role updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update admin role");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -301,7 +302,7 @@ export function useDeleteAdmin() {
       toast.success("Admin deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete admin");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -341,7 +342,7 @@ export function useCheckinPass() {
       toast.success(response.data.message || "Check-in successful!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Check-in failed");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -357,7 +358,7 @@ export function useCheckoutPass() {
       toast.success(response.data.message || "Check-out successful!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Check-out failed");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -497,7 +498,7 @@ export function useCreateRole() {
       toast.success("Role created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create role");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -523,9 +524,7 @@ export function useImportHouses() {
       );
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to import houses"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -541,9 +540,7 @@ export function useImportResidents() {
       );
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to import residents"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -589,9 +586,7 @@ export function useCreateHouseGroup() {
       toast.success("House group created successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to create house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -612,9 +607,7 @@ export function useUpdateHouseGroup() {
       toast.success("House group updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -629,9 +622,7 @@ export function useDeleteHouseGroup() {
       toast.success("House group deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to delete house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -646,9 +637,7 @@ export function useBulkDeleteHouseGroups() {
       toast.success("House groups deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to delete house groups"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -663,9 +652,7 @@ export function useToggleHouseGroupActive() {
       toast.success("House group status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house group status"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -680,9 +667,7 @@ export function useBulkToggleHouseGroupActive() {
       toast.success("House groups status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house groups status"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }

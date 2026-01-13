@@ -15,6 +15,7 @@ import { Wallet, CreditCard, History, ArrowRight, ArrowDownRight, ArrowUpRight, 
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDateTime, titleCase } from "@/lib/utils";
+import { parseApiError } from "@/lib/error-utils";
 import { WalletTransaction } from "@/types";
 
 // Memoized currency formatter to avoid recreating on every render
@@ -168,7 +169,7 @@ export default function WalletPage() {
                 toast.error("Failed to initiate payment");
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.detail || "Failed to fund wallet");
+            toast.error(parseApiError(error).message);
         }
     }, [amount, description, fundWalletMutation]);
 

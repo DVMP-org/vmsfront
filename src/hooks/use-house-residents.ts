@@ -10,6 +10,7 @@ import {
     ResidentCreate,
 } from "@/types";
 import { toast } from "sonner";
+import { parseApiError } from "@/lib/error-utils";
 
 export function useHouseResidents(
     houseId: string | null,
@@ -44,7 +45,7 @@ export function useAddHouseResident(houseId: string | null) {
             toast.success("Resident added successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to add resident");
+            toast.error(parseApiError(error).message);
         },
     });
 }
@@ -74,7 +75,7 @@ export function useUpdateHouseResident(houseId: string | null) {
             toast.success("Resident updated successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to update resident");
+            toast.error(parseApiError(error).message);
         },
     });
 }
@@ -92,7 +93,7 @@ export function useDeleteHouseResident(houseId: string | null) {
             toast.success("Resident deleted successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to delete resident");
+            toast.error(parseApiError(error).message);
         },
     });
 }
@@ -110,7 +111,7 @@ export function useToggleHouseResidentStatus(houseId: string | null) {
             toast.success("Resident status toggled successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to toggle resident status");
+            toast.error(parseApiError(error).message);
         },
     });
 }

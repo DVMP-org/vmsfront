@@ -11,6 +11,7 @@ import {
   UpdateHouseRequest,
 } from "@/types";
 import { toast } from "sonner";
+import { parseApiError } from "@/lib/error-utils";
 
 export function useResidentHouses() {
   return useQuery({
@@ -61,7 +62,7 @@ export function useUpdateHouse(houseId: string | null) {
       toast.success("House details updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update house details");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -124,7 +125,7 @@ export function useCreateGatePass(houseId: string | null) {
       toast.success("Gate pass created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create gate pass");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -145,7 +146,7 @@ export function useRevokeGatePass(houseId: string | null) {
       toast.success("Gate pass revoked successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to revoke gate pass");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -210,9 +211,7 @@ export function useResidentOnboarding() {
       toast.success("You're now onboarded as a resident!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to complete onboarding"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -271,7 +270,7 @@ export function useFundWallet() {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to fund wallet");
+      toast.error(parseApiError(error).message);
     },
   });
 }
