@@ -17,6 +17,9 @@ import {
   HouseDetail,
   Resident,
   ResidentHouse,
+  Due,
+  CreateDueRequest,
+  HouseDue,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -669,5 +672,109 @@ export function useBulkToggleHouseGroupActive() {
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
     },
+  });
+}
+
+// Dues
+export function useAdminDues(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) {
+  return useQuery<PaginatedResponse<Due>>({
+    queryKey: ["admin", "dues", params],
+    queryFn: async () => {
+      const response = await adminService.getDues(params);
+      return response.data;
+    },
+  });
+}
+
+export function useCreateDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateDueRequest) => adminService.createDue(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      toast.success("Due created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useAdminDue(dueId: string | null) {
+  return useQuery<Due>({
+    queryKey: ["admin", "due", dueId],
+    queryFn: async () => {
+      if (!dueId) throw new Error("Due ID is required");
+      const response = await adminService.getDue(dueId);
+      return response.data;
+    },
+    enabled: !!dueId,
+  });
+}
+
+export function useUpdateDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ dueId, data }: { dueId: string; data: Partial<CreateDueRequest> }) =>
+      adminService.updateDue(dueId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      if (response.data?.id) {
+        queryClient.invalidateQueries({ queryKey: ["admin", "due", response.data.id] });
+      }
+      toast.success("Due updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useDeleteDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (dueId: string) => adminService.deleteDue(dueId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      toast.success("Due deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useAdminDueHouses(dueId: string | null, params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) {
+  return useQuery<PaginatedResponse<HouseDue>>({
+    queryKey: ["admin", "due-houses", dueId, params],
+    queryFn: async () => {
+      if (!dueId) throw new Error("Due ID is required");
+      const response = await adminService.getDueHouses(dueId, params);
+      return response.data;
+    },
+    enabled: !!dueId,
+  });
+}
+
+export function useAdminHouseDue(dueId: string | null, houseId: string | null) {
+  return useQuery<HouseDue>({
+    queryKey: ["admin", "house-due", dueId, houseId],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
+      const response = await adminService.getHouseDue(dueId, houseId);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
   });
 }

@@ -23,6 +23,7 @@ import {
   UserCog,
   Puzzle,
   Wallet,
+  Receipt,
   Palette,
   FolderTree,
 } from "lucide-react";
@@ -80,6 +81,15 @@ const adminLinks = [
   { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
   { href: "/admin/houses", label: "Houses", icon: Building2 },
   { href: "/admin/house-groups", label: "House Groups", icon: FolderTree },
+  {
+    href: "/admin/dues",
+    label: "Dues",
+    icon: Receipt,
+    children: [
+      { href: "/admin/dues", label: "All Dues", icon: Receipt },
+      { href: "/admin/dues/houses", label: "House Dues", icon: Building2 },
+    ],
+  },
   { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/forums", label: "Forums", icon: MessageSquare },
@@ -94,6 +104,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
@@ -308,6 +319,18 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     });
   };
 
+  const toggleMenu = (label: string) => {
+    setExpandedMenus((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(label)) {
+        newSet.delete(label);
+      } else {
+        newSet.add(label);
+      }
+      return newSet;
+    });
+  };
+
   // Pre-calculate active routes for all plugins to avoid redundant checks during render
   // returns Map<PluginName, ActiveRoutePath | null>
   const activeRoutesMap = useMemo(() => {
@@ -376,6 +399,25 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
         return newSet;
       });
     }
+
+    // Auto-expand admin menus with active children
+    if (actualType === "admin") {
+      adminLinks.forEach(link => {
+        if (link.children) {
+          const hasActiveChild = link.children.some(child =>
+            pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
+          );
+          if (hasActiveChild) {
+            setExpandedMenus(prev => {
+              if (prev.has(link.label)) return prev;
+              const newSet = new Set(prev);
+              newSet.add(link.label);
+              return newSet;
+            });
+          }
+        }
+      });
+    }
   }, [pathname, actualType, filteredPlugins, activeRoutesMap]);
 
   return (
@@ -436,15 +478,112 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
       {/* Navigation Links */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto overflow-x-hidden">
-        {links.map((link) => {
+        {links.map((link: any) => {
           const Icon = link.icon;
+          const isParentActive = link.children?.some((child: any) =>
+            pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
+          ) || (pathname === link.href || (pathname && pathname.startsWith(link.href + "/")));
+
           const isActive = mostSpecificMatch?.href === link.href;
+          const isExpanded = expandedMenus.has(link.label);
+          const hasChildren = link.children && link.children.length > 0;
+
           // Use a stable key that combines href and label to ensure uniqueness
           const linkKey = `${link.href}-${link.label}`;
+
+          if (hasChildren) {
+            // Find if any child is a more specific match than the parent's base href
+            const activeChild = link.children.find((child: any) =>
+              pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
+            );
+
+            // Re-sort children to ensure strictness if needed, but usually simple match is fine
+            // if we are in a child route.
+
+            return (
+              <div key={linkKey} className="mb-1">
+                <button
+                  onClick={() => toggleMenu(link.label)}
+                  className={cn(
+                    "flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200",
+                    "group relative",
+                    isMobile || !collapsed
+                      ? "gap-3 px-3 py-2.5 justify-between"
+                      : "justify-center px-2 py-2.5",
+                    activeChild
+                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  title={collapsed && !isMobile ? link.label : undefined}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        activeChild && "text-primary-foreground"
+                      )}
+                    />
+                    {(isMobile || !collapsed) && (
+                      <span className="flex-1 truncate text-left">{link.label}</span>
+                    )}
+                  </div>
+                  {(isMobile || !collapsed) && (
+                    <div className="flex-shrink-0">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  )}
+                </button>
+
+                {isExpanded && (isMobile || !collapsed) && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
+                    {link.children.map((child: any) => {
+                      const ChildIcon = child.icon;
+                      // Strict child check: it is active if it's the exact match or the most specific start
+                      // Given submenus, usually children are specific enough.
+                      const isChildActive = pathname === child.href || (pathname && pathname.startsWith(child.href + "/"));
+
+                      // Handle the case where "All Dues" is /admin/dues and "House Dues" is /admin/dues/houses
+                      // If we are at /admin/dues/houses, both start with /admin/dues.
+                      // We need to check if ANY OTHER child is a better match.
+                      const isBestChildMatch = isChildActive && !link.children.some((otherChild: any) =>
+                        otherChild !== child &&
+                        otherChild.href.length > child.href.length &&
+                        pathname.startsWith(otherChild.href)
+                      );
+
+                      return (
+                        <li key={child.href}>
+                          <Link
+                            href={child.href}
+                            onClick={handleLinkClick}
+                            className={cn(
+                              "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                              "gap-3 px-3 py-2.5",
+                              isBestChildMatch
+                                ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="flex-1 truncate">{child.label}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link
               key={linkKey}
+              // ... unchanged
               href={link.href}
               onClick={handleLinkClick}
               className={cn(

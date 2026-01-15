@@ -42,6 +42,9 @@ import {
     HouseDetail,
     Resident,
     ResidentHouse,
+    Due,
+    CreateDueRequest,
+    HouseDue,
 } from "@/types";
 
 export const adminService = {
@@ -547,5 +550,54 @@ export const adminService = {
         data: UpdatePaymentGatewayRequest
     ): Promise<ApiResponse<PaymentGateway>> {
         return apiClient.put(`/admin/config/payment/gateway/${gatewayName}/update`, data);
+    },
+
+    // Dues
+    async getDues(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Due>>> {
+        return apiClient.get("/admin/dues/", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async createDue(data: CreateDueRequest): Promise<ApiResponse<Due>> {
+        return apiClient.post("/admin/dues/create", data);
+    },
+
+    async getDue(dueId: string): Promise<ApiResponse<Due>> {
+        return apiClient.get(`/admin/dues/${dueId}`);
+    },
+
+    async updateDue(dueId: string, data: Partial<CreateDueRequest>): Promise<ApiResponse<Due>> {
+        return apiClient.put(`/admin/dues/${dueId}/update`, data);
+    },
+
+    async deleteDue(dueId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/dues/${dueId}/delete`);
+    },
+
+    async getDueHouses(dueId: string, params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
+        return apiClient.get(`/admin/dues/${dueId}/houses`, {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async getHouseDue(dueId: string, houseId: string): Promise<ApiResponse<HouseDue>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}`);
     },
 };

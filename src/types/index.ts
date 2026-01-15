@@ -18,6 +18,22 @@ export enum UserType {
     ADMIN = "admin",
 }
 
+export enum DueTenureLength {
+    ONE_TIME = "one_time",
+    DAILY = "daily",
+    WEEKLY = "weekly",
+    MONTHLY = "monthly",
+    QUARTERLY = "quarterly",
+    BIANNUALLY = "biannually",
+    YEARLY = "yearly",
+}
+
+export enum HouseDueStatus {
+    UNPAID = "unpaid",
+    PARTIALLY_PAID = "partially_paid",
+    PAID = "paid",
+}
+
 // Base Types
 export interface User {
     id: string;
@@ -639,6 +655,38 @@ export interface ResidentHouse {
     is_active: boolean;
 }
 
+export interface HouseLite {
+    id: string;
+    name: string;
+    address: string;
+}
+
+export interface Due {
+    id: string;
+    name: string;
+    description?: string | null;
+    amount: number;
+    minimum_payment_breakdown: DueTenureLength;
+    tenure_length: DueTenureLength;
+    recurring: boolean;
+    houses: HouseLite[];
+    start_date?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface CreateDueRequest {
+    name: string;
+    description: string;
+    amount: number;
+    house_groups_ids: string[];
+    houses_ids: string[];
+    minimum_payment_breakdown: string; // DueTenureLength
+    tenure_length: string; // DueTenureLength
+    recurring: boolean;
+    start_date?: string;
+}
+
 export interface ResidentCreate {
 
     email: string;
@@ -647,4 +695,17 @@ export interface ResidentCreate {
     last_name: string;
     phone: string;
     address: string;
+}
+export interface HouseDue {
+    id: string;
+    due_id: string;
+    house_id: string;
+    due?: Due;
+    house?: House;
+    amount: number;
+    balance: number;
+    paid_amount: number;
+    status: HouseDueStatus;
+    created_at: string;
+    updated_at: string;
 }
