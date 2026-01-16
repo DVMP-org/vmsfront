@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,6 +34,15 @@ const TENURE_OPTIONS = [
     { value: DueTenureLength.BIANNUALLY, label: "Biannually" },
     { value: DueTenureLength.YEARLY, label: "Yearly" },
 ];
+
+const TENURE_WEIGHTS: Record<string, number> = {
+    [DueTenureLength.DAILY]: 1,
+    [DueTenureLength.WEEKLY]: 2,
+    [DueTenureLength.MONTHLY]: 3,
+    [DueTenureLength.QUARTERLY]: 4,
+    [DueTenureLength.BIANNUALLY]: 5,
+    [DueTenureLength.YEARLY]: 6,
+};
 
 interface DueFormProps {
     initialData?: Partial<DueFormData>;
@@ -84,6 +93,31 @@ export function DueForm({
             : [...current, id];
         setValue(field, next, { shouldValidate: true });
     };
+
+    const tenureLength = watch("tenure_length");
+    const breakdown = watch("minimum_payment_breakdown");
+
+    // Enforce breakdown rules: Breakdown must be shorter than Tenure
+    useEffect(() => {
+        const tenureWeight = TENURE_WEIGHTS[tenureLength] || 0;
+        const breakdownWeight = TENURE_WEIGHTS[breakdown] || 0;
+
+        // If breakdown is no longer strictly less than tenure, pick a valid one
+        if (breakdownWeight >= tenureWeight && tenureWeight > 1) {
+            const validBreakdowns = Object.entries(TENURE_WEIGHTS)
+                .filter(([_, w]) => w < tenureWeight)
+                .sort((a, b) => b[1] - a[1]); // Pick the largest valid breakdown allowed
+
+            if (validBreakdowns.length > 0) {
+                setValue("minimum_payment_breakdown", validBreakdowns[0][0]);
+            }
+        } else if (tenureWeight === 1) {
+            // If tenure is Daily, breakdown is also Daily
+            if (breakdown !== DueTenureLength.DAILY) {
+                setValue("minimum_payment_breakdown", DueTenureLength.DAILY);
+            }
+        }
+    }, [tenureLength, breakdown, setValue]);
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -188,7 +222,15 @@ export function DueForm({
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                         {...register("minimum_payment_breakdown")}
                                     >
-                                        {TENURE_OPTIONS.filter((o) => o.value !== DueTenureLength.ONE_TIME).map((opt) => (
+                                        {TENURE_OPTIONS.filter((o) => {
+                                            if (o.value === DueTenureLength.ONE_TIME) return false;
+                                            const optionWeight = TENURE_WEIGHTS[o.value] || 0;
+                                            const currentTenureWeight = TENURE_WEIGHTS[tenureLength] || 0;
+                                            // Breakdown must be strictly smaller than tenure, except for Daily where it's the same
+                                            return currentTenureWeight > 1
+                                                ? optionWeight < currentTenureWeight
+                                                : optionWeight <= currentTenureWeight;
+                                        }).map((opt) => (
                                             <option key={opt.value} value={opt.value}>
                                                 {opt.label}
                                             </option>
