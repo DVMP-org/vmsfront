@@ -185,18 +185,7 @@ export function useProfile() {
   });
 }
 
-export function useDashboardSelect() {
-  return useQuery<DashboardSelect>({
-    queryKey: ["auth", "dashboard-select"],
-    queryFn: async () => {
-      const response = await authService.getDashboardSelect();
-      const user = response.data;
 
-      return user;
-    },
-    enabled: useAuthStore.getState().isAuthenticated,
-  });
-}
 
 export function useVerifyToken() {
   return useQuery<AuthResponse>({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -28,7 +28,7 @@ interface HeaderProps {
   type: "resident" | "admin" | "select" | "auth";
 }
 
-export function Header({ onMenuClick, type }: HeaderProps) {
+export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
   const { user, logout } = useAuth();
   const { selectedHouse, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
@@ -137,11 +137,6 @@ export function Header({ onMenuClick, type }: HeaderProps) {
             href={dashboardHref}
             className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold"
           >
-            {/* <Home className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
-            <span className="truncate">
-              {branding?.app_name || "VMSCORE"}
-            </span> */}
-            {/* <LogoFull /> */}
             {logoUrl ? (
               <img
                 src={logoUrl}
@@ -186,8 +181,6 @@ export function Header({ onMenuClick, type }: HeaderProps) {
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
-              {/* Notification badge can be added here later */}
-              {/* <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span> */}
             </Button>
 
             <div className="relative" ref={menuRef}>
@@ -196,9 +189,6 @@ export function Header({ onMenuClick, type }: HeaderProps) {
                 onClick={() => setMenuOpen((prev) => !prev)}
                 className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
               >
-                {/* <div className="flex font-semibold text-3xl items-center justify-center rounded-full bg-[var(--primary,#213928)]/10 text-[var(--primary,#213928)] uppercase">
-                {getInitials(user.first_name, user.last_name)}
-              </div> */}
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
                     {getFullName(user.first_name, user.last_name)}
@@ -257,9 +247,9 @@ export function Header({ onMenuClick, type }: HeaderProps) {
       </div>
     </header>
   );
-}
+});
 
-function MenuAction({
+const MenuAction = memo(function MenuAction({
   icon: Icon,
   label,
   description,
@@ -285,4 +275,4 @@ function MenuAction({
       </div>
     </button>
   );
-}
+});

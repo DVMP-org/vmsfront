@@ -64,7 +64,7 @@ export default function HouseDueDetailPage() {
                 <AlertCircle className="h-10 w-10 text-destructive/40 mb-4" />
                 <h2 className="text-xl font-bold text-foreground">House Due record not found</h2>
                 <p className="text-sm text-muted-foreground mt-2 mb-6">The requested house assessment record could not be found or may have been removed.</p>
-                <Button variant="outline" className="font-bold text-xs uppercase" onClick={() => router.push(`/admin/dues/${dueId}/houses`)}>
+                <Button variant="outline" className="font-bold text-xs uppercase" onClick={() => router.back()}>
                     <ArrowLeft className="h-3.5 w-3.5 mr-2" />
                     Back to House List
                 </Button>
@@ -210,13 +210,14 @@ export default function HouseDueDetailPage() {
                         <CardContent className="p-5 grid grid-cols-2 md:grid-cols-4 gap-6">
                             <DetailItem label="Due Name" value={due?.name || "N/A"} />
                             <DetailItem label="Billing Cycle" value={titleCase(due?.tenure_length || "One-time")} />
-                            <DetailItem label="Status" value={due?.recurring ? "Recurring" : "One-time"} />
+                            <DetailItem label="Recurring" value={due?.recurring ? "True" : "False"} />
+                            <DetailItem label="Payment Breakdown" value={titleCase(houseDue?.payment_breakdown) || "N/A"} />
                             <DetailItem label="Property" value={house?.name || "N/A"} />
                         </CardContent>
                     </Card>
 
                     {/* Payment Schedule */}
-                    <Card className="rounded-lg shadow-none border-border/60 overflow-hidden">
+                    <Card className="rounded-lg overflow-hidden">
                         <CardHeader className="py-3 px-5 border-b bg-muted/20">
                             <CardTitle className="text-[11px] font-bold uppercase text-muted-foreground flex items-center gap-2">
                                 <Calendar className="h-3.5 w-3.5" />
@@ -258,7 +259,7 @@ export default function HouseDueDetailPage() {
                                 total={paymentsData?.total || 0}
                                 currentPage={paymentsPage}
                                 onPageChange={setPaymentsPage}
-                                className="border-none"
+                                className=""
                                 showPagination={true}
                                 emptyMessage="No payments detected."
                             />

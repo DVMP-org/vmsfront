@@ -29,11 +29,16 @@ import {
   HouseDue,
   DueSchedule,
   DuePayment,
+  DashboardSelect,
 } from "@/types";
 
 export const residentService = {
   async getHouses(): Promise<ApiResponse<House[]>> {
     return apiClient.get("/resident/house/list");
+  },
+
+  async getDashboardSelect(): Promise<ApiResponse<DashboardSelect>> {
+    return apiClient.get("/resident/dashboard/select");
   },
 
   async getResident(): Promise<ApiResponse<Resident>> {

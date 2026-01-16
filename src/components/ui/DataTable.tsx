@@ -616,7 +616,7 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="rounded-lg  bg-card overflow-hidden">
         <Table className="min-w-full text-xs sm:text-sm">
           <TableHeader>
             <TableRow>
