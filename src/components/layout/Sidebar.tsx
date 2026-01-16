@@ -31,11 +31,18 @@ import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
-import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath, findMatchingRoute, findPluginRouteAndType } from "@/lib/plugin-utils";
+import {
+  buildPluginPath,
+  extractRoutePath,
+  isPluginPath,
+  findMatchingRoute,
+  findPluginRouteAndType,
+} from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentHouse } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasPermission } from "@/lib/permissions";
+import { adminLinks } from "@/config/admin-routes";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -81,40 +88,6 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
   return links;
 }
 
-const adminLinks = [
-  { href: "/admin", label: "Dashboard", icon: Home },
-  { href: "/admin/gate", label: "Gate Console", icon: Scan, permission: "gate_passes.console" },
-  { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
-  { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
-  { href: "/admin/houses", label: "Houses", icon: Building2, permission: "houses.list" },
-  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree, permission: "house_groups.list" },
-  {
-    href: "/admin/dues",
-    label: "Dues",
-    icon: Receipt,
-    permission: ["dues.list", "dues.houses"],
-    children: [
-      { href: "/admin/dues", label: "All Dues", icon: Receipt, permission: "dues.list" },
-      { href: "/admin/dues/houses", label: "House Dues", icon: Building2, permission: "dues.houses" },
-    ],
-  },
-  { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
-  {
-    href: "#",
-    label: "Admins",
-    icon: UserCog,
-    permission: ["users.list", "roles.list"],
-    children: [
-      { href: "/admin/admins", label: "Admins", icon: UserCog, permission: "users.list" },
-      { href: "/admin/admins/roles", label: "Roles", icon: Shield, permission: "roles.list" },
-    ],
-  },
-  { href: "/admin/forums", label: "Forums", icon: MessageSquare, permission: "forum_category.list" },
-  { href: "/admin/settings", label: "Settings", icon: Settings, permission: "branding.list" },
-  { href: "/admin/plugins", label: "Plugins", icon: Puzzle, permission: "plugins.list" },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.summary" },
-  { href: "/admin/profile", label: "Profile", icon: UserCog },
-];
 
 export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);

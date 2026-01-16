@@ -297,6 +297,47 @@ export function useUpdateAdminRole() {
   });
 }
 
+export function useAdminDeleteRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (roleId: string) => adminService.deleteRole(roleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      toast.success("Role deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      roleId,
+      data,
+    }: {
+      roleId: string;
+      data: Partial<{
+        name: string;
+        code: string;
+        description: string;
+        permissions: any;
+      }>;
+    }) => adminService.updateRole(roleId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      toast.success("Role updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
 export function useDeleteAdmin() {
   const queryClient = useQueryClient();
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 
 export default function AdminLayout({
     children,
@@ -9,7 +10,9 @@ export default function AdminLayout({
 }) {
     return (
         <DashboardLayout type="admin">
-            {children}
+            <AdminPermissionGuard>
+                {children}
+            </AdminPermissionGuard>
         </DashboardLayout>
     );
 }

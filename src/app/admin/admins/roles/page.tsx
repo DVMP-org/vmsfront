@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminRoles } from "@/hooks/use-admin";
+import { useAdminDeleteRole, useAdminRoles } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -15,6 +15,8 @@ import { Shield, Trash2, Edit } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { AdminRole } from "@/types";
+import { SlideOver } from "@/components/ui/SlideOver";
+import { UpdateRoleForm } from "./components/UpdateRoleForm";
 
 const PAGE_SIZE = 20;
 
@@ -39,6 +41,10 @@ export default function RolesPage() {
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
+  const [editingRole, setEditingRole] = useState<AdminRole | null>(null);
+  const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
+
+  const deletRole = useAdminDeleteRole();
 
   // Sync state to URL
   useEffect(() => {
@@ -74,6 +80,16 @@ export default function RolesPage() {
     toast.info(`Deleting ${selectedIds.length} role(s)...`);
     // TODO: Implement bulk delete
     setSelectedRoles(new Set());
+  };
+
+  const handleDelete = (roleId: string) => {
+    setDeletingRoleId(roleId);
+    toast.info(`Deleting role "${roleId}"...`);
+    deletRole.mutate(roleId, {
+      onSettled: () => {
+        setDeletingRoleId(null);
+      },
+    });
   };
 
   const bulkActions: BulkAction[] = [
@@ -158,7 +174,7 @@ export default function RolesPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/admin/roles/${row.id}/edit`)}
+            onClick={() => setEditingRole(row)}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -166,11 +182,12 @@ export default function RolesPage() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (window.confirm(`Are you sure you want to delete the role "${row.name}"?`)) {
+              if (confirm(`Are you sure you want to delete the role "${row.name}"?`)) {
                 toast.info(`Deleting role "${row.name}"...`);
-                // TODO: Implement delete
+                handleDelete(row.id);
               }
             }}
+            disabled={deletingRoleId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
@@ -191,7 +208,7 @@ export default function RolesPage() {
           </div>
           <Button
             type="button"
-            onClick={() => router.push("/admin/roles/create")}
+            onClick={() => router.push("/admin/admins/roles/create")}
           >
             Create role
           </Button>
@@ -208,7 +225,7 @@ export default function RolesPage() {
                 description="Admin roles will appear here"
                 action={{
                   label: "Create role",
-                  onClick: () => router.push("/admin/roles/create"),
+                  onClick: () => router.push("/admin/admins/roles/create"),
                 }}
               />
             ) : (
@@ -244,6 +261,25 @@ export default function RolesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Update Role SlideOver */}
+      <SlideOver
+        isOpen={!!editingRole}
+        onClose={() => setEditingRole(null)}
+        title="Edit Role & Permissions"
+        description="Modify the name, code, and access levels for this role."
+        size="lg"
+      >
+        {editingRole && (
+          <UpdateRoleForm
+            role={editingRole}
+            onSuccess={() => {
+              setEditingRole(null);
+            }}
+            onCancel={() => setEditingRole(null)}
+          />
+        )}
+      </SlideOver>
     </>
   );
 }

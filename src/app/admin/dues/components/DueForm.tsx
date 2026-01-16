@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { DueTenureLength, House, HouseGroup } from "@/types";
-import { Landmark, Home, Users } from "lucide-react";
+import { Landmark, Home, Users, Zap, Repeat } from "lucide-react";
 
 export const dueSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -124,63 +124,86 @@ export function DueForm({
                     <CardHeader>
                         <CardTitle className="text-lg">Billing Cycle</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                        <Checkbox
-                            label="This is a recurring due"
-                            description="The due will be automatically generated based on the selected tenure."
-                            checked={recurring}
-                            onChange={(e) => {
-                                const isRecurring = e.target.checked;
-                                setValue("recurring", isRecurring);
-                                if (isRecurring) {
-                                    setValue("tenure_length", DueTenureLength.MONTHLY);
-                                    setValue("minimum_payment_breakdown", DueTenureLength.ONE_TIME);
-                                } else {
+                    <CardContent className="space-y-6 pt-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setValue("recurring", false);
                                     setValue("tenure_length", DueTenureLength.ONE_TIME);
                                     setValue("minimum_payment_breakdown", DueTenureLength.ONE_TIME);
-                                }
-                            }}
-                        />
-
-                        {recurring && (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Minimum Payment Breakdown</label>
-                                <select
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                                    {...register("minimum_payment_breakdown")}
-                                >
-                                    {TENURE_OPTIONS.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-muted-foreground">Allow residents to pay in installments.</p>
-                            </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Tenure Length</label>
-                            <select
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                                {...register("tenure_length")}
+                                }}
+                                className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-2 text-center ${!recurring
+                                    ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5 text-[var(--brand-primary,#213928)]"
+                                    : "border-zinc-200 hover:border-zinc-300 text-muted-foreground hover:text-foreground"
+                                    }`}
                             >
-                                {TENURE_OPTIONS.filter((o) => recurring ? o.value !== DueTenureLength.ONE_TIME : true).map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-muted-foreground">How often this due will be generated/due.</p>
+                                <Zap className={`h-5 w-5 ${!recurring ? "text-[var(--brand-primary,#213928)]" : "text-zinc-400"}`} />
+                                <div className="space-y-0.5">
+                                    <div className="text-sm font-semibold">One-time</div>
+                                    <div className="text-[10px] hidden xs:block opacity-80">Paid once only</div>
+                                </div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setValue("recurring", true);
+                                    setValue("tenure_length", DueTenureLength.MONTHLY);
+                                    setValue("minimum_payment_breakdown", DueTenureLength.MONTHLY);
+                                }}
+                                className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-2 text-center ${recurring
+                                    ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5 text-[var(--brand-primary,#213928)]"
+                                    : "border-zinc-200 hover:border-zinc-300 text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                <Repeat className={`h-5 w-5 ${recurring ? "text-[var(--brand-primary,#213928)]" : "text-zinc-400"}`} />
+                                <div className="space-y-0.5">
+                                    <div className="text-sm font-semibold">Recurring</div>
+                                    <div className="text-[10px] hidden xs:block opacity-80">Periodic billing</div>
+                                </div>
+                            </button>
                         </div>
 
                         {recurring && (
-                            <Input
-                                label="Start Date"
-                                type="date"
-                                {...register("start_date")}
-                                error={errors.start_date?.message}
-                            />
+                            <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Tenure Length</label>
+                                    <select
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                        {...register("tenure_length")}
+                                    >
+                                        {TENURE_OPTIONS.filter((o) => o.value !== DueTenureLength.ONE_TIME).map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">How often this due will be generated.</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Payment Breakdown</label>
+                                    <select
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                        {...register("minimum_payment_breakdown")}
+                                    >
+                                        {TENURE_OPTIONS.filter((o) => o.value !== DueTenureLength.ONE_TIME).map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">Allow residents to pay in installments.</p>
+                                </div>
+
+                                <Input
+                                    label="Start Date"
+                                    type="date"
+                                    {...register("start_date")}
+                                    error={errors.start_date?.message}
+                                />
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -196,11 +219,19 @@ export function DueForm({
                                 <span className="font-medium">{recurring ? "Recurring" : "One-time"}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Frequency/Breakdown:</span>
+                                <span className="text-muted-foreground">Frequency:</span>
                                 <span className="font-medium capitalize">
-                                    {(recurring ? watch("tenure_length") : watch("minimum_payment_breakdown")).replace("_", " ")}
+                                    {watch("tenure_length").replace("_", " ")}
                                 </span>
                             </div>
+                            {recurring && (
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Payment Plan:</span>
+                                    <span className="font-medium capitalize">
+                                        {watch("minimum_payment_breakdown").replace("_", " ")}
+                                    </span>
+                                </div>
+                            )}
                             <div className="pt-2 border-t flex justify-between items-center">
                                 <span className="text-sm font-semibold">Total Cost:</span>
                                 <span className="text-lg font-bold">₦{watch("amount") || 0}</span>

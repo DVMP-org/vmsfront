@@ -22,8 +22,10 @@ import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
 import { getFullName, getInitials, formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus2, ShieldCheck } from "lucide-react";
-import { Admin } from "@/types";
+import { Shield, Trash2, UserPlus2, ShieldCheck, Edit } from "lucide-react";
+import { Admin, AdminRole } from "@/types";
+import { SlideOver } from "@/components/ui/SlideOver";
+import { UpdateAdminRoleForm } from "./components/UpdateAdminRoleForm";
 
 interface CreateAdminFormState {
   first_name: string;
@@ -67,6 +69,7 @@ export default function AdminManagementPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateAdminFormState>(initialFormState);
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
 
@@ -152,8 +155,8 @@ export default function AdminManagementPage() {
       };
     }
     const total = admins.length;
-    const withCustomPermissions = admins?.filter((admin) => admin.permissions && admin.permissions !== "").length;
-    const allAccess = admins?.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
+    const withCustomPermissions = admins?.filter((admin) => admin.role?.permissions && admin.role?.permissions !== "").length;
+    const allAccess = admins?.filter((admin) => admin.role?.permissions_parsed.includes("*") || admin.role?.code?.toLowerCase() === "super_admin").length;
     const uniqueRoles = new Set(admins?.map((admin) => admin.role_id).filter(Boolean)).size;
     return { total, withCustomPermissions, allAccess, uniqueRoles };
   }, [admins]);
@@ -256,19 +259,19 @@ export default function AdminManagementPage() {
         label: role.name,
       })) || [],
       accessor: (row) => (
-        <select
-          value={row.role_id || ""}
-          onChange={(e) => handleRoleChange(row.id, e.target.value)}
-          disabled={updatingAdminId === row.id}
-          className="h-9 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        >
-          <option value="">No role</option>
-          {roles?.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="px-3 py-1">
+            {row.role?.name || "No role"}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditingAdmin(row)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
       ),
     },
     {
@@ -317,7 +320,12 @@ export default function AdminManagementPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(row.id)}
+            onClick={() => {
+              if (confirm(`Are you sure you want to delete the admin "${row.name}"?`)) {
+                toast.info(`Deleting admin "${row.name}"...`);
+                handleDelete(row.id);
+              }
+            }}
             disabled={deletingAdminId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -351,7 +359,7 @@ export default function AdminManagementPage() {
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
           <Card>
@@ -362,7 +370,7 @@ export default function AdminManagementPage() {
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.withCustomPermissions}</div>
+              <div className="text-xl font-bold">{stats.withCustomPermissions}</div>
             </CardContent>
           </Card>
           <Card>
@@ -371,7 +379,7 @@ export default function AdminManagementPage() {
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.allAccess}</div>
+              <div className="text-xl font-bold">{stats.allAccess}</div>
             </CardContent>
           </Card>
           <Card>
@@ -380,7 +388,7 @@ export default function AdminManagementPage() {
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.uniqueRoles}</div>
+              <div className="text-xl font-bold">{stats.uniqueRoles}</div>
             </CardContent>
           </Card>
         </div>
@@ -443,10 +451,11 @@ export default function AdminManagementPage() {
       </div>
 
       {/* Create Admin Modal */}
-      <Modal
+      <SlideOver
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Quick Onboard Admin"
+        description="Create a new admin user with basic information."
       >
         <form onSubmit={handleCreateSubmit} className="space-y-4">
           <Input
@@ -505,7 +514,26 @@ export default function AdminManagementPage() {
             </Button>
           </div>
         </form>
-      </Modal>
+      </SlideOver>
+
+      {/* Update Role SlideOver */}
+      <SlideOver
+        isOpen={!!editingAdmin}
+        onClose={() => setEditingAdmin(null)}
+        title="Update Admin Role"
+        description="Change the role and access level for this administrator."
+      >
+        {editingAdmin && (
+          <UpdateAdminRoleForm
+            admin={editingAdmin}
+            roles={roles || []}
+            onSuccess={() => {
+              setEditingAdmin(null);
+            }}
+            onCancel={() => setEditingAdmin(null)}
+          />
+        )}
+      </SlideOver>
     </>
   );
 }
