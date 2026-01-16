@@ -130,6 +130,9 @@ export function useAuth() {
       clearAuth();
       apiClient.clearToken();
       queryClient.clear();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vms_admin_profile");
+      }
       toast.success("Logged out successfully");
       router.push("/auth/login");
     },
@@ -138,6 +141,9 @@ export function useAuth() {
       clearAuth();
       apiClient.clearToken();
       queryClient.clear();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vms_admin_profile");
+      }
       router.push("/auth/login");
     },
   });
