@@ -228,7 +228,7 @@ export const adminService = {
         search?: string;
         status?: string;
     }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
-        return apiClient.get("/admin/list", {
+        return apiClient.get("/admin/admins/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
@@ -239,15 +239,15 @@ export const adminService = {
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.post("/admin/create", data);
+        return apiClient.post("/admin/admins/create", data);
     },
 
     async updateAdminRole(adminId: string, data: UpdateAdminRoleRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.put(`/admin/update/${adminId}/`, data);
+        return apiClient.put(`/admin/admins/update/${adminId}`, data);
     },
 
     async deleteAdmin(adminId: string): Promise<ApiResponse<Admin>> {
-        return apiClient.delete(`/admin/delete/${adminId}/`);
+        return apiClient.delete(`/admin/admins/delete/${adminId}`);
     },
 
     // Roles

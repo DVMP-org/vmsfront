@@ -814,3 +814,14 @@ export function useAdminDuePayments(
     enabled: !!dueId && !!houseId,
   });
 }
+
+export function useAdminProfile() {
+  return useQuery<Admin>({
+    queryKey: ["admin", "profile"],
+    queryFn: async () => {
+      const response = await adminService.getAdminProfile();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}

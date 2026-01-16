@@ -70,10 +70,10 @@ export default function OnboardingPage() {
                 setUserData(response.data);
 
                 // Pre-fill form
-                setValue("first_name", response.data.first_name || "");
-                setValue("last_name", response.data.last_name || "");
-                setValue("phone", response.data.phone || "");
-                setValue("address", response.data.address || "");
+                setValue("first_name", response.data.user.first_name || "");
+                setValue("last_name", response.data.user.last_name || "");
+                setValue("phone", response.data.user.phone || "");
+                setValue("address", response.data.user.address || "");
             } catch (error: any) {
                 toast.error("Invalid or expired onboarding link.");
                 router.push("/auth/login");
@@ -223,7 +223,7 @@ export default function OnboardingPage() {
                                 <Button
                                     type="button"
                                     onClick={nextStep}
-                                    className="w-full h-14 text-lg font-semibold group bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 shadow-xl shadow-[var(--brand-primary)]/10"
+                                    className="w-full h-14 text-lg font-semibold group"
                                 >
                                     Continue to Security
                                     <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                                     </Button>
                                     <Button
                                         type="submit"
-                                        className="flex-1 h-14 text-lg font-bold bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 shadow-xl shadow-[var(--brand-primary)]/10"
+                                        className="flex-1 h-14 text-lg font-bold "
                                         isLoading={onboardMutation.isPending}
                                     >
                                         {onboardMutation.isPending ? "Activating..." : "Complete Activation"}

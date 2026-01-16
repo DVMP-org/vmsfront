@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,8 @@ import type { LoadedPlugin } from "@/types/plugin";
 import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath, findMatchingRoute, findPluginRouteAndType } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentHouse } from "@/hooks/use-resident";
+import { useAdminProfile } from "@/hooks/use-admin";
+import { hasPermission } from "@/lib/permissions";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -81,39 +83,60 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard", icon: Home },
-  { href: "/admin/gate", label: "Gate Console", icon: Scan },
-  { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard },
-  { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
-  { href: "/admin/houses", label: "Houses", icon: Building2 },
-  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree },
+  { href: "/admin/gate", label: "Gate Console", icon: Scan, permission: "gate_passes.console" },
+  { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
+  { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
+  { href: "/admin/houses", label: "Houses", icon: Building2, permission: "houses.list" },
+  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree, permission: "house_groups.list" },
   {
     href: "/admin/dues",
     label: "Dues",
     icon: Receipt,
+    permission: ["dues.list", "dues.houses"],
     children: [
-      { href: "/admin/dues", label: "All Dues", icon: Receipt },
-      { href: "/admin/dues/houses", label: "House Dues", icon: Building2 },
+      { href: "/admin/dues", label: "All Dues", icon: Receipt, permission: "dues.list" },
+      { href: "/admin/dues/houses", label: "House Dues", icon: Building2, permission: "dues.houses" },
     ],
   },
-  { href: "/admin/residents", label: "Residents", icon: Users },
-  { href: "/admin/admins", label: "Admins", icon: UserCog },
-  { href: "/admin/forums", label: "Forums", icon: MessageSquare },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/plugins", label: "Plugins", icon: Puzzle },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },
+  { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
+  {
+    href: "#",
+    label: "Admins",
+    icon: UserCog,
+    permission: ["users.list", "roles.list"],
+    children: [
+      { href: "/admin/admins", label: "Admins", icon: UserCog, permission: "users.list" },
+      { href: "/admin/admins/roles", label: "Roles", icon: Shield, permission: "roles.list" },
+    ],
+  },
+  { href: "/admin/forums", label: "Forums", icon: MessageSquare, permission: "forum_category.list" },
+  { href: "/admin/settings", label: "Settings", icon: Settings, permission: "branding.list" },
+  { href: "/admin/plugins", label: "Plugins", icon: Puzzle, permission: "plugins.list" },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.summary" },
   { href: "/admin/profile", label: "Profile", icon: UserCog },
 ];
 
 export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
   const user = useAuthStore((state) => state.user);
+  const { data: adminProfile, isLoading: isAdminProfileLoading } = useAdminProfile();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Helper to determine active state consistently
+  const isLinkActive = useCallback((href: string) => {
+    if (!pathname || !href) return false;
+    return pathname === href || pathname.startsWith(href + "/");
+  }, [pathname]);
 
   // Load plugins from cache first, then refresh from API in background
   useEffect(() => {
@@ -236,47 +259,65 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const isSuperUser = residentHouse?.is_super_user ?? false;
 
   const links = useMemo(() => {
-    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId, isSuperUser) : adminLinks;
+    let baseLinks =
+      actualType === "resident"
+        ? buildResidentLinks(effectiveHouseId, isSuperUser)
+        : [...adminLinks];
 
-    // Deduplicate links by href AND label to prevent duplicates
-    // Use Map to track both href and label for better deduplication
-    const seen = new Map<string, Set<string>>(); // href -> Set of labels
-    const uniqueLinks: typeof linkArray = [];
+    // Priority for role data: Fresh API Profile > Auth Store User > Null (restricted)
+    const activeRole = actualType === "admin" ? (adminProfile?.role || user?.admin?.role) : null;
 
-    for (const link of linkArray) {
-      const labelsForHref = seen.get(link.href);
-      if (!labelsForHref) {
-        // First time seeing this href
-        seen.set(link.href, new Set([link.label]));
-        uniqueLinks.push(link);
-      } else if (!labelsForHref.has(link.label)) {
-        // Same href but different label - should not happen, but skip to be safe
-        labelsForHref.add(link.label);
+    if (actualType === "admin") {
+      // If we are not mounted yet (SSR) or have no role data while loading, only show non-permission links
+      if (!mounted || (!activeRole && isAdminProfileLoading)) {
+        return baseLinks.filter((link: any) => !link.permission);
       }
-      // If we've seen both this href and label, skip (duplicate)
+
+      baseLinks = baseLinks
+        .filter((link: any) => {
+          if (!link.permission) return true;
+          if (!activeRole) return false;
+          return hasPermission(activeRole, link.permission);
+        })
+        .map((link: any) => {
+          const l = link as any;
+          if (!l.children) return link;
+          return {
+            ...link,
+            children: l.children.filter((child: any) => {
+              if (!child.permission) return true;
+              return hasPermission(activeRole, child.permission);
+            }),
+          };
+        })
+        .filter((link: any) => {
+          const l = link as any;
+          return l.href || (l.children && l.children.length > 0);
+        });
     }
 
-    // Double-check: ensure no duplicates by creating a final deduplicated array
-    const finalLinks: typeof linkArray = [];
-    const hrefSet = new Set<string>();
-    for (const link of uniqueLinks) {
-      if (!hrefSet.has(link.href)) {
-        hrefSet.add(link.href);
-        finalLinks.push(link);
-      }
-    }
+    // Deduplicate links by href
+    const seenHrefs = new Set<string>();
+    return baseLinks.filter((link) => {
+      if (seenHrefs.has(link.href)) return false;
+      seenHrefs.add(link.href);
+      return true;
+    });
+  }, [actualType, effectiveHouseId, isSuperUser, adminProfile, user, isAdminProfileLoading, mounted]);
+  // Flatten and sort links for precise matching
+  const activeLink = useMemo(() => {
+    if (!pathname) return null;
 
-    return finalLinks;
-  }, [actualType, effectiveHouseId, isSuperUser]);
-  const mostSpecificMatch = useMemo(() => {
-    const sortedLinks = [...links].sort(
-      (a, b) => b.href.length - a.href.length
-    );
-    return sortedLinks.find(
-      (link) =>
-        pathname === link.href ||
-        (pathname && pathname.startsWith(link.href + "/"))
-    );
+    const flattened: any[] = [];
+    links.forEach((l) => {
+      const linkItem = l as any;
+      flattened.push(linkItem);
+      if (linkItem.children) flattened.push(...linkItem.children);
+    });
+
+    // Sort by length descending to match most specific route first
+    const sorted = [...flattened].sort((a, b) => (b.href?.length || 0) - (a.href?.length || 0));
+    return sorted.find(l => l.href && (pathname === l.href || pathname.startsWith(l.href + "/"))) || null;
   }, [links, pathname]);
 
   // Auto-collapse on smaller screens, but keep sidebar visible
@@ -373,57 +414,39 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
   // Auto-expand plugins with active routes
   // Only checks filteredPlugins which already ensures correct type
+  // Auto-expand plugins and menus with active routes - Consolidated
   useEffect(() => {
-    // Only run when plugins are actually loaded
-    if (filteredPlugins.length === 0) return;
+    if (!pathname || (filteredPlugins.length === 0 && links.length === 0)) return;
 
-    const activePlugins = new Set<string>();
+    let expandedNeedsUpdate = false;
+    const nextExpandedPlugins = new Set(expandedPlugins);
+    const nextExpandedMenus = new Set(expandedMenus);
+
+    // Auto-expand plugins
     filteredPlugins.forEach((plugin) => {
-      // Use the memoized map
-      const activeRoute = activeRoutesMap.get(plugin.name);
-      if (activeRoute) {
-        activePlugins.add(plugin.name);
+      if (activeRoutesMap.has(plugin.name) && !nextExpandedPlugins.has(plugin.name)) {
+        nextExpandedPlugins.add(plugin.name);
+        expandedNeedsUpdate = true;
       }
     });
 
-    // Only update if there are active plugins and they're not already in the set
-    if (activePlugins.size > 0) {
-      setExpandedPlugins((prev) => {
-        // Check if we need to update at all
-        let needsUpdate = false;
-        activePlugins.forEach((name) => {
-          if (!prev.has(name)) {
-            needsUpdate = true;
-          }
-        });
-
-        if (!needsUpdate) return prev; // Return same reference if no change
-
-        const newSet = new Set(prev);
-        activePlugins.forEach((name) => newSet.add(name));
-        return newSet;
-      });
-    }
-
-    // Auto-expand admin menus with active children
+    // Auto-expand admin menus
     if (actualType === "admin") {
-      adminLinks.forEach(link => {
-        if (link.children) {
-          const hasActiveChild = link.children.some(child =>
-            pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
-          );
-          if (hasActiveChild) {
-            setExpandedMenus(prev => {
-              if (prev.has(link.label)) return prev;
-              const newSet = new Set(prev);
-              newSet.add(link.label);
-              return newSet;
-            });
-          }
+      links.forEach(link => {
+        const l = link as any;
+        const hasActiveInMenu = l.children?.some((child: any) => child.href === activeLink?.href);
+        if (hasActiveInMenu && !nextExpandedMenus.has(l.label)) {
+          nextExpandedMenus.add(l.label);
+          expandedNeedsUpdate = true;
         }
       });
     }
-  }, [pathname, actualType, filteredPlugins, activeRoutesMap]);
+
+    if (expandedNeedsUpdate) {
+      setExpandedPlugins(nextExpandedPlugins);
+      setExpandedMenus(nextExpandedMenus);
+    }
+  }, [pathname, actualType, filteredPlugins, activeRoutesMap, links, isLinkActive]);
 
   return (
     <aside
@@ -485,11 +508,10 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto overflow-x-hidden">
         {links.map((link: any) => {
           const Icon = link.icon;
-          const isParentActive = link.children?.some((child: any) =>
-            pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
-          ) || (pathname === link.href || (pathname && pathname.startsWith(link.href + "/")));
+          const isParentActive = activeLink?.href === link.href ||
+            link.children?.some((child: any) => child.href === activeLink?.href);
 
-          const isActive = mostSpecificMatch?.href === link.href;
+          const isActive = activeLink?.href === link.href;
           const isExpanded = expandedMenus.has(link.label);
           const hasChildren = link.children && link.children.length > 0;
 
@@ -497,9 +519,9 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
           const linkKey = `${link.href}-${link.label}`;
 
           if (hasChildren) {
-            // Find if any child is a more specific match than the parent's base href
+            // Find if any child is the current active link
             const activeChild = link.children.find((child: any) =>
-              pathname === child.href || (pathname && pathname.startsWith(child.href + "/"))
+              child.href === activeLink?.href
             );
 
             // Re-sort children to ensure strictness if needed, but usually simple match is fine
@@ -547,18 +569,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                   <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
                     {link.children.map((child: any) => {
                       const ChildIcon = child.icon;
-                      // Strict child check: it is active if it's the exact match or the most specific start
-                      // Given submenus, usually children are specific enough.
-                      const isChildActive = pathname === child.href || (pathname && pathname.startsWith(child.href + "/"));
-
-                      // Handle the case where "All Dues" is /admin/dues and "House Dues" is /admin/dues/houses
-                      // If we are at /admin/dues/houses, both start with /admin/dues.
-                      // We need to check if ANY OTHER child is a better match.
-                      const isBestChildMatch = isChildActive && !link.children.some((otherChild: any) =>
-                        otherChild !== child &&
-                        otherChild.href.length > child.href.length &&
-                        pathname.startsWith(otherChild.href)
-                      );
+                      const isChildActive = child.href === activeLink?.href;
 
                       return (
                         <li key={child.href}>
@@ -568,7 +579,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
                             className={cn(
                               "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
                               "gap-3 px-3 py-2.5",
-                              isBestChildMatch
+                              isChildActive
                                 ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             )}
