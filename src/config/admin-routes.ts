@@ -38,7 +38,7 @@ export const adminLinks: AdminRoute[] = [
         permission: ["dues.list", "dues.houses"],
         children: [
             { href: "/admin/dues", label: "All Dues", icon: Receipt, permission: "dues.list" },
-            { href: "/admin/dues/houses", label: "House Dues", icon: Building2, permission: "dues.houses" },
+
         ],
     },
     { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },

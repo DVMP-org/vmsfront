@@ -80,7 +80,7 @@ export default function SelectPage() {
           </div>
         </div>
 
-        {isLoading ? (
+        {isDashboardLoading ? (
           <div className="space-y-4">
             <CardSkeleton />
             <CardSkeleton />
@@ -114,41 +114,46 @@ export default function SelectPage() {
                 </div>
               </div>
             )}
-
-            {isAdmin && (
-              <div className="space-y-3 border-t pt-8">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                  Management
-                </p>
-                <DashboardCard
-                  icon={
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)] ">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                  }
-                  title="Admin Console"
-                  subtitle="Manage estate operations, residents, and analytics."
-                  selected={selectedCard === "admin"}
-                  onClick={handleSelectAdmin}
-                >
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--brand-primary,#213928)] brightness-75 dark:text-gray-400 mt-1">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    <span>Authorized access</span>
-                  </div>
-                </DashboardCard>
-              </div>
-            )}
-
-            {noDestinations && (
-              <EmptyState
-                icon={KeyRound}
-                title="No Access"
-                description="We couldn't find any assigned properties or admin roles for your account. Please contact management."
-              />
-            )}
           </div>
         )}
+        {isAdminLoading ? (
+          <div className="space-y-4">
+            <CardSkeleton />
+          </div>
+        ) : (
+          isAdmin && (
+            <div className="space-y-3 border-t pt-8">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Management
+              </p>
+              <DashboardCard
+                icon={
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)] ">
+                    <Shield className="h-5 w-5" />
+                  </div>
+                }
+                title="Admin Console"
+                subtitle="Manage estate operations, residents, and analytics."
+                selected={selectedCard === "admin"}
+                onClick={handleSelectAdmin}
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--brand-primary,#213928)] brightness-75 dark:text-gray-400 mt-1">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Authorized access</span>
+                </div>
+              </DashboardCard>
+            </div>
+          )
+        )}
+        {noDestinations && (
+          <EmptyState
+            icon={KeyRound}
+            title="No Access"
+            description="We couldn't find any assigned properties or admin roles for your account. Please contact management."
+          />
+        )}
       </div>
+
     </div>
   );
 }

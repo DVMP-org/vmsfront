@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -89,7 +89,48 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
 }
 
 
-export function Sidebar({ type, onMobileClose }: SidebarProps) {
+const SidebarLink = memo(function SidebarLink({
+  link,
+  isActive,
+  collapsed,
+  isMobile,
+  onClick,
+}: {
+  link: any;
+  isActive: boolean;
+  collapsed: boolean;
+  isMobile: boolean;
+  onClick: () => void;
+}) {
+  const Icon = link.icon;
+  return (
+    <Link
+      href={link.href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+        "group relative",
+        isMobile || !collapsed ? "gap-3 px-3 py-2.5" : "justify-center px-2 py-2.5",
+        isActive
+          ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      )}
+      title={collapsed && !isMobile ? link.label : undefined}
+    >
+      <Icon
+        className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary-foreground")}
+      />
+      {(isMobile || !collapsed) && <span className="flex-1 truncate">{link.label}</span>}
+      {collapsed && !isMobile && (
+        <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+          {link.label}
+        </span>
+      )}
+    </Link>
+  );
+});
+
+export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -104,6 +145,7 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
 
   // Helper to determine active state consistently
   const isLinkActive = useCallback((href: string) => {
@@ -570,39 +612,14 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
           }
 
           return (
-            <Link
+            <SidebarLink
               key={linkKey}
-              // ... unchanged
-              href={link.href}
+              link={link}
+              isActive={isActive}
+              collapsed={collapsed}
+              isMobile={isMobile}
               onClick={handleLinkClick}
-              className={cn(
-                "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-                "group relative",
-                isMobile || !collapsed
-                  ? "gap-3 px-3 py-2.5"
-                  : "justify-center px-2 py-2.5",
-                isActive
-                  ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-              title={collapsed && !isMobile ? link.label : undefined}
-            >
-              <Icon
-                className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isActive && "text-primary-foreground"
-                )}
-              />
-              {(isMobile || !collapsed) && (
-                <span className="flex-1 truncate">{link.label}</span>
-              )}
-              {collapsed && !isMobile && (
-                <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                  {link.label}
-                </span>
-              )}
-            </Link>
-
+            />
           );
         })}
         <>
@@ -703,4 +720,4 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
       </nav>
     </aside>
   );
-}
+});

@@ -192,10 +192,7 @@ export default function DueDetailPage() {
                                 <Building2 className="h-4 w-4 text-muted-foreground" />
                                 Houses
                             </CardTitle>
-                            <Button variant="ghost" size="sm" className="h-8 text-xs text-brand-primary" onClick={() => router.push(`/admin/dues/${dueId}/houses`)}>
-                                View Houses
-                                <ExternalLink className="h-3 w-3 ml-2" />
-                            </Button>
+
                         </CardHeader>
                         <CardContent className="p-0">
                             {due.houses && due.houses.length > 0 ? (
