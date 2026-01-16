@@ -1,14 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, CreditCard, Palette } from "lucide-react";
 import { PaymentGatewaysSection } from "./components/PaymentGatewaysSection";
 import { BrandingSection } from "./components/BrandingSection";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 type SettingsTab = "payment" | "branding";
 
 export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState<SettingsTab>("payment");
+    const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+        config: {
+            tab: { defaultValue: "payment" },
+        },
+    });
+
+    const [activeTab, setActiveTab] = useState<SettingsTab>(() => initializeFromUrl("tab"));
+
+    useEffect(() => {
+        syncToUrl({ tab: activeTab });
+    }, [activeTab, syncToUrl]);
 
     return (
         <>

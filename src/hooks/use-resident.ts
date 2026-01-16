@@ -9,6 +9,9 @@ import {
   FundWalletRequest,
   WalletTransaction,
   UpdateHouseRequest,
+  HouseDue,
+  DueSchedule,
+  DuePayment,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -272,5 +275,88 @@ export function useFundWallet() {
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
     },
+  });
+}
+
+export function useHouseDues(
+  houseId: string | null,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  return useQuery<PaginatedResponse<HouseDue>>({
+    queryKey: ["resident", "house-dues", houseId, page, pageSize],
+    queryFn: async () => {
+      if (!houseId) throw new Error("House ID is required");
+      const response = await residentService.getHouseDues(houseId, page, pageSize);
+      return response.data;
+    },
+    enabled: !!houseId,
+  });
+}
+
+export function useHouseDue(houseId: string | null, dueId: string | null) {
+  return useQuery({
+    queryKey: ["resident", "house-due", houseId, dueId],
+    queryFn: async () => {
+      if (!dueId) throw new Error("Due ID is required");
+      if (!houseId) throw new Error("House ID is required");
+      const response = await residentService.getHouseDue(houseId, dueId);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useScheduleHouseDue(houseId: string | null, dueId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { payment_breakdown: string }) => {
+      if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
+      return residentService.scheduleHouseDue(houseId, dueId, data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "house-due", houseId, dueId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "house-dues", houseId] });
+      toast.success("Payment schedule updated successfully!");
+      return response.data;
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useDueSchedules(
+  houseId: string | null,
+  dueId: string | null,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  return useQuery({
+    queryKey: ["resident", "due-schedules", houseId, dueId, page, pageSize],
+    queryFn: async () => {
+      if (!houseId || !dueId) throw new Error("House and Due ID are required");
+      const response = await residentService.getDueSchedules(houseId, dueId, page, pageSize);
+      return response.data;
+    },
+    enabled: !!houseId && !!dueId,
+  });
+}
+
+export function useDuePayments(
+  houseId: string | null,
+  dueId: string | null,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  return useQuery({
+    queryKey: ["resident", "due-payments", houseId, dueId, page, pageSize],
+    queryFn: async () => {
+      if (!houseId || !dueId) throw new Error("House and Due ID are required");
+      const response = await residentService.getDuePayments(houseId, dueId, page, pageSize);
+      return response.data;
+    },
+    enabled: !!houseId && !!dueId,
   });
 }

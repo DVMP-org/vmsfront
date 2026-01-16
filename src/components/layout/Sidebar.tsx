@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ import {
   UserCog,
   Puzzle,
   Wallet,
+  Receipt,
   Palette,
   FolderTree,
 } from "lucide-react";
@@ -30,9 +31,18 @@ import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
-import { buildPluginPath, extractRoutePath, normalizeRoutePath, isPluginPath, findMatchingRoute, findPluginRouteAndType } from "@/lib/plugin-utils";
+import {
+  buildPluginPath,
+  extractRoutePath,
+  isPluginPath,
+  findMatchingRoute,
+  findPluginRouteAndType,
+} from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentHouse } from "@/hooks/use-resident";
+import { useAdminProfile } from "@/hooks/use-admin";
+import { hasPermission } from "@/lib/permissions";
+import { adminLinks } from "@/config/admin-routes";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -58,6 +68,11 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
       label: "Forum",
       icon: MessageSquare,
     },
+    {
+      href: houseId ? `${base}/dues` : "/select",
+      label: "Dues",
+      icon: Receipt,
+    },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
@@ -73,31 +88,28 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
   return links;
 }
 
-const adminLinks = [
-  { href: "/admin", label: "Dashboard", icon: Home },
-  { href: "/admin/gate", label: "Gate Console", icon: Scan },
-  { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard },
-  { href: "/admin/gate/events", label: "Gate Events", icon: Activity },
-  { href: "/admin/houses", label: "Houses", icon: Building2 },
-  { href: "/admin/house-groups", label: "House Groups", icon: FolderTree },
-  { href: "/admin/residents", label: "Residents", icon: Users },
-  { href: "/admin/admins", label: "Admins", icon: UserCog },
-  { href: "/admin/forums", label: "Forums", icon: MessageSquare },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/plugins", label: "Plugins", icon: Puzzle },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/roles", label: "Roles & Permissions", icon: Shield },
-  { href: "/admin/profile", label: "Profile", icon: UserCog },
-];
 
 export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
   const { selectedHouse } = useAppStore();
   const user = useAuthStore((state) => state.user);
+  const { data: adminProfile, isLoading: isAdminProfileLoading } = useAdminProfile();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Helper to determine active state consistently
+  const isLinkActive = useCallback((href: string) => {
+    if (!pathname || !href) return false;
+    return pathname === href || pathname.startsWith(href + "/");
+  }, [pathname]);
 
   // Load plugins from cache first, then refresh from API in background
   useEffect(() => {
@@ -220,47 +232,65 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
   const isSuperUser = residentHouse?.is_super_user ?? false;
 
   const links = useMemo(() => {
-    const linkArray = actualType === "resident" ? buildResidentLinks(effectiveHouseId, isSuperUser) : adminLinks;
+    let baseLinks =
+      actualType === "resident"
+        ? buildResidentLinks(effectiveHouseId, isSuperUser)
+        : [...adminLinks];
 
-    // Deduplicate links by href AND label to prevent duplicates
-    // Use Map to track both href and label for better deduplication
-    const seen = new Map<string, Set<string>>(); // href -> Set of labels
-    const uniqueLinks: typeof linkArray = [];
+    // Priority for role data: Fresh API Profile > Auth Store User > Null (restricted)
+    const activeRole = actualType === "admin" ? (adminProfile?.role || user?.admin?.role) : null;
 
-    for (const link of linkArray) {
-      const labelsForHref = seen.get(link.href);
-      if (!labelsForHref) {
-        // First time seeing this href
-        seen.set(link.href, new Set([link.label]));
-        uniqueLinks.push(link);
-      } else if (!labelsForHref.has(link.label)) {
-        // Same href but different label - should not happen, but skip to be safe
-        labelsForHref.add(link.label);
+    if (actualType === "admin") {
+      // If we are not mounted yet (SSR) or have no role data while loading, only show non-permission links
+      if (!mounted || (!activeRole && isAdminProfileLoading)) {
+        return baseLinks.filter((link: any) => !link.permission);
       }
-      // If we've seen both this href and label, skip (duplicate)
+
+      baseLinks = baseLinks
+        .filter((link: any) => {
+          if (!link.permission) return true;
+          if (!activeRole) return false;
+          return hasPermission(activeRole, link.permission);
+        })
+        .map((link: any) => {
+          const l = link as any;
+          if (!l.children) return link;
+          return {
+            ...link,
+            children: l.children.filter((child: any) => {
+              if (!child.permission) return true;
+              return hasPermission(activeRole, child.permission);
+            }),
+          };
+        })
+        .filter((link: any) => {
+          const l = link as any;
+          return l.href || (l.children && l.children.length > 0);
+        });
     }
 
-    // Double-check: ensure no duplicates by creating a final deduplicated array
-    const finalLinks: typeof linkArray = [];
-    const hrefSet = new Set<string>();
-    for (const link of uniqueLinks) {
-      if (!hrefSet.has(link.href)) {
-        hrefSet.add(link.href);
-        finalLinks.push(link);
-      }
-    }
+    // Deduplicate links by href
+    const seenHrefs = new Set<string>();
+    return baseLinks.filter((link) => {
+      if (seenHrefs.has(link.href)) return false;
+      seenHrefs.add(link.href);
+      return true;
+    });
+  }, [actualType, effectiveHouseId, isSuperUser, adminProfile, user, isAdminProfileLoading, mounted]);
+  // Flatten and sort links for precise matching
+  const activeLink = useMemo(() => {
+    if (!pathname) return null;
 
-    return finalLinks;
-  }, [actualType, effectiveHouseId, isSuperUser]);
-  const mostSpecificMatch = useMemo(() => {
-    const sortedLinks = [...links].sort(
-      (a, b) => b.href.length - a.href.length
-    );
-    return sortedLinks.find(
-      (link) =>
-        pathname === link.href ||
-        (pathname && pathname.startsWith(link.href + "/"))
-    );
+    const flattened: any[] = [];
+    links.forEach((l) => {
+      const linkItem = l as any;
+      flattened.push(linkItem);
+      if (linkItem.children) flattened.push(...linkItem.children);
+    });
+
+    // Sort by length descending to match most specific route first
+    const sorted = [...flattened].sort((a, b) => (b.href?.length || 0) - (a.href?.length || 0));
+    return sorted.find(l => l.href && (pathname === l.href || pathname.startsWith(l.href + "/"))) || null;
   }, [links, pathname]);
 
   // Auto-collapse on smaller screens, but keep sidebar visible
@@ -308,6 +338,18 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
     });
   };
 
+  const toggleMenu = (label: string) => {
+    setExpandedMenus((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(label)) {
+        newSet.delete(label);
+      } else {
+        newSet.add(label);
+      }
+      return newSet;
+    });
+  };
+
   // Pre-calculate active routes for all plugins to avoid redundant checks during render
   // returns Map<PluginName, ActiveRoutePath | null>
   const activeRoutesMap = useMemo(() => {
@@ -345,38 +387,39 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
   // Auto-expand plugins with active routes
   // Only checks filteredPlugins which already ensures correct type
+  // Auto-expand plugins and menus with active routes - Consolidated
   useEffect(() => {
-    // Only run when plugins are actually loaded
-    if (filteredPlugins.length === 0) return;
+    if (!pathname || (filteredPlugins.length === 0 && links.length === 0)) return;
 
-    const activePlugins = new Set<string>();
+    let expandedNeedsUpdate = false;
+    const nextExpandedPlugins = new Set(expandedPlugins);
+    const nextExpandedMenus = new Set(expandedMenus);
+
+    // Auto-expand plugins
     filteredPlugins.forEach((plugin) => {
-      // Use the memoized map
-      const activeRoute = activeRoutesMap.get(plugin.name);
-      if (activeRoute) {
-        activePlugins.add(plugin.name);
+      if (activeRoutesMap.has(plugin.name) && !nextExpandedPlugins.has(plugin.name)) {
+        nextExpandedPlugins.add(plugin.name);
+        expandedNeedsUpdate = true;
       }
     });
 
-    // Only update if there are active plugins and they're not already in the set
-    if (activePlugins.size > 0) {
-      setExpandedPlugins((prev) => {
-        // Check if we need to update at all
-        let needsUpdate = false;
-        activePlugins.forEach((name) => {
-          if (!prev.has(name)) {
-            needsUpdate = true;
-          }
-        });
-
-        if (!needsUpdate) return prev; // Return same reference if no change
-
-        const newSet = new Set(prev);
-        activePlugins.forEach((name) => newSet.add(name));
-        return newSet;
+    // Auto-expand admin menus
+    if (actualType === "admin") {
+      links.forEach(link => {
+        const l = link as any;
+        const hasActiveInMenu = l.children?.some((child: any) => child.href === activeLink?.href);
+        if (hasActiveInMenu && !nextExpandedMenus.has(l.label)) {
+          nextExpandedMenus.add(l.label);
+          expandedNeedsUpdate = true;
+        }
       });
     }
-  }, [pathname, actualType, filteredPlugins, activeRoutesMap]);
+
+    if (expandedNeedsUpdate) {
+      setExpandedPlugins(nextExpandedPlugins);
+      setExpandedMenus(nextExpandedMenus);
+    }
+  }, [pathname, actualType, filteredPlugins, activeRoutesMap, links, isLinkActive]);
 
   return (
     <aside
@@ -436,15 +479,100 @@ export function Sidebar({ type, onMobileClose }: SidebarProps) {
 
       {/* Navigation Links */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto overflow-x-hidden">
-        {links.map((link) => {
+        {links.map((link: any) => {
           const Icon = link.icon;
-          const isActive = mostSpecificMatch?.href === link.href;
+          const isParentActive = activeLink?.href === link.href ||
+            link.children?.some((child: any) => child.href === activeLink?.href);
+
+          const isActive = activeLink?.href === link.href;
+          const isExpanded = expandedMenus.has(link.label);
+          const hasChildren = link.children && link.children.length > 0;
+
           // Use a stable key that combines href and label to ensure uniqueness
           const linkKey = `${link.href}-${link.label}`;
+
+          if (hasChildren) {
+            // Find if any child is the current active link
+            const activeChild = link.children.find((child: any) =>
+              child.href === activeLink?.href
+            );
+
+            // Re-sort children to ensure strictness if needed, but usually simple match is fine
+            // if we are in a child route.
+
+            return (
+              <div key={linkKey} className="mb-1">
+                <button
+                  onClick={() => toggleMenu(link.label)}
+                  className={cn(
+                    "flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200",
+                    "group relative",
+                    isMobile || !collapsed
+                      ? "gap-3 px-3 py-2.5 justify-between"
+                      : "justify-center px-2 py-2.5",
+                    activeChild
+                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  title={collapsed && !isMobile ? link.label : undefined}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        activeChild && "text-primary-foreground"
+                      )}
+                    />
+                    {(isMobile || !collapsed) && (
+                      <span className="flex-1 truncate text-left">{link.label}</span>
+                    )}
+                  </div>
+                  {(isMobile || !collapsed) && (
+                    <div className="flex-shrink-0">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  )}
+                </button>
+
+                {isExpanded && (isMobile || !collapsed) && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
+                    {link.children.map((child: any) => {
+                      const ChildIcon = child.icon;
+                      const isChildActive = child.href === activeLink?.href;
+
+                      return (
+                        <li key={child.href}>
+                          <Link
+                            href={child.href}
+                            onClick={handleLinkClick}
+                            className={cn(
+                              "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                              "gap-3 px-3 py-2.5",
+                              isChildActive
+                                ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="flex-1 truncate">{child.label}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link
               key={linkKey}
+              // ... unchanged
               href={link.href}
               onClick={handleLinkClick}
               className={cn(

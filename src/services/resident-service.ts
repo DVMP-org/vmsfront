@@ -26,6 +26,9 @@ import {
   WalletTransaction,
   ResidentHouse,
   ResidentCreate,
+  HouseDue,
+  DueSchedule,
+  DuePayment,
 } from "@/types";
 
 export const residentService = {
@@ -323,5 +326,48 @@ export const residentService = {
     residentId: string
   ): Promise<ApiResponse<ResidentHouse>> {
     return apiClient.put(`/resident/house/${houseId}/residents/${residentId}/toggle-status`);
+  },
+
+  async getHouseDues(
+    houseId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues`, {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+    });
+  },
+
+  async getHouseDue(houseId: string, dueId: string): Promise<ApiResponse<HouseDue>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}`);
+  },
+
+  async scheduleHouseDue(houseId: string, dueId: string, data: { payment_breakdown: string }): Promise<ApiResponse<HouseDue>> {
+    return apiClient.post(`/resident/house/${houseId}/dues/${dueId}/schedule`, data);
+  },
+
+  async getDueSchedules(
+    houseId: string,
+    dueId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/schedules`, {
+      params: { page, page_size: pageSize },
+    });
+  },
+
+  async getDuePayments(
+    houseId: string,
+    dueId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/payments`, {
+      params: { page, page_size: pageSize },
+    });
   },
 };

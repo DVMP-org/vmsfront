@@ -42,6 +42,11 @@ import {
     HouseDetail,
     Resident,
     ResidentHouse,
+    Due,
+    CreateDueRequest,
+    HouseDue,
+    DueSchedule,
+    DuePayment,
 } from "@/types";
 
 export const adminService = {
@@ -223,7 +228,7 @@ export const adminService = {
         search?: string;
         status?: string;
     }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
-        return apiClient.get("/admin/list", {
+        return apiClient.get("/admin/admins/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
@@ -234,15 +239,15 @@ export const adminService = {
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.post("/admin/create", data);
+        return apiClient.post("/admin/admins/create", data);
     },
 
     async updateAdminRole(adminId: string, data: UpdateAdminRoleRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.put(`/admin/update/${adminId}/`, data);
+        return apiClient.put(`/admin/admins/update/${adminId}`, data);
     },
 
     async deleteAdmin(adminId: string): Promise<ApiResponse<Admin>> {
-        return apiClient.delete(`/admin/delete/${adminId}/`);
+        return apiClient.delete(`/admin/admins/delete/${adminId}`);
     },
 
     // Roles
@@ -547,5 +552,76 @@ export const adminService = {
         data: UpdatePaymentGatewayRequest
     ): Promise<ApiResponse<PaymentGateway>> {
         return apiClient.put(`/admin/config/payment/gateway/${gatewayName}/update`, data);
+    },
+
+    // Dues
+    async getDues(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Due>>> {
+        return apiClient.get("/admin/dues/", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async createDue(data: CreateDueRequest): Promise<ApiResponse<Due>> {
+        return apiClient.post("/admin/dues/create", data);
+    },
+
+    async getDue(dueId: string): Promise<ApiResponse<Due>> {
+        return apiClient.get(`/admin/dues/${dueId}`);
+    },
+
+    async updateDue(dueId: string, data: Partial<CreateDueRequest>): Promise<ApiResponse<Due>> {
+        return apiClient.put(`/admin/dues/${dueId}/update`, data);
+    },
+
+    async deleteDue(dueId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/dues/${dueId}/delete`);
+    },
+
+    async getDueHouses(dueId: string, params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
+        return apiClient.get(`/admin/dues/${dueId}/houses`, {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async getHouseDue(dueId: string, houseId: string): Promise<ApiResponse<HouseDue>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}`);
+    },
+
+    async getDueSchedules(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/schedules`, {
+            params: { page, page_size: pageSize },
+        });
+    },
+
+    async getDuePayments(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/payments`, {
+            params: { page, page_size: pageSize },
+        });
     },
 };

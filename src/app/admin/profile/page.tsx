@@ -335,7 +335,7 @@ export default function AdminProfilePage() {
                   </div>
                   <div className="flex justify-between items-center text-xs mt-1.5">
                     <span className="text-muted-foreground">Role ID</span>
-                    <span className="font-mono">{titleCase(adminProfile?.role.code) ?? "N/A"}</span>
+                    <span className="font-mono">{titleCase(adminProfile?.role?.code) ?? "N/A"}</span>
                   </div>
                 </div>
               </div>

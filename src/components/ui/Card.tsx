@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function Card({ className, ...props }: CardProps) {
   return (
@@ -41,7 +41,7 @@ export function CardTitle({
     <h3
       className={cn(
         "font-semibold leading-none tracking-tight",
-        "text-lg xs:text-xl sm:text-2xl",
+        "text-lg xs:text-xl sm:text-xl",
         className
       )}
       {...props}
