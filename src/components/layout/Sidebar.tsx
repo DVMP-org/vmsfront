@@ -279,12 +279,18 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
         ? buildResidentLinks(effectiveHouseId, isSuperUser)
         : [...adminLinks];
 
-    // Priority for role data: Fresh API Profile > Auth Store User > Null (restricted)
+    // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User
     const activeRole = actualType === "admin" ? (adminProfile?.role || user?.admin?.role) : null;
 
     if (actualType === "admin") {
-      // If we are not mounted yet (SSR) or have no role data while loading, only show non-permission links
+      // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
+      // only show non-permission links to avoid flickering.
       if (!mounted || (!activeRole && isAdminProfileLoading)) {
+        return baseLinks.filter((link: any) => !link.permission);
+      }
+
+      // If we are mounted but have no activeRole (unauthorized or logged out), restrict strictly.
+      if (!activeRole) {
         return baseLinks.filter((link: any) => !link.permission);
       }
 
