@@ -52,7 +52,7 @@ export default function CreateDuePage() {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back
                 </Button>
-                <h1 className="text-2xl font-bold">Create New Due</h1>
+                <h1 className="text-xl font-bold">Create New Due</h1>
             </div>
 
             <DueForm

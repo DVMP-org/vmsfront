@@ -8,14 +8,14 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ChevronLeft, Eye, LayoutGrid, ChevronRight, Activity } from "lucide-react";
 import { formatCurrency, titleCase } from "@/lib/utils";
 import { HouseDue, HouseDueStatus } from "@/types";
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-const PAGE_SIZE = 10;
-const PAGE_SIZE_OPTIONS = [10, 20, 50];
+const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export default function DueHousesPage() {
     const params = useParams();
@@ -55,23 +55,23 @@ export default function DueHousesPage() {
             key: "house",
             header: "House",
             accessor: (row) => (
-                <div className="flex flex-col">
-                    <span className="font-medium">{row.house?.name || "Unknown House"}</span>
-                    <span className="text-xs text-muted-foreground">{row.house?.address}</span>
+                <div className="py-1">
+                    <span className="font-medium text-foreground block">{row.house?.name || "Null_Unit"}</span>
+                    <span className="text-[9px] text-muted-foreground font-mono uppercase tracking-tighter opacity-70">UID: {row.house_id}</span>
                 </div>
             ),
         },
         {
             key: "amount",
-            header: "Target Amount",
-            accessor: (row) => formatCurrency(row.amount),
+            header: "Total Amount",
+            accessor: (row) => <span className="font-medium tabular-nums">{formatCurrency(row.amount)}</span>,
         },
         {
             key: "paid",
             header: "Paid",
             accessor: (row) => (
-                <span className="text-green-600 font-medium">
-                    {formatCurrency(row.paid_amount)}
+                <span className="text-emerald-600 font-medium tabular-nums">
+                    +{formatCurrency(row.paid_amount)}
                 </span>
             ),
         },
@@ -79,7 +79,7 @@ export default function DueHousesPage() {
             key: "balance",
             header: "Balance",
             accessor: (row) => (
-                <span className={cn(row.balance > 0 ? "text-destructive" : "text-muted-foreground")}>
+                <span className={cn("font-bold tabular-nums", row.balance > 0 ? "text-red-500" : "text-emerald-600")}>
                     {formatCurrency(row.balance)}
                 </span>
             ),
@@ -88,13 +88,13 @@ export default function DueHousesPage() {
             key: "status",
             header: "Status",
             accessor: (row) => {
-                const colors = {
-                    [HouseDueStatus.PAID]: "default",
+                const variants = {
+                    [HouseDueStatus.PAID]: "success",
                     [HouseDueStatus.PARTIALLY_PAID]: "secondary",
                     [HouseDueStatus.UNPAID]: "danger",
                 };
                 return (
-                    <Badge variant={colors[row.status] as any} className="capitalize">
+                    <Badge variant={variants[row.status] as any} className="text-[10px] font-black uppercase tracking-tighter px-2 h-5 border-none">
                         {titleCase(row.status)}
                     </Badge>
                 );
@@ -102,15 +102,15 @@ export default function DueHousesPage() {
         },
         {
             key: "actions",
-            header: "Actions",
+            header: "",
             accessor: (row) => (
                 <div className="flex justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 px-2 text-[10px] font-black uppercase tracking-tighter text-primary hover:bg-primary/5"
                         onClick={() => router.push(`/admin/dues/${dueId}/house/${row.house_id}`)}
                     >
-                        <Eye className="h-4 w-4 mr-2" />
                         View
                     </Button>
                 </div>
@@ -119,33 +119,44 @@ export default function DueHousesPage() {
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push(`/admin/dues/${dueId}`)}
-                    className="-ml-2 h-8 hover:bg-transparent hover:underline px-2"
-                >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Due
-                </Button>
-            </div>
-
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">House Dues: {due?.name}</h1>
-                    <p className="text-muted-foreground">
-                        Tracking payments for all houses assigned to this due
-                    </p>
+        <div className="space-y-4">
+            {/* Utility Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-muted-foreground/10 pb-4">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => router.push(`/admin/dues/${dueId}`)}
+                        className="h-8 w-8 border-muted-foreground/20 rounded-md"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-[11px] font-black uppercase  text-muted-foreground/50">
+                            <span>Dues</span>
+                            <ChevronRight className="h-2.5 w-2.5 opacity-40" />
+                            <span className="text-primary/70">{due?.name || "Due"}</span>
+                            <ChevronRight className="h-2.5 w-2.5 opacity-40" />
+                            <span className="text-foreground">Houses</span>
+                        </div>
+                        <h1 className="text-xl font-black  text-foreground leading-none">House List</h1>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="h-8 font-black uppercase  text-[10px] bg-muted/5 border-muted-foreground/10 px-3">
+                        Total: {total}
+                    </Badge>
                 </div>
             </div>
 
-            <Card>
-                <CardContent className="p-6">
-                    {isLoading ? (
+            {/* Matrix Ledger */}
+            <div className="bg-muted/10 border border-muted-foreground/10 rounded-md p-1">
+                {isLoading ? (
+                    <div className="bg-background rounded-lg p-6">
                         <TableSkeleton />
-                    ) : (
+                    </div>
+                ) : (
+                    <div className="bg-background rounded-lg overflow-hidden shadow-sm">
                         <DataTable
                             data={houseDues}
                             columns={columns}
@@ -163,10 +174,13 @@ export default function DueHousesPage() {
                                 setSearch(val);
                             }}
                             externalSearch={search}
+                            className="border-none"
                         />
-                    )}
-                </CardContent>
-            </Card>
+                    </div>
+                )}
+            </div>
+
+
         </div>
     );
 }

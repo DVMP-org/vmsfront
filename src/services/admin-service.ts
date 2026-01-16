@@ -45,6 +45,8 @@ import {
     Due,
     CreateDueRequest,
     HouseDue,
+    DueSchedule,
+    DuePayment,
 } from "@/types";
 
 export const adminService = {
@@ -599,5 +601,27 @@ export const adminService = {
 
     async getHouseDue(dueId: string, houseId: string): Promise<ApiResponse<HouseDue>> {
         return apiClient.get(`/admin/dues/${dueId}/house/${houseId}`);
+    },
+
+    async getDueSchedules(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/schedules`, {
+            params: { page, page_size: pageSize },
+        });
+    },
+
+    async getDuePayments(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/payments`, {
+            params: { page, page_size: pageSize },
+        });
     },
 };

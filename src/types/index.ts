@@ -696,6 +696,16 @@ export interface ResidentCreate {
     phone: string;
     address: string;
 }
+export interface HouseDueOption {
+    payment_breakdown: string;
+    amount: string;
+    due_amount: number;
+    currency: {
+        iso_name: string;
+        currency: string;
+    };
+}
+
 export interface HouseDue {
     id: string;
     due_id: string;
@@ -706,6 +716,41 @@ export interface HouseDue {
     balance: number;
     paid_amount: number;
     status: HouseDueStatus;
+    payment_breakdown?: string | null;
+    payment_completed?: boolean;
+    schedules?: DueSchedule[];
+    payments?: DuePayment[];
+    payment_breakdown_options?: HouseDueOption[];
     created_at: string;
     updated_at: string;
+}
+
+export interface DueSchedule {
+    id: string;
+    due_id: string;
+    house_id: string;
+    house_due_id: string;
+    payment_date: string;
+    balance_before: number;
+    balance_after: number;
+    amount: number;
+    created_at: string;
+    updated_at: string;
+    is_paid: boolean;
+    is_payable: boolean;
+    payment?: DuePayment;
+}
+
+export interface DuePayment {
+    id: string;
+    due_id: string;
+    house_id: string;
+    house_due_id: string;
+    due_schedule_id?: string;
+    payment_date: string;
+    amount: number;
+    created_at: string;
+    updated_at: string;
+    due?: Due;
+    schedule?: Partial<DueSchedule>;
 }

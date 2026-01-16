@@ -20,6 +20,8 @@ import {
   Due,
   CreateDueRequest,
   HouseDue,
+  DueSchedule,
+  DuePayment,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -773,6 +775,40 @@ export function useAdminHouseDue(dueId: string | null, houseId: string | null) {
     queryFn: async () => {
       if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
       const response = await adminService.getHouseDue(dueId, houseId);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useAdminDueSchedules(
+  dueId: string | null,
+  houseId: string | null,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  return useQuery({
+    queryKey: ["admin", "due-schedules", dueId, houseId, page, pageSize],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due and House ID are required");
+      const response = await adminService.getDueSchedules(dueId, houseId, page, pageSize);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useAdminDuePayments(
+  dueId: string | null,
+  houseId: string | null,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  return useQuery({
+    queryKey: ["admin", "due-payments", dueId, houseId, page, pageSize],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due and House ID are required");
+      const response = await adminService.getDuePayments(dueId, houseId, page, pageSize);
       return response.data;
     },
     enabled: !!dueId && !!houseId,

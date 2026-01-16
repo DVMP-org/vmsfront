@@ -277,18 +277,18 @@ export default function AdminManagementPage() {
       sortable: false,
       accessor: (row) => {
         const permissionsLabel =
-          row.permissions === "*"
+          row.role?.permissions_parsed.includes("*")
             ? "All access"
-            : row.permissions
-              ? `${row.permissions.split(",").length} override(s)`
+            : row.role?.permissions_parsed
+              ? `${row.role?.permissions_parsed?.length} override(s)`
               : "Inherit role";
 
         return (
           <Badge
             variant={
-              row.permissions === "*"
+              row.role?.permissions_parsed.includes("*")
                 ? "default"
-                : row.permissions
+                : row.role?.permissions_parsed
                   ? "secondary"
                   : "warning"
             }

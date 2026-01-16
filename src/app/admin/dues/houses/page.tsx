@@ -10,12 +10,12 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Building2, Eye, Receipt } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Building2, Eye, Receipt, ChevronRight, Filter, Activity } from "lucide-react";
+import { formatCurrency, titleCase } from "@/lib/utils";
 import { Due } from "@/types";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 export default function HouseDuesOverviewPage() {
     const router = useRouter();
@@ -49,34 +49,42 @@ export default function HouseDuesOverviewPage() {
     const columns: Column<Due>[] = [
         {
             key: "name",
-            header: "Due Name",
-            accessor: (row) => <span className="font-medium">{row.name}</span>,
+            header: "Due",
+            accessor: (row) => (
+                <div className="py-1">
+                    <span className="font-medium text-foreground block">{row.name}</span>
+                    <span className="text-[9px] text-muted-foreground font-mono uppercase tracking-tighter opacity-70">RID: {row.id.split('-')[0]}</span>
+                </div>
+            ),
         },
         {
             key: "amount",
             header: "Amount",
-            accessor: (row) => formatCurrency(row.amount),
+            accessor: (row) => <span className="font-medium tabular-nums">{formatCurrency(row.amount)}</span>,
         },
         {
             key: "houses_count",
-            header: "Assigned Houses",
+            header: "Houses",
             accessor: (row) => (
-                <Badge variant="outline">
-                    {row.houses?.length || 0} Houses
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                    <Building2 className="h-3 w-3 text-muted-foreground/40" />
+                    <span className="text-xs font-bold text-muted-foreground/80">
+                        {row.houses?.length || 0} Houses
+                    </span>
+                </div>
             ),
         },
         {
             key: "actions",
-            header: "Actions",
+            header: "",
             accessor: (row) => (
                 <div className="flex justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 px-3 text-[10px] font-black uppercase tracking-tighter text-primary hover:bg-primary/5"
                         onClick={() => router.push(`/admin/dues/${row.id}/houses`)}
                     >
-                        <Eye className="h-4 w-4 mr-2" />
                         View
                     </Button>
                 </div>
@@ -85,28 +93,46 @@ export default function HouseDuesOverviewPage() {
     ];
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">House Dues Overview</h1>
-                <p className="text-muted-foreground">Select a due to view detailed house-by-house status</p>
+        <div className="space-y-4">
+            {/* Enterprise Navigation Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-muted-foreground/10 pb-4">
+                <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 text-[9px] font-black uppercase  text-muted-foreground/50">
+                        <span>Dues</span>
+                        <ChevronRight className="h-2.5 w-2.5 opacity-40" />
+                        <span className="text-foreground">Houses</span>
+                    </div>
+                    <h1 className="text-xl font-black  text-foreground leading-none">House Dues</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="h-9 border-muted-foreground/20 text-xs font-bold uppercase ">
+                        <Filter className="h-3.5 w-3.5 mr-2 opacity-60" />
+                        Filter
+                    </Button>
+                </div>
             </div>
 
-            <Card>
-                <CardContent className="p-6">
-                    {isLoading ? (
+            {/* Assessment Grid */}
+            <div className="bg-muted/10 border border-muted-foreground/10 rounded-md p-1">
+                {isLoading ? (
+                    <div className="bg-background rounded-lg p-6">
                         <TableSkeleton />
-                    ) : dues.length === 0 ? (
+                    </div>
+                ) : dues.length === 0 ? (
+                    <div className="bg-background rounded-lg">
                         <EmptyState
                             icon={Receipt}
                             title="No dues found"
-                            description="Create a due first to manage house assignments"
+                            description="No dues have been created yet."
                         />
-                    ) : (
+                    </div>
+                ) : (
+                    <div className="bg-background rounded-lg overflow-hidden shadow-sm">
                         <DataTable
                             data={dues}
                             columns={columns}
                             searchable={true}
-                            searchPlaceholder="Search dues..."
+                            searchPlaceholder="Filter dues..."
                             pageSize={pageSize}
                             onPageSizeChange={setPageSize}
                             pageSizeOptions={PAGE_SIZE_OPTIONS}
@@ -119,10 +145,24 @@ export default function HouseDuesOverviewPage() {
                                 setSearch(val);
                             }}
                             externalSearch={search}
+                            className="border-none"
                         />
-                    )}
-                </CardContent>
-            </Card>
+                    </div>
+                )}
+            </div>
+
+            {/* Footer Metrics */}
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">
+                        <Activity className="h-3 w-3" />
+                        Dues
+                    </div>
+                </div>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest tabular-nums">
+                    Total: {total}
+                </span>
+            </div>
         </div>
     );
 }

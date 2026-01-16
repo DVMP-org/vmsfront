@@ -59,6 +59,11 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
       label: "Forum",
       icon: MessageSquare,
     },
+    {
+      href: houseId ? `${base}/dues` : "/select",
+      label: "Dues",
+      icon: Receipt,
+    },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
