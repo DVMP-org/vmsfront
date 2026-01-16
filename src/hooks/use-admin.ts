@@ -867,7 +867,11 @@ export function useAdminProfile() {
       const profile = response.data;
       // Persistence: store in localStorage for instant access next time
       if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+        } catch (e) {
+          console.error(e);
+        }
       }
       return profile;
     },
