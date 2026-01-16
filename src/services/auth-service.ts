@@ -26,9 +26,7 @@ export const authService = {
     return apiClient.get("/auth/verify");
   },
 
-  async getDashboardSelect(): Promise<ApiResponse<DashboardSelect>> {
-    return apiClient.get("/dashboard/select");
-  },
+
   async getUser(): Promise<ApiResponse<AuthResponse["user"]>> {
     return apiClient.get("/users/me");
   },

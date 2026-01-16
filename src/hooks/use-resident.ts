@@ -12,9 +12,25 @@ import {
   HouseDue,
   DueSchedule,
   DuePayment,
+  DashboardSelect,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
+import { useAuthStore } from "@/store/auth-store";
+
+
+export function useResidentDashboardSelect() {
+  return useQuery<DashboardSelect>({
+    queryKey: ["resident", "dashboard-select"],
+    queryFn: async () => {
+      const response = await residentService.getDashboardSelect();
+      const user = response.data;
+
+      return user;
+    },
+    enabled: useAuthStore.getState().isAuthenticated,
+  });
+}
 
 export function useResidentHouses() {
   return useQuery({

@@ -318,7 +318,7 @@ export interface AdminSummary {
 export interface DashboardSelect {
     user: UserProfile;
     houses: House[];
-    admin: AdminSummary | null;
+    // admin: AdminSummary | null;
 }
 
 export interface ResidentDashboard {
