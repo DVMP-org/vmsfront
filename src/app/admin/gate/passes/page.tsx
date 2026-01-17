@@ -14,12 +14,12 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/Card";
 import { formatPassWindow, getTimeRemaining } from "@/lib/utils";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
-const DEFAULT_PAGE_SIZE = 20;
+const PAGE_SIZE = 20;
 const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
-  { label: "All statuses", value: undefined },
-  { label: "Active / Checked-in", value: GatePassStatus.CHECKED_IN },
+  { label: "Checked-in", value: GatePassStatus.CHECKED_IN },
   { label: "Checked-out", value: GatePassStatus.CHECKED_OUT },
   { label: "Pending", value: GatePassStatus.PENDING },
   { label: "Completed", value: GatePassStatus.COMPLETED },
@@ -29,112 +29,36 @@ const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
 
 export default function AdminGatePassesPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    sort: { defaultValue: undefined },
+    status: { defaultValue: undefined },
+    house_id: { defaultValue: undefined },
+    resident_id: { defaultValue: undefined },
+    startDate: { defaultValue: undefined },
+    endDate: { defaultValue: undefined },
+  }), []);
+
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config,
+    skipInitialSync: true,
+  });
   const isInitialMount = useRef(true);
 
   // Initialize state from URL params
-  const [page, setPage] = useState(() => {
-    const pageParam = searchParams.get("page");
-    return pageParam ? parseInt(pageParam, 10) : 1;
-  });
-  const [pageSize, setPageSize] = useState(() => {
-    const pageSizeParam = searchParams.get("pageSize");
-    return pageSizeParam ? parseInt(pageSizeParam, 10) : DEFAULT_PAGE_SIZE;
-  });
-  const [search, setSearch] = useState(() => searchParams.get("search") || "");
-  const [status, setStatus] = useState<string | undefined>(() => {
-    const statusParam = searchParams.get("status");
-    return statusParam || undefined;
-  });
-  const [houseId, setHouseId] = useState<string | undefined>(() => {
-    const houseIdParam = searchParams.get("house_id");
-    return houseIdParam || undefined;
-  });
-  const [residentId, setResidentId] = useState<string | undefined>(() => {
-    const residentIdParam = searchParams.get("resident_id");
-    return residentIdParam || undefined;
-  });
-  const [sort, setSort] = useState<string | null>(() => {
-    const sortParam = searchParams.get("sort");
-    return sortParam || null;
-  });
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [selectedPasses, setSelectedPasses] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState(() => initializeFromUrl("search") || "");
+  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
+  const [houseId, setHouseId] = useState<string | undefined>(() => initializeFromUrl("house_id"));
+  const [residentId, setResidentId] = useState<string | undefined>(() => initializeFromUrl("resident_id"));
+  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
 
-  // Sync state to URL query parameters
-  const syncToUrl = useCallback((updates: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    status?: string | undefined;
-    houseId?: string | undefined;
-    residentId?: string | undefined;
-    sort?: string | null;
-  }) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (updates.page !== undefined) {
-      if (updates.page > 1) {
-        params.set("page", String(updates.page));
-      } else {
-        params.delete("page");
-      }
-    }
-
-    if (updates.pageSize !== undefined) {
-      if (updates.pageSize !== DEFAULT_PAGE_SIZE) {
-        params.set("pageSize", String(updates.pageSize));
-      } else {
-        params.delete("pageSize");
-      }
-    }
-
-    if (updates.search !== undefined) {
-      if (updates.search.trim()) {
-        params.set("search", updates.search.trim());
-      } else {
-        params.delete("search");
-      }
-    }
-
-    if (updates.status !== undefined) {
-      if (updates.status) {
-        params.set("status", updates.status);
-      } else {
-        params.delete("status");
-      }
-    }
-
-    if (updates.houseId !== undefined) {
-      if (updates.houseId) {
-        params.set("house_id", updates.houseId);
-      } else {
-        params.delete("house_id");
-      }
-    }
-
-    if (updates.residentId !== undefined) {
-      if (updates.residentId) {
-        params.set("resident_id", updates.residentId);
-      } else {
-        params.delete("resident_id");
-      }
-    }
-
-    if (updates.sort !== undefined) {
-      if (updates.sort) {
-        params.set("sort", updates.sort);
-      } else {
-        params.delete("sort");
-      }
-    }
-
-    const queryString = params.toString();
-    router.replace(
-      queryString ? `${pathname}?${queryString}` : pathname,
-      { scroll: false }
-    );
-  }, [pathname, router, searchParams]);
 
   // Sync state changes to URL (skip initial mount)
   useEffect(() => {
@@ -142,8 +66,29 @@ export default function AdminGatePassesPage() {
       isInitialMount.current = false;
       return;
     }
-    syncToUrl({ page, pageSize, search, status, houseId, residentId, sort });
-  }, [page, pageSize, search, status, houseId, residentId, sort, syncToUrl]);
+
+    syncToUrl({
+      page,
+      pageSize,
+      search,
+      status,
+      house_id: houseId,
+      resident_id: residentId,
+      sort,
+      startDate,
+      endDate
+    });
+  }, [
+    page,
+    pageSize,
+    search,
+    status,
+    houseId,
+    residentId,
+    sort,
+    startDate,
+    endDate,
+    syncToUrl]);
 
   // Fetch houses and residents for filter dropdowns
   const { data: housesData } = useAdminHouses({
@@ -158,20 +103,6 @@ export default function AdminGatePassesPage() {
   const houses = useMemo(() => housesData?.items ?? [], [housesData]);
   const residents = useMemo(() => residentsData?.items ?? [], [residentsData]);
 
-  // Build initial filters from URL state
-  const initialFilters = useMemo(() => {
-    const filters: FilterConfig[] = [];
-    if (status) {
-      filters.push({ field: "status", operator: "eq", value: status });
-    }
-    if (houseId) {
-      filters.push({ field: "house_id", operator: "eq", value: houseId });
-    }
-    if (residentId) {
-      filters.push({ field: "resident_id", operator: "eq", value: residentId });
-    }
-    return filters;
-  }, [status, houseId, residentId]);
 
   // Define available filters for DataTable
   const availableFilters: FilterDefinition[] = useMemo(() => {
@@ -186,6 +117,7 @@ export default function AdminGatePassesPage() {
         })),
         operator: "eq",
       },
+
     ];
 
     // Add house filter if houses are loaded
@@ -194,8 +126,8 @@ export default function AdminGatePassesPage() {
         field: "house_id",
         label: "House",
         type: "select",
+        isSearchable: true,
         options: [
-          { value: "", label: "All Houses" },
           ...houses.map((house) => ({
             value: house.id,
             label: house.name,
@@ -211,22 +143,31 @@ export default function AdminGatePassesPage() {
         field: "resident_id",
         label: "Resident",
         type: "select",
+        isSearchable: true,
         options: [
-          { value: "", label: "All Residents" },
+
           ...residents.map((resident) => ({
             value: resident.resident.id,
-            label: `${resident.user?.first_name || ""} ${resident.user?.last_name || ""} ${resident.user?.email ? `(${resident.user.email})` : ""}`.trim() || "Unknown",
+            label: `${resident.user?.name || ""}`.trim() || "Unknown",
           })),
         ],
         operator: "eq",
       });
     }
 
+    filters.push(
+      {
+        field: "created_at",
+        label: "Date Range",
+        type: "date-range",
+      }
+    )
+
     return filters;
   }, [houses, residents]);
 
   // Build filters for API from current state
-  const filtersForAPI = useMemo(() => {
+  const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
     if (status) {
       filters.push({ field: "status", operator: "eq", value: status });
@@ -237,19 +178,24 @@ export default function AdminGatePassesPage() {
     if (residentId) {
       filters.push({ field: "resident_id", operator: "eq", value: residentId });
     }
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
     return filters;
-  }, [status, houseId, residentId]);
+  }, [status, houseId, residentId, startDate, endDate]);
 
   const { data, isLoading, isFetching } = useAdminGatePasses({
     page,
     pageSize,
     search: search.trim() || undefined,
-    filters: formatFiltersForAPI(filtersForAPI),
+    filters: formatFiltersForAPI(activeFilters),
     sort: sort || undefined,
   });
 
   const passes = useMemo(() => data?.items ?? [], [data?.items]);
-  const totalPages = data?.total_pages ?? 1;
   const total = data?.total ?? 0;
 
 
@@ -419,59 +365,60 @@ export default function AdminGatePassesPage() {
         <Card>
           {/* Table */}
           <CardContent className="p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : (
-              <DataTable
-                data={passes}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search pass code, resident or visitor..."
-                pageSize={pageSize}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                onPageSizeChange={(newPageSize) => {
-                  setPage(1);
-                  setPageSize(newPageSize);
-                }}
-                showPagination={true}
-                emptyMessage="No passes found. Once visitors or residents generate passes, they will appear here."
-                selectable={true}
-                getRowId={(row) => row.id}
-                selectedRows={selectedPasses}
-                onSelectionChange={setSelectedPasses}
-                serverSide={true}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                initialSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                availableFilters={availableFilters}
-                initialFilters={initialFilters}
-                onFiltersChange={(filters) => {
-                  setPage(1);
-                  // Extract filter values from filters and explicitly clear if not found
-                  const statusFilter = filters.find((f) => f.field === "status");
-                  const houseIdFilter = filters.find((f) => f.field === "house_id");
-                  const residentIdFilter = filters.find((f) => f.field === "resident_id");
+            <DataTable
+              data={passes}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search pass code, resident or visitor..."
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={(newPageSize) => {
+                setPage(1);
+                setPageSize(newPageSize);
+              }}
+              showPagination={true}
+              emptyMessage="No passes found. Once visitors or residents generate passes, they will appear here."
+              selectable={true}
+              getRowId={(row) => row.id}
+              selectedRows={selectedPasses}
+              onSelectionChange={setSelectedPasses}
+              serverSide={true}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              initialSearch={search}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              availableFilters={availableFilters}
+              initialFilters={activeFilters}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                // Extract filter values from filters and explicitly clear if not found
+                const statusFilter = filters.find((f) => f.field === "status");
+                const houseIdFilter = filters.find((f) => f.field === "house_id");
+                const residentIdFilter = filters.find((f) => f.field === "resident_id");
+                const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
 
-                  // Always set state (undefined if filter not found) to ensure URL clearing
-                  setStatus(statusFilter?.value as string | undefined || undefined);
-                  setHouseId(houseIdFilter?.value as string | undefined || undefined);
-                  setResidentId(residentIdFilter?.value as string | undefined || undefined);
-                }}
-                initialSort={sort}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={true}
-                className=" rounded"
-              />
-            )}
+                // Always set state (undefined if filter not found) to ensure URL clearing
+                setStatus(statusFilter?.value as string | undefined || undefined);
+                setHouseId(houseIdFilter?.value as string | undefined || undefined);
+                setResidentId(residentIdFilter?.value as string | undefined || undefined);
+                setStartDate(startDate?.value as string | undefined || undefined);
+                setEndDate(endDate?.value as string | undefined || undefined);
+              }}
+              initialSort={sort}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={true}
+              isLoading={isLoading}
+              className=" rounded"
+            />
           </CardContent>
         </Card>
       </div>

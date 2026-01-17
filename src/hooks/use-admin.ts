@@ -723,6 +723,8 @@ export function useAdminDues(params: {
   page: number;
   pageSize: number;
   search?: string;
+  filters?: string;
+  sort?: string;
 }) {
   return useQuery<PaginatedResponse<Due>>({
     queryKey: ["admin", "dues", params],

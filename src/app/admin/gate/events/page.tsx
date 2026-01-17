@@ -13,96 +13,43 @@ import { titleCase } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Eye } from "lucide-react";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
-const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE = 10;
 const OWNER_TYPE_FILTERS: Array<{ label: string; value: string | undefined }> = [
-  { label: "All types", value: undefined },
   { label: "Visitor", value: "visitor" },
   { label: "Resident", value: "resident" },
 ];
 
 export default function AdminGateEventsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    sort: { defaultValue: undefined },
+    owner_type: { defaultValue: undefined },
+    startDate: { defaultValue: undefined },
+    endDate: { defaultValue: undefined },
+  }), []);
+
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config,
+    skipInitialSync: true,
+  });
   const isInitialMount = useRef(true);
 
+
+
   // Initialize state from URL params
-  const [page, setPage] = useState(() => {
-    const pageParam = searchParams.get("page");
-    return pageParam ? parseInt(pageParam, 10) : 1;
-  });
-  const [pageSize, setPageSize] = useState(() => {
-    const pageSizeParam = searchParams.get("pageSize");
-    return pageSizeParam ? parseInt(pageSizeParam, 10) : DEFAULT_PAGE_SIZE;
-  });
-  const [search, setSearch] = useState(() => searchParams.get("search") || "");
-  const [ownerType, setOwnerType] = useState<string | undefined>(() => {
-    const ownerTypeParam = searchParams.get("owner_type");
-    return ownerTypeParam || undefined;
-  });
-  const [sort, setSort] = useState<string | null>(() => {
-    const sortParam = searchParams.get("sort");
-    return sortParam || null;
-  });
-
-  // Sync state to URL query parameters
-  const syncToUrl = useCallback((updates: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    ownerType?: string | undefined;
-    sort?: string | null;
-  }) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (updates.page !== undefined) {
-      if (updates.page > 1) {
-        params.set("page", String(updates.page));
-      } else {
-        params.delete("page");
-      }
-    }
-
-    if (updates.pageSize !== undefined) {
-      if (updates.pageSize !== DEFAULT_PAGE_SIZE) {
-        params.set("pageSize", String(updates.pageSize));
-      } else {
-        params.delete("pageSize");
-      }
-    }
-
-    if (updates.search !== undefined) {
-      if (updates.search.trim()) {
-        params.set("search", updates.search.trim());
-      } else {
-        params.delete("search");
-      }
-    }
-
-    if (updates.ownerType !== undefined) {
-      if (updates.ownerType) {
-        params.set("owner_type", updates.ownerType);
-      } else {
-        params.delete("owner_type");
-      }
-    }
-
-    if (updates.sort !== undefined) {
-      if (updates.sort) {
-        params.set("sort", updates.sort);
-      } else {
-        params.delete("sort");
-      }
-    }
-
-    const queryString = params.toString();
-    router.replace(
-      queryString ? `${pathname}?${queryString}` : pathname,
-      { scroll: false }
-    );
-  }, [pathname, router, searchParams]);
+  const [page, setPage] = useState<number>(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState<number>(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState<string | undefined>(() => initializeFromUrl("search") || "");
+  const [ownerType, setOwnerType] = useState<string | undefined>(() => initializeFromUrl("owner_type"))
+  const [sort, setSort] = useState<string | undefined>(() => initializeFromUrl("sort"))
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
 
   // Sync state changes to URL (skip initial mount)
   useEffect(() => {
@@ -110,17 +57,23 @@ export default function AdminGateEventsPage() {
       isInitialMount.current = false;
       return;
     }
-    syncToUrl({ page, pageSize, search, ownerType, sort });
-  }, [page, pageSize, search, ownerType, sort, syncToUrl]);
+    syncToUrl({ page, pageSize, search, ownerType, sort, startDate, endDate });
+  }, [page, pageSize, search, ownerType, sort, startDate, endDate, syncToUrl]);
 
   // Build initial filters from URL state
-  const initialFilters = useMemo(() => {
+  const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
     if (ownerType) {
       filters.push({ field: "owner_type", operator: "eq", value: ownerType });
     }
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
     return filters;
-  }, [ownerType]);
+  }, [ownerType, startDate, endDate]);
 
   // Define available filters for DataTable
   const availableFilters: FilterDefinition[] = useMemo(() => [
@@ -134,22 +87,21 @@ export default function AdminGateEventsPage() {
       })),
       operator: "eq",
     },
+    {
+      field: "created_at",
+      label: "Date",
+      type: "date-range"
+    }
   ], []);
 
   // Build filters for API from current state
-  const filtersForAPI = useMemo(() => {
-    const filters: FilterConfig[] = [];
-    if (ownerType) {
-      filters.push({ field: "owner_type", operator: "eq", value: ownerType });
-    }
-    return filters;
-  }, [ownerType]);
+
 
   const { data, isLoading, isFetching } = useAdminGateEvents({
     page,
     pageSize,
     search: search.trim() || undefined,
-    filters: formatFiltersForAPI(filtersForAPI),
+    filters: formatFiltersForAPI(activeFilters),
     sort: sort || undefined,
   });
 
@@ -262,50 +214,53 @@ export default function AdminGateEventsPage() {
         {/* Table */}
         <Card>
           <CardContent>
-            {isLoading ? (
-              <TableSkeleton />
-            ) : (
-              <DataTable
-                data={events}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search events..."
-                pageSize={pageSize}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                onPageSizeChange={(newPageSize) => {
-                  setPage(1);
-                  setPageSize(newPageSize);
-                }}
-                showPagination={true}
-                emptyMessage="No events match these filters. Try removing filters or check back after the next scan."
-                serverSide={true}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                initialSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                availableFilters={availableFilters}
-                initialFilters={initialFilters}
-                onFiltersChange={(filters) => {
-                  setPage(1);
-                  // Extract owner_type from filters and explicitly clear if not found
-                  const ownerTypeFilter = filters.find((f) => f.field === "owner_type");
-                  // Always set state (undefined if filter not found) to ensure URL clearing
-                  setOwnerType(ownerTypeFilter?.value as string | undefined || undefined);
-                }}
-                initialSort={sort}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={true}
-                className=" rounded"
-              />
-            )}
+
+            <DataTable
+              data={events}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search events..."
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={(newPageSize) => {
+                setPage(1);
+                setPageSize(newPageSize);
+              }}
+              showPagination={true}
+              emptyMessage="No events match these filters. Try removing filters or check back after the next scan."
+              serverSide={true}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              initialSearch={search}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              availableFilters={availableFilters}
+              initialFilters={activeFilters}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                // Extract owner_type from filters and explicitly clear if not found
+                const ownerTypeFilter = filters.find((f) => f.field === "owner_type");
+                const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+
+                // Always set state (undefined if filter not found) to ensure URL clearing
+                setOwnerType(ownerTypeFilter?.value as string | undefined || undefined);
+                setStartDate(startDate?.value as string | undefined || undefined);
+                setEndDate(endDate?.value as string | undefined || undefined);
+              }}
+              initialSort={sort}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={true}
+              className=" rounded"
+              isLoading={isLoading}
+            />
           </CardContent>
         </Card>
       </div>

@@ -6,12 +6,13 @@ import { useAdminDues } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Plus, Receipt, Filter, LayoutGrid } from "lucide-react";
-import { formatCurrency, titleCase } from "@/lib/utils";
-import { Due } from "@/types";
+import { Plus, Receipt, Filter, LayoutGrid, ArrowRight } from "lucide-react";
+import { cn, formatCurrency, formatDateTime, titleCase } from "@/lib/utils";
+import { Due, DueTenureLength } from "@/types";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 const PAGE_SIZE = 20;
@@ -19,28 +20,93 @@ const PAGE_SIZE = 20;
 export default function DuesPage() {
     const router = useRouter();
 
+    const config = useMemo(() => ({
+        page: { defaultValue: 1 },
+        pageSize: { defaultValue: PAGE_SIZE },
+        search: { defaultValue: "" },
+        sort: { defaultValue: undefined },
+        recurring: { defaultValue: undefined },
+        tenure_length: { defaultValue: undefined },
+        startDate: { defaultValue: undefined },
+        endDate: { defaultValue: undefined },
+    }), []);
+
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
-        config: {
-            page: { defaultValue: 1 },
-            pageSize: { defaultValue: PAGE_SIZE },
-            search: { defaultValue: "" },
-        },
+        config,
         skipInitialSync: true,
     });
 
     const [page, setPage] = useState(() => initializeFromUrl("page"));
     const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
     const [search, setSearch] = useState(() => initializeFromUrl("search"));
+    const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+    const [recurring, setRecurring] = useState<string | undefined>(() => initializeFromUrl("recurring"));
+    const [tenure_length, setTenureLength] = useState<string | undefined>(() => initializeFromUrl("tenure_length"));
+    const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+    const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
 
     useEffect(() => {
-        syncToUrl({ page, pageSize, search });
-    }, [page, pageSize, search, syncToUrl]);
+        syncToUrl({ page, pageSize, search, sort, recurring, tenure_length, startDate, endDate });
+    }, [page, pageSize, search, sort, recurring, tenure_length, startDate, endDate, syncToUrl]);
+
+    const activeFilters = useMemo(() => {
+        const filters: FilterConfig[] = [];
+        if (recurring !== undefined) {
+            filters.push({ field: "recurring", operator: "eq", value: recurring });
+        }
+        if (tenure_length !== undefined) {
+            filters.push({ field: "tenure_length", operator: "eq", value: tenure_length });
+        }
+        if (startDate !== undefined) {
+            filters.push({ field: "created_at", operator: "gte", value: startDate });
+        }
+        if (endDate !== undefined) {
+            filters.push({ field: "created_at", operator: "lte", value: endDate });
+        }
+
+        return filters;
+    }, [recurring, tenure_length, startDate, endDate]);
 
     const { data, isLoading } = useAdminDues({
         page,
         pageSize,
         search: search.trim() || undefined,
+        filters: formatFiltersForAPI(activeFilters),
+        sort: sort || undefined,
     });
+
+    const availableFilters: FilterDefinition[] = [
+        {
+            field: "recurring",
+            label: "Plan Type",
+            type: "select",
+            options: [
+                { value: "true", label: "Recurring" },
+                { value: "false", label: "One-time" },
+            ],
+            operator: "eq",
+        },
+        {
+            field: "created_at",
+            label: "Date",
+            type: "date-range",
+        },
+        {
+            field: "tenure_length",
+            label: "Billing Cycle",
+            type: "select",
+            options: [
+                { value: DueTenureLength.ONE_TIME, label: "One-time" },
+                { value: DueTenureLength.DAILY, label: "Daily" },
+                { value: DueTenureLength.WEEKLY, label: "Weekly" },
+                { value: DueTenureLength.MONTHLY, label: "Monthly" },
+                { value: DueTenureLength.QUARTERLY, label: "Quarterly" },
+                { value: DueTenureLength.BIANNUALLY, label: "Bi-Annually" },
+                { value: DueTenureLength.YEARLY, label: "Yearly" },
+            ],
+            operator: "eq",
+        }
+    ];
 
     const dues = useMemo(() => data?.items ?? [], [data]);
     const total = data?.total ?? 0;
@@ -99,6 +165,18 @@ export default function DuesPage() {
             ),
         },
         {
+            key: "created_at",
+            header: "Created Date",
+            sortable: true,
+            accessor: (row) => (
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                        {formatDateTime(row.created_at)}
+                    </span>
+                </div>
+            ),
+        },
+        {
             key: "actions",
             header: "",
             accessor: (row) => (
@@ -151,51 +229,52 @@ export default function DuesPage() {
                 </div>
             </div>
 
-            <div className="bg-white border border-border/60 rounded-lg overflow-hidden">
-                {isLoading ? (
-                    <div className="p-6">
-                        <TableSkeleton />
-                    </div>
-                ) : dues.length === 0 ? (
-                    <EmptyState
-                        icon={Receipt}
-                        title="No dues found"
-                        description="You haven't created any dues yet. Start by creating a new one."
-                        action={{
-                            label: "Create Due",
-                            onClick: () => router.push("/admin/dues/create"),
-                        }}
-                    />
-                ) : (
-                    <DataTable
-                        data={dues}
-                        columns={columns}
-                        searchable={true}
-                        searchPlaceholder="Search dues by name..."
-                        pageSize={pageSize}
-                        onPageSizeChange={setPageSize}
-                        pageSizeOptions={PAGE_SIZE_OPTIONS}
-                        serverSide={true}
-                        total={total}
-                        currentPage={page}
-                        onPageChange={setPage}
-                        onSearchChange={(val) => {
-                            setPage(1);
-                            setSearch(val);
-                        }}
-                        externalSearch={search}
-                        className="border-none"
-                    />
-                )}
+            <div className=" p-3 border border-border/60 rounded-lg overflow-hidden">
+
+                <DataTable
+                    data={dues}
+                    columns={columns}
+                    searchable={true}
+                    searchPlaceholder="Search dues by name..."
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    pageSizeOptions={PAGE_SIZE_OPTIONS}
+                    serverSide={true}
+                    total={total}
+                    currentPage={page}
+                    onPageChange={setPage}
+                    availableFilters={availableFilters}
+                    initialFilters={activeFilters}
+                    onFiltersChange={(filters) => {
+                        setPage(1);
+                        const recurringFilter = filters.find(f => f.field === "recurring");
+                        setRecurring(recurringFilter?.value as string | undefined);
+                        const tenureLengthFilter = filters.find(f => f.field === "tenure_length");
+                        setTenureLength(tenureLengthFilter?.value as string | undefined);
+                        const startFilter = filters.find(f => f.field === "created_at" && f.operator === "gte");
+                        setStartDate(startFilter?.value as string | undefined);
+                        const endFilter = filters.find(f => f.field === "created_at" && f.operator === "lte");
+                        setEndDate(endFilter?.value as string | undefined);
+                    }}
+                    onSortChange={(newSort) => {
+                        setPage(1);
+                        setSort(newSort);
+                    }}
+                    onSearchChange={(val) => {
+                        setPage(1);
+                        setSearch(val);
+                    }}
+                    initialSearch={search}
+                    className="p-3"
+                    disableClientSideSorting={true}
+                    initialSort={sort}
+                    isLoading={isLoading}
+                />
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-muted-foreground/60 uppercase font-bold tracking-widest px-2">
-                <span>Dues</span>
                 <span>Total: {total}</span>
             </div>
         </div>
     );
 }
-
-import { cn } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";

@@ -25,11 +25,13 @@ import {
   CheckSquare,
   Square,
   FilterX,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Loader2
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { format, parseISO, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
+import { SearchableSelect } from "./SearchableSelect";
 
 export interface Column<T> {
   key: string;
@@ -60,6 +62,7 @@ export interface FilterDefinition {
   type: "select" | "date" | "date-range";
   options?: Array<{ value: string; label: string }>;
   operator?: FilterConfig["operator"];
+  isSearchable?: boolean;
 }
 
 export interface BulkAction {
@@ -110,6 +113,7 @@ interface DataTableProps<T> {
   disableClientSideSorting?: boolean;
   // Bulk actions
   bulkActions?: BulkAction[];
+  isLoading?: boolean | null;
   // Row styling
   rowClassName?: (row: T) => string;
   enableRowStriping?: boolean;
@@ -153,6 +157,7 @@ export function DataTable<T extends Record<string, any>>({
   disableClientSideFiltering = false,
   disableClientSideSorting = false,
   bulkActions = [],
+  isLoading = false,
   rowClassName,
   enableRowStriping = true,
 }: DataTableProps<T>) {
@@ -599,18 +604,28 @@ export function DataTable<T extends Record<string, any>>({
                       {filterDef.label}:
                     </label>
                     {filterDef.type === "select" ? (
-                      <select
-                        value={filterValues[filterDef.field] || ""}
-                        onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
-                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
-                      >
-                        <option value="">All</option>
-                        {filterDef.options?.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      filterDef.isSearchable ? (
+                        <SearchableSelect
+                          options={filterDef.options || []}
+                          value={filterValues[filterDef.field] || ""}
+                          onChange={(value) => handleFilterChange(filterDef.field, value || "")}
+                          placeholder={`All ${filterDef.label}`}
+                          className="min-w-[150px]"
+                        />
+                      ) : (
+                        <select
+                          value={filterValues[filterDef.field] || ""}
+                          onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
+                          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
+                        >
+                          <option value="">All</option>
+                          {filterDef.options?.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )
                     ) : filterDef.type === "date" ? (
                       <div className="relative">
                         <DatePicker
@@ -717,122 +732,129 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Table */}
       <div className="rounded-lg  bg-card overflow-hidden">
-        <Table className="min-w-full text-xs sm:text-sm">
-          <TableHeader>
-            <TableRow>
-              {selectable && (
-                <TableHead className="w-12">
-                  <button
-                    onClick={toggleSelectAll}
-                    className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                    aria-label={allSelected ? "Deselect all" : "Select all"}
-                  >
-                    {allSelected ? (
-                      <CheckSquare className="h-4 w-4 text-primary" />
-                    ) : someSelected ? (
-                      <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
-                    ) : (
-                      <Square className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </TableHead>
-              )}
-              {safeColumns.map((column) => (
-                <TableHead
-                  key={column.key}
-                  className={column.className}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{column.header}</span>
-                    {column.sortable && (
-                      <button
-                        onClick={() => handleSort(column.key)}
-                        className="hover:text-foreground transition-colors"
-                        aria-label={`Sort by ${column.header}`}
-                      >
-                        {sortState.column === column.key ? (
-                          sortState.direction === "asc" ? (
-                            <ArrowUp className="h-4 w-4" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4" />
-                          )
-                        ) : (
-                          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedData.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <Table className="min-w-full text-xs sm:text-sm">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={safeColumns.length + (selectable ? 1 : 0)}
-                  className="h-24 text-center"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <p className="text-muted-foreground">{emptyMessage}</p>
-                    {hasActiveFilters && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                      >
-                        Clear filters to see all results
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row, index) => {
-                const rowId = getRowId(row);
-                const isSelected = selected.has(rowId);
-                const isEven = index % 2 === 0;
-                const customClassName = rowClassName ? rowClassName(row) : "";
-                const stripingClassName = enableRowStriping && isEven ? "bg-muted/30" : "";
-
-                return (
-                  <TableRow
-                    key={rowId || index}
-                    className={cn(
-                      "hover:bg-muted/50 transition-colors",
-                      stripingClassName,
-                      customClassName,
-                      isSelected && "bg-primary/10"
-                    )}
+                {selectable && (
+                  <TableHead className="w-12">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                      aria-label={allSelected ? "Deselect all" : "Select all"}
+                    >
+                      {allSelected ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : someSelected ? (
+                        <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
+                      ) : (
+                        <Square className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  </TableHead>
+                )}
+                {safeColumns.map((column) => (
+                  <TableHead
+                    key={column.key}
+                    className={column.className}
                   >
-                    {selectable && (
-                      <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{column.header}</span>
+                      {column.sortable && (
                         <button
-                          onClick={() => toggleRowSelection(rowId)}
-                          className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                          aria-label={isSelected ? "Deselect row" : "Select row"}
+                          onClick={() => handleSort(column.key)}
+                          className="hover:text-foreground transition-colors"
+                          aria-label={`Sort by ${column.header}`}
                         >
-                          {isSelected ? (
-                            <CheckSquare className="h-4 w-4 text-primary" />
+                          {sortState.column === column.key ? (
+                            sortState.direction === "asc" ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : (
+                              <ArrowDown className="h-4 w-4" />
+                            )
                           ) : (
-                            <Square className="h-4 w-4 text-muted-foreground" />
+                            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                           )}
                         </button>
-                      </TableCell>
-                    )}
-                    {safeColumns.map((column) => (
-                      <TableCell key={column.key} className={column.className}>
-                        {column.accessor
-                          ? column.accessor(row)
-                          : String(row[column.key] ?? "-")}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={safeColumns.length + (selectable ? 1 : 0)}
+                    className="h-24 text-center"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-muted-foreground">{emptyMessage}</p>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                        >
+                          Clear filters to see all results
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((row, index) => {
+                  const rowId = getRowId(row);
+                  const isSelected = selected.has(rowId);
+                  const isEven = index % 2 === 0;
+                  const customClassName = rowClassName ? rowClassName(row) : "";
+                  const stripingClassName = enableRowStriping && isEven ? "bg-muted/30" : "";
+
+                  return (
+                    <TableRow
+                      key={rowId || index}
+                      className={cn(
+                        "hover:bg-muted/50 transition-colors",
+                        stripingClassName,
+                        customClassName,
+                        isSelected && "bg-primary/10"
+                      )}
+                    >
+                      {selectable && (
+                        <TableCell>
+                          <button
+                            onClick={() => toggleRowSelection(rowId)}
+                            className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                            aria-label={isSelected ? "Deselect row" : "Select row"}
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </TableCell>
+                      )}
+                      {safeColumns.map((column) => (
+                        <TableCell key={column.key} className={column.className}>
+                          {column.accessor
+                            ? column.accessor(row)
+                            : String(row[column.key] ?? "-")}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        )}
+
       </div>
 
       {/* Pagination */}

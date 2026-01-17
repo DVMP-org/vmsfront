@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Plus, Building2, Trash2, Edit, CheckCircle, Eye, Upload } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
@@ -54,6 +54,10 @@ export default function HousesPage() {
   const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
   const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() => initializeFromUrl("houseGroupId"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
+
+
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -80,49 +84,84 @@ export default function HousesPage() {
     syncToUrl({ page, pageSize, search, status, houseGroupId, sort });
   }, [page, pageSize, search, status, houseGroupId, sort, syncToUrl]);
 
-  // Build filterable fields from payload
-  const filterableFields = useMemo(() => {
-    const fields: Array<{ field: string; operator?: "eq"; value?: string | boolean }> = [];
-    if (status) {
-      fields.push({
-        field: "is_active",
-        operator: "eq",
-        value: status === "true"
-      });
-    }
-    if (houseGroupId) {
-      fields.push({
-        field: "house_group_id",
-        operator: "eq",
-        value: houseGroupId
-      });
-    }
-    return fields;
-  }, [status, houseGroupId]);
-
-  const { data, isLoading, isFetching } = useAdminHouses({
-    page,
-    pageSize,
-    search: search.trim() || undefined,
-    filters: formatFiltersForAPI(
-      filterableFields.map((f) => ({
-        field: f.field,
-        operator: f.operator || "eq",
-        value: f.value!,
-      }))
-    ),
-    sort: sort || undefined,
-  });
-
   // Fetch house groups for filter
   const { data: houseGroupsData } = useAdminHouseGroups({
     page: 1,
     pageSize: 100,
   });
+  const houseGroups = useMemo(() => houseGroupsData?.items ?? [], [houseGroupsData]);
 
-  const houses = data?.items ?? [];
+
+  const availableFilters = useMemo(() => {
+    const filters: FilterDefinition[] = [
+      {
+        field: "is_active",
+        label: "Active",
+        operator: "eq",
+        type: "select",
+        options: [{
+          label: "True", value: "true",
+        }]
+      }
+    ];
+
+
+
+    if (houseGroups.length > 0) {
+      filters.push({
+        field: "house_group_id",
+        label: "House Group",
+        type: "select",
+        isSearchable: true,
+        options: [
+          ...houseGroups.map((house) => ({
+            value: house.id,
+            label: house.name,
+          })),
+        ],
+        operator: "eq",
+      });
+    }
+
+    filters.push({
+      field: "created_at",
+      label: "Date",
+      type: "date-range"
+    })
+    return filters;
+  }, [status, houseGroups]);
+
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+
+    if (status) {
+      filters.push({ field: "status", operator: "eq", value: status });
+    }
+    if (houseGroupId) {
+      filters.push({ field: "house_group_id", operator: "eq", value: houseGroupId });
+    }
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
+    return filters;
+  }, [status, houseGroupId, status, startDate, endDate]);
+
+  const { data, isLoading, isFetching } = useAdminHouses({
+    page,
+    pageSize,
+    search: search.trim() || undefined,
+    filters: formatFiltersForAPI(activeFilters),
+    sort: sort || undefined,
+  });
+
+
+
+  const houses = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
-  const houseGroups = houseGroupsData?.items ?? [];
+
 
   const handleCloseImportModal = () => {
     setIsImportModalOpen(false);
@@ -360,61 +399,56 @@ export default function HousesPage() {
 
         <Card>
           <CardContent className="p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : !houses || houses.length === 0 && !search && !status && !houseGroupId ? (
-              <EmptyState
-                icon={Building2}
-                title="No houses yet"
-                description="Get started by adding your first house"
-                action={{
-                  label: "Add House",
-                  onClick: () => setIsCreateModalOpen(true),
-                }}
-              />
-            ) : (
-              <DataTable
-                data={houses}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search houses..."
-                pageSize={pageSize}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                onPageSizeChange={setPageSize}
-                showPagination={true}
-                emptyMessage="No houses found"
-                serverSide={true}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                externalSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                filterableFields={filterableFields}
-                onFiltersChange={(filters) => {
-                  setPage(1);
-                  // Extract filter values from filters and explicitly clear if not found
-                  const isActiveFilter = filters.find(f => f.field === "is_active");
-                  const houseGroupFilter = filters.find(f => f.field === "house_group_id");
 
-                  // Always set state (undefined if filter not found) to ensure URL clearing
-                  setStatus(isActiveFilter?.value as string | undefined || undefined);
-                  setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
-                }}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={true}
-                selectable={true}
-                selectedRows={selectedHouses}
-                onSelectionChange={setSelectedHouses}
-                bulkActions={bulkActions}
-              />
-            )}
+            <DataTable
+              data={houses}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search houses..."
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={setPageSize}
+              showPagination={true}
+              emptyMessage="No houses found"
+              serverSide={true}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              initialSearch={search}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              availableFilters={availableFilters}
+              initialFilters={activeFilters}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                // Extract filter values from filters and explicitly clear if not found
+                const isActiveFilter = filters.find(f => f.field === "is_active");
+                const houseGroupFilter = filters.find(f => f.field === "house_group_id");
+                const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+
+                // Always set state (undefined if filter not found) to ensure URL clearing
+                setStatus(isActiveFilter?.value as string | undefined || undefined);
+                setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
+                setStartDate(startDate?.value as string | undefined || undefined);
+                setEndDate(endDate?.value as string | undefined || undefined);
+              }}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              getRowId={(row) => row.id}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={true}
+              selectable={true}
+              selectedRows={selectedHouses}
+              onSelectionChange={setSelectedHouses}
+              bulkActions={bulkActions}
+              isLoading={isLoading}
+            />
+
           </CardContent>
         </Card>
       </div>

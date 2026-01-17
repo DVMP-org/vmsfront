@@ -560,12 +560,16 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<Due>>> {
         return apiClient.get("/admin/dues/", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
