@@ -230,6 +230,7 @@ export default function VisitorsPage() {
                 showPagination={false}
                 emptyMessage="No visitors found"
                 searchPlaceholder="Search visitors..."
+                onPageChange={setPage}
                 onPageSizeChange={(newPageSize) => {
                   setPage(1);
                   setPageSize(newPageSize);

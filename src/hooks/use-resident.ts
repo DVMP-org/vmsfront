@@ -255,11 +255,19 @@ export function useWallet() {
   });
 }
 
-export function useWalletHistory(page: number = 1, pageSize: number = 20) {
+export function useWalletHistory(
+  params: {
+    page: number,
+    pageSize: number,
+    search?: string,
+    sort?: string,
+    filters?: string
+  }
+) {
   return useQuery<PaginatedResponse<WalletTransaction>>({
-    queryKey: ["resident", "wallet", "history", page, pageSize],
+    queryKey: ["resident", "wallet", "history", params],
     queryFn: async () => {
-      const response = await residentService.getWalletHistory(page, pageSize);
+      const response = await residentService.getWalletHistory(params);
       return response.data;
     },
   });
@@ -306,14 +314,19 @@ export function useFundWallet() {
 
 export function useHouseDues(
   houseId: string | null,
-  page: number = 1,
-  pageSize: number = 10
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sort?: string;
+    filters?: string
+  }
 ) {
   return useQuery<PaginatedResponse<HouseDue>>({
-    queryKey: ["resident", "house-dues", houseId, page, pageSize],
+    queryKey: ["resident", "house-dues", houseId, params],
     queryFn: async () => {
       if (!houseId) throw new Error("House ID is required");
-      const response = await residentService.getHouseDues(houseId, page, pageSize);
+      const response = await residentService.getHouseDues(houseId, params);
       return response.data;
     },
     enabled: !!houseId,

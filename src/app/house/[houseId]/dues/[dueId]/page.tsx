@@ -14,7 +14,8 @@ import {
     formatCurrency,
     formatDate,
     titleCase,
-    cn
+    cn,
+    formatDateTime
 } from "@/lib/utils";
 import {
     Card,
@@ -342,16 +343,28 @@ export default function ResidentDueDetailPage() {
                     <div className="space-y-3">
                         <div>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Assessment Name</p>
-                            <p className="text-sm font-semibold">{due?.name || "N/A"}</p>
-                        </div>
-                        {due?.description && (
-                            <div>
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Description</p>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {due.description}
-                                </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold">{due?.name || "N/A"}</p>
+                                {/* <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Status</p> */}
+                                <Badge variant={
+                                    houseDue.status == HouseDueStatus.PAID ? "secondary" : HouseDueStatus.PARTIALLY_PAID ? "warning" : "danger"
+                                }>
+                                    {titleCase(houseDue.status)}
+                                </Badge>
                             </div>
-                        )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {due?.description && (
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Description</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {due.description}
+                                    </p>
+                                </div>
+                            )}
+
+                        </div>
+
                         <div className="flex gap-6">
                             <div>
                                 <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Tenure</p>
@@ -362,13 +375,14 @@ export default function ResidentDueDetailPage() {
                                 <p className="text-xs font-medium">{titleCase(due?.minimum_payment_breakdown)}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Status</p>
-                                <Badge variant={
-                                    houseDue.status == HouseDueStatus.PAID ? "secondary" : HouseDueStatus.PARTIALLY_PAID ? "warning" : "danger"
-                                }>
-                                    {titleCase(houseDue.status)}
-                                </Badge>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Payment Breakdown</p>
+                                <p className="text-xs font-medium">{titleCase(houseDue?.payment_breakdown)}</p>
                             </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Next Schedule Date</p>
+                                <p className="text-xs font-medium">{formatDateTime(houseDue?.next_schedule.payment_date)}</p>
+                            </div>
+
 
                         </div>
 

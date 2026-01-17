@@ -746,6 +746,7 @@ export interface HouseDue {
     payment_breakdown_options?: HouseDueOption[];
     created_at: string;
     updated_at: string;
+    next_schedule?: DuePayment | null;
 }
 
 export interface DueSchedule {

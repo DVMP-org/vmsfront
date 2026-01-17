@@ -175,12 +175,18 @@ export const residentService = {
     params?: {
       page?: number;
       pageSize?: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
     return apiClient.get(`/resident/house/${houseId}/forum/categories`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 100,
+        search: params?.search ?? undefined,
+        filters: params?.filters ?? undefined,
+        sort: params?.sort ?? undefined,
       },
     });
   },
@@ -207,15 +213,17 @@ export const residentService = {
       page?: number;
       pageSize?: number;
       search?: string;
-      includeDeleted?: boolean;
+      filters?: string;
+      sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
     return apiClient.get(`/resident/house/${houseId}/forum/topics`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 20,
-        search_query: params?.search ?? undefined,
-        include_deleted: params?.includeDeleted ?? undefined,
+        search: params?.search ?? undefined,
+        filters: params?.filters ?? undefined,
+        sort: params?.sort ?? undefined,
       },
     });
   },
@@ -254,15 +262,23 @@ export const residentService = {
   async getForumPosts(
     houseId: string,
     topicId: string,
-    page: number = 1,
-    pageSize: number = 20
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
+    }
   ): Promise<ApiResponse<PaginatedResponse<ForumPost>>> {
     return apiClient.get(
       `/resident/house/${houseId}/forum/topic/${topicId}/post/all`,
       {
         params: {
-          page,
-          page_size: pageSize,
+          page: params.page,
+          page_size: params.pageSize,
+          search: params.search,
+          filters: params.filters,
+          sort: params.sort,
         },
       }
     );
@@ -290,13 +306,17 @@ export const residentService = {
   },
 
   async getWalletHistory(
-    page: number = 1,
-    pageSize: number = 20
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
+    }
   ): Promise<ApiResponse<PaginatedResponse<WalletTransaction>>> {
     return apiClient.get("/resident/wallet/history", {
       params: {
-        page,
-        page_size: pageSize,
+        ...params
       },
     });
   },
@@ -354,13 +374,21 @@ export const residentService = {
 
   async getHouseDues(
     houseId: string,
-    page: number = 1,
-    pageSize: number = 10
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
   ): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
     return apiClient.get(`/resident/house/${houseId}/dues`, {
       params: {
-        page,
-        page_size: pageSize,
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 10,
+        search: params?.search ?? undefined,
+        sort: params?.sort ?? undefined,
+        filters: params?.filters ?? undefined,
       },
     });
   },

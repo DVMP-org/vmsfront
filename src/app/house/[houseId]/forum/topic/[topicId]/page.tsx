@@ -45,6 +45,8 @@ import {
   Loader2,
   Send,
 } from "lucide-react";
+import { formatFiltersForAPI } from "@/lib/table-utils";
+import { FilterConfig } from "@/components/ui/DataTable";
 
 type PendingAttachment = {
   id: string;
@@ -90,11 +92,33 @@ export default function ForumTopicPage() {
   );
 
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("created_at:desc");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const pageSize = 15;
+
+  const topicsActiveFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (categoryFilter !== "all") {
+      filters.push({
+        field: "category_id",
+        value: categoryFilter,
+        operator: "eq"
+      });
+    }
+    return filters;
+  }, [categoryFilter]);
   const {
     data: postsResponse,
     isLoading: isPostsLoading,
-  } = useForumPosts(effectiveHouseId, topicId ?? null, page, pageSize);
+  } = useForumPosts(effectiveHouseId, topicId ?? null, {
+    page,
+    pageSize,
+    search: search.trim() || undefined,
+    sort,
+    filters: topicsActiveFilters.length > 0 ? formatFiltersForAPI(topicsActiveFilters) : undefined
+  });
   const posts = useMemo(
     // @ts-expect-error – PaginatedResponse may be array in this branch
     () => postsResponse?.items ?? [],
@@ -117,7 +141,6 @@ export default function ForumTopicPage() {
 
   const createPost = useCreateForumPost();
   const viewerId = profile?.id ?? null;
-  console.log(profile)
   const canSubmit = hasMeaningfulContent(content);
 
   const handleCreatePost = (event: FormEvent<HTMLFormElement>) => {

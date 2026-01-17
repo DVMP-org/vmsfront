@@ -29,7 +29,11 @@ import {
   Sparkles,
   MessageSquare,
   ArrowUpRight,
+  Pin,
+  Lock,
 } from "lucide-react";
+import { formatFiltersForAPI } from "@/lib/table-utils";
+import { FilterConfig } from "@/components/ui/DataTable";
 
 export default function ForumCategoryPage() {
   const router = useRouter();
@@ -38,8 +42,11 @@ export default function ForumCategoryPage() {
   const rawCategoryId = params?.categoryId;
   const houseId = Array.isArray(rawHouseId) ? rawHouseId[0] : rawHouseId;
   const categoryId = Array.isArray(rawCategoryId) ? rawCategoryId[0] : rawCategoryId;
-
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const { selectedHouse, setSelectedHouse } = useAppStore();
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const { data: profile } = useProfile();
   const effectiveHouseId = houseId ?? selectedHouse?.id ?? null;
 
@@ -56,14 +63,34 @@ export default function ForumCategoryPage() {
     effectiveHouseId,
     categoryId ?? null
   );
+
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (categoryFilter !== "all") {
+      filters.push({
+        field: "category_id",
+        value: categoryId,
+        operator: "eq"
+      });
+    }
+    return filters;
+  }, [categoryId, categoryFilter]);
   const { data: topicsResponse, isLoading: isTopicsLoading } = useForumTopics(
     effectiveHouseId,
-    { page: 1, pageSize: 200 }
+    {
+      page: 1,
+      pageSize: 200,
+      search: search.trim() || undefined,
+      filters: activeFilters.length > 0 ? formatFiltersForAPI(activeFilters) : undefined
+    }
   );
 
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  useEffect(() => {
+    if (!categoryId) return;
+    setCategoryFilter(categoryId);
+  }, [categoryId]);
+
+
   const filteredTopics = useMemo(() => {
     // @ts-expect-error – PaginatedResponse may be array in this branch
     const items = (topicsResponse?.items ?? []) as ForumTopic[];
@@ -161,7 +188,7 @@ export default function ForumCategoryPage() {
   return (
     <>
       <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
+        <section className="rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3 max-w-2xl">
               <button
@@ -185,7 +212,7 @@ export default function ForumCategoryPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[var(--brand-primary,#213928)] hover:bg-white/90"
+                  className="bg-white text-[rgb(var(--brand-primary))] hover:bg-white/90"
                   onClick={() => setTopicModalOpen(true)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -209,8 +236,8 @@ export default function ForumCategoryPage() {
                 value={topicStats.total}
                 icon={MessageSquare}
               />
-              <StatTile label="Pinned" value={topicStats.pinned} />
-              <StatTile label="Locked" value={topicStats.locked} />
+              <StatTile label="Pinned" value={topicStats.pinned} icon={Pin} />
+              <StatTile label="Locked" value={topicStats.locked} icon={Lock} />
             </div>
           </div>
         </section>

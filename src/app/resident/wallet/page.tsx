@@ -80,7 +80,7 @@ export default function WalletPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { data: wallet, isLoading: isWalletLoading } = useWallet();
-    const { data: recentHistory, isLoading: isHistoryLoading } = useWalletHistory(1, 5);
+    const { data: recentHistory, isLoading: isHistoryLoading } = useWalletHistory({ page: 1, pageSize: 5 });
     const fundWalletMutation = useFundWallet();
     const [isFundModalOpen, setIsFundModalOpen] = useState(false);
     const [amount, setAmount] = useState("");
