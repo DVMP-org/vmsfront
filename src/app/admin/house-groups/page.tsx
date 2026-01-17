@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Plus, Building2, Edit, Trash2, CheckCircle, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
@@ -19,9 +19,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 const STATUS_FILTERS: Array<{ value: string, label: string }> = [
-    { value: "all", label: "All" },
-    { value: "true", label: "Active" },
-    { value: "false", label: "Inactive" },
+    { value: "True", label: "Active" },
+    { value: "False", label: "Inactive" },
 ]
 
 export default function HouseGroupsPage() {
@@ -32,8 +31,10 @@ export default function HouseGroupsPage() {
             page: { defaultValue: 1 },
             pageSize: { defaultValue: PAGE_SIZE },
             search: { defaultValue: "" },
-            status: { defaultValue: undefined },
+            is_active: { defaultValue: undefined },
             sort: { defaultValue: null },
+            startDate: { defaultValue: undefined },
+            endDate: { defaultValue: undefined },
         },
         skipInitialSync: true,
     });
@@ -44,6 +45,9 @@ export default function HouseGroupsPage() {
     const [search, setSearch] = useState(() => initializeFromUrl("search"));
     const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("is_active"));
     const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+    const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
+    const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
+
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -60,34 +64,57 @@ export default function HouseGroupsPage() {
 
     // Sync state to URL
     useEffect(() => {
-        syncToUrl({ page, pageSize, search, status, sort });
-    }, [page, pageSize, search, status, sort, syncToUrl]);
+        syncToUrl({
+            page,
+            pageSize,
+            search,
+            is_active: status,
+            sort,
+            startDate,
+            endDate
+        });
+    }, [page, pageSize, search, status, sort, startDate, endDate, syncToUrl]);
 
     // Build filters
-    const filterableFields = useMemo(() => {
-        const fields: Array<{ field: string; operator?: "eq"; value?: string | boolean }> = [];
-        if (status) {
-            fields.push({
-                field: "is_active",
-                operator: "eq",
-                value: status === "true"
-            });
+    const availableFilters = useMemo(() => {
+        const fields: FilterDefinition[] = [{
+            field: "is_active",
+            label: "Status",
+            type: "select",
+            options: [
+                ...STATUS_FILTERS.map((s) => ({ value: s.value, label: s.label }))
+            ],
+        },
+        {
+            field: "created_at",
+            label: "Date Range",
+            type: "date-range",
+
         }
+        ];
         return fields;
     }, [status]);
+
+    const activeFilters = useMemo(() => {
+        const filters: FilterConfig[] = [];
+        if (status) {
+            filters.push({ field: "is_active", operator: "eq", value: status });
+        }
+        if (startDate) {
+            filters.push({ field: "created_at", operator: "gte", value: startDate });
+        }
+        if (endDate) {
+            filters.push({ field: "created_at", operator: "lte", value: endDate });
+        }
+        return filters;
+    }, [status, startDate, endDate]);
 
     // Fetch house groups
     const { data, isLoading, isFetching } = useAdminHouseGroups({
         page,
         pageSize,
         search: search.trim() || undefined,
-        filters: formatFiltersForAPI(
-            filterableFields.map((f) => ({
-                field: f.field,
-                operator: f.operator || "eq",
-                value: f.value!,
-            }))
-        ),
+        filters: formatFiltersForAPI(activeFilters),
         sort: sort || undefined,
     });
 
@@ -330,59 +357,51 @@ export default function HouseGroupsPage() {
                         {/* Table */}
                         <Card>
                             <CardContent className="p-6">
-                                {isLoading ? (
-                                    <TableSkeleton />
-                                ) : houseGroups.length === 0 && !search && !status ? (
-                                    <EmptyState
-                                        icon={Building2}
-                                        title="No house groups"
-                                        description="Create your first house group to organize houses"
-                                        action={{
-                                            label: "Create House Group",
-                                            onClick: () => {
-                                                setIsCreateModalOpen(true);
-                                            },
-                                        }}
-                                    />
-                                ) : (
-                                    <DataTable
-                                        data={houseGroups}
-                                        columns={columns}
-                                        searchable={true}
-                                        searchPlaceholder="Search house groups..."
-                                        pageSize={pageSize}
-                                        pageSizeOptions={PAGE_SIZE_OPTIONS}
-                                        onPageSizeChange={setPageSize}
-                                        showPagination={true}
-                                        emptyMessage="No house groups found"
-                                        serverSide={true}
-                                        total={total}
-                                        currentPage={page}
-                                        onPageChange={setPage}
-                                        externalSearch={search}
-                                        onSearchChange={(value) => {
-                                            setPage(1);
-                                            setSearch(value);
-                                        }}
-                                        filterableFields={filterableFields}
-                                        onFiltersChange={(filters) => {
-                                            setPage(1);
-                                            const statusFilter = filters.find((f) => f.field === "is_active");
-                                            setStatus(statusFilter?.value as string | undefined || undefined);
-                                        }}
-                                        onSortChange={(newSort) => {
-                                            setPage(1);
-                                            setSort(newSort);
-                                        }}
-                                        disableClientSideFiltering={true}
-                                        disableClientSideSorting={false}
-                                        className=" rounded"
-                                        selectable={true}
-                                        selectedRows={selectedGroups}
-                                        onSelectionChange={setSelectedGroups}
-                                        bulkActions={bulkActions}
-                                    />
-                                )}
+
+                                <DataTable
+                                    data={houseGroups}
+                                    columns={columns}
+                                    searchable={true}
+                                    searchPlaceholder="Search house groups..."
+                                    pageSize={pageSize}
+                                    pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                    onPageSizeChange={setPageSize}
+                                    showPagination={true}
+                                    emptyMessage="No house groups found"
+                                    serverSide={true}
+                                    total={total}
+                                    currentPage={page}
+                                    onPageChange={setPage}
+                                    initialSearch={search}
+                                    onSearchChange={(value) => {
+                                        setPage(1);
+                                        setSearch(value);
+                                    }}
+                                    availableFilters={availableFilters}
+                                    initialFilters={activeFilters}
+                                    onFiltersChange={(filters) => {
+                                        setPage(1);
+                                        const statusFilter = filters.find((f) => f.field === "is_active");
+                                        setStatus(statusFilter?.value as string | undefined || undefined);
+                                        const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                                        setStartDate(startDateFilter?.value as string | undefined || undefined);
+                                        const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+                                        setEndDate(endDateFilter?.value as string | undefined || undefined);
+                                    }}
+                                    onSortChange={(newSort) => {
+                                        setPage(1);
+                                        setSort(newSort);
+                                    }}
+                                    disableClientSideFiltering={true}
+                                    disableClientSideSorting={false}
+                                    className=" rounded"
+                                    selectable={true}
+                                    selectedRows={selectedGroups}
+                                    onSelectionChange={setSelectedGroups}
+                                    bulkActions={bulkActions}
+                                    isLoading={isLoading || isFetching}
+                                />
+
                             </CardContent>
                         </Card>
                     </div>

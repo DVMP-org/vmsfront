@@ -32,13 +32,14 @@ const PAGE_SIZE = 10;
 
 export default function HousesPage() {
   const router = useRouter();
+  const isInitialMount = useRef(true);
   // URL query sync
   const config = useMemo(() => ({
     page: { defaultValue: 1 },
     pageSize: { defaultValue: PAGE_SIZE },
     search: { defaultValue: "" },
-    status: { defaultValue: undefined },
-    houseGroupId: { defaultValue: undefined },
+    is_active: { defaultValue: undefined },
+    house_group_id: { defaultValue: undefined },
     sort: { defaultValue: null },
   }), []);
 
@@ -51,8 +52,8 @@ export default function HousesPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
-  const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() => initializeFromUrl("houseGroupId"));
+  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("is_active"));
+  const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() => initializeFromUrl("house_group_id"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
   const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
   const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
@@ -81,8 +82,12 @@ export default function HousesPage() {
 
   // Sync state to URL
   useEffect(() => {
-    syncToUrl({ page, pageSize, search, status, houseGroupId, sort });
-  }, [page, pageSize, search, status, houseGroupId, sort, syncToUrl]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    syncToUrl({ page, pageSize, search, status, houseGroupId, sort, startDate, endDate });
+  }, [page, pageSize, search, status, houseGroupId, sort, startDate, endDate, syncToUrl]);
 
   // Fetch house groups for filter
   const { data: houseGroupsData } = useAdminHouseGroups({
@@ -96,16 +101,15 @@ export default function HousesPage() {
     const filters: FilterDefinition[] = [
       {
         field: "is_active",
-        label: "Active",
+        label: "Status",
         operator: "eq",
         type: "select",
-        options: [{
-          label: "True", value: "true",
-        }]
+        options: [
+          { label: "Active", value: "True" },
+          { label: "Inactive", value: "False" },
+        ]
       }
     ];
-
-
 
     if (houseGroups.length > 0) {
       filters.push({
@@ -129,13 +133,13 @@ export default function HousesPage() {
       type: "date-range"
     })
     return filters;
-  }, [status, houseGroups]);
+  }, [houseGroups]);
 
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
 
     if (status) {
-      filters.push({ field: "status", operator: "eq", value: status });
+      filters.push({ field: "is_active", operator: "eq", value: status });
     }
     if (houseGroupId) {
       filters.push({ field: "house_group_id", operator: "eq", value: houseGroupId });
@@ -147,7 +151,7 @@ export default function HousesPage() {
       filters.push({ field: "created_at", operator: "lte", value: endDate });
     }
     return filters;
-  }, [status, houseGroupId, status, startDate, endDate]);
+  }, [status, houseGroupId, startDate, endDate]);
 
   const { data, isLoading, isFetching } = useAdminHouses({
     page,
@@ -424,13 +428,13 @@ export default function HousesPage() {
               onFiltersChange={(filters) => {
                 setPage(1);
                 // Extract filter values from filters and explicitly clear if not found
-                const isActiveFilter = filters.find(f => f.field === "is_active");
+                const statusFilter = filters.find(f => f.field === "is_active");
                 const houseGroupFilter = filters.find(f => f.field === "house_group_id");
                 const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
                 const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
 
                 // Always set state (undefined if filter not found) to ensure URL clearing
-                setStatus(isActiveFilter?.value as string | undefined || undefined);
+                setStatus(statusFilter?.value as string | undefined || undefined);
                 setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
                 setStartDate(startDate?.value as string | undefined || undefined);
                 setEndDate(endDate?.value as string | undefined || undefined);
@@ -446,7 +450,7 @@ export default function HousesPage() {
               selectedRows={selectedHouses}
               onSelectionChange={setSelectedHouses}
               bulkActions={bulkActions}
-              isLoading={isLoading}
+              isLoading={isLoading || isFetching}
             />
 
           </CardContent>

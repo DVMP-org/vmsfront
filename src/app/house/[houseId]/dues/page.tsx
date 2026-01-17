@@ -155,7 +155,7 @@ export default function ResidentDuesPage() {
                             setPage(1);
                             setSearch(val);
                         }}
-                        externalSearch={search}
+                        initialSearch={search}
                         className="border-none"
                     />
                 )}

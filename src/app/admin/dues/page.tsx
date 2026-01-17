@@ -67,7 +67,7 @@ export default function DuesPage() {
         return filters;
     }, [recurring, tenure_length, startDate, endDate]);
 
-    const { data, isLoading } = useAdminDues({
+    const { data, isLoading, isFetching } = useAdminDues({
         page,
         pageSize,
         search: search.trim() || undefined,
@@ -81,8 +81,8 @@ export default function DuesPage() {
             label: "Plan Type",
             type: "select",
             options: [
-                { value: "true", label: "Recurring" },
-                { value: "false", label: "One-time" },
+                { value: "True", label: "Recurring" },
+                { value: "False", label: "One-time" },
             ],
             operator: "eq",
         },
@@ -268,7 +268,7 @@ export default function DuesPage() {
                     className="p-3"
                     disableClientSideSorting={true}
                     initialSort={sort}
-                    isLoading={isLoading}
+                    isLoading={isLoading || isFetching}
                 />
             </div>
 

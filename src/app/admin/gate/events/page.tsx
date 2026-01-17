@@ -259,7 +259,7 @@ export default function AdminGateEventsPage() {
               disableClientSideFiltering={true}
               disableClientSideSorting={true}
               className=" rounded"
-              isLoading={isLoading}
+              isLoading={isLoading || isFetching}
             />
           </CardContent>
         </Card>

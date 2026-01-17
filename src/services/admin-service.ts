@@ -227,14 +227,16 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
-        status?: string;
+        sort?: string;
+        filters?: string;
     }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
         return apiClient.get("/admin/admins/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
-                status: params?.status ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
             },
         });
     },

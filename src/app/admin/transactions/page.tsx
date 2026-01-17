@@ -101,7 +101,7 @@ export default function TransactionsPage() {
         return filters;
     }, [type, status, dateFrom, dateTo]);
 
-    const { data, isLoading } = useAdminTransactions({
+    const { data, isLoading, isFetching } = useAdminTransactions({
         page,
         pageSize,
         search: search.trim() || undefined,
@@ -206,7 +206,7 @@ export default function TransactionsPage() {
 
             <Card className="rounded-lg shadow-none border-border/60">
                 <CardContent className="p-0">
-                    {isLoading ? (
+                    {isLoading || isFetching ? (
                         <div className="p-6">
                             <TableSkeleton />
                         </div>
@@ -260,6 +260,7 @@ export default function TransactionsPage() {
                             className="border-none"
                             disableClientSideFiltering={true}
                             disableClientSideSorting={true}
+                            isLoading={isLoading || isFetching}
                         />
                     )}
                 </CardContent>

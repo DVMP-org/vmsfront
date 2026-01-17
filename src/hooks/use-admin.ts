@@ -255,7 +255,8 @@ export function useAdmins(params: {
   page: number;
   pageSize: number;
   search?: string;
-  status?: string;
+  sort?: string;
+  filters?: string;
 }) {
   return useQuery<PaginatedResponse<Admin>>({
     queryKey: ["admin", "admins", params],

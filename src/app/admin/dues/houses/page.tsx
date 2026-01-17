@@ -144,7 +144,7 @@ export default function HouseDuesOverviewPage() {
                                 setPage(1);
                                 setSearch(val);
                             }}
-                            externalSearch={search}
+                            initialSearch={search}
                             className="border-none"
                         />
                     </div>

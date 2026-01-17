@@ -399,15 +399,15 @@ export default function AdminGatePassesPage() {
                 const statusFilter = filters.find((f) => f.field === "status");
                 const houseIdFilter = filters.find((f) => f.field === "house_id");
                 const residentIdFilter = filters.find((f) => f.field === "resident_id");
-                const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+                const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
 
                 // Always set state (undefined if filter not found) to ensure URL clearing
                 setStatus(statusFilter?.value as string | undefined || undefined);
                 setHouseId(houseIdFilter?.value as string | undefined || undefined);
                 setResidentId(residentIdFilter?.value as string | undefined || undefined);
-                setStartDate(startDate?.value as string | undefined || undefined);
-                setEndDate(endDate?.value as string | undefined || undefined);
+                setStartDate(startDateFilter?.value as string | undefined || undefined);
+                setEndDate(endDateFilter?.value as string | undefined || undefined);
               }}
               initialSort={sort}
               onSortChange={(newSort) => {
@@ -416,7 +416,7 @@ export default function AdminGatePassesPage() {
               }}
               disableClientSideFiltering={true}
               disableClientSideSorting={true}
-              isLoading={isLoading}
+              isLoading={isLoading || isFetching}
               className=" rounded"
             />
           </CardContent>

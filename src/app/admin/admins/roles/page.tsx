@@ -241,7 +241,7 @@ export default function RolesPage() {
                 total={total}
                 currentPage={page}
                 onPageChange={setPage}
-                externalSearch={search}
+                initialSearch={search}
                 onSearchChange={(value) => {
                   setPage(1);
                   setSearch(value);
