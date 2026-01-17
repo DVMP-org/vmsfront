@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useWalletTransaction } from "@/hooks/use-resident";
+import { useTransaction, useWalletTransaction } from "@/hooks/use-resident";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Loader2, ArrowRight, Wallet, Copy, Check, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -51,7 +51,7 @@ export default function PaymentSuccessPage() {
         setIsInPopup(window.opener !== null);
     }, [searchParams]);
 
-    const { data: transaction, isLoading, error } = useWalletTransaction(reference);
+    const { data: transaction, isLoading, error } = useTransaction(reference);
 
     // Set timeout for verification (wait 60 seconds before declaring failure)
     useEffect(() => {
@@ -234,15 +234,6 @@ export default function PaymentSuccessPage() {
 
                         {/* Transaction Details */}
                         <div className="bg-muted/50 rounded-lg border p-5 mb-6 space-y-4">
-                            <div className="flex items-center justify-between py-2 border-b border-border/50">
-                                <div className="flex items-center gap-2">
-                                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm font-medium text-muted-foreground">New Balance</span>
-                                </div>
-                                <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                                    {formatCurrency(transaction.balance_after)}
-                                </span>
-                            </div>
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">

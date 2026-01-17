@@ -23,8 +23,9 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate, titleCase, cn } from "@/lib/utils";
 import { HouseDueStatus, DueSchedule, DuePayment } from "@/types";
-import { useState } from "react";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { useState, useMemo } from "react";
+import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 export default function HouseDueDetailPage() {
     const params = useParams();
@@ -39,9 +40,36 @@ export default function HouseDueDetailPage() {
     const [paymentsPage, setPaymentsPage] = useState(1);
     const pageSize = 10;
 
-    const { data: schedulesData, isLoading: isLoadingSchedules } = useAdminDueSchedules(dueId, houseId, schedulePage, pageSize);
-    const { data: paymentsData, isLoading: isLoadingPayments } = useAdminDuePayments(dueId, houseId, paymentsPage, pageSize);
+    const [scheduleFilters, setScheduleFilters] = useState<FilterConfig[]>([]);
+    const [paymentFilters, setPaymentFilters] = useState<FilterConfig[]>([]);
 
+    const { data: schedulesData, isLoading: isLoadingSchedules } = useAdminDueSchedules(
+        dueId,
+        houseId,
+        schedulePage,
+        pageSize,
+        formatFiltersForAPI(scheduleFilters));
+    const { data: paymentsData, isLoading: isLoadingPayments } = useAdminDuePayments(
+        dueId,
+        houseId,
+        paymentsPage,
+        pageSize,
+        formatFiltersForAPI(paymentFilters));
+
+    const availableScheduleFilters: FilterDefinition[] = useMemo(() => [
+        {
+            field: "payment_date",
+            label: "Payment Date",
+            type: "date-range",
+        }
+    ], [])
+    const availablePaymentFilters: FilterDefinition[] = useMemo(() => [
+        {
+            field: "payment_date",
+            label: "Payment Date",
+            type: "date-range",
+        }
+    ], [])
     if (isLoading) {
         return (
             <div className="space-y-4 max-w-7xl px-4 py-6">
@@ -233,9 +261,15 @@ export default function HouseDueDetailPage() {
                                 total={schedulesData?.total || 0}
                                 currentPage={schedulePage}
                                 onPageChange={setSchedulePage}
+                                availableFilters={availableScheduleFilters}
+                                onFiltersChange={(filters) => {
+                                    setScheduleFilters(filters);
+                                    setSchedulePage(1);
+                                }}
                                 className="border-none"
                                 showPagination={true}
                                 emptyMessage="No payment schedule generated yet."
+                                disableClientSideFiltering={true}
                             />
                         </CardContent>
                     </Card>
@@ -259,9 +293,15 @@ export default function HouseDueDetailPage() {
                                 total={paymentsData?.total || 0}
                                 currentPage={paymentsPage}
                                 onPageChange={setPaymentsPage}
+                                availableFilters={availablePaymentFilters}
+                                onFiltersChange={(filters) => {
+                                    setPaymentFilters(filters);
+                                    setPaymentsPage(1);
+                                }}
                                 className=""
                                 showPagination={true}
                                 emptyMessage="No payments detected."
+                                disableClientSideFiltering={true}
                             />
                         </CardContent>
                     </Card>

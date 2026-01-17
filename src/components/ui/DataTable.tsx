@@ -23,8 +23,12 @@ import {
   Search,
   X,
   CheckSquare,
-  Square
+  Square,
+  FilterX,
+  Calendar as CalendarIcon
 } from "lucide-react";
+import DatePicker from "react-datepicker";
+import { format, parseISO, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export interface Column<T> {
@@ -53,8 +57,8 @@ export interface FilterableField {
 export interface FilterDefinition {
   field: string;
   label: string;
-  type: "select";
-  options: Array<{ value: string; label: string }>;
+  type: "select" | "date" | "date-range";
+  options?: Array<{ value: string; label: string }>;
   operator?: FilterConfig["operator"];
 }
 
@@ -188,7 +192,16 @@ export function DataTable<T extends Record<string, any>>({
     const initial: Record<string, string> = {};
     effectiveInitialFilters.forEach((filter) => {
       if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
-        initial[filter.field] = String(filter.value);
+        const filterDef = availableFilters.find((f) => f.field === filter.field);
+        if (filterDef?.type === "date-range") {
+          if (filter.operator === "gte") {
+            initial[`${filter.field}_from`] = String(filter.value);
+          } else if (filter.operator === "lte") {
+            initial[`${filter.field}_to`] = String(filter.value);
+          }
+        } else {
+          initial[filter.field] = String(filter.value);
+        }
       }
     });
     return initial;
@@ -234,12 +247,21 @@ export function DataTable<T extends Record<string, any>>({
     const newFilterValues: Record<string, string> = {};
     effectiveInitialFilters.forEach((filter) => {
       if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
-        newFilterValues[filter.field] = String(filter.value);
+        const filterDef = availableFilters.find((f) => f.field === filter.field);
+        if (filterDef?.type === "date-range") {
+          if (filter.operator === "gte") {
+            newFilterValues[`${filter.field}_from`] = String(filter.value);
+          } else if (filter.operator === "lte") {
+            newFilterValues[`${filter.field}_to`] = String(filter.value);
+          }
+        } else {
+          newFilterValues[filter.field] = String(filter.value);
+        }
       }
     });
 
     setFilterValues(newFilterValues);
-  }, [effectiveInitialFilters]);
+  }, [effectiveInitialFilters, availableFilters]);
 
   // Sync sort state with external initialSort
   useEffect(() => {
@@ -256,16 +278,41 @@ export function DataTable<T extends Record<string, any>>({
 
   // Build filters from internal filterValues
   const currentFilters = useMemo(() => {
-    return availableFilters
-      .filter((filterDef) => {
+    const filters: FilterConfig[] = [];
+
+    availableFilters.forEach((filterDef) => {
+      if (filterDef.type === "date-range") {
+        const fromValue = filterValues[`${filterDef.field}_from`];
+        const toValue = filterValues[`${filterDef.field}_to`];
+
+        if (fromValue) {
+          filters.push({
+            field: filterDef.field,
+            operator: "gte",
+            value: fromValue,
+          });
+        }
+
+        if (toValue) {
+          filters.push({
+            field: filterDef.field,
+            operator: "lte",
+            value: toValue,
+          });
+        }
+      } else {
         const value = filterValues[filterDef.field];
-        return value !== undefined && value !== null && value !== "";
-      })
-      .map((filterDef) => ({
-        field: filterDef.field,
-        operator: filterDef.operator || "eq",
-        value: filterValues[filterDef.field],
-      }));
+        if (value !== undefined && value !== null && value !== "") {
+          filters.push({
+            field: filterDef.field,
+            operator: filterDef.operator || "eq",
+            value: value,
+          });
+        }
+      }
+    });
+
+    return filters;
   }, [availableFilters, filterValues]);
 
   // Use ref to store the latest onFiltersChange callback to avoid re-renders
@@ -543,36 +590,89 @@ export function DataTable<T extends Record<string, any>>({
 
           {/* Filters Bar */}
           {availableFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-              <span className="text-sm font-medium text-muted-foreground">Filters:</span>
-              {availableFilters.map((filterDef) => (
-                <div key={filterDef.field} className="flex items-center gap-2">
-                  <label className="text-sm text-muted-foreground whitespace-nowrap">
-                    {filterDef.label}:
-                  </label>
-                  <select
-                    value={filterValues[filterDef.field] || ""}
-                    onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
-                    className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
-                  >
-                    <option value="">All</option>
-                    {filterDef.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 bg-muted/30 rounded-lg border border-border">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filters:</span>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                {availableFilters.map((filterDef) => (
+                  <div key={filterDef.field} className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      {filterDef.label}:
+                    </label>
+                    {filterDef.type === "select" ? (
+                      <select
+                        value={filterValues[filterDef.field] || ""}
+                        onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
+                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
+                      >
+                        <option value="">All</option>
+                        {filterDef.options?.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : filterDef.type === "date" ? (
+                      <div className="relative">
+                        <DatePicker
+                          selected={filterValues[filterDef.field] ? parseISO(filterValues[filterDef.field]) : null}
+                          onChange={(date: Date | null) => {
+                            if (date && isValid(date)) {
+                              handleFilterChange(filterDef.field, format(date, "yyyy-MM-dd"));
+                            } else {
+                              handleFilterChange(filterDef.field, "");
+                            }
+                          }}
+                          dateFormat="yyyy-MM-dd"
+                          isClearable
+                          portalId="root"
+                          placeholderText={`Select ${filterDef.label}`}
+                          className="h-9 w-[150px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative flex items-center">
+                        <DatePicker
+                          selectsRange={true}
+                          startDate={filterValues[`${filterDef.field}_from`] ? parseISO(filterValues[`${filterDef.field}_from`]) : undefined}
+                          endDate={filterValues[`${filterDef.field}_to`] ? parseISO(filterValues[`${filterDef.field}_to`]) : undefined}
+                          onChange={(update: [Date | null, Date | null]) => {
+                            const [start, end] = update;
+
+                            // Update start date
+                            if (start && isValid(start)) {
+                              handleFilterChange(`${filterDef.field}_from`, format(start, "yyyy-MM-dd"));
+                            } else {
+                              handleFilterChange(`${filterDef.field}_from`, "");
+                            }
+
+                            // Update end date
+                            if (end && isValid(end)) {
+                              handleFilterChange(`${filterDef.field}_to`, format(end, "yyyy-MM-dd"));
+                            } else {
+                              handleFilterChange(`${filterDef.field}_to`, "");
+                            }
+                          }}
+                          isClearable
+                          portalId="root"
+                          dateFormat="MMM d, yyyy"
+                          placeholderText={`Filter by ${filterDef.label.toLowerCase()} range`}
+                          className="h-9 w-[220px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                        <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
               {Object.keys(filterValues).length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearAllFilters}
-                  className="h-9 ml-auto"
+                  className="h-9 ml-auto text-xs text-muted-foreground hover:text-foreground hover:bg-transparent px-2"
                 >
-                  <X className="h-4 w-4 mr-1" />
-                  Clear Filters
+                  <FilterX className="h-3.5 w-3.5 mr-1.5" />
+                  Reset
                 </Button>
               )}
             </div>

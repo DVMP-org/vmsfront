@@ -615,6 +615,29 @@ export interface WalletTransaction {
     updated_at: string;
 }
 
+export enum TransactionType {
+    WALLET_FUNDING = "wallet_funding",
+    DUE_PAYMENT = "due_payment",
+    PLUGIN_PURCHASE = "plugin_purchase",
+    INTERNAL_DEBIT = "internal_debit",
+    INTERNAL_CREDIT = "internal_credit"
+}
+
+export interface Transaction {
+    id: string;
+    reference: string;
+    amount: number;
+    type: TransactionType;
+    status: "pending" | "success" | "failed";
+    paid_at: string | null;
+    processor: string | null;
+    description: string | null;
+    currency: string;
+    payload: Record<string, any> | null;
+    metadata: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+}
 // Payment Gateway Types
 export interface PaymentGateway {
     name: string;

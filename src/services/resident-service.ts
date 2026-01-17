@@ -358,10 +358,11 @@ export const residentService = {
     houseId: string,
     dueId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    filters?: string
   ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
     return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/schedules`, {
-      params: { page, page_size: pageSize },
+      params: { page, page_size: pageSize, filters },
     });
   },
 
@@ -369,10 +370,21 @@ export const residentService = {
     houseId: string,
     dueId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    filters?: string
   ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
     return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/payments`, {
-      params: { page, page_size: pageSize },
+      params: { page, page_size: pageSize, filters },
     });
+  },
+
+  async payDueSchedule(
+    houseId: string,
+    dueId: string,
+    scheduleId: string
+  ): Promise<ApiResponse<FundWalletResponse>> {
+    return apiClient.post(
+      `/resident/house/${houseId}/dues/${dueId}/schedules/${scheduleId}/pay`
+    );
   },
 };

@@ -826,13 +826,22 @@ export function useAdminDueSchedules(
   dueId: string | null,
   houseId: string | null,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters?: string,
+  sorts?: string
 ) {
   return useQuery({
-    queryKey: ["admin", "due-schedules", dueId, houseId, page, pageSize],
+    queryKey: ["admin", "due-schedules", dueId, houseId, page, pageSize, filters, sorts],
     queryFn: async () => {
       if (!dueId || !houseId) throw new Error("Due and House ID are required");
-      const response = await adminService.getDueSchedules(dueId, houseId, page, pageSize);
+      const response = await adminService.getDueSchedules(
+        dueId,
+        houseId,
+        page,
+        pageSize,
+        filters,
+        sorts
+      );
       return response.data;
     },
     enabled: !!dueId && !!houseId,
@@ -843,13 +852,15 @@ export function useAdminDuePayments(
   dueId: string | null,
   houseId: string | null,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters?: string,
+  sorts?: string
 ) {
   return useQuery({
-    queryKey: ["admin", "due-payments", dueId, houseId, page, pageSize],
+    queryKey: ["admin", "due-payments", dueId, houseId, page, pageSize, filters, sorts],
     queryFn: async () => {
       if (!dueId || !houseId) throw new Error("Due and House ID are required");
-      const response = await adminService.getDuePayments(dueId, houseId, page, pageSize);
+      const response = await adminService.getDuePayments(dueId, houseId, page, pageSize, filters, sorts);
       return response.data;
     },
     enabled: !!dueId && !!houseId,
@@ -891,5 +902,34 @@ export function useAdminProfile() {
     },
     staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins
+  });
+}
+
+// Transactions
+export function useAdminTransactions(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["admin", "transactions", params],
+    queryFn: async () => {
+      const response = await adminService.getTransactions(params);
+      return response.data;
+    },
+  });
+}
+
+export function useAdminTransaction(transactionId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "transaction", transactionId],
+    queryFn: async () => {
+      if (!transactionId) throw new Error("Transaction ID is required");
+      const response = await adminService.getTransaction(transactionId);
+      return response.data;
+    },
+    enabled: !!transactionId,
   });
 }

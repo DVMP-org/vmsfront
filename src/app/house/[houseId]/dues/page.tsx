@@ -100,7 +100,7 @@ export default function ResidentDuesPage() {
                         variant="ghost"
                         size="sm"
                         className="h-8 group text-xs text-muted-foreground hover:text-brand-primary"
-                        onClick={() => router.push(`/house/${houseId}/dues/${row.due_id}`)}
+                        onClick={() => router.replace(`/house/${houseId}/dues/${row.due_id}`)}
                     >
                         View Due
                         <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />

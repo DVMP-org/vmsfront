@@ -13,10 +13,12 @@ import {
   DueSchedule,
   DuePayment,
   DashboardSelect,
+  Transaction,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 import { useAuthStore } from "@/store/auth-store";
+import { generalService } from "@/services/general-service";
 
 
 export function useResidentDashboardSelect() {
@@ -347,13 +349,14 @@ export function useDueSchedules(
   houseId: string | null,
   dueId: string | null,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters?: string
 ) {
   return useQuery({
-    queryKey: ["resident", "due-schedules", houseId, dueId, page, pageSize],
+    queryKey: ["resident", "due-schedules", houseId, dueId, page, pageSize, filters],
     queryFn: async () => {
       if (!houseId || !dueId) throw new Error("House and Due ID are required");
-      const response = await residentService.getDueSchedules(houseId, dueId, page, pageSize);
+      const response = await residentService.getDueSchedules(houseId, dueId, page, pageSize, filters);
       return response.data;
     },
     enabled: !!houseId && !!dueId,
@@ -364,15 +367,53 @@ export function useDuePayments(
   houseId: string | null,
   dueId: string | null,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters?: string
 ) {
   return useQuery({
-    queryKey: ["resident", "due-payments", houseId, dueId, page, pageSize],
+    queryKey: ["resident", "due-payments", houseId, dueId, page, pageSize, filters],
     queryFn: async () => {
       if (!houseId || !dueId) throw new Error("House and Due ID are required");
-      const response = await residentService.getDuePayments(houseId, dueId, page, pageSize);
+      const response = await residentService.getDuePayments(houseId, dueId, page, pageSize, filters);
       return response.data;
     },
     enabled: !!houseId && !!dueId,
+  });
+}
+
+export function usePayDueSchedule(houseId: string | null, dueId: string | null) {
+  return useMutation({
+    mutationFn: (scheduleId: string) => {
+      if (!houseId || !dueId) throw new Error("House and Due ID are required");
+      return residentService.payDueSchedule(houseId, dueId, scheduleId);
+    },
+    onSuccess: (response) => {
+      return response.data;
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useTransaction(reference: string | null) {
+  return useQuery<Transaction>({
+    queryKey: ["resident", "transaction", reference],
+    queryFn: async () => {
+      if (!reference) throw new Error("Reference is required");
+      const response = await generalService.getTransaction(reference);
+      return response.data;
+    },
+    enabled: !!reference,
+    retry: 5,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === "pending" || !data) {
+        return 3000;
+      }
+      return false;
+    },
+    refetchIntervalInBackground: true,
   });
 }

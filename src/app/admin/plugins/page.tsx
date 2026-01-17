@@ -402,8 +402,8 @@ export default function PluginsPage() {
                       <button
                         onClick={() => handleTogglePlugin(plugin.id)}
                         disabled={togglePluginMutation.isPending}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary,#213928)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
-                          ? "bg-[var(--brand-primary,#213928)]"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928))] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
+                          ? "bg-[rgb(var(--brand-primary,#213928))]"
                           : "bg-gray-200"
                           }`}
                         role="switch"
