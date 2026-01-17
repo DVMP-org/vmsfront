@@ -1,7 +1,6 @@
-"use client";
-
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 export default function AdminLayout({
     children,
@@ -9,10 +8,13 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     return (
-        <DashboardLayout type="admin">
-            <AdminPermissionGuard>
-                {children}
-            </AdminPermissionGuard>
-        </DashboardLayout>
+        <RouteGuard>
+            <DashboardLayout type="admin">
+                <AdminPermissionGuard>
+                    {children}
+                </AdminPermissionGuard>
+            </DashboardLayout>
+        </RouteGuard>
     );
 }
+

@@ -10,7 +10,8 @@ import {
   useBulkDeleteHouses,
   useBulkToggleHouseActive,
   useImportHouses,
-  useAdminHouseGroups
+  useAdminHouseGroups,
+  usePrefetchHouse
 } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -32,15 +33,17 @@ const PAGE_SIZE = 10;
 export default function HousesPage() {
   const router = useRouter();
   // URL query sync
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    status: { defaultValue: undefined },
+    houseGroupId: { defaultValue: undefined },
+    sort: { defaultValue: null },
+  }), []);
+
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
-    config: {
-      page: { defaultValue: 1 },
-      pageSize: { defaultValue: PAGE_SIZE },
-      search: { defaultValue: "" },
-      status: { defaultValue: undefined },
-      houseGroupId: { defaultValue: undefined },
-      sort: { defaultValue: null },
-    },
+    config,
     skipInitialSync: true,
   });
 
@@ -70,6 +73,7 @@ export default function HousesPage() {
   const bulkDeleteMutation = useBulkDeleteHouses();
   const bulkToggleActiveMutation = useBulkToggleHouseActive();
   const importHousesMutation = useImportHouses();
+  const prefetchHouse = usePrefetchHouse();
 
   // Sync state to URL
   useEffect(() => {
@@ -234,6 +238,7 @@ export default function HousesPage() {
       accessor: (row) => (
         <button
           onClick={() => router.push(`/admin/houses/${row.id}`)}
+          onMouseEnter={() => prefetchHouse(row.id)}
           className="font-medium text-primary hover:underline text-left"
         >
           {row.name}
@@ -303,6 +308,7 @@ export default function HousesPage() {
             variant="ghost"
             size="sm"
             onClick={() => router.push(`/admin/houses/${row.id}`)}
+            onMouseEnter={() => prefetchHouse(row.id)}
             className="text-muted-foreground hover:text-primary"
           >
             <Eye className="h-4 w-4" />
