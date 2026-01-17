@@ -22,12 +22,14 @@ export default function ResidentDuesPage() {
     const router = useRouter(); // Error check: next/navigation is standard in this project
     const houseId = params.houseId;
 
+    const config = useMemo(() => ({
+        page: { defaultValue: 1 },
+        pageSize: { defaultValue: PAGE_SIZE },
+        search: { defaultValue: "" },
+    }), []);
+
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
-        config: {
-            page: { defaultValue: 1 },
-            pageSize: { defaultValue: PAGE_SIZE },
-            search: { defaultValue: "" },
-        },
+        config,
         skipInitialSync: true,
     });
 
@@ -115,7 +117,7 @@ export default function ResidentDuesPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                    <h1 className="text-2xl font-bold  text-foreground flex items-center gap-2">
                         <Wallet className="h-5 w-5 text-muted-foreground" />
                         My Property Dues
                     </h1>
@@ -131,17 +133,11 @@ export default function ResidentDuesPage() {
             </div>
 
             {/* Dues Ledger Table */}
-            <div className="bg-white border border-border/60 rounded-lg overflow-hidden">
+            <div className="border p-3 border-border/60 rounded-lg overflow-hidden">
                 {isLoading ? (
                     <div className="p-6">
                         <TableSkeleton />
                     </div>
-                ) : dues.length === 0 ? (
-                    <EmptyState
-                        icon={Receipt}
-                        title="No dues found"
-                        description="There are no outstanding or historical dues recorded for this property unit."
-                    />
                 ) : (
                     <DataTable
                         data={dues}

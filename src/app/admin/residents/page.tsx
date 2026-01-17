@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident } from "@/hooks/use-admin";
+import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident, usePrefetchResident } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -34,14 +34,16 @@ const PAGE_SIZE = 10;
 
 export default function ResidentsPage() {
   // URL query sync
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    status: { defaultValue: undefined },
+    sort: { defaultValue: null },
+  }), []);
+
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
-    config: {
-      page: { defaultValue: 1 },
-      pageSize: { defaultValue: PAGE_SIZE },
-      search: { defaultValue: "" },
-      status: { defaultValue: undefined },
-      sort: { defaultValue: null },
-    },
+    config,
     skipInitialSync: true,
   });
 
@@ -83,6 +85,7 @@ export default function ResidentsPage() {
   });
 
   const importResidentsMutation = useImportResidents();
+  const prefetchResident = usePrefetchResident();
   const router = useRouter();
 
   // Bulk actions
@@ -262,6 +265,7 @@ export default function ResidentsPage() {
             variant="ghost"
             size="sm"
             onClick={() => router.push(`/admin/residents/${row.resident.id}`)}
+            onMouseEnter={() => prefetchResident(row.resident.id)}
             title="View Details"
           >
             <Eye className="h-4 w-4" />

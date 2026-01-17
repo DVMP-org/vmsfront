@@ -933,3 +933,37 @@ export function useAdminTransaction(transactionId: string | null) {
     enabled: !!transactionId,
   });
 }
+
+// Prefetching hooks for performance
+export function usePrefetchHouse() {
+  const queryClient = useQueryClient();
+
+  return (houseId: string) => {
+    if (!houseId) return;
+    queryClient.prefetchQuery({
+      queryKey: ["admin", "house", houseId],
+      queryFn: async () => {
+        const response = await adminService.getHouse(houseId);
+        return response.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+}
+
+export function usePrefetchResident() {
+  const queryClient = useQueryClient();
+
+  return (residentId: string) => {
+    if (!residentId) return;
+    queryClient.prefetchQuery({
+      queryKey: ["admin", "resident", residentId],
+      queryFn: async () => {
+        const response = await adminService.getResident(residentId);
+        return response.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+}
+
