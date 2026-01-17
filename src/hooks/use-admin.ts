@@ -22,6 +22,7 @@ import {
   HouseDue,
   DueSchedule,
   DuePayment,
+  AdminRole,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -355,11 +356,17 @@ export function useDeleteAdmin() {
 }
 
 // Roles
-export function useAdminRoles() {
-  return useQuery({
-    queryKey: ["admin", "roles"],
+export function useAdminRoles(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sort?: string;
+  filters?: string;
+}) {
+  return useQuery<PaginatedResponse<AdminRole>>({
+    queryKey: ["admin", "roles", params],
     queryFn: async () => {
-      const response = await adminService.getRoles();
+      const response = await adminService.getRoles(params);
       return response.data;
     },
   });

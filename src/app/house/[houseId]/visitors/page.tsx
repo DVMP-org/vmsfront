@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useVisitors } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
@@ -9,13 +9,17 @@ import { useProfile } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { Column, DataTable } from "@/components/ui/DataTable";
+import { Column, DataTable, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Users, Home as HomeIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import type { Visitor } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
+
+const PAGE_SIZE = 10;
 export default function VisitorsPage() {
   const router = useRouter();
   const params = useParams<{ houseId?: string }>();
@@ -25,12 +29,94 @@ export default function VisitorsPage() {
   const { data: profile } = useProfile();
   const houseId = routeHouseId ?? selectedHouse?.id ?? null;
 
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    sort: { defaultValue: null },
+    startDate: { defaultValue: "" },
+    endDate: { defaultValue: "" },
+  }), []);
+
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config,
+    skipInitialSync: true,
+  });
+  const isInitialMount = useRef(true);
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [sort, setSort] = useState(() => initializeFromUrl("sort"));
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
+
+
+  // Sync state changes to URL (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    syncToUrl({
+      page,
+      pageSize,
+      search,
+      sort,
+      startDate,
+      endDate
+    });
+  }, [
+    page,
+    pageSize,
+    search,
+    sort,
+    startDate,
+    endDate,
+    syncToUrl]);
+
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+
+
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
+    return filters;
+  },
+    [
+      startDate,
+      endDate
+    ]
+  );
+
+  const availableFilters: FilterDefinition[] = useMemo(() => {
+    const filters: FilterDefinition[] = [
+
+      {
+        field: "created_at",
+        label: "Created Between",
+        type: "date-range",
+      },
+    ]
+    return filters;
+  }, []);
+
+
+
   const { data: paginatedVisitors, isLoading, isFetching } = useVisitors(
     houseId,
-    page,
-    pageSize
+    {
+      page,
+      pageSize,
+      search: search.trim(),
+      sort: sort,
+      filters: formatFiltersForAPI(activeFilters),
+    }
   );
 
   useEffect(() => {
@@ -67,20 +153,16 @@ export default function VisitorsPage() {
       key: "name",
       header: "Name",
       sortable: true,
-      filterable: true,
       className: "font-medium",
     },
     {
       key: "email",
       header: "Email",
-      sortable: true,
-      filterable: true,
       accessor: (row) => row.email || "-",
     },
     {
       key: "phone",
       header: "Phone",
-      sortable: true,
       accessor: (row) => row.phone || "-",
     },
     {
@@ -139,42 +221,62 @@ export default function VisitorsPage() {
 
         <Card>
           <CardContent className="p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : !visitors.length ? (
-              <EmptyState
-                icon={Users}
-                title="No visitors yet"
-                description="Visitors from your passes will appear here"
+
+            <>
+              <DataTable
+                data={Array.isArray(visitors) ? visitors : []}
+                columns={visitorColumns}
+                searchable
+                showPagination={false}
+                emptyMessage="No visitors found"
+                searchPlaceholder="Search visitors..."
+                onPageSizeChange={(newPageSize) => {
+                  setPage(1);
+                  setPageSize(newPageSize);
+                }}
+                initialFilters={activeFilters}
+                availableFilters={availableFilters}
+                onFiltersChange={(filters) => {
+                  setPage(1)
+                  const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                  const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setStartDate(startDateFilter?.value as string | undefined || undefined);
+                  setEndDate(endDateFilter?.value as string | undefined || undefined);
+                }}
+                onSortChange={(sort) => {
+                  setPage(1)
+                  setSort(sort)
+                }}
+                onSearchChange={(search) => {
+                  setPage(1)
+                  setSearch(search)
+                }}
+                isLoading={isLoading || isFetching}
+                initialSort={sort}
+                initialSearch={search}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
               />
-            ) : (
-              <>
-                <DataTable
-                  data={Array.isArray(visitors) ? visitors : []}
-                  columns={visitorColumns}
-                  searchable
-                  showPagination={false}
-                  emptyMessage="No visitors found"
-                  searchPlaceholder="Search visitors..."
-                />
-                <PaginationBar
-                  page={page}
-                  pageSize={pageSize}
-                  total={paginatedVisitors?.total ?? visitors.length}
-                  totalPages={paginatedVisitors?.total_pages ?? 1}
-                  hasNext={
-                    paginatedVisitors?.has_next ??
-                    page < (paginatedVisitors?.total_pages ?? 0)
-                  }
-                  hasPrevious={
-                    paginatedVisitors?.has_previous ?? page > 1
-                  }
-                  isFetching={isFetching}
-                  resourceLabel="visitors"
-                  onChange={(next) => setPage(next)}
-                />
-              </>
-            )}
+              <PaginationBar
+                page={page}
+                pageSize={pageSize}
+                total={paginatedVisitors?.total ?? visitors.length}
+                totalPages={paginatedVisitors?.total_pages ?? 1}
+                hasNext={
+                  paginatedVisitors?.has_next ??
+                  page < (paginatedVisitors?.total_pages ?? 0)
+                }
+                hasPrevious={
+                  paginatedVisitors?.has_previous ?? page > 1
+                }
+                isFetching={isFetching}
+                resourceLabel="visitors"
+                onChange={(next) => setPage(next)}
+              />
+            </>
+
           </CardContent>
         </Card>
       </div>

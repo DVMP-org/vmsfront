@@ -73,13 +73,21 @@ export const residentService = {
 
   async getGatePasses(
     houseId: string,
-    page: number = 1,
-    pageSize: number = 10
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
   ): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
     return apiClient.get(`/resident/house/${houseId}/gate-passes`, {
       params: {
-        page,
-        page_size: pageSize,
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
       },
     });
   },
@@ -94,11 +102,22 @@ export const residentService = {
 
   async getVisitors(
     houseId: string,
-    page: number = 1,
-    pageSize: number = 10
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
   ): Promise<ApiResponse<PaginatedResponse<Visitor>>> {
     return apiClient.get(`/resident/house/${houseId}/visitors`, {
-      params: { page, page_size: pageSize },
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
+      },
     });
   },
 

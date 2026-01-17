@@ -38,9 +38,6 @@ export interface Column<T> {
   header: string;
   accessor?: (row: T) => ReactNode;
   sortable?: boolean;
-  filterable?: boolean;
-  filterType?: "text" | "select";
-  filterOptions?: { value: string; label: string }[];
   className?: string;
 }
 
@@ -50,11 +47,6 @@ export interface FilterConfig {
   value: string | number | boolean | string[];
 }
 
-export interface FilterableField {
-  field: string;
-  operator?: FilterConfig["operator"];
-  value?: string | number | boolean | string[] | null;
-}
 
 export interface FilterDefinition {
   field: string;
@@ -105,10 +97,6 @@ interface DataTableProps<T> {
   // Sort - now fully managed internally
   initialSort?: string | null;
   onSortChange?: (sort: string | null) => void;
-  // Legacy props for backward compatibility
-  externalSearch?: string;
-  filterableFields?: FilterableField[];
-  // Disable client-side operations when using API-level
   disableClientSideFiltering?: boolean;
   disableClientSideSorting?: boolean;
   // Bulk actions
@@ -151,9 +139,6 @@ export function DataTable<T extends Record<string, any>>({
   onFiltersChange,
   initialSort: propInitialSort = null,
   onSortChange,
-  // Legacy props for backward compatibility
-  externalSearch,
-  filterableFields = [],
   disableClientSideFiltering = false,
   disableClientSideSorting = false,
   bulkActions = [],
@@ -169,22 +154,8 @@ export function DataTable<T extends Record<string, any>>({
   );
 
   // Use new props if provided, fall back to legacy props for backward compatibility
-  const effectiveInitialSearch = useMemo(() => propInitialSearch || externalSearch || "", [propInitialSearch, externalSearch]);
-  const effectiveInitialFilters = useMemo(() => {
-    if (propInitialFilters.length > 0) {
-      return propInitialFilters;
-    }
-    if (filterableFields.length > 0) {
-      return filterableFields
-        .filter(f => f.value !== undefined && f.value !== null && f.value !== "")
-        .map(f => ({
-          field: f.field,
-          operator: (f.operator || "eq") as FilterConfig["operator"],
-          value: f.value!,
-        }));
-    }
-    return [];
-  }, [propInitialFilters, filterableFields]);
+  const effectiveInitialSearch = propInitialSearch || "";
+  const effectiveInitialFilters = propInitialFilters;
 
   // Internal state for search
   const [localSearchTerm, setLocalSearchTerm] = useState(effectiveInitialSearch);

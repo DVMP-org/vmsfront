@@ -7,7 +7,7 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterDefinition } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CreditCard, Eye, Search, FilterX } from "lucide-react";
@@ -58,33 +58,31 @@ export default function TransactionsPage() {
     }, [page, pageSize, search, type, status, sort, dateFrom, dateTo, syncToUrl]);
 
     // Available filters for the DataTable
-    const availableFilters = useMemo(() => [
+    const availableFilters: FilterDefinition[] = useMemo(() => [
         {
             field: "type",
             label: "Type",
-            type: "select" as const,
+            type: "select",
             options: [
-                { value: "", label: "All Types" },
                 ...TRANSACTION_TYPE_OPTIONS
             ],
-            operator: "eq" as const,
+            operator: "eq",
         },
         {
             field: "status",
             label: "Status",
-            type: "select" as const,
+            type: "select",
             options: [
-                { value: "", label: "All Statuses" },
                 { value: "success", label: "Success" },
                 { value: "pending", label: "Pending" },
                 { value: "failed", label: "Failed" },
             ],
-            operator: "eq" as const,
+            operator: "eq",
         },
         {
             field: "created_at",
-            label: "Date",
-            type: "date-range" as const,
+            label: "Created Between",
+            type: "date-range",
         }
     ], []);
 

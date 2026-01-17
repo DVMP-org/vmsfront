@@ -2,7 +2,21 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', "storage.googleapis.com"],
+    domains: ['localhost', "storage.googleapis.com", "api.vmscore.test", "vmscore.vercel.app"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.vmscore.test',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vmscore.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,

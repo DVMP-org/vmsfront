@@ -224,7 +224,6 @@ export default function AdminGatePassesPage() {
       key: "code",
       header: "Pass code",
       sortable: true,
-      filterable: true,
       accessor: (row) => (
         <span className="font-medium text-sm">{row.code}</span>
       ),
@@ -243,12 +242,6 @@ export default function AdminGatePassesPage() {
       key: "status",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: STATUS_FILTERS.map((f) => ({
-        value: f.value || "",
-        label: f.label,
-      })),
       accessor: (row) => <StatusBadge status={row.status} />,
     },
     {

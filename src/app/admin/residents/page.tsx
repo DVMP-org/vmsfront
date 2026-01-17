@@ -7,7 +7,7 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -223,7 +223,6 @@ export default function ResidentsPage() {
       key: "name",
       header: "Name",
       sortable: true,
-      filterable: true,
       accessor: (row) => (
         <span className="font-medium">
           {getFullName(row?.user?.first_name, row?.user?.last_name)}
@@ -234,14 +233,12 @@ export default function ResidentsPage() {
       key: "email",
       header: "Email",
       sortable: true,
-      filterable: true,
       accessor: (row) => row?.user?.email,
     },
     {
       key: "phone",
       header: "Phone",
       sortable: true,
-      filterable: true,
       accessor: (row) => row?.user?.phone || "-",
     },
     {
@@ -268,12 +265,6 @@ export default function ResidentsPage() {
       key: "status",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: [
-        { value: "active", label: "Active" },
-        { value: "inactive", label: "Inactive" },
-      ],
       accessor: (row) => (
         <Badge variant={row.user.is_active ? "success" : "secondary"}>
           {row.user.is_active ? "Active" : "Inactive"}

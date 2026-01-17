@@ -100,7 +100,11 @@ export default function AdminManagementPage() {
   });
 
 
-  const { data: roles, isLoading: rolesLoading } = useAdminRoles();
+  const { data: rolesData, isLoading: rolesLoading } = useAdminRoles({
+    page: 1,
+    pageSize: 100
+  });
+  const roles = useMemo(() => rolesData?.items ?? [], [rolesData]);
   const createAdmin = useCreateAdmin();
   const updateAdminRole = useUpdateAdminRole();
   const deleteAdmin = useDeleteAdmin();
@@ -247,12 +251,6 @@ export default function AdminManagementPage() {
       key: "role",
       header: "Role",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: roles?.map((role) => ({
-        value: role.id,
-        label: role.name,
-      })) || [],
       accessor: (row) => (
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="px-3 py-1">

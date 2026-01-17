@@ -222,7 +222,6 @@ export default function HouseGroupsPage() {
             key: "name",
             header: "Group Name",
             sortable: true,
-            filterable: true,
             accessor: (row) => (
                 <button
                     onClick={() => router.push(`/admin/house-groups/${row.id}`)}
@@ -244,12 +243,6 @@ export default function HouseGroupsPage() {
             key: "is_active",
             header: "Status",
             sortable: true,
-            filterable: true,
-            filterType: "select",
-            filterOptions: STATUS_FILTERS.filter(f => f.value !== "all").map((f) => ({
-                value: f.value,
-                label: f.label,
-            })),
             accessor: (row) => {
                 const isActive = (row as any).is_active;
                 return (

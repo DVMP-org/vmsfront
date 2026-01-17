@@ -254,8 +254,22 @@ export const adminService = {
     },
 
     // Roles
-    async getRoles(): Promise<ApiResponse<AdminRole[]>> {
-        return apiClient.get("/admin/role/list");
+    async getRoles(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        sort?: string;
+        filters?: string;
+    }): Promise<ApiResponse<PaginatedResponse<AdminRole>>> {
+        return apiClient.get("/admin/role/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
+            },
+        });
     },
 
     async getRole(roleId: string): Promise<ApiResponse<AdminRole>> {
@@ -382,17 +396,17 @@ export const adminService = {
     async getForumCategories(params?: {
         page?: number;
         pageSize?: number;
-        houseId?: string;
         search?: string;
-        includeLocked?: boolean;
+        sort?: string;
+        filters?: string;
     }): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
         return apiClient.get("/admin/forum/category/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 12,
-                house_id: params?.houseId ?? undefined,
-                search_query: params?.search ?? undefined,
-                include_locked: params?.includeLocked ?? undefined,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
             },
         });
     },
@@ -423,25 +437,17 @@ export const adminService = {
     async getForumTopics(params?: {
         page?: number;
         pageSize?: number;
-        houseId?: string;
-        categoryId?: string;
-        status?: "pinned" | "locked" | "deleted";
         search?: string;
-        startDate?: string;
-        endDate?: string;
-        includeDeleted?: boolean;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
         return apiClient.get("/admin/forum/topics", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
-                house_id: params?.houseId ?? undefined,
-                category_id: params?.categoryId ?? undefined,
-                status: params?.status ?? undefined,
-                search_query: params?.search ?? undefined,
-                start_date: params?.startDate ?? undefined,
-                end_date: params?.endDate ?? undefined,
-                include_deleted: params?.includeDeleted ?? undefined,
+                filters: params?.filters ?? undefined,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },

@@ -90,17 +90,21 @@ export function useUpdateHouse(houseId: string | null) {
 
 export function useGatePasses(
   houseId: string | null,
-  page: number = 1,
-  pageSize: number = 10
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sort?: string;
+    filters?: string
+  }
 ) {
   return useQuery<PaginatedResponse<GatePass>>({
-    queryKey: ["resident", "gate-passes", houseId, page, pageSize],
+    queryKey: ["resident", "gate-passes", houseId, params],
     queryFn: async () => {
       if (!houseId) throw new Error("House ID is required");
       const response = await residentService.getGatePasses(
         houseId,
-        page,
-        pageSize
+        params
       );
       return response.data;
     },
@@ -174,17 +178,21 @@ export function useRevokeGatePass(houseId: string | null) {
 
 export function useVisitors(
   houseId: string | null,
-  page: number = 1,
-  pageSize: number = 10
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sort?: string;
+    filters?: string
+  }
 ) {
   return useQuery({
-    queryKey: ["resident", "visitors", houseId, page, pageSize],
+    queryKey: ["resident", "visitors", houseId, params],
     queryFn: async () => {
       if (!houseId) throw new Error("House ID is required");
       const response = await residentService.getVisitors(
         houseId,
-        page,
-        pageSize
+        params
       );
       return response.data;
     },

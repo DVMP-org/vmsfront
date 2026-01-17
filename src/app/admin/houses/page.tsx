@@ -304,12 +304,6 @@ export default function HousesPage() {
       key: "house_groups",
       header: "Groups",
       sortable: false,
-      filterable: true,
-      filterType: "select",
-      filterOptions: houseGroups.map((group) => ({
-        value: group.id,
-        label: group.name,
-      })),
       accessor: (row) => {
         const count = row.house_groups?.length || 0;
         return (
@@ -323,12 +317,6 @@ export default function HousesPage() {
       key: "is_active",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: [
-        { value: "true", label: "Active" },
-        { value: "false", label: "Inactive" },
-      ],
       accessor: (row) => (
         <span className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}>
           {(row as any).is_active ? "Active" : "Inactive"}
