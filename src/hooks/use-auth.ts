@@ -66,8 +66,6 @@ export function useAuth() {
 
       // Set auth state
       setAuth(user, token);
-      apiClient.setToken(token);
-
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
@@ -76,9 +74,9 @@ export function useAuth() {
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();
-        router.push(redirectTarget);
+        router.replace(redirectTarget);
       } else {
-        router.push("/select");
+        router.replace("/select");
       }
       console.log("router.push called");
     },
@@ -103,7 +101,6 @@ export function useAuth() {
 
       // Set auth state
       setAuth(user, token);
-      apiClient.setToken(token);
       console.log("Auth state set after registration");
 
       toast.success("Registration successful!");
@@ -112,8 +109,8 @@ export function useAuth() {
 
       // Navigate immediately
       console.log("Attempting to navigate to /select...");
-      router.push("/select");
-      console.log("router.push called");
+      router.replace("/select");
+      console.log("router.replace called");
     },
     onError: (error: any) => {
       console.error("Register error:", error);

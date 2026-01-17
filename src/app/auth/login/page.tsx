@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +26,13 @@ export default function LoginPage() {
   );
   const { login, isLoggingIn, loginError, loginFieldErrors, clearAuthErrors } =
     useAuth();
+  const router = useRouter(); // We need the router for prefetching
+
+  // Prefetch dashboard routes to speed up transition after login
+  useEffect(() => {
+    router.prefetch("/select");
+    router.prefetch("/admin");
+  }, [router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -10,7 +10,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore();
+  const token = useAuthStore((state) => state.token);
 
   useEffect(() => {
     if (token) {

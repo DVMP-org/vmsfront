@@ -10,6 +10,7 @@ import {
     AdminRole,
     ResidentUser,
     ResidentUserCreate,
+    Transaction,
     ResidentProfileUpdatePayload,
     GatePass,
     GatePassCheckinRequest,
@@ -607,10 +608,17 @@ export const adminService = {
         dueId: string,
         houseId: string,
         page: number = 1,
-        pageSize: number = 10
+        pageSize: number = 10,
+        filters?: string,
+        sorts?: string
     ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
         return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/schedules`, {
-            params: { page, page_size: pageSize },
+            params: {
+                page,
+                page_size: pageSize,
+                filters,
+                sorts
+            },
         });
     },
 
@@ -618,10 +626,39 @@ export const adminService = {
         dueId: string,
         houseId: string,
         page: number = 1,
-        pageSize: number = 10
+        pageSize: number = 10,
+        filters?: string,
+        sorts?: string
     ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
         return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/payments`, {
-            params: { page, page_size: pageSize },
+            params: {
+                page,
+                page_size: pageSize,
+                filters,
+                sorts
+            },
         });
+    },
+
+    async getTransactions(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
+        return apiClient.get('/admin/transactions', {
+            params: {
+                page: params.page ?? 1,
+                page_size: params.pageSize ?? 15,
+                search: params.search ?? undefined,
+                filters: params.filters ?? undefined,
+                sort: params.sort ?? undefined,
+            },
+        });
+    },
+
+    async getTransaction(transactionId: string): Promise<ApiResponse<Transaction>> {
+        return apiClient.get(`/admin/transactions/${transactionId}`);
     },
 };

@@ -5,8 +5,11 @@ import {
     useHouseDue,
     useDueSchedules,
     useDuePayments,
-    useScheduleHouseDue
+    useScheduleHouseDue,
+    usePayDueSchedule,
+    useTransaction
 } from "@/hooks/use-resident";
+import { openPaymentPopup } from "@/lib/payment-popup";
 import {
     formatCurrency,
     formatDate,
@@ -40,8 +43,11 @@ import {
     DuePayment,
     DueSchedule
 } from "@/types";
-import { useState } from "react";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 export default function ResidentDueDetailPage() {
     const params = useParams<{ houseId: string; dueId: string }>();
@@ -50,19 +56,69 @@ export default function ResidentDueDetailPage() {
 
     const { data: houseDue, isLoading } = useHouseDue(houseId, dueId);
 
-    // Pagination states
+    // Pagination and Filter states
     const [schedulePage, setSchedulePage] = useState(1);
     const [paymentsPage, setPaymentsPage] = useState(1);
     const pageSize = 10;
 
-    const { data: schedulesData, isLoading: isLoadingSchedules } = useDueSchedules(houseId, dueId, schedulePage, pageSize);
-    const { data: paymentsData, isLoading: isLoadingPayments } = useDuePayments(houseId, dueId, paymentsPage, pageSize);
+    const [scheduleFilters, setScheduleFilters] = useState<FilterConfig[]>([]);
+    const [paymentFilters, setPaymentFilters] = useState<FilterConfig[]>([]);
+
+    const { data: schedulesData, isLoading: isLoadingSchedules } = useDueSchedules(
+        houseId,
+        dueId,
+        schedulePage,
+        pageSize,
+        formatFiltersForAPI(scheduleFilters)
+    );
+    const { data: paymentsData, isLoading: isLoadingPayments } = useDuePayments(
+        houseId,
+        dueId,
+        paymentsPage,
+        pageSize,
+        formatFiltersForAPI(paymentFilters)
+    );
+
+    const availableScheduleFilters: FilterDefinition[] = [
+        {
+            field: "payment_date",
+            label: "Due Date",
+            type: "date-range",
+        }
+    ];
+
+    const availablePaymentFilters: FilterDefinition[] = [
+        {
+            field: "payment_date",
+            label: "Paid Date",
+            type: "date-range",
+        }
+    ];
 
     const scheduleMutation = useScheduleHouseDue(houseId, dueId);
+    const payScheduleMutation = usePayDueSchedule(houseId, dueId);
     const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
+    const [paymentReference, setPaymentReference] = useState<string | null>(null);
+    const { data: transaction } = useTransaction(paymentReference);
+    const queryClient = useQueryClient();
 
     const schedules = schedulesData?.items || [];
     const payments = paymentsData?.items || [];
+
+    useEffect(() => {
+        if (transaction && paymentReference) {
+            if (transaction.status === "success") {
+                toast.success("Payment successful!");
+                setPaymentReference(null);
+                queryClient.invalidateQueries({ queryKey: ["resident", "house-due", houseId, dueId] });
+                queryClient.invalidateQueries({ queryKey: ["resident", "due-schedules", houseId, dueId] });
+                queryClient.invalidateQueries({ queryKey: ["resident", "due-payments", houseId, dueId] });
+            } else if (transaction.status === "failed") {
+                toast.error("Payment failed. Please try again.");
+                setPaymentReference(null);
+            }
+        }
+    }, [transaction, paymentReference, queryClient, houseId, dueId]);
 
     if (isLoading) {
         return (
@@ -95,11 +151,34 @@ export default function ResidentDueDetailPage() {
     }
 
     const { due } = houseDue;
-    const isActivated = houseDue.status !== HouseDueStatus.UNPAID || schedules.length > 0;
+    const isActivated = houseDue.payment_breakdown !== null;
 
     const handleActivate = () => {
         if (!selectedStrategy) return;
         scheduleMutation.mutate({ payment_breakdown: selectedStrategy });
+    };
+
+    const handlePaySchedule = async (scheduleId: string) => {
+        try {
+            const response = await payScheduleMutation.mutateAsync(scheduleId);
+            if (response.data?.authorization_url && response.data?.reference) {
+                setPaymentReference(response.data.reference);
+
+                openPaymentPopup(
+                    response.data.authorization_url,
+                    response.data.reference,
+                    (ref) => {
+                        console.log("Payment popup closed, polling transaction:", ref);
+                    },
+                    (error) => {
+                        toast.error(error || "Payment cancelled");
+                        setPaymentReference(null);
+                    }
+                );
+            }
+        } catch (error) {
+            // Error handled by mutation
+        }
     };
 
     const scheduleColumns: Column<DueSchedule>[] = [
@@ -141,12 +220,15 @@ export default function ResidentDueDetailPage() {
                     {row.is_payable && !row.is_paid && (
                         <Button
                             size="sm"
-                            className=" "
-                            onClick={() => {
-                                // Payment logic to be implemented or route to checkout
-                                toast.info("Payment feature coming soon");
-                            }}
+                            className=" h-8 px-4 text-[10px] font-bold shadow-none"
+                            disabled={payScheduleMutation.isPending || !!paymentReference}
+                            onClick={() => handlePaySchedule(row.id)}
                         >
+                            {payScheduleMutation.isPending && payScheduleMutation.variables === row.id ? (
+                                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                            ) : (
+                                <CreditCard className="h-3 w-3 mr-2" />
+                            )}
                             Make Payment
                         </Button>
                     )}
@@ -248,64 +330,131 @@ export default function ResidentDueDetailPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Activation Area */}
-                    {!isActivated ? (
-                        <Card className="rounded-lg shadow-none border-brand-primary border-2 bg-brand-primary/[0.02] overflow-hidden">
-                            <CardHeader className="py-4 border-b border-brand-primary/10">
-                                <CardTitle className="text-sm font-bold flex items-center gap-2 text-brand-primary">
-                                    <Clock className="h-4 w-4" />
-                                    Select Payment Plan
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-6">
+            {/* Due Details Info Card */}
+            <Card className="rounded-lg shadow-none border-border/40 overflow-hidden bg-muted/20">
+                <CardHeader className="py-3 border-b bg-muted/30">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Receipt className="h-4 w-4 text-muted-foreground" />
+                        Due Details
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                    <div className="space-y-3">
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Assessment Name</p>
+                            <p className="text-sm font-semibold">{due?.name || "N/A"}</p>
+                        </div>
+                        {due?.description && (
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Description</p>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    To begin settling this assessment, please select your preferred payment strategy. Once activated, your payment schedule will be generated automatically.
+                                    {due.description}
                                 </p>
+                            </div>
+                        )}
+                        <div className="flex gap-6">
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Tenure</p>
+                                <p className="text-xs font-medium capitalize">{titleCase(due?.tenure_length) || "N/A"}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Minimum Payment Breakdown</p>
+                                <p className="text-xs font-medium">{titleCase(due?.minimum_payment_breakdown)}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">Status</p>
+                                <Badge variant={
+                                    houseDue.status == HouseDueStatus.PAID ? "secondary" : HouseDueStatus.PARTIALLY_PAID ? "warning" : "danger"
+                                }>
+                                    {titleCase(houseDue.status)}
+                                </Badge>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {['monthly', 'full'].map((strategy) => (
-                                        <button
-                                            key={strategy}
-                                            onClick={() => setSelectedStrategy(strategy)}
-                                            className={cn(
-                                                "p-4 rounded-lg border-2 text-left transition-all",
-                                                selectedStrategy === strategy
-                                                    ? "border-brand-primary bg-brand-primary/5 ring-1 ring-brand-primary"
-                                                    : "border-border hover:border-brand-primary/40"
-                                            )}
-                                        >
-                                            <p className="text-xs font-bold uppercase tracking-wider mb-1">
-                                                {strategy === 'full' ? 'Pay Full' : 'Pay Monthly'}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground leading-snug">
-                                                {strategy === 'full'
-                                                    ? 'Pay the entire amount at once.'
-                                                    : 'Pay in installments over the billing period.'}
-                                            </p>
-                                        </button>
-                                    ))}
-                                </div>
+                        </div>
 
-                                <div className="flex justify-end pt-2">
-                                    <Button
-                                        className="bg-brand-primary hover:bg-brand-primary/90 text-white font-bold h-11 px-8 shadow-none"
-                                        disabled={!selectedStrategy || scheduleMutation.isPending}
-                                        onClick={handleActivate}
-                                    >
-                                        {scheduleMutation.isPending ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <ArrowRight className="h-4 w-4 mr-2" />
+                    </div>
+                </CardContent>
+            </Card>
+
+            {!isActivated ? (
+                <div className="space-y-6">
+                    {/* Activation Area */}
+                    <Card className="rounded-lg shadow-none border-brand-primary border-2 bg-brand-primary/[0.02] overflow-hidden">
+                        <CardHeader className="py-4 border-b border-brand-primary/10">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-brand-primary">
+                                <Clock className="h-4 w-4" />
+                                Select Payment Plan
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                To begin settling this assessment, please select your preferred payment strategy. Once activated, your payment schedule will be generated automatically.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {houseDue.payment_breakdown_options?.map((option) => (
+                                    <button
+                                        key={option.payment_breakdown}
+                                        onClick={() => setSelectedStrategy(option.payment_breakdown)}
+                                        className={cn(
+                                            "p-4 rounded-lg border-2 text-left transition-all relative overflow-hidden",
+                                            selectedStrategy === option.payment_breakdown
+                                                ? "border-brand-primary bg-brand-primary/5 ring-1 ring-brand-primary"
+                                                : "border-border hover:border-brand-primary/40"
                                         )}
-                                        Start Payment Plan
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        /* Payment Schedule */
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <p className="text-xs font-bold uppercase tracking-wider">
+                                                {titleCase(option.payment_breakdown)}
+                                            </p>
+                                            {selectedStrategy === option.payment_breakdown && (
+                                                <BadgeCheck className="h-4 w-4 text-brand-primary" />
+                                            )}
+                                        </div>
+                                        <p className="text-lg font-black text-foreground">
+                                            {option.amount}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-1">
+                                            Per {titleCase(option.payment_breakdown)} installment
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end pt-2">
+                                <Button
+                                    className=" text-white font-bold h-11 px-8 shadow-none"
+                                    disabled={!selectedStrategy || scheduleMutation.isPending}
+                                    onClick={handleActivate}
+                                >
+                                    {scheduleMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <ArrowRight className="h-4 w-4 mr-2" />
+                                    )}
+                                    Start Payment Plan
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Security Notice */}
+                    <Card className="rounded-lg shadow-none border-brand-primary/20 bg-brand-primary/[0.03]">
+                        <CardContent className="p-4 space-y-3 font-medium">
+                            <div className="flex items-center gap-2 text-brand-primary text-xs font-bold uppercase tracking-wider">
+                                <ShieldCheck className="h-4 w-4" />
+                                Security Notice
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                This statement is a secure record of your account. All payments are tracked and protected.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Payment Schedule */}
                         <Card className="rounded-lg shadow-none border-border/60 overflow-hidden">
                             <CardHeader className="py-4 border-b h-14 bg-muted/20">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -324,51 +473,63 @@ export default function ResidentDueDetailPage() {
                                     onPageChange={setSchedulePage}
                                     className="border-none"
                                     showPagination={true}
+                                    availableFilters={availableScheduleFilters}
+                                    onFiltersChange={(filters) => {
+                                        setSchedulePage(1);
+                                        setScheduleFilters(filters);
+                                    }}
+                                    disableClientSideFiltering={true}
                                 />
                             </CardContent>
                         </Card>
-                    )}
-                </div>
+                    </div>
 
-                <div className="space-y-6">
-                    {/* Recent Payments */}
-                    <Card className="rounded-lg shadow-none border-border/60 flex flex-col">
-                        <CardHeader className="py-4 border-b h-14">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <History className="h-4 w-4 text-muted-foreground" />
-                                Recent Payments
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <DataTable
-                                data={payments}
-                                columns={paymentColumns}
-                                pageSize={pageSize}
-                                serverSide={true}
-                                total={paymentsData?.total || 0}
-                                currentPage={paymentsPage}
-                                onPageChange={setPaymentsPage}
-                                className="border-none"
-                                showPagination={true}
-                                emptyMessage="No payments made"
-                            />
-                        </CardContent>
-                    </Card>
+                    <div className="space-y-6">
+                        {/* Recent Payments */}
+                        <Card className="rounded-lg shadow-none border-border/60 flex flex-col">
+                            <CardHeader className="py-4 border-b h-14">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <History className="h-4 w-4 text-muted-foreground" />
+                                    Recent Payments
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <DataTable
+                                    data={payments}
+                                    columns={paymentColumns}
+                                    pageSize={pageSize}
+                                    serverSide={true}
+                                    total={paymentsData?.total || 0}
+                                    currentPage={paymentsPage}
+                                    onPageChange={setPaymentsPage}
+                                    className="border-none"
+                                    showPagination={true}
+                                    emptyMessage="No payments made"
+                                    availableFilters={availablePaymentFilters}
+                                    onFiltersChange={(filters) => {
+                                        setPaymentsPage(1);
+                                        setPaymentFilters(filters);
+                                    }}
+                                    disableClientSideFiltering={true}
+                                />
+                            </CardContent>
+                        </Card>
 
-                    {/* Security Notice */}
-                    <Card className="rounded-lg shadow-none border-brand-primary/20 bg-brand-primary/[0.03]">
-                        <CardContent className="p-4 space-y-3 font-medium">
-                            <div className="flex items-center gap-2 text-brand-primary text-xs font-bold uppercase tracking-wider">
-                                <ShieldCheck className="h-4 w-4" />
-                                Security Notice
-                            </div>
-                            <p className="text-[11px] leading-relaxed text-muted-foreground">
-                                This statement is a secure record of your account. All payments are tracked and protected.
-                            </p>
-                        </CardContent>
-                    </Card>
+                        {/* Security Notice */}
+                        <Card className="rounded-lg shadow-none border-brand-primary/20 bg-brand-primary/[0.03]">
+                            <CardContent className="p-4 space-y-3 font-medium">
+                                <div className="flex items-center gap-2 text-brand-primary text-xs font-bold uppercase tracking-wider">
+                                    <ShieldCheck className="h-4 w-4" />
+                                    Security Notice
+                                </div>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                    This statement is a secure record of your account. All payments are tracked and protected.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
@@ -400,4 +561,3 @@ function FinancialMetric({
     );
 }
 
-import { toast } from "sonner";
