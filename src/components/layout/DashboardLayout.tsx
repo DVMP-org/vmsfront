@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Header } from "./Header";
-import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
+
+const Sidebar = dynamic(() => import("./Sidebar").then(mod => mod.Sidebar), {
+  ssr: false,
+  loading: () => <div className="hidden lg:block w-64 h-full border-r bg-background flex-shrink-0" />
+});
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,7 +20,10 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 1024;
+  });
   useRequireEmailVerification(true);
   useRequireResidentOnboarding(type === "resident");
 
@@ -32,33 +41,54 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const handleSidebarClose = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
+
+  const handleMenuClick = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))] text-foreground">
       {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
-          // Base state: Hidden on mobile (translated left), Visible on desktop (reset transform)
-          "-translate-x-full lg:translate-x-0",
-          // Mobile Open state: Visible (slide in)
-          sidebarOpen && "translate-x-0"
+      <AnimatePresence>
+        {isMobile && sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={handleSidebarClose}
+            aria-hidden="true"
+          />
         )}
-      >
-        <Sidebar type={type} onMobileClose={() => setSidebarOpen(false)} />
-      </div>
+      </AnimatePresence>
+
+      {/* Sidebar Container */}
+      <AnimatePresence mode="wait">
+        {(isMobile ? sidebarOpen : true) && (
+          <motion.div
+            key="sidebar-container"
+            initial={isMobile ? { x: "-100%" } : false}
+            animate={{ x: 0 }}
+            exit={isMobile ? { x: "-100%" } : undefined}
+            transition={{ type: "spring", stiffness: 300, damping: 35 }}
+            className={cn(
+              "z-50 flex-shrink-0",
+              isMobile ? "fixed inset-y-0 left-0 w-64 lg:hidden" : "relative hidden lg:block h-full"
+            )}
+            style={{ willChange: "transform, width" }}
+          >
+            <Sidebar type={type} onMobileClose={handleSidebarClose} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col w-full lg:w-auto min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} type={type} />
+        <Header onMenuClick={handleMenuClick} sidebarOpen={sidebarOpen} type={type} />
         <main
           className={cn(
             "flex-1 overflow-y-auto",

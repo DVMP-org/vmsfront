@@ -78,6 +78,7 @@ export function useActiveBrandingTheme() {
         },
         staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
         refetchOnWindowFocus: true,
+        initialData: () => getCachedTheme() ?? undefined,
     });
 }
 

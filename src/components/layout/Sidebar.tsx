@@ -44,6 +44,8 @@ import { useResidentHouse } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasPermission } from "@/lib/permissions";
 import { adminLinks } from "@/config/admin-routes";
+import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
+import { LogoFull } from "../LogoFull";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -163,9 +165,12 @@ const SidebarLink = memo(function SidebarLink({
   );
 });
 
-export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarProps) {
+export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 1024;
+  });
   const [mounted, setMounted] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
@@ -174,6 +179,31 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
   const { selectedHouse } = useAppStore();
   const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isLoading: isAdminProfileLoading } = useAdminProfile();
+  const { data: activeTheme } = useActiveBrandingTheme();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
+
+  useEffect(() => {
+    // Initialize dark mode from root element class
+    const root = document.documentElement;
+    setIsDarkMode(root.classList.contains("dark"));
+
+    // Watch for dark mode changes
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(root.classList.contains("dark"));
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const logoUrl = useMemo(() => {
+    if (!activeTheme) return null;
+    return isDarkMode && activeTheme.dark_logo_url
+      ? activeTheme.dark_logo_url
+      : activeTheme.logo_url;
+  }, [activeTheme, isDarkMode]);
 
   useEffect(() => {
     setMounted(true);
@@ -382,9 +412,6 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
       // On mobile/tablet (< 1024px), always show expanded
       if (mobile) {
         setCollapsed(false);
-      } else {
-        // On desktop, start expanded
-        setCollapsed(false);
       }
     };
 
@@ -503,12 +530,15 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
   }, [pathname, actualType, filteredPlugins, activeRoutesMap, links, isLinkActive]);
 
   return (
-    <aside
+    <motion.aside
+      animate={{
+        width: !isMobile && collapsed ? 80 : 256,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
+      style={{ willChange: "width" }}
       className={cn(
-        "relative flex flex-col border-r bg-zinc-50/50 dark:bg-background transition-all duration-500 ease-in-out",
-        "h-full w-64 shadow-sm",
-        "flex-shrink-0 z-30",
-        !isMobile && collapsed && "w-20"
+        "relative flex flex-col border-r bg-background overflow-hidden",
+        "h-full shadow-sm flex-shrink-0 z-30"
       )}
     >
       {/* Header with Close/Collapse Button */}
@@ -523,20 +553,34 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
         )}
       >
         {(!collapsed || isMobile) && (
-          <div className="flex items-center gap-2">
-            <div className={cn(
-              "p-1.5 rounded-lg",
-              actualType === "admin" ? "bg-indigo-500/10" : "bg-[rgb(var(--brand-primary,#213928))]/10"
-            )}>
-              {actualType === "admin" ? (
-                <Shield className="h-4 w-4 text-indigo-600" />
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Link
+              href="/select"
+              className="flex items-center gap-2 rounded-full transition-all duration-300"
+            >
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={activeTheme?.name || "Logo"}
+                  className={cn(
+                    "h-6 w-auto max-w-[140px] object-contain transition-all duration-300",
+                    isDarkMode && !activeTheme?.dark_logo_url && "brightness-0 invert opacity-90"
+                  )}
+                />
               ) : (
-                <Users className="h-4 w-4 text-[rgb(var(--brand-primary,#213928))]" />
+                <LogoFull className={cn("h-6", isDarkMode && "brightness-0 invert opacity-90")} />
               )}
-            </div>
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
-              {actualType === "resident" ? "Resident" : "Management"}
-            </span>
+            </Link>
+            {(!collapsed || isMobile) && (
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border whitespace-nowrap",
+                actualType === "admin"
+                  ? "bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
+                  : "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))] border-[rgb(var(--brand-primary,#213928))]/20"
+              )}>
+                {actualType === "admin" ? "Management" : "Residents"}
+              </span>
+            )}
           </div>
         )}
         <div className="flex items-center gap-2">
@@ -574,7 +618,10 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
 
       <LayoutGroup>
         {/* Navigation Links */}
-        <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav className={cn(
+          "flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
+          isMobile || !collapsed ? "p-3" : "py-4 px-0"
+        )}>
           {links.map((link: any) => {
             const Icon = link.icon;
             const isParentActive = activeLink?.href === link.href ||
@@ -611,7 +658,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                     )}
                     title={collapsed && !isMobile ? link.label : undefined}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
                       <Icon
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
@@ -640,7 +687,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
                         {link.children.map((child: any) => {
@@ -715,7 +762,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                     )}
                     title={collapsed && !isMobile ? plugin.manifest.title : undefined}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
                       <i
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
@@ -746,7 +793,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
                         {getPluginRoutesMemoized(plugin).map(route => {
@@ -804,6 +851,6 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
           </div>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   );
 });
