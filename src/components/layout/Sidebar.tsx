@@ -537,7 +537,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "relative flex flex-col border-r bg-zinc-50/50 dark:bg-background overflow-hidden",
+        "relative flex flex-col border-r bg-background overflow-hidden",
         "h-full shadow-sm flex-shrink-0 z-30"
       )}
     >
