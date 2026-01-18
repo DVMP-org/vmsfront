@@ -57,10 +57,18 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
+                  const root = document.documentElement;
+                  const darkMode = localStorage.getItem('darkMode');
+                  
+                  if (darkMode === 'true' || (!darkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    root.classList.add('dark');
+                  } else {
+                    root.classList.remove('dark');
+                  }
+
                   const cached = localStorage.getItem('active-branding-theme');
                   if (cached) {
                     const theme = JSON.parse(cached);
-                    const root = document.documentElement;
                     if (theme.primary_color) {
                       root.style.setProperty('--brand-primary', theme.primary_color);
                     }
