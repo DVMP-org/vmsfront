@@ -4,9 +4,10 @@ interface LogoProps {
   width?: number;
   height?: number;
   color?: string;
+  className?: string;
 }
 
-export const LogoFull = ({ width = 130, height = 35, color }: LogoProps) => {
+export const LogoFull = ({ width = 130, height = 35, color, className }: LogoProps) => {
   return (
     <svg
       width={width}
@@ -14,6 +15,7 @@ export const LogoFull = ({ width = 130, height = 35, color }: LogoProps) => {
       viewBox="0 0 231 88"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
       <path
         d="M73.3337 47.6668C73.3337 66.0001 60.5003 75.1668 45.247 80.4834C44.4483 80.7541 43.5806 80.7412 42.7903 80.4468C27.5003 75.1668 14.667 66.0001 14.667 47.6668V22.0001C14.667 21.0276 15.0533 20.095 15.7409 19.4074C16.4286 18.7197 17.3612 18.3334 18.3337 18.3334C25.667 18.3334 34.8337 13.9334 41.2137 8.3601C41.9905 7.69643 42.9786 7.33179 44.0003 7.33179C45.022 7.33179 46.0102 7.69643 46.787 8.3601C53.2037 13.9701 62.3337 18.3334 69.667 18.3334C70.6395 18.3334 71.5721 18.7197 72.2597 19.4074C72.9474 20.095 73.3337 21.0276 73.3337 22.0001V47.6668Z"

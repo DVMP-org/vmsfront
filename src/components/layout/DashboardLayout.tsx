@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,10 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 1024;
+  });
   useRequireEmailVerification(true);
   useRequireResidentOnboarding(type === "resident");
 
@@ -32,13 +35,21 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const handleSidebarClose = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
+
+  const handleMenuClick = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))] text-foreground">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={handleSidebarClose}
           aria-hidden="true"
         />
       )}
@@ -53,12 +64,12 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
           sidebarOpen && "translate-x-0"
         )}
       >
-        <Sidebar type={type} onMobileClose={() => setSidebarOpen(false)} />
+        <Sidebar type={type} onMobileClose={handleSidebarClose} />
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col w-full lg:w-auto min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} type={type} />
+        <Header onMenuClick={handleMenuClick} sidebarOpen={sidebarOpen} type={type} />
         <main
           className={cn(
             "flex-1 overflow-y-auto",

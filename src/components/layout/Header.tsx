@@ -31,10 +31,11 @@ import type { House } from "@/types";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  sidebarOpen?: boolean;
   type: "resident" | "admin" | "select" | "auth";
 }
 
-export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
+export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: HeaderProps) {
   const { user, logout } = useAuth();
   const { selectedHouse, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
@@ -52,7 +53,10 @@ export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
   const dashboardHref = "/select";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const toggleDarkMode = () => {
@@ -82,39 +86,20 @@ export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
   }, [menuOpen]);
 
   useEffect(() => {
-    // Initialize dark mode from localStorage or system preference
     const root = document.documentElement;
-    const stored = localStorage.getItem("darkMode");
 
-    if (stored === "true") {
-      root.classList.add("dark");
-      setIsDarkMode(true);
-    } else if (stored === "false") {
-      root.classList.remove("dark");
-      setIsDarkMode(false);
-    } else {
-      // Check system preference if no stored preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-        setIsDarkMode(true);
-      } else {
-        root.classList.remove("dark");
-        setIsDarkMode(false);
-      }
-    }
+    // Initial check just in case
+    setIsDarkMode(root.classList.contains("dark"));
 
-    // Check for dark mode class on html element
-    const checkDarkMode = () => {
+    const observer = new MutationObserver(() => {
       setIsDarkMode(root.classList.contains("dark"));
-    };
+    });
 
-    // Watch for changes
-    const observer = new MutationObserver(checkDarkMode);
     observer.observe(root, {
       attributes: true,
       attributeFilter: ["class"],
     });
+
     return () => observer.disconnect();
   }, []);
 
@@ -140,21 +125,6 @@ export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
           </Button>
 
           <div className="flex items-center gap-2">
-            <Link
-              href={dashboardHref}
-              className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold hover:bg-muted/50 transition-colors"
-            >
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={activeTheme?.name || "Logo"}
-                  className="h-5 w-auto max-w-[120px] object-contain"
-                />
-              ) : (
-                <LogoFull />
-              )}
-            </Link>
-
             {!isSelectRoute && user && (
               <WorkspaceSwitcher
                 selectedHouse={selectedHouse}
@@ -165,36 +135,43 @@ export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
         </div>
 
         {user && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleDarkMode}
-              className="h-9 w-9 p-0"
+              className="h-9 w-9 p-0 rounded-full hover:bg-muted/50 transition-colors"
               aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDarkMode ? (
-                <Sun className="h-5 w-5" />
+                <Sun className="h-5 w-5 text-amber-500" />
               ) : (
-                <Moon className="h-5 w-5" />
+                <Moon className="h-5 w-5 text-slate-700" />
               )}
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 w-9 p-0 relative"
+              className="h-9 w-9 p-0 relative rounded-full hover:bg-muted/50 transition-colors"
               aria-label="Notifications"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5 text-muted-foreground" />
+              <span className="absolute top-2 right-2 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
             </Button>
 
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 rounded-full bg-card px-3 py-2 text-sm font-medium"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-card/80 backdrop-blur-sm border border-border/40 px-2 py-1.5 sm:px-3 sm:py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
               >
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] text-[10px] font-bold sm:hidden">
+                  {getInitials(user.first_name, user.last_name)}
+                </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
                     {getFullName(user.first_name, user.last_name)}
@@ -207,14 +184,27 @@ export const Header = memo(function Header({ onMenuClick, type }: HeaderProps) {
                 </div>
                 <ChevronsUpDown
                   className={cn(
-                    "h-6 w-6 text-muted-foreground transition",
+                    "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition",
                     menuOpen && "rotate-180 text-foreground"
                   )}
                 />
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-3 w-60 rounded-xl border border-border/60 bg-background p-3 text-sm shadow-lg">
+                <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-64 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-3 text-sm shadow-2xl z-50 ring-1 ring-black/5">
+                  <div className="flex items-center gap-3 px-2 py-3 border-b border-border/40 mb-2 sm:hidden">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] font-bold">
+                      {getInitials(user.first_name, user.last_name)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-foreground">
+                        {getFullName(user.first_name, user.last_name)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
                   <MenuAction
                     icon={User}
                     label="Profile settings"
@@ -343,13 +333,16 @@ function WorkspaceSwitcher({
           open && "ring-2 ring-[rgb(var(--brand-primary,#213928))]/20 border-[rgb(var(--brand-primary,#213928))]/40"
         )}
       >
-        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-background shadow-sm border border-border/40">
+        <div className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg bg-background shadow-sm border border-border/40">
           {currentWorkspaceIcon}
         </div>
-        <span className="hidden sm:block text-xs font-bold text-foreground truncate max-w-[120px]">
+        <span className="hidden md:block text-xs font-bold text-foreground truncate max-w-[100px] xl:max-w-[150px]">
           {currentWorkspaceName}
         </span>
-        <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="hidden sm:block md:hidden text-[10px] font-bold text-foreground truncate max-w-[80px]">
+          {currentWorkspaceName}
+        </span>
+        <ChevronsUpDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
       </button>
 
       <AnimatePresence>
