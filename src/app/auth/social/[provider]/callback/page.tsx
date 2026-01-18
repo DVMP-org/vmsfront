@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSocialCallback } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
+import { titleCase } from "@/lib/utils";
 
 export default function SocialCallbackPage() {
     const params = useParams();
@@ -45,7 +46,7 @@ export default function SocialCallbackPage() {
                 </h1>
 
                 <p className="text-muted-foreground">
-                    Please wait while we complete your sign-in with {params.provider}.
+                    Please wait while we complete your sign-in with {titleCase(params.provider)}.
                 </p>
 
                 {isError && (
