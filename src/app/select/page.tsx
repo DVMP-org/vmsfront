@@ -64,7 +64,7 @@ export default function SelectPage() {
   const noDestinations = !isLoading && houses.length === 0 && !isAdmin;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
       {/* Decorative background elements */}
       <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />

@@ -594,7 +594,7 @@ export default function AdminForumsPage() {
                 categoriesWithCounts.map(({ category, topicCount }) => (
                   <div
                     key={category.id}
-                    className="px-4 py-3 hover:bg-muted transition-colors border-l-2 border-transparent hover:border-foreground/20"
+                    className="px-4 py-3 hover:bg-muted transition-colors border-l-4 border border-muted dark:border-muted hover:border-foreground/20"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
