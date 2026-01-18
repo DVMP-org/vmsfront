@@ -36,6 +36,7 @@ import {
   ConfirmActionModal,
 } from "@/app/admin/forums/components/ForumModals";
 import type { ForumPost } from "@/types";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 export default function AdminForumTopicDetailPage() {
   const params = useParams<{ topicId: string }>();
@@ -58,7 +59,7 @@ export default function AdminForumTopicDetailPage() {
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
-    houseId: topic?.house_id,
+    filters: formatFiltersForAPI([{ field: "house_id", operator: "eq" as const, value: topic?.house_id }]),
   });
 
   const updateTopic = useUpdateAdminForumTopic();

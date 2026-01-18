@@ -17,8 +17,15 @@ import {
   HouseDetail,
   Resident,
   ResidentHouse,
+  Due,
+  CreateDueRequest,
+  HouseDue,
+  DueSchedule,
+  DuePayment,
+  AdminRole,
 } from "@/types";
 import { toast } from "sonner";
+import { parseApiError } from "@/lib/error-utils";
 import { AdminDashboard } from "@/types";
 
 // Houses
@@ -74,7 +81,7 @@ export function useCreateHouse() {
       toast.success("House created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -93,7 +100,7 @@ export function useUpdateHouse() {
       toast.success("House updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -109,7 +116,7 @@ export function useDeleteHouse() {
       toast.success("House deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete house");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -124,7 +131,7 @@ export function useBulkDeleteHouses() {
       toast.success("Houses deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete houses");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -139,7 +146,7 @@ export function useBulkToggleHouseActive() {
       toast.success("Houses status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update houses status");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -174,7 +181,7 @@ export function useCreateResident() {
       toast.success("Resident created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -223,7 +230,7 @@ export function useUpdateResident() {
       toast.success("Resident updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -239,7 +246,7 @@ export function useDeleteResident() {
       toast.success("Resident deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete resident");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -249,7 +256,8 @@ export function useAdmins(params: {
   page: number;
   pageSize: number;
   search?: string;
-  status?: string;
+  sort?: string;
+  filters?: string;
 }) {
   return useQuery<PaginatedResponse<Admin>>({
     queryKey: ["admin", "admins", params],
@@ -270,7 +278,7 @@ export function useCreateAdmin() {
       toast.success("Admin created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create admin");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -286,7 +294,48 @@ export function useUpdateAdminRole() {
       toast.success("Admin role updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update admin role");
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useAdminDeleteRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (roleId: string) => adminService.deleteRole(roleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      toast.success("Role deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      roleId,
+      data,
+    }: {
+      roleId: string;
+      data: Partial<{
+        name: string;
+        code: string;
+        description: string;
+        permissions: any;
+      }>;
+    }) => adminService.updateRole(roleId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      toast.success("Role updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -301,17 +350,23 @@ export function useDeleteAdmin() {
       toast.success("Admin deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete admin");
+      toast.error(parseApiError(error).message);
     },
   });
 }
 
 // Roles
-export function useAdminRoles() {
-  return useQuery({
-    queryKey: ["admin", "roles"],
+export function useAdminRoles(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sort?: string;
+  filters?: string;
+}) {
+  return useQuery<PaginatedResponse<AdminRole>>({
+    queryKey: ["admin", "roles", params],
     queryFn: async () => {
-      const response = await adminService.getRoles();
+      const response = await adminService.getRoles(params);
       return response.data;
     },
   });
@@ -341,7 +396,7 @@ export function useCheckinPass() {
       toast.success(response.data.message || "Check-in successful!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Check-in failed");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -357,7 +412,7 @@ export function useCheckoutPass() {
       toast.success(response.data.message || "Check-out successful!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Check-out failed");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -497,7 +552,7 @@ export function useCreateRole() {
       toast.success("Role created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to create role");
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -523,9 +578,7 @@ export function useImportHouses() {
       );
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to import houses"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -541,9 +594,7 @@ export function useImportResidents() {
       );
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to import residents"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -589,9 +640,7 @@ export function useCreateHouseGroup() {
       toast.success("House group created successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to create house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -612,9 +661,7 @@ export function useUpdateHouseGroup() {
       toast.success("House group updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -629,9 +676,7 @@ export function useDeleteHouseGroup() {
       toast.success("House group deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to delete house group"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -646,9 +691,7 @@ export function useBulkDeleteHouseGroups() {
       toast.success("House groups deleted successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to delete house groups"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -663,9 +706,7 @@ export function useToggleHouseGroupActive() {
       toast.success("House group status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house group status"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
@@ -680,9 +721,259 @@ export function useBulkToggleHouseGroupActive() {
       toast.success("House groups status updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to update house groups status"
-      );
+      toast.error(parseApiError(error).message);
     },
   });
 }
+
+// Dues
+export function useAdminDues(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery<PaginatedResponse<Due>>({
+    queryKey: ["admin", "dues", params],
+    queryFn: async () => {
+      const response = await adminService.getDues(params);
+      return response.data;
+    },
+  });
+}
+
+export function useCreateDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateDueRequest) => adminService.createDue(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      toast.success("Due created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useAdminDue(dueId: string | null) {
+  return useQuery<Due>({
+    queryKey: ["admin", "due", dueId],
+    queryFn: async () => {
+      if (!dueId) throw new Error("Due ID is required");
+      const response = await adminService.getDue(dueId);
+      return response.data;
+    },
+    enabled: !!dueId,
+  });
+}
+
+export function useUpdateDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ dueId, data }: { dueId: string; data: Partial<CreateDueRequest> }) =>
+      adminService.updateDue(dueId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      if (response.data?.id) {
+        queryClient.invalidateQueries({ queryKey: ["admin", "due", response.data.id] });
+      }
+      toast.success("Due updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useDeleteDue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (dueId: string) => adminService.deleteDue(dueId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
+      toast.success("Due deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useAdminDueHouses(dueId: string | null, params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) {
+  return useQuery<PaginatedResponse<HouseDue>>({
+    queryKey: ["admin", "due-houses", dueId, params],
+    queryFn: async () => {
+      if (!dueId) throw new Error("Due ID is required");
+      const response = await adminService.getDueHouses(dueId, params);
+      return response.data;
+    },
+    enabled: !!dueId,
+  });
+}
+
+export function useAdminHouseDue(dueId: string | null, houseId: string | null) {
+  return useQuery<HouseDue>({
+    queryKey: ["admin", "house-due", dueId, houseId],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
+      const response = await adminService.getHouseDue(dueId, houseId);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useAdminDueSchedules(
+  dueId: string | null,
+  houseId: string | null,
+  page: number = 1,
+  pageSize: number = 10,
+  filters?: string,
+  sorts?: string
+) {
+  return useQuery({
+    queryKey: ["admin", "due-schedules", dueId, houseId, page, pageSize, filters, sorts],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due and House ID are required");
+      const response = await adminService.getDueSchedules(
+        dueId,
+        houseId,
+        page,
+        pageSize,
+        filters,
+        sorts
+      );
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useAdminDuePayments(
+  dueId: string | null,
+  houseId: string | null,
+  page: number = 1,
+  pageSize: number = 10,
+  filters?: string,
+  sorts?: string
+) {
+  return useQuery({
+    queryKey: ["admin", "due-payments", dueId, houseId, page, pageSize, filters, sorts],
+    queryFn: async () => {
+      if (!dueId || !houseId) throw new Error("Due and House ID are required");
+      const response = await adminService.getDuePayments(dueId, houseId, page, pageSize, filters, sorts);
+      return response.data;
+    },
+    enabled: !!dueId && !!houseId,
+  });
+}
+
+export function useAdminProfile() {
+  const queryClient = useQueryClient();
+  const STORAGE_KEY = "vms_admin_profile";
+
+  return useQuery<Admin>({
+    queryKey: ["admin", "profile"],
+    queryFn: async () => {
+      const response = await adminService.getAdminProfile();
+      const profile = response.data;
+      // Persistence: store in localStorage for instant access next time
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      return profile;
+    },
+    initialData: () => {
+      // Synchronous recovery from localStorage for instant Sidebar rendering
+      if (typeof window !== "undefined") {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          try {
+            return JSON.parse(cached);
+          } catch (e) {
+            return undefined;
+          }
+        }
+      }
+      return undefined;
+    },
+    staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins
+  });
+}
+
+// Transactions
+export function useAdminTransactions(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["admin", "transactions", params],
+    queryFn: async () => {
+      const response = await adminService.getTransactions(params);
+      return response.data;
+    },
+  });
+}
+
+export function useAdminTransaction(transactionId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "transaction", transactionId],
+    queryFn: async () => {
+      if (!transactionId) throw new Error("Transaction ID is required");
+      const response = await adminService.getTransaction(transactionId);
+      return response.data;
+    },
+    enabled: !!transactionId,
+  });
+}
+
+// Prefetching hooks for performance
+export function usePrefetchHouse() {
+  const queryClient = useQueryClient();
+
+  return (houseId: string) => {
+    if (!houseId) return;
+    queryClient.prefetchQuery({
+      queryKey: ["admin", "house", houseId],
+      queryFn: async () => {
+        const response = await adminService.getHouse(houseId);
+        return response.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+}
+
+export function usePrefetchResident() {
+  const queryClient = useQueryClient();
+
+  return (residentId: string) => {
+    if (!residentId) return;
+    queryClient.prefetchQuery({
+      queryKey: ["admin", "resident", residentId],
+      queryFn: async () => {
+        const response = await adminService.getResident(residentId);
+        return response.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+}
+

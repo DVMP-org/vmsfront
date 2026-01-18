@@ -12,6 +12,7 @@ import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Plus, Zap, Search, Building2 } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
 import { toast } from "sonner";
+import { parseApiError } from "@/lib/error-utils";
 import { useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { Meter, MeterCreate } from "@/plugins/electricity/types";
@@ -71,7 +72,7 @@ export default function AdminMetersPage() {
             });
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || "Failed to add meter");
+            toast.error(parseApiError(error).message);
         },
     });
 
@@ -226,29 +227,29 @@ export default function AdminMetersPage() {
                             }
                         />
                     ) : (
-                                <>
-                                    <DataTable
-                                        data={filteredMeters}
-                                        columns={columns}
-                                        searchable={false}
-                                        showPagination={false}
-                                        emptyMessage="No meters found"
-                                    />
-                                    {showPagination && (
-                                        <PaginationBar
-                                            page={page}
-                                            pageSize={pageSize}
-                                            total={total}
-                                            totalPages={totalPages}
-                                            hasNext={hasNext}
-                                            hasPrevious={hasPrevious}
-                                            resourceLabel="meters"
-                                            onChange={handlePageChange}
-                                            isFetching={isLoading}
-                                            className="mt-6"
-                                        />
-                                    )}
-                                </>
+                        <>
+                            <DataTable
+                                data={filteredMeters}
+                                columns={columns}
+                                searchable={false}
+                                showPagination={false}
+                                emptyMessage="No meters found"
+                            />
+                            {showPagination && (
+                                <PaginationBar
+                                    page={page}
+                                    pageSize={pageSize}
+                                    total={total}
+                                    totalPages={totalPages}
+                                    hasNext={hasNext}
+                                    hasPrevious={hasPrevious}
+                                    resourceLabel="meters"
+                                    onChange={handlePageChange}
+                                    isFetching={isLoading}
+                                    className="mt-6"
+                                />
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>

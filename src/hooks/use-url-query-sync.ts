@@ -127,6 +127,12 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
         });
 
         const queryString = params.toString();
+        const currentQueryString = searchParams.toString();
+
+        if (queryString === currentQueryString) {
+            return;
+        }
+
         router.replace(
             queryString ? `${pathname}?${queryString}` : pathname,
             { scroll: false }

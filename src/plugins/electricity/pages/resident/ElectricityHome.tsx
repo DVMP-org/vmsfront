@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { cleanToken } from "../../utils";
 
 export default function ResidentElectricityDashboard() {
     const router = useRouter();
@@ -192,30 +193,30 @@ export default function ResidentElectricityDashboard() {
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
-                                {meters.map((meter) => (
+                            {meters.map((meter) => (
                                 <Card key={meter.id} className="border">
                                     <CardContent className="p-4">
                                         <div className="flex items-start justify-between mb-3">
-                                                <div className="flex-1">
+                                            <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Zap className="h-5 w-5 text-muted-foreground" />
                                                     <span className="font-semibold">
-                                                            {meter.meter_number}
-                                                        </span>
+                                                        {meter.meter_number}
+                                                    </span>
                                                 </div>
-                                                    {/* <p className="text-sm text-muted-foreground">
+                                                {/* <p className="text-sm text-muted-foreground">
                                                         {titleCase(meter.house?.name ?? meter.house?.address) || "N/A"}
                                                 </p> */}
-                                                    <div className="flex gap-2 mt-1">
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            {titleCase(meter.meter_type)}
-                                                        </Badge>
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            {titleCase(meter.disco.replace(/-/g, " "))}
-                                                        </Badge>
-                                                    </div>
+                                                <div className="flex gap-2 mt-1">
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {titleCase(meter.meter_type)}
+                                                    </Badge>
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {titleCase(meter.disco.replace(/-/g, " "))}
+                                                    </Badge>
                                                 </div>
                                             </div>
+                                        </div>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -253,17 +254,17 @@ export default function ResidentElectricityDashboard() {
                             </p>
                         </div>
                     ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Meter Number</TableHead>
-                                        <TableHead>Units</TableHead>
-                                        <TableHead>Token</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead className="text-right">Date</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Meter Number</TableHead>
+                                    <TableHead>Units</TableHead>
+                                    <TableHead>Token</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead className="text-right">Date</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {recentPurchases.map((purchase) => (
                                     <TableRow key={purchase.id}>
                                         <TableCell className="font-medium">
@@ -274,7 +275,7 @@ export default function ResidentElectricityDashboard() {
                                         </TableCell>
                                         <TableCell>
                                             {purchase.token ? (
-                                                <span className="font-mono text-xs">{purchase.token}</span>
+                                                <span className="font-mono text-xs">{cleanToken(purchase.token)}</span>
                                             ) : (
                                                 "—"
                                             )}
@@ -287,8 +288,8 @@ export default function ResidentElectricityDashboard() {
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                </TableBody>
-                            </Table>
+                            </TableBody>
+                        </Table>
                     )}
                 </CardContent>
             </Card>

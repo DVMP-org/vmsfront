@@ -18,6 +18,22 @@ export enum UserType {
     ADMIN = "admin",
 }
 
+export enum DueTenureLength {
+    ONE_TIME = "one_time",
+    DAILY = "daily",
+    WEEKLY = "weekly",
+    MONTHLY = "monthly",
+    QUARTERLY = "quarterly",
+    BIANNUALLY = "biannually",
+    YEARLY = "yearly",
+}
+
+export enum HouseDueStatus {
+    UNPAID = "unpaid",
+    PARTIALLY_PAID = "partially_paid",
+    PAID = "paid",
+}
+
 // Base Types
 export interface User {
     id: string;
@@ -302,7 +318,7 @@ export interface AdminSummary {
 export interface DashboardSelect {
     user: UserProfile;
     houses: House[];
-    admin: AdminSummary | null;
+    // admin: AdminSummary | null;
 }
 
 export interface ResidentDashboard {
@@ -599,6 +615,29 @@ export interface WalletTransaction {
     updated_at: string;
 }
 
+export enum TransactionType {
+    WALLET_FUNDING = "wallet_funding",
+    DUE_PAYMENT = "due_payment",
+    PLUGIN_PURCHASE = "plugin_purchase",
+    INTERNAL_DEBIT = "internal_debit",
+    INTERNAL_CREDIT = "internal_credit"
+}
+
+export interface Transaction {
+    id: string;
+    reference: string;
+    amount: number;
+    type: TransactionType;
+    status: "pending" | "success" | "failed";
+    paid_at: string | null;
+    processor: string | null;
+    description: string | null;
+    currency: string;
+    payload: Record<string, any> | null;
+    metadata: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+}
 // Payment Gateway Types
 export interface PaymentGateway {
     name: string;
@@ -639,6 +678,38 @@ export interface ResidentHouse {
     is_active: boolean;
 }
 
+export interface HouseLite {
+    id: string;
+    name: string;
+    address: string;
+}
+
+export interface Due {
+    id: string;
+    name: string;
+    description?: string | null;
+    amount: number;
+    minimum_payment_breakdown: DueTenureLength;
+    tenure_length: DueTenureLength;
+    recurring: boolean;
+    houses: HouseLite[];
+    start_date?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface CreateDueRequest {
+    name: string;
+    description: string;
+    amount: number;
+    house_groups_ids: string[];
+    houses_ids: string[];
+    minimum_payment_breakdown: string; // DueTenureLength
+    tenure_length: string; // DueTenureLength
+    recurring: boolean;
+    start_date?: string;
+}
+
 export interface ResidentCreate {
 
     email: string;
@@ -647,4 +718,63 @@ export interface ResidentCreate {
     last_name: string;
     phone: string;
     address: string;
+}
+export interface HouseDueOption {
+    payment_breakdown: string;
+    amount: string;
+    due_amount: number;
+    currency: {
+        iso_name: string;
+        currency: string;
+    };
+}
+
+export interface HouseDue {
+    id: string;
+    due_id: string;
+    house_id: string;
+    due?: Due;
+    house?: House;
+    amount: number;
+    balance: number;
+    paid_amount: number;
+    status: HouseDueStatus;
+    payment_breakdown?: string | null;
+    payment_completed?: boolean;
+    schedules?: DueSchedule[];
+    payments?: DuePayment[];
+    payment_breakdown_options?: HouseDueOption[];
+    created_at: string;
+    updated_at: string;
+    next_schedule?: DuePayment | null;
+}
+
+export interface DueSchedule {
+    id: string;
+    due_id: string;
+    house_id: string;
+    house_due_id: string;
+    payment_date: string;
+    balance_before: number;
+    balance_after: number;
+    amount: number;
+    created_at: string;
+    updated_at: string;
+    is_paid: boolean;
+    is_payable: boolean;
+    payment?: DuePayment;
+}
+
+export interface DuePayment {
+    id: string;
+    due_id: string;
+    house_id: string;
+    house_due_id: string;
+    due_schedule_id?: string;
+    payment_date: string;
+    amount: number;
+    created_at: string;
+    updated_at: string;
+    due?: Due;
+    schedule?: Partial<DueSchedule>;
 }

@@ -3,17 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useResetPassword } from "@/hooks/use-auth";
-import { ShieldCheck, KeyRound, ArrowLeft } from "lucide-react";
+import { ShieldCheck, KeyRound, ArrowLeft, RefreshCw } from "lucide-react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion } from "framer-motion";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -63,113 +58,122 @@ export default function ResetPasswordPage() {
 
   if (tokenMissing && !resetPassword.isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/5 via-background to-var(--brand-secondary)/10 px-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader className="space-y-2">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-600">
-              <KeyRound className="h-6 w-6" />
-            </div>
-            <CardTitle>Reset link expired</CardTitle>
-            <CardDescription>
-              The password reset link is missing or has expired. Request a new one to
-              continue.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/auth/forgot-password">
-              <Button className="w-full">Request new link</Button>
+      <AuthLayout
+        title="Check failed"
+        description="The password reset link is missing or has expired"
+      >
+        <div className="text-center py-8 space-y-6">
+          <div className="mx-auto w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center">
+            <KeyRound className="w-10 h-10 text-yellow-600" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold">Invalid Link</h3>
+            <p className="text-muted-foreground">
+              For security reasons, reset links expire quickly. Please request a new one to continue.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <Link href="/auth/forgot-password" title="Request new link">
+              <Button className="w-full h-12 gap-2 text-base font-semibold">
+                <RefreshCw className="w-4 h-4" />
+                Request New Link
+              </Button>
             </Link>
-          </CardContent>
-        </Card>
-      </div>
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Back to login
+            </Link>
+          </div>
+        </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/5 via-background to-var(--brand-secondary)/10 px-4 py-8">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-var(--brand-primary)/10 text-var(--brand-primary)">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <CardTitle className="text-2xl font-semibold">
-            Choose a new password
-          </CardTitle>
-          <CardDescription>
-            Use the form below to secure your account. After saving, you will be
-            redirected to sign in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errors.token && (
-              <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                {errors.token}
-              </div>
-            )}
+    <AuthLayout
+      title="Create new password"
+      description="Enter a secure password for your account"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {errors.token && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            {errors.token}
+          </motion.div>
+        )}
 
-            <Input
-              type="email"
-              label="Account email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={(event) =>
-                setFormData((prev) => ({ ...prev, email: event.target.value }))
-              }
-              error={errors.email}
-              required
-            />
+        <div className="space-y-4">
+          <Input
+            type="email"
+            label="Account Email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={(event) =>
+              setFormData((prev) => ({ ...prev, email: event.target.value }))
+            }
+            error={errors.email}
+            required
+            className="h-12"
+          />
 
+          <Input
+            type="password"
+            label="New Password"
+            placeholder="••••••••"
+            value={formData.newPassword}
+            onChange={(event) =>
+              setFormData((prev) => ({
+                ...prev,
+                newPassword: event.target.value,
+              }))
+            }
+            error={errors.newPassword}
+            required
+            className="h-12"
+          />
 
+          <Input
+            type="password"
+            label="Confirm New Password"
+            placeholder="••••••••"
+            value={formData.confirmPassword}
+            onChange={(event) =>
+              setFormData((prev) => ({
+                ...prev,
+                confirmPassword: event.target.value,
+              }))
+            }
+            error={errors.confirmPassword}
+            required
+            className="h-12"
+          />
+        </div>
 
-            <Input
-              type="password"
-              label="New password"
-              placeholder="••••••••"
-              value={formData.newPassword}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  newPassword: event.target.value,
-                }))
-              }
-              error={errors.newPassword}
-              required
-            />
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          isLoading={resetPassword.isPending}
+        >
+          Save New Password
+        </Button>
 
-            <Input
-              type="password"
-              label="Confirm new password"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  confirmPassword: event.target.value,
-                }))
-              }
-              error={errors.confirmPassword}
-              required
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={resetPassword.isPending}
-            >
-              Save new password
-            </Button>
-
-            <Link
-              href="/auth/login"
-              className="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
-            >
-              <ArrowLeft className="h-4 w-4 text-var(--brand-primary)" />
-              Back to login
-            </Link>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="text-center">
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-[var(--brand-primary)] transition-colors group"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to login
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

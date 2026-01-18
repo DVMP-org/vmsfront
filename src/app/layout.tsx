@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
@@ -51,16 +51,24 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
+                  const root = document.documentElement;
+                  const darkMode = localStorage.getItem('darkMode');
+                  
+                  if (darkMode === 'true' || (!darkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    root.classList.add('dark');
+                  } else {
+                    root.classList.remove('dark');
+                  }
+
                   const cached = localStorage.getItem('active-branding-theme');
                   if (cached) {
                     const theme = JSON.parse(cached);
-                    const root = document.documentElement;
                     if (theme.primary_color) {
                       root.style.setProperty('--brand-primary', theme.primary_color);
                     }

@@ -10,6 +10,7 @@ import {
     AdminRole,
     ResidentUser,
     ResidentUserCreate,
+    Transaction,
     ResidentProfileUpdatePayload,
     GatePass,
     GatePassCheckinRequest,
@@ -42,6 +43,11 @@ import {
     HouseDetail,
     Resident,
     ResidentHouse,
+    Due,
+    CreateDueRequest,
+    HouseDue,
+    DueSchedule,
+    DuePayment,
 } from "@/types";
 
 export const adminService = {
@@ -221,33 +227,49 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         search?: string;
-        status?: string;
+        sort?: string;
+        filters?: string;
     }): Promise<ApiResponse<PaginatedResponse<Admin>>> {
-        return apiClient.get("/admin/list", {
+        return apiClient.get("/admin/admins/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
                 search: params?.search ?? undefined,
-                status: params?.status ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
             },
         });
     },
 
     async createAdmin(data: CreateAdminRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.post("/admin/create", data);
+        return apiClient.post("/admin/admins/create", data);
     },
 
     async updateAdminRole(adminId: string, data: UpdateAdminRoleRequest): Promise<ApiResponse<Admin>> {
-        return apiClient.put(`/admin/update/${adminId}/`, data);
+        return apiClient.put(`/admin/admins/update/${adminId}`, data);
     },
 
     async deleteAdmin(adminId: string): Promise<ApiResponse<Admin>> {
-        return apiClient.delete(`/admin/delete/${adminId}/`);
+        return apiClient.delete(`/admin/admins/delete/${adminId}`);
     },
 
     // Roles
-    async getRoles(): Promise<ApiResponse<AdminRole[]>> {
-        return apiClient.get("/admin/role/list");
+    async getRoles(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        sort?: string;
+        filters?: string;
+    }): Promise<ApiResponse<PaginatedResponse<AdminRole>>> {
+        return apiClient.get("/admin/role/list", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
+            },
+        });
     },
 
     async getRole(roleId: string): Promise<ApiResponse<AdminRole>> {
@@ -374,17 +396,17 @@ export const adminService = {
     async getForumCategories(params?: {
         page?: number;
         pageSize?: number;
-        houseId?: string;
         search?: string;
-        includeLocked?: boolean;
+        sort?: string;
+        filters?: string;
     }): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
         return apiClient.get("/admin/forum/category/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 12,
-                house_id: params?.houseId ?? undefined,
-                search_query: params?.search ?? undefined,
-                include_locked: params?.includeLocked ?? undefined,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
+                filters: params?.filters ?? undefined,
             },
         });
     },
@@ -415,25 +437,17 @@ export const adminService = {
     async getForumTopics(params?: {
         page?: number;
         pageSize?: number;
-        houseId?: string;
-        categoryId?: string;
-        status?: "pinned" | "locked" | "deleted";
         search?: string;
-        startDate?: string;
-        endDate?: string;
-        includeDeleted?: boolean;
+        filters?: string;
+        sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
         return apiClient.get("/admin/forum/topics", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
-                house_id: params?.houseId ?? undefined,
-                category_id: params?.categoryId ?? undefined,
-                status: params?.status ?? undefined,
-                search_query: params?.search ?? undefined,
-                start_date: params?.startDate ?? undefined,
-                end_date: params?.endDate ?? undefined,
-                include_deleted: params?.includeDeleted ?? undefined,
+                filters: params?.filters ?? undefined,
+                search: params?.search ?? undefined,
+                sort: params?.sort ?? undefined,
             },
         });
     },
@@ -547,5 +561,116 @@ export const adminService = {
         data: UpdatePaymentGatewayRequest
     ): Promise<ApiResponse<PaymentGateway>> {
         return apiClient.put(`/admin/config/payment/gateway/${gatewayName}/update`, data);
+    },
+
+    // Dues
+    async getDues(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Due>>> {
+        return apiClient.get("/admin/dues/", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
+            },
+        });
+    },
+
+    async createDue(data: CreateDueRequest): Promise<ApiResponse<Due>> {
+        return apiClient.post("/admin/dues/create", data);
+    },
+
+    async getDue(dueId: string): Promise<ApiResponse<Due>> {
+        return apiClient.get(`/admin/dues/${dueId}`);
+    },
+
+    async updateDue(dueId: string, data: Partial<CreateDueRequest>): Promise<ApiResponse<Due>> {
+        return apiClient.put(`/admin/dues/${dueId}/update`, data);
+    },
+
+    async deleteDue(dueId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/dues/${dueId}/delete`);
+    },
+
+    async getDueHouses(dueId: string, params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
+        return apiClient.get(`/admin/dues/${dueId}/houses`, {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+            },
+        });
+    },
+
+    async getHouseDue(dueId: string, houseId: string): Promise<ApiResponse<HouseDue>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}`);
+    },
+
+    async getDueSchedules(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10,
+        filters?: string,
+        sorts?: string
+    ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/schedules`, {
+            params: {
+                page,
+                page_size: pageSize,
+                filters,
+                sorts
+            },
+        });
+    },
+
+    async getDuePayments(
+        dueId: string,
+        houseId: string,
+        page: number = 1,
+        pageSize: number = 10,
+        filters?: string,
+        sorts?: string
+    ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
+        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/payments`, {
+            params: {
+                page,
+                page_size: pageSize,
+                filters,
+                sorts
+            },
+        });
+    },
+
+    async getTransactions(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
+        return apiClient.get('/admin/transactions', {
+            params: {
+                page: params.page ?? 1,
+                page_size: params.pageSize ?? 15,
+                search: params.search ?? undefined,
+                filters: params.filters ?? undefined,
+                sort: params.sort ?? undefined,
+            },
+        });
+    },
+
+    async getTransaction(transactionId: string): Promise<ApiResponse<Transaction>> {
+        return apiClient.get(`/admin/transactions/${transactionId}`);
     },
 };

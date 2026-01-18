@@ -118,8 +118,8 @@ export default function ResidentDashboardPage() {
     validWindow: formatPassWindow(pass.valid_from, pass.valid_to),
     statusLabel: pass.status,
     usesSummary:
-      pass.max_uses !== null && pass.max_uses !== undefined
-        ? `${pass.uses_count}/${pass.max_uses}`
+      pass.max_uses !== undefined
+        ? `${pass.uses_count}/${pass.max_uses ?? "∞"} used`
         : `${pass.uses_count} used`,
   }));
 
@@ -133,7 +133,6 @@ export default function ResidentDashboardPage() {
     {
       key: "visitorNames",
       header: "Visitors",
-      filterable: true,
       sortable: true,
       accessor: (row) =>
         row.visitors && row.visitors.length > 0 ? (
@@ -165,14 +164,7 @@ export default function ResidentDashboardPage() {
       key: "statusLabel",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: [
-        { value: "active", label: "Active" },
-        { value: "expired", label: "Expired" },
-        { value: "revoked", label: "Revoked" },
-        { value: "draft", label: "Draft" },
-      ],
+
       accessor: (row) => (
         <Badge className={getPassStatusColor(row.status)}>
           {titleCase(row.statusLabel.replace("_", " "))}
@@ -238,7 +230,6 @@ export default function ResidentDashboardPage() {
       key: "actor",
       header: "Person",
       sortable: true,
-      filterable: true,
       accessor: (row) => <span>{titleCase(row.actor)}</span>
     },
     {

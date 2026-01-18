@@ -2,12 +2,12 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident } from "@/hooks/use-admin";
+import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident, usePrefetchResident } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterableField, BulkAction } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -34,14 +34,18 @@ const PAGE_SIZE = 10;
 
 export default function ResidentsPage() {
   // URL query sync
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    status: { defaultValue: undefined },
+    sort: { defaultValue: null },
+    startDate: { defaultValue: undefined },
+    endDate: { defaultValue: undefined },
+  }), []);
+
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
-    config: {
-      page: { defaultValue: 1 },
-      pageSize: { defaultValue: PAGE_SIZE },
-      search: { defaultValue: "" },
-      status: { defaultValue: undefined },
-      sort: { defaultValue: null },
-    },
+    config,
     skipInitialSync: true,
   });
 
@@ -52,19 +56,48 @@ export default function ResidentsPage() {
   const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
   const [selectedResidents, setSelectedResidents] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
+
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (status) {
+      filters.push({ field: "status", operator: "eq", value: status });
+    }
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
+    return filters;
+  }, [status, startDate, endDate]);
 
   // Sync state to URL
   useEffect(() => {
-    syncToUrl({ page, pageSize, search, status, sort });
-  }, [page, pageSize, search, status, sort, syncToUrl]);
+    syncToUrl({ page, pageSize, search, status, sort, startDate, endDate });
+  }, [page, pageSize, search, status, sort, startDate, endDate, syncToUrl]);
 
-  // Build filterable fields from payload
-  const filterableFields = useMemo(() => {
-    const fields: Array<{ field: string; operator?: "eq"; value?: string | null }> = [];
-    if (status) {
-      fields.push({ field: "status", operator: "eq", value: status });
-    }
-    return fields;
+
+  const availableFilters = useMemo(() => {
+    const filters: FilterDefinition[] = [
+      {
+        field: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
+        ],
+      },
+      {
+        field: "created_at",
+        label: "Created Between",
+        type: "date-range",
+      }
+    ];
+
+    return filters;
   }, [status]);
 
   const { data, isLoading, isFetching } = useAdminResidents({
@@ -72,17 +105,12 @@ export default function ResidentsPage() {
     pageSize,
     search: search.trim() || undefined,
     status,
-    filters: formatFiltersForAPI(
-      filterableFields.map((f) => ({
-        field: f.field,
-        operator: f.operator || "eq",
-        value: f.value!,
-      }))
-    ),
+    filters: formatFiltersForAPI(activeFilters),
     sort: sort || undefined,
   });
 
   const importResidentsMutation = useImportResidents();
+  const prefetchResident = usePrefetchResident();
   const router = useRouter();
 
   // Bulk actions
@@ -187,7 +215,6 @@ export default function ResidentsPage() {
   };
 
   const residents = useMemo(() => data?.items ?? [], [data]);
-  const totalPages = data?.total_pages ?? 1;
   const total = data?.total ?? 0;
 
 
@@ -196,7 +223,6 @@ export default function ResidentsPage() {
       key: "name",
       header: "Name",
       sortable: true,
-      filterable: true,
       accessor: (row) => (
         <span className="font-medium">
           {getFullName(row?.user?.first_name, row?.user?.last_name)}
@@ -207,14 +233,12 @@ export default function ResidentsPage() {
       key: "email",
       header: "Email",
       sortable: true,
-      filterable: true,
       accessor: (row) => row?.user?.email,
     },
     {
       key: "phone",
       header: "Phone",
       sortable: true,
-      filterable: true,
       accessor: (row) => row?.user?.phone || "-",
     },
     {
@@ -241,12 +265,6 @@ export default function ResidentsPage() {
       key: "status",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: [
-        { value: "active", label: "Active" },
-        { value: "inactive", label: "Inactive" },
-      ],
       accessor: (row) => (
         <Badge variant={row.user.is_active ? "success" : "secondary"}>
           {row.user.is_active ? "Active" : "Inactive"}
@@ -262,6 +280,7 @@ export default function ResidentsPage() {
             variant="ghost"
             size="sm"
             onClick={() => router.push(`/admin/residents/${row.resident.id}`)}
+            onMouseEnter={() => prefetchResident(row.resident.id)}
             title="View Details"
           >
             <Eye className="h-4 w-4" />
@@ -315,57 +334,51 @@ export default function ResidentsPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : !residents || residents.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                title="No residents yet"
-                description="Residents will appear here once they are created"
-                action={{
-                  label: "Add resident",
-                  onClick: () => router.push("/admin/residents/create"),
-                }}
-              />
-            ) : (
-              <DataTable
-                data={residents}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search residents by name, email, or phone..."
-                pageSize={pageSize}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                onPageSizeChange={setPageSize}
-                showPagination={true}
-                emptyMessage="No residents found"
-                serverSide={true}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                externalSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                filterableFields={filterableFields}
-                onFiltersChange={(filters) => {
-                  setPage(1);
-                  const statusFilter = filters.find((f) => f.field === "status");
-                  setStatus(statusFilter?.value as string | undefined || undefined);
-                }}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={true}
-                selectable={true}
-                getRowId={(row) => row.resident.id}
-                selectedRows={selectedResidents}
-                onSelectionChange={setSelectedResidents}
-                bulkActions={bulkActions}
-              />
-            )}
+
+            <DataTable
+              data={residents}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search residents by name, email, or phone..."
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={setPageSize}
+              showPagination={true}
+              emptyMessage="No residents found"
+              serverSide={true}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              initialSearch={search}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              availableFilters={availableFilters}
+              initialFilters={activeFilters}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                const statusFilter = filters.find((f) => f.field === "status");
+                setStatus(statusFilter?.value as string | undefined || undefined);
+                const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                setStartDate(startDateFilter?.value as string | undefined || undefined);
+                const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+                setEndDate(endDateFilter?.value as string | undefined || undefined);
+              }}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={true}
+              selectable={true}
+              getRowId={(row) => row.resident.id}
+              selectedRows={selectedResidents}
+              onSelectionChange={setSelectedResidents}
+              bulkActions={bulkActions}
+              isLoading={isLoading || isFetching}
+            />
+
           </CardContent>
         </Card>
       </div>

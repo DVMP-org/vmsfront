@@ -54,26 +54,10 @@ import {
   TopicFormModal,
   ConfirmActionModal,
 } from "./components/ForumModals";
+import { formatFiltersForAPI } from "@/lib/table-utils";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
-interface FilterState {
-  houseId: string;
-  categoryId: string;
-  status: "all" | "pinned" | "locked" | "deleted";
-  page: number;
-  search: string;
-  startDate: string;
-  endDate: string;
-}
-
-const DEFAULT_FILTERS: FilterState = {
-  houseId: "all",
-  categoryId: "all",
-  status: "all",
-  page: 1,
-  search: "",
-  startDate: "",
-  endDate: "",
-};
+const PAGE_SIZE = 100;
 
 export default function AdminForumsPage() {
   const router = useRouter();
@@ -88,129 +72,93 @@ export default function AdminForumsPage() {
     [housesData?.items]
   );
 
-  const [filters, setFilters] = useState<FilterState>(() => ({
-    houseId: searchParams.get("houseId") ?? DEFAULT_FILTERS.houseId,
-    categoryId: searchParams.get("categoryId") ?? DEFAULT_FILTERS.categoryId,
-    status: (searchParams.get("status") as FilterState["status"]) ??
-      DEFAULT_FILTERS.status,
-    page: Number(searchParams.get("page") ?? DEFAULT_FILTERS.page) || 1,
-    search: searchParams.get("search") ?? DEFAULT_FILTERS.search,
-    startDate: searchParams.get("startDate") ?? DEFAULT_FILTERS.startDate,
-    endDate: searchParams.get("endDate") ?? DEFAULT_FILTERS.endDate,
-  }));
-  const [searchInput, setSearchInput] = useState(filters.search);
 
-  const syncFiltersToUrl = useCallback(
-    (next: FilterState) => {
-      const params = new URLSearchParams();
-      if (next.houseId && next.houseId !== "all") {
-        params.set("houseId", next.houseId);
-      }
-      if (next.categoryId && next.categoryId !== "all") {
-        params.set("categoryId", next.categoryId);
-      }
-      if (next.status !== "all") {
-        params.set("status", next.status);
-      }
-      if (next.page > 1) {
-        params.set("page", String(next.page));
-      }
-      if (next.search.trim().length > 0) {
-        params.set("search", next.search.trim());
-      }
-      if (next.startDate) {
-        params.set("startDate", next.startDate);
-      }
-      if (next.endDate) {
-        params.set("endDate", next.endDate);
-      }
-      const queryString = params.toString();
-      router.replace(
-        queryString ? `${pathname}?${queryString}` : pathname,
-        { scroll: false }
-      );
+
+  // URL query sync
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config: {
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      isPinned: { defaultValue: undefined },
+      isLocked: { defaultValue: undefined },
+      isDeleted: { defaultValue: undefined },
+      houseId: { defaultValue: "all" },
+      categoryId: { defaultValue: "all" },
+      startDate: { defaultValue: undefined },
+      endDate: { defaultValue: undefined },
     },
-    [pathname, router]
-  );
+    skipInitialSync: true,
+  });
 
-  const updateFilters = useCallback(
-    (patch: Partial<FilterState>) => {
-      setFilters((prev) => {
-        const merged: FilterState = {
-          ...prev,
-          ...patch,
-        };
-        return merged;
-      });
-    },
-    []
-  );
 
-  // Add a useEffect to sync URL when filters change
-  // But only sync if the change didn't come from URL params (to avoid loops)
-  const isInitialMount = useRef(true);
-  useEffect(() => {
-    // Skip on initial mount to avoid syncing URL params back
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    syncFiltersToUrl(filters);
-  }, [filters, syncFiltersToUrl]);
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [houseId, setHouseId] = useState(() => initializeFromUrl("houseId"));
+  const [categoryId, setCategoryId] = useState(() => initializeFromUrl("categoryId"));
+  const [isPinned, setIsPinned] = useState(() => initializeFromUrl("isPinned"));
+  const [isDeleted, setIsDeleted] = useState(() => initializeFromUrl("isDeleted"));
+  const [isLocked, setIsLocked] = useState(() => initializeFromUrl("isLocked"));
+  const [startDate, setStartDate] = useState(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState(() => initializeFromUrl("endDate"));
+
+  const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      houseId: searchParams.get("houseId") ?? DEFAULT_FILTERS.houseId,
-      categoryId: searchParams.get("categoryId") ?? DEFAULT_FILTERS.categoryId,
-      status:
-        (searchParams.get("status") as FilterState["status"]) ??
-        DEFAULT_FILTERS.status,
-      page: Number(searchParams.get("page") ?? DEFAULT_FILTERS.page) || 1,
-      search: searchParams.get("search") ?? DEFAULT_FILTERS.search,
-      startDate: searchParams.get("startDate") ?? DEFAULT_FILTERS.startDate,
-      endDate: searchParams.get("endDate") ?? DEFAULT_FILTERS.endDate,
-    }));
-    // Reset initial mount flag when searchParams change
-    isInitialMount.current = true;
-  }, [searchParams]);
-
-  useEffect(() => {
-    setSearchInput(filters.search);
-  }, [filters.search]);
+    syncToUrl({ page, pageSize, search, isPinned, isLocked, isDeleted, houseId, categoryId, startDate, endDate });
+  }, [page, pageSize, search, isPinned, isLocked, isDeleted, houseId, categoryId, startDate, endDate, syncToUrl]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
-      updateFilters({ search: searchInput, page: 1 });
+      setSearch(searchInput);
+      setPage(1);
     }, 350);
     return () => clearTimeout(handle);
-  }, [searchInput, updateFilters]);
+  }, [searchInput]);
+
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    if (houseId && houseId !== "all") {
+      filters.push({ field: "house_id", operator: "eq" as const, value: houseId });
+    }
+    if (categoryId !== "all") filters.push({ field: "category_id", operator: "eq" as const, value: categoryId });
+    if (isPinned) filters.push({ field: "is_pinned", operator: "eq" as const, value: isPinned });
+    if (isLocked) filters.push({ field: "is_locked", operator: "eq" as const, value: isLocked });
+    if (isDeleted) filters.push({ field: "is_deleted", operator: "eq" as const, value: isDeleted });
+
+    if (startDate) filters.push({ field: "created_at", operator: "gte" as const, value: startDate });
+    if (endDate) filters.push({ field: "created_at", operator: "lte" as const, value: endDate });
+
+    return filters;
+  }, [houseId, categoryId, isPinned, isLocked, isDeleted, startDate, endDate]);
+
+  const apiFilters = useMemo(() => formatFiltersForAPI(activeFilters), [activeFilters]);
 
   const selectedHouse: House | undefined = useMemo(() => {
     if (!houses || houses.length === 0) return undefined;
-    if (filters.houseId === "all") return undefined;
-    return houses.find((house) => house.id === filters.houseId);
-  }, [houses, filters.houseId]);
+    if (houseId === "all") return undefined;
+    return houses.find((house) => house.id === houseId);
+  }, [houses, houseId]);
 
   const categoriesResponse = useAdminForumCategories({
     page: 1,
-    pageSize: 50,
-    houseId: filters.houseId === "all" ? undefined : filters.houseId,
+    pageSize: 100,
+    filters: houseId && houseId !== "all"
+      ? formatFiltersForAPI([{ field: "house_id", operator: "eq" as const, value: houseId }])
+      : undefined,
   });
+
   const topicsResponse = useAdminForumTopics({
-    page: filters.page,
+    page,
     pageSize: 10,
-    houseId: filters.houseId === "all" ? undefined : filters.houseId,
-    categoryId: filters.categoryId === "all" ? undefined : filters.categoryId,
-    status: filters.status === "all" ? undefined : filters.status,
-    search: filters.search,
-    startDate: filters.startDate || undefined,
-    endDate: filters.endDate || undefined,
+    search: search.trim() || undefined,
+    filters: apiFilters,
   });
 
   const categories = useMemo(
     () => categoriesResponse.data?.items ?? [],
-    [categoriesResponse.data?.items]
+    [categoriesResponse]
   );
   const topics = useMemo(
     () => topicsResponse.data?.items ?? [],
@@ -220,11 +168,11 @@ export default function AdminForumsPage() {
   const topicsTotalPages = topicsResponse.data?.total_pages ?? 1;
 
   const categoriesByHouse = useMemo(() => {
-    if (filters.houseId === "all") return categories;
+    if (!houseId || houseId === "all") return categories;
     return categories.filter(
-      (category) => category.house_id === filters.houseId
+      (category) => category.house_id === houseId
     );
-  }, [categories, filters.houseId]);
+  }, [categories, houseId]);
 
   const categoriesWithCounts = useMemo(
     () => {
@@ -309,7 +257,15 @@ export default function AdminForumsPage() {
 
   const handleResetFilters = () => {
     setSearchInput("");
-    updateFilters(DEFAULT_FILTERS);
+    setSearch("");
+    setHouseId("all");
+    setCategoryId("all");
+    setIsPinned(undefined);
+    setIsLocked(undefined);
+    setIsDeleted(undefined);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setPage(1);
   };
 
   const handleCategorySubmit = (values: {
@@ -423,9 +379,10 @@ export default function AdminForumsPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <select
               className="rounded border border-foreground/20  px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground h-8 bg-foreground/10"
-              value={filters.houseId}
+              value={houseId}
               onChange={(event) => {
-                updateFilters({ houseId: event.target.value, page: 1 });
+                setHouseId(event.target.value);
+                setPage(1);
               }}
             >
               <option value="all">All houses</option>
@@ -494,10 +451,11 @@ export default function AdminForumsPage() {
             </div>
             <select
               className="border border-foreground/20 rounded bg-foreground/10 px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground w-full md:w-48 h-8"
-              value={filters.categoryId}
-              onChange={(event) =>
-                updateFilters({ categoryId: event.target.value, page: 1 })
-              }
+              value={categoryId}
+              onChange={(event) => {
+                setCategoryId(event.target.value);
+                setPage(1);
+              }}
             >
               <option value="all">All categories</option>
               {categoriesByHouse.map((category) => (
@@ -507,35 +465,86 @@ export default function AdminForumsPage() {
               ))}
             </select>
             <div className="flex gap-1 border border-foreground/20 rounded bg-muted p-0.5">
-              {(["all", "pinned", "locked", "deleted"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => updateFilters({ status: value, page: 1 })}
-                  className={cn(
-                    "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
-                    filters.status === value
-                      ? "bg-foreground/10 text-foreground shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700"
-                  )}
-                >
-                  {value}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPinned(undefined);
+                  setIsLocked(undefined);
+                  setIsDeleted(undefined);
+                  setPage(1);
+                }}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  (!isPinned && !isLocked && !isDeleted)
+                    ? "bg-foreground/10 text-foreground shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700"
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPinned(isPinned ? undefined : "true");
+                  setPage(1);
+                }}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  isPinned
+                    ? "bg-foreground/10 text-foreground shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700"
+                )}
+              >
+                Pinned
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLocked(isLocked ? undefined : "true");
+                  setPage(1);
+                }}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  isLocked
+                    ? "bg-foreground/10 text-foreground shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700"
+                )}
+              >
+                Locked
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleted(isDeleted ? undefined : "true");
+                  setPage(1);
+                }}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  isDeleted
+                    ? "bg-foreground/10 text-foreground shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700"
+                )}
+              >
+                Deleted
+              </button>
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <DateInput
               label="From"
-              value={filters.startDate}
-              onChange={(value) =>
-                updateFilters({ startDate: value, page: 1 })
-              }
+              value={startDate}
+              onChange={(value) => {
+                setStartDate(value);
+                setPage(1);
+              }}
             />
             <DateInput
               label="To"
-              value={filters.endDate}
-              onChange={(value) => updateFilters({ endDate: value, page: 1 })}
+              value={endDate}
+              onChange={(value) => {
+                setEndDate(value);
+                setPage(1);
+              }}
             />
           </div>
           <Button
@@ -585,7 +594,7 @@ export default function AdminForumsPage() {
                 categoriesWithCounts.map(({ category, topicCount }) => (
                   <div
                     key={category.id}
-                    className="px-4 py-3 hover:bg-muted transition-colors border-l-2 border-transparent hover:border-foreground/20"
+                    className="px-4 py-3 hover:bg-muted transition-colors border-l-4 border border-muted dark:border-muted hover:border-foreground/20"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -855,12 +864,12 @@ export default function AdminForumsPage() {
                   </Table>
                   <div className="border-t border-foreground/20 px-4 py-3">
                     <PaginationBar
-                      page={filters.page}
+                      page={page}
                       totalPages={topicsTotalPages}
                       total={topicsTotal}
                       pageSize={10}
                       resourceLabel="topics"
-                      onChange={(page) => updateFilters({ page })}
+                      onChange={setPage}
                       isFetching={topicFetcher.isFetching}
                     />
                   </div>
@@ -876,7 +885,7 @@ export default function AdminForumsPage() {
         mode={categoryModalMode}
         houses={houses}
         defaultHouseId={
-          filters.houseId !== "all" ? filters.houseId : houses?.[0]?.id
+          houseId !== "all" ? houseId : houses?.[0]?.id
         }
         initialValues={
           activeCategory
@@ -902,7 +911,7 @@ export default function AdminForumsPage() {
         houses={houses}
         categories={categories}
         defaultHouseId={
-          filters.houseId !== "all" ? filters.houseId : houses?.[0]?.id
+          houseId !== "all" ? houseId : houses?.[0]?.id
         }
         initialValues={
           activeTopic

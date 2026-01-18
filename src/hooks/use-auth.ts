@@ -66,8 +66,6 @@ export function useAuth() {
 
       // Set auth state
       setAuth(user, token);
-      apiClient.setToken(token);
-
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
@@ -76,9 +74,9 @@ export function useAuth() {
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();
-        router.push(redirectTarget);
+        router.replace(redirectTarget);
       } else {
-        router.push("/select");
+        router.replace("/select");
       }
       console.log("router.push called");
     },
@@ -103,7 +101,6 @@ export function useAuth() {
 
       // Set auth state
       setAuth(user, token);
-      apiClient.setToken(token);
       console.log("Auth state set after registration");
 
       toast.success("Registration successful!");
@@ -112,8 +109,8 @@ export function useAuth() {
 
       // Navigate immediately
       console.log("Attempting to navigate to /select...");
-      router.push("/select");
-      console.log("router.push called");
+      router.replace("/select");
+      console.log("router.replace called");
     },
     onError: (error: any) => {
       console.error("Register error:", error);
@@ -130,6 +127,9 @@ export function useAuth() {
       clearAuth();
       apiClient.clearToken();
       queryClient.clear();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vms_admin_profile");
+      }
       toast.success("Logged out successfully");
       router.push("/auth/login");
     },
@@ -138,6 +138,9 @@ export function useAuth() {
       clearAuth();
       apiClient.clearToken();
       queryClient.clear();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vms_admin_profile");
+      }
       router.push("/auth/login");
     },
   });
@@ -185,18 +188,7 @@ export function useProfile() {
   });
 }
 
-export function useDashboardSelect() {
-  return useQuery<DashboardSelect>({
-    queryKey: ["auth", "dashboard-select"],
-    queryFn: async () => {
-      const response = await authService.getDashboardSelect();
-      const user = response.data;
 
-      return user;
-    },
-    enabled: useAuthStore.getState().isAuthenticated,
-  });
-}
 
 export function useVerifyToken() {
   return useQuery<AuthResponse>({

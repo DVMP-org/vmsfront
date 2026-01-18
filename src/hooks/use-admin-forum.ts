@@ -16,27 +16,14 @@ import {
   PaginatedResponse,
 } from "@/types";
 
-interface AdminForumCategoryParams {
+
+export function useAdminForumCategories(params: {
   page?: number;
   pageSize?: number;
-  houseId?: string;
   search?: string;
-  includeLocked?: boolean;
-}
-
-interface AdminForumTopicParams {
-  page?: number;
-  pageSize?: number;
-  houseId?: string;
-  categoryId?: string;
-  status?: "pinned" | "locked" | "deleted";
-  search?: string;
-  startDate?: string;
-  endDate?: string;
-  includeDeleted?: boolean;
-}
-
-export function useAdminForumCategories(params: AdminForumCategoryParams) {
+  sort?: string;
+  filters?: string;
+}) {
   return useQuery<PaginatedResponse<ForumCategory>>({
     queryKey: ["admin", "forum", "categories", params],
     queryFn: async () => {
@@ -59,7 +46,13 @@ export function useAdminForumCategory(categoryId: string | null) {
 }
 
 export function useAdminForumTopics(
-  params: AdminForumTopicParams,
+  params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sort?: string;
+    filters?: string;
+  },
   options?: { enabled?: boolean }
 ) {
   return useQuery<PaginatedResponse<ForumTopic>>({
@@ -86,7 +79,13 @@ export function useAdminForumTopic(topicId: string | null) {
 
 export function useAdminForumPosts(
   topicId: string | null,
-  params: { page?: number; pageSize?: number }
+  params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sort?: string;
+    filters?: string;
+  }
 ) {
   return useQuery<PaginatedResponse<ForumPost>>({
     queryKey: ["admin", "forum", "posts", topicId, params],

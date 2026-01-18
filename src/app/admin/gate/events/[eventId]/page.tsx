@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, Clock, MapPin, Fingerprint, Scan, ShieldCheck, User2, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Fingerprint, Scan, ShieldCheck, User2, Calendar, Mail, Phone, Copy, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAdminGateEvent } from "@/hooks/use-admin";
-import { cn, titleCase } from "@/lib/utils";
+import { cn, getPassStatusColor, titleCase } from "@/lib/utils";
+import { toast } from "sonner";
+import { GatePassStatus, Resident, Visitor } from "@/types";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 export default function AdminGateEventDetailPage() {
   const router = useRouter();
@@ -17,6 +20,7 @@ export default function AdminGateEventDetailPage() {
   const eventId = Array.isArray(params?.eventId) ? params?.eventId[0] : params?.eventId ?? null;
 
   const { data, isLoading } = useAdminGateEvent(eventId);
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const timeline = useMemo(() => {
     if (!data) return [];
@@ -97,10 +101,10 @@ export default function AdminGateEventDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {data.checkout_time ? (
-            <Badge className="bg-zinc-100 text-zinc-700 hover:bg-zinc-100 border-zinc-200">Completed</Badge>
+          {data?.checkout_time ? (
+            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">Completed</Badge>
           ) : (
-            <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-100">Active Session</Badge>
+            <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-200">Active Session</Badge>
           )}
         </div>
       </div>
@@ -127,13 +131,93 @@ export default function AdminGateEventDetailPage() {
                     label="Created Timestamp"
                     value={format(new Date(data.created_at), "yyyy-MM-dd HH:mm:ss")}
                   />
-                  <DetailItem label="Pass Status" value={titleCase(data.gate_pass?.status || "N/A")} />
-                  <DetailItem label="House Mapping" value={data.house?.name || "Unassigned"} />
+                  <DetailItem label="Pass Status" value={data.gate_pass?.status || "N/A"} />
+                  <DetailItem label="House Unit" value={data.house?.name || "Unassigned"} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          <Card className="rounded-lg shadow-none border-border/60 overflow-hidden">
+            <CardHeader className="py-4 border-b bg-muted/30">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <User2 className="h-4 w-4 text-muted-foreground" />
+                Owner Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="md:w-1/3 text-center md:text-left">
+                  <div className="w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-2 mx-auto md:mx-0">
+                    <User2 className="h-6 w-6 text-zinc-600" />
+                  </div>
+                  <h3 className="font-bold text-foreground text-lg">{data.owner?.name || "N/A"}</h3>
+                  <p className="text-xs text-muted-foreground uppercase tracking-tight">{titleCase(data.owner_type)} Details</p>
+                </div>
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 py-2 border-t md:border-t-0 md:border-l border-border md:pl-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                      <Mail className="h-3 w-3" /> Email Address
+                    </p>
+                    <p className="text-sm font-medium text-foreground">{data.owner?.email || "N/A"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> Phone Number
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      {(data.owner as any)?.phone || (data.owner as any)?.user?.phone || "N/A"}
+                    </p>
+                  </div>
+                  {data.owner_type.toLowerCase() === "visitor" ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                        <User2 className="h-3 w-3" /> Visitor Pass Code
+                      </p>
+                      <span className="flex items-center cursor-pointer group" onClick={() =>
+                        copyToClipboard(`${data?.gate_pass?.code}-${(data?.owner as Visitor).pass_code_suffix}`, "visitor_pass", "Visitor pass code copied")
+                      }>
+                        <p className="text-sm font-medium text-foreground">
+                          {data?.gate_pass?.code}-{(data?.owner as Visitor).pass_code_suffix}
+                        </p>
+
+                        {isCopied("visitor_pass") ? (
+                          <Check className="h-3.5 w-3.5 ml-2 text-emerald-500 animate-in zoom-in duration-300" />
+                        ) : (
+                          <Copy
+                            className="h-3.5 w-3.5 ml-2 text-muted-foreground group-hover:text-foreground transition-colors"
+                          />
+                        )}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                        <User2 className="h-3 w-3" /> Resident Pass Code
+                      </p>
+                      <span className="flex items-center cursor-pointer group" onClick={() =>
+                        copyToClipboard(`${data?.gate_pass?.code}-${(data?.owner as Resident).pass_code}`, "resident_pass", "Resident pass code copied")
+                      }>
+                        <p className="text-sm font-medium text-foreground">
+                          {data?.gate_pass?.code}-{(data?.owner as Resident).pass_code}
+                        </p>
+                        {isCopied("resident_pass") ? (
+                          <Check className="h-3.5 w-3.5 ml-2 text-emerald-500 animate-in zoom-in duration-300" />
+                        ) : (
+                          <Copy
+                            className="h-3.5 w-3.5 ml-2 text-muted-foreground group-hover:text-foreground transition-colors"
+                          />
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Linked House Details Card */}
           <Card className="rounded-lg shadow-none border-border/60 overflow-hidden">
             <CardHeader className="py-4 border-b bg-muted/30">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -167,8 +251,9 @@ export default function AdminGateEventDetailPage() {
           </Card>
         </div>
 
-        {/* Right Column: Timeline & Side Info */}
+        {/* Right Column */}
         <div className="space-y-6">
+          {/* Activity Timeline Card */}
           <Card className="rounded-lg shadow-none border-border/60">
             <CardHeader className="py-4 border-b">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -202,6 +287,7 @@ export default function AdminGateEventDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Security Audit Notice Card */}
           <Card className="rounded-lg shadow-none border-[rgb(var(--brand-primary))] bg-[rgb(var(--brand-primary)/0.2)]">
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2 text-[rgb(var(--brand-primary))] text-sm font-semibold">
@@ -214,22 +300,28 @@ export default function AdminGateEventDetailPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 
-function DetailItem({ label, value, isMono = false }: { label: string; value: string; isMono?: boolean }) {
+function DetailItem({ label, value, isMono = false, className }: { label: string; value: string; isMono?: boolean, className?: string }) {
+  const statuses: string[] = Object.values(GatePassStatus) as string[]
   return (
     <div className="space-y-1">
       <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">{label}</p>
       <p className={cn(
         "text-sm font-medium text-foreground break-all",
-        isMono && "font-mono text-xs text-muted-foreground"
+        isMono && "font-mono text-xs text-muted-foreground",
+
       )}>
-        {value}
-      </p>
-    </div>
+        {statuses.includes(value.toLocaleLowerCase()) ? (<div className={cn(
+          "px-3 py-1 border-md rounded-xs w-fit",
+          getPassStatusColor(value)
+        )}>{titleCase(value)}</div>) : titleCase(value)
+        }
+      </p >
+    </div >
   );
 }
 

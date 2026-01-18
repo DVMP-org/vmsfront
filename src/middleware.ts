@@ -1,21 +1,32 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from 'next/server';
+
 export function middleware(request: NextRequest) {
-  // Since we're using client-side authentication with localStorage/Zustand,
-  // we let all requests pass through and handle auth checks in client components
+  const token = request.cookies.get('auth-token')?.value;
+  const { pathname } = request.nextUrl;
+
+  // Define public vs private paths
+  const isAuthPath = pathname.startsWith('/auth');
+  const isProtectedPath =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/house') ||
+    pathname.startsWith('/select');
+
+  // 1. If user is authenticated and tries to access /auth/login, redirect to /select
+  if (token && isAuthPath && !pathname.includes('verify-email')) {
+    return NextResponse.redirect(new URL('/select', request.url));
+  }
+
+  // 2. If user is NOT authenticated and tries to access protected paths, redirect to /auth/login
+  if (!token && isProtectedPath) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect_to', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 
+// Optimization: Only run middleware for specific routes
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ['/admin/:path*', '/house/:path*', '/select', '/auth/:path*'],
 };
-

@@ -18,12 +18,14 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Modal } from "@/components/ui/Modal";
-import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { getFullName, getInitials, formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus2, ShieldCheck } from "lucide-react";
-import { Admin } from "@/types";
+import { Shield, Trash2, UserPlus2, ShieldCheck, Edit } from "lucide-react";
+import { Admin, AdminRole } from "@/types";
+import { SlideOver } from "@/components/ui/SlideOver";
+import { UpdateAdminRoleForm } from "./components/UpdateAdminRoleForm";
 
 interface CreateAdminFormState {
   first_name: string;
@@ -53,6 +55,8 @@ export default function AdminManagementPage() {
       search: { defaultValue: "" },
       roleId: { defaultValue: undefined },
       sort: { defaultValue: null },
+      startDate: { defaultValue: undefined },
+      endDate: { defaultValue: undefined },
     },
     skipInitialSync: true,
   });
@@ -67,80 +71,78 @@ export default function AdminManagementPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateAdminFormState>(initialFormState);
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
 
-  const { data: adminsData, isLoading: adminsLoading } = useAdmins({
-    page: 1,
-    pageSize: 100,
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (roleId) {
+      filters.push({ field: "role_id", operator: "eq", value: roleId });
+    }
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
+    return filters;
+  }, [roleId, startDate, endDate]);
+
+  const { data: adminsData, isLoading: adminsLoading, isFetching: adminsFetching } = useAdmins({
+    page,
+    pageSize,
+    search: search.trim() || undefined,
+    filters: formatFiltersForAPI(activeFilters),
+    sort,
   });
 
-  const admins = adminsData?.items;
 
-  const { data: roles, isLoading: rolesLoading } = useAdminRoles();
+  const { data: rolesData, isLoading: rolesLoading } = useAdminRoles({
+    page: 1,
+    pageSize: 100
+  });
+  const roles = useMemo(() => rolesData?.items ?? [], [rolesData]);
   const createAdmin = useCreateAdmin();
   const updateAdminRole = useUpdateAdminRole();
   const deleteAdmin = useDeleteAdmin();
 
   // Sync state to URL
   useEffect(() => {
-    syncToUrl({ page, pageSize, search, roleId, sort });
-  }, [page, pageSize, search, roleId, sort, syncToUrl]);
+    syncToUrl({ page, pageSize, search, roleId, sort, startDate, endDate });
+  }, [page, pageSize, search, roleId, sort, startDate, endDate, syncToUrl]);
 
   // Build filterable fields
-  const filterableFields = useMemo(() => {
-    const fields: Array<{ field: string; operator?: "eq"; value?: string }> = [];
-    if (roleId) {
-      fields.push({
+  const availableFilters = useMemo(() => {
+    const filters: FilterDefinition[] = [];
+    if (roles?.length > 0) {
+      filters.push({
         field: "role_id",
         operator: "eq",
-        value: roleId
-      });
-    }
-    return fields;
-  }, [roleId]);
+        label: "Role",
+        type: "select",
+        options: roles?.map((role) => ({
+          label: role.name,
+          value: role.id,
+        })),
 
-  // Filter admins client-side (since API doesn't support pagination yet)
-  const filteredAdmins = useMemo(() => {
-    if (!admins) return [];
-    let result = admins;
-
-    // Apply search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((admin) => {
-        const name = admin.name?.toLowerCase() || "";
-        const firstName = admin.user?.first_name?.toLowerCase() || "";
-        const lastName = admin.user?.last_name?.toLowerCase() || "";
-        const email = admin.user?.email?.toLowerCase() || "";
-        const role = admin.role?.name?.toLowerCase() || "";
-        return (
-          name.includes(q) ||
-          firstName.includes(q) ||
-          lastName.includes(q) ||
-          email.includes(q) ||
-          role.includes(q)
-        );
       });
     }
 
-    // Apply role filter
-    if (roleId) {
-      result = result.filter((admin) => admin.role_id === roleId);
-    }
-
-    return result;
-  }, [admins, search, roleId]);
+    filters.push({
+      field: "created_at",
+      label: "Date",
+      type: "date-range",
+    });
+    return filters;
+  }, [roles]);
 
   // Pagination
-  const paginatedAdmins = useMemo(() => {
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredAdmins.slice(startIndex, endIndex);
-  }, [filteredAdmins, page, pageSize]);
+  const admins = useMemo(() => adminsData?.items ?? [], [adminsData]);
 
-  const totalPages = Math.ceil(filteredAdmins.length / pageSize);
-  const total = filteredAdmins.length;
+  const total = adminsData?.total;
 
   const stats = useMemo(() => {
     if (!admins || !Array.isArray(admins)) {
@@ -152,8 +154,8 @@ export default function AdminManagementPage() {
       };
     }
     const total = admins.length;
-    const withCustomPermissions = admins?.filter((admin) => admin.permissions && admin.permissions !== "").length;
-    const allAccess = admins?.filter((admin) => admin.permissions === "*" || admin.role?.code?.toLowerCase() === "super_admin").length;
+    const withCustomPermissions = admins?.filter((admin) => admin.role?.permissions && admin.role?.permissions !== "").length;
+    const allAccess = admins?.filter((admin) => admin.role?.permissions_parsed.includes("*") || admin.role?.code?.toLowerCase() === "super_admin").length;
     const uniqueRoles = new Set(admins?.map((admin) => admin.role_id).filter(Boolean)).size;
     return { total, withCustomPermissions, allAccess, uniqueRoles };
   }, [admins]);
@@ -249,26 +251,20 @@ export default function AdminManagementPage() {
       key: "role",
       header: "Role",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: roles?.map((role) => ({
-        value: role.id,
-        label: role.name,
-      })) || [],
       accessor: (row) => (
-        <select
-          value={row.role_id || ""}
-          onChange={(e) => handleRoleChange(row.id, e.target.value)}
-          disabled={updatingAdminId === row.id}
-          className="h-9 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        >
-          <option value="">No role</option>
-          {roles?.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="px-3 py-1">
+            {row.role?.name || "No role"}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditingAdmin(row)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
       ),
     },
     {
@@ -277,18 +273,18 @@ export default function AdminManagementPage() {
       sortable: false,
       accessor: (row) => {
         const permissionsLabel =
-          row.permissions === "*"
+          row.role?.permissions_parsed.includes("*")
             ? "All access"
-            : row.permissions
-              ? `${row.permissions.split(",").length} override(s)`
+            : row.role?.permissions_parsed
+              ? `${row.role?.permissions_parsed?.length} override(s)`
               : "Inherit role";
 
         return (
           <Badge
             variant={
-              row.permissions === "*"
+              row.role?.permissions_parsed.includes("*")
                 ? "default"
-                : row.permissions
+                : row.role?.permissions_parsed
                   ? "secondary"
                   : "warning"
             }
@@ -317,7 +313,12 @@ export default function AdminManagementPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(row.id)}
+            onClick={() => {
+              if (confirm(`Are you sure you want to delete the admin "${row.name}"?`)) {
+                toast.info(`Deleting admin "${row.name}"...`);
+                handleDelete(row.id);
+              }
+            }}
             disabled={deletingAdminId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -351,7 +352,7 @@ export default function AdminManagementPage() {
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
           <Card>
@@ -362,7 +363,7 @@ export default function AdminManagementPage() {
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.withCustomPermissions}</div>
+              <div className="text-xl font-bold">{stats.withCustomPermissions}</div>
             </CardContent>
           </Card>
           <Card>
@@ -371,7 +372,7 @@ export default function AdminManagementPage() {
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.allAccess}</div>
+              <div className="text-xl font-bold">{stats.allAccess}</div>
             </CardContent>
           </Card>
           <Card>
@@ -380,7 +381,7 @@ export default function AdminManagementPage() {
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.uniqueRoles}</div>
+              <div className="text-xl font-bold">{stats.uniqueRoles}</div>
             </CardContent>
           </Card>
         </div>
@@ -388,65 +389,60 @@ export default function AdminManagementPage() {
         {/* Table */}
         <Card>
           <CardContent className="p-6">
-            {adminsLoading ? (
-              <TableSkeleton />
-            ) : !filteredAdmins || filteredAdmins.length === 0 && !search && !roleId ? (
-              <EmptyState
-                icon={Shield}
-                title="No admins onboarded yet"
-                description="Use the quick onboard button to add your first teammate."
-                action={{
-                  label: "Quick onboard admin",
-                  onClick: () => setCreateModalOpen(true),
-                }}
-              />
-            ) : (
-              <DataTable
-                data={paginatedAdmins}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search admins by name, email, or role..."
-                pageSize={pageSize}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                onPageSizeChange={setPageSize}
-                showPagination={true}
-                emptyMessage="No admins found"
-                serverSide={false}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                externalSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                onFiltersChange={(filters) => {
-                  setPage(1);
-                  const roleFilter = filters.find((f) => f.field === "role_id");
-                  setRoleId(roleFilter?.value as string | undefined || undefined);
-                }}
-                filterableFields={filterableFields}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={false}
-                selectable={true}
-                selectedRows={selectedAdmins}
-                onSelectionChange={setSelectedAdmins}
-                bulkActions={bulkActions}
-              />
-            )}
+
+            <DataTable
+              data={admins}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search admins by name, email, or role..."
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={setPageSize}
+              showPagination={true}
+              emptyMessage="No admins found"
+              serverSide={false}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              initialSearch={search}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                const roleFilter = filters.find((f) => f.field === "role_id");
+                const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+                setRoleId(roleFilter?.value as string | undefined || undefined);
+                setStartDate(startDateFilter?.value as string | undefined || undefined);
+                setEndDate(endDateFilter?.value as string | undefined || undefined);
+              }}
+              availableFilters={availableFilters}
+              initialFilters={activeFilters}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={false}
+              selectable={true}
+              selectedRows={selectedAdmins}
+              onSelectionChange={setSelectedAdmins}
+              bulkActions={bulkActions}
+              isLoading={adminsLoading || adminsFetching}
+            />
+
           </CardContent>
         </Card>
       </div>
 
       {/* Create Admin Modal */}
-      <Modal
+      <SlideOver
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Quick Onboard Admin"
+        description="Create a new admin user with basic information."
       >
         <form onSubmit={handleCreateSubmit} className="space-y-4">
           <Input
@@ -505,7 +501,26 @@ export default function AdminManagementPage() {
             </Button>
           </div>
         </form>
-      </Modal>
+      </SlideOver>
+
+      {/* Update Role SlideOver */}
+      <SlideOver
+        isOpen={!!editingAdmin}
+        onClose={() => setEditingAdmin(null)}
+        title="Update Admin Role"
+        description="Change the role and access level for this administrator."
+      >
+        {editingAdmin && (
+          <UpdateAdminRoleForm
+            admin={editingAdmin}
+            roles={roles || []}
+            onSuccess={() => {
+              setEditingAdmin(null);
+            }}
+            onCancel={() => setEditingAdmin(null)}
+          />
+        )}
+      </SlideOver>
     </>
   );
 }

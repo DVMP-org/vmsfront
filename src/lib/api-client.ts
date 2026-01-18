@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
+import { useAuthStore } from "@/store/auth-store";
 
 // Use production API URL in production, fallback to localhost for development
 const API_URL =
@@ -39,6 +40,7 @@ class ApiClient {
       async (error: AxiosError) => {
         if (error.response?.status === 401) {
           // Token expired or invalid
+          useAuthStore.getState().clearAuth();
           this.clearToken();
           if (typeof window !== "undefined") {
             const currentPath =

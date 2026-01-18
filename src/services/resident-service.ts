@@ -26,11 +26,19 @@ import {
   WalletTransaction,
   ResidentHouse,
   ResidentCreate,
+  HouseDue,
+  DueSchedule,
+  DuePayment,
+  DashboardSelect,
 } from "@/types";
 
 export const residentService = {
   async getHouses(): Promise<ApiResponse<House[]>> {
     return apiClient.get("/resident/house/list");
+  },
+
+  async getDashboardSelect(): Promise<ApiResponse<DashboardSelect>> {
+    return apiClient.get("/resident/dashboard/select");
   },
 
   async getResident(): Promise<ApiResponse<Resident>> {
@@ -65,13 +73,21 @@ export const residentService = {
 
   async getGatePasses(
     houseId: string,
-    page: number = 1,
-    pageSize: number = 10
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
   ): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
     return apiClient.get(`/resident/house/${houseId}/gate-passes`, {
       params: {
-        page,
-        page_size: pageSize,
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
       },
     });
   },
@@ -86,11 +102,22 @@ export const residentService = {
 
   async getVisitors(
     houseId: string,
-    page: number = 1,
-    pageSize: number = 10
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
   ): Promise<ApiResponse<PaginatedResponse<Visitor>>> {
     return apiClient.get(`/resident/house/${houseId}/visitors`, {
-      params: { page, page_size: pageSize },
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
+      },
     });
   },
 
@@ -148,12 +175,18 @@ export const residentService = {
     params?: {
       page?: number;
       pageSize?: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
     return apiClient.get(`/resident/house/${houseId}/forum/categories`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 100,
+        search: params?.search ?? undefined,
+        filters: params?.filters ?? undefined,
+        sort: params?.sort ?? undefined,
       },
     });
   },
@@ -180,15 +213,17 @@ export const residentService = {
       page?: number;
       pageSize?: number;
       search?: string;
-      includeDeleted?: boolean;
+      filters?: string;
+      sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
     return apiClient.get(`/resident/house/${houseId}/forum/topics`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 20,
-        search_query: params?.search ?? undefined,
-        include_deleted: params?.includeDeleted ?? undefined,
+        search: params?.search ?? undefined,
+        filters: params?.filters ?? undefined,
+        sort: params?.sort ?? undefined,
       },
     });
   },
@@ -227,15 +262,23 @@ export const residentService = {
   async getForumPosts(
     houseId: string,
     topicId: string,
-    page: number = 1,
-    pageSize: number = 20
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
+    }
   ): Promise<ApiResponse<PaginatedResponse<ForumPost>>> {
     return apiClient.get(
       `/resident/house/${houseId}/forum/topic/${topicId}/post/all`,
       {
         params: {
-          page,
-          page_size: pageSize,
+          page: params.page,
+          page_size: params.pageSize,
+          search: params.search,
+          filters: params.filters,
+          sort: params.sort,
         },
       }
     );
@@ -263,13 +306,17 @@ export const residentService = {
   },
 
   async getWalletHistory(
-    page: number = 1,
-    pageSize: number = 20
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
+    }
   ): Promise<ApiResponse<PaginatedResponse<WalletTransaction>>> {
     return apiClient.get("/resident/wallet/history", {
       params: {
-        page,
-        page_size: pageSize,
+        ...params
       },
     });
   },
@@ -323,5 +370,68 @@ export const residentService = {
     residentId: string
   ): Promise<ApiResponse<ResidentHouse>> {
     return apiClient.put(`/resident/house/${houseId}/residents/${residentId}/toggle-status`);
+  },
+
+  async getHouseDues(
+    houseId: string,
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
+  ): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues`, {
+      params: {
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 10,
+        search: params?.search ?? undefined,
+        sort: params?.sort ?? undefined,
+        filters: params?.filters ?? undefined,
+      },
+    });
+  },
+
+  async getHouseDue(houseId: string, dueId: string): Promise<ApiResponse<HouseDue>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}`);
+  },
+
+  async scheduleHouseDue(houseId: string, dueId: string, data: { payment_breakdown: string }): Promise<ApiResponse<HouseDue>> {
+    return apiClient.post(`/resident/house/${houseId}/dues/${dueId}/schedule`, data);
+  },
+
+  async getDueSchedules(
+    houseId: string,
+    dueId: string,
+    page: number = 1,
+    pageSize: number = 10,
+    filters?: string
+  ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/schedules`, {
+      params: { page, page_size: pageSize, filters },
+    });
+  },
+
+  async getDuePayments(
+    houseId: string,
+    dueId: string,
+    page: number = 1,
+    pageSize: number = 10,
+    filters?: string
+  ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
+    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/payments`, {
+      params: { page, page_size: pageSize, filters },
+    });
+  },
+
+  async payDueSchedule(
+    houseId: string,
+    dueId: string,
+    scheduleId: string
+  ): Promise<ApiResponse<FundWalletResponse>> {
+    return apiClient.post(
+      `/resident/house/${houseId}/dues/${dueId}/schedules/${scheduleId}/pay`
+    );
   },
 };
