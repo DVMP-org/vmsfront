@@ -8,8 +8,11 @@ import {
   CheckSquare,
   Lock,
   MessageSquare,
+  Pencil,
   Pin,
+  Plus,
   Shield,
+  Trash,
   Unlock,
 } from "lucide-react";
 import {
@@ -51,6 +54,7 @@ import {
   ConfirmActionModal,
 } from "@/app/admin/forums/components/ForumModals";
 import type { ForumTopic } from "@/types";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 export default function AdminForumCategoryDetailPage() {
   const params = useParams<{ categoryId: string | string[] }>();
@@ -71,7 +75,9 @@ export default function AdminForumCategoryDetailPage() {
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
-    houseId: categoryQuery.data?.house_id,
+    filters: formatFiltersForAPI([{
+      field: "house_id", operator: "eq" as const, value: categoryQuery.data?.house_id
+    }]),
   });
   const [page, setPage] = useState(1);
   const category = categoryQuery.data;
@@ -79,10 +85,16 @@ export default function AdminForumCategoryDetailPage() {
     () => ({
       page,
       pageSize: 10,
-      categoryId: normalizedCategoryId ?? undefined,
-      houseId: category?.house_id ?? undefined,
+      filters: formatFiltersForAPI([
+        {
+          field: "category_id", operator: "eq" as const, value: normalizedCategoryId
+        },
+        {
+          field: "house_id", operator: "eq" as const, value: categoryQuery.data?.house_id
+        }
+      ]),
     }),
-    [page, normalizedCategoryId, category?.house_id]
+    [page, normalizedCategoryId]
   );
   const topicsQuery = useAdminForumTopics(categoryTopicsFilters, {
     enabled: Boolean(normalizedCategoryId),
@@ -196,7 +208,7 @@ export default function AdminForumCategoryDetailPage() {
               <button
                 type="button"
                 onClick={() => router.push("/admin/forums")}
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition hover:text-foreground"
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase  text-muted-foreground transition hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Overview
@@ -241,16 +253,17 @@ export default function AdminForumCategoryDetailPage() {
                   setTopicModalOpen(true);
                 }}
               >
+                <Plus className="mr-2 h-4 w-4" />
                 Create topic
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setCategoryModalOpen(true)}
               >
+                <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </Button>
               <Button
-                variant="ghost"
                 onClick={() =>
                   updateCategory.mutate({
                     categoryId: normalizedCategoryId!,
@@ -258,10 +271,10 @@ export default function AdminForumCategoryDetailPage() {
                   })
                 }
               >
+                <Lock className="mr-2 h-4 w-4" />
                 {category?.is_locked ? "Unlock" : "Lock"}
               </Button>
               <Button
-                variant="ghost"
                 onClick={() =>
                   updateCategory.mutate({
                     categoryId: normalizedCategoryId!,
@@ -269,12 +282,14 @@ export default function AdminForumCategoryDetailPage() {
                   })
                 }
               >
+                <Shield className="mr-2 h-4 w-4" />
                 Set default
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setCategoryToDelete(true)}
               >
+                <Trash className="mr-2 h-4 w-4" />
                 Delete
               </Button>
             </div>

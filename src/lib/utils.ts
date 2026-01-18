@@ -68,13 +68,26 @@ export function getPassStatusColor(status: string): string {
     case "checked_in":
       return "text-green-600 bg-green-50 border border-green-600";
     case "checked_out":
-      return "text-indigo-600 bg-indigo-50 border border-indigo-600";
+      return "text-white bg-orange-500 border border-orange-500";
     case "pending":
       return "text-amber-600 bg-amber-50 border border-amber-600";
     default:
       return "text-gray-600 bg-gray-50 border border-gray-600";
   }
 }
+
+export const getStatusStyles = (status: string) => {
+  switch (status) {
+    case "success":
+      return "border-green-500/50 text-green-600";
+    case "failed":
+      return "border-red-500/50 text-red-600";
+    case "pending":
+      return "border-amber-500/50 text-amber-600";
+    default:
+      return "border-border text-muted-foreground";
+  }
+};
 
 export function truncateText(text: string, length: number = 50): string {
   if (text.length <= length) return text;

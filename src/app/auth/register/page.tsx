@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
-import { Home, Lock, Mail, Phone, User2Icon } from "lucide-react";
+import { Lock, Mail, Phone, User2Icon } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion } from "framer-motion";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -60,68 +61,73 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/10 via-background to-var(--brand-secondary)/10 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Home className="h-8 w-8 text-var(--brand-primary)" />
-            </div>
+    <AuthLayout
+      title="Create account"
+      description="Enter your information to get started"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {registerError && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            {registerError}
+          </motion.div>
+        )}
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              type="text"
+              name="first_name"
+              label="First Name"
+              placeholder="John"
+              icon={User2Icon}
+              value={formData.first_name}
+              onChange={handleChange}
+              error={errors.first_name || registerFieldErrors.first_name}
+              className="h-11"
+            />
+            <Input
+              type="text"
+              name="last_name"
+              label="Last Name"
+              placeholder="Doe"
+              icon={User2Icon}
+              value={formData.last_name}
+              onChange={handleChange}
+              error={errors.last_name || registerFieldErrors.last_name}
+              className="h-11"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
-            Enter your information to get started
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {registerError && (
-              <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {registerError}
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="text"
-                name="first_name"
-                label="First Name"
-                placeholder="John"
-                icon={User2Icon}
-                value={formData.first_name}
-                onChange={handleChange}
-                error={errors.first_name || registerFieldErrors.first_name}
-              />
-              <Input
-                type="text"
-                name="last_name"
-                label="Last Name"
-                placeholder="Doe"
-                icon={User2Icon}
-                value={formData.last_name}
-                onChange={handleChange}
-                error={errors.last_name || registerFieldErrors.last_name}
-              />
-            </div>
-            <Input
-              type="email"
-              name="email"
-              label="Email"
-              placeholder="name@example.com"
-              value={formData.email}
-              icon={Mail}
-              onChange={handleChange}
-              error={errors.email || registerFieldErrors.email}
-            />
-            <Input
-              type="tel"
-              name="phone"
-              label="Phone (Optional)"
-              icon={Phone}
-              placeholder="+1234567890"
-              value={formData.phone}
-              onChange={handleChange}
-              error={registerFieldErrors.phone}
-            />
+
+          <Input
+            type="email"
+            name="email"
+            label="Email Address"
+            placeholder="name@example.com"
+            value={formData.email}
+            icon={Mail}
+            onChange={handleChange}
+            error={errors.email || registerFieldErrors.email}
+            className="h-11"
+          />
+
+          <Input
+            type="tel"
+            name="phone"
+            label="Phone (Optional)"
+            icon={Phone}
+            placeholder="+1234567890"
+            value={formData.phone}
+            onChange={handleChange}
+            error={registerFieldErrors.phone}
+            className="h-11"
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <PasswordInput
               name="password"
               label="Password"
@@ -130,6 +136,7 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               error={errors.password || registerFieldErrors.password}
+              className="h-11 "
             />
             <PasswordInput
               name="confirmPassword"
@@ -143,24 +150,26 @@ export default function RegisterPage() {
                 registerFieldErrors.confirmPassword ||
                 registerFieldErrors.password
               }
+              className="h-11 "
             />
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={isRegistering}
-            >
-              Create Account
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/auth/login" className="text-var(--brand-primary) hover:underline font-medium">
-              Sign in
-            </Link>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          isLoading={isRegistering}
+        >
+          Create Account
+        </Button>
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Already have an account? </span>
+          <Link href="/auth/login" className="text-[var(--brand-primary)] hover:underline font-bold transition-all">
+            Sign in
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

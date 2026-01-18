@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
@@ -9,6 +9,8 @@ import {
   Phone,
   Clock3,
   QrCode,
+  Check,
+  Copy,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -20,12 +22,15 @@ import { Button } from "@/components/ui/Button";
 import { useVisitor } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export default function VisitorDetailPage() {
   const router = useRouter();
   const params = useParams<{ houseId?: string; visitorId?: string }>();
   const { selectedHouse, setSelectedHouse } = useAppStore();
   const { data: profile } = useProfile();
+  const [copiedVisitorGatePass, setVisitorCopiedGatePass] = useState(false);
+  const [copiedGatePass, setCopiedGatePass] = useState(false);
 
   const rawHouseId = params?.houseId;
   const houseId = Array.isArray(rawHouseId) ? rawHouseId[0] : rawHouseId;
@@ -41,6 +46,38 @@ export default function VisitorDetailPage() {
       setSelectedHouse(match);
     }
   }, [houseId, profile?.houses, selectedHouse?.id, setSelectedHouse]);
+
+
+  const parseImageUrl = useMemo(() => (url: string) => {
+    try {
+      const parsedUrl = new URL(url);
+
+      return parsedUrl.toString();
+    } catch (error) {
+      console.error("Error parsing URL:", error);
+      return `https://api.vmscore.test/${url}`;
+    }
+  }, []);
+
+  const copyVisitorGatePass = () => {
+    if (!passCode) return;
+    navigator.clipboard.writeText(passCode);
+    setVisitorCopiedGatePass(true);
+    toast.success("Visitor Pass code copied to clipboard");
+    setTimeout(() => {
+      setVisitorCopiedGatePass(false);
+    }, 2000);
+  };
+
+  const copyGatePass = () => {
+    if (!visitor.gate_pass?.code) return;
+    navigator.clipboard.writeText(visitor.gate_pass.code);
+    setCopiedGatePass(true);
+    toast.success("Pass code copied to clipboard");
+    setTimeout(() => {
+      setCopiedGatePass(false);
+    }, 2000);
+  };
 
   const { data: visitor, isLoading } = useVisitor(effectiveHouseId, visitorId ?? null);
 
@@ -108,16 +145,16 @@ export default function VisitorDetailPage() {
           </Button>
         </div>
 
-        <section className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-indigo-700 text-white shadow-xl">
+        <section className="rounded-xl border border-border/60 shadow-xl">
           <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-wide text-white/70">Visitor</p>
+              <p className="text-sm uppercase">Visitor</p>
               <h1 className="text-3xl font-semibold">{visitor.name ?? "Visitor"}</h1>
               <p className="text-white/80">{visitor.email}</p>
             </div>
             <div className="grid gap-2 text-right text-sm">
               <span className="text-white/70">Pass code</span>
-              <span className="font-mono text-lg tracking-wide">{passCode}</span>
+              <span className="font-mono text-lg">{passCode}</span>
             </div>
           </div>
         </section>
@@ -129,12 +166,12 @@ export default function VisitorDetailPage() {
               <CardDescription>Who this visitor is and when they were created.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <InfoTile icon={Mail} label="Email" value={visitor.email ?? "—"} />
-              <InfoTile icon={Phone} label="Phone" value={visitor.phone ?? "—"} />
+              <InfoTile icon={Mail} label="Email" value={visitor.email ? visitor.email : "Not Provided"} />
+              <InfoTile icon={Phone} label="Phone" value={visitor.phone ? visitor.phone : "Not Provided"} />
               <InfoTile
                 icon={Clock3}
                 label="Created"
-                value={visitor.created_at ? format(new Date(visitor.created_at), "PPpp") : "—"}
+                value={visitor.created_at ? format(new Date(visitor.created_at), "PPpp") : "Not Provided"}
               />
               <InfoTile
                 icon={Clock3}
@@ -154,16 +191,33 @@ export default function VisitorDetailPage() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Pass code
                 </p>
-                <p className="font-mono text-lg">{passCode}</p>
+                <span className="flex items-center gap-2 z-10 cursor-pointer" onClick={copyVisitorGatePass}>
+                  <p className="font-mono text-lg"
+
+                  >{passCode}</p>
+                  {copiedVisitorGatePass ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-muted-foreground" />
+                  )}
+
+                </span>
                 {visitor.gate_pass?.code && (
-                  <Badge variant="secondary" className="mt-2">
-                    {visitor.gate_pass.code}
+                  <Badge variant="secondary" className="mt-2 cursor-pointer" onClick={copyGatePass}>
+                    <span className="flex items-center gap-2">
+                      <p className="font-mono text-md">{visitor.gate_pass.code}</p>
+                      {copiedGatePass ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </span>
                   </Badge>
                 )}
               </div>
               {visitor.qr_code_url && (
                 <Image
-                  src={visitor.qr_code_url}
+                  src={parseImageUrl(visitor.qr_code_url)}
                   alt="Visitor QR code"
                   width={160}
                   height={160}

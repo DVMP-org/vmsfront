@@ -18,11 +18,12 @@ import { toast } from "sonner";
 
 export function useForumTopics(
   houseId: string | null,
-  options?: {
+  params?: {
     page?: number;
     pageSize?: number;
     search?: string;
-    includeDeleted?: boolean;
+    filters?: string;
+    sort?: string;
   }
 ) {
   return useQuery<PaginatedResponse<ForumTopic>>({
@@ -30,18 +31,16 @@ export function useForumTopics(
       "forum",
       "topics",
       houseId,
-      options?.page ?? 1,
-      options?.pageSize ?? 20,
-      options?.search ?? "",
-      options?.includeDeleted ?? false,
+      params
     ],
     queryFn: async () => {
       if (!houseId) throw new Error("House ID is required");
       const response = await residentService.getForumTopics(houseId, {
-        page: options?.page,
-        pageSize: options?.pageSize,
-        search: options?.search,
-        includeDeleted: options?.includeDeleted,
+        page: params?.page,
+        pageSize: params?.pageSize,
+        search: params?.search,
+        filters: params?.filters,
+        sort: params?.sort,
       });
       return response.data;
     },
@@ -86,16 +85,24 @@ export function useForumCategory(
 
 export function useForumCategoriesList(
   houseId: string | null,
-  page: number = 1,
-  pageSize: number = 100
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    filters?: string;
+    sort?: string;
+  }
 ) {
   return useQuery<PaginatedResponse<ForumCategory>>({
-    queryKey: ["forum", "categories", houseId, page, pageSize],
+    queryKey: ["forum", "categories", houseId, params],
     queryFn: async () => {
       if (!houseId) throw new Error("House ID is required");
       const response = await residentService.getForumCategories(houseId, {
-        page,
-        pageSize,
+        page: params.page,
+        pageSize: params.pageSize,
+        search: params.search,
+        filters: params.filters,
+        sort: params.sort,
       });
       return response.data;
     },
@@ -108,18 +115,28 @@ export function useForumCategoriesList(
 export function useForumPosts(
   houseId: string | null,
   topicId: string | null,
-  page: number = 1,
-  pageSize: number = 20
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    filters?: string;
+    sort?: string;
+  }
 ) {
   return useQuery<PaginatedResponse<ForumPost>>({
-    queryKey: ["forum", "posts", houseId, topicId, page, pageSize],
+    queryKey: ["forum", "posts", houseId, topicId, params],
     queryFn: async () => {
       if (!houseId || !topicId) throw new Error("IDs are required");
       const response = await residentService.getForumPosts(
         houseId,
         topicId,
-        page,
-        pageSize
+        {
+          page: params.page,
+          pageSize: params.pageSize,
+          search: params.search,
+          filters: params.filters,
+          sort: params.sort,
+        }
       );
       return response.data;
     },

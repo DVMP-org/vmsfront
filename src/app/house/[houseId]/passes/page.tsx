@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { differenceInHours, formatDistanceToNow } from "date-fns";
 import { useGatePasses } from "@/hooks/use-resident";
@@ -11,12 +11,23 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { Column, DataTable } from "@/components/ui/DataTable";
+import { Column, DataTable, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Plus, CreditCard, ArrowRight, Home as HomeIcon } from "lucide-react";
 import { formatDate, formatDateTime, formatPassWindow, getPassStatusColor, getTimeRemaining, titleCase } from "@/lib/utils";
-import type { GatePass } from "@/types";
+import { GatePassStatus, type GatePass } from "@/types";
 import { PaginationBar } from "@/components/ui/PaginationBar";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
+const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
+  { label: "Checked-in", value: GatePassStatus.CHECKED_IN },
+  { label: "Checked-out", value: GatePassStatus.CHECKED_OUT },
+  { label: "Pending", value: GatePassStatus.PENDING },
+  { label: "Completed", value: GatePassStatus.COMPLETED },
+  { label: "Revoked", value: GatePassStatus.REVOKED },
+  { label: "Expired", value: GatePassStatus.EXPIRED },
+];
+const PAGE_SIZE = 100;
 export default function PassesPage() {
   const router = useRouter();
   const params = useParams<{ houseId?: string }>();
@@ -26,13 +37,108 @@ export default function PassesPage() {
   const { data: profile } = useProfile();
   const houseId = routeHouseId ?? selectedHouse?.id ?? null;
 
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const config = useMemo(() => ({
+    page: { defaultValue: 1 },
+    pageSize: { defaultValue: PAGE_SIZE },
+    search: { defaultValue: "" },
+    sort: { defaultValue: null },
+    status: { defaultValue: "" },
+    startDate: { defaultValue: "" },
+    endDate: { defaultValue: "" },
+  }), []);
+
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config,
+    skipInitialSync: true,
+  });
+  const isInitialMount = useRef(true);
+  const [page, setPage] = useState(() => initializeFromUrl("page"));
+  const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
+  const [search, setSearch] = useState(() => initializeFromUrl("search"));
+  const [sort, setSort] = useState(() => initializeFromUrl("sort"));
+  const [status, setStatus] = useState(() => initializeFromUrl("status"));
+  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
+
+  // Sync state changes to URL (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    syncToUrl({
+      page,
+      pageSize,
+      search,
+      status,
+      sort,
+      startDate,
+      endDate
+    });
+  }, [
+    page,
+    pageSize,
+    search,
+    status,
+    sort,
+    startDate,
+    endDate,
+    syncToUrl]);
+
+  const activeFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+
+    if (status) {
+      filters.push({ field: "status", operator: "eq", value: status });
+    }
+
+    if (startDate) {
+      filters.push({ field: "created_at", operator: "gte", value: startDate });
+    }
+    if (endDate) {
+      filters.push({ field: "created_at", operator: "lte", value: endDate });
+    }
+    return filters;
+  },
+    [
+      status,
+      startDate,
+      endDate
+    ]
+  );
+
+  const availableFilters: FilterDefinition[] = useMemo(() => {
+    const filters: FilterDefinition[] = [
+      {
+        field: "status",
+        label: "Status",
+        type: "select",
+        options: STATUS_FILTERS,
+      },
+      {
+        field: "created_at",
+        label: "Created Between",
+        type: "date-range",
+      },
+    ]
+    return filters;
+  }, []);
+
+
   const {
     data: paginatedPasses,
     isLoading,
     isFetching,
-  } = useGatePasses(houseId, page, pageSize);
+  } = useGatePasses(
+    houseId,
+    {
+      page,
+      pageSize,
+      search,
+      sort,
+      filters: formatFiltersForAPI(activeFilters)
+    });
 
   useEffect(() => {
     if (!routeHouseId || !profile?.houses) return;
@@ -82,14 +188,11 @@ export default function PassesPage() {
     {
       key: "code",
       header: "Pass",
-      sortable: true,
       className: "font-mono text-sm font-semibold",
     },
     {
       key: "visitorNames",
       header: "Visitors",
-      filterable: true,
-      sortable: true,
       accessor: (row) =>
         row.visitors && row.visitors.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
@@ -122,16 +225,7 @@ export default function PassesPage() {
     {
       key: "statusLabel",
       header: "Status",
-      sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: [
-        { value: "pending", label: "Pending" },
-        { value: "checked_in", label: "CheckedIn" },
-        { value: "checked_out", label: "CheckedOut" },
-        { value: "Revoked", label: "Revoked" },
-        { value: "expired", label: "Expired" },
-      ],
+
       accessor: (row) => (
         <Badge className={`${getPassStatusColor(row.status)} px-2 py-0.5`}>
           {row.statusLabel}
@@ -141,7 +235,6 @@ export default function PassesPage() {
     {
       key: "usesSummary",
       header: "Usage",
-      sortable: true,
       accessor: (row) => (
         <span className="text-sm text-muted-foreground">
           {row.usesSummary}
@@ -210,46 +303,64 @@ export default function PassesPage() {
         </div>
         <Card>
           <CardContent className="p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : !passRows.length ? (
-              <EmptyState
-                icon={CreditCard}
-                title="No passes yet"
-                description="Create your first visitor pass to get started"
-                action={{
-                  label: "Create Pass",
-                  onClick: () => router.push(`${houseBase}/passes/create`),
+
+            <>
+              <DataTable
+                data={passRows}
+                columns={passColumns}
+                searchable
+                showPagination={false}
+                searchPlaceholder="Search passes..."
+                emptyMessage="No passes match your filters"
+                isLoading={isLoading || isFetching}
+                initialFilters={activeFilters}
+                availableFilters={availableFilters}
+                onPageSizeChange={(newPageSize) => {
+                  setPage(1);
+                  setPageSize(newPageSize);
                 }}
+                onFiltersChange={(filters) => {
+                  setPage(1)
+                  const statusFilter = filters.find((f) => f.field === "status");
+                  const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                  const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+
+                  // Always set state (undefined if filter not found) to ensure URL clearing
+                  setStatus(statusFilter?.value as string | undefined || undefined);
+                  setStartDate(startDateFilter?.value as string | undefined || undefined);
+                  setEndDate(endDateFilter?.value as string | undefined || undefined);
+                }}
+                onSortChange={(sort) => {
+                  setPage(1)
+                  setSort(sort)
+                }}
+                onSearchChange={(search) => {
+                  setPage(1)
+                  setSearch(search)
+                }}
+                initialSort={sort}
+                initialSearch={search}
+                disableClientSideFiltering={true}
+                disableClientSideSorting={true}
               />
-            ) : (
-              <>
-                <DataTable
-                  data={passRows}
-                  columns={passColumns}
-                  searchable
-                  showPagination={false}
-                  searchPlaceholder="Search passes..."
-                  emptyMessage="No passes match your filters"
-                />
-                <PaginationBar
-                  page={page}
-                  pageSize={pageSize}
-                  total={paginatedPasses?.total ?? passRows.length}
-                  totalPages={paginatedPasses?.total_pages ?? 1}
-                  hasNext={
-                    paginatedPasses?.has_next ??
-                    page < (paginatedPasses?.total_pages ?? 0)
-                  }
-                  hasPrevious={
-                    paginatedPasses?.has_previous ?? page > 1
-                  }
-                  isFetching={isFetching}
-                  resourceLabel="passes"
-                  onChange={(next) => setPage(next)}
-                />
-              </>
-            )}
+              <PaginationBar
+                page={page}
+                pageSize={pageSize}
+                total={paginatedPasses?.total ?? passRows.length}
+                totalPages={paginatedPasses?.total_pages ?? 1}
+                hasNext={
+                  paginatedPasses?.has_next ??
+                  page < (paginatedPasses?.total_pages ?? 0)
+                }
+                hasPrevious={
+                  paginatedPasses?.has_previous ?? page > 1
+                }
+                isFetching={isFetching}
+                resourceLabel="passes"
+                onChange={(next) => setPage(next)}
+              />
+            </>
+
           </CardContent>
         </Card>
       </div>

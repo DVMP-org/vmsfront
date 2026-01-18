@@ -22,13 +22,13 @@ export function useRequireEmailVerification(enabled: boolean = true) {
         const isPublicPage = pathname === "/" || pathname === "/about" || pathname === "/contact";
 
         // Don't redirect if already on verification or any auth page (login, register, forgot-password, etc.)
-        // if (!isEmailVerified && !isVerificationPage && !isAuthPage && !isPublicPage) {
-        //     router.replace("/auth/verify-email");
-        // }
+        if (!isEmailVerified && !isVerificationPage && !isAuthPage && !isPublicPage) {
+            router.replace("/auth/verify-email");
+        }
 
-        // // If verified and on verification page, redirect to home or select
-        // if (isEmailVerified && isVerificationPage) {
-        //     router.replace("/select");
-        // }
+        // If verified and on verification page, redirect to home or select
+        if (isEmailVerified && isVerificationPage) {
+            router.replace("/select");
+        }
     }, [enabled, isAuthenticated, user, pathname, router]);
 }

@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { formatCurrency, titleCase } from "@/lib/utils";
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils";
 import { useHouseDues } from "@/hooks/use-resident";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Receipt, Wallet, ArrowRight } from "lucide-react";
-import { HouseDue, HouseDueStatus } from "@/types";
+import { Receipt, Wallet, ArrowRight, Eye } from "lucide-react";
+import { DueTenureLength, HouseDue, HouseDueStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { PaginationBar } from "@/components/ui/PaginationBar";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 const PAGE_SIZE = 20;
@@ -26,22 +28,128 @@ export default function ResidentDuesPage() {
         page: { defaultValue: 1 },
         pageSize: { defaultValue: PAGE_SIZE },
         search: { defaultValue: "" },
+        sort: { defaultValue: undefined },
+        status: { defaultValue: undefined },
+        payment_breakdown: { defaultValue: undefined },
+        startDate: { defaultValue: undefined },
+        endDate: { defaultValue: undefined },
     }), []);
 
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
         config,
         skipInitialSync: true,
     });
-
+    const isInitialMount = useRef(true);
     const [page, setPage] = useState(() => initializeFromUrl("page"));
     const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
     const [search, setSearch] = useState(() => initializeFromUrl("search"));
+    const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
+    const [payment_breakdown, setPaymentBreakdown] = useState<string | undefined>(() => initializeFromUrl("payment_breakdown"));
+    const [sort, setSort] = useState(() => initializeFromUrl("sort"));
+    const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
+    const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
 
+
+    // Sync state changes to URL (skip initial mount)
     useEffect(() => {
-        syncToUrl({ page, pageSize, search });
-    }, [page, pageSize, search, syncToUrl]);
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
 
-    const { data, isLoading } = useHouseDues(houseId, page, pageSize);
+        syncToUrl({
+            page,
+            pageSize,
+            search,
+            sort,
+            startDate,
+            endDate,
+            status,
+            payment_breakdown,
+        });
+    }, [
+        page,
+        pageSize,
+        search,
+        sort,
+        startDate,
+        endDate,
+        status,
+        payment_breakdown,
+        syncToUrl]);
+
+    const activeFilters = useMemo(() => {
+        const filters: FilterConfig[] = [];
+        if (payment_breakdown) {
+            filters.push({ field: "payment_breakdown", operator: "eq", value: payment_breakdown });
+        }
+        if (status) {
+            filters.push({ field: "status", operator: "eq", value: status });
+        }
+
+        if (startDate) {
+            filters.push({ field: "created_at", operator: "gte", value: startDate });
+        }
+        if (endDate) {
+            filters.push({ field: "created_at", operator: "lte", value: endDate });
+        }
+        return filters;
+    },
+        [
+            status,
+            payment_breakdown,
+            startDate,
+            endDate
+        ]
+    );
+
+    const availableFilters: FilterDefinition[] = useMemo(() => {
+        const filters: FilterDefinition[] = [
+            {
+                field: "payment_breakdown",
+                label: "Payment Breakdown",
+                type: "select",
+                options: [
+                    { value: DueTenureLength.ONE_TIME, label: "One-time" },
+                    { value: DueTenureLength.DAILY, label: "Daily" },
+                    { value: DueTenureLength.WEEKLY, label: "Weekly" },
+                    { value: DueTenureLength.MONTHLY, label: "Monthly" },
+                    { value: DueTenureLength.QUARTERLY, label: "Quarterly" },
+                    { value: DueTenureLength.BIANNUALLY, label: "Bi-Annually" },
+                    { value: DueTenureLength.YEARLY, label: "Yearly" },
+                ],
+            },
+            {
+                field: "status",
+                label: "Status",
+                type: "select",
+                options: [
+                    { value: HouseDueStatus.PAID, label: "Paid" },
+                    { value: HouseDueStatus.UNPAID, label: "Unpaid" },
+                    { value: HouseDueStatus.PARTIALLY_PAID, label: "Partially Paid" },
+                ],
+            },
+            {
+                field: "created_at",
+                label: "Created Between",
+                type: "date-range",
+            },
+        ]
+        return filters;
+    }, []);
+
+
+
+    const { data, isLoading, isFetching } = useHouseDues(
+        houseId,
+        {
+            page,
+            pageSize,
+            search,
+            sort,
+            filters: activeFilters.length > 0 ? formatFiltersForAPI(activeFilters) : undefined
+        }
+    );
 
     const dues = useMemo(() => data?.items ?? [], [data]);
     const total = data?.total ?? 0;
@@ -50,6 +158,7 @@ export default function ResidentDuesPage() {
         {
             key: "name",
             header: "Due Description",
+            sortable: true,
             accessor: (row) => (
                 <div className="py-1">
                     <span className="font-semibold text-foreground block truncate max-w-[250px]">{row.due?.name || "Service Charge"}</span>
@@ -60,11 +169,13 @@ export default function ResidentDuesPage() {
         {
             key: "amount",
             header: "Total Amount",
+            sortable: true,
             accessor: (row) => <span className="font-medium tabular-nums text-foreground">{formatCurrency(row.amount)}</span>,
         },
         {
             key: "balance",
             header: "Balance Remaining",
+            sortable: true,
             accessor: (row) => (
                 <span className={cn(
                     "font-bold tabular-nums",
@@ -75,8 +186,21 @@ export default function ResidentDuesPage() {
             ),
         },
         {
+            key: "payment_breakdown",
+            header: "Payment Breakdown",
+            sortable: true,
+            accessor: (row) => <span className="font-medium tabular-nums text-foreground">{titleCase(row.payment_breakdown)}</span>,
+        },
+        {
+            key: "created_at",
+            header: "Created At",
+            sortable: true,
+            accessor: (row) => <span className="font-medium tabular-nums text-foreground">{formatDate(row.created_at)}</span>,
+        },
+        {
             key: "status",
             header: "Payment Status",
+            sortable: true,
             accessor: (row) => {
                 const variants = {
                     [HouseDueStatus.PAID]: "success",
@@ -104,8 +228,8 @@ export default function ResidentDuesPage() {
                         className="h-8 group text-xs text-muted-foreground hover:text-brand-primary"
                         onClick={() => router.replace(`/house/${houseId}/dues/${row.due_id}`)}
                     >
-                        View Due
-                        <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
+
+                        <Eye className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
                     </Button>
                 </div>
             ),
@@ -119,7 +243,7 @@ export default function ResidentDuesPage() {
                 <div>
                     <h1 className="text-2xl font-bold  text-foreground flex items-center gap-2">
                         <Wallet className="h-5 w-5 text-muted-foreground" />
-                        My Property Dues
+                        My Dues
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         View and manage service charges, utility billings, and payment schedules for your unit.
@@ -134,31 +258,66 @@ export default function ResidentDuesPage() {
 
             {/* Dues Ledger Table */}
             <div className="border p-3 border-border/60 rounded-lg overflow-hidden">
-                {isLoading ? (
-                    <div className="p-6">
-                        <TableSkeleton />
-                    </div>
-                ) : (
-                    <DataTable
-                        data={dues}
-                        columns={columns}
-                        searchable={true}
-                        searchPlaceholder="Search dues..."
-                        pageSize={pageSize}
-                        onPageSizeChange={setPageSize}
-                        pageSizeOptions={PAGE_SIZE_OPTIONS}
-                        serverSide={true}
-                        total={total}
-                        currentPage={page}
-                        onPageChange={setPage}
-                        onSearchChange={(val) => {
-                            setPage(1);
-                            setSearch(val);
-                        }}
-                        initialSearch={search}
-                        className="border-none"
-                    />
-                )}
+
+                <DataTable
+                    data={dues}
+                    columns={columns}
+                    searchable={true}
+                    searchPlaceholder="Search dues..."
+                    showPagination={false}
+                    currentPage={page}
+                    onPageChange={setPage}
+                    onPageSizeChange={(newPageSize) => {
+                        setPage(1);
+                        setPageSize(newPageSize);
+                    }}
+                    onSearchChange={(val) => {
+                        setPage(1);
+                        setSearch(val);
+                    }}
+                    initialSearch={search}
+                    className="border-none"
+                    initialSort={sort}
+                    initialFilters={activeFilters}
+                    availableFilters={availableFilters}
+                    onFiltersChange={(filters) => {
+                        const startDateVal = filters.find((f) => f.field === "created_at" && f.operator === "gte")?.value as string | undefined;
+                        const endDateVal = filters.find((f) => f.field === "created_at" && f.operator === "lte")?.value as string | undefined;
+                        const statusVal = filters.find(f => f.field === "status")?.value as string | undefined;
+                        const paymentBreakdownVal = filters.find(f => f.field === "payment_breakdown")?.value as string | undefined;
+
+                        if (startDateVal !== startDate) setStartDate(startDateVal || undefined);
+                        if (endDateVal !== endDate) setEndDate(endDateVal || undefined);
+                        if (statusVal !== status) setStatus(statusVal || undefined);
+                        if (paymentBreakdownVal !== payment_breakdown) setPaymentBreakdown(paymentBreakdownVal || undefined);
+
+                        setPage(1);
+                    }}
+                    onSortChange={(sort) => {
+                        setPage(1)
+                        setSort(sort)
+                    }}
+                    disableClientSideFiltering={true}
+                    disableClientSideSorting={true}
+                    isLoading={isLoading || isFetching}
+                />
+                <PaginationBar
+                    page={page}
+                    pageSize={pageSize}
+                    total={total}
+                    totalPages={data?.total_pages ?? 1}
+                    hasNext={
+                        data?.has_next ??
+                        page < (data?.total_pages ?? 0)
+                    }
+                    hasPrevious={
+                        data?.has_previous ?? page > 1
+                    }
+                    isFetching={isFetching}
+                    resourceLabel="dues"
+                    onChange={(next) => setPage(next)}
+                />
+
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-muted-foreground/60 uppercase font-bold tracking-widest px-2">

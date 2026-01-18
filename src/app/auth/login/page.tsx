@@ -5,18 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
 import Link from "next/link";
-import { Home, Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Logo } from "@/components/Logo";
-import { LogoFull } from "@/components/LogoFull";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +19,7 @@ export default function LoginPage() {
   );
   const { login, isLoggingIn, loginError, loginFieldErrors, clearAuthErrors } =
     useAuth();
-  const router = useRouter(); // We need the router for prefetching
+  const router = useRouter();
 
   // Prefetch dashboard routes to speed up transition after login
   useEffect(() => {
@@ -53,36 +46,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="">
-              <LogoFull width={200} height={80} />
-              {/* <Home className="h-8 w-8 text-primary" /> */}
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {loginError && (
-              <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {loginError}
-              </div>
-            )}
-            <Input
-              type="email"
-              label="Email"
-              placeholder="name@example.com"
-              icon={Mail}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email || loginFieldErrors.email}
-            />
+    <AuthLayout
+      title="Welcome back"
+      description="Enter your credentials to access your account"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {loginError && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            {loginError}
+          </motion.div>
+        )}
+
+        <div className="space-y-4">
+          <Input
+            type="email"
+            label="Email Address"
+            placeholder="name@example.com"
+            icon={Mail}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email || loginFieldErrors.email}
+            className="h-12"
+          />
+
+          <div className="space-y-1">
             <PasswordInput
               label="Password"
               placeholder="••••••••"
@@ -90,33 +82,39 @@ export default function LoginPage() {
               icon={Lock}
               onChange={(e) => setPassword(e.target.value)}
               error={errors.password || loginFieldErrors.password}
+              className="h-12"
             />
-            <div className="flex justify-end text-sm">
+            <div className="flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="font-medium text-[var(--brand-primary)] hover:underline"
+                className="text-xs font-medium text-[var(--brand-primary)] hover:underline opacity-80 hover:opacity-100 transition-opacity"
               >
                 Forgot password?
               </Link>
             </div>
-            <Button type="submit" className="w-full" isLoading={isLoggingIn}>
-              Sign In
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">
-              Don&apos;t have an account?{" "}
-            </span>
-            <Link
-              href="/auth/register"
-              className="text-[var(--brand-primary)] hover:underline font-medium"
-            >
-              Sign up
-            </Link>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          isLoading={isLoggingIn}
+        >
+          Sign In
+        </Button>
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">
+            Don&apos;t have an account?{" "}
+          </span>
+          <Link
+            href="/auth/register"
+            className="text-[var(--brand-primary)] hover:underline font-bold transition-all"
+          >
+            Create account
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

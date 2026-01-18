@@ -1,47 +1,95 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CardSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useWalletHistory } from "@/hooks/use-resident";
 import { ArrowLeft, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, getStatusStyles } from "@/lib/utils";
 import { WalletTransaction } from "@/types";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 // Memoized currency formatter
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency: "NGN",
-        minimumFractionDigits: 2,
-    }).format(value);
-};
+
 
 // Memoized status color getter
-const getStatusStyles = (status: string) => {
-    switch (status) {
-        case "success":
-            return "border-green-500/50 text-green-600";
-        case "failed":
-            return "border-red-500/50 text-red-600";
-        case "pending":
-            return "border-amber-500/50 text-amber-600";
-        default:
-            return "border-border text-muted-foreground";
-    }
-};
+
 
 export default function WalletHistoryPage() {
     const router = useRouter();
     const [page, setPage] = useState(1);
-    const pageSize = 20;
-    const { data: history, isLoading } = useWalletHistory(page, pageSize);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchInput, setSearchInput] = useState("");
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
+    const [type, setType] = useState("");
+    const [startDate, setStartDate] = useState<string | undefined>();
+    const [endDate, setEndDate] = useState<string | undefined>();
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearch(searchInput);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+
+    const activeFilters = useMemo(() => {
+        const filters: FilterConfig[] = [];
+
+        if (type) {
+            filters.push({ field: "type", operator: "eq", value: type });
+        }
+        if (startDate) {
+            filters.push({ field: "created_at", operator: "gte", value: startDate });
+        }
+        if (endDate) {
+            filters.push({ field: "created_at", operator: "lte", value: endDate });
+        }
+        return filters;
+    },
+        [
+            type,
+            startDate,
+            endDate
+        ]
+    );
+
+    const availableFilters: FilterDefinition[] = useMemo(() => {
+        const filters: FilterDefinition[] = [
+
+            {
+                field: "created_at",
+                label: "Created Between",
+                type: "date-range",
+            },
+            {
+                field: "type",
+                label: "Type",
+                type: "select",
+                options: [
+                    { value: "credit", label: "Credit" },
+                    { value: "debit", label: "Debit" },
+                ],
+            },
+        ]
+        return filters;
+    }, []);
+    const { data: history, isLoading, isFetching } = useWalletHistory({
+        page,
+        pageSize,
+        search: search.trim() || null,
+        filters: activeFilters.length > 0 ? formatFiltersForAPI(activeFilters) : null,
+        sort
+    });
 
     const handleBack = useCallback(() => {
         router.push("/resident/wallet");
@@ -67,7 +115,8 @@ export default function WalletHistoryPage() {
                     <ArrowUpRight className="h-4 w-4 text-red-700" />
                 ),
             statusBadge: (
-                <Badge variant="outline" className={`text-[10px] px-1.5 uppercase font-bold ${getStatusStyles(transaction.status)}`}>
+                <Badge variant="outline" className={`text-[10px] px-1.5 uppercase font-bold
+            ${getStatusStyles(transaction.status)}`}>
                     {transaction.status}
                 </Badge>
             ),
@@ -93,10 +142,8 @@ export default function WalletHistoryPage() {
             header: "Amount",
             sortable: true,
             accessor: (row) => (
-                <span
-                    className={`font-semibold tabular-nums text-xs ${row.type === "credit" ? "text-green-600" : "text-red-700"
-                        }`}
-                >
+                <span className={`font-semibold tabular-nums text-xs ${row.type === "credit" ? "text-green-600"
+                    : "text-red-700"}`}>
                     {row.type === "credit" ? "+" : "-"}
                     {row.formattedAmount}
                 </span>
@@ -141,15 +188,6 @@ export default function WalletHistoryPage() {
         },
     ], []);
 
-    if (isLoading) {
-        return (
-            <DashboardLayout type="resident">
-                <div className="space-y-6">
-                    <CardSkeleton />
-                </div>
-            </DashboardLayout>
-        );
-    }
 
     return (
         <DashboardLayout type="resident">
@@ -157,12 +195,8 @@ export default function WalletHistoryPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleBack}
-                            className="h-8 w-8 rounded-full border"
-                        >
+                        <Button variant="ghost" size="icon" onClick={handleBack}
+                            className="h-8 w-8 rounded-full border">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                         <div>
@@ -180,46 +214,63 @@ export default function WalletHistoryPage() {
                         <div className="space-y-0.5">
                             <CardTitle className="text-sm font-semibold">Transactions</CardTitle>
                         </div>
-                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-medium text-muted-foreground">
+                        <span
+                            className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-medium text-muted-foreground">
                             {history?.total || 0} Total
                         </span>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {history && history.items.length > 0 ? (
-                            <>
-                                <DataTable
-                                    data={transactionRows}
-                                    columns={columns}
-                                    searchable={false}
-                                />
-                                {history.total_pages > 1 && (
-                                    <div className="mt-6">
-                                        <PaginationBar
-                                            page={page}
-                                            totalPages={history.total_pages}
-                                            total={history.total}
-                                            pageSize={history.page_size}
-                                            onChange={setPage}
-                                        />
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="text-center py-12">
-                                <p className="text-muted-foreground">No transactions found</p>
-                                <Button
-                                    variant="outline"
-                                    className="mt-4"
-                                    onClick={() => router.push("/wallet")}
-                                >
-                                    Fund Wallet
-                                </Button>
-                            </div>
-                        )}
+
+                        <>
+                            <DataTable data={transactionRows} columns={columns} isLoading={isLoading || isFetching}
+                                availableFilters={availableFilters} serverSide={true} searchable={true}
+                                onFiltersChange={(filters) => {
+                                    const startDateVal = filters.find((f) => f.field === "created_at" && f.operator
+                                        === "gte")?.value as string | undefined;
+                                    const endDateVal = filters.find((f) => f.field === "created_at" && f.operator
+                                        === "lte")?.value as string | undefined;
+                                    const typeVal = filters.find((f) => f.field === "type" && f.operator
+                                        === "eq")?.value as string | undefined;
+
+                                    if (startDateVal !== startDate) setStartDate(startDateVal || undefined);
+                                    if (endDateVal !== endDate) setEndDate(endDateVal || undefined);
+                                    if (typeVal !== type) setType(typeVal || undefined);
+
+                                    setPage(1);
+                                }}
+                                onSortChange={(newSort) => {
+                                    if (newSort !== sort) {
+                                        setSort(newSort);
+                                        setPage(1);
+                                    }
+                                }}
+                                onSearchChange={(val) => {
+                                    setSearchInput(val);
+                                }}
+                                initialFilters={activeFilters}
+                                initialSort={sort}
+                                initialSearch={searchInput}
+                                emptyMessage="No transactions found"
+                                searchPlaceholder="Search transactions..."
+                                onPageChange={setPage}
+                                showPagination={false}
+                                disableClientSideFiltering={true}
+                                disableClientSideSorting={true}
+                            />
+
+                            <PaginationBar page={page} pageSize={pageSize} total={history?.total ?? 0}
+                                totalPages={history?.total_pages ?? 1} hasNext={history?.has_next ?? page <
+                                    (history?.total_pages ?? 0)} hasPrevious={history?.has_previous ?? page > 1
+                                    }
+                                isFetching={isFetching}
+                                resourceLabel="wallet history"
+                                onChange={(next) => setPage(next)}
+                            />
+                        </>
+
                     </CardContent>
                 </Card>
             </div>
         </DashboardLayout>
     );
 }
-

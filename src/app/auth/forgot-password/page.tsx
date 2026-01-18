@@ -3,16 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useForgotPassword } from "@/hooks/use-auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -35,69 +30,95 @@ export default function ForgotPasswordPage() {
         onSuccess: () => {
           setSubmitted(true);
         },
-        onError: () => {
+        onError: (err: any) => {
           setSubmitted(false);
+          setError(err?.response?.data?.message || "Something went wrong. Please try again.");
         },
       }
     );
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-var(--brand-primary)/5 via-background to-var(--brand-secondary)/10 px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-var(--brand-primary)/10 text-var(--brand-primary)">
-            <Mail className="h-6 w-6" />
-          </div>
-          <CardTitle className="text-2xl font-semibold">
-            Reset your password
-          </CardTitle>
-          <CardDescription>
-            Enter the email linked to your VMSCORE account and we&apos;ll send you
-            a secure reset link.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {submitted ? (
-              <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary">
-                Check {email} for a password reset email. It may take a few
-                minutes to arrive.
-              </div>
-            ) : (
-              <>
-                {error && (
-                  <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
-                <Input
-                  type="email"
-                  label="Email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  isLoading={forgotPassword.isPending}
-                >
-                  Send reset link
-                </Button>
-              </>
-            )}
+    <AuthLayout
+      title="Reset password"
+      description="Enter your email to receive a secure reset link"
+    >
+      <AnimatePresence mode="wait">
+        {submitted ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-8 space-y-6"
+          >
+            <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-[var(--brand-primary)]" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold">Check your email</h3>
+              <p className="text-muted-foreground">
+                We&apos;ve sent a password reset link to <span className="font-semibold text-foreground">{email}</span>.
+              </p>
+            </div>
             <Link
               href="/auth/login"
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
+              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-primary)] hover:underline group"
             >
-              <ArrowLeft className="h-4 w-4 text-var(--brand-primary)" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               Back to login
             </Link>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                {error}
+              </motion.div>
+            )}
+
+            <Input
+              type="email"
+              label="Email Address"
+              placeholder="you@example.com"
+              icon={Mail}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              className="h-12"
+            />
+
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+              isLoading={forgotPassword.isPending}
+            >
+              Send Reset Link
+            </Button>
+
+            <div className="text-center pt-2">
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-[var(--brand-primary)] transition-colors group"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                Back to login
+              </Link>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </AuthLayout>
   );
 }

@@ -10,18 +10,19 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DataTable, Column, BulkAction } from "@/components/ui/DataTable";
-import { Shield, Trash2, Edit } from "lucide-react";
+import { DataTable, Column, BulkAction, FilterDefinition } from "@/components/ui/DataTable";
+import { Shield, Trash2, Edit, Plus } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { AdminRole } from "@/types";
 import { SlideOver } from "@/components/ui/SlideOver";
 import { UpdateRoleForm } from "./components/UpdateRoleForm";
+import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE = 20;
 
 export default function RolesPage() {
-  const { data: roles, isLoading } = useAdminRoles();
+
   const router = useRouter();
 
   // URL query sync
@@ -43,7 +44,9 @@ export default function RolesPage() {
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
   const [editingRole, setEditingRole] = useState<AdminRole | null>(null);
   const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
-
+  const [status, setStatus] = useState<string | null>(() => initializeFromUrl("status"));
+  const [startDate, setStartDate] = useState<string | null>(() => initializeFromUrl("startDate"));
+  const [endDate, setEndDate] = useState<string | null>(() => initializeFromUrl("endDate"));
   const deletRole = useAdminDeleteRole();
 
   // Sync state to URL
@@ -51,29 +54,47 @@ export default function RolesPage() {
     syncToUrl({ page, pageSize, search, sort });
   }, [page, pageSize, search, sort, syncToUrl]);
 
-  // Filter roles client-side
-  const filteredRoles = useMemo(() => {
-    if (!roles) return [];
-    if (!search.trim()) return roles;
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    if (status) filters.push({ field: "status", operator: "eq" as const, value: status });
 
-    const q = search.toLowerCase();
-    return roles.filter((role) => {
-      const name = role.name?.toLowerCase() || "";
-      const code = role.code?.toLowerCase() || "";
-      const description = role.description?.toLowerCase() || "";
-      return name.includes(q) || code.includes(q) || description.includes(q);
-    });
-  }, [roles, search]);
+    // Match the DataTable internal key pattern for date-range
+    if (startDate) filters.push({ field: "created_at", operator: "gte" as const, value: startDate });
+    if (endDate) filters.push({ field: "created_at", operator: "lte" as const, value: endDate });
+
+    return filters;
+  }, [status, startDate, endDate]);
+
+  const availableFilters: FilterDefinition[] = [
+    {
+      field: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive" },
+      ],
+    },
+    {
+      field: "created_at",
+      label: "Created Between",
+      type: "date-range",
+    },
+  ];
+
+
+  const { data: rolesData, isLoading, isFetching } = useAdminRoles({
+    page,
+    pageSize,
+    search,
+    sort,
+    filters: formatFiltersForAPI(activeFilters)
+  });
 
   // Pagination
-  const paginatedRoles = useMemo(() => {
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredRoles.slice(startIndex, endIndex);
-  }, [filteredRoles, page, pageSize]);
+  const roles = useMemo(() => rolesData?.items ?? [], [rolesData]);
 
-  const totalPages = Math.ceil(filteredRoles.length / pageSize);
-  const total = filteredRoles.length;
+  const total = rolesData?.total ?? 0;
 
   // Bulk actions
   const handleBulkDelete = (selectedIds: string[]) => {
@@ -210,54 +231,55 @@ export default function RolesPage() {
             type="button"
             onClick={() => router.push("/admin/admins/roles/create")}
           >
+            <Plus className="h-4 w-4" />
             Create role
           </Button>
         </div>
 
         <Card>
           <CardContent className="p-6">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : !roles || roles.length === 0 && !search ? (
-              <EmptyState
-                icon={Shield}
-                title="No roles defined"
-                description="Admin roles will appear here"
-                action={{
-                  label: "Create role",
-                  onClick: () => router.push("/admin/admins/roles/create"),
-                }}
-              />
-            ) : (
-              <DataTable
-                data={paginatedRoles}
-                columns={columns}
-                searchable={true}
-                searchPlaceholder="Search roles by name, code, or description..."
-                pageSize={pageSize}
-                showPagination={true}
-                emptyMessage="No roles found"
-                serverSide={false}
-                total={total}
-                currentPage={page}
-                onPageChange={setPage}
-                initialSearch={search}
-                onSearchChange={(value) => {
-                  setPage(1);
-                  setSearch(value);
-                }}
-                onSortChange={(newSort) => {
-                  setPage(1);
-                  setSort(newSort);
-                }}
-                disableClientSideFiltering={true}
-                disableClientSideSorting={false}
-                selectable={true}
-                selectedRows={selectedRoles}
-                onSelectionChange={setSelectedRoles}
-                bulkActions={bulkActions}
-              />
-            )}
+
+            <DataTable
+              data={roles}
+              columns={columns}
+              searchable={true}
+              searchPlaceholder="Search roles by name, code, or description..."
+              pageSize={pageSize}
+              showPagination={true}
+              emptyMessage="No roles found"
+              serverSide={false}
+              total={total}
+              currentPage={page}
+              initialFilters={activeFilters}
+              availableFilters={availableFilters}
+              onPageChange={setPage}
+              initialSearch={search}
+              onFiltersChange={(filters) => {
+                setPage(1);
+                const statusFilter = filters.find((filter) => filter.field === "status");
+                const startDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "gte");
+                const endDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "lte");
+                setStatus(statusFilter?.value as string | undefined || undefined);
+                setStartDate(startDateFilter?.value as string | undefined || undefined);
+                setEndDate(endDateFilter?.value as string | undefined || undefined);
+              }}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearch(value);
+              }}
+              onSortChange={(newSort) => {
+                setPage(1);
+                setSort(newSort);
+              }}
+              disableClientSideFiltering={true}
+              disableClientSideSorting={false}
+              selectable={true}
+              selectedRows={selectedRoles}
+              onSelectionChange={setSelectedRoles}
+              bulkActions={bulkActions}
+              isLoading={isLoading || isFetching}
+            />
+
           </CardContent>
         </Card>
       </div>

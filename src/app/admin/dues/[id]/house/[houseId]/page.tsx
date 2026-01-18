@@ -43,13 +43,13 @@ export default function HouseDueDetailPage() {
     const [scheduleFilters, setScheduleFilters] = useState<FilterConfig[]>([]);
     const [paymentFilters, setPaymentFilters] = useState<FilterConfig[]>([]);
 
-    const { data: schedulesData, isLoading: isLoadingSchedules } = useAdminDueSchedules(
+    const { data: schedulesData, isLoading: isLoadingSchedules, isFetching: isFetchingSchedules } = useAdminDueSchedules(
         dueId,
         houseId,
         schedulePage,
         pageSize,
         formatFiltersForAPI(scheduleFilters));
-    const { data: paymentsData, isLoading: isLoadingPayments } = useAdminDuePayments(
+    const { data: paymentsData, isLoading: isLoadingPayments, isFetching: isFetchingPayments } = useAdminDuePayments(
         dueId,
         houseId,
         paymentsPage,
@@ -270,6 +270,7 @@ export default function HouseDueDetailPage() {
                                 showPagination={true}
                                 emptyMessage="No payment schedule generated yet."
                                 disableClientSideFiltering={true}
+                                isLoading={isLoadingSchedules || isFetchingSchedules}
                             />
                         </CardContent>
                     </Card>
@@ -302,6 +303,7 @@ export default function HouseDueDetailPage() {
                                 showPagination={true}
                                 emptyMessage="No payments detected."
                                 disableClientSideFiltering={true}
+                                isLoading={isLoadingPayments || isFetchingPayments}
                             />
                         </CardContent>
                     </Card>

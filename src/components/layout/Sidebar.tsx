@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Home,
   Users,
@@ -95,36 +96,68 @@ const SidebarLink = memo(function SidebarLink({
   collapsed,
   isMobile,
   onClick,
+  accentColor = "brand",
 }: {
   link: any;
   isActive: boolean;
   collapsed: boolean;
   isMobile: boolean;
   onClick: () => void;
+  accentColor?: "brand" | "admin";
 }) {
   const Icon = link.icon;
+  const isBrand = accentColor === "brand";
+
   return (
     <Link
       href={link.href}
       onClick={onClick}
       className={cn(
-        "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-        "group relative",
+        "flex items-center rounded-md text-sm font-medium transition-all duration-300",
+        "group relative mt-0.5",
         isMobile || !collapsed ? "gap-3 px-3 py-2.5" : "justify-center px-2 py-2.5",
         isActive
-          ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          ? isBrand
+            ? "bg-[rgb(var(--brand-primary,#213928)/0.1)] text-[rgb(var(--brand-primary,#213928))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.2)]"
+            : "bg-indigo-500/10 text-indigo-600 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.2)]"
+          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100"
       )}
       title={collapsed && !isMobile ? link.label : undefined}
     >
+      {isActive && (
+        <motion.div
+          layoutId="active-indicator"
+          className={cn(
+            "absolute left-0 w-1 h-3/5 rounded-full",
+            isBrand ? "bg-[rgb(var(--brand-primary,#213928))]" : "bg-indigo-600"
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
+
       <Icon
-        className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary-foreground")}
+        className={cn(
+          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+          isActive
+            ? isBrand
+              ? "text-[rgb(var(--brand-primary,#213928))]"
+              : "text-indigo-600"
+            : ""
+        )}
       />
-      {(isMobile || !collapsed) && <span className="flex-1 truncate">{link.label}</span>}
-      {collapsed && !isMobile && (
-        <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+
+      {(isMobile || !collapsed) && (
+        <span className={cn("flex-1 truncate", isActive && "font-bold")}>
           {link.label}
         </span>
+      )}
+
+      {collapsed && !isMobile && (
+        <div className="absolute left-full ml-4 px-2.5 py-1.5 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100] shadow-xl translate-x-1 group-hover:translate-x-0 border border-zinc-700">
+          {link.label}
+        </div>
       )}
     </Link>
   );
@@ -472,28 +505,39 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
   return (
     <aside
       className={cn(
-        "relative flex flex-col border-r bg-background transition-all duration-300 ease-in-out",
-        "h-full w-64",
+        "relative flex flex-col border-r bg-zinc-50/50 dark:bg-background transition-all duration-500 ease-in-out",
+        "h-full w-64 shadow-sm",
         "flex-shrink-0 z-30",
-        // On desktop, support collapsed state
-        !isMobile && collapsed && "w-16"
+        !isMobile && collapsed && "w-20"
       )}
     >
       {/* Header with Close/Collapse Button */}
       <div
         className={cn(
-          "flex items-center border-b bg-muted/50",
+          "flex items-center border-b bg-white dark:bg-zinc-900/50 backdrop-blur-sm",
           isMobile
-            ? "justify-between p-3"
+            ? "justify-between px-4 py-4"
             : collapsed
-              ? "justify-center p-2"
-              : "justify-between p-3"
+              ? "justify-center p-3"
+              : "justify-between px-4 py-4"
         )}
       >
         {(!collapsed || isMobile) && (
-          <span className="text-sm font-semibold text-foreground">
-            {actualType === "resident" ? "Resident" : "Admin"}
-          </span>
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "p-1.5 rounded-lg",
+              actualType === "admin" ? "bg-indigo-500/10" : "bg-[rgb(var(--brand-primary,#213928))]/10"
+            )}>
+              {actualType === "admin" ? (
+                <Shield className="h-4 w-4 text-indigo-600" />
+              ) : (
+                <Users className="h-4 w-4 text-[rgb(var(--brand-primary,#213928))]" />
+              )}
+            </div>
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+              {actualType === "resident" ? "Resident" : "Management"}
+            </span>
+          </div>
         )}
         <div className="flex items-center gap-2">
           {isMobile && onMobileClose && (
@@ -501,10 +545,10 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
               variant="ghost"
               size="sm"
               onClick={onMobileClose}
-              className="h-8 w-8 p-0"
+              className="h-9 w-9 p-0 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
               aria-label="Close menu"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5 text-zinc-500" />
             </Button>
           )}
           {!isMobile && (
@@ -512,218 +556,254 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
               variant="ghost"
               size="sm"
               onClick={toggleCollapse}
-              className={cn("h-8 w-8 p-0", collapsed ? "mx-auto" : "ml-auto")}
+              className={cn(
+                "h-8 w-8 p-0 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-300",
+                collapsed ? "mx-auto" : "ml-auto"
+              )}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-zinc-400" />
               ) : (
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 text-zinc-400" />
               )}
             </Button>
           )}
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 space-y-1 p-2 overflow-y-auto overflow-x-hidden">
-        {links.map((link: any) => {
-          const Icon = link.icon;
-          const isParentActive = activeLink?.href === link.href ||
-            link.children?.some((child: any) => child.href === activeLink?.href);
+      <LayoutGroup>
+        {/* Navigation Links */}
+        <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          {links.map((link: any) => {
+            const Icon = link.icon;
+            const isParentActive = activeLink?.href === link.href ||
+              link.children?.some((child: any) => child.href === activeLink?.href);
 
-          const isActive = activeLink?.href === link.href;
-          const isExpanded = expandedMenus.has(link.label);
-          const hasChildren = link.children && link.children.length > 0;
+            const isActive = activeLink?.href === link.href;
+            const isExpanded = expandedMenus.has(link.label);
+            const hasChildren = link.children && link.children.length > 0;
 
-          // Use a stable key that combines href and label to ensure uniqueness
-          const linkKey = `${link.href}-${link.label}`;
+            // Use a stable key that combines href and label to ensure uniqueness
+            const linkKey = `${link.href}-${link.label}`;
 
-          if (hasChildren) {
-            // Find if any child is the current active link
-            const activeChild = link.children.find((child: any) =>
-              child.href === activeLink?.href
-            );
+            if (hasChildren) {
+              const activeChild = link.children.find((child: any) =>
+                child.href === activeLink?.href
+              );
+              const isBrand = actualType === "resident";
 
-            // Re-sort children to ensure strictness if needed, but usually simple match is fine
-            // if we are in a child route.
-
-            return (
-              <div key={linkKey} className="mb-1">
-                <button
-                  onClick={() => toggleMenu(link.label)}
-                  className={cn(
-                    "flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200",
-                    "group relative",
-                    isMobile || !collapsed
-                      ? "gap-3 px-3 py-2.5 justify-between"
-                      : "justify-center px-2 py-2.5",
-                    activeChild
-                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                  title={collapsed && !isMobile ? link.label : undefined}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        activeChild && "text-primary-foreground"
-                      )}
-                    />
-                    {(isMobile || !collapsed) && (
-                      <span className="flex-1 truncate text-left">{link.label}</span>
+              return (
+                <div key={linkKey} className="mb-0.5">
+                  <button
+                    onClick={() => toggleMenu(link.label)}
+                    className={cn(
+                      "flex items-center w-full rounded-xl text-sm font-medium transition-all duration-300 ease-out",
+                      "group relative",
+                      isMobile || !collapsed
+                        ? "gap-3 px-3 py-2.5 justify-between"
+                        : "justify-center px-2 py-2.5",
+                      activeChild
+                        ? isBrand
+                          ? "bg-[rgb(var(--brand-primary,#213928)/0.5)] text-[rgb(var(--brand-primary,#213928))]"
+                          : "bg-indigo-500/5 text-indigo-600"
+                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
                     )}
-                  </div>
-                  {(isMobile || !collapsed) && (
-                    <div className="flex-shrink-0">
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
+                    title={collapsed && !isMobile ? link.label : undefined}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+                          activeChild && (isBrand ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                        )}
+                      />
+                      {(isMobile || !collapsed) && (
+                        <span className={cn("flex-1 truncate text-left", activeChild && "font-bold")}>
+                          {link.label}
+                        </span>
                       )}
                     </div>
-                  )}
-                </button>
+                    {(isMobile || !collapsed) && (
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        className="flex-shrink-0"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+                      </motion.div>
+                    )}
+                  </button>
 
-                {isExpanded && (isMobile || !collapsed) && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
-                    {link.children.map((child: any) => {
-                      const ChildIcon = child.icon;
-                      const isChildActive = child.href === activeLink?.href;
+                  <AnimatePresence>
+                    {isExpanded && (isMobile || !collapsed) && (
+                      <motion.ul
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
+                      >
+                        {link.children.map((child: any) => {
+                          const ChildIcon = child.icon;
+                          const isChildActive = child.href === activeLink?.href;
 
-                      return (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href}
-                            onClick={handleLinkClick}
-                            className={cn(
-                              "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-                              "gap-3 px-3 py-2.5",
-                              isChildActive
-                                ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            <ChildIcon className="h-4 w-4 flex-shrink-0" />
-                            <span className="flex-1 truncate">{child.label}</span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          }
-
-          return (
-            <SidebarLink
-              key={linkKey}
-              link={link}
-              isActive={isActive}
-              collapsed={collapsed}
-              isMobile={isMobile}
-              onClick={handleLinkClick}
-            />
-          );
-        })}
-        <>
-
-          {filteredPlugins.map(plugin => {
-            const isExpanded = expandedPlugins.has(plugin.name);
-            const hasActiveRoute = isPluginActive(plugin.name);
-            const pluginIcon = plugin.manifest.icon
-              ? `fa fa-${plugin.manifest.icon}`
-              : 'fa fa-cube';
+                          return (
+                            <li key={child.href} className="pl-3 py-0.5">
+                              <Link
+                                href={child.href}
+                                onClick={handleLinkClick}
+                                className={cn(
+                                  "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
+                                  "gap-3 px-3 py-2",
+                                  isChildActive
+                                    ? isBrand
+                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                      : "bg-indigo-600 text-white shadow-sm"
+                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                                )}
+                              >
+                                <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                                <span className="flex-1 truncate">{child.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
 
             return (
-              <div key={plugin.name} className="mb-1">
-                {/* Plugin Dropdown Header */}
-                <button
-                  onClick={() => togglePlugin(plugin.name)}
-                  className={cn(
-                    "flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200",
-                    "group relative",
-                    isMobile || !collapsed
-                      ? "gap-3 px-3 py-2.5 justify-between"
-                      : "justify-center px-2 py-2.5",
-                    hasActiveRoute
-                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                  title={collapsed && !isMobile ? plugin.manifest.title : undefined}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <i
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        pluginIcon,
-                        hasActiveRoute && "text-primary-foreground"
-                      )}
-                    />
-                    {(isMobile || !collapsed) && (
-                      <span className="flex-1 truncate text-left">{plugin.manifest.title}</span>
-                    )}
-                  </div>
-                  {(isMobile || !collapsed) && (
-                    <div className="flex-shrink-0">
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  )}
-                  {collapsed && !isMobile && (
-                    <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                      {plugin.manifest.title}
-                    </span>
-                  )}
-                </button>
-
-                {/* Plugin Routes Submenu */}
-                {isExpanded && (isMobile || !collapsed) && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l-2 border-muted pl-2">
-                    {getPluginRoutesMemoized(plugin).map(route => {
-                      const isActive = isPluginRouteActive(plugin.name, route.path);
-                      const routeHref = buildPluginPath(plugin.basePath, route.path);
-                      // Get title and icon from route (routes.js) or fallback to path
-                      const routeTitle = route.title || route.path || "Route";
-                      const routeIcon = route.icon || "circle";
-                      return (
-                        <li key={route.path}>
-                          <Link
-                            onClick={handleLinkClick}
-                            className={cn(
-                              "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-                              "group relative",
-                              "gap-3 px-3 py-2.5",
-                              isActive
-                                ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            )}
-                            href={routeHref}
-                          >
-                            <i
-                              className={cn(
-                                "h-4 w-4 flex-shrink-0",
-                                `fa fa-${routeIcon}`,
-                                isActive && "text-primary-foreground"
-                              )}
-                            />
-                            <span className="flex-1 truncate">{routeTitle}</span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+              <SidebarLink
+                key={linkKey}
+                link={link}
+                isActive={isActive}
+                collapsed={collapsed}
+                isMobile={isMobile}
+                onClick={handleLinkClick}
+                accentColor={actualType === "resident" ? "brand" : "admin"}
+              />
             );
           })}
-        </>
-      </nav>
+          <>
+
+            {filteredPlugins.map(plugin => {
+              const isExpanded = expandedPlugins.has(plugin.name);
+              const hasActiveRoute = isPluginActive(plugin.name);
+              const pluginIcon = plugin.manifest.icon
+                ? `fa fa-${plugin.manifest.icon}`
+                : 'fa fa-cube';
+
+              return (
+                <div key={plugin.name} className="mb-0.5">
+                  {/* Plugin Dropdown Header */}
+                  <button
+                    onClick={() => togglePlugin(plugin.name)}
+                    className={cn(
+                      "flex items-center w-full rounded-xl text-sm font-medium transition-all duration-300",
+                      "group relative",
+                      isMobile || !collapsed
+                        ? "gap-3 px-3 py-2.5 justify-between"
+                        : "justify-center px-2 py-2.5",
+                      hasActiveRoute
+                        ? actualType === "resident"
+                          ? "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))]"
+                          : "bg-indigo-500/5 text-indigo-600"
+                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                    )}
+                    title={collapsed && !isMobile ? plugin.manifest.title : undefined}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <i
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+                          pluginIcon,
+                          hasActiveRoute && (actualType === "resident" ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                        )}
+                      />
+                      {(isMobile || !collapsed) && (
+                        <span className={cn("flex-1 truncate text-left", hasActiveRoute && "font-bold")}>
+                          {plugin.manifest.title}
+                        </span>
+                      )}
+                    </div>
+                    {(isMobile || !collapsed) && (
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        className="flex-shrink-0"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+                      </motion.div>
+                    )}
+                  </button>
+
+                  {/* Plugin Routes Submenu */}
+                  <AnimatePresence>
+                    {isExpanded && (isMobile || !collapsed) && (
+                      <motion.ul
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
+                      >
+                        {getPluginRoutesMemoized(plugin).map(route => {
+                          const isActive = isPluginRouteActive(plugin.name, route.path);
+                          const routeHref = buildPluginPath(plugin.basePath, route.path);
+                          const routeTitle = route.title || route.path || "Route";
+                          const routeIcon = route.icon || "circle";
+                          return (
+                            <li key={route.path} className="pl-3 py-0.5">
+                              <Link
+                                onClick={handleLinkClick}
+                                className={cn(
+                                  "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
+                                  "group relative",
+                                  "gap-3 px-3 py-2",
+                                  isActive
+                                    ? actualType === "resident"
+                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                      : "bg-indigo-600 text-white shadow-sm"
+                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                                )}
+                                href={routeHref}
+                              >
+                                <i
+                                  className={cn(
+                                    "h-4 w-4 flex-shrink-0",
+                                    `fa fa-${routeIcon}`,
+                                    isActive && "text-primary-foreground"
+                                  )}
+                                />
+                                <span className="flex-1 truncate">{routeTitle}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </>
+        </nav>
+      </LayoutGroup>
+
+      <div className="p-3 border-t bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
+        <div className={cn(
+          "px-3 py-2 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 transition-all duration-500",
+          collapsed && !isMobile ? "p-1.5 opacity-0 invisible" : "opacity-100 visible"
+        )}>
+          <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Status</p>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+            <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">System Online</span>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 });

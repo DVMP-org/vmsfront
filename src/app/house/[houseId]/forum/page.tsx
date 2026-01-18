@@ -30,6 +30,8 @@ import {
 } from "@/hooks/use-forum";
 import type { ForumCategory } from "@/types";
 import { cn } from "@/lib/utils";
+import { formatFiltersForAPI } from "@/lib/table-utils";
+import { FilterConfig } from "@/components/ui/DataTable";
 
 interface CategoryWithCount {
   category: ForumCategory;
@@ -55,20 +57,64 @@ export default function HouseForumPage() {
   }, [profile?.houses, routeHouseId, selectedHouse?.id, setSelectedHouse]);
 
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("created_at:desc");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const pageSize = 10;
+  const topicsActiveFilters = useMemo(() => {
+    const filters: FilterConfig[] = [];
+    if (categoryFilter !== "all") {
+      filters.push({
+        field: "category_id",
+        value: categoryFilter,
+        operator: "eq"
+      });
+    }
+    return filters;
+  }, [categoryFilter]);
+
   const {
     data: topicsResponse,
     isLoading,
     isFetching,
-  } = useForumTopics(effectiveHouseId, { page, pageSize, search });
+  } = useForumTopics(effectiveHouseId, {
+    page,
+    pageSize,
+    search: search.trim() || undefined,
+    sort,
+    filters: topicsActiveFilters.length > 0 ? formatFiltersForAPI(topicsActiveFilters) : undefined
+  });
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const categoriesActiveFilters = useMemo(() => {
+    const filters: FilterConfig[] = [{
+      "field": "include_deleted",
+      "value": true,
+      "operator": "eq"
+    }]
+    return filters
+  }, [])
 
   const {
     data: categoriesResponse,
     isLoading: isCategoriesLoading,
     isFetching: isCategoriesFetching,
-  } = useForumCategoriesList(effectiveHouseId, 1, 100);
+  } = useForumCategoriesList(effectiveHouseId, {
+    page: 1,
+    pageSize: 100,
+    search: search.trim() || undefined,
+    filters: categoriesActiveFilters.length > 0 ? formatFiltersForAPI(categoriesActiveFilters) : undefined,
+    sort,
+  });
 
   const topics = useMemo(
     // @ts-expect-error – PaginatedResponse may be array in this branch
@@ -125,10 +171,7 @@ export default function HouseForumPage() {
     }
   }, [categoryFilter, categories]);
 
-  const filteredTopics = useMemo(() => {
-    if (categoryFilter === "all") return topics;
-    return topics.filter((topic) => topic.category_id === categoryFilter);
-  }, [categoryFilter, topics]);
+  const filteredTopics = topics;
 
   const activeCategoryMeta = useMemo(() => {
     if (categoryFilter === "all") return null;
@@ -349,10 +392,9 @@ export default function HouseForumPage() {
               <div className="w-full md:w-64">
                 <Input
                   placeholder="Search topics..."
-                  value={search}
+                  value={searchInput}
                   onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
+                    setSearchInput(event.target.value);
                   }}
                 />
               </div>

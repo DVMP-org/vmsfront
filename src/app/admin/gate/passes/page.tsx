@@ -13,7 +13,7 @@ import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/u
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/Card";
-import { formatPassWindow, getTimeRemaining } from "@/lib/utils";
+import { cn, formatPassWindow, getTimeRemaining } from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
@@ -224,7 +224,6 @@ export default function AdminGatePassesPage() {
       key: "code",
       header: "Pass code",
       sortable: true,
-      filterable: true,
       accessor: (row) => (
         <span className="font-medium text-sm">{row.code}</span>
       ),
@@ -243,12 +242,6 @@ export default function AdminGatePassesPage() {
       key: "status",
       header: "Status",
       sortable: true,
-      filterable: true,
-      filterType: "select",
-      filterOptions: STATUS_FILTERS.map((f) => ({
-        value: f.value || "",
-        label: f.label,
-      })),
       accessor: (row) => <StatusBadge status={row.status} />,
     },
     {
@@ -426,37 +419,37 @@ export default function AdminGatePassesPage() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, className }: { status: string, className?: string }) {
   const statusMap: Record<string, { label: string; className: string }> = {
     [GatePassStatus.CHECKED_IN]: {
       label: "Checked in",
-      className: "bg-green-50 text-green-600 border border-green-600",
+      className: cn("bg-green-50 text-green-600 border border-green-600 w-fit", className),
     },
     [GatePassStatus.CHECKED_OUT]: {
       label: "Checked out",
-      className: "bg-indigo-50 text-indigo-600 border border-indigo-600",
+      className: cn("bg-indigo-50 text-indigo-600 border border-indigo-600 w-fit", className),
     },
     [GatePassStatus.PENDING]: {
       label: "Pending",
-      className: "bg-amber-50 text-amber-600 border border-amber-600",
+      className: cn("bg-amber-50 text-amber-600 border border-amber-600 w-fit", className),
     },
     [GatePassStatus.REVOKED]: {
       label: "Revoked",
-      className: "bg-red-50 text-red-600 border border-red-600",
+      className: cn("bg-red-50 text-red-600 border border-red-600 w-fit", className),
     },
     [GatePassStatus.EXPIRED]: {
       label: "Expired",
-      className: "bg-red-50 text-red-600 border border-red-600",
+      className: cn("bg-red-50 text-red-600 border border-red-600 w-fit", className),
     },
     [GatePassStatus.COMPLETED]: {
       label: "Completed",
-      className: "bg-red-50 text-red-600 border border-red-600",
+      className: cn("bg-red-50 text-red-600 border border-red-600 w-fit", className),
     },
   };
 
   const data = statusMap[status] ?? {
     label: status,
-    className: "bg-muted text-muted-foreground border border-border",
+    className: cn("bg-muted text-muted-foreground border border-border w-fit", className),
   };
 
   return (

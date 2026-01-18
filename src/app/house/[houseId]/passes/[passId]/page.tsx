@@ -29,6 +29,7 @@ export default function PassDetailPage() {
   const { data: pass, isLoading } = useGatePass(houseId, passId);
   const revokePassMutation = useRevokeGatePass(houseId);
   const [copied, setCopied] = useState(false);
+  const [suffixCopied, setSuffixCopied] = useState(false);
 
   useEffect(() => {
     if (!routeHouseId || !profile?.houses) return;
@@ -56,6 +57,14 @@ export default function PassDetailPage() {
       await navigator.clipboard.writeText(pass.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopySuffix = async (suffix: string) => {
+    if (pass?.code && suffix) {
+      await navigator.clipboard.writeText(`${pass.code}-${suffix}`);
+      setSuffixCopied(true);
+      setTimeout(() => setSuffixCopied(false), 2000);
     }
   };
 
@@ -136,6 +145,16 @@ export default function PassDetailPage() {
                       )}
                       {visitor.phone && (
                         <div className="text-xs text-zinc-500">{visitor.phone}</div>
+                      )}
+                      {visitor.pass_code_suffix && (
+                        <span className="flex items-center gap-1 text-xs text-zinc-500">
+                          <span className="font-mono font-semibold">{pass?.code}-{visitor.pass_code_suffix}</span>
+                          {suffixCopied ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4 cursor-pointer" onClick={() => handleCopySuffix(visitor.pass_code_suffix)} />
+                          )}
+                        </span>
                       )}
                     </div>
                   ))

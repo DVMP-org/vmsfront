@@ -29,7 +29,7 @@ export default function AdminGateEventsPage() {
     pageSize: { defaultValue: PAGE_SIZE },
     search: { defaultValue: "" },
     sort: { defaultValue: undefined },
-    owner_type: { defaultValue: undefined },
+    ownerType: { defaultValue: undefined },
     startDate: { defaultValue: undefined },
     endDate: { defaultValue: undefined },
   }), []);
@@ -46,7 +46,7 @@ export default function AdminGateEventsPage() {
   const [page, setPage] = useState<number>(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState<number>(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState<string | undefined>(() => initializeFromUrl("search") || "");
-  const [ownerType, setOwnerType] = useState<string | undefined>(() => initializeFromUrl("owner_type"))
+  const [ownerType, setOwnerType] = useState<string | undefined>(() => initializeFromUrl("ownerType"))
   const [sort, setSort] = useState<string | undefined>(() => initializeFromUrl("sort"))
   const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
   const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
@@ -89,7 +89,7 @@ export default function AdminGateEventsPage() {
     },
     {
       field: "created_at",
-      label: "Date",
+      label: "Created Between",
       type: "date-range"
     }
   ], []);
@@ -130,7 +130,6 @@ export default function AdminGateEventsPage() {
       key: "pass",
       header: "Pass",
       sortable: true,
-      filterable: true,
       accessor: (row) => (
         <span className="text-xs">{row?.gate_pass?.code ?? "—"}</span>
       ),
@@ -139,7 +138,6 @@ export default function AdminGateEventsPage() {
       key: "house",
       header: "House",
       sortable: false,
-      filterable: true,
       accessor: (row) => (
         <span className="text-xs">{row?.house?.name ?? "—"}</span>
       ),
