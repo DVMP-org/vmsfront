@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth-store";
 import { Loader } from "@/components/ui/loader";
 
@@ -11,13 +11,13 @@ interface RouteGuardProps {
 
 export function RouteGuard({ children }: RouteGuardProps) {
     const router = useRouter();
-    const pathname = usePathname();
+    const pathname = router.pathname;
     const { isAuthenticated, user, token, _hasHydrated } = useAuthStore();
     const [authorized, setAuthorized] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!_hasHydrated) return;
+        if (!_hasHydrated || !router.isReady) return;
 
         const authCheck = () => {
             if (!isAuthenticated || !token) {
@@ -33,7 +33,8 @@ export function RouteGuard({ children }: RouteGuardProps) {
         };
 
         authCheck();
-    }, [isAuthenticated, token, user, pathname, router, _hasHydrated]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, token, user, pathname, router.query, router.isReady, _hasHydrated]);
 
     if (loading || !authorized) {
         return (

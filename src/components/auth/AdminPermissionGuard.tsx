@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { adminLinks } from "@/config/admin-routes";
 import { hasPermission } from "@/lib/permissions";
@@ -16,13 +16,16 @@ interface AdminPermissionGuardProps {
 }
 
 export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
-    const pathname = usePathname();
-    const { data: adminProfile, isLoading } = useAdminProfile();
+    const router = useRouter();
+    const pathname = router.pathname;
+    const { data: adminProfile, isLoading: isProfileLoading } = useAdminProfile();
     const user = useAuthStore((state) => state.user);
 
     const activeRole = useMemo(() => adminProfile?.role || user?.admin?.role, [adminProfile, user]);
 
     const requiredPermission = useMemo(() => {
+        if (!router.isReady || !pathname) return undefined;
+
         // Flatten links to find the match for the current pathname
         const flattened: any[] = [];
         adminLinks.forEach((link) => {
@@ -40,7 +43,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         );
 
         return match?.permission;
-    }, [pathname]);
+    }, [pathname, router.isReady]);
 
     const hasAccess = useMemo(() => {
         if (!requiredPermission) return true;
@@ -48,7 +51,8 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         return hasPermission(activeRole, requiredPermission);
     }, [activeRole, requiredPermission]);
 
-    if (isLoading) {
+    // Don't render anything until router is ready to prevent hydration mismatch with pathname
+    if (!router.isReady || isProfileLoading) {
         return (
             <div className="space-y-6">
                 <div className="space-y-2">
