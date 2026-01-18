@@ -37,6 +37,8 @@ export function useRequireResidentOnboarding(enabled: boolean = true) {
   useEffect(() => {
     if (!enabled || isLoading) return;
 
+    console.log("resident", resident);
+
     const onboardingIncomplete = resident && resident.onboarded === false;
     const isOnboardingPage = pathname?.startsWith("/resident/onboarding");
 

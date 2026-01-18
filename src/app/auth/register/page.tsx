@@ -9,6 +9,7 @@ import { Lock, Mail, Phone, User2Icon } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -157,7 +158,7 @@ export default function RegisterPage() {
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          className="w-full h-12 text-base font-semibold shadow-xs transition-all active:scale-[0.98]"
           isLoading={isRegistering}
         >
           Create Account
@@ -170,6 +171,7 @@ export default function RegisterPage() {
           </Link>
         </div>
       </form>
+      <SocialLoginButtons />
     </AuthLayout>
   );
 }

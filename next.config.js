@@ -2,11 +2,11 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', "storage.googleapis.com", "api.vmscore.test", "vmscore.vercel.app"],
+    domains: ['localhost', "storage.googleapis.com", "api.vmscore.to", "vmscore.vercel.app"],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.vmscore.test',
+        hostname: 'api.vmscore.to',
         port: '',
         pathname: '/**',
       },
@@ -32,7 +32,7 @@ const nextConfig = {
     'http://127.0.0.1:3000',
     'http://192.168.100.20:3000',
     'http://192.168.100.20',
-    "dashboard.vmscore.test"
+    "dashboard.vmscore.to"
   ],
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL

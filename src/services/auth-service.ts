@@ -49,4 +49,10 @@ export const authService = {
   async resendVerification(): Promise<ApiResponse<{ message: string }>> {
     return apiClient.post("/auth/verify-email-resent");
   },
+  async getSocialLoginUrl(provider: string): Promise<ApiResponse<{ url: string }>> {
+    return apiClient.post(`/auth/social/${provider}/login`);
+  },
+  async socialCallback(provider: string, code: string): Promise<ApiResponse<AuthResponse>> {
+    return apiClient.get(`/auth/social/${provider}/callback?code=${code}`);
+  },
 };

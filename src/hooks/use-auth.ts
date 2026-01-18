@@ -256,6 +256,47 @@ export function useOnboard() {
   });
 }
 
+export function useSocialLogin() {
+  return useMutation({
+    mutationFn: (provider: string) => authService.getSocialLoginUrl(provider),
+    onSuccess: (response) => {
+      const { url } = response.data;
+      if (url) {
+        window.location.href = url;
+      }
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to initialize social login");
+    },
+  });
+}
+
+export function useSocialCallback() {
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ provider, code }: { provider: string; code: string }) =>
+      authService.socialCallback(provider, code),
+    onSuccess: (response) => {
+      const { user, token } = response.data;
+      setAuth(user, token);
+      apiClient.setToken(token);
+      queryClient.invalidateQueries({ queryKey: ["auth", "profile"] });
+
+      toast.success("Login successful!");
+      router.replace("/select");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Social login failed");
+      router.replace("/auth/login");
+    },
+  });
+}
+
 export function useResendVerification() {
   return useMutation({
     mutationFn: () => authService.resendVerification(),
