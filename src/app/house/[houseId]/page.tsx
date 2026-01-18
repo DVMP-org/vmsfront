@@ -118,8 +118,8 @@ export default function ResidentDashboardPage() {
     validWindow: formatPassWindow(pass.valid_from, pass.valid_to),
     statusLabel: pass.status,
     usesSummary:
-      pass.max_uses !== null && pass.max_uses !== undefined
-        ? `${pass.uses_count}/${pass.max_uses}`
+      pass.max_uses !== undefined
+        ? `${pass.uses_count}/${pass.max_uses ?? "∞"} used`
         : `${pass.uses_count} used`,
   }));
 
