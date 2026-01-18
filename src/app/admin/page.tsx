@@ -24,7 +24,7 @@ const DashboardCharts = dynamic(
     loading: () => (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="border border-zinc-200 rounded-lg h-[280px] bg-zinc-50 animate-pulse" />
+          <div key={i} className="border border-zinc-200 rounded-lg h-[280px] bg-background dark:bg-card animate-pulse" />
         ))}
       </div>
     ),
@@ -44,8 +44,8 @@ const COLORS = {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-[var(--brand-primary)] bg-white px-3 py-2 text-sm shadow-lg">
-      <p className="font-semibold text-[var(--brand-primary)] mb-1">{label}</p>
+    <div className="rounded-lg border border-[rgb(var(--brand-primary))] bg-white px-3 py-2 text-sm shadow-lg">
+      <p className="font-semibold text-[rgb(var(--brand-primary))] mb-1">{label}</p>
       {payload.map((item: any, idx: number) => (
         <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
           <span className="flex items-center gap-2">
@@ -74,7 +74,7 @@ const MetricCard = memo(function MetricCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="border border-zinc-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-card">
+    <div className="border border-zinc-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-background dark:bg-card">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs text-zinc-500 uppercase tracking-wide">{title}</div>
         <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
@@ -190,8 +190,9 @@ export default function AdminDashboardPage() {
       <div className="space-y-4">
         <div className="h-16 bg-muted animate-pulse rounded-lg" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+            <div key={i} className="h-24 bg-muted dark:bg-background animate-pulse rounded-lg" />
           ))}
         </div>
       </div>
