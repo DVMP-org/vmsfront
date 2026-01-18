@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 
@@ -46,26 +47,40 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))] text-foreground">
       {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={handleSidebarClose}
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {isMobile && sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={handleSidebarClose}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
-          // Base state: Hidden on mobile (translated left), Visible on desktop (reset transform)
-          "-translate-x-full lg:translate-x-0",
-          // Mobile Open state: Visible (slide in)
-          sidebarOpen && "translate-x-0"
-        )}
-      >
-        <Sidebar type={type} onMobileClose={handleSidebarClose} />
-      </div>
+      {isMobile ? (
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 35 }}
+              className="fixed inset-y-0 left-0 z-50 w-64 lg:hidden"
+            >
+              <Sidebar type={type} onMobileClose={handleSidebarClose} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        <div className="hidden lg:block">
+          <Sidebar type={type} onMobileClose={handleSidebarClose} />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col w-full lg:w-auto min-w-0">

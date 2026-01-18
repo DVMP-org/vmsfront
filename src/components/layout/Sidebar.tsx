@@ -165,7 +165,7 @@ const SidebarLink = memo(function SidebarLink({
   );
 });
 
-export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarProps) {
+export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -530,12 +530,15 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
   }, [pathname, actualType, filteredPlugins, activeRoutesMap, links, isLinkActive]);
 
   return (
-    <aside
+    <motion.aside
+      animate={{
+        width: !isMobile && collapsed ? 80 : 256,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
+      style={{ willChange: "width" }}
       className={cn(
-        "relative flex flex-col border-r bg-zinc-50/50 dark:bg-background transition-all duration-500 ease-in-out",
-        "h-full w-64 shadow-sm",
-        "flex-shrink-0 z-30",
-        !isMobile && collapsed && "w-20"
+        "relative flex flex-col border-r bg-zinc-50/50 dark:bg-background overflow-hidden",
+        "h-full shadow-sm flex-shrink-0 z-30"
       )}
     >
       {/* Header with Close/Collapse Button */}
@@ -615,7 +618,10 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
 
       <LayoutGroup>
         {/* Navigation Links */}
-        <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav className={cn(
+          "flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
+          isMobile || !collapsed ? "p-3" : "py-4 px-0"
+        )}>
           {links.map((link: any) => {
             const Icon = link.icon;
             const isParentActive = activeLink?.href === link.href ||
@@ -652,7 +658,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                     )}
                     title={collapsed && !isMobile ? link.label : undefined}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
                       <Icon
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
@@ -681,7 +687,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
                         {link.children.map((child: any) => {
@@ -756,7 +762,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                     )}
                     title={collapsed && !isMobile ? plugin.manifest.title : undefined}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
                       <i
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
@@ -787,7 +793,7 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
                         {getPluginRoutesMemoized(plugin).map(route => {
@@ -845,6 +851,6 @@ export const Sidebar = memo(function Sidebar({ type, onMobileClose }: SidebarPro
           </div>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   );
 });
