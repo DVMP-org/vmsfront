@@ -33,8 +33,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
-        // "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
+          // "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
+          "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
         // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
         destructive:
           "border-red-600 bg-red-600 disabled:bg-red-600/70 text-white font-bold",

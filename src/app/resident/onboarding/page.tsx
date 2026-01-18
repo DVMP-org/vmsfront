@@ -3,7 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Loader2, Home, Plus, ShieldCheck, X } from "lucide-react";
@@ -35,7 +42,9 @@ export default function ResidentOnboardingPage() {
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const storedToken = useAuthStore((state) => state.token);
   const [profile, setProfile] = useState<{ user: UserProfile } | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(storedToken || null);
+  const [authToken, setAuthToken] = useState<string | null>(
+    storedToken || null,
+  );
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [slugInput, setSlugInput] = useState("");
@@ -57,7 +66,7 @@ export default function ResidentOnboardingPage() {
   });
 
   const tokenFromQuery = searchParams.get("token");
-  const effectiveToken = tokenFromQuery || authToken;
+  const effectiveToken = tokenFromQuery || storedToken;
 
   const housesQuery = useAllHouses();
   const onboardingMutation = useResidentOnboarding();
@@ -82,6 +91,10 @@ export default function ResidentOnboardingPage() {
     let active = true;
     setInitializing(true);
 
+    if (tokenFromQuery) {
+      clearAuth();
+    }
+
     const syncProfile = async () => {
       try {
         apiClient.setToken(effectiveToken);
@@ -92,7 +105,9 @@ export default function ResidentOnboardingPage() {
         setProfile({ user: userProfile });
         setAuthToken(effectiveToken);
         setProfileLoaded(true);
-        queryClient.setQueryData(["dashboard", "select"], { user: userProfile });
+        queryClient.setQueryData(["dashboard", "select"], {
+          user: userProfile,
+        });
       } catch (error: any) {
         if (!active) return;
         const message =
@@ -189,7 +204,7 @@ export default function ResidentOnboardingPage() {
       const next = [...prev];
       for (const entry of entries) {
         const exists = next.some(
-          (value) => value.toLowerCase() === entry.toLowerCase()
+          (value) => value.toLowerCase() === entry.toLowerCase(),
         );
         if (!exists) {
           next.push(entry);
@@ -211,7 +226,9 @@ export default function ResidentOnboardingPage() {
       const { slugs: houseSlugs, unresolved } = resolveHouseSlugs();
       if (unresolved.length > 0) {
         toast.info(
-          `We'll submit ${unresolved.join(", ")} as provided. Your admin will still be able to validate the request.`
+          `We'll submit ${unresolved.join(
+            ", ",
+          )} as provided. Your admin will still be able to validate the request.`,
         );
       }
       onboardingMutation.mutate(
@@ -226,13 +243,17 @@ export default function ResidentOnboardingPage() {
         },
         {
           onSuccess: () => {
-            toast.success("Onboarding complete! Redirecting to your dashboard.");
+            toast.success(
+              "Onboarding complete! Redirecting to your dashboard.",
+            );
             router.replace("/select");
           },
-        }
+        },
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Invalid house data.");
+      toast.error(
+        error instanceof Error ? error.message : "Invalid house data.",
+      );
     }
   };
 
@@ -257,11 +278,15 @@ export default function ResidentOnboardingPage() {
             <CardTitle>We need your invite link</CardTitle>
             <CardDescription>
               This page requires a valid onboarding link. Please open the link
-              you received via email or request a new invitation from your estate admin.
+              you received via email or request a new invitation from your
+              estate admin.
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button className="w-full" onClick={() => router.push("/auth/login")}>
+            <Button
+              className="w-full"
+              onClick={() => router.push("/auth/login")}
+            >
               Go to login
             </Button>
           </CardFooter>
@@ -277,10 +302,13 @@ export default function ResidentOnboardingPage() {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]">
             <Home className="h-6 w-6" />
           </div>
-          <h1 className="text-3xl font-semibold text-foreground">Resident onboarding</h1>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Resident onboarding
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Choose the house(s) you belong to using their public slug. We will link
-            your verified account to the selected homes and unlock your dashboard.
+            Choose the house(s) you belong to using their public slug. We will
+            link your verified account to the selected homes and unlock your
+            dashboard.
           </p>
         </div>
 
@@ -293,14 +321,16 @@ export default function ResidentOnboardingPage() {
                 </div>
                 <CardTitle>You're already onboarded</CardTitle>
                 <CardDescription>
-                  Your account is linked to{" "}
-                  {profile?.user?.houses?.length || 0}{" "}
+                  Your account is linked to {profile?.user?.houses?.length || 0}{" "}
                   house{(profile?.user?.houses?.length ?? 0) === 1 ? "" : "s"}.
                   Jump back into your dashboard to manage passes and visitors.
                 </CardDescription>
               </CardHeader>
               <CardFooter className="flex flex-col gap-3">
-                <Button className="w-full" onClick={() => router.replace("/select")}>
+                <Button
+                  className="w-full"
+                  onClick={() => router.replace("/select")}
+                >
                   Continue to dashboard
                 </Button>
               </CardFooter>
@@ -310,8 +340,10 @@ export default function ResidentOnboardingPage() {
               <CardHeader className="space-y-2">
                 <CardTitle>Link your houses</CardTitle>
                 <CardDescription>
-                  Enter the slug (e.g. <code className="rounded bg-muted px-1">oak-villa</code>) provided
-                  by your estate admin. You can add multiple houses if needed.
+                  Enter the slug (e.g.{" "}
+                  <code className="rounded bg-muted px-1">oak-villa</code>)
+                  provided by your estate admin. You can add multiple houses if
+                  needed.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -355,8 +387,9 @@ export default function ResidentOnboardingPage() {
                             onClick={() =>
                               setSelectedSlugs((prev) =>
                                 prev.filter(
-                                  (value) => value.toLowerCase() !== slug.toLowerCase()
-                                )
+                                  (value) =>
+                                    value.toLowerCase() !== slug.toLowerCase(),
+                                ),
                               )
                             }
                             className="rounded-full bg-white/70 p-0.5 text-muted-foreground transition hover:text-foreground"
@@ -386,7 +419,7 @@ export default function ResidentOnboardingPage() {
                               const exists = prev.some(
                                 (value) =>
                                   value.toLowerCase() ===
-                                  (house.slug || house.name).toLowerCase()
+                                  (house.slug || house.name).toLowerCase(),
                               );
                               if (exists) return prev;
                               return [
@@ -396,7 +429,9 @@ export default function ResidentOnboardingPage() {
                             });
                           }}
                         >
-                          <p className="font-semibold text-foreground">{house.name}</p>
+                          <p className="font-semibold text-foreground">
+                            {house.name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {house.slug || "No slug available"}
                           </p>
@@ -434,15 +469,17 @@ export default function ResidentOnboardingPage() {
                     Need your house slug?
                   </p>
                   <p>
-                    Ask your estate admin for the public slug or copy it from your welcome
-                    email. It usually matches the friendly house URL (e.g. <code className="rounded bg-muted px-1">green-court</code>).
+                    Ask your estate admin for the public slug or copy it from
+                    your welcome email. It usually matches the friendly house
+                    URL (e.g.{" "}
+                    <code className="rounded bg-muted px-1">green-court</code>).
                   </p>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button
                   type="submit"
-                  className="w-full bg-[var(--brand-primary,#213928)] text-white hover:bg-[var(--brand-primary,#213928)]/90"
+                  className="w-full"
                   disabled={selectedSlugs.length === 0}
                   isLoading={onboardingMutation.isPending}
                 >
@@ -463,7 +500,8 @@ export default function ResidentOnboardingPage() {
 
         <div className="rounded-2xl border border-border/60 bg-card/70 p-5 text-sm text-muted-foreground">
           <p>
-            Having trouble? Contact your estate administrator and share this email:
+            Having trouble? Contact your estate administrator and share this
+            email:
           </p>
           <p className="mt-2 font-semibold text-foreground">
             {profile?.user?.email || "your-account-email"}
