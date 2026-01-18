@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Header } from "./Header";
-import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
+
+const Sidebar = dynamic(() => import("./Sidebar").then(mod => mod.Sidebar), {
+  ssr: false,
+  loading: () => <div className="hidden lg:block w-64 h-full border-r bg-background flex-shrink-0" />
+});
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -61,26 +66,25 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      {isMobile ? (
-        <AnimatePresence>
-          {sidebarOpen && (
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 35 }}
-              className="fixed inset-y-0 left-0 z-50 w-64 lg:hidden"
-            >
-              <Sidebar type={type} onMobileClose={handleSidebarClose} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ) : (
-        <div className="hidden lg:block">
-          <Sidebar type={type} onMobileClose={handleSidebarClose} />
-        </div>
-      )}
+      {/* Sidebar Container */}
+      <AnimatePresence mode="wait">
+        {(isMobile ? sidebarOpen : true) && (
+          <motion.div
+            key="sidebar-container"
+            initial={isMobile ? { x: "-100%" } : false}
+            animate={{ x: 0 }}
+            exit={isMobile ? { x: "-100%" } : undefined}
+            transition={{ type: "spring", stiffness: 300, damping: 35 }}
+            className={cn(
+              "z-50 flex-shrink-0",
+              isMobile ? "fixed inset-y-0 left-0 w-64 lg:hidden" : "relative hidden lg:block h-full"
+            )}
+            style={{ willChange: "transform, width" }}
+          >
+            <Sidebar type={type} onMobileClose={handleSidebarClose} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col w-full lg:w-auto min-w-0">
