@@ -59,7 +59,7 @@ export function ActionMenu({
         aria-label={ariaLabel}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "inline-flex items-center justify-center rounded-xl border border-transparent bg-white/80 text-muted-foreground transition hover:border-border hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          "inline-flex items-center justify-center rounded-xl border border-transparent bg-white/80 dark:bg-white/20 text-muted-foreground transition hover:border-border hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           triggerStyles,
           triggerClassName
         )}

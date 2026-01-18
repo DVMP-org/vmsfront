@@ -314,7 +314,7 @@ export default function HouseForumPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[rgb(var(--brand-primary,#213928))] hover:bg-white/90"
+                  className="bg-white/90 text-[rgb(var(--brand-primary,#213928))] hover:bg-white/90"
                   onClick={() =>
                     handleOpenTopicModal(
                       activeCategoryMeta?.id ?? (categoryFilter !== "all" ? categoryFilter : undefined)
@@ -382,7 +382,7 @@ export default function HouseForumPage() {
                 {hasCategoryFilter && (
                   <button
                     type="button"
-                    className="text-xs font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
+                    className="text-xs font-semibold text-[rgb(var(--brand-primary,#213928))] dark:text-white/80 underline-offset-2 hover:underline"
                     onClick={() => setCategoryFilter("all")}
                   >
                     Clear category filter
@@ -448,8 +448,8 @@ export default function HouseForumPage() {
                         )
                       }
                       className={cn(
-                        "flex w-full flex-col gap-3 rounded-2xl border border-border/60 bg-gradient-to-r from-white to-slate-50/80 p-4 text-left shadow-sm shadow-slate-200 transition",
-                        "hover:-translate-y-0.5 hover:border-[var(--brand-primary,#213928)]/40 hover:shadow-lg"
+                        "flex w-full flex-col gap-3 rounded-2xl border border-border cursor-pointer bg-card p-4 text-left shadow-sm shadow-sm transition",
+                        "hover:-translate-y-0.5 hover:border-[rgb(var(--brand-primary)/0.4)] hover:shadow-lg"
                       )}
                     >
                       <div className="flex flex-col gap-2">
@@ -502,11 +502,11 @@ export default function HouseForumPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-muted-foreground">
                         {topic.category && (
-                          <span className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 text-[var(--brand-primary,#213928)]">
+                          <span className="rounded-full bg-[rgb(var(--brand-primary,#213928)/0.3)] dark:text-white/80 px-3 py-1 text-[rgb(var(--brand-primary,#213928))]">
                             {topic.category.name}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-inner">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-muted/80 px-3 py-1 shadow-inner dark:text-foreground">
                           {topic.posts_count} {topic.posts_count === 1 ? "reply" : "replies"}
                         </span>
                         {topic.last_post_at && (
@@ -524,7 +524,7 @@ export default function HouseForumPage() {
               )}
             </CardContent>
             {showPagination && (
-              <div className="flex flex-col gap-3 border-t border-dashed border-border/60 px-6 py-4">
+              <div className="flex flex-col gap-3 border-t border-dashed border-border px-6 py-4">
                 <PaginationBar
                   page={page}
                   pageSize={pageSize}
@@ -552,6 +552,7 @@ export default function HouseForumPage() {
         isOpen={isCategoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
         title="Create Forum Category"
+        className="bg-card"
       >
         <form className="space-y-4" onSubmit={handleCreateCategory}>
           <Input
@@ -576,7 +577,7 @@ export default function HouseForumPage() {
                 }))
               }
               className={cn(
-                "min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
+                "min-h-[100px] w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               )}
               placeholder="Share a short summary or the type of updates that belong here."
@@ -606,6 +607,7 @@ export default function HouseForumPage() {
         isOpen={isTopicModalOpen}
         onClose={() => setTopicModalOpen(false)}
         title="Start a New Topic"
+        className="bg-card"
       >
         <form className="space-y-4" onSubmit={handleCreateTopic}>
           <div className="space-y-2">
@@ -620,7 +622,7 @@ export default function HouseForumPage() {
                   categoryId: event.target.value,
                 }))
               }
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
+              className="w-full rounded-xl border border-input bg-card px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               required
             >
               <option value="">Select a category</option>
@@ -653,7 +655,7 @@ export default function HouseForumPage() {
                 }))
               }
               className={cn(
-                "min-h-[160px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
+                "min-h-[160px] w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
               )}
               placeholder="Share details or context to kick-start the discussion."
@@ -715,7 +717,7 @@ function CategorySidebar({
   const hasCategories = categories.length > 0;
 
   return (
-    <aside className="h-fit rounded-3xl border border-border/60 bg-white shadow-lg shadow-slate-200/60 lg:sticky lg:top-24">
+    <aside className="h-fit rounded-3xl border border-border bg-card shadow-lg shadow-sm lg:sticky lg:top-24">
       <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Categories</h2>
@@ -800,29 +802,28 @@ function CategorySidebarItem({
   return (
     <div
       className={cn(
-        "rounded-2xl border px-4 py-3 transition",
+        "rounded-2xl border px-4 py-3 hover:shadow-lg hover:-translate-y-0.5 transition cursor-pointer",
         isActive
-          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5"
-          : "border-border/40 bg-muted/30 hover:border-[var(--brand-primary,#213928)]/40"
+          ? "border-border bg-[rgb(var(--brand-primary)/0.9)] text-white/80 dark:text-foreground hover:bg-[rgb(var(--brand-primary))]"
+          : "border-[rgb(var(--brand-primary)/0.4)] bg-muted/30 hover:border-[rgb(var(--brand-primary)/0.9)]"
       )}
+      onClick={onClick}
     >
-      <button
-        type="button"
-        onClick={onClick}
+      <div
         className="flex w-full items-start justify-between gap-2 text-left"
       >
         <div>
-          <p className="text-sm font-semibold text-foreground">{label}</p>
+          <p className={cn("text-sm font-semibold text-foreground", isActive ? "text-white/80 dark:text-foreground" : "")}>{label}</p>
           {description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className={cn("text-xs text-foreground/80 dark:text-muted-foreground line-clamp-2", isActive ? "text-white/80 dark:text-foreground" : "")}>
               {description}
             </p>
           )}
         </div>
-        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-muted-foreground shadow">
+        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-muted-foreground shadow dark:bg-muted/80 dark:text-foreground">
           {count}
         </span>
-      </button>
+      </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--brand-primary,#213928)]">
         {onView && (
           <button

@@ -8,6 +8,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  className?: string;
 }
 
 export function Modal({
@@ -16,6 +17,7 @@ export function Modal({
   title,
   children,
   size = "md",
+  className
 }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -43,7 +45,7 @@ export function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-4 xs:px-4 xs:py-6 sm:px-0">
+    <div className={"fixed inset-0 z-50 flex items-center justify-center px-3 py-4 xs:px-4 xs:py-6 sm:px-0"}>
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -57,7 +59,8 @@ export function Modal({
           "relative w-full rounded-xl bg-background shadow-lg",
           "max-h-[95vh] xs:max-h-[90vh] overflow-y-auto",
           "animate-in fade-in zoom-in-95 duration-200",
-          sizes[size]
+          sizes[size],
+          className
         )}
       >
         {/* Header */}

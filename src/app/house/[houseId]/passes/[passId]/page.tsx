@@ -71,7 +71,7 @@ export default function PassDetailPage() {
   if (!houseId || !passId) {
     return (
       <>
-        <div className="border border-zinc-200 rounded bg-white p-8">
+        <div className="border border-muted rounded bg-white p-8">
           <EmptyState
             icon={HomeIcon}
             title="Select a house to continue"
@@ -108,7 +108,7 @@ export default function PassDetailPage() {
     <>
       <div className="max-w-4xl mx-auto">
         {/* Compact Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-4">
+        <div className="flex items-center justify-between border-b border-muted pb-3 mb-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -118,7 +118,7 @@ export default function PassDetailPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-zinc-900">Gate Pass Details</h1>
+            <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">Gate Pass Details</h1>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPassStatusColor(pass.status)}`}>
               {titleCase(pass.status)}
             </span>
@@ -129,9 +129,9 @@ export default function PassDetailPage() {
           {/* Left Column: Pass Information */}
           <div className="col-span-2 space-y-4">
             {/* Visitor Info */}
-            <div className="border border-zinc-200 rounded bg-white">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-                <h2 className="text-sm font-semibold text-zinc-900">Visitor Information</h2>
+            <div className="border border-muted rounded-xs bg-background">
+              <div className="border-b border-muted bg-zinc-50 dark:bg-zinc-900 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Visitor Information</h2>
               </div>
               <div className="divide-y divide-zinc-100">
                 {pass.visitors.length === 0 ? (
@@ -139,15 +139,15 @@ export default function PassDetailPage() {
                 ) : (
                   pass.visitors.map((visitor) => (
                     <div key={visitor.id} className="px-3 py-2.5">
-                      <div className="text-sm font-medium text-zinc-900">{visitor.name}</div>
+                      <div className="text-sm font-medium text-zinc-900 dark:text-white">{visitor.name}</div>
                       {visitor.email && (
-                        <div className="text-xs text-zinc-500 mt-0.5">{visitor.email}</div>
+                        <div className="text-xs text-zinc-500 mt-0.5 dark:text-white/50">{visitor.email}</div>
                       )}
                       {visitor.phone && (
-                        <div className="text-xs text-zinc-500">{visitor.phone}</div>
+                        <div className="text-xs text-zinc-500 dark:text-white/50">{visitor.phone}</div>
                       )}
                       {visitor.pass_code_suffix && (
-                        <span className="flex items-center gap-1 text-xs text-zinc-500">
+                        <span className="flex items-center gap-1 text-xs text-zinc-500 dark:text-white/50">
                           <span className="font-mono font-semibold">{pass?.code}-{visitor.pass_code_suffix}</span>
                           {suffixCopied ? (
                             <Check className="h-4 w-4 text-green-500" />
@@ -163,15 +163,15 @@ export default function PassDetailPage() {
             </div>
 
             {/* Access Rules */}
-            <div className="border border-zinc-200 rounded bg-white">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-                <h2 className="text-sm font-semibold text-zinc-900">Access Rules</h2>
+            <div className="border border-muted rounded-xs bg-background">
+              <div className="border-b border-muted bg-zinc-50 dark:bg-zinc-900 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Access Rules</h2>
               </div>
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-muted">
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm text-zinc-600">Pass Code</span>
+                  <span className="text-sm text-zinc-600 dark:text-white/50">Pass Code</span>
                   <div className="flex items-center gap-2">
-                    <code className="text-sm font-mono font-semibold text-zinc-900">{pass.code}</code>
+                    <code className="text-sm font-mono font-semibold text-zinc-900 dark:text-white">{pass.code}</code>
                     <button
                       onClick={handleCopyCode}
                       className="p-1 hover:bg-zinc-100 rounded transition-colors"
@@ -187,40 +187,40 @@ export default function PassDetailPage() {
                 </div>
                 {pass.max_uses && (
                   <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm text-zinc-600">Usage Limit</span>
-                    <span className="text-sm font-medium text-zinc-900">
+                    <span className="text-sm text-zinc-600 dark:text-white/50">Usage Limit</span>
+                    <span className="text-sm font-medium text-zinc-900 dark:text-white">
                       {pass.uses_count} / {pass.max_uses} uses
                     </span>
                   </div>
                 )}
                 {!pass.max_uses && (
                   <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm text-zinc-600">Usage Limit</span>
-                    <span className="text-sm font-medium text-zinc-900">Unlimited</span>
+                    <span className="text-sm text-zinc-600 dark:text-white/50">Usage Limit</span>
+                    <span className="text-sm font-medium text-zinc-900 dark:text-white">Unlimited</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm text-zinc-600">Current Usage</span>
-                  <span className="text-sm font-medium text-zinc-900">{pass.uses_count} scans</span>
+                  <span className="text-sm text-zinc-600 dark:text-white/50">Current Usage</span>
+                  <span className="text-sm font-medium text-zinc-900 dark:text-white">{pass.uses_count} scans</span>
                 </div>
               </div>
             </div>
 
             {/* Validity Window */}
-            <div className="border border-zinc-200 rounded bg-white">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-                <h2 className="text-sm font-semibold text-zinc-900">Validity Window</h2>
+            <div className="border border-muted rounded-xs bg-background">
+              <div className="border-b border-muted bg-zinc-50 dark:bg-zinc-900 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Validity Window</h2>
               </div>
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-muted">
                 <div className="px-3 py-2">
-                  <div className="text-xs text-zinc-500 mb-0.5">Valid From</div>
-                  <div className="text-sm font-medium text-zinc-900">
+                  <div className="text-xs text-zinc-500 mb-0.5 dark:text-white/50">Valid From</div>
+                  <div className="text-sm font-medium text-zinc-900 dark:text-white">
                     {formatDateTime(pass.valid_from || "")}
                   </div>
                 </div>
                 <div className="px-3 py-2">
-                  <div className="text-xs text-zinc-500 mb-0.5">Valid To</div>
-                  <div className="text-sm font-medium text-zinc-900">
+                  <div className="text-xs text-zinc-500 mb-0.5 dark:text-white/50">Valid To</div>
+                  <div className="text-sm font-medium text-zinc-900 dark:text-white">
                     {formatDateTime(pass.valid_to || "")}
                   </div>
                 </div>
@@ -231,9 +231,9 @@ export default function PassDetailPage() {
           {/* Right Column: QR Code & Actions */}
           <div className="space-y-4">
             {/* QR Code */}
-            <div className="border border-zinc-200 rounded bg-white">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-                <h2 className="text-sm font-semibold text-zinc-900">QR Code</h2>
+            <div className="border border-muted rounded-xs bg-background">
+              <div className="border-b border-muted bg-zinc-50 dark:bg-zinc-900 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">QR Code</h2>
               </div>
               <div className="p-4 flex flex-col items-center">
                 {pass.qr_code_url ? (
@@ -257,9 +257,9 @@ export default function PassDetailPage() {
             </div>
 
             {/* Primary Actions */}
-            <div className="border border-zinc-200 rounded bg-white">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-                <h2 className="text-sm font-semibold text-zinc-900">Actions</h2>
+            <div className="border border-muted rounded-xs bg-background">
+              <div className="border-b border-muted bg-zinc-50 dark:bg-zinc-900 px-3 py-2">
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Actions</h2>
               </div>
               <div className="p-3 space-y-2">
                 {pass.status === GatePassStatus.CHECKED_IN && (

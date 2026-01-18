@@ -218,12 +218,12 @@ export default function CreatePassPage() {
       <div className="max-w-2xl mx-auto px-4 md:px-0">
         {/* Compact Header */}
         <div className="border-b border-zinc-200 pb-3 mb-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-zinc-900">Create Pass</h1>
+          <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">Create Pass</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Fast Mode: Essential Fields Only */}
-          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
+          <div className="bg-card border border-zinc-200 rounded-md shadow-sm overflow-hidden">
             <div className="p-4 space-y-4">
               {!showAdvanced && (
                 <Input
@@ -239,15 +239,15 @@ export default function CreatePassPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Pass Duration</label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 ">
                   {durations.map((d) => (
                     <button
                       key={d.value}
                       type="button"
                       onClick={() => handleDurationSelect(d)}
-                      className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${selectedDuration === d.value
+                      className={`py-2 px-3 text-sm font-medium rounded-xs dark:text-white border transition-all ${selectedDuration === d.value
                         ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
-                        : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                        : "bg-card text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                         }`}
                     >
                       {d.label}
@@ -256,9 +256,9 @@ export default function CreatePassPage() {
                   <button
                     type="button"
                     onClick={() => handleDurationSelect(null)}
-                    className={`py-2 px-3 text-sm font-medium rounded-xs border transition-all ${showCustomDates
+                    className={`py-2 px-3 text-sm font-medium rounded-xs dark:text-white border transition-all ${showCustomDates
                       ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
-                      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                      : "bg-card/50 text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                       }`}
                   >
                     Custom
@@ -290,14 +290,14 @@ export default function CreatePassPage() {
           </div>
 
           {/* Advanced Options (Collapsed) */}
-          <div className="border border-zinc-200 rounded-md bg-white shadow-sm overflow-hidden">
+          <div className="border border-zinc-200 rounded-md bg-card shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={toggleAdvanced}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-50/50 transition-colors font-medium"
+              className="w-full cursor-pointer flex items-center justify-between px-4 py-3 text-sm text-zinc-700 dark:text-white hover:bg-zinc-50/50 dark:hover:bg-zinc-800 transition-colors font-medium"
             >
               <div className="flex items-center gap-2">
-                <span className="p-1 rounded bg-zinc-100 text-zinc-500">
+                <span className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
                   {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </span>
                 <span>Advanced Options</span>
@@ -305,7 +305,7 @@ export default function CreatePassPage() {
               </div>
             </button>
             {showAdvanced && (
-              <div className="border-t border-zinc-100 p-4 space-y-6 bg-zinc-50/30">
+              <div className="border-t border-zinc-100 p-4 space-y-6 bg-zinc-50/30 dark:bg-zinc-800/30">
                 <div className="max-w-xs">
                   <Input
                     type="number"
@@ -326,7 +326,7 @@ export default function CreatePassPage() {
                       variant="outline"
                       size="sm"
                       onClick={addVisitor}
-                      className="h-8 text-xs font-medium border-zinc-300"
+                      className="h-8 text-xs font-medium"
                     >
                       + Add Visitor
                     </Button>
@@ -334,7 +334,7 @@ export default function CreatePassPage() {
 
                   <div className="space-y-4">
                     {visitors.map((visitor, index) => (
-                      <div key={index} className="border border-zinc-200 rounded-lg p-4 space-y-4 bg-white shadow-sm relative group">
+                      <div key={index} className="border border-zinc-200 rounded-lg p-4 space-y-4 bg-background shadow-sm relative group">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-zinc-400">VISITOR #{index + 1}</span>
                           {visitors.length > 1 && (
@@ -390,7 +390,7 @@ export default function CreatePassPage() {
               type="button"
               variant="outline"
               onClick={() => router.back()}
-              className="px-6 h-10 text-zinc-600 font-medium"
+              className="px-6 h-10 text-zinc-600 font-medium dark:text-white"
             >
               Cancel
             </Button>
