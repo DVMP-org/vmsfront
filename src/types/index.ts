@@ -454,11 +454,20 @@ export interface AuthResponse {
 }
 
 export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
     data: T;
-    message?: string;
-    status?: string;
-    success?: boolean;
-    status_code?: number;
+    errors?: Record<string, string[]>;
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next?: boolean;
+    has_previous?: boolean;
 }
 
 export interface GatePassCheckinResponse {
@@ -777,4 +786,21 @@ export interface DuePayment {
     updated_at: string;
     due?: Due;
     schedule?: Partial<DueSchedule>;
+}
+
+export interface DatabaseNotification {
+    title: string;
+    message: string;
+    intent: string;
+}
+
+export interface NotificationResponse {
+    id: string;
+    event: string;
+    recipient: string;
+    payload: DatabaseNotification;
+    is_read: boolean;
+    read_at: string | null;
+    created_at: string;
+    updated_at: string;
 }

@@ -28,6 +28,7 @@ import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { motion, AnimatePresence } from "framer-motion";
 import type { House } from "@/types";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -45,11 +46,7 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
   const isHouseRoute = type == 'resident' || pathname?.startsWith("/house");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
-  const isAdminUser = useMemo(() => {
-    if (!user) return false;
-    const type = `${user.user_type ?? ""}`.toLowerCase();
-    return user.is_admin || type === "admin";
-  }, [user]);
+  const isAdminUser = useAdminProfile();
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
   const dashboardHref = "/select";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -150,18 +147,7 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
               )}
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 p-0 relative rounded-full hover:bg-muted/50 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <span className="absolute top-2 right-2 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-            </Button>
+            <NotificationDropdown />
 
             <div className="relative" ref={menuRef}>
               <button

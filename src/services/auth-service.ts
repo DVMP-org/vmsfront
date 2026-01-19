@@ -28,11 +28,11 @@ export const authService = {
 
 
   async getUser(): Promise<ApiResponse<AuthResponse["user"]>> {
-    return apiClient.get("/users/me");
+    return apiClient.get("/user/me");
   },
 
   async updateProfile(data: Partial<RegisterRequest>): Promise<ApiResponse<AuthResponse["user"]>> {
-    return apiClient.patch("/users/update-profile", data);
+    return apiClient.patch("/user/update-profile", data);
   },
 
   async forgotPassword(data: ForgotPasswordRequest): Promise<ApiResponse<{ ok: boolean; message: string }>> {
