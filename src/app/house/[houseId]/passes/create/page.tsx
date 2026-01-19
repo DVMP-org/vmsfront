@@ -198,7 +198,7 @@ export default function CreatePassPage() {
   if (!houseId) {
     return (
       <>
-        <div className="border border-zinc-200 rounded bg-white p-8">
+        <div className="border border-muted rounded bg-white p-8">
           <EmptyState
             icon={HomeIcon}
             title="Select a house to continue"
@@ -217,13 +217,13 @@ export default function CreatePassPage() {
     <>
       <div className="max-w-2xl mx-auto px-4 md:px-0">
         {/* Compact Header */}
-        <div className="border-b border-zinc-200 pb-3 mb-4 flex items-center justify-between">
+        <div className="border-b border-muted pb-3 mb-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">Create Pass</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Fast Mode: Essential Fields Only */}
-          <div className="bg-card border border-zinc-200 rounded-md shadow-sm overflow-hidden">
+          <div className="bg-card border border-muted rounded-md shadow-sm overflow-hidden">
             <div className="p-4 space-y-4">
               {!showAdvanced && (
                 <Input
@@ -234,6 +234,7 @@ export default function CreatePassPage() {
                   value={visitorName}
                   onChange={(e) => setVisitorName(e.target.value)}
                   error={errors.visitorName}
+                  className="outline-none border-muted"
                 />
               )}
 
@@ -247,7 +248,7 @@ export default function CreatePassPage() {
                       onClick={() => handleDurationSelect(d)}
                       className={`py-2 px-3 text-sm font-medium rounded-xs dark:text-white border transition-all ${selectedDuration === d.value
                         ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
-                        : "bg-card text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                        : "bg-card text-zinc-600 border-muted hover:border-zinc-300 hover:bg-zinc-50 dark:hover:text-[rgb(var(--brand-primary))]"
                         }`}
                     >
                       {d.label}
@@ -258,7 +259,7 @@ export default function CreatePassPage() {
                     onClick={() => handleDurationSelect(null)}
                     className={`py-2 px-3 text-sm font-medium rounded-xs dark:text-white border transition-all ${showCustomDates
                       ? "bg-[rgb(var(--brand-primary))] text-white border-[rgb(var(--brand-primary))] shadow-sm"
-                      : "bg-card/50 text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                      : "bg-card/50 text-zinc-600 border-muted hover:border-zinc-300 hover:bg-zinc-50 dark:hover:text-[rgb(var(--brand-primary))]"
                       }`}
                   >
                     Custom
@@ -290,7 +291,7 @@ export default function CreatePassPage() {
           </div>
 
           {/* Advanced Options (Collapsed) */}
-          <div className="border border-zinc-200 rounded-md bg-card shadow-sm overflow-hidden">
+          <div className="border border-muted rounded-md bg-card shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={toggleAdvanced}
@@ -305,7 +306,7 @@ export default function CreatePassPage() {
               </div>
             </button>
             {showAdvanced && (
-              <div className="border-t border-zinc-100 p-4 space-y-6 bg-zinc-50/30 dark:bg-zinc-800/30">
+              <div className="border-t border-muted p-4 space-y-6 bg-zinc-50/30 dark:bg-zinc-800/30">
                 <div className="max-w-xs">
                   <Input
                     type="number"
@@ -319,7 +320,7 @@ export default function CreatePassPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                  <div className="flex items-center justify-between border-b border-muted pb-2">
                     <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Visitor Details</label>
                     <Button
                       type="button"
@@ -334,7 +335,7 @@ export default function CreatePassPage() {
 
                   <div className="space-y-4">
                     {visitors.map((visitor, index) => (
-                      <div key={index} className="border border-zinc-200 rounded-lg p-4 space-y-4 bg-background shadow-sm relative group">
+                      <div key={index} className="border border-muted rounded-lg p-4 space-y-4 bg-background shadow-sm relative group">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-zinc-400">VISITOR #{index + 1}</span>
                           {visitors.length > 1 && (
@@ -385,7 +386,7 @@ export default function CreatePassPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-muted">
             <Button
               type="button"
               variant="outline"
