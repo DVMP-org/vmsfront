@@ -449,6 +449,18 @@ export function useAdminVisitors(params: {
   });
 }
 
+export function useAdminVisitor(visitorId: string | null) {
+  return useQuery<Visitor>({
+    queryKey: ["admin", "visitor", visitorId],
+    queryFn: async () => {
+      if (!visitorId) throw new Error("Visitor ID is required");
+      const response = await adminService.getVisitor(visitorId);
+      return response.data;
+    },
+    enabled: !!visitorId,
+  });
+}
+
 
 export function useAdminGatePasses(params: {
   page: number;

@@ -332,6 +332,10 @@ export const adminService = {
         });
     },
 
+    async getVisitor(visitorId: string): Promise<ApiResponse<Visitor>> {
+        return apiClient.get(`/admin/visitors/${visitorId}`);
+    },
+
     async getAllPermissions(): Promise<ApiResponse<AllPermissionsResponse>> {
         return apiClient.get("/admin/role/permissions/all");
     },

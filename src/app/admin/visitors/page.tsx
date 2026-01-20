@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -32,6 +33,7 @@ export default function AdminVisitorsPage() {
         skipInitialSync: true,
     });
     const isInitialMount = useRef(true);
+    const router = useRouter()
 
     const [page, setPage] = useState(() => initializeFromUrl("page"));
     const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
@@ -199,7 +201,12 @@ export default function AdminVisitorsPage() {
             header: "Actions",
             accessor: (row) => (
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { }} title="View Detail">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/admin/visitors/${row.id}`)}
+                        title="View Detail"
+                    >
                         <Eye className="h-4 w-4" />
                     </Button>
                 </div>

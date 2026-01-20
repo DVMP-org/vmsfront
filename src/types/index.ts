@@ -153,6 +153,22 @@ export interface ResidentUserCreate {
     email?: string;
 }
 
+
+
+export interface GateResponseLite {
+    id: string;
+    name: string;
+    slug: string;
+}
+
+export interface VisitorGateStatus {
+    gate: GateResponseLite;
+    event: GateEvent | null;
+    dependency_gate: GateResponseLite | null;
+    status: "locked" | "pending" | "checked_in" | "checked_out" | "unavailable" | string;
+    message: string | null;
+}
+
 export interface Visitor {
     id: string;
     email: string;
@@ -164,15 +180,11 @@ export interface Visitor {
     gate_pass_id?: string | null;
     gate_pass_code?: string | null;
     status?: VisitorStatus;
-    gate_pass?: {
-        id: string;
-        code: string;
-        house_id: string;
-        resident_id?: string | null;
-        qr_code_url?: string | null;
-    } | null;
+    gate_pass?: GatePass | null;
     created_at: string;
     updated_at: string;
+    gate_events?: GateEvent[];
+    dependency_gate_map?: Record<string, VisitorGateStatus>;
 }
 
 export enum VisitorStatus {
