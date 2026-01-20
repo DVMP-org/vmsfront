@@ -27,7 +27,10 @@ const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
   { label: "Revoked", value: GatePassStatus.REVOKED },
   { label: "Expired", value: GatePassStatus.EXPIRED },
 ];
-const PAGE_SIZE = 100;
+
+
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const PAGE_SIZE = 20;
 export default function PassesPage() {
   const router = useRouter();
   const params = useParams<{ houseId?: string }>();
@@ -310,6 +313,8 @@ export default function PassesPage() {
                 columns={passColumns}
                 searchable
                 showPagination={false}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                pageSize={pageSize}
                 searchPlaceholder="Search passes..."
                 emptyMessage="No passes match your filters"
                 isLoading={isLoading || isFetching}

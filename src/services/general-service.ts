@@ -19,7 +19,7 @@ export const generalService = {
         filters?: string;
         sort?: string;
     }): Promise<ApiResponse<PaginatedResponse<NotificationResponse>>> {
-        return apiClient.get(`/user/notifications/${userId}`, {
+        return apiClient.get(`/user/notifications`, {
             params: {
                 page: params.page ?? 1,
                 page_size: params.pageSize ?? 10,

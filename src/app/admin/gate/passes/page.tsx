@@ -17,7 +17,7 @@ import { cn, formatPassWindow, getTimeRemaining } from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
   { label: "Checked-in", value: GatePassStatus.CHECKED_IN },
   { label: "Checked-out", value: GatePassStatus.CHECKED_OUT },

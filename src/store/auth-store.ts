@@ -27,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
             },
             clearAuth: () => {
                 deleteCookie("auth-token");
+                localStorage.removeItem("vms_admin_profile")
                 set({ user: null, token: null, isAuthenticated: false });
             },
             updateUser: (userData) =>
