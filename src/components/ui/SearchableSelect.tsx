@@ -146,9 +146,9 @@ export function SearchableSelect<IsMulti extends boolean = false>({
                 value={selectedOption as any}
                 onChange={(newValue: any) => {
                     if (isMulti) {
-                        onChange?.((newValue as SearchableSelectOption[]).map(opt => opt.value) as any);
+                    if (isMulti) {
+                        onChange?.((newValue ? (newValue as SearchableSelectOption[]).map(opt => opt.value) : []) as any);
                     } else {
-                        onChange?.((newValue as SearchableSelectOption)?.value as any);
                     }
                 }}
                 options={options}
