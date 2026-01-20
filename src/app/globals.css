@@ -101,6 +101,29 @@
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Custom Scrollbar Styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply bg-zinc-200 dark:bg-zinc-800 rounded-full border-2 border-transparent bg-clip-padding transition-colors;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-300 dark:bg-zinc-700;
+  }
 }
 
 @layer components {

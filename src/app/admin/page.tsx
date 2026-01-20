@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
     let activeGatePasses = 0;
     gatePasses.forEach(p => {
       statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-      if (p.status === GatePassStatus.CHECKED_IN) activeGatePasses++;
+      if (p.status === GatePassStatus.CHECKED_IN || p.status === GatePassStatus.ACTIVE) activeGatePasses++;
     });
 
     const hourStats = new Map<string, { checkins: number; checkouts: number }>();
@@ -142,6 +142,7 @@ export default function AdminDashboardPage() {
     });
 
     const statusChartData = [
+      { name: "Active", value: statusCounts[GatePassStatus.ACTIVE] || 0, color: COLORS.success },
       { name: "Checked In", value: statusCounts[GatePassStatus.CHECKED_IN] || 0, color: COLORS.success },
       { name: "Checked Out", value: statusCounts[GatePassStatus.CHECKED_OUT] || 0, color: COLORS.zinc },
       { name: "Pending", value: statusCounts[GatePassStatus.PENDING] || 0, color: COLORS.warning },
