@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
+import { adminGateService } from "@/services/admin-gate-service";
+import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
 import {
   CreateHouseRequest,
   CreateAdminRequest,
@@ -23,6 +25,7 @@ import {
   DueSchedule,
   DuePayment,
   AdminRole,
+  Visitor,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -430,6 +433,23 @@ export function useVisitorsByPassCode(passCode: string | null) {
   });
 }
 
+export function useAdminVisitors(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery<PaginatedResponse<Visitor>>({
+    queryKey: ["admin", "visitors", params],
+    queryFn: async () => {
+      const response = await adminService.getVisitors(params);
+      return response.data;
+    },
+  });
+}
+
+
 export function useAdminGatePasses(params: {
   page: number;
   pageSize: number;
@@ -803,6 +823,101 @@ export function useDeleteDue() {
     },
   });
 }
+
+// Gates
+export function useAdminGates(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+}) {
+  return useQuery<PaginatedResponse<Gate>>({
+    queryKey: ["admin", "gates", params],
+    queryFn: async () => {
+      const response = await adminGateService.getGates(params);
+      return response.data;
+    },
+  });
+}
+
+export function useAdminGate(gateId: string | null) {
+  return useQuery<Gate>({
+    queryKey: ["admin", "gate", gateId],
+    queryFn: async () => {
+      if (!gateId) throw new Error("Gate ID is required");
+      const response = await adminGateService.getGate(gateId);
+      return response.data;
+    },
+    enabled: !!gateId,
+  });
+}
+
+export function useCreateGate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateGateRequest) => adminGateService.createGate(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
+      toast.success("Gate created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useUpdateGate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ gateId, data }: { gateId: string; data: UpdateGateRequest }) =>
+      adminGateService.updateGate(gateId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "gate"] });
+      toast.success("Gate updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useDeleteGate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (gateId: string) => adminGateService.deleteGate(gateId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
+      toast.success("Gate deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useToggleGateAdminStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ gateId, gateAdminIds }: { gateId: string; gateAdminIds: string[] }) =>
+      adminGateService.toggleGateAdminStatus(gateId, gateAdminIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "gate"] });
+      toast.success("Admin status toggled!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+
 
 export function useAdminDueHouses(dueId: string | null, params: {
   page: number;

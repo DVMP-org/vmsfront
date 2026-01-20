@@ -13,12 +13,13 @@ import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/u
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/Card";
-import { cn, formatPassWindow, getTimeRemaining } from "@/lib/utils";
+import { cn, formatPassWindow, getTimeRemaining, titleCase } from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
+  { label: "Active", value: GatePassStatus.ACTIVE },
   { label: "Checked-in", value: GatePassStatus.CHECKED_IN },
   { label: "Checked-out", value: GatePassStatus.CHECKED_OUT },
   { label: "Pending", value: GatePassStatus.PENDING },
@@ -423,7 +424,7 @@ function StatusBadge({ status, className }: { status: string, className?: string
   const statusMap: Record<string, { label: string; className: string }> = {
     [GatePassStatus.CHECKED_IN]: {
       label: "Checked in",
-      className: cn("bg-green-50 text-green-600 border border-green-600 w-fit", className),
+      className: cn("bg-orange-50 text-orange-600 border border-orange-600 w-fit", className),
     },
     [GatePassStatus.CHECKED_OUT]: {
       label: "Checked out",
@@ -445,6 +446,10 @@ function StatusBadge({ status, className }: { status: string, className?: string
       label: "Completed",
       className: cn("bg-red-50 text-red-600 border border-red-600 w-fit", className),
     },
+    [GatePassStatus.ACTIVE]: {
+      label: "Active",
+      className: cn("bg-green-50 text-green-600 border border-green-600 w-fit", className),
+    },
   };
 
   const data = statusMap[status] ?? {
@@ -454,7 +459,7 @@ function StatusBadge({ status, className }: { status: string, className?: string
 
   return (
     <Badge variant="secondary" className={`${data.className} font-normal text-xs`}>
-      {data.label}
+      {titleCase(data.label)}
     </Badge>
   );
 }

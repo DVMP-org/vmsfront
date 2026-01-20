@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { QRScanner } from "@/components/ui/QRScanner";
-import { Scan, CheckCircle, XCircle, LogIn, LogOut, QrCode } from "lucide-react";
+import { titleCase, cn, formatPassWindow, getTimeRemaining } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Clock, User, Home as HomeIcon, Calendar, Check, Info,
+  Scan, CheckCircle, XCircle, LogIn, LogOut, QrCode
+} from "lucide-react";
 import { Visitor } from "@/types";
-import { titleCase } from "@/lib/utils";
-import { title } from "process";
 
 // Helper function to check if pass code is 2-part or 3-part
 function getPassCodeParts(code: string): { baseCode: string; suffix: string | null; isThreePart: boolean } {
@@ -38,6 +41,120 @@ function shouldDirectScan(code: string, parts?: ReturnType<typeof getPassCodePar
   const isGateThreePart = normalized.startsWith("GATE-") && resolvedParts.isThreePart;
   return isResidentPass || isGateThreePart;
 }
+
+const ResultDisplay = ({ result, type }: { result: any, type: "checkin" | "checkout" }) => {
+  if (!result) return null;
+
+  const isSuccess = result.status === "checked_in" || result.status === "checked_out" || result.status === "active";
+  const isSelectVisitor = result.status === "select_visitor";
+
+  const statusColors = {
+    success: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
+    warning: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
+    error: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800",
+  };
+
+  const currentTheme = isSuccess ? statusColors.success : isSelectVisitor ? statusColors.warning : statusColors.error;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={cn("mt-6 rounded-xl border-2 p-6 transition-all", currentTheme)}
+    >
+      <div className="flex items-start gap-4">
+        <div className={cn(
+          "p-3 rounded-full shrink-0",
+          isSuccess ? "bg-green-100 dark:bg-green-900/40" : isSelectVisitor ? "bg-blue-100 dark:bg-blue-900/40" : "bg-red-100 dark:bg-red-900/40"
+        )}>
+          {isSuccess ? <Check className="h-6 w-6" /> : isSelectVisitor ? <Info className="h-6 w-6" /> : <XCircle className="h-6 w-6" />}
+        </div>
+
+        <div className="flex-1 space-y-4">
+          <div>
+            <h3 className="text-xl font-bold uppercase tracking-tight">
+              {result.message || (isSuccess ? `${type.replace('in', '-in').replace('out', '-out')} Successful` : "Scan Failed")}
+            </h3>
+            {isSuccess && (
+              <p className="text-sm opacity-80 font-medium">
+                {type === "checkin" ? "Person granted entry at" : "Person granted exit at"}{" "}
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
+
+          {result.gate_pass && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {/* Person Info */}
+              <div className="bg-white/50 dark:bg-zinc-900/50 p-4 rounded-lg border border-current/10 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 font-bold border border-zinc-200 dark:border-zinc-700">
+                    {result.owner?.name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{result.owner?.name || "Unknown User"}</p>
+                    <p className="text-xs text-zinc-500">{result.owner?.email || result.owner?.phone || "No contact info"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <Badge variant="outline" className="capitalize text-[10px] py-0">{result.owner_type || "User"}</Badge>
+                  {result.gate_pass.resident_id && <Badge variant="secondary" className="text-[10px] py-0">Resident</Badge>}
+                </div>
+              </div>
+
+              {/* Pass Context */}
+              <div className="bg-white/50 dark:bg-zinc-900/50 p-4 rounded-lg border border-current/10 space-y-2">
+                <div className="flex justify-between items-center pb-2 border-b border-current/5">
+                  <span className="text-[10px] uppercase font-bold opacity-60">Pass Details</span>
+                  <code className="text-xs font-mono font-bold">{result.gate_pass.code}</code>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-70 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Remaining Uses</span>
+                    <span className="font-bold">
+                      {result.gate_pass.max_uses
+                        ? `${result.gate_pass.max_uses - (result.uses_count || 0)} / ${result.gate_pass.max_uses}`
+                        : "Unlimited"}
+                    </span>
+                  </div>
+
+                  {result.gate_pass.valid_to && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="opacity-70 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Validity</span>
+                      <span className={cn(
+                        "font-medium",
+                        new Date(result.gate_pass.valid_to) < new Date() ? "text-red-500" : ""
+                      )}>
+                        {new Date(result.gate_pass.valid_to).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {result.gate_pass.house && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="opacity-70 flex items-center gap-1.5"><HomeIcon className="h-3 w-3" /> Destination</span>
+                      <span className="font-medium truncate ml-4 text-right">{result.gate_pass.house.name}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isSuccess && !isSelectVisitor && (
+            <div className="bg-white/50 dark:bg-zinc-900/50 p-4 rounded-lg border border-red-200 dark:border-red-800/20">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                Authentication failed. Please check the pass details and try again.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 function GateConsoleContent() {
   const router = useRouter();
@@ -108,6 +225,7 @@ function GateConsoleContent() {
             // Check if response status indicates an error
             if (response.data.status &&
               response.data.status !== "checked_in" &&
+              response.data.status !== "active" &&
               response.data.status !== "checked_out" &&
               response.data.status !== "select_visitor") {
               setErrorResult({
@@ -177,6 +295,7 @@ function GateConsoleContent() {
         onSuccess: (response) => {
           // Check if response status indicates an error
           if (response.data.status &&
+            response.data.status !== "active" &&
             response.data.status !== "checked_in" &&
             response.data.status !== "checked_out" &&
             response.data.status !== "select_visitor") {
@@ -309,41 +428,47 @@ function GateConsoleContent() {
                     Loading visitors...
                   </div>
                 ) : visitors && visitors.length > 0 ? (
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border rounded-xl overflow-hidden bg-white dark:bg-zinc-900/50 shadow-sm border-zinc-200 dark:border-zinc-800">
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="bg-zinc-50 dark:bg-zinc-800/50">
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Pass Code</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="font-bold text-xs uppercase tracking-wider">Name</TableHead>
+                          <TableHead className="font-bold text-xs uppercase tracking-wider">Contact</TableHead>
+                          <TableHead className="font-bold text-xs uppercase tracking-wider">Suffix</TableHead>
+                          <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-6">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {visitors.map((visitor) => (
-                          <TableRow key={visitor.id}>
-                            <TableCell className="font-medium">{visitor.name}</TableCell>
-                            <TableCell className="text-muted-foreground">{visitor.email}</TableCell>
-                            <TableCell className="font-mono text-sm">{visitor?.gate_pass_code + '-' + visitor?.pass_code_suffix || "N/A"}</TableCell>
+                          <TableRow key={visitor.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors">
+                            <TableCell className="py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold ring-1 ring-zinc-200 dark:ring-zinc-700">
+                                  {visitor.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="font-semibold text-sm">{visitor.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{visitor.email || visitor.phone || "—"}</TableCell>
                             <TableCell>
+                              <Badge variant="outline" className="font-mono text-[10px] py-0">
+                                +{visitor.pass_code_suffix}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right pr-4">
                               <Button
                                 size="sm"
-                                variant={scanType === "checkin" ? "primary" : "outline"}
+                                variant="ghost"
                                 onClick={() => handleVisitorAction(visitor, scanType)}
                                 disabled={isLoading}
-                                className="gap-1"
-                              >
-                                {scanType === "checkin" ? (
-                                  <>
-                                    <LogIn className="h-4 w-4" />
-                                    Check In
-                                  </>
-                                ) : (
-                                  <>
-                                    <LogOut className="h-4 w-4" />
-                                    Check Out
-                                  </>
+                                className={cn(
+                                  "rounded-full h-8 px-4 text-xs font-bold",
+                                  scanType === "checkin"
+                                    ? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                    : "text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                                 )}
+                              >
+                                {scanType === "checkin" ? "Check In" : "Check Out"}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -360,100 +485,16 @@ function GateConsoleContent() {
             )}
 
             {/* Error Result */}
-            {errorResult && (
-              <div className="p-4 rounded-lg border-2 border-red-500 bg-red-50 dark:bg-red-900/20">
-                <div className="flex items-start gap-3">
-                  <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-1" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1 text-red-900 dark:text-red-100">
-                      Error
-                    </h3>
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                      {errorResult.message}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setErrorResult(null)}
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/40"
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {errorResult && (
+                <ResultDisplay result={errorResult} type={scanType} />
+              )}
 
-            {/* Success Result */}
-            {lastResult && (
-              <div
-                className={`p-4 rounded-lg border-2 ${lastResult.status === "checked_in" || lastResult.status === "checked_out"
-                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                  : lastResult.status === "select_visitor"
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                    : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                  }`}
-              >
-                <div className="flex items-start gap-3">
-                  {(lastResult.status === "checked_in" || lastResult.status === "checked_out") ? (
-                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
-                  ) : lastResult.status === "select_visitor" ? (
-                    <XCircle className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
-                  ) : (
-                    <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-1" />
-                  )}
-                  <div className="flex-1">
-                    <h3 className={`font-semibold text-lg mb-1 ${lastResult.status === "checked_in" || lastResult.status === "checked_out"
-                      ? "text-green-900 dark:text-green-100"
-                      : lastResult.status === "select_visitor"
-                        ? "text-blue-900 dark:text-blue-100"
-                        : "text-red-900 dark:text-red-100"
-                      }`}>
-                      {lastResult.message}
-                    </h3>
-                    {lastResult.gate_pass && (
-                      <div className="space-y-1 text-sm">
-                        <p>
-                          <span className="font-medium">Pass Code:</span>{" "}
-                          {lastResult.gate_pass.code}
-                        </p>
-                        <p>
-                          <span className="font-medium">Status:</span>{" "}
-                          <Badge
-                            variant={
-                              lastResult.gate_pass.status === "checked_in" ||
-                                lastResult.gate_pass.status === "active"
-                                ? "success"
-                                : "danger"
-                            }
-                          >
-                            {titleCase(lastResult.gate_pass.status.replace("_", " "))}
-                          </Badge>
-                        </p>
-                        {lastResult.owner && (
-                          <p>
-                            <span className="font-medium">Owner:</span>{" "}
-                            {titleCase(lastResult.owner.name)}
-                          </p>
-                        )}
-                        {lastResult.uses_count && (
-                          <p>
-                            <span className="font-medium">Uses Count:</span>{" "}
-                            {lastResult.uses_count}
-                          </p>
-                        )}
-                        {lastResult.gate_pass.max_uses && (
-                          <p>
-                            <span className="font-medium">Max Uses:</span>{" "}
-                            {lastResult.gate_pass.max_uses}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+              {/* Success Result */}
+              {lastResult && (
+                <ResultDisplay result={lastResult} type={scanType} />
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
 
@@ -469,20 +510,20 @@ function GateConsoleContent() {
         )}
 
         {/* Instructions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Instructions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• Select whether you want to check in or check out</p>
-            <p>• Enter the pass code manually or click the QR icon to scan a QR code</p>
-            <p>• QR scanner uses your device camera - grant camera permissions when prompted</p>
-            <p>• For 2-part codes (GATE-XXXXX), select a visitor from the list</p>
-            <p>• For 3-part codes (GATE-XXXXX-001), check-in/out happens automatically</p>
-            <p>• The system will validate the pass and log the event</p>
-            <p>• Approved passes will show in green, denied in red</p>
-          </CardContent>
-        </Card>
+        <div className="bg-zinc-50 dark:bg-zinc-900/30 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="h-5 w-5 text-zinc-500" />
+            <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Quick Guide</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs text-muted-foreground">
+            <p>• Select <strong>Check In</strong> or <strong>Check Out</strong> mode</p>
+            <p>• Enter pass code or use the <strong>QR icon</strong> to scan</p>
+            <p>• 3-part codes (GATE-XXXXX-001) check-in automatically</p>
+            <p>• 2-part codes (GATE-XXXXX) require selecting a visitor</p>
+            <p>• Approved passes show in <strong>Green</strong>, denied in <strong>Red</strong></p>
+            <p>• Valid passes are logged in the <strong>Gate Events</strong> history</p>
+          </div>
+        </div>
       </div>
     </>
   );

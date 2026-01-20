@@ -314,6 +314,24 @@ export const adminService = {
         return apiClient.get(`/admin/passes/visitors/${passCode}`);
     },
 
+    async getVisitors(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<Visitor>>> {
+        return apiClient.get("/admin/visitors", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
+            },
+        });
+    },
+
     async getAllPermissions(): Promise<ApiResponse<AllPermissionsResponse>> {
         return apiClient.get("/admin/role/permissions/all");
     },

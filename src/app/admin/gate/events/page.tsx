@@ -143,6 +143,14 @@ export default function AdminGateEventsPage() {
       ),
     },
     {
+      key: "gate",
+      header: "Gate",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">{row?.gate?.name ?? "—"}</span>
+      ),
+    },
+    {
       key: "owner",
       header: "Owner",
       sortable: false,

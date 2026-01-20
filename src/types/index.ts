@@ -1,5 +1,8 @@
+import { Gate } from "./gate";
+
 // Enums
 export enum GatePassStatus {
+    ACTIVE = "active",
     PENDING = "pending",
     CHECKED_IN = "checked_in",
     CHECKED_OUT = "checked_out",
@@ -160,6 +163,7 @@ export interface Visitor {
     pass_code?: string; // Computed: gate_pass_code-pass_code_suffix
     gate_pass_id?: string | null;
     gate_pass_code?: string | null;
+    status?: VisitorStatus;
     gate_pass?: {
         id: string;
         code: string;
@@ -169,6 +173,16 @@ export interface Visitor {
     } | null;
     created_at: string;
     updated_at: string;
+}
+
+export enum VisitorStatus {
+    CHECKED_IN = "checked_in",
+    CHECKED_OUT = "checked_out",
+    PENDING = "pending",
+    IN_PROGRESS = "in_progress",
+    COMPLETED = "completed",
+    REVOKED = "revoked",
+    EXPIRED = "expired",
 }
 
 export interface ForumCategory {
@@ -263,11 +277,13 @@ export interface GateEvent {
     checkout_time: string | null;
     created_at: string;
     house_id?: string | null;
+    gate_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
     gate_pass?: GatePass | null;
     scanned_by?: Admin | null;
     house?: House | null;
+    gate?: Gate | null;
 
 }
 
@@ -804,3 +820,5 @@ export interface NotificationResponse {
     created_at: string;
     updated_at: string;
 }
+
+export * from "./gate";
