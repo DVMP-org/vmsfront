@@ -506,6 +506,7 @@ export interface GatePassCheckinResponse {
     owner: Visitor | Resident | null;
     uses_count: number | null;
     max_uses: number | null;
+    owner_type: string | null;
 }
 
 export interface PermissionDictionary {

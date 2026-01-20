@@ -98,8 +98,8 @@ const ResultDisplay = ({ result, type }: { result: any, type: "checkin" | "check
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  <Badge variant="outline" className="capitalize text-[10px] py-0">{result.owner_type || "User"}</Badge>
-                  {result.gate_pass.resident_id && <Badge variant="secondary" className="text-[10px] py-0">Resident</Badge>}
+                  <Badge variant="outline" className="capitalize text-[10px] py-0">{result.owner_type || "Visitor"}</Badge>
+
                 </div>
               </div>
 
