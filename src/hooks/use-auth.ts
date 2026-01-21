@@ -51,9 +51,13 @@ export function useAuth() {
   const { user, token, isAuthenticated, setAuth, clearAuth } = useAuthStore();
 
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [loginFieldErrors, setLoginFieldErrors] = useState<Record<string, string>>({});
+  const [loginFieldErrors, setLoginFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [registerError, setRegisterError] = useState<string | null>(null);
-  const [registerFieldErrors, setRegisterFieldErrors] = useState<Record<string, string>>({});
+  const [registerFieldErrors, setRegisterFieldErrors] = useState<
+    Record<string, string>
+  >({});
 
   const loginMutation = useMutation({
     mutationFn: authService.login,
@@ -189,8 +193,6 @@ export function useProfile() {
   });
 }
 
-
-
 export function useVerifyToken() {
   return useQuery<AuthResponse>({
     queryKey: ["auth", "verify"],
@@ -208,7 +210,7 @@ export function useForgotPassword() {
       authService.forgotPassword(data),
     onSuccess: () => {
       toast.success(
-        "If an account exists for that email, a reset link has been sent."
+        "If an account exists for that email, a reset link has been sent.",
       );
     },
     onError: (error: any) => {
@@ -220,8 +222,7 @@ export function useForgotPassword() {
 
 export function useResetPassword(onSuccess?: () => void) {
   return useMutation({
-    mutationFn: (data: ResetPasswordRequest) =>
-      authService.resetPassword(data),
+    mutationFn: (data: ResetPasswordRequest) => authService.resetPassword(data),
     onSuccess: () => {
       toast.success("Password reset successfully. Please log in.");
       onSuccess?.();
@@ -307,6 +308,20 @@ export function useResendVerification() {
     onError: (error: any) => {
       const parsedError = parseApiError(error);
       toast.error(parsedError.message || "Failed to resend verification email");
+    },
+  });
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: ({ token }: { token: string }) =>
+      authService.verifyEmail(token),
+    onSuccess: (response) => {
+      toast.success(response.message || "Email verified successfully!");
+    },
+    onError: (error: any) => {
+      const parsedError = parseApiError(error);
+      toast.error(parsedError.message || "Failed to verify email");
     },
   });
 }
