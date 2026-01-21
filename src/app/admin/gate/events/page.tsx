@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useAdminGateEvents } from "@/hooks/use-admin";
 import { GateEvent } from "@/types";
 import { formatFiltersForAPI } from "@/lib/table-utils";
-import { titleCase } from "@/lib/utils";
+import { formatDate, formatTime, titleCase } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Eye } from "lucide-react";
@@ -143,6 +143,14 @@ export default function AdminGateEventsPage() {
       ),
     },
     {
+      key: "gate",
+      header: "Gate",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">{row?.gate?.name ?? "—"}</span>
+      ),
+    },
+    {
       key: "owner",
       header: "Owner",
       sortable: false,
@@ -160,6 +168,22 @@ export default function AdminGateEventsPage() {
       sortable: false,
       accessor: (row) => (
         <span className="text-xs">{row?.scanned_by?.user?.name ?? "—"}</span>
+      ),
+    },
+    {
+      key: "checkin_time",
+      header: "Check-in Time",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">{row?.checkin_time ? formatDistanceToNow(new Date(row?.checkin_time)) : "—"}</span>
+      ),
+    },
+    {
+      key: "checkout_time",
+      header: "Check-out Time",
+      sortable: false,
+      accessor: (row) => (
+        <span className="text-xs">{row?.checkout_time ? formatDistanceToNow(new Date(row?.checkout_time)) : "—"}</span>
       ),
     },
     {

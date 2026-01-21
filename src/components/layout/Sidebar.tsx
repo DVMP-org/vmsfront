@@ -537,8 +537,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "relative flex flex-col border-r bg-background overflow-hidden",
-        "h-full shadow-sm flex-shrink-0 z-30"
+        "relative flex flex-col border-r bg-background",
+        "h-screen shadow-sm flex-shrink-0 z-30"
       )}
     >
       {/* Header with Close/Collapse Button */}

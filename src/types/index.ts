@@ -1,5 +1,8 @@
+import { Gate } from "./gate";
+
 // Enums
 export enum GatePassStatus {
+    ACTIVE = "active",
     PENDING = "pending",
     CHECKED_IN = "checked_in",
     CHECKED_OUT = "checked_out",
@@ -150,6 +153,22 @@ export interface ResidentUserCreate {
     email?: string;
 }
 
+
+
+export interface GateResponseLite {
+    id: string;
+    name: string;
+    slug: string;
+}
+
+export interface VisitorGateStatus {
+    gate: GateResponseLite;
+    event: GateEvent | null;
+    dependency_gate: GateResponseLite | null;
+    status: "locked" | "pending" | "checked_in" | "checked_out" | "unavailable" | string;
+    message: string | null;
+}
+
 export interface Visitor {
     id: string;
     email: string;
@@ -160,15 +179,22 @@ export interface Visitor {
     pass_code?: string; // Computed: gate_pass_code-pass_code_suffix
     gate_pass_id?: string | null;
     gate_pass_code?: string | null;
-    gate_pass?: {
-        id: string;
-        code: string;
-        house_id: string;
-        resident_id?: string | null;
-        qr_code_url?: string | null;
-    } | null;
+    status?: VisitorStatus;
+    gate_pass?: GatePass | null;
     created_at: string;
     updated_at: string;
+    gate_events?: GateEvent[];
+    dependency_gate_map?: Record<string, VisitorGateStatus>;
+}
+
+export enum VisitorStatus {
+    CHECKED_IN = "checked_in",
+    CHECKED_OUT = "checked_out",
+    PENDING = "pending",
+    IN_PROGRESS = "in_progress",
+    COMPLETED = "completed",
+    REVOKED = "revoked",
+    EXPIRED = "expired",
 }
 
 export interface ForumCategory {
@@ -263,11 +289,13 @@ export interface GateEvent {
     checkout_time: string | null;
     created_at: string;
     house_id?: string | null;
+    gate_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
     gate_pass?: GatePass | null;
     scanned_by?: Admin | null;
     house?: House | null;
+    gate?: Gate | null;
 
 }
 
@@ -478,6 +506,7 @@ export interface GatePassCheckinResponse {
     owner: Visitor | Resident | null;
     uses_count: number | null;
     max_uses: number | null;
+    owner_type: string | null;
 }
 
 export interface PermissionDictionary {
@@ -804,3 +833,5 @@ export interface NotificationResponse {
     created_at: string;
     updated_at: string;
 }
+
+export * from "./gate";

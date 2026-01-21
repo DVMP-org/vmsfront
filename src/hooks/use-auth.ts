@@ -78,6 +78,7 @@ export function useAuth() {
       const redirectTarget = getRedirectFromQuery();
       if (redirectTarget) {
         clearRedirectQueryParam();
+        router.refresh();
         router.replace(redirectTarget);
       } else {
         router.replace("/select");

@@ -14,6 +14,7 @@ import {
     UserCog,
     MessageSquare,
     type LucideIcon,
+    DoorOpen,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -29,6 +30,7 @@ export const adminLinks: AdminRoute[] = [
     { href: "/admin/gate", label: "Gate Console", icon: Scan, permission: "gate_passes.console" },
     { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
     { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
+    { href: "/admin/gates", label: "Gates", icon: DoorOpen, permission: "gates.list" },
     { href: "/admin/houses", label: "Houses", icon: Building2, permission: "houses.list" },
     { href: "/admin/house-groups", label: "House Groups", icon: FolderTree, permission: "house_groups.list" },
     {
@@ -42,6 +44,7 @@ export const adminLinks: AdminRoute[] = [
         ],
     },
     { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
+    { href: "/admin/visitors", label: "Visitors", icon: Users, permission: "visitors.list" },
     {
         href: "#",
         label: "Admins",

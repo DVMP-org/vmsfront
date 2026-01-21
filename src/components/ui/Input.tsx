@@ -50,12 +50,12 @@ export const inputContainerVariants = cva(
     variants: {
       status: {
         default:
-          "border-[#DEDEDE] bg-white text-[#191919] dark:!bg-transparent caret-text-primary focus-within:bg-white dark:focus-within:!bg-transparent dark:text-white focus-within:border-primary-main dark:focus-within:border-[#9299A2] dark:disabled:!border-[#9299A2]",
+          "border-[#DEDEDE] bg-white dark:border-white/20 text-[#191919] dark:!bg-transparent caret-text-primary focus-within:bg-white dark:focus-within:!bg-transparent dark:text-white focus-within:border-primary-main dark:focus-within:border-[#9299A2] dark:disabled:!border-[#9299A2]",
         error:
           "placeholder:text-red-500 bg-red-50 border-red-500 dark:!bg-status-error-bg-dark text-red-500 focus-within:bg-red-50 focus-within:border-red-500",
         loading: "",
         prefilled:
-          "bg-[#F6F6F6] border-[#DEDEDE] dark:!bg-transparent caret-[#DEDEDE] focus-within:bg-[#F6F6F6] focus-within:border-[#DEDEDE] dark:!border-[#9299A2] dark:focus-within:border-[#9299A2]",
+          "bg-[#F6F6F6] border-[#DEDEDE] dark:border-white/20 dark:!bg-transparent caret-[#DEDEDE] focus-within:bg-[#F6F6F6] focus-within:border-[#DEDEDE] dark:!border-[#9299A2] dark:focus-within:border-[#9299A2]",
         neutral:
           "bg-[#F6F6F6] border-[#DEDEDE] dark:!bg-transparent caret-[#DEDEDE] focus-within:bg-[#F6F6F6] focus-within:border-[#DEDEDE] dark:!border-[#9299A2] dark:focus-within:border-[#9299A2]",
       },
