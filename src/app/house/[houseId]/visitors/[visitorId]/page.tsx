@@ -91,7 +91,7 @@ export default function VisitorDetailPage() {
 
   const gateVisualization = useMemo(() => {
     // Handle both spelled and typoed versions from API
-    const map = (visitor as any)?.dependency_gate_map || (visitor as any)?.dependecy_gate_map;
+    const map = (visitor as any)?.dependency_gate_map;
     if (!map) return { mainPath: [], branches: [] };
 
     const items = (Object.values(map) as VisitorGateStatus[]).filter(Boolean);
@@ -228,7 +228,7 @@ export default function VisitorDetailPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             {/* Movement Dependency Map */}
-            {((visitor as any)?.dependency_gate_map || (visitor as any)?.dependecy_gate_map) && (
+            {((visitor as any)?.dependency_gate_map) && (
               <Card className="relative  border border-white/20 dark:border-zinc-800/50 shadow-xl bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl h-[calc(100vh-400px)]">
                 <CardHeader className="border-b border-zinc-100/50 dark:border-zinc-800/50 px-6 py-4">
                   <div className="flex items-center justify-between">

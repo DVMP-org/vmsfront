@@ -162,7 +162,7 @@ export default function VisitorDetailPage() {
                 <div className="lg:col-span-2 space-y-8">
 
                     {/* Movement Dependency Map */}
-                    {((visitor as any)?.dependency_gate_map || (visitor as any)?.dependecy_gate_map) && (
+                    {((visitor as any)?.dependency_gate_map) && (
                         <Card className="relative overflow-visible border border-white/20 dark:border-zinc-800/50 shadow-xl bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl h-auto">
                             <CardHeader className="border-b border-zinc-100/50 dark:border-zinc-800/50 px-6 py-4">
                                 <div className="flex items-center justify-between">
