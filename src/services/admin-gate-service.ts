@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
-import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
+import { Gate, CreateGateRequest, UpdateGateRequest, GateNode } from "@/types/gate";
 
 export const adminGateService = {
     async getGates(params: {
@@ -40,5 +40,9 @@ export const adminGateService = {
 
     async toggleGateAdminStatus(gateId: string, gateAdminIds: string[]): Promise<ApiResponse<void>> {
         return apiClient.post(`/admin/gate/admin/${gateId}/toggle`, gateAdminIds);
+    },
+
+    async getGateDependencyMap(): Promise<ApiResponse<GateNode[]>> {
+        return apiClient.get("/admin/gate/dependency/map");
     },
 };

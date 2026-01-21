@@ -134,8 +134,13 @@ export default function VisitorDetailPage() {
       if (!visited.has(item.gate.id)) processNode(item);
     });
 
-    return { mainPath, branches };
+    const result = { mainPath, branches };
+    console.log("Gate Visualization Map:", map);
+    console.log("Gate Visualization Result:", result);
+    return result;
   }, [visitor]);
+
+
 
   if (!effectiveHouseId) {
     return (
@@ -288,6 +293,7 @@ export default function VisitorDetailPage() {
                             )}>
                               {gateStatus.gate.name}
                             </p>
+
                             <div className="mt-1 flex flex-col items-center gap-1">
                               {gateStatus.event ? (
                                 <div className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[9px] font-bold font-mono">
@@ -301,6 +307,12 @@ export default function VisitorDetailPage() {
                                   {status}
                                 </Badge>
                               )}
+
+
+                              <p className="text-[8px] text-red-500 dark:text-red-400 max-w-[100px] leading-tight mt-1 italic font-medium">
+                                {gateStatus.message}
+                              </p>
+
                             </div>
                           </div>
 
@@ -338,6 +350,9 @@ export default function VisitorDetailPage() {
                                       </span>
                                       <span className="text-[8px] text-zinc-400 mt-1 uppercase font-black tracking-widest px-1.5">
                                         {branch.status}
+                                      </span>
+                                      <span className="text-[8px] text-red-500/80 dark:text-red-400 mt-0.5 italic leading-tight px-1.5 max-w-[120px]">
+                                        {branch.message}
                                       </span>
                                     </div>
                                   </motion.div>

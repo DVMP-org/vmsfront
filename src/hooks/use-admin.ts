@@ -1104,3 +1104,12 @@ export function usePrefetchResident() {
   };
 }
 
+export function useAdminGateDependencyMap() {
+  return useQuery({
+    queryKey: ["admin", "gate", "dependency-map"],
+    queryFn: async () => {
+      const response = await adminGateService.getGateDependencyMap();
+      return response.data;
+    },
+  });
+}

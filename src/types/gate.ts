@@ -24,6 +24,10 @@ export interface Gate {
     dependencies?: Gate[];
 }
 
+export interface GateNode extends Gate {
+    children: GateNode[];
+}
+
 export interface CreateGateRequest {
     name: string;
     admin_ids: string[];

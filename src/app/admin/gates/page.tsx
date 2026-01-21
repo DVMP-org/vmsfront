@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
-import { Plus, Settings, Trash2, UserPlus, Eye } from "lucide-react";
+import { Plus, Settings, Trash2, UserPlus, Eye, GitGraph } from "lucide-react";
 import { Gate } from "@/types";
 import { useAdminGates, useDeleteGate } from "@/hooks/use-admin";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { GateFormModal } from "@/components/admin/gate-modals/GateFormModal";
 import { GateToggleAdminModal } from "@/components/admin/gate-modals/GateToggleAdminModal";
 import { GateViewModal } from "@/components/admin/gate-modals/GateViewModal";
+import { GateDependencyModal } from "@/components/admin/gate-modals/GateDependencyModal";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
@@ -46,6 +47,7 @@ export default function AdminGatesPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isToggleAdminModalOpen, setIsToggleAdminModalOpen] = useState(false);
+    const [isDependencyModalOpen, setIsDependencyModalOpen] = useState(false);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -171,7 +173,7 @@ export default function AdminGatesPage() {
                         row.gate_admins.slice(0, 3).map((gateAdmin) => (
                             <div
                                 key={gateAdmin.admin_id}
-                                className="inline-block m-2 h-7 w-7 ring-2 ring-white/20 rounded-full bg-white/40 flex items-center justify-center text-[10px] font-medium"
+                                className="inline-block m-2 h-7 w-7 ring-2 dark:ring-white/20 ring-zinc-500 rounded-full dark:bg-white/40 bg-zinc-200 flex items-center justify-center text-[10px] font-medium"
                                 title={gateAdmin.admin?.user?.first_name + " " + gateAdmin.admin?.user?.last_name || gateAdmin.admin?.user?.email || "Admin"}
                             >
                                 {gateAdmin.admin?.user?.first_name?.[0] || "?"}
@@ -235,10 +237,16 @@ export default function AdminGatesPage() {
                         {total} total gate{total !== 1 ? "s" : ""} configured
                     </p>
                 </div>
-                <Button onClick={() => setIsCreateModalOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Gate
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsDependencyModalOpen(true)}>
+                        <GitGraph className="mr-2 h-4 w-4" />
+                        Dependency Map
+                    </Button>
+                    <Button onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Gate
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -310,6 +318,11 @@ export default function AdminGatesPage() {
                     setSelectedGate(null);
                 }}
                 gate={selectedGate || undefined}
+            />
+
+            <GateDependencyModal
+                isOpen={isDependencyModalOpen}
+                onClose={() => setIsDependencyModalOpen(false)}
             />
         </div>
     );
