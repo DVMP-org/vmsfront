@@ -23,10 +23,10 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Prefetch dashboard routes to speed up transition after login
-  useEffect(() => {
-    router.prefetch("/select");
-    router.prefetch("/admin");
-  }, [router]);
+  // useEffect(() => {
+  //   router.prefetch("/select");
+  //   router.prefetch("/admin");
+  // }, [router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

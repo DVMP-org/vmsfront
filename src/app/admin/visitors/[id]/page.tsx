@@ -181,9 +181,14 @@ export default function VisitorDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-8 pb-12 overflow-auto max-h-[600px] scrollbar-thin">
-                                <div className="flex items-start justify-between min-w-max gap-12 relative pt-8 pb-32">
+                                <div className={cn(
+                                    "flex items-start min-w-max gap-12 relative pt-8 pb-32",
+                                    gateVisualization.mainPath.length === 1 ? "justify-center w-full" : "justify-between"
+                                )}>
                                     {/* Main Path Connection Line */}
-                                    <div className="hidden md:block absolute top-[60px] left-12 right-12 h-[2px] bg-gradient-to-r from-blue-500/20 via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800 -z-0" />
+                                    {gateVisualization.mainPath.length > 1 && (
+                                        <div className="hidden md:block absolute top-[60px] left-12 right-12 h-[2px] bg-gradient-to-r from-blue-500/20 via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800 -z-0" />
+                                    )}
 
                                     {gateVisualization.mainPath.map((gateStatus, idx, arr) => {
                                         const status = gateStatus.status;
