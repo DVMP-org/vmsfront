@@ -30,6 +30,7 @@ import {
   DueSchedule,
   DuePayment,
   DashboardSelect,
+  ImportResponse,
 } from "@/types";
 
 export const residentService = {
@@ -432,6 +433,43 @@ export const residentService = {
   ): Promise<ApiResponse<FundWalletResponse>> {
     return apiClient.post(
       `/resident/house/${houseId}/dues/${dueId}/schedules/${scheduleId}/pay`
+    );
+  },
+  async addVisitorsToGatePass(
+    houseId: string,
+    passId: string,
+    data: { name: string; email: string; phone?: string }[]
+  ): Promise<ApiResponse<Visitor[]>> {
+    return apiClient.post(
+      `/resident/house/${houseId}/gate-passes/${passId}/visitors`,
+      { visitors: data }
+    );
+  },
+
+  async removeVisitorFromGatePass(
+    houseId: string,
+    passId: string,
+    visitorIds: string[]
+  ): Promise<ApiResponse<{ success: boolean }>> {
+    return apiClient.delete(
+      `/resident/house/${houseId}/gate-passes/${passId}/visitors`,
+      { data: visitorIds }
+    );
+  },
+
+  async uploadVisitorsToGatePass(
+    houseId: string,
+    passId: string,
+    data: FormData
+  ): Promise<ApiResponse<ImportResponse<Visitor>>> {
+    return apiClient.post(
+      `/resident/house/${houseId}/gate-passes/${passId}/visitors/bulk`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
   },
 };

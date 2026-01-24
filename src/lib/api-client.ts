@@ -2,12 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
 
 // Use production API URL in production, fallback to localhost for development
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://api.gatekeeperhq.cfd'
-    : 'http://localhost:8080');
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 class ApiClient {
   private client: AxiosInstance;
 

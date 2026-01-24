@@ -438,3 +438,61 @@ export function useTransaction(reference: string | null) {
     refetchIntervalInBackground: true,
   });
 }
+
+export function useAddVisitorsToGatePass(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ passId, data }: { passId: string; data: { name: string; email: string; phone?: string }[] }) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.addVisitorsToGatePass(houseId, passId, data);
+    },
+    onSuccess: (_, { passId }) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      // Invalidate specific visitor queries if necessary
+      toast.success("Visitors added successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useRemoveVisitorFromGatePass(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ passId, visitorIds }: { passId: string; visitorIds: string[] }) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.removeVisitorFromGatePass(houseId, passId, visitorIds);
+    },
+    onSuccess: (_, { passId }) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      toast.success("Visitor removed successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
+
+export function useUploadVisitorsToGatePass(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ passId, data }: { passId: string; data: FormData }) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.uploadVisitorsToGatePass(houseId, passId, data);
+    },
+    onSuccess: (_, { passId }) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      toast.success("Visitors uploaded successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}

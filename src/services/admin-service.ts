@@ -695,4 +695,8 @@ export const adminService = {
     async getTransaction(transactionId: string): Promise<ApiResponse<Transaction>> {
         return apiClient.get(`/admin/transactions/${transactionId}`);
     },
+
+    async streamLogs(): Promise<ApiResponse<any>> {
+        return apiClient.get('/admin/logs/stream');
+    },
 };

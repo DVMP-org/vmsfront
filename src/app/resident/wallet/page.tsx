@@ -186,7 +186,7 @@ export default function WalletPage() {
 
     return (
         <DashboardLayout type="resident">
-            <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+            <div className="max-w-5xl  space-y-8 animate-in fade-in duration-500">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border/50">
                     <div className="space-y-1">
