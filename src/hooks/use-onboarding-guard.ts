@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth-store";
 import { residentService } from "@/services/resident-service";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
  */
 export function useRequireResidentOnboarding(enabled: boolean = true) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
   const token = useAuthStore((state) => state.token);
 
   const { data: resident, isLoading } = useQuery({

@@ -4,11 +4,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { DataTable, Column } from "@/components/ui/DataTable";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { TableSkeleton } from "@/components/ui/Skeleton";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Badge } from "@/components/ui/Badge";
-import { CreditCard, Search, DollarSign } from "lucide-react";
+import { Search, DollarSign } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { PurchaseToken } from "@/plugins/electricity/types";
@@ -36,9 +34,9 @@ export default function AdminPurchasesPage() {
     // Filter purchases by search query (client-side filtering for now)
     const filteredPurchases = purchases.filter(
         (purchase) =>
-            purchase.meter?.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.email.toLowerCase().includes(searchQuery.toLowerCase())
+            purchase?.meter?.meter_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            purchase?.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            purchase?.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const totalRevenue = purchases
@@ -172,43 +170,32 @@ export default function AdminPurchasesPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? (
-                        <TableSkeleton />
-                    ) : filteredPurchases.length === 0 ? (
-                        <EmptyState
-                            icon={CreditCard}
-                            title="No purchases yet"
-                            description={
-                                searchQuery
-                                    ? "No purchases match your search"
-                                    : "Purchases will appear here once residents start buying electricity"
-                            }
+
+                    <>
+                        <DataTable
+                            data={filteredPurchases}
+                            columns={columns}
+                            searchable={false}
+                            showPagination={false}
+                            emptyMessage="No purchases found"
+                            isLoading={isLoading || isFetching}
                         />
-                    ) : (
-                                <>
-                                    <DataTable
-                                        data={filteredPurchases}
-                                        columns={columns}
-                                        searchable={false}
-                                        showPagination={false}
-                                        emptyMessage="No purchases found"
-                                    />
-                                    {showPagination && (
-                                        <PaginationBar
-                                            page={page}
-                                            pageSize={pageSize}
-                                            total={total}
-                                            totalPages={totalPages}
-                                            hasNext={hasNext}
-                                            hasPrevious={hasPrevious}
-                                            resourceLabel="purchases"
-                                            onChange={handlePageChange}
-                                            isFetching={isFetching}
-                                            className="mt-6"
-                                        />
-                                    )}
-                                </>
-                    )}
+                        {showPagination && (
+                            <PaginationBar
+                                page={page}
+                                pageSize={pageSize}
+                                total={total}
+                                totalPages={totalPages}
+                                hasNext={hasNext}
+                                hasPrevious={hasPrevious}
+                                resourceLabel="purchases"
+                                onChange={handlePageChange}
+                                isFetching={isFetching}
+                                className="mt-6"
+                            />
+                        )}
+                    </>
+
                 </CardContent>
             </Card>
         </div>

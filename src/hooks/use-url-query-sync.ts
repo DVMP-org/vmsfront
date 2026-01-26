@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+"use client";
+
+import { useCallback, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/router";
 
 export interface UrlQueryConfig {
     [key: string]: {
@@ -16,47 +18,37 @@ export interface UseUrlQuerySyncOptions {
 
 /**
  * Reusable hook for syncing component state with URL query parameters
- * 
- * @example
- * const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
- *   config: {
- *     page: { defaultValue: 1 },
- *     pageSize: { defaultValue: 20 },
- *     search: { defaultValue: "" },
- *     status: { defaultValue: undefined },
- *     sort: { defaultValue: null },
- *   }
- * });
- * 
- * // Initialize state from URL on mount
- * const [page, setPage] = useState(() => initializeFromUrl("page"));
- * const [search, setSearch] = useState(() => initializeFromUrl("search"));
- * 
- * // Sync state changes to URL
- * useEffect(() => {
- *   syncToUrl({ page, search, status });
- * }, [page, search, status]);
+ * Adapted for Next.js Pages Router.
  */
 export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
     const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
     const isInitialMount = useRef(true);
     const { config, skipInitialSync = false } = options;
+
+    const pathname = router.pathname;
+
+    // Convert router.query to URLSearchParams-like interface if needed, 
+    // but initializeFromUrl will use it directly.
+    const query = router.query;
 
     /**
      * Initialize a state value from URL query parameter
      */
     const initializeFromUrl = useCallback((key: string) => {
+        if (!router.isReady) {
+            return config[key]?.defaultValue;
+        }
+
         const paramConfig = config[key];
         if (!paramConfig) {
             console.warn(`No config found for key: ${key}`);
             return undefined;
         }
 
-        const paramValue = searchParams.get(key);
+        const val = query[key];
+        const paramValue = Array.isArray(val) ? val[0] : val;
 
-        if (paramValue === null) {
+        if (paramValue === undefined || paramValue === null) {
             return paramConfig.defaultValue;
         }
 
@@ -77,23 +69,40 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
         }
 
         return paramValue;
-    }, [config, searchParams]);
+    }, [config, query, router.isReady]);
 
     /**
      * Sync state values to URL query parameters
      */
     const syncToUrl = useCallback((updates: Record<string, any>) => {
+        if (!router.isReady) return;
+
         if (skipInitialSync && isInitialMount.current) {
             isInitialMount.current = false;
             return;
         }
 
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams();
+        // Preserve existing query params that are not in config? 
+        // Or only manage declared ones? The original implementation 
+        // seemed to use searchParams.toString() as base.
+
+        // Let's use current router.query as base
+        Object.keys(query).forEach(key => {
+            const val = query[key];
+            if (val !== undefined) {
+                if (Array.isArray(val)) {
+                    val.forEach(v => params.append(key, v));
+                } else {
+                    params.set(key, val);
+                }
+            }
+        });
 
         Object.entries(updates).forEach(([key, value]) => {
             const paramConfig = config[key];
             if (!paramConfig) {
-                console.warn(`No config found for key: ${key}`);
+                // Not managed by this hook, leave as is
                 return;
             }
 
@@ -127,17 +136,21 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
         });
 
         const queryString = params.toString();
-        const currentQueryString = searchParams.toString();
+        const currentQueryString = new URLSearchParams(query as any).toString();
 
         if (queryString === currentQueryString) {
             return;
         }
 
         router.replace(
-            queryString ? `${pathname}?${queryString}` : pathname,
-            { scroll: false }
+            {
+                pathname: router.pathname,
+                query: Object.fromEntries(params.entries()),
+            },
+            undefined,
+            { shallow: true, scroll: false }
         );
-    }, [config, pathname, router, searchParams, skipInitialSync]);
+    }, [config, query, router, skipInitialSync]);
 
     /**
      * Mark initial mount as complete after first render
@@ -151,7 +164,7 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
     return {
         initializeFromUrl,
         syncToUrl,
-        searchParams,
+        query,
         pathname,
     };
 }

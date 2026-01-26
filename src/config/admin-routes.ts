@@ -15,6 +15,12 @@ import {
     MessageSquare,
     type LucideIcon,
     DoorOpen,
+    Users2Icon,
+    Users2,
+    UserPlus2Icon,
+    BookUser,
+    BookUserIcon,
+    ShieldPlusIcon,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -44,11 +50,11 @@ export const adminLinks: AdminRoute[] = [
         ],
     },
     { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
-    { href: "/admin/visitors", label: "Visitors", icon: Users, permission: "visitors.list" },
+    { href: "/admin/visitors", label: "Visitors", icon: BookUserIcon, permission: "visitors.list" },
     {
         href: "#",
         label: "Admins",
-        icon: UserCog,
+        icon: ShieldPlusIcon,
         permission: ["admins.list", "roles.list"],
         children: [
             { href: "/admin/admins", label: "Admins", icon: UserCog, permission: "admins.list" },

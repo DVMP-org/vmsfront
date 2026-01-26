@@ -14,6 +14,18 @@ export function formatDate(date: string | Date): string {
   });
 }
 
+
+
+export const formatFileSize = (size: number) => {
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (size >= 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+  return `${size} B`;
+};
+
 export function formatDateTime(date: string | Date): string {
   return new Date(date).toLocaleString("en-US", {
     year: "numeric",
@@ -71,6 +83,8 @@ export function getPassStatusColor(status: string): string {
       return "text-white bg-orange-500 border border-orange-500";
     case "pending":
       return "text-amber-600 bg-amber-50 border border-amber-600";
+    case "completed":
+      return "text-green-600 bg-green-50 border border-green-600";
     default:
       return "text-gray-600 bg-gray-50 border border-gray-600";
   }

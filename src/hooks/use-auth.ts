@@ -324,4 +324,7 @@ export function useVerifyEmail() {
       toast.error(parsedError.message || "Failed to verify email");
     },
   });
+
+
 }
+

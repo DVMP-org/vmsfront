@@ -27,6 +27,14 @@ export interface PurchaseToken {
     transaction?: Transaction | null;
 }
 
+export interface ImportResponse<T = any> {
+    total: number;
+    successful: number;
+    failed: number;
+    results: T[];
+}
+
+
 export interface Transaction {
     id: string;
     reference: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth-store";
 
 /**
@@ -9,7 +9,7 @@ import { useAuthStore } from "@/store/auth-store";
  */
 export function useRequireEmailVerification(enabled: boolean = true) {
     const router = useRouter();
-    const pathname = usePathname();
+    const pathname = router.pathname;
     const { user, isAuthenticated } = useAuthStore();
 
 
