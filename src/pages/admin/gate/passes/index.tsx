@@ -9,16 +9,18 @@ import { GatePassStatus, GatePass } from "@/types";
 import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { Card, CardContent } from "@/components/ui/Card";
-import { cn, formatPassWindow, getTimeRemaining } from "@/lib/utils";
+import { cn, formatPassWindow, getTimeRemaining, titleCase } from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { toast } from "sonner";
 
+
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
+    { label: "Active", value: GatePassStatus.ACTIVE },
     { label: "Checked-in", value: GatePassStatus.CHECKED_IN },
     { label: "Checked-out", value: GatePassStatus.CHECKED_OUT },
     { label: "Pending", value: GatePassStatus.PENDING },
@@ -45,6 +47,7 @@ export default function AdminGatePassesPage() {
         config,
         skipInitialSync: true,
     });
+    const isInitialMount = useRef(true);
 
     // Initialize state from URL params
     const [page, setPage] = useState(() => initializeFromUrl("page"));
@@ -61,6 +64,10 @@ export default function AdminGatePassesPage() {
 
     // Sync state changes to URL (skip initial mount)
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
 
         syncToUrl({
             page,
@@ -309,8 +316,14 @@ export default function AdminGatePassesPage() {
             sortable: false,
             accessor: (row) => (
                 <div className="flex items-center gap-2">
-
-                    <Eye className="w-4 h-4 cursor-pointer" onClick={() => router.push(`/admin/gate/passes/${row.id}`)} />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/admin/gate/passes/${row.id}`)}
+                    >
+                        <Eye className="h-3.5 w-3.5 mr-1.5" />
+                        View
+                    </Button>
                 </div>
             ),
         }
@@ -429,7 +442,7 @@ function StatusBadge({ status, className }: { status: string, className?: string
     const statusMap: Record<string, { label: string; className: string }> = {
         [GatePassStatus.CHECKED_IN]: {
             label: "Checked in",
-            className: cn("bg-green-50 text-green-600 border border-green-600 w-fit", className),
+            className: cn("bg-orange-50 text-orange-600 border border-orange-600 w-fit", className),
         },
         [GatePassStatus.CHECKED_OUT]: {
             label: "Checked out",
@@ -451,6 +464,10 @@ function StatusBadge({ status, className }: { status: string, className?: string
             label: "Completed",
             className: cn("bg-red-50 text-red-600 border border-red-600 w-fit", className),
         },
+        [GatePassStatus.ACTIVE]: {
+            label: "Active",
+            className: cn("bg-green-50 text-green-600 border border-green-600 w-fit", className),
+        },
     };
 
     const data = statusMap[status] ?? {
@@ -460,7 +477,7 @@ function StatusBadge({ status, className }: { status: string, className?: string
 
     return (
         <Badge variant="secondary" className={`${data.className} font-normal text-xs`}>
-            {data.label}
+            {titleCase(data.label)}
         </Badge>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef, ReactElement } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,9 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -183,7 +186,7 @@ export default function AdminVisitorsPage() {
             key: "status",
             header: "Status",
             accessor: (row) => (
-                <StatusBadge status={row.status} />
+                <StatusBadge status={row?.status || VisitorStatus.PENDING} />
             ),
         },
         {
@@ -307,3 +310,15 @@ function StatusBadge({ status, className }: { status: string, className?: string
         </Badge>
     );
 }
+
+AdminVisitorsPage.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <RouteGuard>
+            <DashboardLayout type="admin">
+                <AdminPermissionGuard>
+                    {page}
+                </AdminPermissionGuard>
+            </DashboardLayout>
+        </RouteGuard>
+    );
+};

@@ -554,6 +554,20 @@ export interface PaginatedResponse<T> {
     has_previous?: boolean;
 }
 
+
+export interface ImportResultItem {
+    status: string;
+    row: number;
+    error?: string;
+}
+
+export interface ImportResult {
+    total: number;
+    successful: number;
+    failed: number;
+    results: ImportResultItem[];
+}
+
 export interface ImportResponse<T = any> {
     total: number;
     successful: number;

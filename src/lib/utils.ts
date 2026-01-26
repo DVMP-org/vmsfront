@@ -83,6 +83,8 @@ export function getPassStatusColor(status: string): string {
       return "text-white bg-orange-500 border border-orange-500";
     case "pending":
       return "text-amber-600 bg-amber-50 border border-amber-600";
+    case "completed":
+      return "text-green-600 bg-green-50 border border-green-600";
     default:
       return "text-gray-600 bg-gray-50 border border-gray-600";
   }

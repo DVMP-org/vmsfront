@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef, ReactElement } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +17,9 @@ import { GateToggleAdminModal } from "@/components/admin/gate-modals/GateToggleA
 import { GateViewModal } from "@/components/admin/gate-modals/GateViewModal";
 import { GateDependencyModal } from "@/components/admin/gate-modals/GateDependencyModal";
 import { formatFiltersForAPI } from "@/lib/table-utils";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -327,3 +330,16 @@ export default function AdminGatesPage() {
         </div>
     );
 }
+
+
+AdminGatesPage.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <RouteGuard>
+            <DashboardLayout type="admin">
+                <AdminPermissionGuard>
+                    {page}
+                </AdminPermissionGuard>
+            </DashboardLayout>
+        </RouteGuard>
+    );
+};

@@ -8,22 +8,23 @@ import { Lock, Mail } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-        {}
+        {},
     );
     const { login, isLoggingIn, loginError, loginFieldErrors, clearAuthErrors } =
         useAuth();
     const router = useRouter();
 
     // Prefetch dashboard routes to speed up transition after login
-    useEffect(() => {
-        router.prefetch("/select");
-        router.prefetch("/admin");
-    }, [router]);
+    // useEffect(() => {
+    //   router.prefetch("/select");
+    //   router.prefetch("/admin");
+    // }, [router]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,7 +86,7 @@ export default function LoginPage() {
                         <div className="flex justify-end">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-xs font-medium text-[var(--brand-primary)] hover:underline opacity-80 hover:opacity-100 transition-opacity"
+                                className="text-xs font-medium text-[rgb(var(--brand-primary))] dark:text-white/70 hover:underline opacity-80 hover:opacity-100 transition-opacity"
                             >
                                 Forgot password?
                             </Link>
@@ -95,7 +96,7 @@ export default function LoginPage() {
 
                 <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                    className="w-full h-12 text-base font-semibold shadow-xs transition-all active:scale-[0.98]"
                     isLoading={isLoggingIn}
                 >
                     Sign In
@@ -107,12 +108,14 @@ export default function LoginPage() {
                     </span>
                     <Link
                         href="/auth/register"
-                        className="text-[var(--brand-primary)] hover:underline font-bold transition-all"
+                        className="text-[rgb(var(--brand-primary))] dark:text-white/70 hover:underline font-bold transition-all"
                     >
                         Create account
                     </Link>
                 </div>
             </form>
+
+            <SocialLoginButtons />
         </AuthLayout>
     );
 }

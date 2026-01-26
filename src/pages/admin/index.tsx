@@ -18,6 +18,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 
+
 // Lazy load the charts component
 const DashboardCharts = dynamic(
     () => import("@/components/modules/admin/DashboardCharts"),
@@ -41,6 +42,27 @@ const COLORS = {
     purple: "#8b5cf6",
     zinc: "#71717a",
 };
+
+function ChartTooltip({ active, payload, label }: any) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="rounded-lg border border-[rgb(var(--brand-primary))] bg-white px-3 py-2 text-sm shadow-lg">
+            <p className="font-semibold text-[rgb(var(--brand-primary))] mb-1">{label}</p>
+            {payload.map((item: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
+                    <span className="flex items-center gap-2">
+                        <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: item.color }}
+                        />
+                        {item.name}
+                    </span>
+                    <span className="font-medium text-[var(--brand-primary)]">{item.value}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 const MetricCard = memo(function MetricCard({
     title,
@@ -78,11 +100,12 @@ export default function AdminDashboardPage() {
         const houses = dashboard.houses || [];
         const residents = dashboard.residents || [];
 
+        // All-in-one pass for stats and grouping
         const statusCounts: Record<string, number> = {};
         let activeGatePasses = 0;
         gatePasses.forEach(p => {
             statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-            if (p.status === GatePassStatus.CHECKED_IN) activeGatePasses++;
+            if (p.status === GatePassStatus.CHECKED_IN || p.status === GatePassStatus.ACTIVE) activeGatePasses++;
         });
 
         const hourStats = new Map<string, { checkins: number; checkouts: number }>();
@@ -121,6 +144,7 @@ export default function AdminDashboardPage() {
         });
 
         const statusChartData = [
+            { name: "Active", value: statusCounts[GatePassStatus.ACTIVE] || 0, color: COLORS.success },
             { name: "Checked In", value: statusCounts[GatePassStatus.CHECKED_IN] || 0, color: COLORS.success },
             { name: "Checked Out", value: statusCounts[GatePassStatus.CHECKED_OUT] || 0, color: COLORS.zinc },
             { name: "Pending", value: statusCounts[GatePassStatus.PENDING] || 0, color: COLORS.warning },
@@ -164,11 +188,12 @@ export default function AdminDashboardPage() {
         };
     }, [dashboard]);
 
-    if (isLoading || !router.isReady) {
+    if (isLoading) {
         return (
             <div className="space-y-4">
                 <div className="h-16 bg-muted animate-pulse rounded-lg" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
                     {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="h-24 bg-muted dark:bg-background animate-pulse rounded-lg" />
                     ))}
@@ -226,6 +251,7 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
+            {/* Enhanced Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <MetricCard
                     title="Houses"
@@ -253,9 +279,12 @@ export default function AdminDashboardPage() {
                 />
             </div>
 
+            {/* Charts Section */}
             <DashboardCharts chartData={chartData} />
 
+            {/* Operational Metrics, Quick Actions, and Activity Summary */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Operational Metrics */}
                 <div className="border border-foreground/20 rounded-lg">
                     <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                         <h2 className="text-sm font-semibold text-foreground">Operational Metrics</h2>
@@ -288,6 +317,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
+                {/* Quick Actions */}
                 <div className="border border-foreground/20 rounded-lg">
                     <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                         <h2 className="text-sm font-semibold text-foreground">Quick Actions</h2>
@@ -313,6 +343,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
+                {/* Activity Summary */}
                 <div className="border border-foreground/20 rounded-lg">
                     <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                         <h2 className="text-sm font-semibold text-foreground">Activity Summary</h2>
@@ -334,7 +365,9 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
+            {/* Recent Activity Tables */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Recent houses table */}
                 <div className="border border-foreground/20 rounded-lg overflow-hidden">
                     <div className="border-b border-foreground/20 px-4 py-3 bg-muted/50">
                         <h2 className="text-sm font-semibold text-foreground">Recent Houses</h2>
@@ -364,6 +397,7 @@ export default function AdminDashboardPage() {
                     )}
                 </div>
 
+                {/* Recent residents table */}
                 <div className="border border-foreground/20 rounded-lg overflow-hidden">
                     <div className="border-b border-foreground/20 px-4 py-3 bg-muted/50">
                         <h2 className="text-sm font-semibold text-foreground">Recent Residents</h2>

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
-import { ArrowLeft, Info, Home, ExternalLink } from "lucide-react";
+import { ArrowLeft, Info, Home, ExternalLink, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { House } from "@/types";
@@ -38,6 +38,7 @@ export default function HouseGroupDetailPage() {
         { key: "address", header: "Address", accessor: (row) => row.address || "-" },
         { key: "is_active", header: "Status", accessor: (row) => <Badge variant={row.is_active ? "success" : "secondary"}>{row.is_active ? "Active" : "Inactive"}</Badge> },
         { key: "created_at", header: "Added", accessor: (row) => formatDate(row.created_at) },
+        { key: "actions", header: "Actions", sortable: false, accessor: (row) => <Button variant="outline" size="sm" onClick={() => router.push(`/admin/houses/${row.id}`)}><Eye className="h-3.5 w-3.5 mr-1.5" />View</Button> }
     ];
 
     return (

@@ -1,20 +1,22 @@
-import { useAuth, useProfile } from "@/hooks/use-auth";
+import { useAuth, useProfile, useVerifyEmail } from "@/hooks/use-auth";
 import { useResendVerification } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
-import { Mail, ArrowLeft, ShieldCheck, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
+import { Mail, ArrowLeft, ShieldCheck, ExternalLink, RefreshCw, Sparkles, Loader } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/router";
 
 export default function VerifyEmailPage() {
   const { user, logout } = useAuth();
   const { refetch: refreshProfile } = useProfile();
+  const router = useRouter();
   const resendMutation = useResendVerification();
   const verifyMutation = useVerifyEmail();
-  const searchParams = useSearchParams();
-  const tokenFromParams = searchParams.get("token");
+  const { token } = router.query;
+  const tokenFromParams = Array.isArray(token) ? token[0] : token;
   const [countdown, setCountdown] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const verificationAttempted = useRef(false);
@@ -23,7 +25,7 @@ export default function VerifyEmailPage() {
     if (tokenFromParams && !verificationAttempted.current) {
       verificationAttempted.current = true;
       verifyMutation.mutate(
-        { token: tokenFromParams },
+        { token: tokenFromParams as string },
         {
           onSuccess: () => {
             refreshProfile();
@@ -67,7 +69,7 @@ export default function VerifyEmailPage() {
               <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl">
                 <Loader
                   size={48}
-                  colour="brand-primary"
+                  color="brand-primary"
                   className="animate-spin"
                 />
               </div>

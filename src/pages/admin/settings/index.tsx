@@ -6,8 +6,9 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { LogsViewer } from "@/components/modules/admin/LogsViewer";
 
-type SettingsTab = "payment" | "branding";
+type SettingsTab = "payment" | "branding" | "logs";
 
 export default function SettingsPage() {
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
@@ -57,11 +58,24 @@ export default function SettingsPage() {
                         Branding
                     </div>
                 </button>
+                <button
+                    onClick={() => setActiveTab("logs")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "logs"
+                        ? "border-zinc-900 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Palette className="h-3.5 w-3.5" />
+                        Logs
+                    </div>
+                </button>
             </div>
 
             <div className="pt-4">
                 {activeTab === "payment" && <PaymentGatewaysSection />}
                 {activeTab === "branding" && <BrandingSection />}
+                {activeTab === "logs" && <LogsViewer />}
             </div>
         </div>
     );

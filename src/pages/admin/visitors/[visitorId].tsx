@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { ReactElement, useMemo } from "react";
+import { useRouter } from "next/router";
 import { format } from "date-fns";
 import {
     ArrowLeft, Calendar, Clock, MapPin, Search,
@@ -17,11 +17,15 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn, titleCase } from "@/lib/utils";
 import { VisitorStatus, VisitorGateStatus } from "@/types";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
+import VisitorDetail from "@/components/modules/admin/visitors/VisitorDetail";
 
 export default function VisitorDetailPage() {
-    const { id } = useParams();
     const router = useRouter();
-    const { data: visitor, isLoading, error } = useAdminVisitor(id as string);
+    const { visitorId } = router.query
+    const { data: visitor, isLoading, error } = useAdminVisitor(visitorId as string);
 
     const events = useMemo(() => visitor?.gate_events || [], [visitor]);
     const sortedEvents = useMemo(() => {
@@ -181,118 +185,7 @@ export default function VisitorDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-8 pb-12 overflow-auto max-h-[600px] scrollbar-thin">
-                                <div className={cn(
-                                    "flex items-start min-w-max gap-12 relative pt-8 pb-32",
-                                    gateVisualization.mainPath.length === 1 ? "justify-center w-full" : "justify-between"
-                                )}>
-                                    {/* Main Path Connection Line */}
-                                    {gateVisualization.mainPath.length > 1 && (
-                                        <div className="hidden md:block absolute top-[60px] left-12 right-12 h-[2px] bg-gradient-to-r from-blue-500/20 via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800 -z-0" />
-                                    )}
-
-                                    {gateVisualization.mainPath.map((gateStatus, idx, arr) => {
-                                        const status = gateStatus.status;
-                                        const isCleared = status === 'checked_in' || status === 'checked_out';
-                                        const isPending = status === 'pending';
-                                        const isLocked = status === 'locked';
-                                        const isLast = idx === arr.length - 1;
-                                        const nodeBranches = gateVisualization.branches[gateStatus.gate.id] || [];
-
-                                        return (
-                                            <div key={gateStatus.gate.id} className="flex flex-col items-center gap-4 relative z-10">
-                                                {/* Node Circle */}
-                                                <motion.div
-                                                    initial={{ scale: 0.8, opacity: 0 }}
-                                                    animate={{ scale: 1, opacity: 1 }}
-                                                    transition={{ delay: idx * 0.1 }}
-                                                    className={cn(
-                                                        "h-14 w-14 rounded-2xl flex items-center justify-center transition-all duration-500 border-[3px] shadow-sm relative",
-                                                        isCleared
-                                                            ? "bg-green-100 border-green-500 text-green-600 shadow-lg shadow-green-500/20"
-                                                            : isPending
-                                                                ? "bg-blue-50 border-blue-400 text-blue-500 animate-pulse shadow-lg shadow-blue-500/20"
-                                                                : isLocked
-                                                                    ? "bg-zinc-600 dark:bg-zinc-800 border-zinc-500 dark:border-zinc-700 dark:text-zinc-400 text-zinc-400"
-                                                                    : "bg-zinc-50 border-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:border-zinc-700"
-                                                    )}
-                                                >
-                                                    {isCleared ? <CheckCircle2 className="h-7 w-7" /> : isLocked ? <Shield className="h-6 w-6 opacity-70" /> : <Circle className="h-6 w-6" />}
-
-                                                    {/* Progress Connector (Mobile) */}
-                                                    {!isLast && (
-                                                        <div className="md:hidden absolute -bottom-8 left-1/2 -ml-px h-8 w-0.5 bg-zinc-200 dark:bg-zinc-800" />
-                                                    )}
-                                                </motion.div>
-
-                                                {/* Info Container */}
-                                                <div className="text-center w-32 z-10">
-                                                    <p className={cn(
-                                                        "text-xs font-extrabold truncate uppercase tracking-tighter",
-                                                        isCleared ? "text-green-700 dark:text-green-400" : isPending ? "text-blue-600" : "text-zinc-500"
-                                                    )}>
-                                                        {gateStatus.gate.name}
-                                                    </p>
-                                                    <div className="mt-1 flex flex-col items-center gap-1">
-                                                        {gateStatus.event ? (
-                                                            <div className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[9px] font-bold font-mono">
-                                                                {format(new Date(gateStatus.event.checkin_time), "HH:mm")}
-                                                            </div>
-                                                        ) : (
-                                                            <Badge variant="outline" className={cn(
-                                                                "text-[8px] uppercase px-1.5 py-0 border-zinc-200 dark:border-zinc-700 font-bold",
-                                                                isLocked ? "bg-zinc-200 text-zinc-600" : "bg-blue-50 text-blue-500 border-blue-200"
-                                                            )}>
-                                                                {status}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* BRANCHING SECTION (Vertical Spine and Spurs) */}
-                                                <AnimatePresence>
-                                                    {nodeBranches.length > 0 && (
-                                                        <div className="absolute top-[120px] left-1/2 flex flex-col gap-12 py-4">
-                                                            {nodeBranches.map((branch, bIdx) => (
-                                                                <motion.div
-                                                                    key={branch.gate.id}
-                                                                    initial={{ x: -20, opacity: 0 }}
-                                                                    animate={{ x: 0, opacity: 1 }}
-                                                                    className="flex items-center gap-4 relative "
-                                                                >
-                                                                    {/* The Curved Spur - connecting seamlessly to the one above */}
-                                                                    <div
-                                                                        className="absolute -left-2 border-l-2 border-b-2 border-zinc-200 dark:border-zinc-800 rounded-bl-xl shadow-[0_2px_0_0_rgba(0,0,0,0.02)]"
-                                                                        style={{
-                                                                            top: bIdx === 0 ? "-80px" : "-60px",
-                                                                            height: bIdx === 0 ? "116px" : "96px",
-                                                                            width: "28px"
-                                                                        }}
-                                                                    />
-
-                                                                    <div className={cn(
-                                                                        "h-12 w-12 rounded-xl flex items-center justify-center left-4 mr-2 border-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm text-zinc-400 relative z-10",
-                                                                        branch.status === 'unavailable' && "opacity-60 grayscale"
-                                                                    )}>
-                                                                        <Activity className="h-6 w-6" />
-                                                                    </div>
-
-                                                                    <div className="flex flex-col relative z-20">
-                                                                        <span className="text-[10px] font-black left-4 text-zinc-500 bg-white/80 dark:bg-zinc-900/80 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 leading-none whitespace-nowrap shadow-sm backdrop-blur-sm">
-                                                                            {branch.gate.name}
-                                                                        </span>
-                                                                        <span className="text-[8px] text-zinc-400 mt-1 uppercase font-black tracking-widest px-1.5">
-                                                                            {branch.status}
-                                                                        </span>
-                                                                    </div>
-                                                                </motion.div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                <VisitorDetail visitor={visitor} />
                             </CardContent>
                         </Card>
                     )}
@@ -518,7 +411,7 @@ export default function VisitorDetailPage() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -560,3 +453,15 @@ function StatusBadge({ status, className }: { status: string, className?: string
         </Badge>
     );
 }
+
+VisitorDetailPage.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <RouteGuard>
+            <DashboardLayout type="admin">
+                <AdminPermissionGuard>
+                    {page}
+                </AdminPermissionGuard>
+            </DashboardLayout>
+        </RouteGuard>
+    );
+};

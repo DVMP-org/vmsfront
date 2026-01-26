@@ -1,29 +1,24 @@
-"use client";
 
 import { useEffect, useRef } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useSocialCallback } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import { titleCase } from "@/lib/utils";
 
 export default function SocialCallbackPage() {
-    const params = useParams();
-    const searchParams = useSearchParams();
     const router = useRouter();
+    const { provider, code } = router.query;
     const { mutate: handleCallback, isPending, isError } = useSocialCallback();
     const hasTriggered = useRef(false);
 
     useEffect(() => {
-        const provider = params.provider as string;
-        const code = searchParams.get("code");
-
         if (provider && code && !hasTriggered.current) {
             hasTriggered.current = true;
-            handleCallback({ provider, code });
+            handleCallback({ provider: provider as string, code: code as string });
         } else if (!code && !isPending) {
             router.replace("/auth/login");
         }
-    }, [params.provider, searchParams, handleCallback, router, isPending]);
+    }, [provider, code, handleCallback, router, isPending]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
@@ -46,7 +41,7 @@ export default function SocialCallbackPage() {
                 </h1>
 
                 <p className="text-muted-foreground">
-                    Please wait while we complete your sign-in with {titleCase(params.provider)}.
+                    Please wait while we complete your sign-in with {titleCase(provider)}.
                 </p>
 
                 {isError && (

@@ -45,7 +45,7 @@ export default function AdminGateEventsPage() {
     // Initialize state from URL params
     const [page, setPage] = useState<number>(() => initializeFromUrl("page"));
     const [pageSize, setPageSize] = useState<number>(() => initializeFromUrl("pageSize"));
-    const [search, setSearch] = useState<string | undefined>(() => initializeFromUrl("search"));
+    const [search, setSearch] = useState<string | undefined>(() => initializeFromUrl("search") || "");
     const [ownerType, setOwnerType] = useState<string | undefined>(() => initializeFromUrl("ownerType"))
     const [sort, setSort] = useState<string | undefined>(() => initializeFromUrl("sort"))
     const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
@@ -143,6 +143,14 @@ export default function AdminGateEventsPage() {
             ),
         },
         {
+            key: "gate",
+            header: "Gate",
+            sortable: false,
+            accessor: (row) => (
+                <span className="text-xs">{row?.gate?.name ?? "—"}</span>
+            ),
+        },
+        {
             key: "owner",
             header: "Owner",
             sortable: false,
@@ -160,6 +168,22 @@ export default function AdminGateEventsPage() {
             sortable: false,
             accessor: (row) => (
                 <span className="text-xs">{row?.scanned_by?.user?.name ?? "—"}</span>
+            ),
+        },
+        {
+            key: "checkin_time",
+            header: "Check-in Time",
+            sortable: false,
+            accessor: (row) => (
+                <span className="text-xs">{row?.checkin_time ? formatDistanceToNow(new Date(row?.checkin_time)) : "—"}</span>
+            ),
+        },
+        {
+            key: "checkout_time",
+            header: "Check-out Time",
+            sortable: false,
+            accessor: (row) => (
+                <span className="text-xs">{row?.checkout_time ? formatDistanceToNow(new Date(row?.checkout_time)) : "—"}</span>
             ),
         },
         {
@@ -265,6 +289,7 @@ export default function AdminGateEventsPage() {
         </>
     );
 }
+
 AdminGateEventsPage.getLayout = function getLayout(page: ReactElement) {
     return (
         <RouteGuard>

@@ -25,13 +25,13 @@ const STATUS_FILTERS: Array<{ label: string; value: string | undefined }> = [
     { label: "Revoked", value: GatePassStatus.REVOKED },
     { label: "Expired", value: GatePassStatus.EXPIRED },
 ];
-const PAGE_SIZE = 100;
-
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+const PAGE_SIZE = 20;
 export default function PassesPage() {
     const router = useRouter();
-    const { houseId: rawHouseId } = router.query;
-    const routeHouseId = Array.isArray(rawHouseId) ? rawHouseId[0] : (rawHouseId as string | undefined);
-
+    const params = router.query;
+    const rawHouseId = params?.houseId;
+    const routeHouseId = Array.isArray(rawHouseId) ? rawHouseId[0] : rawHouseId;
     const { selectedHouse, setSelectedHouse } = useAppStore();
     const { data: profile } = useProfile();
     const houseId = routeHouseId ?? selectedHouse?.id ?? null;
@@ -50,7 +50,6 @@ export default function PassesPage() {
         config,
         skipInitialSync: true,
     });
-
     const isInitialMount = useRef(true);
     const [page, setPage] = useState(() => initializeFromUrl("page"));
     const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
@@ -60,45 +59,77 @@ export default function PassesPage() {
     const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
     const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
 
+    // Sync state changes to URL (skip initial mount)
     useEffect(() => {
-        if (!router.isReady) return;
         if (isInitialMount.current) {
             isInitialMount.current = false;
             return;
         }
-        syncToUrl({ page, pageSize, search, status, sort, startDate, endDate });
-    }, [page, pageSize, search, status, sort, startDate, endDate, syncToUrl, router.isReady]);
+
+        syncToUrl({
+            page,
+            pageSize,
+            search,
+            status,
+            sort,
+            startDate,
+            endDate
+        });
+    }, [
+        page,
+        pageSize,
+        search,
+        status,
+        sort,
+        startDate,
+        endDate,
+        syncToUrl]);
 
     const activeFilters = useMemo(() => {
         const filters: FilterConfig[] = [];
-        if (status) filters.push({ field: "status", operator: "eq", value: status });
-        if (startDate) filters.push({ field: "created_at", operator: "gte", value: startDate });
-        if (endDate) filters.push({ field: "created_at", operator: "lte", value: endDate });
-        return filters;
-    }, [status, startDate, endDate]);
 
-    const availableFilters = useMemo(() => {
+        if (status) {
+            filters.push({ field: "status", operator: "eq", value: status });
+        }
+
+        if (startDate) {
+            filters.push({ field: "created_at", operator: "gte", value: startDate });
+        }
+        if (endDate) {
+            filters.push({ field: "created_at", operator: "lte", value: endDate });
+        }
+        return filters;
+    },
+        [
+            status,
+            startDate,
+            endDate
+        ]
+    );
+
+    const availableFilters: FilterDefinition[] = useMemo(() => {
         const filters: FilterDefinition[] = [
             {
                 field: "status",
                 label: "Status",
                 type: "select",
-                options: STATUS_FILTERS.map((f) => ({
-                    value: f.value || "",
-                    label: f.label,
-                })),
-                operator: "eq",
+                options: STATUS_FILTERS.map((s) => ({ label: s.label || "", value: s.value || "" })),
             },
             {
                 field: "created_at",
                 label: "Created Between",
-                type: "date-range"
-            }];
-
+                type: "date-range",
+            },
+        ]
         return filters;
     }, []);
 
-    const { data: paginatedPasses, isLoading, isFetching } = useGatePasses(
+
+    const {
+        data: paginatedPasses,
+        isLoading,
+        isFetching,
+    } = useGatePasses(
         houseId,
         {
             page,
@@ -106,44 +137,78 @@ export default function PassesPage() {
             search,
             sort,
             filters: formatFiltersForAPI(activeFilters)
-        }
-    );
+        });
 
     useEffect(() => {
         if (!routeHouseId || !profile?.houses) return;
         if (selectedHouse?.id === routeHouseId) return;
-        const match = profile.houses.find((h) => h.id === routeHouseId);
-        if (match) setSelectedHouse(match);
+        const match = profile.houses.find((house) => house.id === routeHouseId);
+        if (match) {
+            setSelectedHouse(match);
+        }
     }, [routeHouseId, profile?.houses, selectedHouse?.id, setSelectedHouse]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [houseId]);
 
     const houseBase = houseId ? `/house/${houseId}` : "/select";
 
-    const passRows = useMemo(() => {
-        const items = paginatedPasses?.items;
-        if (!items || !Array.isArray(items)) return [];
-        return items.map((pass) => ({
-            ...pass,
-            visitorNames: pass.visitors?.map((v) => v.name).join(", ") || "No visitors",
-            validWindow: formatPassWindow(pass.valid_from, pass.valid_to),
-            statusLabel: titleCase(pass.status.replace("_", " ")),
-            usesSummary: pass.max_uses !== null && pass.max_uses !== undefined
-                ? `${pass.uses_count}/${pass.max_uses}`
-                : `${pass.uses_count} used`
-        }));
-    }, [paginatedPasses]);
 
-    const passColumns: Column<any>[] = [
-        { key: "code", header: "Pass", className: "font-mono text-sm font-semibold" },
+    type PassRow = GatePass & {
+        visitorNames: string;
+        validWindow: string;
+        statusLabel: string;
+        usesSummary: string;
+    };
+
+    const passRows: PassRow[] = useMemo(
+        () => {
+            const items = paginatedPasses?.items;
+            if (!items) return [];
+            if (!Array.isArray(items)) return [];
+
+            return items.map((pass) => ({
+                ...pass,
+                visitorNames:
+                    pass.visitors?.map((visitor) => visitor.name).join(", ") ||
+                    "No visitors",
+                validWindow: formatPassWindow(pass.valid_from, pass.valid_to),
+                statusLabel: titleCase(pass.status.replace("_", " ")),
+                usesSummary:
+                    pass.max_uses !== null && pass.max_uses !== undefined
+                        ? `${pass.uses_count}/${pass.max_uses}`
+                        : `${pass.uses_count} used`
+            }));
+        },
+        [paginatedPasses]
+    );
+    const passColumns: Column<PassRow>[] = [
+        {
+            key: "code",
+            header: "Pass",
+            className: "font-mono text-sm font-semibold",
+        },
         {
             key: "visitorNames",
             header: "Visitors",
-            accessor: (row) => row.visitors && row.visitors.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                    {row.visitors.map((v: any) => (
-                        <Badge key={v.id} variant="secondary" className="px-2 py-0.5">{v.name}</Badge>
-                    ))}
-                </div>
-            ) : <span className="text-sm text-muted-foreground">No visitors</span>,
+            accessor: (row) =>
+                row.visitors && row.visitors.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                        {row.visitors.slice(0, 3).map((visitor) => (
+                            <Badge key={visitor.id} variant="secondary" className="px-2 py-0.5">
+                                {visitor.name}
+                            </Badge>
+                        ))}
+                        {row.visitors.length > 3 && (
+                            <Badge variant="secondary" className="px-2 py-0.5">
+                                +{row.visitors.length - 3} more
+                            </Badge>
+                        )}
+                    </div>
+                ) : (
+                    <span className="text-sm text-muted-foreground">No visitors</span>
+                ),
         },
         {
             key: "validWindow",
@@ -154,7 +219,9 @@ export default function PassesPage() {
                 return (
                     <div className="flex flex-col text-sm leading-5">
                         <span>{row.validWindow}</span>
-                        {remaining && <span className="text-xs text-amber-600 font-medium">{remaining}</span>}
+                        {remaining && (
+                            <span className="text-xs text-amber-600 font-medium">{remaining}</span>
+                        )}
                     </div>
                 );
             },
@@ -162,95 +229,151 @@ export default function PassesPage() {
         {
             key: "statusLabel",
             header: "Status",
+
             accessor: (row) => (
-                <Badge className={`${getPassStatusColor(row.status)} px-2 py-0.5`}>{row.statusLabel}</Badge>
+                <Badge className={`${getPassStatusColor(row.status)} px-2 py-0.5`}>
+                    {row.statusLabel}
+                </Badge>
             ),
         },
-        { key: "usesSummary", header: "Usage", accessor: (row) => <span className="text-sm text-muted-foreground">{row.usesSummary}</span> },
-        { key: "createdAt", header: "Created", sortable: true, accessor: (row) => <span className="text-sm text-muted-foreground">{formatDate(row.created_at)}</span> },
+        {
+            key: "usesSummary",
+            header: "Usage",
+            accessor: (row) => (
+                <span className="text-sm text-muted-foreground">
+                    {row.usesSummary}
+                </span>
+            ),
+        },
+        {
+            key: "createdAt",
+            header: "Created",
+            sortable: true,
+            accessor: (row) => (
+                <span className="text-sm text-muted-foreground">
+                    {formatDate(row.created_at)}
+                </span>
+            )
+        },
         {
             key: "id",
             header: "",
             accessor: (row) => (
-                <Button variant="ghost" size="sm" className="gap-1" onClick={() => router.push(`${houseBase}/passes/${row.id}`)}>
-                    View <ArrowRight className="h-4 w-4" />
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => router.push(`${houseBase}/passes/${row.id}`)}
+                >
+                    View
+                    <ArrowRight className="h-4 w-4" />
                 </Button>
             ),
         },
     ];
 
-    if (!router.isReady) return null;
-
     if (!houseId) {
         return (
-            <Card>
-                <CardContent className="p-10">
-                    <EmptyState
-                        icon={HomeIcon}
-                        title="Select a house to continue"
-                        description="Choose a house from the dashboard selector to manage passes."
-                        action={{ label: "Choose House", onClick: () => router.push("/select") }}
-                    />
-                </CardContent>
-            </Card>
+            <>
+                <Card>
+                    <CardContent className="p-10">
+                        <EmptyState
+                            icon={HomeIcon}
+                            title="Select a house to continue"
+                            description="Choose a house from the dashboard selector to manage passes."
+                            action={{
+                                label: "Choose House",
+                                onClick: () => router.push("/select"),
+                            }}
+                        />
+                    </CardContent>
+                </Card>
+            </>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold">My Passes</h1>
-                    <p className="text-muted-foreground">Manage your visitor passes</p>
+        <>
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold">My Passes</h1>
+                        <p className="text-muted-foreground">Manage your visitor passes</p>
+                    </div>
+                    <Button onClick={() => router.push(`${houseBase}/passes/create`)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Pass
+                    </Button>
                 </div>
-                <Button onClick={() => router.push(`${houseBase}/passes/create`)}>
-                    <Plus className="mr-2 h-4 w-4" /> Create Pass
-                </Button>
+                <Card>
+                    <CardContent className="p-6">
+
+                        <>
+                            <DataTable
+                                data={passRows}
+                                columns={passColumns}
+                                searchable
+                                showPagination={false}
+                                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                pageSize={pageSize}
+                                searchPlaceholder="Search passes..."
+                                emptyMessage="No passes match your filters"
+                                isLoading={isLoading || isFetching}
+                                initialFilters={activeFilters}
+                                availableFilters={availableFilters}
+                                onPageSizeChange={(newPageSize) => {
+                                    setPage(1);
+                                    setPageSize(newPageSize);
+                                }}
+                                onFiltersChange={(filters) => {
+                                    setPage(1)
+                                    const statusFilter = filters.find((f) => f.field === "status");
+                                    const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
+                                    const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+
+                                    // Always set state (undefined if filter not found) to ensure URL clearing
+                                    setStatus(statusFilter?.value as string | undefined || undefined);
+                                    setStartDate(startDateFilter?.value as string | undefined || undefined);
+                                    setEndDate(endDateFilter?.value as string | undefined || undefined);
+                                }}
+                                onSortChange={(sort) => {
+                                    setPage(1)
+                                    setSort(sort)
+                                }}
+                                onSearchChange={(search) => {
+                                    setPage(1)
+                                    setSearch(search)
+                                }}
+                                initialSort={sort}
+                                initialSearch={search}
+                                disableClientSideFiltering={true}
+                                disableClientSideSorting={true}
+                            />
+                            <PaginationBar
+                                page={page}
+                                pageSize={pageSize}
+                                total={paginatedPasses?.total ?? passRows.length}
+                                totalPages={paginatedPasses?.total_pages ?? 1}
+                                hasNext={
+                                    paginatedPasses?.has_next ??
+                                    page < (paginatedPasses?.total_pages ?? 0)
+                                }
+                                hasPrevious={
+                                    paginatedPasses?.has_previous ?? page > 1
+                                }
+                                isFetching={isFetching}
+                                resourceLabel="passes"
+                                onChange={(next) => setPage(next)}
+                            />
+                        </>
+
+                    </CardContent>
+                </Card>
             </div>
-            <Card>
-                <CardContent className="p-6">
-                    <DataTable
-                        data={passRows}
-                        columns={passColumns}
-                        searchable
-                        showPagination={false}
-                        searchPlaceholder="Search passes..."
-                        emptyMessage="No passes match your filters"
-                        isLoading={isLoading || isFetching}
-                        initialFilters={activeFilters}
-                        availableFilters={availableFilters}
-                        onFiltersChange={(filters) => {
-                            setPage(1);
-                            const sf = filters.find((f) => f.field === "status");
-                            const sdf = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                            const edf = filters.find((f) => f.field === "created_at" && f.operator === "lte");
-                            setStatus(sf?.value as string | undefined);
-                            setStartDate(sdf?.value as string | undefined);
-                            setEndDate(edf?.value as string | undefined);
-                        }}
-                        onSortChange={(s) => { setPage(1); setSort(s); }}
-                        onSearchChange={(s) => { setPage(1); setSearch(s); }}
-                        initialSort={sort}
-                        initialSearch={search}
-                        disableClientSideFiltering={true}
-                        disableClientSideSorting={true}
-                    />
-                    <PaginationBar
-                        page={page}
-                        pageSize={pageSize}
-                        total={paginatedPasses?.total ?? passRows.length}
-                        totalPages={paginatedPasses?.total_pages ?? 1}
-                        hasNext={paginatedPasses?.has_next ?? page < (paginatedPasses?.total_pages ?? 0)}
-                        hasPrevious={paginatedPasses?.has_previous ?? page > 1}
-                        isFetching={isFetching}
-                        resourceLabel="passes"
-                        onChange={(next) => setPage(next)}
-                    />
-                </CardContent>
-            </Card>
-        </div>
+        </>
     );
 }
+
 
 PassesPage.getLayout = function getLayout(page: ReactElement) {
     return (
