@@ -835,3 +835,18 @@ export interface NotificationResponse {
 }
 
 export * from "./gate";
+
+
+
+export interface ImportResultItem {
+    status: string;
+    row: number;
+    error?: string;
+}
+
+export interface ImportResult {
+    total: number;
+    successful: number;
+    failed: number;
+    results: ImportResultItem[];
+}

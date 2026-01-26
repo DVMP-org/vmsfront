@@ -31,6 +31,7 @@ import { useVisitor } from "@/hooks/use-resident";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import VisitorDetail from "@/components/admin/visitor/VisitorDetail";
 
 export default function VisitorDetailPage() {
   const router = useRouter();
@@ -228,145 +229,9 @@ export default function VisitorDetailPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             {/* Movement Dependency Map */}
-            {((visitor as any)?.dependency_gate_map) && (
-              <Card className="relative  border border-white/20 dark:border-zinc-800/50 shadow-xl bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl h-[calc(100vh-400px)]">
-                <CardHeader className="border-b border-zinc-100/50 dark:border-zinc-800/50 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2 font-bold cursor-default group">
-                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform">
-                          <MapIcon className="h-5 w-5" />
-                        </div>
-                        Gate Clearance Route
-                      </CardTitle>
-                      <CardDescription>Visualizing the verification path and branches</CardDescription>
-                    </div>
-                    <Badge variant="outline" className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border-zinc-200 dark:border-zinc-800">
-                      {visitor.status === 'checked_out' ? 'Journey Completed' : 'Path Active'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-8 pb-12 overflow-auto h-full scrollbar-thin">
-                  <div className="flex items-start justify-between min-w-max gap-12 relative pt-8 pb-32">
-                    {/* Main Path Connection Line */}
-                    <div className="hidden md:block absolute top-[60px] left-12 right-12 h-[2px] bg-gradient-to-r from-blue-500/20 via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800 -z-0" />
-
-                    {gateVisualization.mainPath.map((gateStatus, idx, arr) => {
-                      const status = gateStatus.status;
-                      const isCleared = status === 'checked_in' || status === 'checked_out';
-                      const isPending = status === 'pending';
-                      const isLocked = status === 'locked';
-                      const isLast = idx === arr.length - 1;
-                      const nodeBranches = gateVisualization.branches[gateStatus.gate.id] || [];
-
-                      return (
-                        <div key={gateStatus.gate.id} className="flex flex-col items-center gap-4 relative z-10">
-                          {/* Node Circle */}
-                          <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className={cn(
-                              "h-14 w-14 rounded-2xl flex items-center justify-center transition-all duration-500 border-[3px] shadow-sm relative",
-                              isCleared
-                                ? "bg-green-100 border-green-500 text-green-600 shadow-lg shadow-green-500/20"
-                                : isPending
-                                  ? "bg-blue-50 border-blue-400 text-blue-500 animate-pulse shadow-lg shadow-blue-500/20"
-                                  : isLocked
-                                    ? "bg-zinc-600 dark:bg-zinc-800 border-zinc-500 dark:border-zinc-700 dark:text-zinc-400 text-zinc-400"
-                                    : "bg-zinc-50 border-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:border-zinc-700"
-                            )}
-                          >
-                            {isCleared ? <CheckCircle2 className="h-7 w-7" /> : isLocked ? <Shield className="h-6 w-6 opacity-70" /> : <Circle className="h-6 w-6" />}
-
-                            {/* Progress Connector (Mobile) */}
-                            {!isLast && (
-                              <div className="md:hidden absolute -bottom-8 left-1/2 -ml-px h-8 w-0.5 bg-zinc-200 dark:bg-zinc-800" />
-                            )}
-                          </motion.div>
-
-                          {/* Info Container */}
-                          <div className="text-center w-32 z-10">
-                            <p className={cn(
-                              "text-xs font-extrabold truncate uppercase tracking-tighter",
-                              isCleared ? "text-green-700 dark:text-green-400" : isPending ? "text-blue-600" : "text-zinc-500"
-                            )}>
-                              {gateStatus.gate.name}
-                            </p>
-
-                            <div className="mt-1 flex flex-col items-center gap-1">
-                              {gateStatus.event ? (
-                                <div className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[9px] font-bold font-mono">
-                                  {format(new Date(gateStatus.event.checkin_time), "HH:mm")}
-                                </div>
-                              ) : (
-                                <Badge variant="outline" className={cn(
-                                  "text-[8px] uppercase px-1.5 py-0 border-zinc-200 dark:border-zinc-700 font-bold",
-                                  isLocked ? "bg-zinc-200 text-zinc-600" : "bg-blue-50 text-blue-500 border-blue-200"
-                                )}>
-                                  {status}
-                                </Badge>
-                              )}
-
-
-                              <p className="text-[8px] text-red-500 dark:text-red-400 max-w-[100px] leading-tight mt-1 italic font-medium">
-                                {gateStatus.message}
-                              </p>
-
-                            </div>
-                          </div>
-
-                          {/* BRANCHING SECTION (Vertical Spine and Spurs) */}
-                          <AnimatePresence>
-                            {nodeBranches.length > 0 && (
-                              <div className="absolute top-[120px] left-1/2 flex flex-col gap-12 py-4">
-                                {nodeBranches.map((branch, bIdx) => (
-                                  <motion.div
-                                    key={branch.gate.id}
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    className="flex items-center gap-4 relative "
-                                  >
-                                    {/* The Curved Spur - connecting seamlessly to the one above */}
-                                    <div
-                                      className="absolute -left-2 border-l-2 border-b-2 border-zinc-200 dark:border-zinc-800 rounded-bl-xl shadow-[0_2px_0_0_rgba(0,0,0,0.02)]"
-                                      style={{
-                                        top: bIdx === 0 ? "-80px" : "-60px",
-                                        height: bIdx === 0 ? "116px" : "96px",
-                                        width: "28px"
-                                      }}
-                                    />
-
-                                    <div className={cn(
-                                      "h-12 w-12 rounded-xl flex items-center justify-center left-4 mr-2 border-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm text-zinc-400 relative z-10",
-                                      branch.status === 'unavailable' && "opacity-60 grayscale"
-                                    )}>
-                                      <Activity className="h-6 w-6" />
-                                    </div>
-
-                                    <div className="flex flex-col relative z-20">
-                                      <span className="text-[10px] font-black left-4 text-zinc-500 bg-white/80 dark:bg-zinc-900/80 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 leading-none whitespace-nowrap shadow-sm backdrop-blur-sm">
-                                        {branch.gate.name}
-                                      </span>
-                                      <span className="text-[8px] text-zinc-400 mt-1 uppercase font-black tracking-widest px-1.5">
-                                        {branch.status}
-                                      </span>
-                                      <span className="text-[8px] text-red-500/80 dark:text-red-400 mt-0.5 italic leading-tight px-1.5 max-w-[120px]">
-                                        {branch.message}
-                                      </span>
-                                    </div>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <CardContent className="p-8 pb-12 overflow-auto max-h-[600px] scrollbar-thin">
+              <VisitorDetail visitor={visitor} />
+            </CardContent>
           </div>
 
           <div className="space-y-6">

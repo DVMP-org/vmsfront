@@ -199,11 +199,16 @@ export default function PassesPage() {
       accessor: (row) =>
         row.visitors && row.visitors.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
-            {row.visitors.map((visitor) => (
+            {row.visitors.slice(0, 3).map((visitor) => (
               <Badge key={visitor.id} variant="secondary" className="px-2 py-0.5">
                 {visitor.name}
               </Badge>
             ))}
+            {row.visitors.length > 3 && (
+              <Badge variant="secondary" className="px-2 py-0.5">
+                + {row.visitors.length - 2}
+              </Badge>
+            )}
           </div>
         ) : (
           <span className="text-sm text-muted-foreground">No visitors</span>
