@@ -33,6 +33,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
+          // "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
           "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
         // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
         destructive:
@@ -43,7 +44,7 @@ const buttonVariants = cva(
         // outline: "border border-primary text-primary disabled:opacity-60",
         // "destructive-outlined":
         outline:
-          "border-2 border-[rgb(var(--brand-primary,#1e40af))] bg-background dark:bg-background hover:bg-[rgb(var(--brand-primary,#1e40af))] hover:text-white active:bg-[rgb(var(--brand-primary,#1e40af))] active:text-white active:scale-[0.98]",
+          "border-2 border-[rgb(var(--brand-primary,#1e40af))] bg-background dark:bg-card hover:bg-[rgb(var(--brand-primary,#1e40af))] hover:text-white active:bg-[rgb(var(--brand-primary,#1e40af))] active:text-white active:scale-[0.98]",
         "destructive-outlined":
           "border border-red-600 text-red-600 disabled:opacity-60",
         "light-outlined": "border-white text-white disabled:opacity-60",

@@ -9,17 +9,18 @@ export interface SearchableSelectOption {
     label: string;
 }
 
-export interface SearchableSelectProps extends Omit<SelectProps<SearchableSelectOption, false, GroupBase<SearchableSelectOption>>, 'onChange' | 'value'> {
-    value?: string;
-    onChange?: (value: string | undefined) => void;
+export interface SearchableSelectProps<IsMulti extends boolean = false> extends Omit<SelectProps<SearchableSelectOption, IsMulti, GroupBase<SearchableSelectOption>>, 'onChange' | 'value'> {
+    value?: IsMulti extends true ? string[] : string;
+    onChange?: (value: IsMulti extends true ? string[] : string | undefined) => void;
     options: SearchableSelectOption[];
     placeholder?: string;
     className?: string;
     isClearable?: boolean;
     isDisabled?: boolean;
+    isMulti?: IsMulti;
 }
 
-export function SearchableSelect({
+export function SearchableSelect<IsMulti extends boolean = false>({
     value,
     onChange,
     options,
@@ -27,23 +28,26 @@ export function SearchableSelect({
     className,
     isClearable = true,
     isDisabled = false,
+    isMulti,
     ...props
-}: SearchableSelectProps) {
-    const selectedOption = useMemo(() =>
-        options.find(opt => opt.value === value) || null,
-        [options, value]);
+}: SearchableSelectProps<IsMulti>) {
+    const selectedOption = useMemo(() => {
+        if (isMulti && Array.isArray(value)) {
+            return options.filter(opt => value.includes(opt.value));
+        }
+        return options.find(opt => opt.value === value) || null;
+    }, [options, value, isMulti]);
 
-    const customStyles: StylesConfig<SearchableSelectOption, false, GroupBase<SearchableSelectOption>> = {
+    const customStyles: StylesConfig<SearchableSelectOption, IsMulti, GroupBase<SearchableSelectOption>> = {
         control: (base, state) => ({
             ...base,
             backgroundColor: 'transparent',
-            borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : '#DEDEDE',
+            borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : 'bg-white/60',
             boxShadow: 'none',
             '&:hover': {
-                borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : '#DEDEDE',
+                borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : 'bg-white/60',
             },
             minHeight: '36px',
-            height: '36px',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
@@ -53,7 +57,7 @@ export function SearchableSelect({
         }),
         valueContainer: (base) => ({
             ...base,
-            padding: '0 8px',
+            padding: '2px 8px',
         }),
         input: (base) => ({
             ...base,
@@ -82,8 +86,8 @@ export function SearchableSelect({
         }),
         menu: (base) => ({
             ...base,
-            backgroundColor: '#fff',
-            border: '1px solid #DEDEDE',
+            backgroundColor: '#fff dark:hsl(240 6% 10% / 1)',
+            border: '1px solid bg-white/60',
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
             borderRadius: '4px',
             zIndex: 50,
@@ -95,7 +99,7 @@ export function SearchableSelect({
                 : state.isFocused
                     ? 'rgba(var(--brand-primary,#1e40af), 0.1)'
                     : 'transparent',
-            color: state.isSelected ? '#fff' : '#191919',
+            color: state.isSelected ? 'dark:#191919' : 'dark:#fff',
             cursor: 'pointer',
             fontSize: '12px',
             '@media (min-width: 640px)': {
@@ -114,20 +118,44 @@ export function SearchableSelect({
             ...base,
             color: 'inherit',
         }),
+        multiValue: (base) => ({
+            ...base,
+            backgroundColor: 'rgba(var(--brand-primary,#1e40af), 0.1)',
+            borderRadius: '2px',
+        }),
+        multiValueLabel: (base) => ({
+            ...base,
+            color: 'rgb(var(--brand-primary,#1e40af))',
+            fontSize: '12px',
+            padding: '2px 6px',
+        }),
+        multiValueRemove: (base) => ({
+            ...base,
+            color: 'rgb(var(--brand-primary,#1e40af))',
+            '&:hover': {
+                backgroundColor: 'rgba(var(--brand-primary,#1e40af), 0.2)',
+                color: 'rgb(var(--brand-primary,#1e40af))',
+            },
+        }),
     };
 
     return (
         <div className={cn("w-full h-full", className)}>
             <Select
                 instanceId={useMemo(() => Math.random().toString(36).substr(2, 9), [])}
-                value={selectedOption}
-                onChange={(option: SingleValue<SearchableSelectOption>) => {
-                    onChange?.(option ? option.value : undefined);
+                value={selectedOption as any}
+                onChange={(newValue: any) => {
+                    if (isMulti) {
+                        onChange?.((newValue as SearchableSelectOption[]).map(opt => opt.value) as any);
+                    } else {
+                        onChange?.((newValue as SearchableSelectOption)?.value as any);
+                    }
                 }}
                 options={options}
                 placeholder={placeholder}
                 isClearable={isClearable}
                 isDisabled={isDisabled}
+                isMulti={isMulti}
                 styles={customStyles}
                 classNamePrefix="react-select"
                 {...props}
@@ -135,3 +163,4 @@ export function SearchableSelect({
         </div>
     );
 }
+

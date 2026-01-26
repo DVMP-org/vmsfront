@@ -164,7 +164,7 @@ export function BrandingSection() {
             </div>
 
             {activeTheme && (
-                <div className="border border-green-200 bg-green-50/50 rounded-lg p-3 mb-4">
+                <div className="border border-green-200 bg-green-50/50 dark:bg-green-50 rounded-lg p-3 mb-4">
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <div>

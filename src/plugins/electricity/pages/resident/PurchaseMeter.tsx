@@ -188,7 +188,7 @@ export default function ResidentPurchaseMeter() {
     if (purchaseSuccess && purchaseResult) {
         return (
             <div className="space-y-6">
-                <Card className="border-green-200 bg-green-50 dark:bg-green-950">
+                <Card className="border-green-200 bg-green-50 dark:bg-card">
                     <CardContent className="p-8">
                         <div className="flex flex-col items-center text-center">
                             <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />

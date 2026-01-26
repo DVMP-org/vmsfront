@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react";
 
 interface PaginationBarProps {
   page: number;
@@ -60,6 +61,7 @@ export function PaginationBar({
           onClick={() => onChange(1)}
           disabled={!canGoPrevious || isFetching}
         >
+          <ChevronsLeftIcon className="h-4 w-4" />
           First
         </Button>
         <Button
@@ -68,6 +70,7 @@ export function PaginationBar({
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={!canGoPrevious || isFetching}
         >
+          <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
         <span className="text-xs font-medium text-foreground">
@@ -79,6 +82,7 @@ export function PaginationBar({
           onClick={() => onChange(page + 1)}
           disabled={!canGoNext || isFetching}
         >
+          <ChevronRight className="h-4 w-4" />
           Next
         </Button>
         <Button
@@ -87,6 +91,7 @@ export function PaginationBar({
           onClick={() => onChange(totalPages || 1)}
           disabled={!canGoNext || totalPages === 0 || isFetching}
         >
+          <ChevronsRightIcon className="h-4 w-4" />
           Last
         </Button>
       </div>

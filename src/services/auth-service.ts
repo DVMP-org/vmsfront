@@ -26,20 +26,25 @@ export const authService = {
     return apiClient.get("/auth/verify");
   },
 
-
   async getUser(): Promise<ApiResponse<AuthResponse["user"]>> {
-    return apiClient.get("/users/me");
+    return apiClient.get("/user/me");
   },
 
-  async updateProfile(data: Partial<RegisterRequest>): Promise<ApiResponse<AuthResponse["user"]>> {
-    return apiClient.patch("/users/update-profile", data);
+  async updateProfile(
+    data: Partial<RegisterRequest>,
+  ): Promise<ApiResponse<AuthResponse["user"]>> {
+    return apiClient.patch("/user/update-profile", data);
   },
 
-  async forgotPassword(data: ForgotPasswordRequest): Promise<ApiResponse<{ ok: boolean; message: string }>> {
+  async forgotPassword(
+    data: ForgotPasswordRequest,
+  ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
     return apiClient.post("/auth/forgot-password", data);
   },
 
-  async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<{ ok: boolean; message: string }>> {
+  async resetPassword(
+    data: ResetPasswordRequest,
+  ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
     return apiClient.post("/auth/reset-password", data);
   },
 
@@ -48,5 +53,19 @@ export const authService = {
   },
   async resendVerification(): Promise<ApiResponse<{ message: string }>> {
     return apiClient.post("/auth/verify-email-resent");
+  },
+  async verifyEmail(token: string): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.get("/auth/verify-email", { params: { token } });
+  },
+  async getSocialLoginUrl(
+    provider: string,
+  ): Promise<ApiResponse<{ url: string }>> {
+    return apiClient.post(`/auth/social/${provider}/login`);
+  },
+  async socialCallback(
+    provider: string,
+    code: string,
+  ): Promise<ApiResponse<AuthResponse>> {
+    return apiClient.get(`/auth/social/${provider}/callback?code=${code}`);
   },
 };
