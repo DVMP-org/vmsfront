@@ -472,4 +472,15 @@ export const residentService = {
       }
     );
   },
+
+  async extendGatePass(
+    houseId: string,
+    passId: string,
+    data: { valid_to: string }
+  ): Promise<ApiResponse<GatePass>> {
+    return apiClient.put(
+      `/resident/house/${houseId}/gate-passes/${passId}/extend`,
+      data
+    );
+  },
 };

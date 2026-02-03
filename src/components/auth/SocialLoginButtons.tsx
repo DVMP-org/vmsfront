@@ -3,6 +3,7 @@
 import { useSocialLogin } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 export function SocialLoginButtons() {
     const { mutate: loginWithSocial, isPending } = useSocialLogin();
@@ -34,7 +35,7 @@ export function SocialLoginButtons() {
                 >
                     {isPending ? (
                         <span className="flex items-center gap-2">
-                            <span className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                             Initializing...
                         </span>
                     ) : (

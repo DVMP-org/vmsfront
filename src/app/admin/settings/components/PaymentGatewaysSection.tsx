@@ -29,17 +29,17 @@ export function PaymentGatewaysSection() {
     const getBaseUrl = () => {
         if (typeof window === "undefined") return "";
         // Use API URL from environment variable (webhooks go to backend API)
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL
+        const apiUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL;
 
         try {
             // Handle both full URLs and hostname-only strings
-            if (apiUrl.startsWith("http://") || apiUrl.startsWith("https://")) {
+            if (apiUrl?.startsWith("http://") || apiUrl?.startsWith("https://")) {
                 const url = new URL(apiUrl);
                 return `${url.protocol}//${url.host}`;
             } else {
                 // If it's a hostname only (like "api.gatekeeperhq.cfd"), add protocol
                 const protocol = window.location.protocol;
-                return `${protocol}//${apiUrl.replace(/^\/+/, "")}`;
+                return `${protocol}//${apiUrl?.replace(/^\/+/, "")}`;
             }
         } catch {
             // Fallback to current origin if parsing fails
