@@ -13,16 +13,15 @@ import { motion } from "framer-motion";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@admin.com");
-  const [password, setPassword] = useState("password");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
+  const [email, setEmail] = useState(
+    process.env.NODE_ENV === "production" ? "" : "admin@admin.com"
   );
-
-  if (process.env.NODE_ENV === "production") {
-    setEmail("");
-    setPassword("");
-  }
+  const [password, setPassword] = useState(
+    process.env.NODE_ENV === "production" ? "" : "password"
+  );
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
   const { login, isLoggingIn, loginError, loginFieldErrors, clearAuthErrors } =
     useAuth();
   const router = useRouter();

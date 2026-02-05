@@ -46,8 +46,8 @@ export default function ResidentDetailPage() {
 
     const resident = residentData;
     const user = resident.user;
-    const fullName = getFullName(user.first_name, user.last_name);
-    const initials = getInitials(user.first_name, user.last_name);
+    const fullName = getFullName(user?.first_name, user?.last_name);
+    const initials = getInitials(user?.first_name, user?.last_name);
 
     return (
         <>
@@ -68,8 +68,8 @@ export default function ResidentDetailPage() {
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
                             <div className="flex items-center gap-2 mt-1">
-                                <Badge variant={user.is_active ? "success" : "secondary"}>
-                                    {user.is_active ? "Active" : "Inactive"}
+                                <Badge variant={user?.is_active ? "success" : "secondary"}>
+                                    {user?.is_active ? "Active" : "Inactive"}
                                 </Badge>
                                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                                     <Shield className="h-3.5 w-3.5" />
@@ -100,21 +100,21 @@ export default function ResidentDetailPage() {
                                             <span className="text-muted-foreground">Email:</span>
                                             <div className="flex items-center gap-2">
                                                 <Mail className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                                <span>{user.email}</span>
+                                                <span>{user?.email}</span>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-[100px_1fr] items-center">
                                             <span className="text-muted-foreground">Phone:</span>
                                             <div className="flex items-center gap-2">
                                                 <Phone className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                                <span>{user.phone || "—"}</span>
+                                                <span>{user?.phone || "—"}</span>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-[100px_1fr] items-start">
                                             <span className="text-muted-foreground mt-0.5">Address:</span>
                                             <div className="flex items-start gap-2">
                                                 <MapPin className="h-3.5 w-3.5 mt-0.5 text-muted-foreground/70" />
-                                                <span>{user.address || "—"}</span>
+                                                <span>{user?.address || "—"}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -153,18 +153,18 @@ export default function ResidentDetailPage() {
                                 <div className="p-6 border-b border-border bg-muted/5">
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <Home className="h-4 w-4 text-muted-foreground" />
-                                        Linked Residences ({residentHouses.length})
+                                        Linked Residences ({residentHouses?.length})
                                     </h3>
                                 </div>
-                                {residentHouses.length === 0 ? (
+                                {residentHouses?.length === 0 ? (
                                     <div className="p-6 text-center text-muted-foreground text-sm">
                                         No houses linked to this resident yet.
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-border">
-                                        {residentHouses.map(residentHouse => (
+                                        {residentHouses?.map(residentHouse => (
                                             <div key={residentHouse.house.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                                <div className="space-y-1">
+                                                <div className="space-y-1 cursor-pointer" onClick={() => router.push(`/admin/houses/${residentHouse.house.id}`)}>
                                                     <div className="flex flex-row">
                                                         <span className="font-medium">{residentHouse.house.name}</span>
                                                         <span className="font-medium"> {residentHouse.is_super_user && (

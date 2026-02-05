@@ -96,7 +96,7 @@ export default function AdminManagementPage() {
     pageSize,
     search: search.trim() || undefined,
     filters: formatFiltersForAPI(activeFilters),
-    sort,
+    sort: sort || "created_at|desc",
   });
 
 
@@ -430,7 +430,7 @@ export default function AdminManagementPage() {
               selectedRows={selectedAdmins}
               onSelectionChange={setSelectedAdmins}
               bulkActions={bulkActions}
-              isLoading={adminsLoading || adminsFetching}
+              isLoading={adminsLoading || adminsFetching || rolesLoading}
             />
 
           </CardContent>

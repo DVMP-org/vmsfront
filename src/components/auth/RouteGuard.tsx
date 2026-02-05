@@ -24,9 +24,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
     const authCheck = () => {
       if (!isAuthenticated || !token) {
         // Middleware usually handles this, but we keep this as a safety layer
-        if (!pathname.startsWith("/auth")) {
+        if (!pathname?.startsWith("/auth")) {
           const loginUrl = new URL("/auth/login", window.location.origin);
-          loginUrl.searchParams.set("redirect_to", pathname);
+          loginUrl.searchParams.set("redirect_to", pathname || "/");
           router.replace(loginUrl.pathname + loginUrl.search);
         }
       }

@@ -35,7 +35,10 @@ export default function CreateAdminPage() {
   const [grantAll, setGrantAll] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
-  const { data: roles, isLoading: rolesLoading } = useAdminRoles();
+  const { data: roles, isLoading: rolesLoading } = useAdminRoles({
+    page: 1,
+    pageSize: 1000,
+  });
   const {
     data: permissionsMap,
     isLoading: permissionsLoading,
@@ -166,7 +169,7 @@ export default function CreateAdminPage() {
                 </label>
                 {rolesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading roles...</p>
-                ) : !roles || roles.length === 0 ? (
+                ) : !roles || roles?.items?.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No roles available. Create one first.
                   </p>
@@ -180,7 +183,7 @@ export default function CreateAdminPage() {
                     required
                   >
                     <option value="">Select a role</option>
-                    {roles.map((role) => (
+                    {roles?.items?.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>
