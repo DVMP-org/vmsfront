@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { useAdminHouses, useAdminUsers, useCreateResident } from "@/hooks/use-admin";
+import { useAdminResidencies, useAdminUsers, useCreateResident } from "@/hooks/use-admin";
 import { toast } from "sonner";
 import { Users, Home, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
     phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
-    house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
+    residency_slugs: z.array(z.string()).min(1, "Please select at least one residency"),
   }),
   z.object({
     mode: z.literal("new"),
@@ -40,7 +40,7 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
     phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
-    house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
+    residency_slugs: z.array(z.string()).min(1, "Please select at least one residency"),
   }),
 ]);
 
@@ -50,7 +50,7 @@ export default function CreateResidentPage() {
   const router = useRouter();
   const createResident = useCreateResident();
   const { data: users, isLoading: usersLoading } = useAdminUsers();
-  const { data: housesData, isLoading: housesLoading } = useAdminHouses({
+  const { data: residenciesData, isLoading: residenciesLoading } = useAdminResidencies({
     page: 1,
     pageSize: 100,
   });
@@ -71,19 +71,19 @@ export default function CreateResidentPage() {
       last_name: "",
       phone: "",
       address: "",
-      house_slugs: [],
+      residency_slugs: [],
     },
   });
 
   const mode = watch("mode");
   const userId = watch("user_id");
-  const selectedHouseSlugs = watch("house_slugs") || [];
+  const selectedResidencySlugs = watch("residency_slugs") || [];
 
-  const handleHouseToggle = (houseSlug: string) => {
-    const nextSlugs = selectedHouseSlugs.includes(houseSlug)
-      ? selectedHouseSlugs.filter((slug) => slug !== houseSlug)
-      : [...selectedHouseSlugs, houseSlug];
-    setValue("house_slugs", nextSlugs, { shouldValidate: true, shouldDirty: true });
+  const handleResidencyToggle = (residencySlug: string) => {
+    const nextSlugs = selectedResidencySlugs.includes(residencySlug)
+      ? selectedResidencySlugs.filter((slug) => slug !== residencySlug)
+      : [...selectedResidencySlugs, residencySlug];
+    setValue("residency_slugs", nextSlugs, { shouldValidate: true, shouldDirty: true });
   };
 
   const onSubmit = (data: CreateResidentFormData) => {
@@ -98,7 +98,7 @@ export default function CreateResidentPage() {
       last_name: data.last_name || undefined,
       phone: data.phone || undefined,
       address: data.address || undefined,
-      house_slugs: data.house_slugs || [],
+      residency_slugs: data.residency_slugs || [],
     };
 
     createResident.mutate(payload, {
@@ -108,10 +108,10 @@ export default function CreateResidentPage() {
     });
   };
 
-  const houses = useMemo(() => housesData?.items ?? [], [housesData?.items]);
-  const sortedHouses = useMemo(
-    () => houses.slice().sort((a, b) => a.name.localeCompare(b.name)),
-    [houses]
+  const residencies = useMemo(() => residenciesData?.items ?? [], [residenciesData?.items]);
+  const sortedResidencies = useMemo(
+    () => residencies.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [residencies]
   );
 
   const sortedUsers = useMemo(() => {
@@ -176,7 +176,7 @@ export default function CreateResidentPage() {
           <CardHeader>
             <CardTitle>Resident details</CardTitle>
             <CardDescription>
-              Provide the user identifier and optional profile updates. Houses will determine their access.
+              Provide the user identifier and optional profile updates. Residencies will determine their access.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -289,49 +289,49 @@ export default function CreateResidentPage() {
 
               <div className={cn(
                 "space-y-4 rounded-lg border p-4 transition-colors",
-                errors.house_slugs ? "border-destructive bg-destructive/5" : "border-border"
+                errors.residency_slugs ? "border-destructive bg-destructive/5" : "border-border"
               )}>
                 <div className="flex items-center gap-2">
                   <Home className={cn(
                     "h-5 w-5",
-                    errors.house_slugs ? "text-destructive" : "text-[var(--brand-primary,#213928)]"
+                    errors.residency_slugs ? "text-destructive" : "text-[var(--brand-primary,#213928)]"
                   )} />
                   <div>
                     <p className={cn(
                       "text-sm font-medium",
-                      errors.house_slugs ? "text-destructive" : "text-foreground"
-                    )}>Associate houses</p>
+                      errors.residency_slugs ? "text-destructive" : "text-foreground"
+                    )}>Associate residencies</p>
                     <p className="text-xs text-muted-foreground">
-                      Select one or more houses that the resident should belong to.
+                      Select one or more residencies that the resident should belong to.
                     </p>
                   </div>
                 </div>
-                {housesLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading houses...</p>
-                ) : sortedHouses.length === 0 ? (
+                {residenciesLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading residencies...</p>
+                ) : sortedResidencies.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No houses found. Create a house first.
+                    No residencies found. Create a residency first.
                   </p>
                 ) : (
                   <div className="space-y-2">
                     <div className="grid gap-3 md:grid-cols-2">
-                      {sortedHouses.map((house) => {
-                        const slug = house.slug;
+                      {sortedResidencies.map((residency) => {
+                        const slug = residency.slug;
                         const isSelectable = Boolean(slug);
                         return (
                           <Checkbox
-                            key={house.id}
-                            label={house.name}
-                            description={house.address}
-                            checked={slug ? selectedHouseSlugs.includes(slug) : false}
+                            key={residency.id}
+                            label={residency.name}
+                            description={residency.address}
+                            checked={slug ? selectedResidencySlugs.includes(slug) : false}
                             disabled={!isSelectable}
-                            onChange={() => slug && handleHouseToggle(slug)}
+                            onChange={() => slug && handleResidencyToggle(slug)}
                           />
                         );
                       })}
                     </div>
-                    {errors.house_slugs && (
-                      <p className="text-xs text-destructive">{errors.house_slugs.message}</p>
+                    {errors.residency_slugs && (
+                      <p className="text-xs text-destructive">{errors.residency_slugs.message}</p>
                     )}
                   </div>
                 )}

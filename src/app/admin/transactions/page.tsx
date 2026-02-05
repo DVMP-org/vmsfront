@@ -7,7 +7,7 @@ import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterDefinition } from "@/components/ui/DataTable";
+import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CreditCard, Eye, Search, FilterX } from "lucide-react";
@@ -88,7 +88,7 @@ export default function TransactionsPage() {
 
     // Initial filters for DataTable
     const initialFilters = useMemo(() => {
-        const filters = [];
+        const filters: FilterConfig[] = [];
         if (type) filters.push({ field: "type", operator: "eq" as const, value: type });
         if (status) filters.push({ field: "status", operator: "eq" as const, value: status });
 

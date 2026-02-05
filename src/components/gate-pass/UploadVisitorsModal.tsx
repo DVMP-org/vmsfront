@@ -11,20 +11,20 @@ interface UploadVisitorsModalProps {
     isOpen: boolean;
     onClose: () => void;
     passId: string;
-    houseId: string | null;
+    residencyId: string | null;
 }
 
 export function UploadVisitorsModal({
     isOpen,
     onClose,
     passId,
-    houseId,
+    residencyId,
 }: UploadVisitorsModalProps) {
     const [file, setFile] = useState<File | null>(null);
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const uploadVisitorsMutation = useUploadVisitorsToGatePass(houseId);
+    const uploadVisitorsMutation = useUploadVisitorsToGatePass(residencyId);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();

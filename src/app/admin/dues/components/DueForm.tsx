@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { DueTenureLength, House, HouseGroup } from "@/types";
+import { DueTenureLength, Residency, ResidencyGroup } from "@/types";
 import { Landmark, Home, Users, Zap, Repeat } from "lucide-react";
 
 export const dueSchema = z.object({
@@ -19,8 +19,8 @@ export const dueSchema = z.object({
     minimum_payment_breakdown: z.string(),
     tenure_length: z.string(),
     start_date: z.string().optional(),
-    house_groups_ids: z.array(z.string()),
-    houses_ids: z.array(z.string()),
+    residency_groups_ids: z.array(z.string()),
+    residencies_ids: z.array(z.string()),
 });
 
 export type DueFormData = z.infer<typeof dueSchema>;
@@ -48,8 +48,8 @@ interface DueFormProps {
     initialData?: Partial<DueFormData>;
     onSubmit: (data: DueFormData) => void;
     isLoading?: boolean;
-    houses: House[];
-    groups: HouseGroup[];
+    residencies: Residency[];
+    groups: ResidencyGroup[];
     submitLabel?: string;
 }
 
@@ -57,7 +57,7 @@ export function DueForm({
     initialData,
     onSubmit,
     isLoading,
-    houses,
+    residencies,
     groups,
     submitLabel = "Save Due"
 }: DueFormProps) {
@@ -77,16 +77,16 @@ export function DueForm({
             minimum_payment_breakdown: initialData?.minimum_payment_breakdown || DueTenureLength.ONE_TIME,
             tenure_length: initialData?.tenure_length || DueTenureLength.MONTHLY,
             start_date: initialData?.start_date || "",
-            house_groups_ids: initialData?.house_groups_ids || [],
-            houses_ids: initialData?.houses_ids || [],
+            residency_groups_ids: initialData?.residency_groups_ids || [],
+            residencies_ids: initialData?.residencies_ids || [],
         },
     });
 
     const recurring = watch("recurring");
-    const selectedHouseIds = watch("houses_ids");
-    const selectedGroupIds = watch("house_groups_ids");
+    const selectedResidencyIds = watch("residencies_ids");
+    const selectedGroupIds = watch("residency_groups_ids");
 
-    const toggleSelection = (id: string, field: "houses_ids" | "house_groups_ids") => {
+    const toggleSelection = (id: string, field: "residencies_ids" | "residency_groups_ids") => {
         const current = watch(field);
         const next = current.includes(id)
             ? current.filter((i) => i !== id)
@@ -292,7 +292,7 @@ export function DueForm({
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-semibold flex items-center gap-2">
                                         <Landmark className="h-4 w-4" />
-                                        House Groups
+                                        Residency Groups
                                     </label>
                                     <span className="text-xs text-muted-foreground">{selectedGroupIds.length} selected</span>
                                 </div>
@@ -305,7 +305,7 @@ export function DueForm({
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedGroupIds.includes(group.id)}
-                                                    onChange={() => toggleSelection(group.id, "house_groups_ids")}
+                                                    onChange={() => toggleSelection(group.id, "residency_groups_ids")}
                                                     className="h-4 w-4 rounded border-gray-300"
                                                 />
                                                 <span className="text-sm">{group.name}</span>
@@ -319,25 +319,25 @@ export function DueForm({
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-semibold flex items-center gap-2">
                                         <Home className="h-4 w-4" />
-                                        Individual Houses
+                                        Individual Residencies
                                     </label>
-                                    <span className="text-xs text-muted-foreground">{selectedHouseIds.length} selected</span>
+                                    <span className="text-xs text-muted-foreground">{selectedResidencyIds.length} selected</span>
                                 </div>
                                 <div className="border rounded-md max-h-48 overflow-y-auto p-2 space-y-1">
-                                    {houses.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground p-2">No houses found</p>
+                                    {residencies.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground p-2">No residencies found</p>
                                     ) : (
-                                        houses.map((house) => (
-                                            <label key={house.id} className="flex items-center gap-2 p-1.5 hover:bg-muted/50 rounded cursor-pointer">
+                                        residencies.map((residency) => (
+                                            <label key={residency.id} className="flex items-center gap-2 p-1.5 hover:bg-muted/50 rounded cursor-pointer">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedHouseIds.includes(house.id)}
-                                                    onChange={() => toggleSelection(house.id, "houses_ids")}
+                                                    checked={selectedResidencyIds.includes(residency.id)}
+                                                    onChange={() => toggleSelection(residency.id, "residencies_ids")}
                                                     className="h-4 w-4 rounded border-gray-300"
                                                 />
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm">{house.name}</span>
-                                                    <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{house.address}</span>
+                                                    <span className="text-sm">{residency.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{residency.address}</span>
                                                 </div>
                                             </label>
                                         ))
@@ -349,7 +349,7 @@ export function DueForm({
                         <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex gap-3">
                             <Users className="h-5 w-5 text-blue-600 shrink-0" />
                             <p className="text-xs text-blue-700">
-                                Select house groups or individual houses to assign this due. If no selection is made, this due might not be assigned to any house yet.
+                                Select residency groups or individual residencies to assign this due. If no selection is made, this due might not be assigned to any residency yet.
                             </p>
                         </div>
                     </CardContent>

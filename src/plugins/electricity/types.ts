@@ -1,12 +1,12 @@
-import { House } from "@/types";
+import { Residency } from "@/types";
 
 export interface Meter {
     id: string;
     meter_number: string;
     meter_type: string;
     disco: string;
-    house_id: string;
-    house?: House | null;
+    residency_id: string;
+    residency?: Residency | null;
     created_at: string;
     updated_at: string;
 }
@@ -16,8 +16,8 @@ export interface PurchaseToken {
     token: string;
     meter_id: string;
     meter?: Meter | null;
-    house_id: string;
-    house?: House | null;
+    residency_id: string;
+    residency?: Residency | null;
     email: string | null;
     amount: number;
     units: number;
@@ -46,14 +46,14 @@ export interface MeterCreate {
     meter_number: string;
     meter_type: string;
     disco: string;
-    house_id: string;
+    residency_id: string;
 }
 
 export interface PurchaseTokenCreate {
     meter_id: string;
     amount: number;
     description?: string | null;
-    house_id: string;
+    residency_id: string;
     email: string;
 }
 
@@ -62,7 +62,7 @@ export interface ElectricityStats {
     active_meters: number;
     total_purchases: number;
     total_revenue: number;
-    houses: Array<{
+    residencies: Array<{
         id: string;
         name: string;
         meters: Array<Meter>;
@@ -71,7 +71,7 @@ export interface ElectricityStats {
         id: string;
         meter_number: string;
         resident_name: string;
-        house_name: string;
+        residency_name: string;
         amount: number;
         units: number;
         date: string;

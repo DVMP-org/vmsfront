@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { formatDate, formatCurrency, titleCase } from "@/lib/utils";
 import { DataTable, Column } from "@/components/ui/DataTable";
-import { HouseLite } from "@/types";
+import { ResidencyLite } from "@/types";
 import { useState } from "react";
 import { UpdateDueModal } from "../components/UpdateDueModal";
 import { cn } from "@/lib/utils";
@@ -73,10 +73,10 @@ export default function DueDetailPage() {
         });
     };
 
-    const columns: Column<HouseLite>[] = [
+    const columns: Column<ResidencyLite>[] = [
         {
             key: "name",
-            header: "House",
+            header: "Residency",
             sortable: true,
             accessor: (row) => (
                 <div className="py-1">
@@ -99,7 +99,7 @@ export default function DueDetailPage() {
                         variant="ghost"
                         size="sm"
                         className="h-8 text-xs text-muted-foreground hover:text-brand-primary transition-colors"
-                        onClick={() => router.push(`/admin/dues/${dueId}/house/${row.id}`)}
+                        onClick={() => router.push(`/admin/dues/${dueId}/residency/${row.id}`)}
                     >
                         View
                         <ChevronRight className="h-3 w-3 ml-1" />
@@ -175,10 +175,10 @@ export default function DueDetailPage() {
                                 <div className="p-4 space-y-4">
                                     <DetailItem label="Total Amount" value={formatCurrency(due.amount)} />
                                     <DetailItem label="Billing Cycle" value={due.recurring ? titleCase(due.tenure_length) : "One-time"} />
-                                    <DetailItem label="Created" value={formatDate(due.created_at)} />
+                                    <DetailItem label="Created" value={formatDate(due.created_at || "")} />
                                 </div>
                                 <div className="p-4 space-y-4">
-                                    <DetailItem label="Houses" value={`${due.houses?.length || 0} units`} />
+                                    <DetailItem label="Residencies" value={`${due.residencies?.length || 0} units`} />
                                     <DetailItem label="Minimum Plan" value={`${titleCase(due.minimum_payment_breakdown)}`} />
                                     <DetailItem label="Description" value={due.description || "No description."} />
                                 </div>
@@ -190,17 +190,17 @@ export default function DueDetailPage() {
                         <CardHeader className="py-4 border-b flex flex-row items-center justify-between h-14">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <Building2 className="h-4 w-4 text-muted-foreground" />
-                                Houses
+                                Residencies
                             </CardTitle>
 
                         </CardHeader>
                         <CardContent className="p-0">
-                            {due.houses && due.houses.length > 0 ? (
+                            {due.residencies && due.residencies.length > 0 ? (
                                 <DataTable
-                                    data={due.houses}
+                                    data={due.residencies}
                                     columns={columns}
                                     searchable={true}
-                                    searchPlaceholder="Find house by name..."
+                                    searchPlaceholder="Find residency by name..."
                                     pageSize={10}
                                     getRowId={(row) => row.id}
                                     className="border-none"
@@ -208,7 +208,7 @@ export default function DueDetailPage() {
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-20 bg-muted/5">
                                     <Building2 className="h-10 w-10 text-muted-foreground/20 mb-3" />
-                                    <p className="text-sm text-muted-foreground font-medium">No houses assigned.</p>
+                                    <p className="text-sm text-muted-foreground font-medium">No residencies assigned.</p>
                                 </div>
                             )}
                         </CardContent>
@@ -231,7 +231,7 @@ export default function DueDetailPage() {
                                     <span className="text-xs font-bold uppercase tracking-wider">Active Cycle</span>
                                 </div>
                                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                                    Valid from {formatDate(due.created_at)}
+                                    Valid from {formatDate(due.created_at || "")}
                                 </p>
                             </div>
 
@@ -239,8 +239,8 @@ export default function DueDetailPage() {
                                 <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest px-1">Summary</p>
                                 <div className="divide-y border rounded-lg bg-muted/5">
                                     <div className="flex justify-between p-3">
-                                        <span className="text-xs text-muted-foreground">Houses</span>
-                                        <span className="text-xs font-bold text-foreground">{due.houses?.length || 0}</span>
+                                        <span className="text-xs text-muted-foreground">Residencies</span>
+                                        <span className="text-xs font-bold text-foreground">{due.residencies?.length || 0}</span>
                                     </div>
                                     <div className="flex justify-between p-3">
                                         <span className="text-xs text-muted-foreground">Status</span>

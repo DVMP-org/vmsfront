@@ -20,7 +20,7 @@ import { apiClient } from "@/lib/api-client";
 import { useResidentOnboarding } from "@/hooks/use-resident";
 import { useAuthStore } from "@/store/auth-store";
 import type { UserProfile } from "@/types";
-import { useAllHouses } from "@/hooks/use-general";
+import { useAllResidencies } from "@/hooks/use-general";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -66,10 +66,10 @@ export default function ResidentOnboardingPage() {
     },
   });
 
-  const tokenFromQuery = searchParams.get("token");
+  const tokenFromQuery = searchParams?.get("token");
   const effectiveToken = tokenFromQuery || storedToken;
 
-  const housesQuery = useAllHouses();
+  const residenciesQuery = useAllResidencies();
   const onboardingMutation = useResidentOnboarding();
 
   const handleSwitchAccount = () => {
@@ -152,34 +152,34 @@ export default function ResidentOnboardingPage() {
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  const resolveHouseSlugs = () => {
+  const resolveResidencySlugs = () => {
     if (!selectedSlugs.length) {
-      throw new Error("Add at least one house slug to continue.");
+      throw new Error("Add at least one residency slug to continue.");
     }
 
-    const available = housesQuery.data || [];
+    const available = residenciesQuery.data || [];
 
     const unresolved: string[] = [];
     const slugs = selectedSlugs.map((slug) => {
       const trimmed = slug.trim();
       if (!trimmed) {
-        throw new Error("House slugs cannot be empty.");
+        throw new Error("Residency slugs cannot be empty.");
       }
       if (uuidPattern.test(trimmed)) {
         return trimmed;
       }
       const normalized = trimmed.toLowerCase();
-      const match = available.find((house) => {
-        if (!house) return false;
-        const nameMatch = house.name?.toLowerCase() === normalized;
-        const slugMatch = house.slug?.toLowerCase() === normalized;
+      const match = available.find((residency) => {
+        if (!residency) return false;
+        const nameMatch = residency.name?.toLowerCase() === normalized;
+        const slugMatch = residency.slug?.toLowerCase() === normalized;
         return slugMatch || nameMatch;
       });
       if (!match) {
         unresolved.push(trimmed);
         return trimmed;
       }
-      return match.slug;
+      return match.slug || "";
     });
     return { slugs, unresolved };
   };
@@ -187,10 +187,10 @@ export default function ResidentOnboardingPage() {
   const alreadyOnboarded =
     profile?.user?.resident && profile.user.resident.onboarded;
 
-  const suggestedHouses = useMemo(() => {
-    if (!housesQuery.data?.length) return [];
-    return housesQuery.data.slice(0, 3);
-  }, [housesQuery.data]);
+  const suggestedResidencies = useMemo(() => {
+    if (!residenciesQuery.data?.length) return [];
+    return residenciesQuery.data.slice(0, 3);
+  }, [residenciesQuery.data]);
 
   const handleAddSlug = () => {
     if (!slugInput.trim()) return;
@@ -224,7 +224,7 @@ export default function ResidentOnboardingPage() {
     }
 
     try {
-      const { slugs: houseSlugs, unresolved } = resolveHouseSlugs();
+      const { slugs: residencySlugs, unresolved } = resolveResidencySlugs();
       if (unresolved.length > 0) {
         toast.info(
           `We'll submit ${unresolved.join(
@@ -235,7 +235,7 @@ export default function ResidentOnboardingPage() {
       onboardingMutation.mutate(
         {
           user_id: profile.user.id,
-          house_slugs: houseSlugs,
+          residency_slugs: residencySlugs,
           first_name: data.first_name,
           last_name: data.last_name,
           phone: data.phone,
@@ -254,7 +254,7 @@ export default function ResidentOnboardingPage() {
       );
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Invalid house data.",
+        error instanceof Error ? error.message : "Invalid residency data.",
       );
     }
   };
@@ -310,7 +310,7 @@ export default function ResidentOnboardingPage() {
               Resident onboarding
             </h1>
             <p className="text-sm text-muted-foreground">
-              Choose the house(s) you belong to using their public slug. We will
+              Choose the residency(s) you belong to using their public slug. We will
               link your verified account to the selected homes and unlock your
               dashboard.
             </p>
@@ -325,8 +325,8 @@ export default function ResidentOnboardingPage() {
                   </div>
                   <CardTitle>You're already onboarded</CardTitle>
                   <CardDescription>
-                    Your account is linked to {profile?.user?.houses?.length || 0}{" "}
-                    house{(profile?.user?.houses?.length ?? 0) === 1 ? "" : "s"}.
+                    Your account is linked to {profile?.user?.residencies?.length || 0}{" "}
+                    residency{(profile?.user?.residencies?.length ?? 0) === 1 ? "" : "s"}.
                     Jump back into your dashboard to manage passes and visitors.
                   </CardDescription>
                 </CardHeader>
@@ -342,18 +342,18 @@ export default function ResidentOnboardingPage() {
             ) : (
               <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                 <CardHeader className="space-y-2">
-                  <CardTitle>Link your houses</CardTitle>
+                  <CardTitle>Link your residencies</CardTitle>
                   <CardDescription>
                     Enter the slug (e.g.{" "}
                     <code className="rounded bg-muted px-1">oak-villa</code>)
-                    provided by your estate admin. You can add multiple houses if
+                    provided by your estate admin. You can add multiple residencies if
                     needed.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
-                      House slug
+                      Residency slug
                     </label>
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Input
@@ -377,7 +377,7 @@ export default function ResidentOnboardingPage() {
                     <div className="flex flex-wrap gap-2 pt-2">
                       {selectedSlugs.length === 0 ? (
                         <span className="text-xs text-muted-foreground">
-                          No houses added yet.
+                          No residencies added yet.
                         </span>
                       ) : (
                         selectedSlugs.map((slug) => (
@@ -407,37 +407,37 @@ export default function ResidentOnboardingPage() {
                     </div>
                   </div>
 
-                  {suggestedHouses.length > 0 && (
+                  {suggestedResidencies.length > 0 && (
                     <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Popular houses
+                        Popular residencies
                       </p>
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        {suggestedHouses.map((house) => (
+                        {suggestedResidencies.map((residency) => (
                           <button
                             type="button"
-                            key={house.slug}
+                            key={residency.slug}
                             className="rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition hover:border-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)]/5"
                             onClick={() => {
                               setSelectedSlugs((prev) => {
                                 const exists = prev.some(
                                   (value) =>
                                     value.toLowerCase() ===
-                                    (house.slug || house.name).toLowerCase(),
+                                    (residency.slug || residency.name).toLowerCase(),
                                 );
                                 if (exists) return prev;
                                 return [
                                   ...prev,
-                                  house.slug || house.name || house.id,
+                                  residency.slug || residency.name || residency.id,
                                 ];
                               });
                             }}
                           >
                             <p className="font-semibold text-foreground">
-                              {house.name}
+                              {residency.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {house.slug || "No slug available"}
+                              {residency.slug || "No slug available"}
                             </p>
                           </button>
                         ))}
@@ -470,11 +470,11 @@ export default function ResidentOnboardingPage() {
 
                   <div className="rounded-2xl border border-dashed border-[var(--brand-primary,#213928)]/40 bg-[var(--brand-primary,#213928)]/5 p-4 text-sm text-muted-foreground">
                     <p className="font-semibold text-foreground">
-                      Need your house slug?
+                      Need your residency slug?
                     </p>
                     <p>
                       Ask your estate admin for the public slug or copy it from
-                      your welcome email. It usually matches the friendly house
+                      your welcome email. It usually matches the friendly residency
                       URL (e.g.{" "}
                       <code className="rounded bg-muted px-1">green-court</code>).
                     </p>

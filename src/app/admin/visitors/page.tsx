@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Eye, Search, Filter } from "lucide-react";
 import { Visitor, VisitorStatus } from "@/types";
-import { useAdminVisitors, useAdminHouses, useAdminGatePasses } from "@/hooks/use-admin";
+import { useAdminVisitors, useAdminResidencies, useAdminGatePasses } from "@/hooks/use-admin";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { formatFiltersForAPI } from "@/lib/table-utils";
@@ -23,7 +23,7 @@ export default function AdminVisitorsPage() {
         pageSize: { defaultValue: PAGE_SIZE },
         search: { defaultValue: undefined },
         sort: { defaultValue: "-created_at" },
-        house_id: { defaultValue: undefined },
+        residency_id: { defaultValue: undefined },
         gate_pass_id: { defaultValue: undefined },
         status: { defaultValue: undefined },
     }), []);
@@ -39,7 +39,7 @@ export default function AdminVisitorsPage() {
     const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
     const [search, setSearch] = useState(() => initializeFromUrl("search") || "");
     const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
-    const [houseId, setHouseId] = useState<string | undefined>(() => initializeFromUrl("house_id"));
+    const [residencyId, setResidencyId] = useState<string | undefined>(() => initializeFromUrl("residency_id"));
     const [gatePassId, setGatePassId] = useState<string | undefined>(() => initializeFromUrl("gate_pass_id"));
     const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
 
@@ -56,20 +56,20 @@ export default function AdminVisitorsPage() {
             sort,
             gate_pass_id: gatePassId,
             status,
-            house_id: houseId,
+            residency_id: residencyId,
         });
-    }, [page, pageSize, search, sort, houseId, gatePassId, status, syncToUrl]);
+    }, [page, pageSize, search, sort, residencyId, gatePassId, status, syncToUrl]);
 
-    const { data: housesData } = useAdminHouses({ page: 1, pageSize: 100 });
-    const houses = useMemo(() => housesData?.items ?? [], [housesData]);
+    const { data: residenciesData } = useAdminResidencies({ page: 1, pageSize: 100 });
+    const residencies = useMemo(() => residenciesData?.items ?? [], [residenciesData]);
 
     const { data: gatePassesData } = useAdminGatePasses({ page: 1, pageSize: 50 });
     const gatePasses = useMemo(() => gatePassesData?.items ?? [], [gatePassesData]);
 
     const activeFilters = useMemo(() => {
         const filters: FilterConfig[] = [];
-        if (houseId) {
-            filters.push({ field: "house_id", value: houseId, operator: "eq" });
+        if (residencyId) {
+            filters.push({ field: "residency_id", value: residencyId, operator: "eq" });
         }
         if (gatePassId) {
             filters.push({ field: "gate_pass_id", value: gatePassId, operator: "eq" });
@@ -78,7 +78,7 @@ export default function AdminVisitorsPage() {
             filters.push({ field: "status", value: status, operator: "eq" });
         }
         return filters;
-    }, [houseId, gatePassId, status]);
+    }, [residencyId, gatePassId, status]);
 
     const availableFilters: FilterDefinition[] = useMemo(() => {
         const filters: FilterDefinition[] = [
@@ -94,15 +94,15 @@ export default function AdminVisitorsPage() {
                 operator: "eq",
             }
         ];
-        if (houses.length > 0) {
+        if (residencies.length > 0) {
             filters.push({
-                field: "house_id",
-                label: "House",
+                field: "residency_id",
+                label: "Residency",
                 type: "select",
                 isSearchable: true,
-                options: houses.map((house) => ({
-                    value: house.id,
-                    label: house.name,
+                options: residencies.map((residency) => ({
+                    value: residency.id,
+                    label: residency.name,
                 })),
                 operator: "eq",
             });
@@ -121,7 +121,7 @@ export default function AdminVisitorsPage() {
             });
         }
         return filters;
-    }, [houses, gatePasses, VisitorStatus]);
+    }, [residencies, gatePasses, VisitorStatus]);
 
     const { data, isLoading, isFetching } = useAdminVisitors({
         page,
@@ -171,9 +171,9 @@ export default function AdminVisitorsPage() {
                             </Badge>
                         )}
                     </div>
-                    {row.gate_pass?.house_id && (
+                    {row.gate_pass?.residency_id && (
                         <span className="text-[10px] text-muted-foreground mt-0.5">
-                            House ID: {row.gate_pass.house_id.split('-')[0]}
+                            Residency ID: {row.gate_pass.residency_id.split('-')[0]}
                         </span>
                     )}
                 </div>
@@ -183,7 +183,7 @@ export default function AdminVisitorsPage() {
             key: "status",
             header: "Status",
             accessor: (row) => (
-                <StatusBadge status={row.status} />
+                <StatusBadge status={row.status || VisitorStatus.PENDING} />
             ),
         },
         {
@@ -248,10 +248,10 @@ export default function AdminVisitorsPage() {
                         initialFilters={activeFilters}
                         onFiltersChange={(filters) => {
                             setPage(1);
-                            const houseFilter = filters.find(f => f.field === "house_id");
+                            const residencyFilter = filters.find(f => f.field === "residency_id");
                             const statusFilter = filters.find(f => f.field === "status");
                             const gatePassFilter = filters.find(f => f.field === "gate_pass_id");
-                            setHouseId(houseFilter?.value as string);
+                            setResidencyId(residencyFilter?.value as string);
                             setStatus(statusFilter?.value as string);
                             setGatePassId(gatePassFilter?.value as string);
                         }}

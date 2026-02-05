@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import {
-    useAdminHouseDue,
+    useAdminResidencyDue,
     useAdminDueSchedules,
     useAdminDuePayments
 } from "@/hooks/use-admin";
@@ -22,18 +22,18 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { formatCurrency, formatDate, titleCase, cn } from "@/lib/utils";
-import { HouseDueStatus, DueSchedule, DuePayment } from "@/types";
+import { ResidencyDueStatus, DueSchedule, DuePayment } from "@/types";
 import { useState, useMemo } from "react";
 import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 
-export default function HouseDueDetailPage() {
+export default function ResidencyDueDetailPage() {
     const params = useParams();
     const router = useRouter();
     const dueId = params?.id as string;
-    const houseId = params?.houseId as string;
+    const residencyId = params?.residencyId as string;
 
-    const { data: houseDue, isLoading, error } = useAdminHouseDue(dueId, houseId);
+    const { data: residencyDue, isLoading, error } = useAdminResidencyDue(dueId, residencyId);
 
     // Pagination states
     const [schedulePage, setSchedulePage] = useState(1);
@@ -45,13 +45,13 @@ export default function HouseDueDetailPage() {
 
     const { data: schedulesData, isLoading: isLoadingSchedules, isFetching: isFetchingSchedules } = useAdminDueSchedules(
         dueId,
-        houseId,
+        residencyId,
         schedulePage,
         pageSize,
         formatFiltersForAPI(scheduleFilters));
     const { data: paymentsData, isLoading: isLoadingPayments, isFetching: isFetchingPayments } = useAdminDuePayments(
         dueId,
-        houseId,
+        residencyId,
         paymentsPage,
         pageSize,
         formatFiltersForAPI(paymentFilters));
@@ -86,21 +86,21 @@ export default function HouseDueDetailPage() {
         );
     }
 
-    if (error || !houseDue) {
+    if (error || !residencyDue) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border border-dashed border-border/60 max-w-2xl mx-auto mt-20">
                 <AlertCircle className="h-10 w-10 text-destructive/40 mb-4" />
-                <h2 className="text-xl font-bold text-foreground">House Due record not found</h2>
-                <p className="text-sm text-muted-foreground mt-2 mb-6">The requested house assessment record could not be found or may have been removed.</p>
+                <h2 className="text-xl font-bold text-foreground">Residency Due record not found</h2>
+                <p className="text-sm text-muted-foreground mt-2 mb-6">The requested residency assessment record could not be found or may have been removed.</p>
                 <Button variant="outline" className="font-bold text-xs uppercase" onClick={() => router.back()}>
                     <ArrowLeft className="h-3.5 w-3.5 mr-2" />
-                    Back to House List
+                    Back to Residency List
                 </Button>
             </div>
         );
     }
 
-    const { due, house, status, amount, balance, paid_amount } = houseDue;
+    const { due, residency, status, amount, balance, paid_amount } = residencyDue;
 
     const scheduleColumns: Column<DueSchedule>[] = [
         {
@@ -167,15 +167,15 @@ export default function HouseDueDetailPage() {
             {/* VMS Action Bar */}
             <div className="flex items-center justify-between">
                 <button
-                    onClick={() => router.push(`/admin/dues/${dueId}/houses`)}
+                    onClick={() => router.push(`/admin/dues/${dueId}/residencies`)}
                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
                 >
                     <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                    Back to House List
+                    Back to Residency List
                 </button>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="font-mono text-[10px] uppercase border-border/40">
-                        RID: {houseDue.id.split('-')[0]}
+                        RID: {residencyDue.id.split('-')[0]}
                     </Badge>
                 </div>
             </div>
@@ -185,18 +185,18 @@ export default function HouseDueDetailPage() {
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
                         <Building2 className="h-5.5 w-5.5 text-brand-primary" />
-                        {house?.name} — {due?.name}
+                        {residency?.name} — {due?.name}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Specific assessment record and payment history for {house?.address}.
+                        Specific assessment record and payment history for {residency?.address}.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge
-                        variant={status === HouseDueStatus.PAID ? "success" : status === HouseDueStatus.PARTIALLY_PAID ? "secondary" : "danger"}
+                        variant={status === ResidencyDueStatus.PAID ? "success" : status === ResidencyDueStatus.PARTIALLY_PAID ? "secondary" : "danger"}
                         className="h-7 px-3 text-[10px] font-black uppercase tracking-widest border-none shadow-sm"
                     >
-                        {status === HouseDueStatus.PAID ? "Paid" : status === HouseDueStatus.PARTIALLY_PAID ? "Partially Paid" : "Unpaid"}
+                        {status === ResidencyDueStatus.PAID ? "Paid" : status === ResidencyDueStatus.PARTIALLY_PAID ? "Partially Paid" : "Unpaid"}
                     </Badge>
                 </div>
             </div>
@@ -239,8 +239,8 @@ export default function HouseDueDetailPage() {
                             <DetailItem label="Due Name" value={due?.name || "N/A"} />
                             <DetailItem label="Billing Cycle" value={titleCase(due?.tenure_length || "One-time")} />
                             <DetailItem label="Recurring" value={due?.recurring ? "True" : "False"} />
-                            <DetailItem label="Payment Breakdown" value={titleCase(houseDue?.payment_breakdown) || "N/A"} />
-                            <DetailItem label="Property" value={house?.name || "N/A"} />
+                            <DetailItem label="Payment Breakdown" value={titleCase(residencyDue?.payment_breakdown) || "N/A"} />
+                            <DetailItem label="Property" value={residency?.name || "N/A"} />
                         </CardContent>
                     </Card>
 

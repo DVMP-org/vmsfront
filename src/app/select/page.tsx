@@ -19,7 +19,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
-import type { House } from "@/types";
+import type { Residency } from "@/types";
 import { cn } from "@/lib/utils";
 import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
@@ -30,7 +30,7 @@ import { useAdminProfile } from "@/hooks/use-admin";
 export default function SelectPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { setSelectedHouse } = useAppStore();
+  const { setSelectedResidency } = useAppStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useRequireEmailVerification(true);
@@ -39,29 +39,29 @@ export default function SelectPage() {
   const { data: dashboardData, isLoading: isDashboardLoading } = useResidentDashboardSelect();
   const { data: adminProfile, isLoading: isAdminLoading, isError: isAdminError } = useAdminProfile();
 
-  const houses = useMemo<House[]>(() => dashboardData?.houses ?? [], [dashboardData]);
+  const residencies = useMemo<Residency[]>(() => dashboardData?.residencies ?? [], [dashboardData]);
   const isAdmin = useMemo(() => !!adminProfile && !isAdminError, [adminProfile, isAdminError]);
   const isLoading = isDashboardLoading || isAdminLoading;
 
-  const houseSummary = useMemo(() => {
-    if (!houses.length) return "No houses assigned yet";
-    return `${houses.length} ${houses.length === 1 ? "House" : "Houses"}`;
-  }, [houses]);
+  const residencySummary = useMemo(() => {
+    if (!residencies.length) return "No residencies assigned yet";
+    return `${residencies.length} ${residencies.length === 1 ? "Residency" : "Residencies"}`;
+  }, [residencies]);
 
-  const handleSelectHouse = (house: House) => {
-    const cardId = `house-${house.id}`;
+  const handleSelectResidency = (residency: Residency) => {
+    const cardId = `residency-${residency.id}`;
     setSelectedCard(cardId);
-    setSelectedHouse(house);
-    router.push(`/house/${house.id}`);
+    setSelectedResidency(residency);
+    router.push(`/residency/${residency.id}`);
   };
 
   const handleSelectAdmin = () => {
     setSelectedCard("admin");
-    setSelectedHouse(null);
+    setSelectedResidency(null);
     router.push("/admin");
   };
 
-  const noDestinations = !isLoading && houses.length === 0 && !isAdmin;
+  const noDestinations = !isLoading && residencies.length === 0 && !isAdmin;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
@@ -100,7 +100,7 @@ export default function SelectPage() {
           ) : (
             <div className="grid grid-cols-1 gap-10">
               {/* Properties Section */}
-              {houses.length > 0 && (
+              {residencies.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 px-1">
                     <div className="h-5 w-1 rounded-full bg-[rgb(var(--brand-primary,#213928))]" />
@@ -110,8 +110,8 @@ export default function SelectPage() {
                     <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800/50 ml-2" />
                   </div>
                   <div className="grid grid-cols-1 gap-4">
-                    {houses.map((house, index) => {
-                      const cardId = `house-${house.id}`;
+                    {residencies.map((residency, index) => {
+                      const cardId = `residency-${residency.id}`;
                       return (
                         <motion.div
                           key={cardId}
@@ -125,10 +125,10 @@ export default function SelectPage() {
                                 <Home className="h-6 w-6" />
                               </div>
                             }
-                            title={house.name}
-                            subtitle={house.address}
+                            title={residency.name}
+                            subtitle={residency.address}
                             selected={selectedCard === cardId}
-                            onClick={() => handleSelectHouse(house)}
+                            onClick={() => handleSelectResidency(residency)}
                           />
                         </motion.div>
                       );
@@ -150,7 +150,7 @@ export default function SelectPage() {
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: houses.length * 0.1 }}
+                    transition={{ duration: 0.4, delay: residencies.length * 0.1 }}
                   >
                     <DashboardCard
                       icon={

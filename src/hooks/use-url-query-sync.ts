@@ -40,7 +40,7 @@ export interface UseUrlQuerySyncOptions {
 export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
     const router = useRouter();
     const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams() || new URLSearchParams();
     const isInitialMount = useRef(true);
     const { config, skipInitialSync = false } = options;
 
@@ -88,7 +88,7 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
             return;
         }
 
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(searchParams?.toString());
 
         Object.entries(updates).forEach(([key, value]) => {
             const paramConfig = config[key];
@@ -127,14 +127,14 @@ export function useUrlQuerySync(options: UseUrlQuerySyncOptions) {
         });
 
         const queryString = params.toString();
-        const currentQueryString = searchParams.toString();
+        const currentQueryString = searchParams?.toString();
 
         if (queryString === currentQueryString) {
             return;
         }
 
         router.replace(
-            queryString ? `${pathname}?${queryString}` : pathname,
+            queryString ? `${pathname}?${queryString}` : pathname || "",
             { scroll: false }
         );
     }, [config, pathname, router, searchParams, skipInitialSync]);

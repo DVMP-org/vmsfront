@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const isAuthPath = pathname.startsWith('/auth');
   const isProtectedPath =
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/house') ||
+    pathname.startsWith('/residency') ||
     pathname.startsWith('/select');
 
   // 1. If user is authenticated and tries to access /auth/login, redirect to /select
@@ -28,5 +28,5 @@ export function middleware(request: NextRequest) {
 
 // Optimization: Only run middleware for specific routes
 export const config = {
-  matcher: ['/admin/:path*', '/house/:path*', '/select', '/auth/:path*'],
+  matcher: ['/admin/:path*', '/residency/:path*', '/select', '/auth/:path*'],
 };

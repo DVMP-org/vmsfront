@@ -99,7 +99,7 @@ export default function AdminGatePassDetailPage() {
                   <p className="text-sm uppercase tracking-wide text-white/80">Gate pass</p>
                   <h1 className="text-3xl font-semibold">{data.code}</h1>
                   <p className="text-white/80">
-                    Issued for house ID <span className="font-semibold">{data.house_id}</span>
+                    Issued for residency ID <span className="font-semibold">{data.residency_id}</span>
                   </p>
                 </div>
                 <Badge variant="secondary" className="bg-white/20 text-white">
@@ -225,9 +225,9 @@ export default function AdminGatePassDetailPage() {
                                     {event.owner.name ?? event.owner.email ?? "—"}
                                   </div>
                                 )}
-                                {event.house_id && (
+                                {event.residency_id && (
                                   <p className="text-xs uppercase tracking-wide">
-                                    House: {event.house_id}
+                                    Residency: {event.residency_id}
                                   </p>
                                 )}
                               </div>

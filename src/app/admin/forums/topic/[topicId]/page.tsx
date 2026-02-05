@@ -20,7 +20,7 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useAuth } from "@/hooks/use-auth";
 import { toRenderableHtml, hasMeaningfulContent } from "@/lib/safe-html";
-import { useAdminHouses } from "@/hooks/use-admin";
+import { useAdminResidencies } from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumTopic,
@@ -51,15 +51,15 @@ export default function AdminForumTopicDetailPage() {
     page: postsPage,
     pageSize: 10,
   });
-  const { data: housesData } = useAdminHouses({
+  const { data: residenciesData } = useAdminResidencies({
     page: 1,
     pageSize: 100,
   });
-  const houses = housesData?.items ?? [];
+  const residencies = residenciesData?.items ?? [];
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
-    filters: formatFiltersForAPI([{ field: "house_id", operator: "eq" as const, value: topic?.house_id }]),
+    filters: formatFiltersForAPI([{ field: "residency_id", operator: "eq" as const, value: topic?.residency_id || "" }]),
   });
 
   const updateTopic = useUpdateAdminForumTopic();
@@ -110,11 +110,11 @@ export default function AdminForumTopicDetailPage() {
         <button
           type="button"
           onClick={() =>
-            router.push(`/admin/forums/category/${topic.category.id}`)
+            router.push(`/admin/forums/category/${topic?.category?.id}`)
           }
           className="hover:text-zinc-700 transition-colors"
         >
-          {topic.category.name}
+          {topic?.category?.name}
         </button>
       ) : (
         <span>Category</span>
@@ -173,9 +173,9 @@ export default function AdminForumTopicDetailPage() {
       action: () =>
         router.push(`/admin/forums/category/${topic.category?.id}`),
     },
-    topic?.house?.name && {
-      label: "House",
-      value: topic.house.name,
+    topic?.residency?.name && {
+      label: "Residency",
+      value: topic.residency.name,
     },
     topic?.author_name && {
       label: "Created by",
@@ -368,7 +368,7 @@ export default function AdminForumTopicDetailPage() {
                       key={post.id}
                       post={post}
                       viewerId={viewerId}
-                      topicHouseName={topic?.house?.name}
+                      topicResidencyName={topic?.residency?.name}
                       onUpdate={(data) =>
                         topicId &&
                         updatePost.mutate({
@@ -459,13 +459,13 @@ export default function AdminForumTopicDetailPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode="edit"
-        houses={houses}
+        residencies={residencies}
         categories={categoriesForModal}
-        defaultHouseId={topic?.house_id || topic?.house?.id}
+        defaultResidencyId={topic?.residency_id || topic?.residency?.id}
         initialValues={
           topic
             ? {
-              houseId: topic.house_id || topic.house?.id || "",
+              residencyId: topic.residency_id || topic.residency?.id || "",
               categoryId: topic.category_id,
               title: topic.title,
               content: topic.initial_post?.content ?? "",
@@ -675,14 +675,14 @@ export default function AdminForumTopicDetailPage() {
 function PostItem({
   post,
   viewerId,
-  topicHouseName,
+  topicResidencyName,
   onUpdate,
   onToggleDelete,
   topicLocked,
 }: {
   post: ForumPost;
   viewerId: string | null;
-  topicHouseName?: string | null;
+  topicResidencyName?: string | null;
   onUpdate: (data: { content?: string }) => void;
   onToggleDelete: () => void;
   topicLocked: boolean;
@@ -724,7 +724,7 @@ function PostItem({
   const displayName = post.posted_by_admin
     ? "Admin"
     : post.author_name || post.author?.email || "Resident";
-  const houseLabel = post.house?.name || topicHouseName || null;
+  const residencyLabel = post.residency?.name || topicResidencyName || null;
   const isOwn = viewerId ? post.author_id === viewerId : false;
 
   return (
@@ -752,7 +752,7 @@ function PostItem({
             {/* Post Header - Compact Inline */}
             <div className={cn("flex items-center gap-2 mb-1", isOwn ? "justify-end" : "justify-start")}>
               <span className={cn("text-xs font-semibold", isOwn ? "text-white" : "text-zinc-900")}>
-                {displayName} | {houseLabel}
+                {displayName} | {residencyLabel}
               </span>
               {post.posted_by_admin && (
                 <span

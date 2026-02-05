@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminHouses, useAdminHouseGroups, useCreateDue } from "@/hooks/use-admin";
+import { useAdminResidencies, useAdminResidencyGroups, useCreateDue } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/Button";
 import { DueForm, DueFormData } from "../components/DueForm";
 import { CreateDueRequest, DueTenureLength } from "@/types";
@@ -12,17 +12,17 @@ export default function CreateDuePage() {
     const router = useRouter();
     const createMutation = useCreateDue();
 
-    const { data: housesData } = useAdminHouses({
+    const { data: residenciesData } = useAdminResidencies({
         page: 1,
         pageSize: 100,
     });
 
-    const { data: groupsData } = useAdminHouseGroups({
+    const { data: groupsData } = useAdminResidencyGroups({
         page: 1,
         pageSize: 100,
     });
 
-    const houses = useMemo(() => housesData?.items ?? [], [housesData]);
+    const residencies = useMemo(() => residenciesData?.items ?? [], [residenciesData]);
     const groups = useMemo(() => groupsData?.items ?? [], [groupsData]);
 
     const onSubmit = (data: DueFormData) => {
@@ -31,8 +31,8 @@ export default function CreateDuePage() {
             description: data.description,
             amount: data.amount,
             recurring: data.recurring,
-            house_groups_ids: data.house_groups_ids,
-            houses_ids: data.houses_ids,
+            residency_groups_ids: data?.residency_groups_ids,
+            residencies_ids: data?.residencies_ids,
             minimum_payment_breakdown: data.recurring ? data.minimum_payment_breakdown : DueTenureLength.ONE_TIME,
             tenure_length: data.tenure_length,
             start_date: data.recurring ? data.start_date : undefined,
@@ -58,7 +58,7 @@ export default function CreateDuePage() {
             <DueForm
                 onSubmit={onSubmit}
                 isLoading={createMutation.isPending}
-                houses={houses}
+                residencies={residencies}
                 groups={groups}
                 submitLabel="Create Due"
             />

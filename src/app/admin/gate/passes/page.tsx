@@ -9,7 +9,7 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { X } from "lucide-react";
 import { GatePassStatus, GatePass } from "@/types";
-import { useAdminGatePasses, useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
+import { useAdminGatePasses, useAdminResidencies, useAdminResidents } from "@/hooks/use-admin";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -36,7 +36,7 @@ export default function AdminGatePassesPage() {
     search: { defaultValue: "" },
     sort: { defaultValue: undefined },
     status: { defaultValue: undefined },
-    house_id: { defaultValue: undefined },
+    residency_id: { defaultValue: undefined },
     resident_id: { defaultValue: undefined },
     startDate: { defaultValue: undefined },
     endDate: { defaultValue: undefined },
@@ -54,7 +54,7 @@ export default function AdminGatePassesPage() {
   const [selectedPasses, setSelectedPasses] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState(() => initializeFromUrl("search") || "");
   const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
-  const [houseId, setHouseId] = useState<string | undefined>(() => initializeFromUrl("house_id"));
+  const [residencyId, setResidencyId] = useState<string | undefined>(() => initializeFromUrl("residency_id"));
   const [residentId, setResidentId] = useState<string | undefined>(() => initializeFromUrl("resident_id"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
   const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
@@ -73,7 +73,7 @@ export default function AdminGatePassesPage() {
       pageSize,
       search,
       status,
-      house_id: houseId,
+      residency_id: residencyId,
       resident_id: residentId,
       sort,
       startDate,
@@ -84,24 +84,24 @@ export default function AdminGatePassesPage() {
     pageSize,
     search,
     status,
-    houseId,
+    residencyId,
     residentId,
     sort,
     startDate,
     endDate,
     syncToUrl]);
 
-  // Fetch houses and residents for filter dropdowns
-  const { data: housesData } = useAdminHouses({
+  // Fetch residencies and residents for filter dropdowns
+  const { data: residenciesData } = useAdminResidencies({
     page: 1,
-    pageSize: 100, // Get all houses for dropdown
+    pageSize: 100, // Get all residencies for dropdown
   });
   const { data: residentsData } = useAdminResidents({
     page: 1,
     pageSize: 100, // Get all residents for dropdown
   });
 
-  const houses = useMemo(() => housesData?.items ?? [], [housesData]);
+  const residencies = useMemo(() => residenciesData?.items ?? [], [residenciesData]);
   const residents = useMemo(() => residentsData?.items ?? [], [residentsData]);
 
 
@@ -121,17 +121,17 @@ export default function AdminGatePassesPage() {
 
     ];
 
-    // Add house filter if houses are loaded
-    if (houses.length > 0) {
+    // Add residency filter if residencies are loaded
+    if (residencies.length > 0) {
       filters.push({
-        field: "house_id",
-        label: "House",
+        field: "residency_id",
+        label: "Residency",
         type: "select",
         isSearchable: true,
         options: [
-          ...houses.map((house) => ({
-            value: house.id,
-            label: house.name,
+          ...residencies.map((residency) => ({
+            value: residency.id,
+            label: residency.name,
           })),
         ],
         operator: "eq",
@@ -165,7 +165,7 @@ export default function AdminGatePassesPage() {
     )
 
     return filters;
-  }, [houses, residents]);
+  }, [residencies, residents]);
 
   // Build filters for API from current state
   const activeFilters = useMemo(() => {
@@ -173,8 +173,8 @@ export default function AdminGatePassesPage() {
     if (status) {
       filters.push({ field: "status", operator: "eq", value: status });
     }
-    if (houseId) {
-      filters.push({ field: "house_id", operator: "eq", value: houseId });
+    if (residencyId) {
+      filters.push({ field: "residency_id", operator: "eq", value: residencyId });
     }
     if (residentId) {
       filters.push({ field: "resident_id", operator: "eq", value: residentId });
@@ -186,7 +186,7 @@ export default function AdminGatePassesPage() {
       filters.push({ field: "created_at", operator: "lte", value: endDate });
     }
     return filters;
-  }, [status, houseId, residentId, startDate, endDate]);
+  }, [status, residencyId, residentId, startDate, endDate]);
 
   const { data, isLoading, isFetching } = useAdminGatePasses({
     page,
@@ -391,14 +391,14 @@ export default function AdminGatePassesPage() {
                 setPage(1);
                 // Extract filter values from filters and explicitly clear if not found
                 const statusFilter = filters.find((f) => f.field === "status");
-                const houseIdFilter = filters.find((f) => f.field === "house_id");
+                const residencyIdFilter = filters.find((f) => f.field === "residency_id");
                 const residentIdFilter = filters.find((f) => f.field === "resident_id");
                 const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
                 const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
 
                 // Always set state (undefined if filter not found) to ensure URL clearing
                 setStatus(statusFilter?.value as string | undefined || undefined);
-                setHouseId(houseIdFilter?.value as string | undefined || undefined);
+                setResidencyId(residencyIdFilter?.value as string | undefined || undefined);
                 setResidentId(residentIdFilter?.value as string | undefined || undefined);
                 setStartDate(startDateFilter?.value as string | undefined || undefined);
                 setEndDate(endDateFilter?.value as string | undefined || undefined);

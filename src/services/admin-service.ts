@@ -1,10 +1,10 @@
 import { apiClient } from "@/lib/api-client";
 import {
-    House,
-    HouseGroup,
-    CreateHouseRequest,
-    CreateHouseGroupRequest,
-    UpdateHouseGroupRequest,
+    Residency,
+    ResidencyGroup,
+    CreateResidencyRequest,
+    CreateResidencyGroupRequest,
+    UpdateResidencyGroupRequest,
     Admin,
     CreateAdminRequest,
     AdminRole,
@@ -40,12 +40,12 @@ import {
     UpdateBrandingThemeRequest,
     PaymentGateway,
     UpdatePaymentGatewayRequest,
-    HouseDetail,
+    ResidencyDetail,
     Resident,
-    ResidentHouse,
+    ResidentResidency,
     Due,
     CreateDueRequest,
-    HouseDue,
+    ResidencyDue,
     DueSchedule,
     DuePayment,
 } from "@/types";
@@ -68,15 +68,15 @@ export const adminService = {
         return apiClient.put("/admin/me", data);
     },
 
-    // Houses
-    async getHouses(params?: {
+    // Residencies
+    async getResidencies(params?: {
         page?: number;
         pageSize?: number;
         search?: string;
         filters?: string;
         sort?: string;
-    }): Promise<ApiResponse<PaginatedResponse<House>>> {
-        return apiClient.get("/admin/houses", {
+    }): Promise<ApiResponse<PaginatedResponse<Residency>>> {
+        return apiClient.get("/admin/residencies", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
@@ -87,50 +87,50 @@ export const adminService = {
         });
     },
 
-    async createHouse(data: { name: string; description?: string; address: string }): Promise<ApiResponse<House>> {
-        return apiClient.post("/admin/houses/create", data);
+    async createResidency(data: { name: string; description?: string; address: string }): Promise<ApiResponse<Residency>> {
+        return apiClient.post("/admin/residencies/create", data);
     },
 
-    async getHouse(houseId: string): Promise<ApiResponse<House>> {
-        return apiClient.get(`/admin/houses/${houseId}`);
+    async getResidency(residencyId: string): Promise<ApiResponse<Residency>> {
+        return apiClient.get(`/admin/residencies/${residencyId}`);
     },
 
-    async getHouseResidents(houseId: string): Promise<ApiResponse<ResidentHouse[]>> {
-        return apiClient.get(`/admin/houses/${houseId}/residents`);
+    async getResidencyResidents(residencyId: string): Promise<ApiResponse<ResidentResidency[]>> {
+        return apiClient.get(`/admin/residencies/${residencyId}/residents`);
     },
 
-    async updateHouse(
-        houseId: string,
-        data: { name?: string; description?: string; address?: string; house_group_id?: string }
-    ): Promise<ApiResponse<House>> {
-        return apiClient.put(`/admin/houses/${houseId}/update`, data);
+    async updateResidency(
+        residencyId: string,
+        data: { name?: string; description?: string; address?: string; residency_group_id?: string }
+    ): Promise<ApiResponse<Residency>> {
+        return apiClient.put(`/admin/residencies/${residencyId}/update`, data);
     },
 
-    async deleteHouse(houseId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.delete(`/admin/houses/${houseId}/delete`);
+    async deleteResidency(residencyId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/residencies/${residencyId}/delete`);
     },
 
-    async bulkDeleteHouses(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.post("/admin/houses/delete/bulk", houseIds);
+    async bulkDeleteResidencies(residencyIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/residencies/delete/bulk", residencyIds);
     },
 
-    async toggleHouseActive(houseId: string): Promise<ApiResponse<House>> {
-        return apiClient.post(`/admin/houses/${houseId}/toggle-active`);
+    async toggleResidencyActive(residencyId: string): Promise<ApiResponse<Residency>> {
+        return apiClient.post(`/admin/residencies/${residencyId}/toggle-active`);
     },
 
-    async bulkToggleHouseActive(houseIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.post("/admin/houses/toggle-active/bulk", houseIds);
+    async bulkToggleResidencyActive(residencyIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/residencies/toggle-active/bulk", residencyIds);
     },
 
-    // House Groups
-    async getHouseGroups(params?: {
+    // Residency Groups
+    async getResidencyGroups(params?: {
         page?: number;
         pageSize?: number;
         search?: string;
         filters?: string;
         sort?: string;
-    }): Promise<ApiResponse<PaginatedResponse<HouseGroup>>> {
-        return apiClient.get("/admin/house/group/list", {
+    }): Promise<ApiResponse<PaginatedResponse<ResidencyGroup>>> {
+        return apiClient.get("/admin/residency/group/list", {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
@@ -141,35 +141,35 @@ export const adminService = {
         });
     },
 
-    async getHouseGroup(groupId: string): Promise<ApiResponse<HouseGroup>> {
-        return apiClient.get(`/admin/house/group/${groupId}`);
+    async getResidencyGroup(groupId: string): Promise<ApiResponse<ResidencyGroup>> {
+        return apiClient.get(`/admin/residency/group/${groupId}`);
     },
 
-    async createHouseGroup(data: CreateHouseGroupRequest): Promise<ApiResponse<HouseGroup>> {
-        return apiClient.post("/admin/house/groups", data);
+    async createResidencyGroup(data: CreateResidencyGroupRequest): Promise<ApiResponse<ResidencyGroup>> {
+        return apiClient.post("/admin/residency/groups", data);
     },
 
-    async updateHouseGroup(
+    async updateResidencyGroup(
         groupId: string,
-        data: UpdateHouseGroupRequest
-    ): Promise<ApiResponse<HouseGroup>> {
-        return apiClient.put(`/admin/house/group/${groupId}/update`, data);
+        data: UpdateResidencyGroupRequest
+    ): Promise<ApiResponse<ResidencyGroup>> {
+        return apiClient.put(`/admin/residency/group/${groupId}/update`, data);
     },
 
-    async deleteHouseGroup(groupId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.delete(`/admin/house/group/${groupId}/delete`);
+    async deleteResidencyGroup(groupId: string): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.delete(`/admin/residency/group/${groupId}/delete`);
     },
 
-    async bulkDeleteHouseGroups(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.post("/admin/house/group/delete/bulk", groupIds);
+    async bulkDeleteResidencyGroups(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/residency/group/delete/bulk", groupIds);
     },
 
-    async toggleHouseGroupActive(groupId: string): Promise<ApiResponse<HouseGroup>> {
-        return apiClient.post(`/admin/house/group/${groupId}/toggle-active`);
+    async toggleResidencyGroupActive(groupId: string): Promise<ApiResponse<ResidencyGroup>> {
+        return apiClient.post(`/admin/residency/group/${groupId}/toggle-active`);
     },
 
-    async bulkToggleHouseGroupActive(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
-        return apiClient.post("/admin/house/group/toggle-active/bulk", groupIds);
+    async bulkToggleResidencyGroupActive(groupIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
+        return apiClient.post("/admin/residency/group/toggle-active/bulk", groupIds);
     },
 
     // Residents
@@ -197,8 +197,8 @@ export const adminService = {
         return apiClient.get(`/admin/resident/${residentId}`);
     },
 
-    async getResidentHouses(residentId: string): Promise<ApiResponse<ResidentHouse[]>> {
-        return apiClient.get(`/admin/resident/${residentId}/houses`);
+    async getResidentResidencies(residentId: string): Promise<ApiResponse<ResidentResidency[]>> {
+        return apiClient.get(`/admin/resident/${residentId}/residencies`);
     },
 
     async updateResident(
@@ -368,7 +368,7 @@ export const adminService = {
         page?: number;
         pageSize?: number;
         passId?: string;
-        houseId?: string;
+        residencyId?: string;
         search?: string;
         filters?: string;
         sort?: string;
@@ -378,7 +378,7 @@ export const adminService = {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 15,
                 pass_id: params?.passId ?? undefined,
-                house_id: params?.houseId ?? undefined,
+                residency_id: params?.residencyId ?? undefined,
                 search: params?.search ?? undefined,
                 filters: params?.filters ?? undefined,
                 sort: params?.sort ?? undefined,
@@ -402,8 +402,8 @@ export const adminService = {
         });
     },
 
-    async importHouses(formData: FormData): Promise<ApiResponse<ImportResponse>> {
-        return apiClient.post("/admin/houses/create/bulk", formData, {
+    async importResidencies(formData: FormData): Promise<ApiResponse<ImportResponse>> {
+        return apiClient.post("/admin/residencies/create/bulk", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
     },
@@ -620,12 +620,12 @@ export const adminService = {
         return apiClient.delete(`/admin/dues/${dueId}/delete`);
     },
 
-    async getDueHouses(dueId: string, params?: {
+    async getDueResidencies(dueId: string, params?: {
         page?: number;
         pageSize?: number;
         search?: string;
-    }): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
-        return apiClient.get(`/admin/dues/${dueId}/houses`, {
+    }): Promise<ApiResponse<PaginatedResponse<ResidencyDue>>> {
+        return apiClient.get(`/admin/dues/${dueId}/residencies`, {
             params: {
                 page: params?.page ?? 1,
                 page_size: params?.pageSize ?? 10,
@@ -634,19 +634,19 @@ export const adminService = {
         });
     },
 
-    async getHouseDue(dueId: string, houseId: string): Promise<ApiResponse<HouseDue>> {
-        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}`);
+    async getResidencyDue(dueId: string, residencyId: string): Promise<ApiResponse<ResidencyDue>> {
+        return apiClient.get(`/admin/dues/${dueId}/residency/${residencyId}`);
     },
 
     async getDueSchedules(
         dueId: string,
-        houseId: string,
+        residencyId: string,
         page: number = 1,
         pageSize: number = 10,
         filters?: string,
         sorts?: string
     ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
-        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/schedules`, {
+        return apiClient.get(`/admin/dues/${dueId}/residency/${residencyId}/schedules`, {
             params: {
                 page,
                 page_size: pageSize,
@@ -658,13 +658,13 @@ export const adminService = {
 
     async getDuePayments(
         dueId: string,
-        houseId: string,
+        residencyId: string,
         page: number = 1,
         pageSize: number = 10,
         filters?: string,
         sorts?: string
     ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
-        return apiClient.get(`/admin/dues/${dueId}/house/${houseId}/payments`, {
+        return apiClient.get(`/admin/dues/${dueId}/residency/${residencyId}/payments`, {
             params: {
                 page,
                 page_size: pageSize,

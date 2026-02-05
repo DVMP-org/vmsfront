@@ -20,9 +20,10 @@ import { VisitorStatus, VisitorGateStatus } from "@/types";
 import VisitorDetail from "@/components/admin/visitor/VisitorDetail";
 
 export default function VisitorDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params?.id as string;
     const router = useRouter();
-    const { data: visitor, isLoading, error } = useAdminVisitor(id as string);
+    const { data: visitor, isLoading, error } = useAdminVisitor(id);
 
     const events = useMemo(() => visitor?.gate_events || [], [visitor]);
     const sortedEvents = useMemo(() => {
@@ -382,8 +383,8 @@ export default function VisitorDetailPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Destination House */}
-                    {visitor.gate_pass?.house && (
+                    {/* Destination Residency */}
+                    {visitor?.gate_pass?.residency && (
                         <Card className="shadow-2xl border-none overflow-hidden bg-zinc-950 text-white rounded-2xl group">
                             <CardContent className="p-8 relative">
                                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -392,12 +393,12 @@ export default function VisitorDetailPage() {
                                 <div className="relative z-10 space-y-6">
                                     <Badge className="bg-white/10 text-white border-white/20 backdrop-blur-md text-[9px] uppercase font-extrabold tracking-widest">Target Destination</Badge>
                                     <div className="space-y-2">
-                                        <h3 className="font-black text-2xl tracking-tight leading-none">{visitor.gate_pass.house.name}</h3>
+                                        <h3 className="font-black text-2xl tracking-tight leading-none">{visitor?.gate_pass?.residency?.name}</h3>
                                         <p className="text-xs text-zinc-400 flex items-center gap-2 font-medium">
                                             <div className="p-1 rounded bg-white/5">
                                                 <MapPin className="h-3.5 w-3.5 text-zinc-500" />
                                             </div>
-                                            {visitor.gate_pass.house.address}
+                                            {visitor?.gate_pass?.residency?.address}
                                         </p>
                                     </div>
                                     <div className="h-[1px] w-full bg-white/10" />

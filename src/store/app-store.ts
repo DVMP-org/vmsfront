@@ -1,20 +1,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { House, BrandingConfig } from "@/types";
+import { Residency, BrandingConfig } from "@/types";
 
 interface AppState {
-    selectedHouse: House | null;
+    selectedResidency: Residency | null;
     branding: BrandingConfig | null;
-    setSelectedHouse: (house: House | null) => void;
+    setSelectedResidency: (residency: Residency | null) => void;
     setBranding: (branding: BrandingConfig) => void;
 }
 
 export const useAppStore = create<AppState>()(
     persist(
         (set) => ({
-            selectedHouse: null,
+            selectedResidency: null,
             branding: null,
-            setSelectedHouse: (house) => set({ selectedHouse: house }),
+            setSelectedResidency: (residency) => set({ selectedResidency: residency }),
             setBranding: (branding) => set({ branding }),
         }),
         {

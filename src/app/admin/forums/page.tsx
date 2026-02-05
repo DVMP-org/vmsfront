@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/Table";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { TableSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { useAdminHouses } from "@/hooks/use-admin";
+import { useAdminResidencies } from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumTopics,
@@ -46,7 +46,7 @@ import {
   useUpdateAdminForumTopic,
   useDeleteAdminForumTopic,
 } from "@/hooks/use-admin-forum";
-import type { ForumCategory, ForumTopic, House } from "@/types";
+import type { ForumCategory, ForumTopic, Residency } from "@/types";
 import { cn } from "@/lib/utils";
 import { ActionMenu } from "./components/ActionMenu";
 import {
@@ -56,6 +56,7 @@ import {
 } from "./components/ForumModals";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
+import { FilterConfig } from "@/components/ui/DataTable";
 
 const PAGE_SIZE = 100;
 
@@ -63,13 +64,13 @@ export default function AdminForumsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: housesData } = useAdminHouses({
+  const { data: residenciesData } = useAdminResidencies({
     page: 1,
     pageSize: 100,
   });
-  const houses = useMemo(
-    () => housesData?.items ?? [],
-    [housesData?.items]
+  const residencies = useMemo(
+    () => residenciesData?.items ?? [],
+    [residenciesData?.items]
   );
 
 
@@ -83,7 +84,7 @@ export default function AdminForumsPage() {
       isPinned: { defaultValue: undefined },
       isLocked: { defaultValue: undefined },
       isDeleted: { defaultValue: undefined },
-      houseId: { defaultValue: "all" },
+      residencyId: { defaultValue: "all" },
       categoryId: { defaultValue: "all" },
       startDate: { defaultValue: undefined },
       endDate: { defaultValue: undefined },
@@ -95,7 +96,7 @@ export default function AdminForumsPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [houseId, setHouseId] = useState(() => initializeFromUrl("houseId"));
+  const [residencyId, setResidencyId] = useState(() => initializeFromUrl("residencyId"));
   const [categoryId, setCategoryId] = useState(() => initializeFromUrl("categoryId"));
   const [isPinned, setIsPinned] = useState(() => initializeFromUrl("isPinned"));
   const [isDeleted, setIsDeleted] = useState(() => initializeFromUrl("isDeleted"));
@@ -106,8 +107,8 @@ export default function AdminForumsPage() {
   const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
-    syncToUrl({ page, pageSize, search, isPinned, isLocked, isDeleted, houseId, categoryId, startDate, endDate });
-  }, [page, pageSize, search, isPinned, isLocked, isDeleted, houseId, categoryId, startDate, endDate, syncToUrl]);
+    syncToUrl({ page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate });
+  }, [page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate, syncToUrl]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -118,9 +119,9 @@ export default function AdminForumsPage() {
   }, [searchInput]);
 
   const activeFilters = useMemo(() => {
-    const filters = [];
-    if (houseId && houseId !== "all") {
-      filters.push({ field: "house_id", operator: "eq" as const, value: houseId });
+    const filters: FilterConfig[] = [];
+    if (residencyId && residencyId !== "all") {
+      filters.push({ field: "residency_id", operator: "eq" as const, value: residencyId });
     }
     if (categoryId !== "all") filters.push({ field: "category_id", operator: "eq" as const, value: categoryId });
     if (isPinned) filters.push({ field: "is_pinned", operator: "eq" as const, value: isPinned });
@@ -131,21 +132,21 @@ export default function AdminForumsPage() {
     if (endDate) filters.push({ field: "created_at", operator: "lte" as const, value: endDate });
 
     return filters;
-  }, [houseId, categoryId, isPinned, isLocked, isDeleted, startDate, endDate]);
+  }, [residencyId, categoryId, isPinned, isLocked, isDeleted, startDate, endDate]);
 
   const apiFilters = useMemo(() => formatFiltersForAPI(activeFilters), [activeFilters]);
 
-  const selectedHouse: House | undefined = useMemo(() => {
-    if (!houses || houses.length === 0) return undefined;
-    if (houseId === "all") return undefined;
-    return houses.find((house) => house.id === houseId);
-  }, [houses, houseId]);
+  const selectedResidency: Residency | undefined = useMemo(() => {
+    if (!residencies || residencies.length === 0) return undefined;
+    if (residencyId === "all") return undefined;
+    return residencies.find((residency) => residency.id === residencyId);
+  }, [residencies, residencyId]);
 
   const categoriesResponse = useAdminForumCategories({
     page: 1,
     pageSize: 100,
-    filters: houseId && houseId !== "all"
-      ? formatFiltersForAPI([{ field: "house_id", operator: "eq" as const, value: houseId }])
+    filters: residencyId && residencyId !== "all"
+      ? formatFiltersForAPI([{ field: "residency_id", operator: "eq" as const, value: residencyId }])
       : undefined,
   });
 
@@ -167,12 +168,12 @@ export default function AdminForumsPage() {
   const topicsTotal = topicsResponse.data?.total ?? topics.length;
   const topicsTotalPages = topicsResponse.data?.total_pages ?? 1;
 
-  const categoriesByHouse = useMemo(() => {
-    if (!houseId || houseId === "all") return categories;
+  const categoriesByResidency = useMemo(() => {
+    if (!residencyId || residencyId === "all") return categories;
     return categories.filter(
-      (category) => category.house_id === houseId
+      (category) => category.residency_id === residencyId
     );
-  }, [categories, houseId]);
+  }, [categories, residencyId]);
 
   const categoriesWithCounts = useMemo(
     () => {
@@ -184,12 +185,12 @@ export default function AdminForumsPage() {
         );
       });
 
-      return categoriesByHouse.map((category) => ({
+      return categoriesByResidency.map((category) => ({
         category,
         topicCount: category.topics_count ?? counts.get(category.id) ?? 0,
       }));
     },
-    [categoriesByHouse, topics]
+    [categoriesByResidency, topics]
   );
 
   const stats = useMemo(() => {
@@ -199,7 +200,7 @@ export default function AdminForumsPage() {
     return [
       {
         label: "Categories",
-        value: categoriesByHouse.length,
+        value: categoriesByResidency.length,
         icon: FolderOpen,
         description: "Active forum spaces",
       },
@@ -228,7 +229,7 @@ export default function AdminForumsPage() {
         description: "Awaiting review",
       },
     ];
-  }, [categoriesByHouse.length, topics, topicsTotal]);
+  }, [categoriesByResidency.length, topics, topicsTotal]);
 
   const categoryFetcher = categoriesResponse;
   const topicFetcher = topicsResponse;
@@ -258,7 +259,7 @@ export default function AdminForumsPage() {
   const handleResetFilters = () => {
     setSearchInput("");
     setSearch("");
-    setHouseId("all");
+    setResidencyId("all");
     setCategoryId("all");
     setIsPinned(undefined);
     setIsLocked(undefined);
@@ -269,7 +270,7 @@ export default function AdminForumsPage() {
   };
 
   const handleCategorySubmit = (values: {
-    houseId: string;
+    residencyId: string;
     name: string;
     description: string;
     isDefault: boolean;
@@ -278,7 +279,7 @@ export default function AdminForumsPage() {
     if (categoryModalMode === "create") {
       createCategory.mutate(
         {
-          house_id: values.houseId,
+          residency_id: values.residencyId,
           name: values.name,
           description: values.description,
           is_default: values.isDefault,
@@ -299,7 +300,7 @@ export default function AdminForumsPage() {
             description: values.description,
             is_default: values.isDefault,
             is_locked: values.isLocked,
-            house_id: values.houseId,
+            residency_id: values.residencyId,
           },
         },
         {
@@ -312,7 +313,7 @@ export default function AdminForumsPage() {
   };
 
   const handleTopicSubmit = (values: {
-    houseId: string;
+    residencyId: string;
     categoryId: string;
     title: string;
     content: string;
@@ -322,7 +323,7 @@ export default function AdminForumsPage() {
     if (topicModalMode === "create") {
       createTopic.mutate(
         {
-          house_id: values.houseId,
+          residency_id: values.residencyId,
           category_id: values.categoryId,
           title: values.title,
           content: values.content,
@@ -343,7 +344,7 @@ export default function AdminForumsPage() {
           data: {
             title: values.title,
             category_id: values.categoryId,
-            house_id: values.houseId,
+            residency_id: values.residencyId,
             is_pinned: values.isPinned,
             is_locked: values.isLocked,
           },
@@ -379,16 +380,16 @@ export default function AdminForumsPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <select
               className="rounded border border-foreground/20  px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground h-8 bg-foreground/10"
-              value={houseId}
+              value={residencyId}
               onChange={(event) => {
-                setHouseId(event.target.value);
+                setResidencyId(event.target.value);
                 setPage(1);
               }}
             >
-              <option value="all">All houses</option>
-              {houses?.map((house) => (
-                <option key={house.id} value={house.id}>
-                  {house.name}
+              <option value="all">All residencies</option>
+              {residencies?.map((residency) => (
+                <option key={residency.id} value={residency.id}>
+                  {residency.name}
                 </option>
               ))}
             </select>
@@ -458,7 +459,7 @@ export default function AdminForumsPage() {
               }}
             >
               <option value="all">All categories</option>
-              {categoriesByHouse.map((category) => (
+              {categoriesByResidency.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -574,7 +575,7 @@ export default function AdminForumsPage() {
                     <Skeleton key={index} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : categoriesByHouse.length === 0 ? (
+              ) : categoriesByResidency.length === 0 ? (
                 <div className="p-8">
                   <EmptyState
                     icon={FolderOpen}
@@ -626,10 +627,10 @@ export default function AdminForumsPage() {
                         )}
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="font-medium text-muted-foreground">{topicCount} topics</span>
-                          {category.house?.name && (
+                          {category.residency?.name && (
                             <span className="flex items-center gap-1">
                               <Building2 className="h-3 w-3" />
-                              {category.house.name}
+                              {category.residency.name}
                             </span>
                           )}
                         </div>
@@ -658,7 +659,7 @@ export default function AdminForumsPage() {
                                 categoryId: category.id,
                                 data: {
                                   is_locked: !category.is_locked,
-                                  house_id: category.house_id,
+                                  residency_id: category?.residency_id || "",
                                 },
                               }),
                           },
@@ -670,7 +671,7 @@ export default function AdminForumsPage() {
                                 categoryId: category.id,
                                 data: {
                                   is_default: true,
-                                  house_id: category.house_id,
+                                  residency_id: category?.residency_id || "",
                                 },
                               }),
                           },
@@ -698,9 +699,9 @@ export default function AdminForumsPage() {
                     Topics
                   </h2>
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    {selectedHouse
-                      ? `Scoped to ${selectedHouse.name}`
-                      : "All houses"}
+                    {selectedResidency
+                      ? `Scoped to ${selectedResidency.name}`
+                      : "All residencies"}
                   </p>
                 </div>
                 <Button
@@ -775,10 +776,10 @@ export default function AdminForumsPage() {
                             ) : (
                               <span className="text-xs text-muted-foreground">—</span>
                             )}
-                            {topic.house?.name && (
+                            {topic.residency?.name && (
                               <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
                                 <Building2 className="h-3 w-3" />
-                                {topic.house.name}
+                                {topic.residency.name}
                               </p>
                             )}
                           </TableCell>
@@ -883,14 +884,14 @@ export default function AdminForumsPage() {
       <CategoryFormModal
         isOpen={categoryModalOpen}
         mode={categoryModalMode}
-        houses={houses}
-        defaultHouseId={
-          houseId !== "all" ? houseId : houses?.[0]?.id
+        residencies={residencies}
+        defaultResidencyId={
+          residencyId !== "all" ? residencyId : residencies?.[0]?.id
         }
         initialValues={
           activeCategory
             ? {
-              houseId: activeCategory.house_id || "",
+              residencyId: activeCategory.residency_id || "",
               name: activeCategory.name,
               description: activeCategory.description ?? "",
               isDefault: activeCategory.is_default,
@@ -908,15 +909,15 @@ export default function AdminForumsPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode={topicModalMode}
-        houses={houses}
+        residencies={residencies}
         categories={categories}
-        defaultHouseId={
-          houseId !== "all" ? houseId : houses?.[0]?.id
+        defaultResidencyId={
+          residencyId !== "all" ? residencyId : residencies?.[0]?.id
         }
         initialValues={
           activeTopic
             ? {
-              houseId: activeTopic.house_id || "",
+              residencyId: activeTopic.residency_id || "",
               categoryId: activeTopic.category_id,
               title: activeTopic.title,
               content: activeTopic.initial_post?.content ?? "",
@@ -935,7 +936,7 @@ export default function AdminForumsPage() {
       <ConfirmActionModal
         isOpen={Boolean(categoryToDelete)}
         title="Delete category"
-        description="This removes the category from all houses. Topics will remain, but need to be re-categorized."
+        description="This removes the category from all residencies. Topics will remain, but need to be re-categorized."
         confirmLabel="Delete category"
         tone="destructive"
         onConfirm={() => {

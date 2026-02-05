@@ -27,7 +27,7 @@ import { LogoFull } from "../LogoFull";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { motion, AnimatePresence } from "framer-motion";
-import type { House } from "@/types";
+import type { Residency } from "@/types";
 import { NotificationDropdown } from "./NotificationDropdown";
 
 interface HeaderProps {
@@ -38,13 +38,13 @@ interface HeaderProps {
 
 export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: HeaderProps) {
   const { user, logout } = useAuth();
-  const { selectedHouse, branding } = useAppStore();
+  const { selectedResidency, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
 
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
-  const isHouseRoute = type == 'resident' || pathname?.startsWith("/house");
+  const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
   const isAdminUser = useAdminProfile();
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
@@ -124,7 +124,7 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
           <div className="flex items-center gap-2">
             {!isSelectRoute && user && (
               <WorkspaceSwitcher
-                selectedHouse={selectedHouse}
+                selectedResidency={selectedResidency}
                 isAdminRoute={isAdminRoute}
               />
             )}
@@ -260,26 +260,26 @@ const MenuAction = memo(function MenuAction({
 });
 
 function WorkspaceSwitcher({
-  selectedHouse,
+  selectedResidency,
   isAdminRoute,
 }: {
-  selectedHouse: House | null;
-  isAdminRoute: boolean;
+  selectedResidency: Residency | null;
+  isAdminRoute?: boolean | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
-  const { setSelectedHouse } = useAppStore();
+  const { setSelectedResidency } = useAppStore();
 
   const { data: dashboardData } = useResidentDashboardSelect();
   const { data: adminProfile, isError: isAdminError } = useAdminProfile();
 
-  const houses = dashboardData?.houses ?? [];
+  const residencies = dashboardData?.residencies ?? [];
   const isAdmin = !!adminProfile && !isAdminError;
 
   const currentWorkspaceName = isAdminRoute
     ? "Admin Console"
-    : selectedHouse?.name || "Select Estate";
+    : selectedResidency?.name || "Select Estate";
 
   const currentWorkspaceIcon = isAdminRoute ? (
     <Shield className="h-4 w-4 text-indigo-600" />
@@ -298,12 +298,12 @@ function WorkspaceSwitcher({
     return () => window.removeEventListener("click", handleClick);
   }, [open]);
 
-  const handleSwitch = (house: House | null) => {
-    if (house) {
-      setSelectedHouse(house);
-      router.push(`/house/${house.id}`);
+  const handleSwitch = (residency: Residency | null) => {
+    if (residency) {
+      setSelectedResidency(residency);
+      router.push(`/residency/${residency.id}`);
     } else {
-      setSelectedHouse(null);
+      setSelectedResidency(null);
       router.push("/admin");
     }
     setOpen(false);
@@ -347,19 +347,19 @@ function WorkspaceSwitcher({
             </div>
 
             <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar">
-              {houses.length > 0 && (
+              {residencies.length > 0 && (
                 <>
                   <div className="px-2 pt-1 pb-0.5">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">Properties</p>
                   </div>
-                  {houses.map((house) => (
+                  {residencies.map((residency) => (
                     <button
-                      key={house.id}
+                      key={residency.id}
                       type="button"
-                      onClick={() => handleSwitch(house)}
+                      onClick={() => handleSwitch(residency)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                        selectedHouse?.id === house.id && !isAdminRoute && "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]"
+                        selectedResidency?.id === residency.id && !isAdminRoute && "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]"
                       )}
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
@@ -367,10 +367,10 @@ function WorkspaceSwitcher({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold truncate text-foreground">
-                          {house.name}
+                          {residency.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                          {house.address}
+                          {residency.address}
                         </p>
                       </div>
                     </button>

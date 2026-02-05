@@ -24,7 +24,7 @@ export default function AdminGateEventDetailPage() {
 
   const timeline = useMemo(() => {
     if (!data) return [];
-    const entries = [];
+    const entries: any[] = [];
     if (data.checkin_time) {
       entries.push({
         label: "Check-in",
@@ -132,7 +132,7 @@ export default function AdminGateEventDetailPage() {
                     value={format(new Date(data.created_at), "yyyy-MM-dd HH:mm:ss")}
                   />
                   <DetailItem label="Pass Status" value={data.gate_pass?.status || "N/A"} />
-                  <DetailItem label="House Unit" value={data.house?.name || "Unassigned"} />
+                  <DetailItem label="Residency Unit" value={data.residency?.name || "Unassigned"} />
                 </div>
               </div>
             </CardContent>
@@ -217,34 +217,34 @@ export default function AdminGateEventDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Linked House Details Card */}
+          {/* Linked Residency Details Card */}
           <Card className="rounded-lg shadow-none border-border/60 overflow-hidden">
             <CardHeader className="py-4 border-b bg-muted/30">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                Linked House Details
+                Linked Residency Details
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              {data.house ? (
+              {data.residency ? (
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="md:w-1/3 text-center md:text-left">
                     <div className="w-12 h-12 rounded-lg bg-[rgb(var(--brand-primary)/0.1)] flex items-center justify-center mb-2 mx-auto md:mx-0">
                       <Building2 className="h-6 w-6 text-[rgb(var(--brand-primary))]" />
                     </div>
-                    <h3 className="font-bold text-foreground text-lg">{data.house.name}</h3>
+                    <h3 className="font-bold text-foreground text-lg">{data.residency.name}</h3>
                     <p className="text-xs text-muted-foreground uppercase tracking-tight">Registered Unit</p>
                   </div>
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 py-2 border-t md:border-t-0 md:border-l border-border md:pl-8">
-                    <DetailItem label="Street Address" value={data.house.address} />
-                    <DetailItem label="House Description" value={data.house.description || "No description provided."} />
-                    <DetailItem label="House Status" value={data.house.is_active ? "Active" : "Inactive"} />
-                    <DetailItem label="Unit ID" value={data.house.id} isMono />
+                    <DetailItem label="Street Address" value={data.residency.address} />
+                    <DetailItem label="Residency Description" value={data.residency.description || "No description provided."} />
+                    <DetailItem label="Residency Status" value={data.residency.is_active ? "Active" : "Inactive"} />
+                    <DetailItem label="Unit ID" value={data.residency.id} isMono />
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-24 text-muted-foreground italic text-sm">
-                  No registered house linked to this gate event.
+                  No registered residency linked to this gate event.
                 </div>
               )}
             </CardContent>

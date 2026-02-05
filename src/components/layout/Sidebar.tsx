@@ -40,7 +40,7 @@ import {
   findPluginRouteAndType,
 } from "@/lib/plugin-utils";
 import { useAuthStore } from "@/store/auth-store";
-import { useResidentHouse } from "@/hooks/use-resident";
+import { useResidentResidency } from "@/hooks/use-resident-data";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasPermission } from "@/lib/permissions";
 import { adminLinks } from "@/config/admin-routes";
@@ -52,27 +52,27 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
-  const base = houseId ? `/house/${houseId}` : "/select";
+function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) {
+  const base = residencyId ? `/residency/${residencyId}` : "/select";
   const links = [
-    { href: houseId ? base : "/select", label: "Dashboard", icon: Home },
+    { href: residencyId ? base : "/select", label: "Dashboard", icon: Home },
     {
-      href: houseId ? `${base}/passes` : "/select",
+      href: residencyId ? `${base}/passes` : "/select",
       label: "My Passes",
       icon: CreditCard,
     },
     {
-      href: houseId ? `${base}/visitors` : "/select",
+      href: residencyId ? `${base}/visitors` : "/select",
       label: "Visitors",
       icon: Users,
     },
     {
-      href: houseId ? `${base}/forum` : "/select",
+      href: residencyId ? `${base}/forum` : "/select",
       label: "Forum",
       icon: MessageSquare,
     },
     {
-      href: houseId ? `${base}/dues` : "/select",
+      href: residencyId ? `${base}/dues` : "/select",
       label: "Dues",
       icon: Receipt,
     },
@@ -82,7 +82,7 @@ function buildResidentLinks(houseId?: string, isSuperUser: boolean = false) {
 
   if (isSuperUser) {
     links.push({
-      href: houseId ? `${base}/settings` : "/select",
+      href: residencyId ? `${base}/settings` : "/select",
       label: "Settings",
       icon: Settings,
     });
@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedHouse } = useAppStore();
+  const { selectedResidency } = useAppStore();
   const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isLoading: isAdminProfileLoading } = useAdminProfile();
   const { data: activeTheme } = useActiveBrandingTheme();
@@ -263,8 +263,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     };
   }, []);
 
-  const routeHouseId = useMemo(() => {
-    const match = pathname?.match(/^\/house\/([^/]+)/);
+  const routeResidencyId = useMemo(() => {
+    const match = pathname?.match(/^\/residency\/([^/]+)/);
     return match ? match[1] : undefined;
   }, [pathname]);
 
@@ -327,19 +327,19 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     });
   }, [plugins, actualType]);
 
-  // Memoize effectiveHouseId to prevent unnecessary recalculations
-  const effectiveHouseId = useMemo(() => {
+  // Memoize effectiveResidencyId to prevent unnecessary recalculations
+  const effectiveResidencyId = useMemo(() => {
     if (actualType !== "resident") return undefined;
-    return selectedHouse?.id ?? routeHouseId;
-  }, [actualType, selectedHouse?.id, routeHouseId]);
+    return selectedResidency?.id ?? routeResidencyId;
+  }, [actualType, selectedResidency?.id, routeResidencyId]);
 
-  const { data: residentHouse } = useResidentHouse(effectiveHouseId ?? null);
-  const isSuperUser = residentHouse?.is_super_user ?? false;
+  const { data: residentResidency } = useResidentResidency(effectiveResidencyId ?? null);
+  const isSuperUser = residentResidency?.is_super_user ?? false;
 
   const links = useMemo(() => {
     let baseLinks =
       actualType === "resident"
-        ? buildResidentLinks(effectiveHouseId, isSuperUser)
+        ? buildResidentLinks(effectiveResidencyId, isSuperUser)
         : [...adminLinks];
 
     // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User
@@ -387,7 +387,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       seenHrefs.add(link.href);
       return true;
     });
-  }, [actualType, effectiveHouseId, isSuperUser, adminProfile, user, isAdminProfileLoading, mounted]);
+  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfileLoading, mounted]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {
     if (!pathname) return null;

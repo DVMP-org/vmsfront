@@ -21,32 +21,32 @@ import { parseApiError } from "@/lib/error-utils";
 import { cleanToken } from "../../utils";
 
 export default function ResidentPurchaseMeter() {
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams() || new URLSearchParams();
     const router = useRouter();
     const selectedMeterId = searchParams.get("meter");
-    const { selectedHouse } = useAppStore();
+    const { selectedResidency } = useAppStore();
     const { data: user } = useProfile();
     const { data: wallet } = useWallet();
 
-    // Get current house ID from selected house or first house from profile
-    const currentHouseId = selectedHouse?.id || null;
+    // Get current residency ID from selected residency or first residency from profile
+    const currentResidencyId = selectedResidency?.id || null;
     const userEmail = user?.email || "";
 
     const queryClient = useQueryClient();
 
-    // Fetch meters for the current house
+    // Fetch meters for the current residency
     const { data: metersData, isLoading: isLoadingMeters } = useQuery({
-        queryKey: ["electricity", "meters", currentHouseId],
+        queryKey: ["electricity", "meters", currentResidencyId],
         queryFn: async () => {
-            if (!currentHouseId) throw new Error("House ID is required");
+            if (!currentResidencyId) throw new Error("Residency ID is required");
             const response = await electricityService.getMeters({
                 page: 1,
                 pageSize: 100,
-                house_id: currentHouseId,
+                residency_id: currentResidencyId,
             });
             return response.data;
         },
-        enabled: !!currentHouseId,
+        enabled: !!currentResidencyId,
     });
 
     const meters = metersData?.items || [];
@@ -67,7 +67,7 @@ export default function ResidentPurchaseMeter() {
                 token: response.data.token,
                 units: response.data.units,
             });
-            queryClient.invalidateQueries({ queryKey: ["electricity", "meters", currentHouseId] });
+            queryClient.invalidateQueries({ queryKey: ["electricity", "meters", currentResidencyId] });
             queryClient.invalidateQueries({ queryKey: ["electricity", "purchases"] });
             setFormData({ amount: 0 });
         },
@@ -125,8 +125,8 @@ export default function ResidentPurchaseMeter() {
             return;
         }
 
-        if (!currentHouseId) {
-            toast.error("House information is required. Please select a house first.");
+        if (!currentResidencyId) {
+            toast.error("Residency information is required. Please select a residency first.");
             return;
         }
 
@@ -151,7 +151,7 @@ export default function ResidentPurchaseMeter() {
         const purchaseData: PurchaseTokenCreate = {
             meter_id: meterId,
             amount: formData.amount,
-            house_id: currentHouseId,
+            residency_id: currentResidencyId,
             email: userEmail,
         };
 
@@ -168,14 +168,14 @@ export default function ResidentPurchaseMeter() {
     //     );
     // }
 
-    // Show error if no house selected
-    if (!currentHouseId) {
+    // Show error if no residency selected
+    if (!currentResidencyId) {
         return (
             <div className="space-y-6">
                 <EmptyState
                     icon={Zap}
-                    title="No house selected"
-                    description="Please select a house from the dashboard to purchase electricity"
+                    title="No residency selected"
+                    description="Please select a residency from the dashboard to purchase electricity"
                     action={{
                         label: "Go to Dashboard",
                         onClick: () => router.push("/select"),
@@ -269,7 +269,7 @@ export default function ResidentPurchaseMeter() {
                                 <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                 <p>No meters available</p>
                                 <p className="text-sm mt-2">
-                                    Contact admin to register a meter for your house
+                                    Contact admin to register a meter for your residency
                                 </p>
                             </div>
                         ) : (

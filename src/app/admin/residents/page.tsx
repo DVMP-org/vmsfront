@@ -242,19 +242,19 @@ export default function ResidentsPage() {
       accessor: (row) => row?.user?.phone || "-",
     },
     {
-      key: "houses",
-      header: "Houses",
+      key: "residencies",
+      header: "Residencies",
       sortable: false,
       accessor: (row) =>
-        row.houses && row?.houses?.length > 0 ? (
+        row.residencies && row?.residencies?.length > 0 ? (
           <div className="flex flex-wrap gap-1">
-            {row.houses.slice(0, 3).map((house) => (
-              <Badge key={house.id} variant="secondary">
-                {house.name}
+            {row.residencies.slice(0, 3).map((residence) => (
+              <Badge key={residence.id} variant="secondary">
+                {residence.name}
               </Badge>
             ))}
-            {row.houses.length > 3 && (
-              <Badge variant="secondary">+ {row.houses.length - 3}</Badge>
+            {row?.residencies?.length > 3 && (
+              <Badge variant="secondary">+ {row.residencies.length - 3}</Badge>
             )}
           </div>
         ) : (
@@ -416,12 +416,12 @@ export default function ResidentsPage() {
             <code className="rounded bg-muted px-1">last_name</code>,{" "}
             <code className="rounded bg-muted px-1">phone</code>,{" "}
             <code className="rounded bg-muted px-1">address</code>, and{" "}
-            <code className="rounded bg-muted px-1">house_names</code> (comma-separated).
+            <code className="rounded bg-muted px-1">residency_names</code> (comma-separated).
           </p>
           <pre className="rounded-lg bg-muted p-3 text-xs">
-            {`email,first_name,last_name,phone,address,house_names
+            {`email,first_name,last_name,phone,address,residency_names
 jane@example.com,Jane,Doe,+1234567890,Block 1,"Villa 1,Villa 2"
-bob@example.com,Bob,Wilson,,,"House B"`}
+bob@example.com,Bob,Wilson,,,"Residency B"`}
           </pre>
           <Input
             type="file"

@@ -1,11 +1,11 @@
 import { apiClient } from "@/lib/api-client";
-import { ApiResponse, House, NotificationResponse, Transaction, WalletTransaction, PaginatedResponse } from "@/types";
+import { ApiResponse, Residency, NotificationResponse, Transaction, WalletTransaction, PaginatedResponse } from "@/types";
 
 
 
 export const generalService = {
-    async getAllHouses(): Promise<ApiResponse<House[]>> {
-        return apiClient.get('/user/houses/list')
+    async getAllResidencies(): Promise<ApiResponse<Residency[]>> {
+        return apiClient.get('/user/residencies/list')
     },
 
     async getTransaction(reference: string): Promise<ApiResponse<Transaction>> {

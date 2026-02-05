@@ -86,8 +86,8 @@ export default function WalletHistoryPage() {
     const { data: history, isLoading, isFetching } = useWalletHistory({
         page,
         pageSize,
-        search: search.trim() || null,
-        filters: activeFilters.length > 0 ? formatFiltersForAPI(activeFilters) : null,
+        search: search.trim() || undefined,
+        filters: activeFilters.length > 0 ? formatFiltersForAPI(activeFilters) : undefined,
         sort
     });
 
@@ -234,13 +234,13 @@ export default function WalletHistoryPage() {
 
                                     if (startDateVal !== startDate) setStartDate(startDateVal || undefined);
                                     if (endDateVal !== endDate) setEndDate(endDateVal || undefined);
-                                    if (typeVal !== type) setType(typeVal || undefined);
+                                    if (typeVal !== type) setType(typeVal || "");
 
                                     setPage(1);
                                 }}
                                 onSortChange={(newSort) => {
                                     if (newSort !== sort) {
-                                        setSort(newSort);
+                                        setSort(newSort || "");
                                         setPage(1);
                                     }
                                 }}

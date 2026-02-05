@@ -21,7 +21,7 @@ interface ExtendGatePassModalProps {
     isOpen: boolean;
     onClose: () => void;
     passId: string;
-    houseId: string;
+    residencyId: string;
     currentValidTo?: string | null;
 }
 
@@ -29,10 +29,10 @@ export function ExtendGatePassModal({
     isOpen,
     onClose,
     passId,
-    houseId,
+    residencyId,
     currentValidTo,
 }: ExtendGatePassModalProps) {
-    const extendMutation = useExtendGatePass(houseId);
+    const extendMutation = useExtendGatePass(residencyId);
 
     const {
         register,

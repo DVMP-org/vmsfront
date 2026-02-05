@@ -100,7 +100,7 @@ export default function AdminGateEventsPage() {
   const { data, isLoading, isFetching } = useAdminGateEvents({
     page,
     pageSize,
-    search: search.trim() || undefined,
+    search: search?.trim() || undefined,
     filters: formatFiltersForAPI(activeFilters),
     sort: sort || undefined,
   });
@@ -135,11 +135,11 @@ export default function AdminGateEventsPage() {
       ),
     },
     {
-      key: "house",
-      header: "House",
+      key: "residency",
+      header: "Residency",
       sortable: false,
       accessor: (row) => (
-        <span className="text-xs">{row?.house?.name ?? "—"}</span>
+        <span className="text-xs">{row?.residency?.name ?? "—"}</span>
       ),
     },
     {
@@ -276,7 +276,7 @@ export default function AdminGateEventsPage() {
               initialSort={sort}
               onSortChange={(newSort) => {
                 setPage(1);
-                setSort(newSort);
+                setSort(newSort || undefined);
               }}
               disableClientSideFiltering={true}
               disableClientSideSorting={true}

@@ -36,7 +36,7 @@ import {
 import { Checkbox } from "@/components/ui/Checkbox";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { useAdminHouses } from "@/hooks/use-admin";
+import { useAdminResidencies } from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumCategory,
@@ -62,21 +62,21 @@ export default function AdminForumCategoryDetailPage() {
     if (!params?.categoryId) return undefined;
     return Array.isArray(params.categoryId)
       ? params.categoryId[0]
-      : params.categoryId;
+      : params.categoryId || "";
   }, [params?.categoryId]);
   const router = useRouter();
-  const { data: housesData } = useAdminHouses({
+  const { data: residenciesData } = useAdminResidencies({
     page: 1,
     pageSize: 100,
   });
-  const houses = housesData?.items ?? [];
+  const residencies = residenciesData?.items ?? [];
 
-  const categoryQuery = useAdminForumCategory(normalizedCategoryId ?? null);
+  const categoryQuery = useAdminForumCategory(normalizedCategoryId || "");
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
     filters: formatFiltersForAPI([{
-      field: "house_id", operator: "eq" as const, value: categoryQuery.data?.house_id
+      field: "residency_id", operator: "eq" as const, value: categoryQuery?.data?.residency_id || ""
     }]),
   });
   const [page, setPage] = useState(1);
@@ -87,10 +87,10 @@ export default function AdminForumCategoryDetailPage() {
       pageSize: 10,
       filters: formatFiltersForAPI([
         {
-          field: "category_id", operator: "eq" as const, value: normalizedCategoryId
+          field: "category_id", operator: "eq" as const, value: normalizedCategoryId || ""
         },
         {
-          field: "house_id", operator: "eq" as const, value: categoryQuery.data?.house_id
+          field: "residency_id", operator: "eq" as const, value: categoryQuery.data?.residency_id || ""
         }
       ]),
     }),
@@ -229,11 +229,11 @@ export default function AdminForumCategoryDetailPage() {
               <CardDescription>
                 {category?.description || "No description provided."}
               </CardDescription>
-              {category?.house_id && (
+              {category?.residency_id && (
                 <p className="text-xs text-muted-foreground">
-                  House scope ·{" "}
-                  {houses?.find((house) => house.id === category.house_id)?.name ||
-                    category.house_id}
+                  Residency scope ·{" "}
+                  {residencies?.find((residency) => residency.id === category.residency_id)?.name ||
+                    category.residency_id}
                 </p>
               )}
               {category?.updated_at && (
@@ -278,7 +278,7 @@ export default function AdminForumCategoryDetailPage() {
                 onClick={() =>
                   updateCategory.mutate({
                     categoryId: normalizedCategoryId!,
-                    data: { is_default: true, house_id: category?.house_id },
+                    data: { is_default: true, residency_id: category?.residency_id || "" },
                   })
                 }
               >
@@ -497,12 +497,12 @@ export default function AdminForumCategoryDetailPage() {
       <CategoryFormModal
         isOpen={categoryModalOpen}
         mode="edit"
-        houses={houses}
-        defaultHouseId={category?.house_id}
+        residencies={residencies}
+        defaultResidencyId={category?.residency_id || ""}
         initialValues={
           category
             ? {
-              houseId: category.house_id || "",
+              residencyId: category.residency_id || "",
               name: category.name,
               description: category.description ?? "",
               isDefault: category.is_default,
@@ -518,7 +518,7 @@ export default function AdminForumCategoryDetailPage() {
               data: {
                 name: values.name,
                 description: values.description,
-                house_id: values.houseId,
+                residency_id: values.residencyId,
                 is_default: values.isDefault,
                 is_locked: values.isLocked,
               },
@@ -534,13 +534,13 @@ export default function AdminForumCategoryDetailPage() {
       <TopicFormModal
         isOpen={topicModalOpen}
         mode={topicToEdit ? "edit" : "create"}
-        houses={houses}
+        residencies={residencies}
         categories={categoriesForModal}
-        defaultHouseId={category?.house_id}
+        defaultResidencyId={category?.residency_id || ""}
         initialValues={
           topicToEdit
             ? {
-              houseId: topicToEdit.house_id || category?.house_id || "",
+              residencyId: topicToEdit.residency_id || category?.residency_id || "",
               categoryId: topicToEdit.category_id,
               title: topicToEdit.title,
               content: topicToEdit.initial_post?.content ?? "",
@@ -549,7 +549,7 @@ export default function AdminForumCategoryDetailPage() {
             }
             : category
               ? {
-                houseId: category.house_id || "",
+                residencyId: category.residency_id || "",
                 categoryId: category.id,
                 title: "",
                 content: "",
@@ -570,7 +570,7 @@ export default function AdminForumCategoryDetailPage() {
                 data: {
                   title: values.title,
                   category_id: values.categoryId,
-                  house_id: values.houseId,
+                  residency_id: values.residencyId,
                   is_pinned: values.isPinned,
                   is_locked: values.isLocked,
                 },
@@ -585,7 +585,7 @@ export default function AdminForumCategoryDetailPage() {
           } else {
             createTopic.mutate(
               {
-                house_id: values.houseId,
+                residency_id: values.residencyId,
                 category_id: values.categoryId,
                 title: values.title,
                 content: values.content,

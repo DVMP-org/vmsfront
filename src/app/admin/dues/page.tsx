@@ -154,12 +154,12 @@ export default function DuesPage() {
             ),
         },
         {
-            key: "houses",
-            header: "Houses",
+            key: "residencies",
+            header: "Residencies",
             accessor: (row) => (
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium text-muted-foreground">
-                        {row.houses && row.houses.length > 0 ? `${row.houses.length} Units` : "Global"}
+                        {row.residencies && row.residencies.length > 0 ? `${row.residencies.length} Units` : "Global"}
                     </span>
                 </div>
             ),
@@ -171,7 +171,7 @@ export default function DuesPage() {
             accessor: (row) => (
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium text-muted-foreground">
-                        {formatDateTime(row.created_at)}
+                        {formatDateTime(row?.created_at || "")}
                     </span>
                 </div>
             ),
@@ -213,10 +213,10 @@ export default function DuesPage() {
                         variant="outline"
                         size="sm"
                         className="h-10 "
-                        onClick={() => router.push("/admin/dues/houses")}
+                        onClick={() => router.push("/admin/dues/residencies")}
                     >
                         <LayoutGrid className="h-4 w-4 mr-2" />
-                        House List
+                        Residencies List
                     </Button>
                     <Button
                         size="sm"

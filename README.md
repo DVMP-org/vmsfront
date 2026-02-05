@@ -102,14 +102,14 @@ vmsfront/
 - Protected routes
 
 ### Resident Dashboard
-- View house information
+- View residency information
 - Create and manage visitor passes
 - Track gate events
 - View visitor history
 - QR code generation for passes
 
 ### Admin Dashboard
-- Manage houses and residents
+- Manage residencies and residents
 - Gate console for check-in/out
 - View analytics and reports
 - Role-based access control
@@ -189,11 +189,11 @@ The production build is optimized with:
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8080` |
-| `NEXT_PUBLIC_APP_NAME` | Application name | `VMSCORE` |
-| `NEXT_PUBLIC_WS_URL` | WebSocket URL (future) | `ws://localhost:8080` |
+| Variable               | Description            | Default                 |
+| ---------------------- | ---------------------- | ----------------------- |
+| `NEXT_PUBLIC_API_URL`  | Backend API base URL   | `http://localhost:8080` |
+| `NEXT_PUBLIC_APP_NAME` | Application name       | `VMSCORE`               |
+| `NEXT_PUBLIC_WS_URL`   | WebSocket URL (future) | `ws://localhost:8080`   |
 
 ## Deployment
 
