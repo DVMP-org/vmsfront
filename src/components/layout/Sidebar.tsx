@@ -264,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
   }, []);
 
   const routeHouseId = useMemo(() => {
-    const match = pathname.match(/^\/house\/([^/]+)/);
+    const match = pathname?.match(/^\/house\/([^/]+)/);
     return match ? match[1] : undefined;
   }, [pathname]);
 
@@ -469,8 +469,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
         continue;
       }
 
-      const routes = getPluginRoutesMemoized(plugin);
-      if (routes.length === 0) continue;
+      const routes = getPluginRoutesMemoized(plugin) || [];
+      if (routes?.length === 0) continue;
 
       const routePath = extractRoutePath(pathname, plugin.basePath);
       const matchingRoute = findMatchingRoute(routePath, routes, { checkPrefix: true });
@@ -796,7 +796,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                         transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
-                        {getPluginRoutesMemoized(plugin).map(route => {
+                        {getPluginRoutesMemoized(plugin)?.map(route => {
                           const isActive = isPluginRouteActive(plugin.name, route.path);
                           const routeHref = buildPluginPath(plugin.basePath, route.path);
                           const routeTitle = route.title || route.path || "Route";

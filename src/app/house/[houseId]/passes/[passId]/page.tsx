@@ -16,6 +16,7 @@ import { ArrowLeft, Ban, Home as HomeIcon, Copy, Check, Trash2, Plus, Upload, Al
 import { GatePassStatus } from "@/types";
 import { AddVisitorModal } from "@/components/gate-pass/AddVisitorModal";
 import { UploadVisitorsModal } from "@/components/gate-pass/UploadVisitorsModal";
+import { ExtendGatePassModal } from "@/components/gate-pass/ExtendGatePassModal";
 import { Modal } from "@/components/ui/Modal";
 
 export default function PassDetailPage() {
@@ -39,6 +40,7 @@ export default function PassDetailPage() {
   const [isUploadVisitorsOpen, setIsUploadVisitorsOpen] = useState(false);
   const [selectedVisitorIds, setSelectedVisitorIds] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
 
   useEffect(() => {
     if (!routeHouseId || !profile?.houses) return;
@@ -385,7 +387,17 @@ export default function PassDetailPage() {
                 <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Actions</h2>
               </div>
               <div className="p-3 space-y-2">
-                {pass.status === GatePassStatus.CHECKED_IN && (
+                {pass.status !== GatePassStatus.EXPIRED && pass.status !== GatePassStatus.COMPLETED && pass.status !== GatePassStatus.REVOKED && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-9"
+                    onClick={() => setIsExtendModalOpen(true)}
+                  >
+                    Extend Validity
+                  </Button>
+                )}
+                {pass.status !== GatePassStatus.EXPIRED && pass.status !== GatePassStatus.COMPLETED && pass.status !== GatePassStatus.REVOKED && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -421,6 +433,14 @@ export default function PassDetailPage() {
         onClose={() => setIsUploadVisitorsOpen(false)}
         passId={pass.id}
         houseId={houseId}
+      />
+
+      <ExtendGatePassModal
+        isOpen={isExtendModalOpen}
+        onClose={() => setIsExtendModalOpen(false)}
+        passId={pass.id}
+        houseId={houseId}
+        currentValidTo={pass.valid_to}
       />
 
       <Modal

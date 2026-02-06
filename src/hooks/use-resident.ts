@@ -496,3 +496,22 @@ export function useUploadVisitorsToGatePass(houseId: string | null) {
     },
   });
 }
+
+export function useExtendGatePass(houseId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ passId, validTo }: { passId: string; validTo: string }) => {
+      if (!houseId) throw new Error("House ID is required");
+      return residentService.extendGatePass(houseId, passId, { valid_to: validTo });
+    },
+    onSuccess: (_, { passId }) => {
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      toast.success("Gate pass extended successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
+}
