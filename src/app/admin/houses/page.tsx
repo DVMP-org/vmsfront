@@ -11,7 +11,7 @@ import {
   useBulkToggleHouseActive,
   useImportHouses,
   useAdminHouseGroups,
-  usePrefetchHouse
+  usePrefetchHouse,
 } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -19,8 +19,22 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, BulkAction, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
-import { Plus, Building2, Trash2, Edit, CheckCircle, Eye, Upload } from "lucide-react";
+import {
+  DataTable,
+  Column,
+  BulkAction,
+  FilterConfig,
+  FilterDefinition,
+} from "@/components/ui/DataTable";
+import {
+  Plus,
+  Building2,
+  Trash2,
+  Edit,
+  CheckCircle,
+  Eye,
+  Upload,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -34,14 +48,17 @@ export default function HousesPage() {
   const router = useRouter();
   const isInitialMount = useRef(true);
   // URL query sync
-  const config = useMemo(() => ({
-    page: { defaultValue: 1 },
-    pageSize: { defaultValue: PAGE_SIZE },
-    search: { defaultValue: "" },
-    is_active: { defaultValue: undefined },
-    house_group_id: { defaultValue: undefined },
-    sort: { defaultValue: null },
-  }), []);
+  const config = useMemo(
+    () => ({
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      is_active: { defaultValue: undefined },
+      house_group_id: { defaultValue: undefined },
+      sort: { defaultValue: null },
+    }),
+    [],
+  );
 
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
     config,
@@ -52,13 +69,21 @@ export default function HousesPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("is_active"));
-  const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() => initializeFromUrl("house_group_id"));
-  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
-  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
-  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
-
-
+  const [status, setStatus] = useState<string | undefined>(() =>
+    initializeFromUrl("is_active"),
+  );
+  const [houseGroupId, setHouseGroupId] = useState<string | undefined>(() =>
+    initializeFromUrl("house_group_id"),
+  );
+  const [sort, setSort] = useState<string | null>(() =>
+    initializeFromUrl("sort"),
+  );
+  const [startDate, setStartDate] = useState<string | undefined>(() =>
+    initializeFromUrl("startDate"),
+  );
+  const [endDate, setEndDate] = useState<string | undefined>(() =>
+    initializeFromUrl("endDate"),
+  );
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -67,7 +92,9 @@ export default function HousesPage() {
   const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
   const [houseToDelete, setHouseToDelete] = useState<House | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
+  const [importSummary, setImportSummary] = useState<ImportResponse | null>(
+    null,
+  );
   const [selectedHouses, setSelectedHouses] = useState<Set<string>>(new Set());
   const importFormRef = useRef<HTMLFormElement>(null);
 
@@ -86,16 +113,37 @@ export default function HousesPage() {
       isInitialMount.current = false;
       return;
     }
-    syncToUrl({ page, pageSize, search, status, houseGroupId, sort, startDate, endDate });
-  }, [page, pageSize, search, status, houseGroupId, sort, startDate, endDate, syncToUrl]);
+    syncToUrl({
+      page,
+      pageSize,
+      search,
+      status,
+      houseGroupId,
+      sort,
+      startDate,
+      endDate,
+    });
+  }, [
+    page,
+    pageSize,
+    search,
+    status,
+    houseGroupId,
+    sort,
+    startDate,
+    endDate,
+    syncToUrl,
+  ]);
 
   // Fetch house groups for filter
   const { data: houseGroupsData } = useAdminHouseGroups({
     page: 1,
     pageSize: 100,
   });
-  const houseGroups = useMemo(() => houseGroupsData?.items ?? [], [houseGroupsData]);
-
+  const houseGroups = useMemo(
+    () => houseGroupsData?.items ?? [],
+    [houseGroupsData],
+  );
 
   const availableFilters = useMemo(() => {
     const filters: FilterDefinition[] = [
@@ -107,8 +155,8 @@ export default function HousesPage() {
         options: [
           { label: "Active", value: "True" },
           { label: "Inactive", value: "False" },
-        ]
-      }
+        ],
+      },
     ];
 
     if (houseGroups.length > 0) {
@@ -130,8 +178,8 @@ export default function HousesPage() {
     filters.push({
       field: "created_at",
       label: "Date",
-      type: "date-range"
-    })
+      type: "date-range",
+    });
     return filters;
   }, [houseGroups]);
 
@@ -142,7 +190,11 @@ export default function HousesPage() {
       filters.push({ field: "is_active", operator: "eq", value: status });
     }
     if (houseGroupId) {
-      filters.push({ field: "house_group_id", operator: "eq", value: houseGroupId });
+      filters.push({
+        field: "house_group_id",
+        operator: "eq",
+        value: houseGroupId,
+      });
     }
     if (startDate) {
       filters.push({ field: "created_at", operator: "gte", value: startDate });
@@ -161,11 +213,8 @@ export default function HousesPage() {
     sort: sort || undefined,
   });
 
-
-
   const houses = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
-
 
   const handleCloseImportModal = () => {
     setIsImportModalOpen(false);
@@ -174,14 +223,11 @@ export default function HousesPage() {
   };
 
   const handleCreateSubmit = (data: HouseFormData) => {
-    createHouseMutation.mutate(
-      data as any,
-      {
-        onSuccess: () => {
-          setIsCreateModalOpen(false);
-        },
-      }
-    );
+    createHouseMutation.mutate(data as any, {
+      onSuccess: () => {
+        setIsCreateModalOpen(false);
+      },
+    });
   };
 
   const handleEditSubmit = (data: HouseFormData) => {
@@ -197,7 +243,7 @@ export default function HousesPage() {
           setIsEditModalOpen(false);
           setSelectedHouse(null);
         },
-      }
+      },
     );
   };
 
@@ -310,7 +356,7 @@ export default function HousesPage() {
           <span className="text-sm">
             {count} groups{count !== 1 ? "s" : ""}
           </span>
-        )
+        );
       },
     },
     {
@@ -318,7 +364,9 @@ export default function HousesPage() {
       header: "Status",
       sortable: true,
       accessor: (row) => (
-        <span className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}>
+        <span
+          className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}
+        >
           {(row as any).is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -344,11 +392,7 @@ export default function HousesPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(row)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
@@ -370,9 +414,7 @@ export default function HousesPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Houses</h1>
-            <p className="text-muted-foreground">
-              Manage houses in the system
-            </p>
+            <p className="text-muted-foreground">Manage houses in the system</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -382,7 +424,10 @@ export default function HousesPage() {
               <Upload className="mr-2 h-4 w-4" />
               Import Houses
             </Button>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              id="add_house_button"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add House
             </Button>
@@ -391,7 +436,6 @@ export default function HousesPage() {
 
         <Card>
           <CardContent className="p-6">
-
             <DataTable
               data={houses}
               columns={columns}
@@ -416,16 +460,30 @@ export default function HousesPage() {
               onFiltersChange={(filters) => {
                 setPage(1);
                 // Extract filter values from filters and explicitly clear if not found
-                const statusFilter = filters.find(f => f.field === "is_active");
-                const houseGroupFilter = filters.find(f => f.field === "house_group_id");
-                const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
+                const statusFilter = filters.find(
+                  (f) => f.field === "is_active",
+                );
+                const houseGroupFilter = filters.find(
+                  (f) => f.field === "house_group_id",
+                );
+                const startDate = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "gte",
+                );
+                const endDate = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "lte",
+                );
 
                 // Always set state (undefined if filter not found) to ensure URL clearing
-                setStatus(statusFilter?.value as string | undefined || undefined);
-                setHouseGroupId(houseGroupFilter?.value as string | undefined || undefined);
-                setStartDate(startDate?.value as string | undefined || undefined);
-                setEndDate(endDate?.value as string | undefined || undefined);
+                setStatus(
+                  (statusFilter?.value as string | undefined) || undefined,
+                );
+                setHouseGroupId(
+                  (houseGroupFilter?.value as string | undefined) || undefined,
+                );
+                setStartDate(
+                  (startDate?.value as string | undefined) || undefined,
+                );
+                setEndDate((endDate?.value as string | undefined) || undefined);
               }}
               onSortChange={(newSort) => {
                 setPage(1);
@@ -440,7 +498,6 @@ export default function HousesPage() {
               bulkActions={bulkActions}
               isLoading={isLoading || isFetching}
             />
-
           </CardContent>
         </Card>
       </div>
@@ -476,7 +533,11 @@ export default function HousesPage() {
               name: selectedHouse.name,
               address: selectedHouse.address || "",
               description: selectedHouse.description || "",
-              house_group_ids: Array.isArray((selectedHouse as any).house_group_ids) ? (selectedHouse as any).house_group_ids : [],
+              house_group_ids: Array.isArray(
+                (selectedHouse as any).house_group_ids,
+              )
+                ? (selectedHouse as any).house_group_ids
+                : [],
             }}
             onSubmit={handleEditSubmit}
             onCancel={() => {
@@ -500,8 +561,9 @@ export default function HousesPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{houseToDelete?.name}</strong>?
-            This action cannot be undone.
+            Are you sure you want to delete{" "}
+            <strong>{houseToDelete?.name}</strong>? This action cannot be
+            undone.
           </p>
           <div className="flex gap-4 justify-end pt-4">
             <Button
@@ -531,7 +593,11 @@ export default function HousesPage() {
         onClose={handleCloseImportModal}
         title="Import Houses"
       >
-        <form ref={importFormRef} onSubmit={handleImportSubmit} className="space-y-4">
+        <form
+          ref={importFormRef}
+          onSubmit={handleImportSubmit}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium mb-2">
               Upload CSV File

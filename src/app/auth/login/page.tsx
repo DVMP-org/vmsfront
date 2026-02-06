@@ -73,6 +73,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             error={errors.email || loginFieldErrors.email}
             className="h-12"
+            id="login_email_input"
           />
 
           <div className="space-y-1">
@@ -84,6 +85,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               error={errors.password || loginFieldErrors.password}
               className="h-12"
+              id="login_password_input"
             />
             <div className="flex justify-end">
               <Link
@@ -100,6 +102,7 @@ export default function LoginPage() {
           type="submit"
           className="w-full h-12 text-base font-semibold shadow-xs transition-all active:scale-[0.98]"
           isLoading={isLoggingIn}
+          id="login_submit_button"
         >
           Sign In
         </Button>

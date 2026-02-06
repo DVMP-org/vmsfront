@@ -36,16 +36,20 @@ interface HeaderProps {
   type: "resident" | "admin" | "select" | "auth";
 }
 
-export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: HeaderProps) {
+export const Header = memo(function Header({
+  onMenuClick,
+  sidebarOpen,
+  type,
+}: HeaderProps) {
   const { user, logout } = useAuth();
   const { selectedHouse, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
 
-  const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
-  const isHouseRoute = type == 'resident' || pathname?.startsWith("/house");
-  const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
+  const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
+  const isHouseRoute = type == "resident" || pathname?.startsWith("/house");
+  const isSelectRoute = type == "select" || pathname?.startsWith("/select");
   const isAdminUser = useAdminProfile();
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
   const dashboardHref = "/select";
@@ -138,7 +142,9 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
               size="sm"
               onClick={toggleDarkMode}
               className="h-9 w-9 p-0 rounded-full hover:bg-muted/50 transition-colors"
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {isDarkMode ? (
                 <Sun className="h-5 w-5 text-amber-500" />
@@ -154,6 +160,7 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
                 className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-card/80 backdrop-blur-sm border border-border/40 px-2 py-1.5 sm:px-3 sm:py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
+                id="profile_dropdown_button"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] text-[10px] font-bold sm:hidden">
                   {getInitials(user.first_name, user.last_name)}
@@ -171,7 +178,7 @@ export const Header = memo(function Header({ onMenuClick, sidebarOpen, type }: H
                 <ChevronsUpDown
                   className={cn(
                     "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition",
-                    menuOpen && "rotate-180 text-foreground"
+                    menuOpen && "rotate-180 text-foreground",
                   )}
                 />
               </button>
@@ -290,7 +297,10 @@ function WorkspaceSwitcher({
   useEffect(() => {
     if (!open) return;
     const handleClick = (event: MouseEvent) => {
-      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
+      if (
+        switcherRef.current &&
+        !switcherRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -316,7 +326,8 @@ function WorkspaceSwitcher({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1.5 transition-all hover:bg-muted/50",
-          open && "ring-2 ring-[rgb(var(--brand-primary,#213928))]/20 border-[rgb(var(--brand-primary,#213928))]/40"
+          open &&
+            "ring-2 ring-[rgb(var(--brand-primary,#213928))]/20 border-[rgb(var(--brand-primary,#213928))]/40",
         )}
       >
         <div className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg bg-background shadow-sm border border-border/40">
@@ -350,7 +361,9 @@ function WorkspaceSwitcher({
               {houses.length > 0 && (
                 <>
                   <div className="px-2 pt-1 pb-0.5">
-                    <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">Properties</p>
+                    <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                      Properties
+                    </p>
                   </div>
                   {houses.map((house) => (
                     <button
@@ -359,7 +372,9 @@ function WorkspaceSwitcher({
                       onClick={() => handleSwitch(house)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                        selectedHouse?.id === house.id && !isAdminRoute && "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]"
+                        selectedHouse?.id === house.id &&
+                          !isAdminRoute &&
+                          "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]",
                       )}
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
@@ -381,14 +396,17 @@ function WorkspaceSwitcher({
               {isAdmin && (
                 <>
                   <div className="px-2 pt-2 pb-0.5 border-t border-border/40 mt-1">
-                    <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">Management</p>
+                    <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                      Management
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleSwitch(null)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                      isAdminRoute && "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-600"
+                      isAdminRoute &&
+                        "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-600",
                     )}
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600">

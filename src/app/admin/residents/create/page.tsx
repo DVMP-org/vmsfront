@@ -13,7 +13,11 @@ import {
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { useAdminHouses, useAdminUsers, useCreateResident } from "@/hooks/use-admin";
+import {
+  useAdminHouses,
+  useAdminUsers,
+  useCreateResident,
+} from "@/hooks/use-admin";
 import { toast } from "sonner";
 import { Users, Home, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +32,9 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     email: z.string().optional(),
     first_name: z.string().min(2, "First name must be at least 2 characters"),
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
-    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    phone: z
+      .string()
+      .regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
     house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
   }),
@@ -38,7 +44,9 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     email: z.string().email("Please enter a valid email address"),
     first_name: z.string().min(2, "First name must be at least 2 characters"),
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
-    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    phone: z
+      .string()
+      .regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
     house_slugs: z.array(z.string()).min(1, "Please select at least one house"),
   }),
@@ -83,7 +91,10 @@ export default function CreateResidentPage() {
     const nextSlugs = selectedHouseSlugs.includes(houseSlug)
       ? selectedHouseSlugs.filter((slug) => slug !== houseSlug)
       : [...selectedHouseSlugs, houseSlug];
-    setValue("house_slugs", nextSlugs, { shouldValidate: true, shouldDirty: true });
+    setValue("house_slugs", nextSlugs, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const onSubmit = (data: CreateResidentFormData) => {
@@ -111,7 +122,7 @@ export default function CreateResidentPage() {
   const houses = useMemo(() => housesData?.items ?? [], [housesData?.items]);
   const sortedHouses = useMemo(
     () => houses.slice().sort((a, b) => a.name.localeCompare(b.name)),
-    [houses]
+    [houses],
   );
 
   const sortedUsers = useMemo(() => {
@@ -148,7 +159,10 @@ export default function CreateResidentPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin/residents" className="text-[var(--brand-primary,#213928)] hover:underline">
+              <Link
+                href="/admin/residents"
+                className="text-[var(--brand-primary,#213928)] hover:underline"
+              >
                 Residents
               </Link>
               <span>/</span>
@@ -159,14 +173,11 @@ export default function CreateResidentPage() {
               Add Resident
             </h1>
             <p className="text-muted-foreground">
-              Promote an existing user into a resident profile and link their homes.
+              Promote an existing user into a resident profile and link their
+              homes.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
@@ -176,7 +187,8 @@ export default function CreateResidentPage() {
           <CardHeader>
             <CardTitle>Resident details</CardTitle>
             <CardDescription>
-              Provide the user identifier and optional profile updates. Houses will determine their access.
+              Provide the user identifier and optional profile updates. Houses
+              will determine their access.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -197,10 +209,12 @@ export default function CreateResidentPage() {
                         "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
                         mode === value
                           ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
-                          : "border-border text-muted-foreground hover:text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      {value === "existing" ? "Use existing user" : "Create new user"}
+                      {value === "existing"
+                        ? "Use existing user"
+                        : "Create new user"}
                     </button>
                   ))}
                 </div>
@@ -211,7 +225,9 @@ export default function CreateResidentPage() {
                       Select user
                     </label>
                     {usersLoading ? (
-                      <p className="text-sm text-muted-foreground">Loading users...</p>
+                      <p className="text-sm text-muted-foreground">
+                        Loading users...
+                      </p>
                     ) : sortedUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
                         No users available. Onboard a user first.
@@ -221,7 +237,9 @@ export default function CreateResidentPage() {
                         <select
                           className={cn(
                             "w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            errors.mode === undefined && (errors as any).user_id && "border-destructive text-destructive"
+                            errors.mode === undefined &&
+                              (errors as any).user_id &&
+                              "border-destructive text-destructive",
                           )}
                           {...register("user_id")}
                         >
@@ -239,7 +257,9 @@ export default function CreateResidentPage() {
                           ))}
                         </select>
                         {mode === "existing" && (errors as any).user_id && (
-                          <p className="text-xs text-destructive">{(errors as any).user_id?.message}</p>
+                          <p className="text-xs text-destructive">
+                            {(errors as any).user_id?.message}
+                          </p>
                         )}
                       </div>
                     )}
@@ -271,7 +291,6 @@ export default function CreateResidentPage() {
                 />
               </div>
 
-
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
                   label="Phone"
@@ -287,27 +306,44 @@ export default function CreateResidentPage() {
                 />
               </div>
 
-              <div className={cn(
-                "space-y-4 rounded-lg border p-4 transition-colors",
-                errors.house_slugs ? "border-destructive bg-destructive/5" : "border-border"
-              )}>
+              <div
+                className={cn(
+                  "space-y-4 rounded-lg border p-4 transition-colors",
+                  errors.house_slugs
+                    ? "border-destructive bg-destructive/5"
+                    : "border-border",
+                )}
+              >
                 <div className="flex items-center gap-2">
-                  <Home className={cn(
-                    "h-5 w-5",
-                    errors.house_slugs ? "text-destructive" : "text-[var(--brand-primary,#213928)]"
-                  )} />
+                  <Home
+                    className={cn(
+                      "h-5 w-5",
+                      errors.house_slugs
+                        ? "text-destructive"
+                        : "text-[var(--brand-primary,#213928)]",
+                    )}
+                  />
                   <div>
-                    <p className={cn(
-                      "text-sm font-medium",
-                      errors.house_slugs ? "text-destructive" : "text-foreground"
-                    )}>Associate houses</p>
+                    <p
+                      className={cn(
+                        "text-sm font-medium",
+                        errors.house_slugs
+                          ? "text-destructive"
+                          : "text-foreground",
+                      )}
+                    >
+                      Associate houses
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Select one or more houses that the resident should belong to.
+                      Select one or more houses that the resident should belong
+                      to.
                     </p>
                   </div>
                 </div>
                 {housesLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading houses...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Loading houses...
+                  </p>
                 ) : sortedHouses.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No houses found. Create a house first.
@@ -323,7 +359,9 @@ export default function CreateResidentPage() {
                             key={house.id}
                             label={house.name}
                             description={house.address}
-                            checked={slug ? selectedHouseSlugs.includes(slug) : false}
+                            checked={
+                              slug ? selectedHouseSlugs.includes(slug) : false
+                            }
                             disabled={!isSelectable}
                             onChange={() => slug && handleHouseToggle(slug)}
                           />
@@ -331,7 +369,9 @@ export default function CreateResidentPage() {
                       })}
                     </div>
                     {errors.house_slugs && (
-                      <p className="text-xs text-destructive">{errors.house_slugs.message}</p>
+                      <p className="text-xs text-destructive">
+                        {errors.house_slugs.message}
+                      </p>
                     )}
                   </div>
                 )}
@@ -345,14 +385,18 @@ export default function CreateResidentPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" isLoading={createResident.isPending}>
+                <Button
+                  id="new_resident_form_submit_button"
+                  type="submit"
+                  isLoading={createResident.isPending}
+                >
                   Create resident
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
-      </div >
+      </div>
     </>
   );
 }
