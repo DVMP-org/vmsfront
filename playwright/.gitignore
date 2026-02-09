@@ -1,0 +1,27 @@
+# Playwright artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Videos and screenshots (optional - uncomment if you don't want to commit)
+# test-results/**/*.webm
+# test-results/**/*.png

@@ -28,7 +28,9 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     email: z.string().optional(),
     first_name: z.string().min(2, "First name must be at least 2 characters"),
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
-    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    phone: z
+      .string()
+      .regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
     residency_slugs: z.array(z.string()).min(1, "Please select at least one residency"),
   }),
@@ -38,7 +40,9 @@ const createResidentSchema = z.discriminatedUnion("mode", [
     email: z.string().email("Please enter a valid email address"),
     first_name: z.string().min(2, "First name must be at least 2 characters"),
     last_name: z.string().min(2, "Last name must be at least 2 characters"),
-    phone: z.string().regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
+    phone: z
+      .string()
+      .regex(/^\+?[\d\s-]{10,20}$/, "Invalid phone number format"),
     address: z.string().min(5, "Address must be at least 5 characters"),
     residency_slugs: z.array(z.string()).min(1, "Please select at least one residency"),
   }),
@@ -148,7 +152,10 @@ export default function CreateResidentPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin/residents" className="text-[var(--brand-primary,#213928)] hover:underline">
+              <Link
+                href="/admin/residents"
+                className="text-[var(--brand-primary,#213928)] hover:underline"
+              >
                 Residents
               </Link>
               <span>/</span>
@@ -159,14 +166,11 @@ export default function CreateResidentPage() {
               Add Resident
             </h1>
             <p className="text-muted-foreground">
-              Promote an existing user into a resident profile and link their homes.
+              Promote an existing user into a resident profile and link their
+              homes.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
@@ -197,10 +201,12 @@ export default function CreateResidentPage() {
                         "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
                         mode === value
                           ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
-                          : "border-border text-muted-foreground hover:text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      {value === "existing" ? "Use existing user" : "Create new user"}
+                      {value === "existing"
+                        ? "Use existing user"
+                        : "Create new user"}
                     </button>
                   ))}
                 </div>
@@ -211,7 +217,9 @@ export default function CreateResidentPage() {
                       Select user
                     </label>
                     {usersLoading ? (
-                      <p className="text-sm text-muted-foreground">Loading users...</p>
+                      <p className="text-sm text-muted-foreground">
+                        Loading users...
+                      </p>
                     ) : sortedUsers.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
                         No users available. Onboard a user first.
@@ -221,7 +229,9 @@ export default function CreateResidentPage() {
                         <select
                           className={cn(
                             "w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            errors.mode === undefined && (errors as any).user_id && "border-destructive text-destructive"
+                            errors.mode === undefined &&
+                            (errors as any).user_id &&
+                            "border-destructive text-destructive",
                           )}
                           {...register("user_id")}
                         >
@@ -239,7 +249,9 @@ export default function CreateResidentPage() {
                           ))}
                         </select>
                         {mode === "existing" && (errors as any).user_id && (
-                          <p className="text-xs text-destructive">{(errors as any).user_id?.message}</p>
+                          <p className="text-xs text-destructive">
+                            {(errors as any).user_id?.message}
+                          </p>
                         )}
                       </div>
                     )}
@@ -270,7 +282,6 @@ export default function CreateResidentPage() {
                   error={errors.last_name?.message}
                 />
               </div>
-
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
@@ -345,14 +356,18 @@ export default function CreateResidentPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" isLoading={createResident.isPending}>
+                <Button
+                  id="new_resident_form_submit_button"
+                  type="submit"
+                  isLoading={createResident.isPending}
+                >
                   Create resident
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
-      </div >
+      </div>
     </>
   );
 }

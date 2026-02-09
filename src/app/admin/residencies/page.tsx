@@ -21,8 +21,22 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, BulkAction, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
-import { Plus, Building2, Trash2, Edit, CheckCircle, Eye, Upload } from "lucide-react";
+import {
+  DataTable,
+  Column,
+  BulkAction,
+  FilterConfig,
+  FilterDefinition,
+} from "@/components/ui/DataTable";
+import {
+  Plus,
+  Building2,
+  Trash2,
+  Edit,
+  CheckCircle,
+  Eye,
+  Upload,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -122,8 +136,8 @@ export default function ResidenciesPage() {
         options: [
           { label: "Active", value: "True" },
           { label: "Inactive", value: "False" },
-        ]
-      }
+        ],
+      },
     ];
 
     if (residencyGroups.length > 0) {
@@ -161,8 +175,8 @@ export default function ResidenciesPage() {
     filters.push({
       field: "created_at",
       label: "Date",
-      type: "date-range"
-    })
+      type: "date-range",
+    });
     return filters;
   }, [residencyGroups, residencyTypes]);
 
@@ -200,7 +214,6 @@ export default function ResidenciesPage() {
   const residencies = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
 
-
   const handleCloseImportModal = () => {
     setIsImportModalOpen(false);
     setImportFile(null);
@@ -231,7 +244,7 @@ export default function ResidenciesPage() {
           setIsEditModalOpen(false);
           setSelectedResidency(null);
         },
-      }
+      },
     );
   };
 
@@ -344,8 +357,18 @@ export default function ResidenciesPage() {
           <span className="text-sm">
             {count} group{count !== 1 ? "s" : ""}
           </span>
-        )
+        );
       },
+    },
+    {
+      key: "type",
+      header: "Type",
+      sortable: true,
+      accessor: (row) => (
+        <span className={`text-sm ${(row as any).type?.is_active ? "text-green-600" : "text-muted-foreground"}`}>
+          {(row as any).type?.name}
+        </span>
+      ),
     },
     {
       key: "type",
@@ -362,7 +385,9 @@ export default function ResidenciesPage() {
       header: "Status",
       sortable: true,
       accessor: (row) => (
-        <span className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}>
+        <span
+          className={`text-sm ${(row as any).is_active ? "text-green-600" : "text-muted-foreground"}`}
+        >
           {(row as any).is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -388,11 +413,7 @@ export default function ResidenciesPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(row)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
@@ -426,7 +447,10 @@ export default function ResidenciesPage() {
               <Upload className="mr-2 h-4 w-4" />
               Import Residencies
             </Button>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              id="add_house_button"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Residency
             </Button>
@@ -435,7 +459,6 @@ export default function ResidenciesPage() {
 
         <Card>
           <CardContent className="p-6">
-
             <DataTable
               data={residencies}
               columns={columns}
@@ -486,7 +509,6 @@ export default function ResidenciesPage() {
               bulkActions={bulkActions}
               isLoading={isLoading || isFetching}
             />
-
           </CardContent>
         </Card>
       </div>
@@ -580,7 +602,11 @@ export default function ResidenciesPage() {
         onClose={handleCloseImportModal}
         title="Import Residencies"
       >
-        <form ref={importFormRef} onSubmit={handleImportSubmit} className="space-y-4">
+        <form
+          ref={importFormRef}
+          onSubmit={handleImportSubmit}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium mb-2">
               Upload CSV File

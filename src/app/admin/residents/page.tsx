@@ -2,17 +2,38 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminResidents, useImportResidents, useUpdateResident, useDeleteResident, usePrefetchResident } from "@/hooks/use-admin";
+import {
+  useAdminResidents,
+  useImportResidents,
+  useUpdateResident,
+  useDeleteResident,
+  usePrefetchResident,
+} from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  Column,
+  BulkAction,
+  FilterDefinition,
+  FilterConfig,
+} from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { Users, Trash2, Download, Eye, Pencil, Upload, Plug, Plus } from "lucide-react";
+import {
+  Users,
+  Trash2,
+  Download,
+  Eye,
+  Pencil,
+  Upload,
+  Plug,
+  Plus,
+} from "lucide-react";
 import { getFullName } from "@/lib/utils";
 import { formatFiltersForAPI, formatSortForAPI } from "@/lib/table-utils";
 import { ImportResponse, ResidentUser } from "@/types";
@@ -34,15 +55,18 @@ const PAGE_SIZE = 10;
 
 export default function ResidentsPage() {
   // URL query sync
-  const config = useMemo(() => ({
-    page: { defaultValue: 1 },
-    pageSize: { defaultValue: PAGE_SIZE },
-    search: { defaultValue: "" },
-    status: { defaultValue: undefined },
-    sort: { defaultValue: null },
-    startDate: { defaultValue: undefined },
-    endDate: { defaultValue: undefined },
-  }), []);
+  const config = useMemo(
+    () => ({
+      page: { defaultValue: 1 },
+      pageSize: { defaultValue: PAGE_SIZE },
+      search: { defaultValue: "" },
+      status: { defaultValue: undefined },
+      sort: { defaultValue: null },
+      startDate: { defaultValue: undefined },
+      endDate: { defaultValue: undefined },
+    }),
+    [],
+  );
 
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
     config,
@@ -53,11 +77,21 @@ export default function ResidentsPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("status"));
-  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
-  const [selectedResidents, setSelectedResidents] = useState<Set<string>>(new Set());
-  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
-  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
+  const [status, setStatus] = useState<string | undefined>(() =>
+    initializeFromUrl("status"),
+  );
+  const [sort, setSort] = useState<string | null>(() =>
+    initializeFromUrl("sort"),
+  );
+  const [selectedResidents, setSelectedResidents] = useState<Set<string>>(
+    new Set(),
+  );
+  const [startDate, setStartDate] = useState<string | undefined>(() =>
+    initializeFromUrl("startDate"),
+  );
+  const [endDate, setEndDate] = useState<string | undefined>(() =>
+    initializeFromUrl("endDate"),
+  );
 
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
@@ -78,7 +112,6 @@ export default function ResidentsPage() {
     syncToUrl({ page, pageSize, search, status, sort, startDate, endDate });
   }, [page, pageSize, search, status, sort, startDate, endDate, syncToUrl]);
 
-
   const availableFilters = useMemo(() => {
     const filters: FilterDefinition[] = [
       {
@@ -94,7 +127,7 @@ export default function ResidentsPage() {
         field: "created_at",
         label: "Created Between",
         type: "date-range",
-      }
+      },
     ];
 
     return filters;
@@ -130,7 +163,9 @@ export default function ResidentsPage() {
 
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<ResidentUser | null>(null);
+  const [selectedResident, setSelectedResident] = useState<ResidentUser | null>(
+    null,
+  );
 
   const {
     register,
@@ -143,7 +178,9 @@ export default function ResidentsPage() {
 
   // Delete State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [residentToDelete, setResidentToDelete] = useState<ResidentUser | null>(null);
+  const [residentToDelete, setResidentToDelete] = useState<ResidentUser | null>(
+    null,
+  );
 
   const handleEdit = (resident: ResidentUser) => {
     setSelectedResident(resident);
@@ -174,7 +211,7 @@ export default function ResidentsPage() {
           setIsEditModalOpen(false);
           setSelectedResident(null);
         },
-      }
+      },
     );
   };
 
@@ -206,7 +243,9 @@ export default function ResidentsPage() {
   ];
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importSummary, setImportSummary] = useState<ImportResponse | null>(null);
+  const [importSummary, setImportSummary] = useState<ImportResponse | null>(
+    null,
+  );
   const importFormRef = useRef<HTMLFormElement>(null);
   const handleCloseImportModal = () => {
     setIsImportModalOpen(false);
@@ -216,7 +255,6 @@ export default function ResidentsPage() {
 
   const residents = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
-
 
   const columns: Column<ResidentUser>[] = [
     {
@@ -270,7 +308,8 @@ export default function ResidentsPage() {
           {row.user.is_active ? "Active" : "Inactive"}
         </Badge>
       ),
-    }, {
+    },
+    {
       key: "actions",
       header: "Actions",
       sortable: false,
@@ -305,7 +344,7 @@ export default function ResidentsPage() {
           </Button>
         </div>
       ),
-    }
+    },
   ];
 
   return (
@@ -317,7 +356,10 @@ export default function ResidentsPage() {
             <p className="text-muted-foreground">View and manage residents</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsImportModalOpen(true)}
+            >
               <Upload className="h-4 w-4" />
               Bulk Import
             </Button>
@@ -334,7 +376,6 @@ export default function ResidentsPage() {
 
         <Card>
           <CardContent className="space-y-6 p-6">
-
             <DataTable
               data={residents}
               columns={columns}
@@ -359,11 +400,21 @@ export default function ResidentsPage() {
               onFiltersChange={(filters) => {
                 setPage(1);
                 const statusFilter = filters.find((f) => f.field === "status");
-                setStatus(statusFilter?.value as string | undefined || undefined);
-                const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                setStartDate(startDateFilter?.value as string | undefined || undefined);
-                const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
-                setEndDate(endDateFilter?.value as string | undefined || undefined);
+                setStatus(
+                  (statusFilter?.value as string | undefined) || undefined,
+                );
+                const startDateFilter = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "gte",
+                );
+                setStartDate(
+                  (startDateFilter?.value as string | undefined) || undefined,
+                );
+                const endDateFilter = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "lte",
+                );
+                setEndDate(
+                  (endDateFilter?.value as string | undefined) || undefined,
+                );
               }}
               onSortChange={(newSort) => {
                 setPage(1);
@@ -378,7 +429,6 @@ export default function ResidentsPage() {
               bulkActions={bulkActions}
               isLoading={isLoading || isFetching}
             />
-
           </CardContent>
         </Card>
       </div>
@@ -434,7 +484,11 @@ bob@example.com,Bob,Wilson,,,"Residency B"`}
             </p>
           )}
           <div className="flex items-center justify-between">
-            <Button type="button" variant="ghost" onClick={handleCloseImportModal}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleCloseImportModal}
+            >
               Cancel
             </Button>
             <Button type="submit" isLoading={importResidentsMutation.isPending}>
@@ -449,8 +503,8 @@ bob@example.com,Bob,Wilson,,,"Residency B"`}
               </p>
               {importSummary.failed > 0 && (
                 <p className="text-destructive">
-                  {importSummary.failed} item(s) failed. Review the server logs for
-                  details.
+                  {importSummary.failed} item(s) failed. Review the server logs
+                  for details.
                 </p>
               )}
             </div>
@@ -520,8 +574,16 @@ bob@example.com,Bob,Wilson,,,"Residency B"`}
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{residentToDelete ? getFullName(residentToDelete.user.first_name, residentToDelete.user.last_name) : "this resident"}</strong>?
-            This action cannot be undone.
+            Are you sure you want to delete{" "}
+            <strong>
+              {residentToDelete
+                ? getFullName(
+                  residentToDelete.user.first_name,
+                  residentToDelete.user.last_name,
+                )
+                : "this resident"}
+            </strong>
+            ? This action cannot be undone.
           </p>
           <div className="flex gap-4 justify-end pt-4">
             <Button
