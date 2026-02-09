@@ -11,7 +11,9 @@ import {
   useBulkToggleResidencyActive,
   useImportResidencies,
   useAdminResidencyGroups,
-  usePrefetchResidency
+  usePrefetchResidency,
+  useAdminResidencyType,
+  useAdminResidencyTypes
 } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -26,6 +28,7 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { ImportResponse, Residency } from "@/types";
 import { ResidencyForm, ResidencyFormData } from "@/app/admin/residencies/components/ResidencyForm";
+import { set } from "date-fns";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
@@ -40,6 +43,7 @@ export default function ResidenciesPage() {
     search: { defaultValue: "" },
     is_active: { defaultValue: undefined },
     residency_group_id: { defaultValue: undefined },
+    type_id: { defaultValue: undefined },
     sort: { defaultValue: null },
   }), []);
 
@@ -54,6 +58,7 @@ export default function ResidenciesPage() {
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
   const [status, setStatus] = useState<string | undefined>(() => initializeFromUrl("is_active"));
   const [residencyGroupId, setResidencyGroupId] = useState<string | undefined>(() => initializeFromUrl("residency_group_id"));
+  const [residencyTypeId, setResidencyTypeId] = useState<string | undefined>(() => initializeFromUrl("type_id"));
   const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
   const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"));
   const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"));
@@ -86,16 +91,26 @@ export default function ResidenciesPage() {
       isInitialMount.current = false;
       return;
     }
-    syncToUrl({ page, pageSize, search, status, residencyGroupId, sort, startDate, endDate });
-  }, [page, pageSize, search, status, residencyGroupId, sort, startDate, endDate, syncToUrl]);
+    syncToUrl({ page, pageSize, search, status, residencyGroupId, residencyTypeId, sort, startDate, endDate });
+  }, [page, pageSize, search, status, residencyGroupId, residencyTypeId, sort, startDate, endDate, syncToUrl]);
 
   // Fetch residency groups for filter
   const { data: residencyGroupsData } = useAdminResidencyGroups({
     page: 1,
     pageSize: 100,
+    sort: "created_at:desc",
   });
   const residencyGroups = useMemo(() => residencyGroupsData?.items ?? [], [residencyGroupsData]);
 
+  // Fetch Residency Types
+
+  const residencyTypesData = useAdminResidencyTypes({
+    page: 1,
+    pageSize: 100,
+    sort: "created_at:desc",
+  });
+
+  const residencyTypes = useMemo(() => residencyTypesData?.data?.items ?? [], [residencyTypesData]);
 
   const availableFilters = useMemo(() => {
     const filters: FilterDefinition[] = [
@@ -127,13 +142,29 @@ export default function ResidenciesPage() {
       });
     }
 
+    if (residencyTypes.length > 0) {
+      filters.push({
+        field: "type_id",
+        label: "Residency Type",
+        type: "select",
+        isSearchable: true,
+        options: [
+          ...residencyTypes.map((type) => ({
+            value: type.id,
+            label: type.name,
+          })),
+        ],
+        operator: "eq",
+      });
+    }
+
     filters.push({
       field: "created_at",
       label: "Date",
       type: "date-range"
     })
     return filters;
-  }, [residencyGroups]);
+  }, [residencyGroups, residencyTypes]);
 
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
@@ -144,6 +175,9 @@ export default function ResidenciesPage() {
     if (residencyGroupId) {
       filters.push({ field: "residency_group_id", operator: "eq", value: residencyGroupId });
     }
+    if (residencyTypeId) {
+      filters.push({ field: "type_id", operator: "eq", value: residencyTypeId });
+    }
     if (startDate) {
       filters.push({ field: "created_at", operator: "gte", value: startDate });
     }
@@ -151,7 +185,7 @@ export default function ResidenciesPage() {
       filters.push({ field: "created_at", operator: "lte", value: endDate });
     }
     return filters;
-  }, [status, residencyGroupId, startDate, endDate]);
+  }, [status, residencyGroupId, residencyTypeId, startDate, endDate]);
 
   const { data, isLoading, isFetching } = useAdminResidencies({
     page,
@@ -308,10 +342,20 @@ export default function ResidenciesPage() {
         const count = row.residency_groups?.length || 0;
         return (
           <span className="text-sm">
-            {count} groups{count !== 1 ? "s" : ""}
+            {count} group{count !== 1 ? "s" : ""}
           </span>
         )
       },
+    },
+    {
+      key: "type",
+      header: "Type",
+      sortable: true,
+      accessor: (row) => (
+        <span className={`text-sm ${(row as any).type?.is_active ? "text-green-600" : "text-muted-foreground"}`}>
+          {(row as any).type?.name}
+        </span>
+      ),
     },
     {
       key: "is_active",
@@ -418,12 +462,14 @@ export default function ResidenciesPage() {
                 // Extract filter values from filters and explicitly clear if not found
                 const statusFilter = filters.find(f => f.field === "is_active");
                 const residencyGroupFilter = filters.find(f => f.field === "residency_group_id");
+                const residenciesTypeFilter = filters.find(f => f.field === "type_id");
                 const startDate = filters.find((f) => f.field === "created_at" && f.operator === "gte");
                 const endDate = filters.find((f) => f.field === "created_at" && f.operator === "lte");
 
                 // Always set state (undefined if filter not found) to ensure URL clearing
                 setStatus(statusFilter?.value as string | undefined || undefined);
                 setResidencyGroupId(residencyGroupFilter?.value as string | undefined || undefined);
+                setResidencyTypeId(residenciesTypeFilter?.value as string | undefined || undefined);
                 setStartDate(startDate?.value as string | undefined || undefined);
                 setEndDate(endDate?.value as string | undefined || undefined);
               }}
@@ -458,6 +504,7 @@ export default function ResidenciesPage() {
           onCancel={() => setIsCreateModalOpen(false)}
           isLoading={createResidencyMutation.isPending}
           residencyGroups={residencyGroups}
+          residencyTypes={residencyTypes}
         />
       </Modal>
 
@@ -476,7 +523,8 @@ export default function ResidenciesPage() {
               name: selectedResidency.name,
               address: selectedResidency.address || "",
               description: selectedResidency.description || "",
-              residency_group_ids: Array.isArray((selectedResidency as any).residency_group_ids) ? (selectedResidency as any).residency_group_ids : [],
+              residency_group_ids: selectedResidency.residency_groups?.map(g => g.id) || [],
+              type_id: selectedResidency.type?.id || "",
             }}
             onSubmit={handleEditSubmit}
             onCancel={() => {
@@ -485,6 +533,7 @@ export default function ResidenciesPage() {
             }}
             isLoading={updateResidencyMutation.isPending}
             residencyGroups={residencyGroups}
+            residencyTypes={residencyTypes}
           />
         )}
       </Modal>

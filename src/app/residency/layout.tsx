@@ -7,11 +7,11 @@ export default function ResidencyLayout({
     children: React.ReactNode;
 }) {
     return (
-        <RouteGuard>
+        // <RouteGuard>
             <DashboardLayout type="resident">
                 {children}
             </DashboardLayout>
-        </RouteGuard>
+        // </RouteGuard>
     );
 }
 

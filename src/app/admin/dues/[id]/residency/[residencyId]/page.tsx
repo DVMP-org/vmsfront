@@ -249,7 +249,7 @@ export default function ResidencyDueDetailPage() {
                         <CardHeader className="py-3 px-5 border-b bg-muted/20">
                             <CardTitle className="text-[11px] font-bold uppercase text-muted-foreground flex items-center gap-2">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Payment Schedule
+                                Payment Schedules
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { ArrowLeft, Building2, Calendar, Info, Users, Home, MapPin, Shield, Star } from "lucide-react";
+import { ArrowLeft, Building2, Calendar, Info, Users, Home, MapPin, Shield, Star, Type } from "lucide-react";
 import { formatDate, getFullName, getInitials } from "@/lib/utils";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { ResidentResidency, ResidentUser } from "@/types";
@@ -188,6 +188,19 @@ export default function ResidencyDetailPage() {
                         </div>
                         <CardContent className="p-6 space-y-4">
                             <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Type</span>
+                                <div className="flex items-start gap-2 text-sm">
+                                    {residency?.type?.slug == 'house' ? (
+                                        <Building2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    ) : residency?.type?.slug == 'apartment' ? (
+                                        <Home className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    ) : (
+                                        <Shield className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    )}
+                                    <span>{residency?.type?.name || "-"}</span>
+                                </div>
+                            </div>
+                            <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Address</span>
                                 <div className="flex items-start gap-2 text-sm">
                                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -239,6 +252,7 @@ export default function ResidencyDetailPage() {
                             )}
                         </CardContent>
                     </Card>
+
                 </div>
 
                 {/* Residents Column */}

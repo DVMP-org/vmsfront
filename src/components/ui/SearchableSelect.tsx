@@ -86,24 +86,37 @@ export function SearchableSelect<IsMulti extends boolean = false>({
         }),
         menu: (base) => ({
             ...base,
-            backgroundColor: '#fff dark:hsl(240 6% 10% / 1)',
-            border: '1px solid bg-white/60',
+            backgroundColor: 'white',
+            border: '1px solid rgb(229 231 235)',
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
             borderRadius: '4px',
             zIndex: 50,
+            '@media (prefers-color-scheme: dark)': {
+                backgroundColor: 'rgb(31 41 55)',
+                border: '1px solid rgb(55 65 81)',
+            },
         }),
         option: (base, state) => ({
             ...base,
             backgroundColor: state.isSelected
                 ? 'rgb(var(--brand-primary,#1e40af))'
                 : state.isFocused
-                    ? 'rgba(var(--brand-primary,#1e40af), 0.1)'
+                    ? 'rgb(219 234 254)'
                     : 'transparent',
-            color: state.isSelected ? 'dark:#191919' : 'dark:#fff',
+            color: state.isSelected ? '#ffffff' : 'rgb(17 24 39)',
             cursor: 'pointer',
+            // border: "1px solid #e1e1e1",
             fontSize: '12px',
             '@media (min-width: 640px)': {
                 fontSize: '14px',
+            },
+            '@media (prefers-color-scheme: dark)': {
+                backgroundColor: state.isSelected
+                    ? 'rgb(var(--brand-primary,30 64 175))'
+                    : state.isFocused
+                        ? 'rgb(55 65 81)'
+                        : 'transparent',
+                color: state.isSelected ? '#ffffff' : 'rgb(243 244 246)',
             },
             '&:active': {
                 backgroundColor: 'rgb(var(--brand-primary,#1e40af))',

@@ -31,7 +31,12 @@ import {
   DuePayment,
   DashboardSelect,
   ImportResponse,
+  CreateGatePassData,
+  ApproveVisitResponse,
+  VisitResponse,
 } from "@/types";
+import { getValueAsType } from "framer-motion";
+import { get } from "http";
 
 export const residentService = {
   async getResidencies(): Promise<ApiResponse<ResidentResidency[]>> {
@@ -483,4 +488,48 @@ export const residentService = {
       data
     );
   },
+
+    /**
+   * Approve visit request - creates a gate pass with specified details
+   */
+  async approveVisitRequest(
+    visitRequestId: string,
+    data: CreateGatePassData
+  ): Promise<ApiResponse<ApproveVisitResponse>> {
+    return apiClient.post(`/resident/visit/request/${visitRequestId}/approve`, data);
+  },
+
+  /**
+   * Decline visit request with optional reason
+   */
+  async declineVisitRequest(
+    visitRequestId: string,
+    reason?: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post(`/resident/visit/request/${visitRequestId}/decline`, { reason });
+  },
+
+  async getVisitRequest(
+    visitRequestId: string): Promise<ApiResponse<VisitResponse>> {
+    return apiClient.get(`/resident/visits/request/${visitRequestId}`);
+  },
+  async getVisitRequests(
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
+  ): Promise<ApiResponse<PaginatedResponse<VisitResponse>>> {
+    return apiClient.get(`/resident/visits`, {
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
+      },
+    });
+  }
 };

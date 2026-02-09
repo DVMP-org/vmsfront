@@ -14,6 +14,8 @@ import {
   DuePayment,
   DashboardSelect,
   Transaction,
+  CreateGatePassData,
+  VisitResponse,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -514,4 +516,79 @@ export function useExtendGatePass(residencyId: string | null) {
       toast.error(parseApiError(error).message);
     },
   });
+
+ 
 }
+
+ export function useResidentApproveVisitRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: ({  visitRequestId, data }: {visitRequestId: string; data: CreateGatePassData }) => {
+        return residentService.approveVisitRequest(visitRequestId, data);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["resident", "dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["resident", "visitors"] });
+        toast.success("Visit request approved and gate pass created successfully!");
+      },
+      onError: (error: any) => {
+        toast.error(parseApiError(error).message);
+      },
+    });
+  }
+
+  export function useResidentDeclineVisitRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: ({  visitRequestId, reason }: { visitRequestId: string; reason?: string }) => {
+        return residentService.declineVisitRequest( visitRequestId, reason);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["resident", "dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["resident", "visitors"] });
+        toast.success("Visit request declined successfully!");
+      },
+      onError: (error: any) => {
+        toast.error(parseApiError(error).message);
+      },
+    });
+  }
+
+  export function useResidentVisitRequests(
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string | null;
+      filters?: string;
+    }
+  ) {
+    return useQuery<PaginatedResponse<VisitResponse>>({
+      queryKey: ["resident", "visitRequests", params],
+      queryFn: async () => {
+        const response = await residentService.getVisitRequests( {
+          ...params,
+          sort: params.sort || undefined,
+        });
+        return response.data;
+      },
+    });
+  }
+
+
+  export function useResidentVisitRequest(
+    visitRequestId: string | null
+  ) {
+    return useQuery<VisitResponse>({
+      queryKey: ["resident", "visit-request", visitRequestId],
+      queryFn: async () => {
+        if (!visitRequestId) throw new Error("Visit Request ID is required");
+        const response = await residentService.getVisitRequest(visitRequestId);
+        return response.data;
+      },
+      enabled: !!visitRequestId,
+    });
+  }
+

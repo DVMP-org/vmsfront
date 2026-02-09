@@ -26,6 +26,7 @@ import {
   DuePayment,
   AdminRole,
   Visitor,
+  ResidencyType,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -121,6 +122,35 @@ export function useDeleteResidency() {
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
     },
+  });
+}
+
+export function useAdminResidencyTypes(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+  filters?: string;
+  sort?: string;
+}){
+  return useQuery<PaginatedResponse<ResidencyType>>({
+    queryKey: ["admin", "residency-types", params],
+    queryFn: async () => {  
+      const response = await adminService.getResidencyTypes(params);
+      return response.data;
+    },
+  })
+}
+
+export function useAdminResidencyType(typeId: string | null) {
+  return useQuery<ResidencyType>({
+    queryKey: ["admin", "residency-type", typeId],
+    queryFn: async () => {
+      if (!typeId) throw new Error("Residency Type ID is required");
+      const response = await adminService.getResidencyType(typeId);
+      return response.data;
+    },
+    enabled: !!typeId,
   });
 }
 

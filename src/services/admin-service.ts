@@ -48,7 +48,9 @@ import {
     ResidencyDue,
     DueSchedule,
     DuePayment,
+    ResidencyType,
 } from "@/types";
+import { get } from "http";
 
 export const adminService = {
     // Dashboard
@@ -120,6 +122,28 @@ export const adminService = {
 
     async bulkToggleResidencyActive(residencyIds: string[]): Promise<ApiResponse<{ ok: boolean; message?: string }>> {
         return apiClient.post("/admin/residencies/toggle-active/bulk", residencyIds);
+    },
+
+    // Residency Types
+    async getResidencyTypes(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<ResidencyType>>> {
+        return apiClient.get("/admin/residency/types", {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 10,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
+            },
+        });
+    },
+    async getResidencyType(typeId: string): Promise<ApiResponse<ResidencyType>> {
+        return apiClient.get(`/admin/residency/type/${typeId}`);
     },
 
     // Residency Groups

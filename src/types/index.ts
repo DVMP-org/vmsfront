@@ -53,6 +53,15 @@ export interface User {
     name?: string | null
 }
 
+export interface ResidencyType{
+    id: string;
+    name: string;
+    slug: string;
+    is_active : boolean;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+}
 export interface Residency {
     id: string;
     name: string;
@@ -63,6 +72,7 @@ export interface Residency {
     created_at: string;
     updated_at: string;
     residency_groups?: ResidencyGroup[] | null;
+    type?: ResidencyType | null;
 
 }
 
@@ -849,4 +859,71 @@ export interface ImportResult {
     successful: number;
     failed: number;
     results: ImportResultItem[];
+}
+
+
+
+export interface ApproveVisitResponse {
+  id: string;
+  message: string;
+  gate_pass?: {
+    id: string;
+    code: string;
+    qr_code_url?: string | null;
+    valid_from?: string | null;
+    valid_to?: string | null;
+  };
+  visitor?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    pass_code_suffix?: string | null;
+    qr_code_url?: string | null;
+  };
+}
+
+
+export interface VisitResidency {
+  id: string;
+  name: string;
+  address: string;
+  slug?: string | null;
+}
+
+export interface VisitResident {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface CreateVisitRequest {
+  name: string;
+  phone: string;
+  email: string;
+  residency_id: string;
+  resident_id: string;
+  purpose: string;
+  additional_information?: string;
+}
+
+export interface VisitResponse {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  residency_id: string;
+  resident_id: string;
+  purpose: string;
+  additional_information?: string;
+  decline_reason?: string | null;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateGatePassData {
+  valid_from?: string | null;
+  valid_to?: string | null;
+  max_uses?: number | null;
 }

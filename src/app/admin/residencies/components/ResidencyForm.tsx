@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ResidencyGroup } from "@/types";
+import { ResidencyGroup, ResidencyType } from "@/types";
 import { cn } from "@/lib/utils";
 
 export const residencySchema = z.object({
@@ -13,6 +13,7 @@ export const residencySchema = z.object({
     address: z.string().min(5, "Address must be at least 5 characters"),
     description: z.string().optional(),
     residency_group_ids: z.array(z.string()).default([]),
+    type_id: z.string().default(""),
 });
 
 export type ResidencyFormData = z.infer<typeof residencySchema>;
@@ -23,6 +24,7 @@ interface ResidencyFormProps {
     onCancel: () => void;
     isLoading?: boolean;
     residencyGroups: ResidencyGroup[];
+    residencyTypes?: ResidencyType[];
 }
 
 export function ResidencyForm({
@@ -31,6 +33,7 @@ export function ResidencyForm({
     onCancel,
     isLoading,
     residencyGroups,
+    residencyTypes,
 }: ResidencyFormProps) {
     const {
         register,
@@ -45,10 +48,12 @@ export function ResidencyForm({
             address: initialData?.address || "",
             description: initialData?.description || "",
             residency_group_ids: initialData?.residency_group_ids || [],
-        },
+            type_id: initialData?.type_id || "",
+        }
     });
 
     const selectedResidencyGroupIds = watch("residency_group_ids") || [];
+    const selectedTypeId = watch("type_id") || "";
 
     const toggleResidencyGroupSelection = (groupId: string) => {
         const currentIds = selectedResidencyGroupIds;
@@ -57,6 +62,13 @@ export function ResidencyForm({
             : [...currentIds, groupId];
         setValue("residency_group_ids", nextIds, { shouldValidate: true, shouldDirty: true });
     };
+
+    const toggleResidencyTypeSelection = (typeId: string) => {
+        console.log("Selected type ID:", typeId);
+        const currentId = selectedTypeId;
+        const nextId = currentId === typeId ? "" : typeId;
+        setValue("type_id", nextId, { shouldValidate: true, shouldDirty: true });
+    }
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -111,6 +123,34 @@ export function ResidencyForm({
                 </div>
                 {errors.residency_group_ids && (
                     <p className="text-xs text-destructive mt-1">{errors.residency_group_ids.message}</p>
+                )}
+            </div>
+            <div>
+                <label className={cn(
+                    "block text-sm font-medium mb-2",
+                    errors.type_id ? "text-destructive" : "text-foreground"
+                )}>
+                    Types (Optional)
+                </label>
+                <select className={cn(
+                    "w-full max-h-48 overflow-y-auto border rounded-md p-3 bg-card",
+                    errors.type_id ? "border-destructive bg-destructive/5" : "border-input"
+                )}
+                    onChange={(e) => toggleResidencyTypeSelection(e.target.value)}
+                >
+                    {residencyTypes && residencyTypes.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No residency types available</p>
+                    ) : (
+                        residencyTypes?.map((type) => (
+                            <option key={type.id} value={type.id} className="text-sm" selected={selectedTypeId === type.id}>
+                                {type.name}
+                            </option>
+                        ))
+                    )}
+
+                </select>
+                {errors.type_id && (
+                    <p className="text-xs text-destructive mt-1">{errors.type_id.message}</p>
                 )}
             </div>
 

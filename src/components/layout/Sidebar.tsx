@@ -72,6 +72,11 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
       icon: MessageSquare,
     },
     {
+      href: residencyId ? `${base}/visit-requests` : "/select",
+      label: "Visit Requests",
+      icon: Building2,
+    },
+    {
       href: residencyId ? `${base}/dues` : "/select",
       label: "Dues",
       icon: Receipt,
