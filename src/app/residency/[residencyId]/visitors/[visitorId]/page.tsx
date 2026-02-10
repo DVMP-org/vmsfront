@@ -64,7 +64,7 @@ export default function VisitorDetailPage() {
       return parsedUrl.toString();
     } catch (error) {
       console.error("Error parsing URL:", error);
-      return `https://api.vmscore.test/${url}`;
+      return `api.vmscore.to/${url}`;
     }
   }, []);
 
