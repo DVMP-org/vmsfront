@@ -2,14 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
-  const { pathname, } = request.nextUrl;
+  const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
   // Handle subdomain routing for visit module
   const subdomain = hostname.split(".")[0];
   const visitSubdomain = process.env.NEXT_PUBLIC_VISIT_SUBDOMAIN || "visit";
-  const appDomain = process.env.NEXT_APP_DOMAIN || "vmscore.to";
-  if (subdomain === visitSubdomain || hostname === appDomain) {
+  if (subdomain === visitSubdomain && pathname !== "/visit") {
     return NextResponse.redirect(new URL("/visit", request.url));
   }
   // Define public vs private paths
@@ -36,5 +35,5 @@ export function middleware(request: NextRequest) {
 
 // Optimization: Only run middleware for specific routes
 export const config = {
-  matcher: ['/admin/:path*', '/residency/:path*', '/select', '/auth/:path*'],
+  matcher: ['/admin/:path*', '/residency/:path*', '/select', '/auth/:path*', '/visit/:path*'],
 };
