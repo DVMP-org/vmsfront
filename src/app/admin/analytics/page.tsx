@@ -167,8 +167,8 @@ export default function AnalyticsPage() {
         borderColor: "border-blue-200 dark:border-blue-800",
       },
       {
-        label: "Houses",
-        value: analytics.total_houses,
+        label: "Residencies",
+        value: analytics.total_residencies,
         icon: Home,
         color: "text-emerald-600",
         bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
@@ -238,17 +238,17 @@ export default function AnalyticsPage() {
 
     const entries = new Map<
       string,
-      { date: string; houses: number; gate_passes: number; visitors: number }
+      { date: string; residencies: number; gate_passes: number; visitors: number }
     >();
 
     const ingest = (
-      key: "houses" | "gate_passes" | "visitors",
+      key: "residencies" | "gate_passes" | "visitors",
       data: { date: string; count: number }[]
     ) => {
       data.forEach((point) => {
         const current = entries.get(point.date) ?? {
           date: point.date,
-          houses: 0,
+          residencies: 0,
           gate_passes: 0,
           visitors: 0,
         };
@@ -257,7 +257,7 @@ export default function AnalyticsPage() {
       });
     };
 
-    ingest("houses", analytics.time_series.houses);
+    ingest("residencies", analytics.time_series.residencies);
     ingest("gate_passes", analytics.time_series.gate_passes);
     ingest("visitors", analytics.time_series.visitors);
 
@@ -506,7 +506,7 @@ export default function AnalyticsPage() {
                         <stop offset="5%" stopColor="#a855f7" stopOpacity={0.25} />
                         <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="colorHouses" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorResidencies" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} />
                         <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
                       </linearGradient>
@@ -534,11 +534,11 @@ export default function AnalyticsPage() {
                     />
                     <Area
                       type="monotone"
-                      dataKey="houses"
-                      name="Houses"
+                      dataKey="residencies"
+                      name="Residencies"
                       stroke="#0ea5e9"
                       fillOpacity={1}
-                      fill="url(#colorHouses)"
+                      fill="url(#colorResidencies)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -721,8 +721,8 @@ export default function AnalyticsPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${index === 0
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
-                              : "bg-muted text-muted-foreground"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+                            : "bg-muted text-muted-foreground"
                             }`}
                         >
                           {index + 1}

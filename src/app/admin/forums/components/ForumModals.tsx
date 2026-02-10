@@ -5,10 +5,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
-import type { ForumCategory, House } from "@/types";
+import type { ForumCategory, Residency } from "@/types";
 
 interface CategoryFormValues {
-  houseId: string;
+  residencyId: string;
   name: string;
   description: string;
   isDefault: boolean;
@@ -18,8 +18,8 @@ interface CategoryFormValues {
 interface CategoryFormModalProps {
   isOpen: boolean;
   mode: "create" | "edit";
-  houses: House[];
-  defaultHouseId?: string;
+  residencies: Residency[];
+  defaultResidencyId?: string;
   initialValues?: Partial<CategoryFormValues>;
   onClose: () => void;
   onSubmit: (values: CategoryFormValues) => void | Promise<void>;
@@ -27,7 +27,7 @@ interface CategoryFormModalProps {
 }
 
 interface TopicFormValues {
-  houseId: string;
+  residencyId: string;
   categoryId: string;
   title: string;
   content: string;
@@ -38,9 +38,9 @@ interface TopicFormValues {
 interface TopicFormModalProps {
   isOpen: boolean;
   mode: "create" | "edit";
-  houses: House[];
+  residencies: Residency[];
   categories: ForumCategory[];
-  defaultHouseId?: string;
+  defaultResidencyId?: string;
   initialValues?: Partial<TopicFormValues>;
   onClose: () => void;
   onSubmit: (values: TopicFormValues) => void | Promise<void>;
@@ -61,15 +61,15 @@ interface ConfirmActionModalProps {
 export function CategoryFormModal({
   isOpen,
   mode,
-  houses,
-  defaultHouseId,
+  residencies,
+  defaultResidencyId,
   initialValues,
   onClose,
   onSubmit,
   isSubmitting,
 }: CategoryFormModalProps) {
   const [formValues, setFormValues] = useState<CategoryFormValues>({
-    houseId: defaultHouseId || "",
+    residencyId: defaultResidencyId || "",
     name: "",
     description: "",
     isDefault: false,
@@ -78,21 +78,21 @@ export function CategoryFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const fallbackHouseId =
-      initialValues?.houseId ||
-      defaultHouseId ||
-      houses[0]?.id ||
+    const fallbackResidencyId =
+      initialValues?.residencyId ||
+      defaultResidencyId ||
+      residencies[0]?.id ||
       "";
     setFormValues({
-      houseId: fallbackHouseId,
+      residencyId: fallbackResidencyId,
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
       isDefault: initialValues?.isDefault ?? false,
       isLocked: initialValues?.isLocked ?? false,
     });
-  }, [isOpen, initialValues, houses, defaultHouseId]);
+  }, [isOpen, initialValues, residencies, defaultResidencyId]);
 
-  const canSubmit = formValues.houseId && formValues.name.trim().length > 0;
+  const canSubmit = formValues.residencyId && formValues.name.trim().length > 0;
   const modalTitle =
     mode === "create" ? "Create Forum Category" : "Edit Forum Category";
 
@@ -112,27 +112,27 @@ export function CategoryFormModal({
       >
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            House scope
+            Residency scope
           </label>
           <select
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            value={formValues.houseId}
+            value={formValues.residencyId}
             onChange={(event) =>
-              setFormValues((prev) => ({ ...prev, houseId: event.target.value }))
+              setFormValues((prev) => ({ ...prev, residencyId: event.target.value }))
             }
             required
           >
             <option value="" disabled>
-              Select house
+              Select residency
             </option>
-            {houses.map((house) => (
-              <option key={house.id} value={house.id}>
-                {house.name}
+            {residencies.map((residency) => (
+              <option key={residency.id} value={residency.id}>
+                {residency.name}
               </option>
             ))}
           </select>
           <p className="text-xs text-muted-foreground">
-            Categories are scoped per house so residents see only relevant threads.
+            Categories are scoped per residency so residents see only relevant threads.
           </p>
         </div>
 
@@ -209,16 +209,16 @@ export function CategoryFormModal({
 export function TopicFormModal({
   isOpen,
   mode,
-  houses,
+  residencies,
   categories,
-  defaultHouseId,
+  defaultResidencyId,
   initialValues,
   onClose,
   onSubmit,
   isSubmitting,
 }: TopicFormModalProps) {
   const [formValues, setFormValues] = useState<TopicFormValues>({
-    houseId: defaultHouseId || "",
+    residencyId: defaultResidencyId || "",
     categoryId: "",
     title: "",
     content: "",
@@ -226,26 +226,26 @@ export function TopicFormModal({
     isLocked: false,
   });
 
-  const categoriesForHouse = useMemo(() => {
-    if (!formValues.houseId) return categories;
+  const categoriesForResidency = useMemo(() => {
+    if (!formValues.residencyId) return categories;
     return categories.filter(
-      (category) => !category.house_id || category.house_id === formValues.houseId
+      (category) => !category.residency_id || category.residency_id === formValues.residencyId
     );
-  }, [categories, formValues.houseId]);
+  }, [categories, formValues.residencyId]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const fallbackHouseId =
-      initialValues?.houseId ||
-      defaultHouseId ||
-      houses[0]?.id ||
+    const fallbackResidencyId =
+      initialValues?.residencyId ||
+      defaultResidencyId ||
+      residencies[0]?.id ||
       "";
     const scopedCategories = categories.filter(
       (category) =>
-        !category.house_id || category.house_id === fallbackHouseId
+        !category.residency_id || category.residency_id === fallbackResidencyId
     );
     setFormValues({
-      houseId: fallbackHouseId,
+      residencyId: fallbackResidencyId,
       categoryId:
         initialValues?.categoryId ||
         scopedCategories[0]?.id ||
@@ -258,13 +258,13 @@ export function TopicFormModal({
   }, [
     isOpen,
     initialValues,
-    houses,
-    defaultHouseId,
+    residencies,
+    defaultResidencyId,
     categories,
   ]);
 
   const canSubmit =
-    formValues.houseId &&
+    formValues.residencyId &&
     formValues.categoryId &&
     formValues.title.trim().length > 0 &&
     (mode === "edit" || formValues.content.trim().length > 0);
@@ -289,23 +289,23 @@ export function TopicFormModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              House
+              Residency
             </label>
             <select
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={formValues.houseId}
+              value={formValues.residencyId}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  houseId: event.target.value,
+                  residencyId: event.target.value,
                   categoryId: "",
                 }))
               }
             >
-              <option value="">Select house</option>
-              {houses.map((house) => (
-                <option key={house.id} value={house.id}>
-                  {house.name}
+              <option value="">Select residency</option>
+              {residencies.map((residency) => (
+                <option key={residency.id} value={residency.id}>
+                  {residency.name}
                 </option>
               ))}
             </select>
@@ -326,11 +326,11 @@ export function TopicFormModal({
               required
             >
               <option value="" disabled>
-                {categoriesForHouse.length === 0
-                  ? "No categories for this house"
+                {categoriesForResidency.length === 0
+                  ? "No categories for this residency"
                   : "Select category"}
               </option>
-              {categoriesForHouse.map((category) => (
+              {categoriesForResidency.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>

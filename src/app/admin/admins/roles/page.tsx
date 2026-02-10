@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DataTable, Column, BulkAction, FilterDefinition } from "@/components/ui/DataTable";
+import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
 import { Shield, Trash2, Edit, Plus } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
@@ -55,7 +55,7 @@ export default function RolesPage() {
   }, [page, pageSize, search, sort, syncToUrl]);
 
   const activeFilters = useMemo(() => {
-    const filters = [];
+    const filters: FilterConfig[] = [];
     if (status) filters.push({ field: "status", operator: "eq" as const, value: status });
 
     // Match the DataTable internal key pattern for date-range
@@ -87,7 +87,7 @@ export default function RolesPage() {
     page,
     pageSize,
     search,
-    sort,
+    sort: sort || undefined,
     filters: formatFiltersForAPI(activeFilters)
   });
 
@@ -259,9 +259,9 @@ export default function RolesPage() {
                 const statusFilter = filters.find((filter) => filter.field === "status");
                 const startDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "gte");
                 const endDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "lte");
-                setStatus(statusFilter?.value as string | undefined || undefined);
-                setStartDate(startDateFilter?.value as string | undefined || undefined);
-                setEndDate(endDateFilter?.value as string | undefined || undefined);
+                setStatus(statusFilter?.value as string || "");
+                setStartDate(startDateFilter?.value as string || "");
+                setEndDate(endDateFilter?.value as string || "");
               }}
               onSearchChange={(value) => {
                 setPage(1);

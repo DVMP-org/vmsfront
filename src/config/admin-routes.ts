@@ -31,13 +31,13 @@ export const adminLinks: AdminRoute[] = [
     { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
     { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
     { href: "/admin/gates", label: "Gates", icon: DoorOpen, permission: "gates.list" },
-    { href: "/admin/houses", label: "Houses", icon: Building2, permission: "houses.list" },
-    { href: "/admin/house-groups", label: "House Groups", icon: FolderTree, permission: "house_groups.list" },
+    { href: "/admin/residencies", label: "Residencies", icon: Building2, permission: "residencies.list" },
+    { href: "/admin/residency-groups", label: "Residency Groups", icon: FolderTree, permission: "residency_groups.list" },
     {
         href: "/admin/dues",
         label: "Dues",
         icon: Receipt,
-        permission: ["dues.list", "dues.houses"],
+        permission: ["dues.list", "dues.residencies"],
         children: [
             { href: "/admin/dues", label: "All Dues", icon: Receipt, permission: "dues.list" },
 

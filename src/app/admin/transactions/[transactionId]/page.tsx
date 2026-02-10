@@ -34,9 +34,9 @@ import {
 import { toast } from "sonner";
 
 export default function TransactionDetailPage() {
-    const params = useParams<{ transactionId: string }>();
+    const params = useParams();
     const router = useRouter();
-    const { transactionId } = params;
+    const transactionId = params?.transactionId as string;
 
     const { data: transaction, isLoading } = useAdminTransaction(transactionId);
 

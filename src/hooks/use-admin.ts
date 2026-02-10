@@ -3,7 +3,7 @@ import { adminService } from "@/services/admin-service";
 import { adminGateService } from "@/services/admin-gate-service";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
 import {
-  CreateHouseRequest,
+  CreateResidencyRequest,
   CreateAdminRequest,
   GatePass,
   GatePassCheckinRequest,
@@ -11,77 +11,78 @@ import {
   ResidentUser,
   ResidentUserCreate,
   PaginatedResponse,
-  House,
-  HouseGroup,
-  CreateHouseGroupRequest,
-  UpdateHouseGroupRequest,
+  Residency,
+  ResidencyGroup,
+  CreateResidencyGroupRequest,
+  UpdateResidencyGroupRequest,
   Admin,
-  HouseDetail,
+  ResidencyDetail,
   Resident,
-  ResidentHouse,
+  ResidentResidency,
   Due,
   CreateDueRequest,
-  HouseDue,
+  ResidencyDue,
   DueSchedule,
   DuePayment,
   AdminRole,
   Visitor,
+  ResidencyType,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 import { AdminDashboard } from "@/types";
 
-// Houses
-export function useAdminHouses(params: {
+// Residencies
+export function useAdminResidencies(params: {
   page: number;
   pageSize: number;
   search?: string;
   filters?: string;
   sort?: string;
 }) {
-  return useQuery<PaginatedResponse<House>>({
-    queryKey: ["admin", "houses", params],
+  return useQuery<PaginatedResponse<Residency>>({
+    queryKey: ["admin", "residencies", params],
     queryFn: async () => {
-      const response = await adminService.getHouses(params);
+      const response = await adminService.getResidencies(params);
       return response.data;
     },
   });
 }
 
-export function useAdminHouse(houseId: string | null) {
-  return useQuery<House>({
-    queryKey: ["admin", "house", houseId],
+export function useAdminResidency(residencyId: string | null) {
+  return useQuery<Residency>({
+    queryKey: ["admin", "residency", residencyId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
-      const response = await adminService.getHouse(houseId);
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await adminService.getResidency(residencyId);
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useAdminHouseResidents(houseId: string | null) {
-  return useQuery<ResidentHouse[]>({
-    queryKey: ["admin", "house", houseId, "residents"],
+export function useAdminResidencyResidents(residencyId: string | null) {
+  return useQuery<ResidentResidency[]>({
+    queryKey: ["admin", "residency", residencyId, "residents"],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
-      const response = await adminService.getHouseResidents(houseId);
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await adminService.getResidencyResidents(residencyId);
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useCreateHouse() {
+export function useCreateResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: { name: string; description?: string; address: string }) =>
-      adminService.createHouse(data),
+      adminService.createResidency(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-      toast.success("House created successfully!");
+      toast.success("Residency created successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -89,18 +90,18 @@ export function useCreateHouse() {
   });
 }
 
-export function useUpdateHouse() {
+export function useUpdateResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ houseId, data }: {
-      houseId: string;
-      data: { name?: string; description?: string; address?: string; house_group_id?: string };
-    }) => adminService.updateHouse(houseId, data),
+    mutationFn: ({ residencyId, data }: {
+      residencyId: string;
+      data: { name?: string; description?: string; address?: string; residency_group_id?: string };
+    }) => adminService.updateResidency(residencyId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-      toast.success("House updated successfully!");
+      toast.success("Residency updated successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -108,15 +109,15 @@ export function useUpdateHouse() {
   });
 }
 
-export function useDeleteHouse() {
+export function useDeleteResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (houseId: string) => adminService.deleteHouse(houseId),
+    mutationFn: (residencyId: string) => adminService.deleteResidency(residencyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-      toast.success("House deleted successfully!");
+      toast.success("Residency deleted successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -124,14 +125,43 @@ export function useDeleteHouse() {
   });
 }
 
-export function useBulkDeleteHouses() {
+export function useAdminResidencyTypes(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+  filters?: string;
+  sort?: string;
+}){
+  return useQuery<PaginatedResponse<ResidencyType>>({
+    queryKey: ["admin", "residency-types", params],
+    queryFn: async () => {  
+      const response = await adminService.getResidencyTypes(params);
+      return response.data;
+    },
+  })
+}
+
+export function useAdminResidencyType(typeId: string | null) {
+  return useQuery<ResidencyType>({
+    queryKey: ["admin", "residency-type", typeId],
+    queryFn: async () => {
+      if (!typeId) throw new Error("Residency Type ID is required");
+      const response = await adminService.getResidencyType(typeId);
+      return response.data;
+    },
+    enabled: !!typeId,
+  });
+}
+
+export function useBulkDeleteResidencies() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (houseIds: string[]) => adminService.bulkDeleteHouses(houseIds),
+    mutationFn: (residencyIds: string[]) => adminService.bulkDeleteResidencies(residencyIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
-      toast.success("Houses deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
+      toast.success("Residencies deleted successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -139,14 +169,14 @@ export function useBulkDeleteHouses() {
   });
 }
 
-export function useBulkToggleHouseActive() {
+export function useBulkToggleResidencyActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (houseIds: string[]) => adminService.bulkToggleHouseActive(houseIds),
+    mutationFn: (residencyIds: string[]) => adminService.bulkToggleResidencyActive(residencyIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
-      toast.success("Houses status updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
+      toast.success("Residencies status updated successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -201,12 +231,12 @@ export function useAdminResident(residentId: string | null) {
   });
 }
 
-export function useAdminResidentHouses(residentId: string | null) {
-  return useQuery<ResidentHouse[]>({
-    queryKey: ["admin", "resident", residentId, "houses"],
+export function useAdminResidentResidencies(residentId: string | null) {
+  return useQuery<ResidentResidency[]>({
+    queryKey: ["admin", "resident", residentId, "residencies"],
     queryFn: async () => {
       if (!residentId) throw new Error("Resident ID is required");
-      const response = await adminService.getResidentHouses(residentId);
+      const response = await adminService.getResidentResidencies(residentId);
       return response.data;
     },
     enabled: !!residentId,
@@ -495,7 +525,7 @@ export function useAdminGateEvents(params: {
   page: number;
   pageSize: number;
   passId?: string;
-  houseId?: string;
+  residencyId?: string;
   search?: string;
   filters?: string;
   sort?: string;
@@ -599,14 +629,14 @@ export function useAdminUsers() {
   });
 }
 
-export function useImportHouses() {
+export function useImportResidencies() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData: FormData) => adminService.importHouses(formData),
+    mutationFn: (formData: FormData) => adminService.importResidencies(formData),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "houses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       toast.success(
-        `Imported ${response.data.successful} of ${response.data.total} houses`
+        `Imported ${response.data.successful} of ${response.data.total} residencies`
       );
     },
     onError: (error: any) => {
@@ -631,45 +661,45 @@ export function useImportResidents() {
   });
 }
 
-// House Groups
-export function useAdminHouseGroups(params: {
+// Residency Groups
+export function useAdminResidencyGroups(params: {
   page: number;
   pageSize: number;
   search?: string;
   filters?: string;
   sort?: string;
 }) {
-  return useQuery<PaginatedResponse<HouseGroup>>({
-    queryKey: ["admin", "house-groups", params],
+  return useQuery<PaginatedResponse<ResidencyGroup>>({
+    queryKey: ["admin", "residency-groups", params],
     queryFn: async () => {
-      const response = await adminService.getHouseGroups(params);
+      const response = await adminService.getResidencyGroups(params);
       return response.data;
     },
   });
 }
 
 
-export function useAdminHouseGroup(groupId: string | null) {
-  return useQuery<HouseGroup>({
-    queryKey: ["admin", "house-group", groupId],
+export function useAdminResidencyGroup(groupId: string | null) {
+  return useQuery<ResidencyGroup>({
+    queryKey: ["admin", "residency-group", groupId],
     queryFn: async () => {
-      if (!groupId) throw new Error("House group ID is required");
-      const response = await adminService.getHouseGroup(groupId);
+      if (!groupId) throw new Error("Residency group ID is required");
+      const response = await adminService.getResidencyGroup(groupId);
       return response.data;
     },
     enabled: !!groupId,
   });
 }
 
-export function useCreateHouseGroup() {
+export function useCreateResidencyGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateHouseGroupRequest) =>
-      adminService.createHouseGroup(data),
+    mutationFn: (data: CreateResidencyGroupRequest) =>
+      adminService.createResidencyGroup(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House group created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency group created successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -677,7 +707,7 @@ export function useCreateHouseGroup() {
   });
 }
 
-export function useUpdateHouseGroup() {
+export function useUpdateResidencyGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -686,11 +716,11 @@ export function useUpdateHouseGroup() {
       data,
     }: {
       groupId: string;
-      data: UpdateHouseGroupRequest;
-    }) => adminService.updateHouseGroup(groupId, data),
+      data: UpdateResidencyGroupRequest;
+    }) => adminService.updateResidencyGroup(groupId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House group updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency group updated successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -698,14 +728,14 @@ export function useUpdateHouseGroup() {
   });
 }
 
-export function useDeleteHouseGroup() {
+export function useDeleteResidencyGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupId: string) => adminService.deleteHouseGroup(groupId),
+    mutationFn: (groupId: string) => adminService.deleteResidencyGroup(groupId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House group deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency group deleted successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -713,14 +743,14 @@ export function useDeleteHouseGroup() {
   });
 }
 
-export function useBulkDeleteHouseGroups() {
+export function useBulkDeleteResidencyGroups() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupIds: string[]) => adminService.bulkDeleteHouseGroups(groupIds),
+    mutationFn: (groupIds: string[]) => adminService.bulkDeleteResidencyGroups(groupIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House groups deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency groups deleted successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -728,14 +758,14 @@ export function useBulkDeleteHouseGroups() {
   });
 }
 
-export function useToggleHouseGroupActive() {
+export function useToggleResidencyGroupActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupId: string) => adminService.toggleHouseGroupActive(groupId),
+    mutationFn: (groupId: string) => adminService.toggleResidencyGroupActive(groupId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House group status updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency group status updated successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -743,14 +773,14 @@ export function useToggleHouseGroupActive() {
   });
 }
 
-export function useBulkToggleHouseGroupActive() {
+export function useBulkToggleResidencyGroupActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupIds: string[]) => adminService.bulkToggleHouseGroupActive(groupIds),
+    mutationFn: (groupIds: string[]) => adminService.bulkToggleResidencyGroupActive(groupIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "house-groups"] });
-      toast.success("House groups status updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      toast.success("Residency groups status updated successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -931,49 +961,49 @@ export function useToggleGateAdminStatus() {
 
 
 
-export function useAdminDueHouses(dueId: string | null, params: {
+export function useAdminDueResidencies(dueId: string | null, params: {
   page: number;
   pageSize: number;
   search?: string;
 }) {
-  return useQuery<PaginatedResponse<HouseDue>>({
-    queryKey: ["admin", "due-houses", dueId, params],
+  return useQuery<PaginatedResponse<ResidencyDue>>({
+    queryKey: ["admin", "due-residencies", dueId, params],
     queryFn: async () => {
       if (!dueId) throw new Error("Due ID is required");
-      const response = await adminService.getDueHouses(dueId, params);
+      const response = await adminService.getDueResidencies(dueId, params);
       return response.data;
     },
     enabled: !!dueId,
   });
 }
 
-export function useAdminHouseDue(dueId: string | null, houseId: string | null) {
-  return useQuery<HouseDue>({
-    queryKey: ["admin", "house-due", dueId, houseId],
+export function useAdminResidencyDue(dueId: string | null, residencyId: string | null) {
+  return useQuery<ResidencyDue>({
+    queryKey: ["admin", "residency-due", dueId, residencyId],
     queryFn: async () => {
-      if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
-      const response = await adminService.getHouseDue(dueId, houseId);
+      if (!dueId || !residencyId) throw new Error("Due ID and Residency ID are required");
+      const response = await adminService.getResidencyDue(dueId, residencyId);
       return response.data;
     },
-    enabled: !!dueId && !!houseId,
+    enabled: !!dueId && !!residencyId,
   });
 }
 
 export function useAdminDueSchedules(
   dueId: string | null,
-  houseId: string | null,
+  residencyId: string | null,
   page: number = 1,
   pageSize: number = 10,
   filters?: string,
   sorts?: string
 ) {
   return useQuery({
-    queryKey: ["admin", "due-schedules", dueId, houseId, page, pageSize, filters, sorts],
+    queryKey: ["admin", "due-schedules", dueId, residencyId, page, pageSize, filters, sorts],
     queryFn: async () => {
-      if (!dueId || !houseId) throw new Error("Due and House ID are required");
+      if (!dueId || !residencyId) throw new Error("Due and Residency ID are required");
       const response = await adminService.getDueSchedules(
         dueId,
-        houseId,
+        residencyId,
         page,
         pageSize,
         filters,
@@ -981,26 +1011,26 @@ export function useAdminDueSchedules(
       );
       return response.data;
     },
-    enabled: !!dueId && !!houseId,
+    enabled: !!dueId && !!residencyId,
   });
 }
 
 export function useAdminDuePayments(
   dueId: string | null,
-  houseId: string | null,
+  residencyId: string | null,
   page: number = 1,
   pageSize: number = 10,
   filters?: string,
   sorts?: string
 ) {
   return useQuery({
-    queryKey: ["admin", "due-payments", dueId, houseId, page, pageSize, filters, sorts],
+    queryKey: ["admin", "due-payments", dueId, residencyId, page, pageSize, filters, sorts],
     queryFn: async () => {
-      if (!dueId || !houseId) throw new Error("Due and House ID are required");
-      const response = await adminService.getDuePayments(dueId, houseId, page, pageSize, filters, sorts);
+      if (!dueId || !residencyId) throw new Error("Due and Residency ID are required");
+      const response = await adminService.getDuePayments(dueId, residencyId, page, pageSize, filters, sorts);
       return response.data;
     },
-    enabled: !!dueId && !!houseId,
+    enabled: !!dueId && !!residencyId,
   });
 }
 
@@ -1072,15 +1102,15 @@ export function useAdminTransaction(transactionId: string | null) {
 }
 
 // Prefetching hooks for performance
-export function usePrefetchHouse() {
+export function usePrefetchResidency() {
   const queryClient = useQueryClient();
 
-  return (houseId: string) => {
-    if (!houseId) return;
+  return (residencyId: string) => {
+    if (!residencyId) return;
     queryClient.prefetchQuery({
-      queryKey: ["admin", "house", houseId],
+      queryKey: ["admin", "residency", residencyId],
       queryFn: async () => {
-        const response = await adminService.getHouse(houseId);
+        const response = await adminService.getResidency(residencyId);
         return response.data;
       },
       staleTime: 5 * 60 * 1000,

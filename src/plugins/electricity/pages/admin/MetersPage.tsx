@@ -13,7 +13,7 @@ import { Plus, Zap, Search, Building2 } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
-import { useAdminHouses, useAdminResidents } from "@/hooks/use-admin";
+import { useAdminResidencies, useAdminResidents } from "@/hooks/use-admin";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { Meter, MeterCreate } from "@/plugins/electricity/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export default function AdminMetersPage() {
         meter_number: "",
         meter_type: "",
         disco: "",
-        house_id: "",
+        residency_id: "",
     });
 
     // Pagination state
@@ -45,8 +45,8 @@ export default function AdminMetersPage() {
         },
     });
 
-    // Fetch houses and residents for dropdowns
-    const { data: housesData, isLoading: housesLoading } = useAdminHouses({
+    // Fetch residencies and residents for dropdowns
+    const { data: residenciesData, isLoading: residenciesLoading } = useAdminResidencies({
         page: 1,
         pageSize: 100,
     });
@@ -68,7 +68,7 @@ export default function AdminMetersPage() {
                 meter_number: "",
                 meter_type: "",
                 disco: "",
-                house_id: "",
+                residency_id: "",
             });
         },
         onError: (error: any) => {
@@ -77,13 +77,13 @@ export default function AdminMetersPage() {
     });
 
     const meters = metersData?.items || [];
-    const houses = housesData?.items || [];
+    const residencies = residenciesData?.items || [];
     const residents = residentsData?.items || [];
 
-    // Sort houses and residents for dropdown
-    const sortedHouses = useMemo(
-        () => [...houses].sort((a, b) => a.name.localeCompare(b.name)),
-        [houses]
+    // Sort residencies and residents for dropdown
+    const sortedResidencies = useMemo(
+        () => [...residencies].sort((a, b) => a.name.localeCompare(b.name)),
+        [residencies]
     );
 
     const sortedResidents = useMemo(
@@ -99,8 +99,8 @@ export default function AdminMetersPage() {
     const filteredMeters = meters.filter(
         (meter) =>
             meter.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            meter.house?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            meter.house?.address.toLowerCase().includes(searchQuery.toLowerCase())
+            meter.residency?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            meter.residency?.address.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Pagination data
@@ -115,7 +115,7 @@ export default function AdminMetersPage() {
     };
 
     const handleAddMeter = async () => {
-        if (!formData.meter_number || !formData.meter_type || !formData.disco || !formData.house_id) {
+        if (!formData.meter_number || !formData.meter_type || !formData.disco || !formData.residency_id) {
             toast.error("Please fill in all fields");
             return;
         }
@@ -151,12 +151,12 @@ export default function AdminMetersPage() {
             ),
         },
         {
-            key: "house",
-            header: "House",
+            key: "residency",
+            header: "Residency",
             accessor: (meter) => (
                 <div>
-                    <div className="font-medium">{meter.house?.name || "N/A"}</div>
-                    <div className="text-xs text-muted-foreground">{meter.house?.address || ""}</div>
+                    <div className="font-medium">{meter.residency?.name || "N/A"}</div>
+                    <div className="text-xs text-muted-foreground">{meter.residency?.address || ""}</div>
                 </div>
             ),
         },
@@ -300,41 +300,41 @@ export default function AdminMetersPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-2">
-                            House *
+                            Residency *
                         </label>
                         <select
                             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                            value={formData.house_id}
+                            value={formData.residency_id}
                             onChange={(e) =>
-                                setFormData({ ...formData, house_id: e.target.value })
+                                setFormData({ ...formData, residency_id: e.target.value })
                             }
                         >
-                            <option value="">Select house</option>
-                            {sortedHouses.map((house) => (
-                                <option key={house.id} value={house.id}>
-                                    {house.name} - {house.address}
+                            <option value="">Select residency</option>
+                            {sortedResidencies.map((residency) => (
+                                <option key={residency.id} value={residency.id}>
+                                    {residency.name} - {residency.address}
                                 </option>
                             ))}
                         </select>
-                        {housesLoading && (
-                            <p className="text-xs text-muted-foreground mt-1">Loading houses...</p>
+                        {residenciesLoading && (
+                            <p className="text-xs text-muted-foreground mt-1">Loading residencies...</p>
                         )}
                     </div>
-                    {formData.house_id && (
+                    {formData.residency_id && (
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Associated Residents
                             </label>
                             <div className="text-sm text-muted-foreground space-y-1">
                                 {sortedResidents
-                                    .filter(r => r.houses.some(h => h.id === formData.house_id))
+                                    .filter(r => r?.residencies?.some(h => h.id === formData.residency_id))
                                     .map((resident) => (
                                         <div key={resident.user.id}>
                                             {[resident.user.first_name, resident.user.last_name].filter(Boolean).join(" ") || resident.user.email}
                                         </div>
                                     ))}
-                                {sortedResidents.filter(r => r.houses.some(h => h.id === formData.house_id)).length === 0 && (
-                                    <p className="text-xs">No residents found for this house</p>
+                                {sortedResidents.filter(r => r?.residencies?.some(h => h.id === formData.residency_id)).length === 0 && (
+                                    <p className="text-xs">No residents found for this residency</p>
                                 )}
                             </div>
                         </div>

@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  trailingSlash: true,
   images: {
     domains: ['localhost', "storage.googleapis.com", "api.vmscore.to", "vmscore.vercel.app"],
     remotePatterns: [
@@ -41,7 +42,7 @@ const nextConfig = {
     "dashboard.vmscore.to"
   ],
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vmscore.to'
     return [
       {
         source: '/api/:path*',

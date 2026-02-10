@@ -8,12 +8,14 @@ import {
   Wallet,
   FundWalletRequest,
   WalletTransaction,
-  UpdateHouseRequest,
-  HouseDue,
+  UpdateResidencyRequest,
+  ResidencyDue,
   DueSchedule,
   DuePayment,
   DashboardSelect,
   Transaction,
+  CreateGatePassData,
+  VisitResponse,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -34,53 +36,53 @@ export function useResidentDashboardSelect() {
   });
 }
 
-export function useResidentHouses() {
+export function useResidentResidencies() {
   return useQuery({
-    queryKey: ["resident", "houses"],
+    queryKey: ["resident", "residencies"],
     queryFn: async () => {
-      const response = await residentService.getHouses();
+      const response = await residentService.getResidencies();
       return response.data;
     },
   });
 }
 
-export function useResidentDashboard(houseId: string | null) {
+export function useResidentDashboard(residencyId: string | null) {
   return useQuery({
-    queryKey: ["resident", "dashboard", houseId],
+    queryKey: ["resident", "dashboard", residencyId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
-      const response = await residentService.getDashboard(houseId);
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await residentService.getDashboard(residencyId);
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
 
-export function useResidentHouse(houseId: string | null) {
+export function useResidentResidency(residencyId: string | null) {
   return useQuery({
-    queryKey: ["resident", "house", houseId],
+    queryKey: ["resident", "residency", residencyId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required")
-      const response = await residentService.getResidentHouse(houseId);
+      if (!residencyId) throw new Error("Residency ID is required")
+      const response = await residentService.getResidentResidency(residencyId);
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useUpdateHouse(houseId: string | null) {
+export function useUpdateResidency(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateHouseRequest) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.updateHouse(houseId, data);
+    mutationFn: (data: UpdateResidencyRequest) => {
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.updateResidency(residencyId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "house", houseId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "houses"] });
-      toast.success("House details updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["resident", "residency", residencyId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "residencies"] });
+      toast.success("Residency details updated successfully");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
@@ -89,7 +91,7 @@ export function useUpdateHouse(houseId: string | null) {
 }
 
 export function useGatePasses(
-  houseId: string | null,
+  residencyId: string | null,
   params: {
     page: number;
     pageSize: number;
@@ -99,29 +101,29 @@ export function useGatePasses(
   }
 ) {
   return useQuery<PaginatedResponse<GatePass>>({
-    queryKey: ["resident", "gate-passes", houseId, params],
+    queryKey: ["resident", "gate-passes", residencyId, params],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
+      if (!residencyId) throw new Error("Residency ID is required");
       const response = await residentService.getGatePasses(
-        houseId,
+        residencyId,
         params
       );
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useGatePass(houseId: string | null, passId: string | null) {
+export function useGatePass(residencyId: string | null, passId: string | null) {
   return useQuery({
-    queryKey: ["resident", "gate-pass", houseId, passId],
+    queryKey: ["resident", "gate-pass", residencyId, passId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
+      if (!residencyId) throw new Error("Residency ID is required");
       if (!passId) throw new Error("Pass ID is required");
-      const response = await residentService.getGatePass(houseId, passId);
+      const response = await residentService.getGatePass(residencyId, passId);
       return response.data;
     },
-    enabled: !!houseId && !!passId,
+    enabled: !!residencyId && !!passId,
   });
 }
 
@@ -135,18 +137,18 @@ export function useResident() {
   });
 }
 
-export function useCreateGatePass(houseId: string | null) {
+export function useCreateGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CreateGatePassRequest) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.createGatePass(houseId, data);
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.createGatePass(residencyId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", houseId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "visitors", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", residencyId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "visitors", residencyId] });
       toast.success("Gate pass created successfully!");
     },
     onError: (error: any) => {
@@ -155,18 +157,18 @@ export function useCreateGatePass(houseId: string | null) {
   });
 }
 
-export function useRevokeGatePass(houseId: string | null) {
+export function useRevokeGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (passId: string) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.revokeGatePass(houseId, passId);
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.revokeGatePass(residencyId, passId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", houseId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "visitors", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "dashboard", residencyId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "visitors", residencyId] });
       queryClient.invalidateQueries({ queryKey: ["admin", "gate-passes"] });
       toast.success("Gate pass revoked successfully!");
     },
@@ -177,7 +179,7 @@ export function useRevokeGatePass(houseId: string | null) {
 }
 
 export function useVisitors(
-  houseId: string | null,
+  residencyId: string | null,
   params: {
     page: number;
     pageSize: number;
@@ -187,45 +189,45 @@ export function useVisitors(
   }
 ) {
   return useQuery({
-    queryKey: ["resident", "visitors", houseId, params],
+    queryKey: ["resident", "visitors", residencyId, params],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
+      if (!residencyId) throw new Error("Residency ID is required");
       const response = await residentService.getVisitors(
-        houseId,
+        residencyId,
         params
       );
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useVisitorsByGatePass(houseId: string | null, gatePassId: string | null) {
+export function useVisitorsByGatePass(residencyId: string | null, gatePassId: string | null) {
   return useQuery({
-    queryKey: ["resident", "visitors", houseId, "gate-pass", gatePassId],
+    queryKey: ["resident", "visitors", residencyId, "gate-pass", gatePassId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
+      if (!residencyId) throw new Error("Residency ID is required");
       if (!gatePassId) throw new Error("Gate pass ID is required");
-      const response = await residentService.getVisitorsByGatePass(houseId, gatePassId);
+      const response = await residentService.getVisitorsByGatePass(residencyId, gatePassId);
       return response.data;
     },
-    enabled: !!houseId && !!gatePassId,
+    enabled: !!residencyId && !!gatePassId,
   });
 }
 
 export function useVisitor(
-  houseId: string | null,
+  residencyId: string | null,
   visitorId: string | null
 ) {
   return useQuery({
-    queryKey: ["resident", "visitor", houseId, visitorId],
+    queryKey: ["resident", "visitor", residencyId, visitorId],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
+      if (!residencyId) throw new Error("Residency ID is required");
       if (!visitorId) throw new Error("Visitor ID is required");
-      const response = await residentService.getVisitor(houseId, visitorId);
+      const response = await residentService.getVisitor(residencyId, visitorId);
       return response.data;
     },
-    enabled: !!houseId && !!visitorId,
+    enabled: !!residencyId && !!visitorId,
   });
 }
 
@@ -312,8 +314,8 @@ export function useFundWallet() {
   });
 }
 
-export function useHouseDues(
-  houseId: string | null,
+export function useResidencyDues(
+  residencyId: string | null,
   params: {
     page: number;
     pageSize: number;
@@ -322,41 +324,41 @@ export function useHouseDues(
     filters?: string
   }
 ) {
-  return useQuery<PaginatedResponse<HouseDue>>({
-    queryKey: ["resident", "house-dues", houseId, params],
+  return useQuery<PaginatedResponse<ResidencyDue>>({
+    queryKey: ["resident", "residency-dues", residencyId, params],
     queryFn: async () => {
-      if (!houseId) throw new Error("House ID is required");
-      const response = await residentService.getHouseDues(houseId, params);
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await residentService.getResidencyDues(residencyId, params);
       return response.data;
     },
-    enabled: !!houseId,
+    enabled: !!residencyId,
   });
 }
 
-export function useHouseDue(houseId: string | null, dueId: string | null) {
+export function useResidencyDue(residencyId: string | null, dueId: string | null) {
   return useQuery({
-    queryKey: ["resident", "house-due", houseId, dueId],
+    queryKey: ["resident", "residency-due", residencyId, dueId],
     queryFn: async () => {
       if (!dueId) throw new Error("Due ID is required");
-      if (!houseId) throw new Error("House ID is required");
-      const response = await residentService.getHouseDue(houseId, dueId);
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await residentService.getResidencyDue(residencyId, dueId);
       return response.data;
     },
-    enabled: !!dueId && !!houseId,
+    enabled: !!dueId && !!residencyId,
   });
 }
 
-export function useScheduleHouseDue(houseId: string | null, dueId: string | null) {
+export function useScheduleResidencyDue(residencyId: string | null, dueId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: { payment_breakdown: string }) => {
-      if (!dueId || !houseId) throw new Error("Due ID and House ID are required");
-      return residentService.scheduleHouseDue(houseId, dueId, data);
+      if (!dueId || !residencyId) throw new Error("Due ID and Residency ID are required");
+      return residentService.scheduleResidencyDue(residencyId, dueId, data);
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "house-due", houseId, dueId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "house-dues", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "residency-due", residencyId, dueId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "residency-dues", residencyId] });
       toast.success("Payment schedule updated successfully!");
       return response.data;
     },
@@ -367,46 +369,46 @@ export function useScheduleHouseDue(houseId: string | null, dueId: string | null
 }
 
 export function useDueSchedules(
-  houseId: string | null,
+  residencyId: string | null,
   dueId: string | null,
   page: number = 1,
   pageSize: number = 10,
   filters?: string
 ) {
   return useQuery({
-    queryKey: ["resident", "due-schedules", houseId, dueId, page, pageSize, filters],
+    queryKey: ["resident", "due-schedules", residencyId, dueId, page, pageSize, filters],
     queryFn: async () => {
-      if (!houseId || !dueId) throw new Error("House and Due ID are required");
-      const response = await residentService.getDueSchedules(houseId, dueId, page, pageSize, filters);
+      if (!residencyId || !dueId) throw new Error("Residency and Due ID are required");
+      const response = await residentService.getDueSchedules(residencyId, dueId, page, pageSize, filters);
       return response.data;
     },
-    enabled: !!houseId && !!dueId,
+    enabled: !!residencyId && !!dueId,
   });
 }
 
 export function useDuePayments(
-  houseId: string | null,
+  residencyId: string | null,
   dueId: string | null,
   page: number = 1,
   pageSize: number = 10,
   filters?: string
 ) {
   return useQuery({
-    queryKey: ["resident", "due-payments", houseId, dueId, page, pageSize, filters],
+    queryKey: ["resident", "due-payments", residencyId, dueId, page, pageSize, filters],
     queryFn: async () => {
-      if (!houseId || !dueId) throw new Error("House and Due ID are required");
-      const response = await residentService.getDuePayments(houseId, dueId, page, pageSize, filters);
+      if (!residencyId || !dueId) throw new Error("Residency and Due ID are required");
+      const response = await residentService.getDuePayments(residencyId, dueId, page, pageSize, filters);
       return response.data;
     },
-    enabled: !!houseId && !!dueId,
+    enabled: !!residencyId && !!dueId,
   });
 }
 
-export function usePayDueSchedule(houseId: string | null, dueId: string | null) {
+export function usePayDueSchedule(residencyId: string | null, dueId: string | null) {
   return useMutation({
     mutationFn: (scheduleId: string) => {
-      if (!houseId || !dueId) throw new Error("House and Due ID are required");
-      return residentService.payDueSchedule(houseId, dueId, scheduleId);
+      if (!residencyId || !dueId) throw new Error("Residency and Due ID are required");
+      return residentService.payDueSchedule(residencyId, dueId, scheduleId);
     },
     onSuccess: (response) => {
       return response.data;
@@ -439,17 +441,17 @@ export function useTransaction(reference: string | null) {
   });
 }
 
-export function useAddVisitorsToGatePass(houseId: string | null) {
+export function useAddVisitorsToGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ passId, data }: { passId: string; data: { name: string; email: string; phone?: string }[] }) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.addVisitorsToGatePass(houseId, passId, data);
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.addVisitorsToGatePass(residencyId, passId, data);
     },
     onSuccess: (_, { passId }) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", residencyId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
       // Invalidate specific visitor queries if necessary
       toast.success("Visitors added successfully!");
     },
@@ -459,17 +461,17 @@ export function useAddVisitorsToGatePass(houseId: string | null) {
   });
 }
 
-export function useRemoveVisitorFromGatePass(houseId: string | null) {
+export function useRemoveVisitorFromGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ passId, visitorIds }: { passId: string; visitorIds: string[] }) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.removeVisitorFromGatePass(houseId, passId, visitorIds);
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.removeVisitorFromGatePass(residencyId, passId, visitorIds);
     },
     onSuccess: (_, { passId }) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", residencyId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
       toast.success("Visitor removed successfully!");
     },
     onError: (error: any) => {
@@ -478,17 +480,17 @@ export function useRemoveVisitorFromGatePass(houseId: string | null) {
   });
 }
 
-export function useUploadVisitorsToGatePass(houseId: string | null) {
+export function useUploadVisitorsToGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ passId, data }: { passId: string; data: FormData }) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.uploadVisitorsToGatePass(houseId, passId, data);
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.uploadVisitorsToGatePass(residencyId, passId, data);
     },
     onSuccess: (_, { passId }) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", residencyId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
       toast.success("Visitors uploaded successfully!");
     },
     onError: (error: any) => {
@@ -497,21 +499,96 @@ export function useUploadVisitorsToGatePass(houseId: string | null) {
   });
 }
 
-export function useExtendGatePass(houseId: string | null) {
+export function useExtendGatePass(residencyId: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ passId, validTo }: { passId: string; validTo: string }) => {
-      if (!houseId) throw new Error("House ID is required");
-      return residentService.extendGatePass(houseId, passId, { valid_to: validTo });
+      if (!residencyId) throw new Error("Residency ID is required");
+      return residentService.extendGatePass(residencyId, passId, { valid_to: validTo });
     },
     onSuccess: (_, { passId }) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", houseId, passId] });
-      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", houseId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-pass", residencyId, passId] });
+      queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes", residencyId] });
       toast.success("Gate pass extended successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);
     },
   });
+
+ 
 }
+
+ export function useResidentApproveVisitRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: ({  visitRequestId, data }: {visitRequestId: string; data: CreateGatePassData }) => {
+        return residentService.approveVisitRequest(visitRequestId, data);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["resident", "dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["resident", "visitors"] });
+        toast.success("Visit request approved and gate pass created successfully!");
+      },
+      onError: (error: any) => {
+        toast.error(parseApiError(error).message);
+      },
+    });
+  }
+
+  export function useResidentDeclineVisitRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: ({  visitRequestId, reason }: { visitRequestId: string; reason?: string }) => {
+        return residentService.declineVisitRequest( visitRequestId, reason);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["resident", "dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["resident", "visitors"] });
+        toast.success("Visit request declined successfully!");
+      },
+      onError: (error: any) => {
+        toast.error(parseApiError(error).message);
+      },
+    });
+  }
+
+  export function useResidentVisitRequests(
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string | null;
+      filters?: string;
+    }
+  ) {
+    return useQuery<PaginatedResponse<VisitResponse>>({
+      queryKey: ["resident", "visitRequests", params],
+      queryFn: async () => {
+        const response = await residentService.getVisitRequests( {
+          ...params,
+          sort: params.sort || undefined,
+        });
+        return response.data;
+      },
+    });
+  }
+
+
+  export function useResidentVisitRequest(
+    visitRequestId: string | null
+  ) {
+    return useQuery<VisitResponse>({
+      queryKey: ["resident", "visit-request", visitRequestId],
+      queryFn: async () => {
+        if (!visitRequestId) throw new Error("Visit Request ID is required");
+        const response = await residentService.getVisitRequest(visitRequestId);
+        return response.data;
+      },
+      enabled: !!visitRequestId,
+    });
+  }
+

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAdminDue, useAdminHouses, useAdminHouseGroups, useUpdateDue } from "@/hooks/use-admin";
+import { useAdminDue, useAdminResidencies, useAdminResidencyGroups, useUpdateDue } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/Button";
 import { DueForm, DueFormData } from "../../components/DueForm";
 import { CreateDueRequest, DueTenureLength } from "@/types";
@@ -15,17 +15,17 @@ export default function UpdateDuePage() {
     const { data: due, isLoading: dueLoading } = useAdminDue(dueId);
     const updateMutation = useUpdateDue();
 
-    const { data: housesData } = useAdminHouses({
+    const { data: residenciesData } = useAdminResidencies({
         page: 1,
         pageSize: 100,
     });
 
-    const { data: groupsData } = useAdminHouseGroups({
+    const { data: groupsData } = useAdminResidencyGroups({
         page: 1,
         pageSize: 100,
     });
 
-    const houses = useMemo(() => housesData?.items ?? [], [housesData]);
+    const residencies = useMemo(() => residenciesData?.items ?? [], [residenciesData]);
     const groups = useMemo(() => groupsData?.items ?? [], [groupsData]);
 
     const onSubmit = (data: DueFormData) => {
@@ -34,8 +34,8 @@ export default function UpdateDuePage() {
             description: data.description,
             amount: data.amount,
             recurring: data.recurring,
-            house_groups_ids: data.house_groups_ids,
-            houses_ids: data.houses_ids,
+            residency_groups_ids: data.residency_groups_ids,
+            residencies_ids: data.residencies_ids,
             minimum_payment_breakdown: data.recurring ? data.minimum_payment_breakdown : DueTenureLength.ONE_TIME,
             tenure_length: data.tenure_length,
             start_date: data.recurring ? data.start_date : undefined,
@@ -75,8 +75,8 @@ export default function UpdateDuePage() {
         minimum_payment_breakdown: due.minimum_payment_breakdown,
         tenure_length: due.tenure_length,
         start_date: due.start_date || "",
-        houses_ids: due.houses.map(h => h.id),
-        house_groups_ids: [],
+        residencies_ids: due.residencies.map(h => h.id),
+        residency_groups_ids: [],
     };
 
     return (
@@ -93,7 +93,7 @@ export default function UpdateDuePage() {
                 initialData={initialData}
                 onSubmit={onSubmit}
                 isLoading={updateMutation.isPending}
-                houses={houses}
+                residencies={residencies}
                 groups={groups}
                 submitLabel="Update Due"
             />

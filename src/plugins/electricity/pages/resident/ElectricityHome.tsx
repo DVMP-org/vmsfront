@@ -19,40 +19,40 @@ import { cleanToken } from "../../utils";
 
 export default function ResidentElectricityDashboard() {
     const router = useRouter();
-    const { selectedHouse } = useAppStore();
+    const { selectedResidency } = useAppStore();
     const { data: profile } = useProfile();
 
-    // Get current house ID from selected house or first house from profile
-    const currentHouseId = selectedHouse?.id || profile?.houses?.[0]?.id || null;
+    // Get current residency ID from selected residency or first residency from profile
+    const currentResidencyId = selectedResidency?.id || profile?.residencies?.[0]?.id || null;
 
-    // Fetch meters for the current house
+    // Fetch meters for the current residency
     const { data: metersData, isLoading: isLoadingMeters } = useQuery({
-        queryKey: ["electricity", "meters", currentHouseId],
+        queryKey: ["electricity", "meters", currentResidencyId],
         queryFn: async () => {
-            if (!currentHouseId) throw new Error("House ID is required");
+            if (!currentResidencyId) throw new Error("Residency ID is required");
             const response = await electricityService.getMeters({
                 page: 1,
                 pageSize: 100,
-                house_id: currentHouseId,
+                residency_id: currentResidencyId,
             });
             return response.data;
         },
-        enabled: !!currentHouseId,
+        enabled: !!currentResidencyId,
     });
 
-    // Fetch recent purchases for the current house
+    // Fetch recent purchases for the current residency
     const { data: purchasesData, isLoading: isLoadingPurchases } = useQuery({
-        queryKey: ["electricity", "purchases", currentHouseId],
+        queryKey: ["electricity", "purchases", currentResidencyId],
         queryFn: async () => {
-            if (!currentHouseId) throw new Error("House ID is required");
+            if (!currentResidencyId) throw new Error("Residency ID is required");
             const response = await electricityService.getPurchases({
                 page: 1,
                 pageSize: 10,
-                house_id: currentHouseId,
+                residency_id: currentResidencyId,
             });
             return response.data;
         },
-        enabled: !!currentHouseId,
+        enabled: !!currentResidencyId,
     });
 
     const meters = metersData?.items || [];
@@ -66,14 +66,14 @@ export default function ResidentElectricityDashboard() {
 
     const isLoading = isLoadingMeters || isLoadingPurchases;
 
-    // Show error if no house selected
-    if (!currentHouseId) {
+    // Show error if no residency selected
+    if (!currentResidencyId) {
         return (
             <div className="space-y-6">
                 <EmptyState
                     icon={Zap}
-                    title="No house selected"
-                    description="Please select a house from the dashboard to view electricity information"
+                    title="No residency selected"
+                    description="Please select a residency from the dashboard to view electricity information"
                     action={{
                         label: "Go to Dashboard",
                         onClick: () => router.push("/select"),
@@ -188,7 +188,7 @@ export default function ResidentElectricityDashboard() {
                             <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No meters registered</p>
                             <p className="text-sm mt-2">
-                                Contact admin to register a meter for your house
+                                Contact admin to register a meter for your residency
                             </p>
                         </div>
                     ) : (
@@ -205,7 +205,7 @@ export default function ResidentElectricityDashboard() {
                                                     </span>
                                                 </div>
                                                 {/* <p className="text-sm text-muted-foreground">
-                                                        {titleCase(meter.house?.name ?? meter.house?.address) || "N/A"}
+                                                        {titleCase(meter.residency?.name ?? meter.residency?.address) || "N/A"}
                                                 </p> */}
                                                 <div className="flex gap-2 mt-1">
                                                     <Badge variant="secondary" className="text-xs">

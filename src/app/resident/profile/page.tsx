@@ -55,9 +55,9 @@ export default function ResidentProfilePage() {
     }
   }, [isAdminUser, router]);
 
-  const houses = useMemo(
-    () => dashboardProfile?.houses ?? residentProfile?.houses ?? [],
-    [dashboardProfile?.houses, residentProfile?.houses]
+  const residencies = useMemo(
+    () => dashboardProfile?.residencies ?? residentProfile?.residencies ?? [],
+    [dashboardProfile?.residencies, residentProfile?.residencies]
   );
 
   const residentUser = residentProfile?.user ?? user ?? null;
@@ -255,7 +255,7 @@ export default function ResidentProfilePage() {
             <section className="space-y-4">
               <h2 className="text-lg font-medium text-foreground">Linked Residences</h2>
               <div className="rounded-lg border border-border bg-card overflow-hidden">
-                {houses.length === 0 ? (
+                {residencies.length === 0 ? (
                   <div className="p-8 text-center text-sm text-muted-foreground">
                     No residences linked to this account.
                   </div>
@@ -271,15 +271,15 @@ export default function ResidentProfilePage() {
                         </tr>
                       </thead>
                       <tbody className="[&_tr:last-child]:border-0">
-                        {houses.map((house) => (
-                          <tr key={house.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        {residencies.map((residency) => (
+                          <tr key={residency.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                             <td className="p-4 align-middle font-medium text-foreground">
                               <div className="flex items-center gap-2">
                                 <Home className="h-4 w-4 text-muted-foreground" />
-                                {house.name}
+                                {residency.name}
                               </div>
                             </td>
-                            <td className="p-4 align-middle text-muted-foreground">{house.address}</td>
+                            <td className="p-4 align-middle text-muted-foreground">{residency.address}</td>
                             <td className="p-4 align-middle">
                               <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
                                 Resident
@@ -290,8 +290,8 @@ export default function ResidentProfilePage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => router.push(`/house/${house.id}/forum`)}
-                                title="Open House Portal"
+                                onClick={() => router.push(`/residency/${residency.id}/forum`)}
+                                title="Open Residency Portal"
                               >
                                 <ExternalLink className="h-4 w-4" />
                                 <span className="sr-only">Open</span>

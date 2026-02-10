@@ -17,7 +17,7 @@ import { Due } from "@/types";
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 const PAGE_SIZE = 20;
 
-export default function HouseDuesOverviewPage() {
+export default function ResidencyDuesOverviewPage() {
     const router = useRouter();
 
     const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
@@ -63,13 +63,13 @@ export default function HouseDuesOverviewPage() {
             accessor: (row) => <span className="font-medium tabular-nums">{formatCurrency(row.amount)}</span>,
         },
         {
-            key: "houses_count",
-            header: "Houses",
+            key: "residencies_count",
+            header: "Residencies",
             accessor: (row) => (
                 <div className="flex items-center gap-1.5">
                     <Building2 className="h-3 w-3 text-muted-foreground/40" />
                     <span className="text-xs font-bold text-muted-foreground/80">
-                        {row.houses?.length || 0} Houses
+                        {row.residencies?.length || 0} Units
                     </span>
                 </div>
             ),
@@ -83,7 +83,7 @@ export default function HouseDuesOverviewPage() {
                         variant="ghost"
                         size="sm"
                         className="h-7 px-3 text-[10px] font-black uppercase tracking-tighter text-primary hover:bg-primary/5"
-                        onClick={() => router.push(`/admin/dues/${row.id}/houses`)}
+                        onClick={() => router.push(`/admin/dues/${row.id}/residencies`)}
                     >
                         View
                     </Button>
@@ -100,9 +100,9 @@ export default function HouseDuesOverviewPage() {
                     <div className="flex items-center gap-2 text-[9px] font-black uppercase  text-muted-foreground/50">
                         <span>Dues</span>
                         <ChevronRight className="h-2.5 w-2.5 opacity-40" />
-                        <span className="text-foreground">Houses</span>
+                        <span className="text-foreground">Residencies</span>
                     </div>
-                    <h1 className="text-xl font-black  text-foreground leading-none">House Dues</h1>
+                    <h1 className="text-xl font-black  text-foreground leading-none">Residency Dues</h1>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-9 border-muted-foreground/20 text-xs font-bold uppercase ">

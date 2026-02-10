@@ -132,10 +132,10 @@ const ResultDisplay = ({ result, type }: { result: any, type: "checkin" | "check
                     </div>
                   )}
 
-                  {result.gate_pass.house && (
+                  {result?.gate_pass?.residency && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="opacity-70 flex items-center gap-1.5"><HomeIcon className="h-3 w-3" /> Destination</span>
-                      <span className="font-medium truncate ml-4 text-right">{result.gate_pass.house.name}</span>
+                      <span className="font-medium truncate ml-4 text-right">{result?.gate_pass?.residency?.name}</span>
                     </div>
                   )}
                 </div>
@@ -158,7 +158,7 @@ const ResultDisplay = ({ result, type }: { result: any, type: "checkin" | "check
 
 function GateConsoleContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const [code, setCode] = useState("");
   const [scanType, setScanType] = useState<"checkin" | "checkout">("checkin");
   const [lastResult, setLastResult] = useState<any>(null);

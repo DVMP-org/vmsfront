@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
 
     const gatePasses = dashboard.gate_passes || [];
     const gateEvents = dashboard.gate_events || [];
-    const houses = dashboard.houses || [];
+    const residencies = dashboard.residencies || [];
     const residents = dashboard.residents || [];
 
     // All-in-one pass for stats and grouping
@@ -175,13 +175,13 @@ export default function AdminDashboardPage() {
     return {
       chartData: { statusChartData, eventsByHour, activityTrend },
       stats: {
-        totalHouses: houses.length,
+        totalResidencies: residencies.length,
         totalResidents: residents.length,
         activeGatePasses,
         totalGatePasses: gatePasses.length,
         totalGateScans: gateEvents.length + totalCheckouts,
         passUtilization: gatePasses.length ? Math.round((activeGatePasses / gatePasses.length) * 100) : 0,
-        avgResidentsPerHouse: houses.length ? Math.round(residents.length / houses.length) : 0,
+        avgResidentsPerResidency: residencies.length ? Math.round(residents.length / residencies.length) : 0,
       }
     };
   }, [dashboard]);
@@ -200,24 +200,24 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const houses = dashboard?.houses || [];
+  const residencies = dashboard?.residencies || [];
   const residents = dashboard?.residents || [];
   const {
-    totalHouses,
+    totalResidencies,
     totalResidents,
     activeGatePasses,
     totalGatePasses,
     totalGateScans,
     passUtilization,
-    avgResidentsPerHouse
+    avgResidentsPerResidency
   } = stats || {
-    totalHouses: 0,
+    totalResidencies: 0,
     totalResidents: 0,
     activeGatePasses: 0,
     totalGatePasses: 0,
     totalGateScans: 0,
     passUtilization: 0,
-    avgResidentsPerHouse: 0
+    avgResidentsPerResidency: 0
   };
 
   return (
@@ -252,8 +252,8 @@ export default function AdminDashboardPage() {
       {/* Enhanced Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
-          title="Houses"
-          value={totalHouses}
+          title="Residencies"
+          value={totalResidencies}
           subtitle="Managed properties"
           icon={Building2}
         />
@@ -309,8 +309,8 @@ export default function AdminDashboardPage() {
               <span className="text-sm font-semibold text-muted-foreground">{activeGatePasses}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-t border-zinc-100">
-              <span className="text-sm text-foreground">Residents per house</span>
-              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerHouse}</span>
+              <span className="text-sm text-foreground">Residents per residency</span>
+              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerResidency}</span>
             </div>
           </div>
         </div>
@@ -322,8 +322,8 @@ export default function AdminDashboardPage() {
           </div>
           <div className="p-3 space-y-2">
             {[
-              { label: "Create house", sub: "Add a property profile", href: "/admin/houses", icon: Building2 },
-              { label: "Add resident", sub: "Link a user to houses", href: "/admin/residents/create", icon: Users },
+              { label: "Create residency", sub: "Add a property profile", href: "/admin/residencies", icon: Building2 },
+              { label: "Add resident", sub: "Link a user to residencies", href: "/admin/residents/create", icon: Users },
               { label: "Issue gate pass", sub: "Manage visitor access", href: "/admin/gate", icon: CreditCard },
             ].map((action) => (
               <button
@@ -348,16 +348,16 @@ export default function AdminDashboardPage() {
           </div>
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">Recent houses</span>
-              <span className="text-sm font-semibold text-muted-foreground">{houses.length}</span>
+              <span className="text-sm text-foreground">Recent residencies</span>
+              <span className="text-sm font-semibold text-muted-foreground">{residencies.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-foreground">Recent residents</span>
               <span className="text-sm font-semibold text-muted-foreground">{residents.length}</span>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-foreground/20">
-              <span className="text-sm text-foreground">Avg. residents/house</span>
-              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerHouse}</span>
+              <span className="text-sm text-foreground">Avg. residents/residency</span>
+              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerResidency}</span>
             </div>
           </div>
         </div>
@@ -365,28 +365,28 @@ export default function AdminDashboardPage() {
 
       {/* Recent Activity Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent houses table */}
+        {/* Recent residencies table */}
         <div className="border border-foreground/20 rounded-lg overflow-hidden">
           <div className="border-b border-foreground/20 px-4 py-3 bg-muted/50">
-            <h2 className="text-sm font-semibold text-foreground">Recent Houses</h2>
+            <h2 className="text-sm font-semibold text-foreground">Recent Residencies</h2>
           </div>
-          {!houses || houses.length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No houses yet</div>
+          {!residencies || residencies.length === 0 ? (
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No residencies yet</div>
           ) : (
             <div className="divide-y divide-zinc-100">
-              {houses.slice(0, 5).map((house) => (
+              {residencies.slice(0, 5).map((residency) => (
                 <div
-                  key={house.id}
+                  key={residency.id}
                   className="px-4 py-3 hover:bg-foreground/5 transition-colors cursor-pointer flex items-center justify-between"
-                  onClick={() => router.push(`/admin/houses/${house.id}`)}
+                  onClick={() => router.push(`/admin/residencies/${residency.id}`)}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-foreground truncate">{house.name}</div>
-                    <div className="text-xs text-muted-foreground truncate mt-0.5">{house.address}</div>
+                    <div className="text-sm font-medium text-foreground truncate">{residency.name}</div>
+                    <div className="text-xs text-muted-foreground truncate mt-0.5">{residency.address}</div>
                   </div>
-                  {house.created_at && (
+                  {residency.created_at && (
                     <div className="text-right ml-4 flex-shrink-0">
-                      <div className="text-xs text-zinc-500">{formatDate(house.created_at)}</div>
+                      <div className="text-xs text-zinc-500">{formatDate(residency.created_at)}</div>
                     </div>
                   )}
                 </div>
@@ -418,7 +418,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="ml-4 flex-shrink-0">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--brand-primary,#213928)] text-white">
-                      {resident.houses?.length || 0} {resident.houses?.length === 1 ? 'house' : 'houses'}
+                      {resident.residencies?.length || 0} {resident.residencies?.length === 1 ? 'residency' : 'residencies'}
                     </span>
                   </div>
                 </div>

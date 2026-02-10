@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useAdminResident, useAdminResidentHouses } from "@/hooks/use-admin";
+import { useAdminResident, useAdminResidentResidencies } from "@/hooks/use-admin";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,9 +14,9 @@ export default function ResidentDetailPage() {
     const router = useRouter();
     const residentId = params?.id as string;
     const { data: residentData, isLoading, error } = useAdminResident(residentId);
-    const { data: residentHouses, isLoading: housesLoading, error: housesError } = useAdminResidentHouses(residentId);
+    const { data: residentResidencies, isLoading: residenciesLoading, error: residenciesError } = useAdminResidentResidencies(residentId);
 
-    if (isLoading || housesLoading) {
+    if (isLoading || residenciesLoading) {
         return (
             <>
                 <div className="space-y-6">
@@ -85,7 +85,7 @@ export default function ResidentDetailPage() {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Left Column: Personal Info & Houses */}
+                    {/* Left Column: Personal Info & Residencies */}
                     <div className="space-y-6 lg:col-span-2">
 
                         <div className="grid gap-6 md:grid-cols-2">
@@ -147,37 +147,37 @@ export default function ResidentDetailPage() {
                             </Card>
                         </div>
 
-                        {/* Linked Houses */}
+                        {/* Linked Residencies */}
                         <Card>
                             <CardContent className="p-0 overflow-hidden">
                                 <div className="p-6 border-b border-border bg-muted/5">
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <Home className="h-4 w-4 text-muted-foreground" />
-                                        Linked Residences ({residentHouses?.length})
+                                        Linked Residences ({residentResidencies?.length})
                                     </h3>
                                 </div>
-                                {residentHouses?.length === 0 ? (
+                                {residentResidencies?.length === 0 ? (
                                     <div className="p-6 text-center text-muted-foreground text-sm">
-                                        No houses linked to this resident yet.
+                                        No residencies linked to this resident yet.
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-border">
-                                        {residentHouses?.map(residentHouse => (
-                                            <div key={residentHouse.house.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                                <div className="space-y-1 cursor-pointer" onClick={() => router.push(`/admin/houses/${residentHouse.house.id}`)}>
+                                        {residentResidencies?.map(residentResidency => (
+                                            <div key={residentResidency.residency.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                                <div className="space-y-1 cursor-pointer" onClick={() => router.push(`/admin/residencies/${residentResidency.residency.id}`)}>
                                                     <div className="flex flex-row">
-                                                        <span className="font-medium">{residentHouse.house.name}</span>
-                                                        <span className="font-medium"> {residentHouse.is_super_user && (
+                                                        <span className="font-medium">{residentResidency.residency.name}</span>
+                                                        <span className="font-medium"> {residentResidency.is_super_user && (
                                                             <Badge variant="outline" className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                                                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                                 Super User
                                                             </Badge>
                                                         )}</span>
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground">{residentHouse.house.address}</div>
+                                                    <div className="text-xs text-muted-foreground">{residentResidency.residency.address}</div>
                                                 </div>
-                                                <Badge variant="outline" className={cn("text-xs font-normal", residentHouse.house.is_active ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-muted-foreground")}>
-                                                    {residentHouse.house.is_active ? "Active" : "Inactive"}
+                                                <Badge variant="outline" className={cn("text-xs font-normal", residentResidency.residency.is_active ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-muted-foreground")}>
+                                                    {residentResidency.residency.is_active ? "Active" : "Inactive"}
                                                 </Badge>
                                             </div>
                                         ))}

@@ -11,7 +11,7 @@ interface AddVisitorModalProps {
     isOpen: boolean;
     onClose: () => void;
     passId: string;
-    houseId: string | null;
+    residencyId: string | null;
 }
 
 interface TempVisitor {
@@ -25,7 +25,7 @@ export function AddVisitorModal({
     isOpen,
     onClose,
     passId,
-    houseId,
+    residencyId,
 }: AddVisitorModalProps) {
     // Form State
     const [name, setName] = useState("");
@@ -35,7 +35,7 @@ export function AddVisitorModal({
     // List State
     const [visitors, setVisitors] = useState<TempVisitor[]>([]);
 
-    const addVisitorsMutation = useAddVisitorsToGatePass(houseId);
+    const addVisitorsMutation = useAddVisitorsToGatePass(residencyId);
 
     const handleAddToList = (e: React.FormEvent) => {
         e.preventDefault();

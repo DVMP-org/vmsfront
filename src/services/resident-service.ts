@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import {
-  House,
+  Residency,
   GatePass,
   CreateGatePassRequest,
   ResidentDashboard,
@@ -24,18 +24,23 @@ import {
   FundWalletRequest,
   FundWalletResponse,
   WalletTransaction,
-  ResidentHouse,
+  ResidentResidency,
   ResidentCreate,
-  HouseDue,
+  ResidencyDue,
   DueSchedule,
   DuePayment,
   DashboardSelect,
   ImportResponse,
+  CreateGatePassData,
+  ApproveVisitResponse,
+  VisitResponse,
 } from "@/types";
+import { getValueAsType } from "framer-motion";
+import { get } from "http";
 
 export const residentService = {
-  async getHouses(): Promise<ApiResponse<House[]>> {
-    return apiClient.get("/resident/house/list");
+  async getResidencies(): Promise<ApiResponse<ResidentResidency[]>> {
+    return apiClient.get("/resident/residency/list");
   },
 
   async getDashboardSelect(): Promise<ApiResponse<DashboardSelect>> {
@@ -46,16 +51,16 @@ export const residentService = {
     return apiClient.get("/resident/me");
   },
 
-  async getResidentHouse(houseID: string): Promise<ApiResponse<ResidentHouse>> {
-    return apiClient.get(`/resident/house/${houseID}`);
+  async getResidentResidency(residencyId: string): Promise<ApiResponse<ResidentResidency>> {
+    return apiClient.get(`/resident/residency/${residencyId}`);
   },
 
-  async updateHouse(houseId: string, data: { name: string; description?: string; address: string }): Promise<ApiResponse<House>> {
-    return apiClient.put(`/resident/house/${houseId}`, data);
+  async updateResidency(residencyId: string, data: { name: string; description?: string; address: string }): Promise<ApiResponse<ResidentResidency>> {
+    return apiClient.put(`/resident/residency/${residencyId}`, data);
   },
 
-  async getHouseGroups(houseId: string): Promise<ApiResponse<ResidentHouse[]>> {
-    return apiClient.get(`/resident/house/${houseId}/groups`);
+  async getResidencyGroups(residencyId: string): Promise<ApiResponse<ResidentResidency[]>> {
+    return apiClient.get(`/resident/residency/${residencyId}/groups`);
   },
 
   async updateResidentProfile(
@@ -64,16 +69,16 @@ export const residentService = {
     return apiClient.put("/resident/me", data);
   },
 
-  async getDashboard(houseId: string): Promise<ApiResponse<ResidentDashboard>> {
-    return apiClient.get(`/resident/house/${houseId}/dashboard`);
+  async getDashboard(residencyId: string): Promise<ApiResponse<ResidentDashboard>> {
+    return apiClient.get(`/resident/residency/${residencyId}/dashboard`);
   },
 
-  async createGatePass(houseId: string, data: CreateGatePassRequest): Promise<ApiResponse<GatePass>> {
-    return apiClient.post(`/resident/house/${houseId}/gate-passes`, data);
+  async createGatePass(residencyId: string, data: CreateGatePassRequest): Promise<ApiResponse<GatePass>> {
+    return apiClient.post(`/resident/residency/${residencyId}/gate-passes`, data);
   },
 
   async getGatePasses(
-    houseId: string,
+    residencyId: string,
     params: {
       page: number;
       pageSize: number;
@@ -82,7 +87,7 @@ export const residentService = {
       filters?: string
     }
   ): Promise<ApiResponse<PaginatedResponse<GatePass>>> {
-    return apiClient.get(`/resident/house/${houseId}/gate-passes`, {
+    return apiClient.get(`/resident/residency/${residencyId}/gate-passes`, {
       params: {
         page: params.page,
         page_size: params.pageSize,
@@ -93,16 +98,16 @@ export const residentService = {
     });
   },
 
-  async getGatePass(houseId: string, passId: string): Promise<ApiResponse<GatePass>> {
-    return apiClient.get(`/resident/house/${houseId}/gate-passes/${passId}`);
+  async getGatePass(residencyId: string, passId: string): Promise<ApiResponse<GatePass>> {
+    return apiClient.get(`/resident/residency/${residencyId}/gate-passes/${passId}`);
   },
 
-  async revokeGatePass(houseId: string, passId: string): Promise<ApiResponse<GatePass>> {
-    return apiClient.post(`/resident/house/${houseId}/gate-passes/${passId}/revoke`);
+  async revokeGatePass(residencyId: string, passId: string): Promise<ApiResponse<GatePass>> {
+    return apiClient.post(`/resident/residency/${residencyId}/gate-passes/${passId}/revoke`);
   },
 
   async getVisitors(
-    houseId: string,
+    residencyId: string,
     params: {
       page: number;
       pageSize: number;
@@ -111,7 +116,7 @@ export const residentService = {
       filters?: string
     }
   ): Promise<ApiResponse<PaginatedResponse<Visitor>>> {
-    return apiClient.get(`/resident/house/${houseId}/visitors`, {
+    return apiClient.get(`/resident/residency/${residencyId}/visitors`, {
       params: {
         page: params.page,
         page_size: params.pageSize,
@@ -122,15 +127,15 @@ export const residentService = {
     });
   },
 
-  async getVisitorsByGatePass(houseId: string, gatePassId: string): Promise<ApiResponse<Visitor[]>> {
-    return apiClient.get(`/resident/house/${houseId}/gate-passes/${gatePassId}/visitors`);
+  async getVisitorsByGatePass(residencyId: string, gatePassId: string): Promise<ApiResponse<Visitor[]>> {
+    return apiClient.get(`/resident/residency/${residencyId}/gate-passes/${gatePassId}/visitors`);
   },
 
   async getVisitor(
-    houseId: string,
+    residencyId: string,
     visitorId: string
   ): Promise<ApiResponse<Visitor>> {
-    return apiClient.get(`/resident/house/${houseId}/visitors/${visitorId}`);
+    return apiClient.get(`/resident/residency/${residencyId}/visitors/${visitorId}`);
   },
 
   async onboardResident(data: ResidentUserCreate): Promise<ApiResponse<ResidentUser>> {
@@ -141,38 +146,38 @@ export const residentService = {
   async createForumCategory(
     data: ForumCategoryPayload
   ): Promise<ApiResponse<ForumCategory>> {
-    return apiClient.post("/resident/house/forum/category/create", data);
+    return apiClient.post("/resident/residency/forum/category/create", data);
   },
 
   async updateForumCategory(
-    houseId: string,
+    residencyId: string,
     categoryId: string,
     data: ForumCategoryUpdatePayload
   ): Promise<ApiResponse<ForumCategory>> {
     return apiClient.put(
-      `/resident/house/${houseId}/forum/category/${categoryId}/update`,
+      `/resident/residency/${residencyId}/forum/category/${categoryId}/update`,
       data
     );
   },
 
   async deleteForumCategory(
-    houseId: string,
+    residencyId: string,
     categoryId: string
   ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
     return apiClient.delete(
-      `/resident/house/${houseId}/forum/category/${categoryId}/delete`
+      `/resident/residency/${residencyId}/forum/category/${categoryId}/delete`
     );
   },
 
   async getForumCategory(
-    houseId: string,
+    residencyId: string,
     categoryId: string
   ): Promise<ApiResponse<ForumCategory>> {
-    return apiClient.get(`/resident/house/${houseId}/forum/category/${categoryId}`);
+    return apiClient.get(`/resident/residency/${residencyId}/forum/category/${categoryId}`);
   },
 
   async getForumCategories(
-    houseId: string,
+    residencyId: string,
     params?: {
       page?: number;
       pageSize?: number;
@@ -181,7 +186,7 @@ export const residentService = {
       sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumCategory>>> {
-    return apiClient.get(`/resident/house/${houseId}/forum/categories`, {
+    return apiClient.get(`/resident/residency/${residencyId}/forum/categories`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 100,
@@ -196,20 +201,20 @@ export const residentService = {
   async createForumTopic(
     data: ForumTopicCreatePayload
   ): Promise<ApiResponse<ForumTopic>> {
-    return apiClient.post("/resident/house/forum/topic/create", data);
+    return apiClient.post("/resident/residency/forum/topic/create", data);
   },
 
   async getForumTopic(
-    houseId: string,
+    residencyId: string,
     topicId: string
   ): Promise<ApiResponse<ForumTopic>> {
     return apiClient.get(
-      `/resident/house/${houseId}/forum/topic/${topicId}`
+      `/resident/residency/${residencyId}/forum/topic/${topicId}`
     );
   },
 
   async getForumTopics(
-    houseId: string,
+    residencyId: string,
     params?: {
       page?: number;
       pageSize?: number;
@@ -218,7 +223,7 @@ export const residentService = {
       sort?: string;
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumTopic>>> {
-    return apiClient.get(`/resident/house/${houseId}/forum/topics`, {
+    return apiClient.get(`/resident/residency/${residencyId}/forum/topics`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 20,
@@ -230,38 +235,38 @@ export const residentService = {
   },
 
   async updateForumTopic(
-    houseId: string,
+    residencyId: string,
     topicId: string,
     data: ForumTopicUpdatePayload
   ): Promise<ApiResponse<ForumTopic>> {
     return apiClient.put(
-      `/resident/house/${houseId}/forum/topic/${topicId}/update`,
+      `/resident/residency/${residencyId}/forum/topic/${topicId}/update`,
       data
     );
   },
 
   async deleteForumTopic(
-    houseId: string,
+    residencyId: string,
     topicId: string
   ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
     return apiClient.delete(
-      `/resident/house/${houseId}/forum/topic/${topicId}/delete`
+      `/resident/residency/${residencyId}/forum/topic/${topicId}/delete`
     );
   },
 
   // Forum Posts
   async createForumPost(
-    houseId: string,
+    residencyId: string,
     data: ForumPostCreatePayload
   ): Promise<ApiResponse<ForumPost>> {
     return apiClient.post(
-      `/resident/house/${houseId}/forum/topic/post/create`,
+      `/resident/residency/${residencyId}/forum/topic/post/create`,
       data
     );
   },
 
   async getForumPosts(
-    houseId: string,
+    residencyId: string,
     topicId: string,
     params: {
       page: number;
@@ -272,7 +277,7 @@ export const residentService = {
     }
   ): Promise<ApiResponse<PaginatedResponse<ForumPost>>> {
     return apiClient.get(
-      `/resident/house/${houseId}/forum/topic/${topicId}/post/all`,
+      `/resident/residency/${residencyId}/forum/topic/${topicId}/post/all`,
       {
         params: {
           page: params.page,
@@ -286,13 +291,13 @@ export const residentService = {
   },
 
   async updateForumPost(
-    houseId: string,
+    residencyId: string,
     topicId: string,
     postId: string,
     data: ForumPostUpdatePayload
   ): Promise<ApiResponse<ForumPost>> {
     return apiClient.put(
-      `/resident/house/${houseId}/forum/topic${topicId}/post/${postId}/update`,
+      `/resident/residency/${residencyId}/forum/topic/${topicId}/post/${postId}/update`,
       data
     );
   },
@@ -326,16 +331,16 @@ export const residentService = {
     return apiClient.get(`/resident/wallet/transaction/${reference}`);
   },
 
-  // House Residents Management (Super User)
-  async getHouseResidents(
-    houseId: string,
+  // Residency Residents Management (Super User)
+  async getResidencyResidents(
+    residencyId: string,
     params?: {
       page?: number;
       pageSize?: number;
       search?: string;
     }
-  ): Promise<ApiResponse<PaginatedResponse<ResidentHouse>>> {
-    return apiClient.get(`/resident/house/${houseId}/residents`, {
+  ): Promise<ApiResponse<PaginatedResponse<ResidentResidency>>> {
+    return apiClient.get(`/resident/residency/${residencyId}/residents`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 10,
@@ -344,37 +349,37 @@ export const residentService = {
     });
   },
 
-  async addHouseResident(
-    houseId: string,
+  async addResidencyResident(
+    residencyId: string,
     data: ResidentCreate
   ): Promise<ApiResponse<ResidentUser>> {
-    return apiClient.post(`/resident/house/${houseId}/residents/create`, data);
+    return apiClient.post(`/resident/residency/${residencyId}/residents/create`, data);
   },
 
-  async updateHouseResident(
-    houseId: string,
+  async updateResidencyResident(
+    residencyId: string,
     residentId: string,
     data: ResidentProfileUpdatePayload
   ): Promise<ApiResponse<ResidentUser>> {
-    return apiClient.put(`/resident/house/${houseId}/residents/${residentId}`, data);
+    return apiClient.put(`/resident/residency/${residencyId}/residents/${residentId}`, data);
   },
 
-  async deleteHouseResident(
-    houseId: string,
+  async deleteResidencyResident(
+    residencyId: string,
     residentId: string
   ): Promise<ApiResponse<{ ok: boolean; message: string }>> {
-    return apiClient.delete(`/resident/house/${houseId}/residents/${residentId}/delete`);
+    return apiClient.delete(`/resident/residency/${residencyId}/residents/${residentId}/delete`);
   },
 
   async toggleResidentStatus(
-    houseId: string,
+    residencyId: string,
     residentId: string
-  ): Promise<ApiResponse<ResidentHouse>> {
-    return apiClient.put(`/resident/house/${houseId}/residents/${residentId}/toggle-status`);
+  ): Promise<ApiResponse<ResidentResidency>> {
+    return apiClient.put(`/resident/residency/${residencyId}/residents/${residentId}/toggle-status`);
   },
 
-  async getHouseDues(
-    houseId: string,
+  async getResidencyDues(
+    residencyId: string,
     params: {
       page: number;
       pageSize: number;
@@ -382,8 +387,8 @@ export const residentService = {
       sort?: string;
       filters?: string
     }
-  ): Promise<ApiResponse<PaginatedResponse<HouseDue>>> {
-    return apiClient.get(`/resident/house/${houseId}/dues`, {
+  ): Promise<ApiResponse<PaginatedResponse<ResidencyDue>>> {
+    return apiClient.get(`/resident/residency/${residencyId}/dues`, {
       params: {
         page: params?.page ?? 1,
         page_size: params?.pageSize ?? 10,
@@ -394,76 +399,76 @@ export const residentService = {
     });
   },
 
-  async getHouseDue(houseId: string, dueId: string): Promise<ApiResponse<HouseDue>> {
-    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}`);
+  async getResidencyDue(residencyId: string, dueId: string): Promise<ApiResponse<ResidencyDue>> {
+    return apiClient.get(`/resident/residency/${residencyId}/dues/${dueId}`);
   },
 
-  async scheduleHouseDue(houseId: string, dueId: string, data: { payment_breakdown: string }): Promise<ApiResponse<HouseDue>> {
-    return apiClient.post(`/resident/house/${houseId}/dues/${dueId}/schedule`, data);
+  async scheduleResidencyDue(residencyId: string, dueId: string, data: { payment_breakdown: string }): Promise<ApiResponse<ResidencyDue>> {
+    return apiClient.post(`/resident/residency/${residencyId}/dues/${dueId}/schedule`, data);
   },
 
   async getDueSchedules(
-    houseId: string,
+    residencyId: string,
     dueId: string,
     page: number = 1,
     pageSize: number = 10,
     filters?: string
   ): Promise<ApiResponse<PaginatedResponse<DueSchedule>>> {
-    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/schedules`, {
+    return apiClient.get(`/resident/residency/${residencyId}/dues/${dueId}/schedules`, {
       params: { page, page_size: pageSize, filters },
     });
   },
 
   async getDuePayments(
-    houseId: string,
+    residencyId: string,
     dueId: string,
     page: number = 1,
     pageSize: number = 10,
     filters?: string
   ): Promise<ApiResponse<PaginatedResponse<DuePayment>>> {
-    return apiClient.get(`/resident/house/${houseId}/dues/${dueId}/payments`, {
+    return apiClient.get(`/resident/residency/${residencyId}/dues/${dueId}/payments`, {
       params: { page, page_size: pageSize, filters },
     });
   },
 
   async payDueSchedule(
-    houseId: string,
+    residencyId: string,
     dueId: string,
     scheduleId: string
   ): Promise<ApiResponse<FundWalletResponse>> {
     return apiClient.post(
-      `/resident/house/${houseId}/dues/${dueId}/schedules/${scheduleId}/pay`
+      `/resident/residency/${residencyId}/dues/${dueId}/schedules/${scheduleId}/pay`
     );
   },
   async addVisitorsToGatePass(
-    houseId: string,
+    residencyId: string,
     passId: string,
     data: { name: string; email: string; phone?: string }[]
   ): Promise<ApiResponse<Visitor[]>> {
     return apiClient.post(
-      `/resident/house/${houseId}/gate-passes/${passId}/visitors`,
+      `/resident/residency/${residencyId}/gate-passes/${passId}/visitors`,
       { visitors: data }
     );
   },
 
   async removeVisitorFromGatePass(
-    houseId: string,
+    residencyId: string,
     passId: string,
     visitorIds: string[]
   ): Promise<ApiResponse<{ success: boolean }>> {
     return apiClient.delete(
-      `/resident/house/${houseId}/gate-passes/${passId}/visitors`,
+      `/resident/residency/${residencyId}/gate-passes/${passId}/visitors`,
       { data: visitorIds }
     );
   },
 
   async uploadVisitorsToGatePass(
-    houseId: string,
+    residencyId: string,
     passId: string,
     data: FormData
   ): Promise<ApiResponse<ImportResponse<Visitor>>> {
     return apiClient.post(
-      `/resident/house/${houseId}/gate-passes/${passId}/visitors/bulk`,
+      `/resident/residency/${residencyId}/gate-passes/${passId}/visitors/bulk`,
       data,
       {
         headers: {
@@ -474,13 +479,57 @@ export const residentService = {
   },
 
   async extendGatePass(
-    houseId: string,
+    residencyId: string,
     passId: string,
     data: { valid_to: string }
   ): Promise<ApiResponse<GatePass>> {
     return apiClient.put(
-      `/resident/house/${houseId}/gate-passes/${passId}/extend`,
+      `/resident/residency/${residencyId}/gate-passes/${passId}/extend`,
       data
     );
   },
+
+    /**
+   * Approve visit request - creates a gate pass with specified details
+   */
+  async approveVisitRequest(
+    visitRequestId: string,
+    data: CreateGatePassData
+  ): Promise<ApiResponse<ApproveVisitResponse>> {
+    return apiClient.post(`/resident/visit/request/${visitRequestId}/approve`, data);
+  },
+
+  /**
+   * Decline visit request with optional reason
+   */
+  async declineVisitRequest(
+    visitRequestId: string,
+    reason?: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post(`/resident/visit/request/${visitRequestId}/decline`, { reason });
+  },
+
+  async getVisitRequest(
+    visitRequestId: string): Promise<ApiResponse<VisitResponse>> {
+    return apiClient.get(`/resident/visits/request/${visitRequestId}`);
+  },
+  async getVisitRequests(
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      sort?: string;
+      filters?: string
+    }
+  ): Promise<ApiResponse<PaginatedResponse<VisitResponse>>> {
+    return apiClient.get(`/resident/visits`, {
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
+      },
+    });
+  }
 };

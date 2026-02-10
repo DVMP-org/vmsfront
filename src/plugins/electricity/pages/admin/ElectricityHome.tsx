@@ -23,7 +23,7 @@ const defaultStats: ElectricityStats = {
     active_meters: 0,
     total_purchases: 0,
     total_revenue: 0,
-    houses: [],
+    residencies: [],
     recent_purchases: []
 };
 
@@ -79,12 +79,12 @@ export default function AdminElectricityDashboard() {
             accent: "text-blue-500",
         },
         {
-            title: "Active Houses",
+            title: "Active Residencies",
             value: Array.from(
                 new Set(
-                    (stats.houses || [])
-                        .filter((house) => Array.isArray(house.meters) && house.meters.length > 0)
-                        .map((house) => house.id)
+                    (stats.residencies || [])
+                        .filter((residency) => Array.isArray(residency.meters) && residency.meters.length > 0)
+                        .map((residency) => residency.id)
                         .filter(Boolean)
                 )
             ).length,
@@ -225,7 +225,7 @@ export default function AdminElectricityDashboard() {
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <p className="font-medium">{purchase.house_name}</p>
+                                            <p className="font-medium">{purchase.residency_name}</p>
                                             <Badge
                                                 variant={
                                                     purchase.status === "success"

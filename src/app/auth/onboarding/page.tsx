@@ -236,7 +236,7 @@ export default function OnboardingPage() {
                                     label="Residence Address"
                                     {...register("address")}
                                     error={errors.address?.message}
-                                    placeholder="Block A, House 7, Example Estate"
+                                    placeholder="Block A, Residency 7, Example Estate"
                                     icon={MapPin}
                                 />
                                 <div className="space-y-4">

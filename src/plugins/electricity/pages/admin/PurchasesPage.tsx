@@ -38,7 +38,7 @@ export default function AdminPurchasesPage() {
         (purchase) =>
             purchase.meter?.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
             purchase.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.email.toLowerCase().includes(searchQuery.toLowerCase())
+            purchase?.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const totalRevenue = purchases
@@ -75,11 +75,11 @@ export default function AdminPurchasesPage() {
             accessor: (purchase) => purchase.email,
         },
         {
-            key: "house",
-            header: "House",
+            key: "residency",
+            header: "Residency",
             accessor: (purchase) => (
                 <span className="text-muted-foreground">
-                    {purchase?.house?.name || "N/A"}
+                    {purchase?.residency?.name || "N/A"}
                 </span>
             ),
         },
@@ -185,29 +185,29 @@ export default function AdminPurchasesPage() {
                             }
                         />
                     ) : (
-                                <>
-                                    <DataTable
-                                        data={filteredPurchases}
-                                        columns={columns}
-                                        searchable={false}
-                                        showPagination={false}
-                                        emptyMessage="No purchases found"
-                                    />
-                                    {showPagination && (
-                                        <PaginationBar
-                                            page={page}
-                                            pageSize={pageSize}
-                                            total={total}
-                                            totalPages={totalPages}
-                                            hasNext={hasNext}
-                                            hasPrevious={hasPrevious}
-                                            resourceLabel="purchases"
-                                            onChange={handlePageChange}
-                                            isFetching={isFetching}
-                                            className="mt-6"
-                                        />
-                                    )}
-                                </>
+                        <>
+                            <DataTable
+                                data={filteredPurchases}
+                                columns={columns}
+                                searchable={false}
+                                showPagination={false}
+                                emptyMessage="No purchases found"
+                            />
+                            {showPagination && (
+                                <PaginationBar
+                                    page={page}
+                                    pageSize={pageSize}
+                                    total={total}
+                                    totalPages={totalPages}
+                                    hasNext={hasNext}
+                                    hasPrevious={hasPrevious}
+                                    resourceLabel="purchases"
+                                    onChange={handlePageChange}
+                                    isFetching={isFetching}
+                                    className="mt-6"
+                                />
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>

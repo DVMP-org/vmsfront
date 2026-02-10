@@ -1,4 +1,4 @@
-import { Admin, House } from "./index";
+import { Admin } from "./index";
 
 export interface GateAdmin {
     id: string;

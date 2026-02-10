@@ -31,7 +31,7 @@ export enum DueTenureLength {
     YEARLY = "yearly",
 }
 
-export enum HouseDueStatus {
+export enum ResidencyDueStatus {
     UNPAID = "unpaid",
     PARTIALLY_PAID = "partially_paid",
     PAID = "paid",
@@ -53,7 +53,16 @@ export interface User {
     name?: string | null
 }
 
-export interface House {
+export interface ResidencyType{
+    id: string;
+    name: string;
+    slug: string;
+    is_active : boolean;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+}
+export interface Residency {
     id: string;
     name: string;
     description: string | null;
@@ -62,36 +71,37 @@ export interface House {
     is_active: boolean;
     created_at: string;
     updated_at: string;
-    house_groups?: HouseGroup[] | null;
+    residency_groups?: ResidencyGroup[] | null;
+    type?: ResidencyType | null;
 
 }
 
-export interface HouseGroup {
+export interface ResidencyGroup {
     id: string;
     name: string;
     description: string | null;
-    house_ids: string[];
-    houses?: House[];
+    residency_ids: string[];
+    residencies?: Residency[];
     is_active: boolean;
     created_at: string;
     updated_at: string;
 }
 
-export interface CreateHouseGroupRequest {
+export interface CreateResidencyGroupRequest {
     name: string;
     description?: string | null;
-    house_ids: string[];
+    residency_ids: string[];
 }
 
-export interface UpdateHouseGroupRequest {
+export interface UpdateResidencyGroupRequest {
     name?: string;
     description?: string | null;
-    house_ids?: string[];
+    residency_ids?: string[];
 }
 
-export interface UserHouseMembership {
+export interface UserResidencyMembership {
     id: string;
-    house: House;
+    residency: Residency;
     status?: string;
     is_primary?: boolean;
     resident_super_user?: boolean;
@@ -128,24 +138,24 @@ export interface Resident {
     name?: string;
     updated_at: string;
     user?: User | null;
-    houses?: House[];
+    residencies?: Residency[];
 }
 
 export interface ResidentUser {
     user: User;
     resident: Resident;
-    houses?: House[] | null;
+    residencies?: Residency[] | null;
 }
 
-export interface HouseDetail {
-    house: House;
-    house_groups?: HouseGroup[];
+export interface ResidencyDetail {
+    residency: Residency;
+    residency_groups?: ResidencyGroup[];
     residents?: ResidentUser[];
 }
 
 export interface ResidentUserCreate {
     user_id: string;
-    house_slugs: string[];
+    residency_slugs: string[];
     first_name?: string;
     last_name?: string;
     phone?: string;
@@ -199,14 +209,14 @@ export enum VisitorStatus {
 
 export interface ForumCategory {
     id: string;
-    house_id?: string | null;
+    residency_id?: string | null;
     slug: string;
     name: string;
     description?: string | null;
     is_default: boolean;
     is_locked?: boolean;
     topics_count?: number;
-    house?: House | null;
+    residency?: Residency | null;
     last_activity_at?: string | null;
     created_at?: string;
     updated_at?: string;
@@ -221,8 +231,8 @@ export interface ForumPostAttachment {
 export interface ForumPost {
     id: string;
     topic_id: string;
-    house_id?: string | null;
-    house?: House | null;
+    residency_id?: string | null;
+    residency?: Residency | null;
     author_id?: string | null;
     content: string;
     attachments?: ForumPostAttachment[] | null;
@@ -239,7 +249,7 @@ export interface ForumPost {
 
 export interface ForumTopic {
     id: string;
-    house_id?: string | null;
+    residency_id?: string | null;
     category_id: string;
     title: string;
     slug: string;
@@ -255,7 +265,7 @@ export interface ForumTopic {
     deleted_at?: string | null;
     author?: User | null;
     author_name?: string | null;
-    house?: House | null;
+    residency?: Residency | null;
     category?: ForumCategory | null;
     initial_post?: ForumPost | null;
     latest_post?: ForumPost | null;
@@ -266,7 +276,7 @@ export interface GatePass {
     id: string;
     code: string;
     qr_code_url: string | null;
-    house_id: string;
+    residency_id: string;
     resident_id: string;
     valid_from: string | null;
     valid_to: string | null;
@@ -277,7 +287,7 @@ export interface GatePass {
     updated_at: Date;
     visitors: Visitor[];
     gate_events?: GateEvent[];
-    house?: House
+    residency?: Residency
 }
 
 export interface GateEvent {
@@ -288,13 +298,13 @@ export interface GateEvent {
     checkin_time: string;
     checkout_time: string | null;
     created_at: string;
-    house_id?: string | null;
+    residency_id?: string | null;
     gate_id?: string | null;
     updated_at: string;
     owner?: Visitor | Resident;
     gate_pass?: GatePass | null;
     scanned_by?: Admin | null;
-    house?: House | null;
+    residency?: Residency | null;
     gate?: Gate | null;
 
 }
@@ -325,8 +335,8 @@ export interface UserProfile extends User {
     user_type?: UserType | null;
     resident?: Resident | null;
     admin?: Admin | null;
-    houses?: House[];
-    memberships?: UserHouseMembership[];
+    residencies?: Residency[];
+    memberships?: UserResidencyMembership[];
     roles?: AdminRole[];
     admin_roles?: AdminRole[];
     is_admin?: boolean;
@@ -345,13 +355,13 @@ export interface AdminSummary {
 
 export interface DashboardSelect {
     user: UserProfile;
-    houses: House[];
+    residencies: Residency[];
     // admin: AdminSummary | null;
 }
 
 export interface ResidentDashboard {
     resident: Resident;
-    house: House;
+    residency: Residency;
     gate_passes: GatePass[];
     gate_events: GateEvent[];
     gate_events_approved: number;
@@ -385,7 +395,7 @@ export interface ResetPasswordRequest {
 
 export interface CreateGatePassRequest {
     resident_id: string;
-    house_id: string;
+    residency_id: string;
     valid_from: string;
     valid_to: string;
     max_uses?: number;
@@ -396,13 +406,13 @@ export interface CreateGatePassRequest {
     }[];
 }
 
-export interface UpdateHouseRequest {
+export interface UpdateResidencyRequest {
     name: string;
     description?: string;
     address: string;
 }
 
-export interface CreateHouseRequest {
+export interface CreateResidencyRequest {
     name: string;
     description?: string;
     address: string;
@@ -429,7 +439,7 @@ export interface GatePassCheckinRequest {
 }
 
 export interface ForumCategoryPayload {
-    house_id: string;
+    residency_id: string;
     name: string;
     description?: string;
     is_default?: boolean;
@@ -441,11 +451,11 @@ export interface ForumCategoryUpdatePayload {
     description?: string;
     is_default?: boolean;
     is_locked?: boolean;
-    house_id?: string;
+    residency_id?: string;
 }
 
 export interface ForumTopicCreatePayload {
-    house_id: string;
+    residency_id: string;
     category_id: string;
     title: string;
     content: string;
@@ -454,7 +464,7 @@ export interface ForumTopicCreatePayload {
 export interface ForumTopicUpdatePayload {
     title?: string;
     category_id?: string;
-    house_id?: string;
+    residency_id?: string;
     is_pinned?: boolean;
     is_locked?: boolean;
     is_deleted?: boolean;
@@ -465,7 +475,7 @@ export interface ForumPostCreatePayload {
     topic_id: string;
     content: string;
     attachments?: ForumPostAttachment[];
-    house_id?: string;
+    residency_id?: string;
 }
 
 export interface ForumPostUpdatePayload {
@@ -524,7 +534,7 @@ export interface AnalyticsTimeSeriesPoint {
 }
 
 export interface AnalyticsTimeSeries {
-    houses: AnalyticsTimeSeriesPoint[];
+    residencies: AnalyticsTimeSeriesPoint[];
     gate_passes: AnalyticsTimeSeriesPoint[];
     visitors: AnalyticsTimeSeriesPoint[];
     checkins: AnalyticsTimeSeriesPoint[];
@@ -533,7 +543,7 @@ export interface AnalyticsTimeSeries {
 
 export interface AnalyticsSummary {
     total_residents: number;
-    total_houses: number;
+    total_residencies: number;
     total_gate_passes: number;
     total_gate_events: number;
     total_gate_events_approved: number;
@@ -610,7 +620,7 @@ export interface UpdateBrandingThemeRequest {
 }
 
 export interface AdminDashboard {
-    houses: House[];
+    residencies: Residency[];
     residents: ResidentUser[];
     gate_passes: GatePass[];
     gate_events: GateEvent[];
@@ -709,14 +719,14 @@ export interface UpdatePaymentGatewayRequest {
     active?: boolean;
 }
 
-export interface ResidentHouse {
+export interface ResidentResidency {
     resident: Resident;
-    house: House;
+    residency: Residency;
     is_super_user: boolean;
     is_active: boolean;
 }
 
-export interface HouseLite {
+export interface ResidencyLite {
     id: string;
     name: string;
     address: string;
@@ -730,7 +740,7 @@ export interface Due {
     minimum_payment_breakdown: DueTenureLength;
     tenure_length: DueTenureLength;
     recurring: boolean;
-    houses: HouseLite[];
+    residencies: ResidencyLite[];
     start_date?: string;
     created_at?: string;
     updated_at?: string;
@@ -740,8 +750,8 @@ export interface CreateDueRequest {
     name: string;
     description: string;
     amount: number;
-    house_groups_ids: string[];
-    houses_ids: string[];
+    residency_groups_ids: string[];
+    residencies_ids: string[];
     minimum_payment_breakdown: string; // DueTenureLength
     tenure_length: string; // DueTenureLength
     recurring: boolean;
@@ -751,13 +761,13 @@ export interface CreateDueRequest {
 export interface ResidentCreate {
 
     email: string;
-    house_id: string;
+    residency_id: string;
     first_name: string;
     last_name: string;
     phone: string;
     address: string;
 }
-export interface HouseDueOption {
+export interface ResidencyDueOption {
     payment_breakdown: string;
     amount: string;
     due_amount: number;
@@ -767,21 +777,21 @@ export interface HouseDueOption {
     };
 }
 
-export interface HouseDue {
+export interface ResidencyDue {
     id: string;
     due_id: string;
-    house_id: string;
+    residency_id: string;
     due?: Due;
-    house?: House;
+    residency?: Residency;
     amount: number;
     balance: number;
     paid_amount: number;
-    status: HouseDueStatus;
+    status: ResidencyDueStatus;
     payment_breakdown?: string | null;
     payment_completed?: boolean;
     schedules?: DueSchedule[];
     payments?: DuePayment[];
-    payment_breakdown_options?: HouseDueOption[];
+    payment_breakdown_options?: ResidencyDueOption[];
     created_at: string;
     updated_at: string;
     next_schedule?: DuePayment | null;
@@ -790,8 +800,8 @@ export interface HouseDue {
 export interface DueSchedule {
     id: string;
     due_id: string;
-    house_id: string;
-    house_due_id: string;
+    residency_id: string;
+    residency_due_id: string;
     payment_date: string;
     balance_before: number;
     balance_after: number;
@@ -806,8 +816,8 @@ export interface DueSchedule {
 export interface DuePayment {
     id: string;
     due_id: string;
-    house_id: string;
-    house_due_id: string;
+    residency_id: string;
+    residency_due_id: string;
     due_schedule_id?: string;
     payment_date: string;
     amount: number;
@@ -849,4 +859,71 @@ export interface ImportResult {
     successful: number;
     failed: number;
     results: ImportResultItem[];
+}
+
+
+
+export interface ApproveVisitResponse {
+  id: string;
+  message: string;
+  gate_pass?: {
+    id: string;
+    code: string;
+    qr_code_url?: string | null;
+    valid_from?: string | null;
+    valid_to?: string | null;
+  };
+  visitor?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    pass_code_suffix?: string | null;
+    qr_code_url?: string | null;
+  };
+}
+
+
+export interface VisitResidency {
+  id: string;
+  name: string;
+  address: string;
+  slug?: string | null;
+}
+
+export interface VisitResident {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface CreateVisitRequest {
+  name: string;
+  phone: string;
+  email: string;
+  residency_id: string;
+  resident_id: string;
+  purpose: string;
+  additional_information?: string;
+}
+
+export interface VisitResponse {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  residency_id: string;
+  resident_id: string;
+  purpose: string;
+  additional_information?: string;
+  decline_reason?: string | null;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateGatePassData {
+  valid_from?: string | null;
+  valid_to?: string | null;
+  max_uses?: number | null;
 }
