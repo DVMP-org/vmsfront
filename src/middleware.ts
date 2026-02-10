@@ -3,13 +3,14 @@ import { NextResponse, type NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get("host") || "";
+  const hostname = request.headers.get("host")?.replace(":3000", "")
+  ?.replace(":443", "") || "";
 
   // Handle subdomain routing for visit module
   const subdomain = hostname.split(".")[0];
   const visitSubdomain = process.env.NEXT_PUBLIC_VISIT_SUBDOMAIN || "visit";
   if (subdomain === visitSubdomain && pathname !== "/visit") {
-    return NextResponse.redirect(new URL("/visit", request.url));
+    return NextResponse.rewrite(new URL("/visit", request.url));
   }
   // Define public vs private paths
   const isAuthPath = pathname.startsWith('/auth');
