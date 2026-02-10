@@ -16,6 +16,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
+        env:
+          NEXT_PUBLIC_API_URL: https://api.vmscore.to
+          NEXT_PUBLIC_APP_NAME: VMSCORE
+          NEXT_PUBLIC_WS_URL: ws://api.vmscore.to
+          NEXT_VISIT_SUBDOMAIN: visit
+          NEXT_APP_DOMAIN: vmscore.to
       - run: npm install
       - run: npm run build
       - run: npm run test
