@@ -21,7 +21,6 @@ jobs:
       - run: npm run test
     
   build-docker-push:
-    needs: build
     runs-on: ubuntu-latest
     # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
