@@ -63,13 +63,6 @@ export function ResidencyForm({
         setValue("residency_group_ids", nextIds, { shouldValidate: true, shouldDirty: true });
     };
 
-    const toggleResidencyTypeSelection = (typeId: string) => {
-        console.log("Selected type ID:", typeId);
-        const currentId = selectedTypeId;
-        const nextId = currentId === typeId ? "" : typeId;
-        setValue("type_id", nextId, { shouldValidate: true, shouldDirty: true });
-    }
-
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
@@ -136,13 +129,15 @@ export function ResidencyForm({
                     "w-full max-h-48 overflow-y-auto border rounded-md p-3 bg-card",
                     errors.type_id ? "border-destructive bg-destructive/5" : "border-input"
                 )}
-                    onChange={(e) => toggleResidencyTypeSelection(e.target.value)}
+                    value={selectedTypeId}
+                    onChange={(e) => setValue("type_id", e.target.value, { shouldValidate: true, shouldDirty: true })}
                 >
+                    <option value="">Select a type</option>
                     {residencyTypes && residencyTypes.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No residency types available</p>
+                        <option disabled>No residency types available</option>
                     ) : (
                         residencyTypes?.map((type) => (
-                            <option key={type.id} value={type.id} className="text-sm" selected={selectedTypeId === type.id}>
+                            <option key={type.id} value={type.id} className="text-sm">
                                 {type.name}
                             </option>
                         ))
