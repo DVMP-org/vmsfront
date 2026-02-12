@@ -91,8 +91,6 @@ export default function IntegrationsPage() {
 
     const integrations = integrationsResponse?.items || [];
 
-    console.log("Integrations fetched:", integrations);
-
     // Filter by status client-side
     const filteredIntegrations = useMemo(() => {
         return integrations.filter((integration) => {
@@ -106,7 +104,7 @@ export default function IntegrationsPage() {
 
     // Get unique integration types for filtering
     const integrationTypes = useMemo(() => {
-        const types = new Set(integrations.map((i) => i.integration_type));
+        const types = new Set(integrations.map((i) => i.provider));
         return Array.from(types) as IntegrationType[];
     }, [integrations]);
 
@@ -348,9 +346,9 @@ function IntegrationRow({
         <TableRow>
             <TableCell>
                 <div className="flex items-center gap-3">
-                    {integration.logo_url ? (
+                    {integration.config?.logo_url ? (
                         <img
-                            src={integration.logo_url}
+                            src={integration.config.logo_url}
                             alt={integration.name}
                             className="h-8 w-8 rounded object-contain bg-muted p-0.5"
                         />
@@ -373,11 +371,11 @@ function IntegrationRow({
             </TableCell>
             <TableCell>
                 <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
-                    {integration.description}
+                    {integration.config?.description}
                 </p>
             </TableCell>
             <TableCell>
-                <IntegrationTypeBadge type={integration.integration_type} />
+                <IntegrationTypeBadge type={integration.provider} />
             </TableCell>
             <TableCell>
                 <IntegrationStatusToggle
@@ -410,9 +408,9 @@ function IntegrationRow({
                     >
                         <Settings className="h-4 w-4 text-muted-foreground" />
                     </button>
-                    {integration.website_url && (
+                    {integration.config?.website_url && (
                         <a
-                            href={integration.website_url}
+                            href={integration.config.website_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded hover:bg-muted transition-colors"

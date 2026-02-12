@@ -118,6 +118,24 @@ export default function IntegrationDetailsPage() {
 
             if (isRequired && (value === undefined || value === "" || value === null)) {
                 newErrors[key] = "This field is required";
+                return;
+            }
+
+            // Validate email format
+            if (field.type === "email" && value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(String(value))) {
+                    newErrors[key] = "Please enter a valid email address";
+                }
+            }
+
+            // Validate URL format
+            if (field.type === "url" && value) {
+                try {
+                    new URL(String(value));
+                } catch {
+                    newErrors[key] = "Please enter a valid URL";
+                }
             }
         });
 
