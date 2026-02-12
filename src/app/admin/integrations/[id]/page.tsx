@@ -122,7 +122,7 @@ export default function IntegrationDetailsPage() {
             }
             // Validate email format (if value exists)
             else if (field.type === "email" && value) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 if (!emailRegex.test(String(value))) {
                     newErrors[key] = "Please enter a valid email address";
                 }
