@@ -33,7 +33,7 @@ import {
     Info,
     Zap,
 } from "lucide-react";
-import { useDisableIntegration, useEnableIntegration, useIntegration, useUpdateIntegration, useUpdateIntegrationCredentials } from "@/hooks/use-integrations";
+import { useDisableIntegration, useEnableIntegration, useIntegration, useUpdateIntegrationCredentials } from "@/hooks/use-integrations";
 import { titleCase } from "@/lib/utils";
 
 export default function IntegrationDetailsPage() {
@@ -116,21 +116,19 @@ export default function IntegrationDetailsPage() {
             const isRequired = field.required !== false;
             const value = credentialValues[key];
 
+            // Check required fields
             if (isRequired && (value === undefined || value === "" || value === null)) {
                 newErrors[key] = "This field is required";
-                return;
             }
-
-            // Validate email format
-            if (field.type === "email" && value) {
+            // Validate email format (if value exists)
+            else if (field.type === "email" && value) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(String(value))) {
                     newErrors[key] = "Please enter a valid email address";
                 }
             }
-
-            // Validate URL format
-            if (field.type === "url" && value) {
+            // Validate URL format (if value exists)
+            else if (field.type === "url" && value) {
                 try {
                     new URL(String(value));
                 } catch {
