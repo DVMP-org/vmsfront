@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks } from "lucide-react";
+import { Settings, CreditCard, Palette, Blocks, FileText } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 
 type SettingsTab = "payment" | "branding" | "logs" | "integrations";
@@ -56,7 +56,7 @@ function SettingsLayoutContent({
                     <Settings className="h-4 w-4 text-zinc-600" />
                     <h1 className="text-lg font-semibold text-foreground">Platform Settings</h1>
                 </div>
-                <p className="text-xs text-muted-foreground">Configure payment gateways and branding</p>
+                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations and view logs</p>
             </div>
 
             {/* Tabs */}
@@ -105,7 +105,7 @@ function SettingsLayoutContent({
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <Palette className="h-3.5 w-3.5" />
+                        <FileText className="h-3.5 w-3.5" />
                         Logs
                     </div>
                 </button>
@@ -121,7 +121,7 @@ function SettingsLayoutContent({
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
     return (
-        <Suspense>
+        <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" /></div>}>
             <SettingsLayoutContent>{children}</SettingsLayoutContent>
         </Suspense>
     )
