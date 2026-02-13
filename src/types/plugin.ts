@@ -58,7 +58,7 @@ export interface Plugin {
     icon: any;
     enabled: boolean;
     category: string;
-    imageUrl: string;
+    imageUrl?: string;
     color: string;
     details: PluginDetails;
     config: PluginConfig;

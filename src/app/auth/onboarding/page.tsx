@@ -35,7 +35,7 @@ type OnboardingValues = z.infer<typeof onboardingSchema>;
 export default function OnboardingPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const token = searchParams.get("token");
+    const token = searchParams?.get("token");
 
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState<any>(null);

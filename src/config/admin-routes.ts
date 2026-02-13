@@ -15,6 +15,7 @@ import {
     MessageSquare,
     type LucideIcon,
     DoorOpen,
+    Blocks,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -58,6 +59,7 @@ export const adminLinks: AdminRoute[] = [
     { href: "/admin/forums", label: "Forums", icon: MessageSquare, permission: "forum_posts.list" },
     { href: "/admin/settings", label: "Settings", icon: Settings, permission: ["branding.list", 'settings.show'] },
     { href: "/admin/plugins", label: "Plugins", icon: Puzzle, permission: "plugins.list" },
+
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.summary" },
     { href: "/admin/transactions", label: "Transactions", icon: CreditCard, permission: "transactions.list" },
     { href: "/admin/profile", label: "Profile", icon: UserCog },

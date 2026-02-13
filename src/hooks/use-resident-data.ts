@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { residentService } from "@/services/resident-service";
-import { DashboardSelect, ResidentDashboard, ResidentResidency } from "@/types";
+import { DashboardSelect, Residency, ResidentDashboard, ResidentResidency } from "@/types";
 import { useAuthStore } from "@/store/auth-store";
 
 export function useResidentDashboardSelect() {
@@ -17,7 +17,7 @@ export function useResidentDashboardSelect() {
 }
 
 export function useResidentResidencies() {
-    return useQuery({
+    return useQuery<ResidentResidency[]>({
         queryKey: ["resident", "residencies"],
         queryFn: async () => {
             const response = await residentService.getResidencies();
@@ -27,7 +27,7 @@ export function useResidentResidencies() {
 }
 
 export function useResidentDashboard(residencyId: string | null) {
-    return useQuery({
+    return useQuery<ResidentDashboard>({
         queryKey: ["resident", "dashboard", residencyId],
         queryFn: async () => {
             if (!residencyId) throw new Error("Residency ID is required");
@@ -40,7 +40,7 @@ export function useResidentDashboard(residencyId: string | null) {
 
 
 export function useResidentResidency(residencyId: string | null) {
-    return useQuery({
+    return useQuery<ResidentResidency>({
         queryKey: ["resident", "residency", residencyId],
         queryFn: async () => {
             if (!residencyId) throw new Error("Residency ID is required")
