@@ -40,13 +40,14 @@ export function useIntegration(integrationId: string | null) {
 }
 
 
-export function useEnableIntegration(integrationId: string) {
+export function useEnableIntegration() {
   return useMutation({
-    mutationFn: async () => {
-      return integrationService.enableIntegration(integrationId);
+    mutationFn: async (name: string) => {
+      return integrationService.enableIntegration(name);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["integrations", integrationId] });
+    onSuccess: (_data, name) => {
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
+      queryClient.invalidateQueries({ queryKey: ["integration", name] });
       toast.success("Integration enabled successfully");
     },
     onError: (error: any) => {
@@ -55,13 +56,14 @@ export function useEnableIntegration(integrationId: string) {
   });
 }
 
-export function useDisableIntegration(integrationId: string) {
+export function useDisableIntegration() {
   return useMutation({
-    mutationFn: async () => {
-      return integrationService.disableIntegration(integrationId);
+    mutationFn: async (name: string) => {
+      return integrationService.disableIntegration(name);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["integrations", integrationId] });
+    onSuccess: (_data, name) => {
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
+      queryClient.invalidateQueries({ queryKey: ["integration", name] });
       toast.success("Integration disabled successfully");
     },
     onError: (error: any) => {
@@ -76,7 +78,7 @@ export function useUpdateIntegrationCredentials(integrationId: string) {
       return integrationService.updateIntegrationCredentials(integrationId, credentials);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["integrations", integrationId] });
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
       queryClient.invalidateQueries({ queryKey: ["integration", integrationId] });
       toast.success("Integration updated successfully");
     },

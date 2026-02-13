@@ -24,7 +24,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import {
     IntegrationTypeBadge,
     IntegrationStatusToggle,
-} from "./components";
+} from "../integrations/components";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import {
     Puzzle,
@@ -38,9 +38,10 @@ import {
 } from "lucide-react";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { FilterConfig } from "@/components/ui/DataTable";
-import { useIntegrations } from "@/hooks/use-integrations";
+import { useDisableIntegration, useEnableIntegration, useIntegrations } from "@/hooks/use-integrations";
+import { titleCase } from "@/lib/utils";
 
-export default function IntegrationsPage() {
+export default function IntegrationsSection() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
@@ -96,8 +97,8 @@ export default function IntegrationsPage() {
         return integrations.filter((integration) => {
             if (filterStatus === "enabled") return integration.enabled;
             if (filterStatus === "disabled") return !integration.enabled;
-            if (filterStatus === "configured") return integration.credentials_configured;
-            if (filterStatus === "unconfigured") return !integration.credentials_configured;
+            if (filterStatus === "configured") return integration.configured;
+            if (filterStatus === "unconfigured") return !integration.configured;
             return true;
         });
     }, [integrations, filterStatus]);
@@ -109,37 +110,15 @@ export default function IntegrationsPage() {
     }, [integrations]);
 
     // Enable mutation
-    const enableMutation = useMutation({
-        mutationFn: async (name: string) => {
-            return integrationService.enableIntegration(name);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["integrations"] });
-            toast.success("Integration enabled");
-        },
-        onError: (error: any) => {
-            toast.error(error?.message || "Failed to enable integration");
-        },
-    });
+    const enableMutation = useEnableIntegration();
 
     // Disable mutation
-    const disableMutation = useMutation({
-        mutationFn: async (name: string) => {
-            return integrationService.disableIntegration(name);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["integrations"] });
-            toast.success("Integration disabled");
-        },
-        onError: (error: any) => {
-            toast.error(error?.message || "Failed to disable integration");
-        },
-    });
+    const disableMutation = useDisableIntegration();
 
     const handleToggle = (integration: Integration) => {
-        if (!integration.credentials_configured && !integration.enabled) {
+        if (!integration.configured && !integration.enabled) {
             toast.error("Please configure credentials before enabling");
-            router.push(`/admin/integrations/${integration.id}`);
+            router.push(`/admin/settings/integrations/${integration.id}`);
             return;
         }
 
@@ -151,11 +130,11 @@ export default function IntegrationsPage() {
     };
 
     const handleConfigure = (integration: Integration) => {
-        router.push(`/admin/integrations/${integration.id}`);
+        router.push(`/admin/settings/integrations/${integration.id}`);
     };
 
     const enabledCount = integrations.filter((i) => i.enabled).length;
-    const configuredCount = integrations.filter((i) => i.credentials_configured).length;
+    const configuredCount = integrations.filter((i) => i.configured).length;
     const isToggling = enableMutation.isPending || disableMutation.isPending;
     const togglingName = enableMutation.isPending
         ? enableMutation.variables
@@ -346,9 +325,9 @@ function IntegrationRow({
         <TableRow>
             <TableCell>
                 <div className="flex items-center gap-3">
-                    {integration.config?.logo_url ? (
+                    {integration?.logo_url ? (
                         <img
-                            src={integration.config.logo_url}
+                            src={integration.logo_url}
                             alt={integration.name}
                             className="h-8 w-8 rounded object-contain bg-muted p-0.5"
                         />
@@ -361,7 +340,7 @@ function IntegrationRow({
                     )}
                     <div className="min-w-0">
                         <p className="font-medium text-sm text-foreground truncate">
-                            {integration.name}
+                            {titleCase(integration.name)}
                         </p>
                         {integration.version && (
                             <p className="text-xs text-muted-foreground">v{integration.version}</p>
@@ -371,7 +350,7 @@ function IntegrationRow({
             </TableCell>
             <TableCell>
                 <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
-                    {integration.config?.description}
+                    {integration.description || "No description available."}
                 </p>
             </TableCell>
             <TableCell>
@@ -381,13 +360,13 @@ function IntegrationRow({
                 <IntegrationStatusToggle
                     enabled={integration.enabled}
                     onToggle={onToggle}
-                    disabled={isToggling || (!integration.credentials_configured && !integration.enabled)}
+                    disabled={isToggling || (!integration.configured && !integration.enabled)}
                     showLabel
                     size="sm"
                 />
             </TableCell>
             <TableCell>
-                {integration.credentials_configured ? (
+                {integration.configured ? (
                     <Badge variant="success" className="gap-1 text-xs">
                         <CheckCircle2 className="h-3 w-3" />
                         Configured

@@ -71,9 +71,9 @@ export default function IntegrationDetailsPage() {
     }, [integration]);
 
     // Enable mutation
-    const enableMutation = useEnableIntegration(integrationId);
+    const enableMutation = useEnableIntegration();
     // Disable mutation
-    const disableMutation = useDisableIntegration(integrationId)
+    const disableMutation = useDisableIntegration()
     // Update integration mutation
     const updateMutation = useUpdateIntegrationCredentials(integrationId);
 
@@ -164,15 +164,15 @@ export default function IntegrationDetailsPage() {
     const handleToggle = () => {
         if (!integration) return;
 
-        if (!integration.enabled && !integration.credentials_configured) {
+        if (!integration.enabled && !integration.configured) {
             toast.error("Please configure credentials before enabling");
             return;
         }
 
         if (integration.enabled) {
-            disableMutation.mutate();
+            disableMutation.mutate(integration.name);
         } else {
-            enableMutation.mutate();
+            enableMutation.mutate(integration.name);
         }
     };
 
@@ -190,7 +190,7 @@ export default function IntegrationDetailsPage() {
         return (
             <div className="space-y-4">
                 <button
-                    onClick={() => router.push("/admin/integrations")}
+                    onClick={() => router.push("/admin/settings?tab=integrations")}
                     className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -211,7 +211,7 @@ export default function IntegrationDetailsPage() {
         <div className="space-y-6">
             {/* Back Button */}
             <button
-                onClick={() => router.push("/admin/integrations")}
+                onClick={() => router.push("/admin/settings?tab=integrations")}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-4 w-4" />
@@ -283,7 +283,7 @@ export default function IntegrationDetailsPage() {
                         <IntegrationStatusToggle
                             enabled={integration.enabled}
                             onToggle={handleToggle}
-                            disabled={isToggling || (!integration.credentials_configured && !integration.enabled)}
+                            disabled={isToggling || (!integration.configured && !integration.enabled)}
                             showLabel
                             size="md"
                         />
@@ -292,7 +292,7 @@ export default function IntegrationDetailsPage() {
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                             Configuration
                         </p>
-                        {integration.credentials_configured ? (
+                        {integration.configured ? (
                             <div className="flex items-center gap-1.5 text-sm text-emerald-600">
                                 <CheckCircle2 className="h-4 w-4" />
                                 Configured

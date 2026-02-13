@@ -53,6 +53,7 @@ export interface IntegrationConfig {
   website_url: string | null,
   docs_url: string | null,
   type: IntegrationType,
+  tags?: string[] | null,
   capabilities: IntegrationCapability[],
   credentials: IntegrationCredentials,
 }
@@ -62,9 +63,11 @@ export interface Integration {
   name: string;
   config: IntegrationConfig;
   provider: IntegrationType;
+  description?: string | null;
+  logo_url?: string | null;
   // Runtime state
   enabled: boolean;
-  credentials_configured: boolean;
+  configured: boolean;
   last_synced_at?: string | null;
   version?: string;
   created_at?: string;
