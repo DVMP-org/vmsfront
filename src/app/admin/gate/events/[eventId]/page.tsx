@@ -101,11 +101,11 @@ export default function AdminGateEventDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {data?.checkout_time ? (
-            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">Completed</Badge>
-          ) : (
+          {data?.checkin_time ? (
+            <Badge className="bg-red-100 text-red-700 hover:bg-amber-100 border-amber-200">Checked out</Badge>
+          ) : data?.checkout_time ? (
             <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-200">Active Session</Badge>
-          )}
+          ) : null}
         </div>
       </div>
 
