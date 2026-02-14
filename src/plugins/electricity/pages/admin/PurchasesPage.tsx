@@ -139,7 +139,7 @@ export default function AdminPurchasesPage() {
                     <Card className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 text-white">
-                                <DollarSign className="h-5 w-5" />
+
                                 <div>
                                     <p className="text-xs text-white/80">Total Revenue</p>
                                     <p className="text-2xl font-bold">

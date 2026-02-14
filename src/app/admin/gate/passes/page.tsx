@@ -309,6 +309,20 @@ export default function AdminGatePassesPage() {
         </span>
       ),
     },
+    {
+      key: "action",
+      header: "Action",
+      sortable: false,
+      accessor: (row) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/admin/gate/passes/${row.id}`)}
+        >
+          View
+        </Button>
+      ),
+    }
   ];
 
   return (
