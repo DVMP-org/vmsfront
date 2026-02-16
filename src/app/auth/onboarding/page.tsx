@@ -68,12 +68,12 @@ export default function OnboardingPage() {
                 apiClient.setToken(token);
                 const response = await authService.verifyToken();
                 setUserData(response.data);
-
+                console.log(response?.data)
                 // Pre-fill form
-                setValue("first_name", response.data.user.first_name || "");
-                setValue("last_name", response.data.user.last_name || "");
-                setValue("phone", response.data.user.phone || "");
-                setValue("address", response.data.user.address || "");
+                setValue("first_name", response?.data.first_name || "");
+                setValue("last_name", response?.data?.last_name || "");
+                setValue("phone", response?.data?.phone || "");
+                setValue("address", response?.data?.address || "");
             } catch (error: any) {
                 toast.error("Invalid or expired onboarding link.");
                 router.push("/auth/login");

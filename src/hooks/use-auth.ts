@@ -12,6 +12,7 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   AuthResponse,
+  User,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -194,7 +195,7 @@ export function useProfile() {
 }
 
 export function useVerifyToken() {
-  return useQuery<AuthResponse>({
+  return useQuery<User>({
     queryKey: ["auth", "verify"],
     queryFn: async () => {
       const response = await authService.verifyToken();
