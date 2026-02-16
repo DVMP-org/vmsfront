@@ -7,6 +7,7 @@ import {
   DashboardSelect,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  User,
 } from "@/types";
 
 export const authService = {
@@ -22,7 +23,7 @@ export const authService = {
     return apiClient.post("/auth/logout");
   },
 
-  async verifyToken(): Promise<ApiResponse<AuthResponse>> {
+  async verifyToken(): Promise<ApiResponse<User>> {
     return apiClient.get("/auth/verify");
   },
 

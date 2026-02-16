@@ -52,7 +52,13 @@ export interface User {
     updated_at: string;
     name?: string | null
 }
-
+export interface Organization {
+    id: string;
+    name: string;
+    slug: string;
+    created_at: string;
+    updated_at: string;
+}
 export interface ResidencyType{
     id: string;
     name: string;
