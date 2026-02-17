@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { organizationService } from "@/services/organization-service";
 import { useAppStore } from "@/store/app-store";
@@ -118,7 +118,7 @@ export function useCreateOrganization() {
 export function useCheckSlugAvailability() {
   const [isChecking, setIsChecking] = useState(false);
 
-  const checkSlug = async (slug: string): Promise<boolean> => {
+  const checkSlug = useCallback(async (slug: string): Promise<boolean> => {
     if (!slug || slug.length < 2) return false;
     
     setIsChecking(true);
@@ -130,7 +130,7 @@ export function useCheckSlugAvailability() {
     } finally {
       setIsChecking(false);
     }
-  };
+  }, []);
 
   return { checkSlug, isChecking };
 }

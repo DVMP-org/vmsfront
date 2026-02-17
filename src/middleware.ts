@@ -36,56 +36,59 @@ export function middleware(request: NextRequest) {
   // Extract organization subdomain
   const orgSubdomain = extractOrgSubdomain(hostname);
   const isOnSubdomain = !!orgSubdomain;
+  const isAuthenticated = !!token;
 
-  // Define path types
+  // Classify the path
   const isAuthPath = pathname.startsWith('/auth');
+  const isVerifyEmailPath = pathname === '/auth/verify-email';
   const isOrganizationsPath = pathname.startsWith('/organizations');
   const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
   const isSelectPath = pathname.startsWith('/select');
-  const isProtectedPath = isDashboardPath || isSelectPath || isOrganizationsPath;
 
-  // Add X-Organization-Slug header for API requests if on subdomain
+  // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
   if (orgSubdomain) {
     requestHeaders.set("X-Organization", orgSubdomain);
   }
 
-  // 1. If user is authenticated and tries to access /auth paths (except verify-email)
-  if (token && isAuthPath && pathname !== '/auth/verify-email') {
-    // Redirect based on context
-    if (isOnSubdomain) {
-      return NextResponse.redirect(new URL('/select', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/organizations', request.url));
-    }
+  // ============================================================
+  // ROUTING RULES
+  // ============================================================
+
+  // RULE 1: Authenticated users should not access auth pages (except verify-email)
+  if (isAuthenticated && isAuthPath && !isVerifyEmailPath) {
+    const redirectTo = isOnSubdomain ? '/select' : '/organizations';
+    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
-  // 2. If on subdomain and trying to access /organizations, redirect to /select
-  if (isOnSubdomain && isOrganizationsPath && token) {
+  // RULE 2: On SUBDOMAIN - /organizations should redirect to /select
+  // (Organizations list is only for base domain to choose which org to enter)
+  if (isOnSubdomain && isOrganizationsPath) {
     return NextResponse.redirect(new URL('/select', request.url));
   }
 
-  // 3. If user is NOT authenticated and tries to access protected paths
-  if (!token && isProtectedPath) {
+  // RULE 3: On BASE DOMAIN - dashboard routes (/admin, /residency, /select) should redirect to /organizations
+  // (Dashboard routes require an org context from subdomain)
+  if (!isOnSubdomain && (isDashboardPath || isSelectPath)) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL('/organizations', request.url));
+    } else {
+      // Not authenticated - send to login with redirect back
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect_to', '/organizations');
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // RULE 4: Protected paths require authentication
+  // (Dashboard paths on subdomain need auth)
+  if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
     const loginUrl = new URL('/auth/login', request.url);
-    // Validate redirect_to to prevent open redirects
-    const allowedPaths = ['/organizations', '/select', '/admin', '/residency'];
-    const isAllowedRedirect = allowedPaths.some(path => pathname.startsWith(path));
-    loginUrl.searchParams.set('redirect_to', isAllowedRedirect ? pathname : '/organizations');
+    loginUrl.searchParams.set('redirect_to', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. If on BASE domain and trying to access dashboard routes (/admin, /residency), redirect to organizations
-  // Dashboard routes are only accessible from org subdomains
-  if (!isOnSubdomain && isDashboardPath && token) {
-    return NextResponse.redirect(new URL('/organizations', request.url));
-  }
-
-  // 5. If on BASE domain and trying to access /select, redirect to /organizations
-  if (!isOnSubdomain && isSelectPath && token) {
-    return NextResponse.redirect(new URL('/organizations', request.url));
-  }
-
+  // All checks passed - continue with the request
   return NextResponse.next({
     request: {
       headers: requestHeaders,
@@ -93,7 +96,17 @@ export function middleware(request: NextRequest) {
   });
 }
 
-// Optimization: Only run middleware for specific routes
+// Run middleware for these routes
 export const config = {
-  matcher: ['/admin/:path*', '/residency/:path*', '/select', '/auth/:path*', '/visit/:path*', '/organizations/:path*'],
+  matcher: [
+    '/admin',
+    '/admin/:path*',
+    '/residency',
+    '/residency/:path*',
+    '/select',
+    '/auth/:path*',
+    '/visit/:path*',
+    '/organizations',
+    '/organizations/:path*'
+  ],
 };
