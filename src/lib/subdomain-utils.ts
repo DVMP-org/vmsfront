@@ -1,7 +1,7 @@
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
 
 // Reserved subdomains that are not organization slugs
-const RESERVED_SUBDOMAINS = ["www", "app", "api", "admin", "visit"];
+export const RESERVED_SUBDOMAINS = ["www", "app", "api", "admin", "visit"];
 
 export function getSubdomain(): string | null {
   if (typeof window === "undefined") return null;
@@ -33,6 +33,18 @@ export function isBaseDomain(): boolean {
 
 export function buildSubdomainUrl(slug: string, path: string = "/"): string {
   if (typeof window === "undefined") return path;
+
+  // Validate slug format
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+    console.error(`Invalid slug format: ${slug}`);
+    return path;
+  }
+
+  // Check if slug is reserved
+  if (RESERVED_SUBDOMAINS.includes(slug)) {
+    console.error(`Cannot use reserved subdomain: ${slug}`);
+    return path;
+  }
 
   const protocol = window.location.protocol;
   const port = window.location.port ? `:${window.location.port}` : "";

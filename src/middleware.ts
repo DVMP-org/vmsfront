@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { RESERVED_SUBDOMAINS } from '@/lib/subdomain-utils';
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
-const RESERVED_SUBDOMAINS = ["www", "app", "api", "admin", "visit"];
 
 /**
  * Extract organization slug from hostname
@@ -51,7 +51,7 @@ export function middleware(request: NextRequest) {
   }
 
   // 1. If user is authenticated and tries to access /auth paths (except verify-email)
-  if (token && isAuthPath && !pathname.includes('verify-email')) {
+  if (token && isAuthPath && pathname !== '/auth/verify-email') {
     // Redirect based on context
     if (isOnSubdomain) {
       return NextResponse.redirect(new URL('/select', request.url));
@@ -68,7 +68,10 @@ export function middleware(request: NextRequest) {
   // 3. If user is NOT authenticated and tries to access protected paths
   if (!token && isProtectedPath) {
     const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect_to', pathname);
+    // Validate redirect_to to prevent open redirects
+    const allowedPaths = ['/organizations', '/select', '/admin', '/residency'];
+    const isAllowedRedirect = allowedPaths.some(path => pathname.startsWith(path));
+    loginUrl.searchParams.set('redirect_to', isAllowedRedirect ? pathname : '/organizations');
     return NextResponse.redirect(loginUrl);
   }
 
