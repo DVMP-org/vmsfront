@@ -70,13 +70,10 @@ export default function PluginsPage() {
 
   // Update plugin settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: async ({ configEndpoint, settings }: { configEndpoint: string; settings: any }) => {
-      if (!configEndpoint) {
-        throw new Error("No configuration endpoint available for this plugin");
-      }
+    mutationFn: async ({ settings }: { settings: any }) => {
       if (selectedPlugin) {
         settings.plugin_id = selectedPlugin.id
-        return apiClient.put(configEndpoint, settings);
+        return adminService.updatePluginSettings(selectedPlugin.id, settings);
       } else {
         throw new Error("No plugin selected");
       }
@@ -141,40 +138,48 @@ export default function PluginsPage() {
 
       // Parse settings_json if it exists
       let currentSettings: PluginConfig = {};
-      if (pluginData.settings_json) {
-        try {
-          const rawSettings = typeof pluginData.settings_json === 'string'
-            ? JSON.parse(pluginData.settings_json)
-            : pluginData.settings_json;
 
-          // Convert from snake_case to camelCase for frontend use
-          currentSettings = keysToCamelCase(rawSettings);
+      console.log("Fetched plugin settings:", pluginData); // Debug log
+      if (pluginData.configuration) {
+        try {
+          const rawSettings = typeof pluginData.configuration === 'string'
+            ? JSON.parse(pluginData.configuration)
+            : pluginData.configuration;
+
+          // Convert from snake_case to camelCase, then normalize to lowercase for consistent matching
+          const camelCaseSettings = keysToCamelCase(rawSettings);
+          // Normalize all keys to lowercase to handle acronym case differences (e.g., FPS vs fps)
+          for (const key in camelCaseSettings) {
+            currentSettings[key.toLowerCase()] = camelCaseSettings[key];
+          }
         } catch (e) {
-          console.error("Failed to parse settings_json:", e);
+          console.error("Failed to parse configuration:", e);
         }
       }
 
       // Merge with default values from configOptions
-      // Convert option.key to camelCase since we store settings in camelCase
+      // Normalize keys to lowercase for consistent matching
       const defaultSettings: PluginConfig = {};
+      console.log("Plugin config options:", plugin.details.configOptions); // Debug log
       plugin.details.configOptions.forEach((option) => {
         if (option.defaultValue !== undefined) {
-          const camelKey = toCamelCase(option.key);
-          defaultSettings[camelKey] = option.defaultValue;
+          const normalizedKey = toCamelCase(option.key).toLowerCase();
+          defaultSettings[normalizedKey] = option.defaultValue;
         }
       });
-
+      console.log("Default settings:", defaultSettings); // Debug log
+      console.log("Current settings before merge:", currentSettings); // Debug log
       setEditedConfig({ ...defaultSettings, ...currentSettings });
     } catch (error: any) {
       console.error("Failed to fetch plugin settings:", error);
       toast.error("Failed to load plugin settings");
       // Fall back to default values
-      // Convert option.key to camelCase since we store settings in camelCase
+      // Normalize keys to lowercase for consistent matching
       const defaultSettings: PluginConfig = {};
       plugin.details.configOptions.forEach((option) => {
         if (option.defaultValue !== undefined) {
-          const camelKey = toCamelCase(option.key);
-          defaultSettings[camelKey] = option.defaultValue;
+          const normalizedKey = toCamelCase(option.key).toLowerCase();
+          defaultSettings[normalizedKey] = option.defaultValue;
         }
       });
       setEditedConfig(defaultSettings);
@@ -189,13 +194,19 @@ export default function PluginsPage() {
   };
 
   const handleConfigChange = (key: string, value: any) => {
-    // Convert key to camelCase for consistent storage
-    const camelKey = toCamelCase(key);
-    setEditedConfig((prev) => ({ ...prev, [camelKey]: value }));
+    // Normalize key to lowercase for consistent storage (handles acronym case differences)
+    const normalizedKey = toCamelCase(key).toLowerCase();
+    setEditedConfig((prev) => ({ ...prev, [normalizedKey]: value }));
   };
 
-  // Helper to get camelCase key from option.key
-  const getCamelKey = (key: string) => toCamelCase(key);
+  // Helper to get normalized key from option.key (lowercase for case-insensitive matching)
+  const getNormalizedKey = (key: string) => toCamelCase(key).toLowerCase();
+
+  // Helper to get value from editedConfig using normalized key
+  const getConfigValue = (key: string) => {
+    const normalizedKey = getNormalizedKey(key);
+    return editedConfig[normalizedKey];
+  };
 
   const handleSaveConfig = () => {
     if (selectedPlugin) {
@@ -204,7 +215,6 @@ export default function PluginsPage() {
 
       // Save to the plugin's configEndpoint
       updateSettingsMutation.mutate({
-        configEndpoint: selectedPlugin.details.configEndpoint || '',
         settings: snakeCaseSettings,
       });
     }
@@ -451,7 +461,7 @@ export default function PluginsPage() {
       {/* Plugin Details Modal */}
       {selectedPlugin && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="relative w-full max-w-4xl my-8 bg-white rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-4xl my-8 bg-card rounded-2xl shadow-2xl">
             {/* Modal Header */}
             <div
               className={`relative rounded-t-2xl bg-gradient-to-br ${selectedPlugin.color} p-6`}
@@ -467,8 +477,8 @@ export default function PluginsPage() {
                   <selectedPlugin.icon className="h-8 w-8 text-slate-600" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {selectedPlugin.name}
+                  <h2 className="text-2xl font-bold text-muted-foreground">
+                    {titleCase(selectedPlugin.name)}
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
                     {selectedPlugin.description}
@@ -496,7 +506,7 @@ export default function PluginsPage() {
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Use Cases */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 mb-3">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   Use Cases
                 </h3>
@@ -515,7 +525,7 @@ export default function PluginsPage() {
 
               {/* Requirements */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 mb-3">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
                   <AlertCircle className="h-5 w-5 text-amber-500" />
                   Requirements
                 </h3>
@@ -523,7 +533,7 @@ export default function PluginsPage() {
                   {selectedPlugin.details.requirements.map((req, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-2 text-sm text-slate-600"
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
                       {req}
@@ -534,15 +544,15 @@ export default function PluginsPage() {
 
               {/* Setup Steps */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 mb-3">
-                  <Info className="h-5 w-5 text-blue-500" />
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
+                  <Info className="h-5 w-5 text-muted-foreground" />
                   Setup Steps
                 </h3>
                 <ol className="space-y-3">
                   {selectedPlugin.details.setupSteps.map((step, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-3 text-sm text-slate-600"
+                      className="flex items-start gap-3 text-sm text-muted-foreground"
                     >
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600 flex-shrink-0">
                         {index + 1}
@@ -555,7 +565,7 @@ export default function PluginsPage() {
 
               {/* Configuration Options */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 mb-3">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
                   <Settings className="h-5 w-5 text-slate-600" />
                   Configuration
                 </h3>
@@ -569,13 +579,13 @@ export default function PluginsPage() {
                 ) : (
                   <div className="space-y-4">
                     {selectedPlugin.details.configOptions.map((option) => {
-                      const camelKey = getCamelKey(option.key);
+                      const normalizedKey = getNormalizedKey(option.key);
                       return (
                         <div
                           key={option.key}
                           className="rounded-xl border bg-muted/30 p-4"
                         >
-                          <label className="block text-sm font-medium text-slate-900 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             {option.label}
                           </label>
                           <p className="text-xs text-muted-foreground mb-3">
@@ -587,16 +597,16 @@ export default function PluginsPage() {
                               onClick={() =>
                                 handleConfigChange(
                                   option.key,
-                                  !editedConfig[camelKey]
+                                  !editedConfig[normalizedKey]
                                 )
                               }
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                ? "bg-[var(--brand-primary,#213928)]"
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
+                                ? "bg-[rgb(var(--brand-primary))]"
                                 : "bg-gray-300"
                                 }`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
                                   ? "translate-x-6"
                                   : "translate-x-1"
                                   }`}
@@ -607,7 +617,7 @@ export default function PluginsPage() {
                           {option.type === "text" && (
                             <Input
                               type="text"
-                              value={editedConfig[camelKey] || ""}
+                              value={editedConfig[normalizedKey] || ""}
                               onChange={(e) =>
                                 handleConfigChange(option.key, e.target.value)
                               }
@@ -619,7 +629,7 @@ export default function PluginsPage() {
                           {option.type === "number" && (
                             <Input
                               type="number"
-                              value={editedConfig[camelKey] ?? ""}
+                              value={editedConfig[normalizedKey] ?? ""}
                               onChange={(e) => {
                                 const value = e.target.value.trim();
                                 // Only update if we have a valid number
@@ -639,7 +649,7 @@ export default function PluginsPage() {
                                 const value = e.target.value.trim();
                                 if (value === "" || isNaN(Number(value))) {
                                   // Restore previous value or default if invalid
-                                  const currentValue = editedConfig[camelKey];
+                                  const currentValue = editedConfig[normalizedKey];
                                   if (currentValue === undefined || currentValue === null || isNaN(currentValue)) {
                                     handleConfigChange(option.key, option.defaultValue ?? 0);
                                   }
@@ -654,16 +664,16 @@ export default function PluginsPage() {
                               onClick={() =>
                                 handleConfigChange(
                                   option.key,
-                                  !editedConfig[camelKey]
+                                  !editedConfig[normalizedKey]
                                 )
                               }
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[camelKey]
-                                ? "bg-[var(--brand-primary,#213928)]"
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
+                                ? "bg-[rgb(var(--brand-primary))]"
                                 : "bg-gray-300"
                                 }`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[camelKey]
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
                                   ? "translate-x-6"
                                   : "translate-x-1"
                                   }`}
@@ -674,12 +684,12 @@ export default function PluginsPage() {
                           {option.type === "select" && option.options && (
                             <select
                               value={
-                                editedConfig[camelKey] || option.defaultValue
+                                editedConfig[normalizedKey] || option.defaultValue
                               }
                               onChange={(e) =>
                                 handleConfigChange(option.key, e.target.value)
                               }
-                              className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                              className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
                             >
                               {option.options.map((opt) => (
                                 <option key={opt} value={opt}>

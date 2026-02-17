@@ -50,6 +50,7 @@ import {
     DuePayment,
     ResidencyType,
 } from "@/types";
+import { BackendPlugin, Plugin } from "@/types/plugin";
 import { get } from "http";
 
 export const adminService = {
@@ -559,8 +560,12 @@ export const adminService = {
         return apiClient.put(`/admin/plugins/${pluginId}/enable`);
     },
 
-    async getPluginSettings(pluginId: string): Promise<ApiResponse<any>> {
+    async getPluginSettings(pluginId: string): Promise<ApiResponse<BackendPlugin>> {
         return apiClient.get(`/admin/plugins/${pluginId}`);
+    },
+
+    async updatePluginSettings(pluginId: string, settings: any): Promise<ApiResponse<any>> {
+        return apiClient.post(`/admin/plugins/${pluginId}/configure`, settings);
     },
 
     // Branding Themes

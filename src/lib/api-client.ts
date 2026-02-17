@@ -69,7 +69,16 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
+      // Try localStorage first, then fall back to cookie for cross-subdomain support
+      const localToken = localStorage.getItem("token");
+      if (localToken) return localToken;
+      
+      // Read from cookie as fallback
+      const cookieToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("auth-token="))
+        ?.split("=")[1];
+      return cookieToken || null;
     }
     return null;
   }

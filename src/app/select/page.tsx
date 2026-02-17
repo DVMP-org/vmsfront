@@ -21,7 +21,6 @@ import {
 import { Header } from "@/components/layout/Header";
 import type { Residency } from "@/types";
 import { cn } from "@/lib/utils";
-import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
@@ -34,7 +33,6 @@ export default function SelectPage() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useRequireEmailVerification(true);
-  useRequireResidentOnboarding(true);
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useResidentDashboardSelect();
   const { data: adminProfile, isLoading: isAdminLoading, isError: isAdminError } = useAdminProfile();

@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
             syncFromCookie: () => {
                 const cookieToken = getCookie("auth-token");
                 const currentToken = get().token;
-                
+
                 // If we have a cookie token but no state token, update state
                 if (cookieToken && !currentToken) {
                     set({ token: cookieToken, isAuthenticated: true });

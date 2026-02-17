@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
 
   // Classify the path
   const isAuthPath = pathname.startsWith('/auth');
-  const isVerifyEmailPath = pathname === '/auth/verify-email';
+  const isVerifyEmailPath = pathname.startsWith('/auth/verify-email');
   const isOrganizationsPath = pathname.startsWith('/organizations');
   const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
   const isSelectPath = pathname.startsWith('/select');
@@ -52,36 +52,41 @@ export function middleware(request: NextRequest) {
   }
 
   // ============================================================
-  // ROUTING RULES
+  // ROUTING RULES (in order of priority)
   // ============================================================
 
-  // RULE 1: Authenticated users should not access auth pages (except verify-email)
-  if (isAuthenticated && isAuthPath && !isVerifyEmailPath) {
-    const redirectTo = isOnSubdomain ? '/select' : '/organizations';
-    return NextResponse.redirect(new URL(redirectTo, request.url));
+  // RULE 0: Always allow verify-email - users must be able to verify regardless of context
+  if (isVerifyEmailPath) {
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
-  // RULE 2: On SUBDOMAIN - /organizations should redirect to /select
-  // (Organizations list is only for base domain to choose which org to enter)
-  if (isOnSubdomain && isOrganizationsPath) {
-    return NextResponse.redirect(new URL('/select', request.url));
-  }
-
-  // RULE 3: On BASE DOMAIN - dashboard routes (/admin, /residency, /select) should redirect to /organizations
-  // (Dashboard routes require an org context from subdomain)
+  // RULE 1: On BASE DOMAIN - block dashboard routes entirely
+  // Dashboard routes (/admin, /residency, /select) require org context from subdomain
   if (!isOnSubdomain && (isDashboardPath || isSelectPath)) {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL('/organizations', request.url));
     } else {
-      // Not authenticated - send to login with redirect back
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect_to', '/organizations');
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // RULE 4: Protected paths require authentication
-  // (Dashboard paths on subdomain need auth)
+  // RULE 2: On SUBDOMAIN - block /organizations route
+  // Organizations list is only for base domain; subdomain users use /select
+  if (isOnSubdomain && isOrganizationsPath) {
+    return NextResponse.redirect(new URL('/select', request.url));
+  }
+
+  // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
+  if (isAuthenticated && isAuthPath) {
+    const redirectTo = isOnSubdomain ? '/select' : '/organizations';
+    return NextResponse.redirect(new URL(redirectTo, request.url));
+  }
+
+  // RULE 4: Protected paths on subdomain require authentication
   if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect_to', pathname);

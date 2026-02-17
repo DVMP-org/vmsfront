@@ -38,7 +38,7 @@ export const organizationService = {
     data: CreateOrganizationRequest
   ): Promise<ApiResponse<Organization>> {
     try {
-      return apiClient.post("/organizations", data);
+      return apiClient.post("/organizations/create", data);
     } catch (error) {
       console.error('Failed to create organization:', error);
       throw error;
@@ -65,7 +65,7 @@ export const organizationService = {
    */
   async checkSlugAvailability(
     slug: string
-  ): Promise<ApiResponse<{ available: boolean }>> {
+  ): Promise<ApiResponse<{ exists: boolean }>> {
     try {
       return apiClient.get(`/organizations/check-slug/${slug}`);
     } catch (error) {

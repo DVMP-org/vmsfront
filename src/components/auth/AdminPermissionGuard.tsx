@@ -36,7 +36,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         // Sort by length descending to match most specific route first
         const sorted = [...flattened].sort((a, b) => (b.href?.length || 0) - (a.href?.length || 0));
         const match = sorted.find(link =>
-            link.href !== "#" && (pathname === link.href || pathname.startsWith(link.href + "/"))
+            link.href !== "#" && (pathname === link.href || pathname?.startsWith(link.href + "/"))
         );
 
         return match?.permission;

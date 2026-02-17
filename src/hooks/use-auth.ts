@@ -195,13 +195,15 @@ export function useProfile() {
 }
 
 export function useVerifyToken() {
+  const { isAuthenticated, _hasHydrated, token } = useAuthStore();
+  
   return useQuery<User>({
     queryKey: ["auth", "verify"],
     queryFn: async () => {
       const response = await authService.verifyToken();
       return response.data;
     },
-    enabled: useAuthStore.getState().isAuthenticated,
+    enabled: _hasHydrated && (isAuthenticated || !!token),
   });
 }
 

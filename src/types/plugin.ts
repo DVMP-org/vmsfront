@@ -47,6 +47,8 @@ export interface BackendPlugin {
     image?: string;
     details?: PluginDetails;
     [key: string]: any;
+    configuration?: PluginConfig; // Current configuration from backend
+    configured?: boolean; // Whether the plugin has been configured at least once
 }
 
 // Plugin type definition (for UI display)
@@ -65,6 +67,7 @@ export interface Plugin {
     backendVersion?: string;
     frontendVersion?: string;
     hasFrontend?: boolean; // Whether frontend plugin exists
+    configuration?: PluginConfig; // Current configuration from backend
 }
 
 export interface PluginManifest {

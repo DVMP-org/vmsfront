@@ -124,7 +124,7 @@ export function useCheckSlugAvailability() {
     setIsChecking(true);
     try {
       const response = await organizationService.checkSlugAvailability(slug);
-      return response.data.available;
+      return !response.data.exists;
     } catch {
       return false;
     } finally {
