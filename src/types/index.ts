@@ -56,8 +56,32 @@ export interface Organization {
     id: string;
     name: string;
     slug: string;
+    logo_url?: string | null;
+    description?: string | null;
     created_at: string;
     updated_at: string;
+    residencies?: Residency[] | null;
+    residents?: Resident[] | null;
+    admins?: Admin[] | null;
+}
+
+
+
+export interface OrganizationMembership {
+    id: string;
+    organization: Organization;
+    role: 'owner' | 'admin' | 'member';
+    joined_at: string;
+}
+
+export interface CreateOrganizationRequest {
+    name: string;
+    slug: string;
+    description?: string;
+}
+
+export interface OrganizationsResponse {
+    organizations: OrganizationMembership[];
 }
 export interface ResidencyType{
     id: string;

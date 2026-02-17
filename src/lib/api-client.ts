@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
+import { getSubdomain } from "./subdomain-utils";
 
 // Use production API URL in production, fallback to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -19,6 +20,10 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = this.getToken();
+        const subdomain = getSubdomain();
+        if (subdomain) {
+          config.headers["X-Organization"] = subdomain;
+        }
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
