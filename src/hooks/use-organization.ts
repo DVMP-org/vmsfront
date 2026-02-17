@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { organizationService } from "@/services/organization-service";
 import { useAppStore } from "@/store/app-store";
@@ -51,9 +51,11 @@ export function useCurrentOrganization() {
   const query = useOrganization(subdomain);
 
   // Update app store when org data is fetched
-  if (query.data && (!organization || organization.slug !== query.data.slug)) {
-    setSelectedOrganization(query.data);
-  }
+  useEffect(() => {
+    if (query.data && (!organization || organization.slug !== query.data.slug)) {
+      setSelectedOrganization(query.data);
+    }
+  }, [query.data, organization, setSelectedOrganization]);
 
   return {
     ...query,
@@ -139,8 +141,7 @@ export function useCheckSlugAvailability() {
 export function useSelectOrganization() {
   const { setSelectedOrganization } = useAppStore();
 
-  const selectOrganization = (organization: Organization ) => {
- 
+  const selectOrganization = (organization: Organization): void => {
     setSelectedOrganization(organization);
 
     // Redirect to the organization's subdomain

@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { getSubdomain } from "./subdomain-utils";
 
 // Use production API URL in production, fallback to localhost for development
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 class ApiClient {
   private client: AxiosInstance;
 

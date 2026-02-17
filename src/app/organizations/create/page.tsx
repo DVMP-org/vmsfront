@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -16,7 +15,6 @@ import {
 } from "@/hooks/use-organization";
 
 export default function CreateOrganizationPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -48,9 +46,9 @@ export default function CreateOrganizationPage() {
       }
     };
 
-    const timeoutId = setTimeout(checkAvailability, 500);
+    const timeoutId = setTimeout(checkAvailability, 300);
     return () => clearTimeout(timeoutId);
-  }, [formData.slug]);
+  }, [formData.slug, checkSlug]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, name: e.target.value });
@@ -167,9 +165,11 @@ export default function CreateOrganizationPage() {
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
+                  role="alert"
+                  aria-live="assertive"
                   className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" aria-hidden="true" />
                   {error}
                 </motion.div>
               )}
@@ -213,27 +213,28 @@ export default function CreateOrganizationPage() {
                     error={combinedErrors.slug}
                     disabled={isLoading}
                     className="pr-10"
+                    aria-describedby="slug-help"
                   />
                   {isChecking && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2" role="status" aria-label="Checking slug availability">
                       <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
                     </div>
                   )}
                   {!isChecking && slugAvailable === true && formData.slug.length >= 2 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2" role="status" aria-label="Slug is available">
                       <div className="h-2 w-2 rounded-full bg-green-500" />
                     </div>
                   )}
                   {!isChecking && slugAvailable === false && formData.slug.length >= 2 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2" role="status" aria-label="Slug is already taken">
                       <div className="h-2 w-2 rounded-full bg-red-500" />
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400" id="slug-help">
                   Your organization will be accessible at{" "}
                   <span className="font-mono text-zinc-700 dark:text-zinc-300">
-                    {formData.slug || "your-slug"}.yourdomain.com
+                    {formData.slug || "your-slug"}.{process.env.NEXT_PUBLIC_BASE_DOMAIN || "yourdomain.com"}
                   </span>
                 </p>
               </div>
@@ -245,7 +246,7 @@ export default function CreateOrganizationPage() {
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
                   Description{" "}
-                  <span className="text-zinc-400 dark:text-zinc-500">(optional)</span>
+                  <span id="description-help" className="text-zinc-400 dark:text-zinc-500">(optional)</span>
                 </label>
                 <textarea
                   id="description"
@@ -255,6 +256,7 @@ export default function CreateOrganizationPage() {
                   onChange={handleDescriptionChange}
                   disabled={isLoading}
                   rows={3}
+                  aria-describedby="description-help"
                   className={cn(
                     "w-full rounded-xl border border-zinc-200 dark:border-zinc-800",
                     "bg-white dark:bg-zinc-950 px-4 py-3",
