@@ -45,8 +45,9 @@ export const setCookie = (name: string, value: string, days = 7) => {
     const domainAttr = domain ? `; domain=${domain}` : '';
 
     // Secure and SameSite for production
+    // Use SameSite=Lax to allow cross-subdomain navigation while maintaining CSRF protection
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `${name}=${value || ""}${expires}; path=/${domainAttr}${secure}; SameSite=Strict`;
+    document.cookie = `${name}=${value || ""}${expires}; path=/${domainAttr}${secure}; SameSite=Lax`;
 };
 
 export const getCookie = (name: string): string | null => {
@@ -68,5 +69,5 @@ export const deleteCookie = (name: string) => {
     const domain = getCookieDomain();
     const domainAttr = domain ? `; domain=${domain}` : '';
     
-    document.cookie = `${name}=; Path=/${domainAttr}; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    document.cookie = `${name}=; Path=/${domainAttr}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 };
