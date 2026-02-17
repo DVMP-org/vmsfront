@@ -45,7 +45,8 @@ export const setCookie = (name: string, value: string, days = 7) => {
     const domainAttr = domain ? `; domain=${domain}` : '';
 
     // Secure and SameSite for production
-    // Use SameSite=Lax to allow cross-subdomain navigation while maintaining CSRF protection
+    // Use SameSite=Lax to allow top-level navigation from external sites
+    // while maintaining CSRF protection for state-changing requests
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${name}=${value || ""}${expires}; path=/${domainAttr}${secure}; SameSite=Lax`;
 };
