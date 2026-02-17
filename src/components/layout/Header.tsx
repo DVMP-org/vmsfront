@@ -51,8 +51,6 @@ export const Header = memo(function Header({
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log(pathname, "pathname");
-
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
   const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");

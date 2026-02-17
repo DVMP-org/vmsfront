@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -16,7 +15,6 @@ import {
 } from "@/hooks/use-organization";
 
 export default function CreateOrganizationPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -233,7 +231,7 @@ export default function CreateOrganizationPage() {
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Your organization will be accessible at{" "}
                   <span className="font-mono text-zinc-700 dark:text-zinc-300">
-                    {formData.slug || "your-slug"}.yourdomain.com
+                    {formData.slug || "your-slug"}.{process.env.NEXT_PUBLIC_BASE_DOMAIN || "yourdomain.com"}
                   </span>
                 </p>
               </div>

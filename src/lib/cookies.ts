@@ -47,7 +47,6 @@ export const setCookie = (name: string, value: string, days = 7) => {
     // Secure and SameSite for production
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${name}=${value || ""}${expires}; path=/${domainAttr}${secure}; SameSite=Lax`;
-    console.log(`Set cookie: ${name}=${value}; expires=${expires}; path=/${domainAttr}${secure}; SameSite=Lax`);
 };
 
 export const getCookie = (name: string): string | null => {
