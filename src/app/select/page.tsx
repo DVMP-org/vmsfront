@@ -38,7 +38,7 @@ export default function SelectPage() {
   const { data: adminProfile, isLoading: isAdminLoading, isError: isAdminError } = useAdminProfile();
 
   const residencies = useMemo<Residency[]>(() => dashboardData?.residencies ?? [], [dashboardData]);
-  const isAdmin = useMemo(() => !!adminProfile && !isAdminError, [adminProfile, isAdminError]);
+  const isAdmin = adminProfile && !isAdminError; // If we successfully fetch an admin profile, user is admin
   const isLoading = isDashboardLoading || isAdminLoading;
 
   const residencySummary = useMemo(() => {
