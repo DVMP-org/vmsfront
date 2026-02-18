@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { Residency, BrandingConfig, Organization } from "@/types";
 
 interface AppState {
-    organization: Organization| null;
+    organization: Organization | null;
     selectedResidency: Residency | null;
     branding: BrandingConfig | null;
     setSelectedResidency: (residency: Residency | null) => void;

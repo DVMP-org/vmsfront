@@ -16,21 +16,15 @@ export function RouteGuard({ children }: RouteGuardProps) {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  console.log("[RouteGuard] State:", { isAuthenticated, hasUser: !!user, hasToken: !!token, _hasHydrated, pathname });
-
   useEffect(() => {
     if (!_hasHydrated) {
-      console.log("[RouteGuard] Waiting for hydration...");
       return;
     }
 
     const authCheck = () => {
-      console.log("[RouteGuard] authCheck running:", { isAuthenticated, hasToken: !!token });
-      
       if (!isAuthenticated || !token) {
         // Middleware usually handles this, but we keep this as a safety layer
         if (!pathname?.startsWith("/auth")) {
-          console.log("[RouteGuard] Not authenticated, redirecting to login");
           const loginUrl = new URL("/auth/login", window.location.origin);
           loginUrl.searchParams.set("redirect_to", pathname || "/");
           router.replace(loginUrl.pathname + loginUrl.search);
@@ -38,7 +32,6 @@ export function RouteGuard({ children }: RouteGuardProps) {
           return;
         }
       }
-      console.log("[RouteGuard] Authorized!");
       setAuthorized(true);
       setLoading(false);
     };
