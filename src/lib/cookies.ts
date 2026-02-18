@@ -12,10 +12,10 @@ const getCookieDomain = (): string => {
     
     const hostname = window.location.hostname;
     
-    // For localhost subdomains (e.g., acme.localhost), set domain to localhost
+    // For localhost subdomains (e.g., acme.localhost), omit domain attribute
     // This allows cookies to be shared between localhost and *.localhost
     if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-        return 'localhost';
+        return '';
     }
     
     // For production, use the base domain with leading dot for subdomain sharing

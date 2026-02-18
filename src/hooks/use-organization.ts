@@ -82,6 +82,10 @@ export function useCreateOrganization() {
     },
     onSuccess: (response) => {
       const org = response.data;
+      if (!org || !org.slug) {
+        toast.error("Invalid organization response");
+        return;
+      }
       setSelectedOrganization(org);
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       toast.success("Organization created successfully!");
@@ -125,7 +129,8 @@ export function useCheckSlugAvailability() {
     try {
       const response = await organizationService.checkSlugAvailability(slug);
       return !response.data.exists;
-    } catch {
+    } catch (error) {
+      console.error('Failed to check slug availability:', error);
       return false;
     } finally {
       setIsChecking(false);
