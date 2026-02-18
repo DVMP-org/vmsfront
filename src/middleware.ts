@@ -8,10 +8,11 @@ const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
  * Returns null if on base domain or reserved subdomain
  */
 function extractOrgSubdomain(hostname: string): string | null {
-  const cleanHostname = hostname.replace(":3000", "").replace(":443", "");
+  // Remove port numbers first
+  const cleanHostname = hostname.replace(/:\d+$/, "");
 
   // Handle localhost
-  if (cleanHostname.includes("localhost")) {
+  if (cleanHostname === "localhost" || cleanHostname.endsWith(".localhost")) {
     const parts = cleanHostname.split(".");
     if (parts.length > 1 && parts[0] !== "localhost" && !RESERVED_SUBDOMAINS.includes(parts[0])) {
       return parts[0];
@@ -19,10 +20,17 @@ function extractOrgSubdomain(hostname: string): string | null {
     return null;
   }
 
-  // Handle production
-  const parts = cleanHostname.replace(BASE_DOMAIN, "").split(".").filter(Boolean);
-  if (parts.length > 0 && !RESERVED_SUBDOMAINS.includes(parts[0])) {
-    return parts[0];
+  // Handle production - check if hostname ends with BASE_DOMAIN
+  if (!cleanHostname.endsWith(BASE_DOMAIN)) {
+    return null;
+  }
+  
+  // Extract subdomain by removing base domain
+  const subdomain = cleanHostname.slice(0, -(BASE_DOMAIN.length + 1)); // +1 for the dot
+  
+  // Validate subdomain exists and is not reserved
+  if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain)) {
+    return subdomain;
   }
 
   return null;

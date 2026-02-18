@@ -37,7 +37,7 @@ import {
     ArrowRight,
     Loader2,
 } from "lucide-react";
-import { formatNumber, formatPrice, titleCase } from "@/lib/utils";
+import { formatNumber, formatPrice, titleCase, safeOpenUrl } from "@/lib/utils";
 import { FilterConfig } from "@/components/ui/DataTable";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 
@@ -93,6 +93,11 @@ export default function MarketplacePage() {
     const installedCount = plugins.filter((p) => p.installed).length;
 
     const handleInstall = async (plugin: MarketplacePlugin) => {
+        // Prevent duplicate installs by checking if already installing
+        if (installingPluginId === plugin.id || installPluginMutation.isPending) {
+            return;
+        }
+        
         setInstallingPluginId(plugin.id);
         installPluginMutation.mutate(plugin.id, {
             onSettled: () => {
@@ -345,7 +350,9 @@ export default function MarketplacePage() {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             if (plugin.installed) {
-                                                router.push(`/admin/plugins?pluginId=${plugin.id}`);
+                                                // Sanitize plugin ID before using in URL
+                                                const sanitizedId = encodeURIComponent(plugin.id);
+                                                router.push(`/admin/plugins?pluginId=${sanitizedId}`);
                                             } else {
                                                 handleInstall(plugin);
                                             }
@@ -564,7 +571,9 @@ export default function MarketplacePage() {
                                 disabled={installingPluginId === selectedPlugin.id}
                                 onClick={() => {
                                     if (selectedPlugin.installed) {
-                                        router.push(`/admin/plugins?pluginId=${selectedPlugin.id}`);
+                                        // Sanitize plugin ID before using in URL
+                                        const sanitizedId = encodeURIComponent(selectedPlugin.id);
+                                        router.push(`/admin/plugins?pluginId=${sanitizedId}`);
                                         handleCloseDetails();
                                     } else {
                                         handleInstall(selectedPlugin);
@@ -593,9 +602,7 @@ export default function MarketplacePage() {
                                 <Button
                                     variant="outline"
                                     className="gap-2"
-                                    onClick={() =>
-                                        window.open(selectedPlugin.documentationUrl, "_blank")
-                                    }
+                                    onClick={() => safeOpenUrl(selectedPlugin.documentationUrl)}
                                 >
                                     <ExternalLink className="h-4 w-4" />
                                     Docs
@@ -606,9 +613,7 @@ export default function MarketplacePage() {
                                 <Button
                                     variant="outline"
                                     className="gap-2"
-                                    onClick={() =>
-                                        window.open(selectedPlugin.supportUrl, "_blank")
-                                    }
+                                    onClick={() => safeOpenUrl(selectedPlugin.supportUrl)}
                                 >
                                     <ExternalLink className="h-4 w-4" />
                                     Support

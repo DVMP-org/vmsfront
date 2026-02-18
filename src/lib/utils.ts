@@ -246,3 +246,23 @@ export const formatNumber = (num: number) => {
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num?.toString();
 };
+
+/**
+ * Safely open a URL in a new tab with security measures
+ * Validates URL format and prevents javascript: protocol
+ */
+export function safeOpenUrl(url: string | undefined | null): void {
+  if (!url) return;
+  
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      console.warn('Blocked attempt to open URL with unsafe protocol:', url);
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    console.error('Invalid URL:', url, error);
+  }
+}
