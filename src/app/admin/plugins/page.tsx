@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 import { loadPlugins } from "@/lib/plugin_loader";
 import { titleCase, keysToCamelCase, keysToSnakeCase, toCamelCase } from "@/lib/utils";
+import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import {
   Card,
   CardContent,
@@ -28,15 +30,34 @@ import {
   Info,
   ExternalLink,
   Save,
+  Store,
 } from "lucide-react";
 import { Plugin, PluginConfig, BackendPlugin } from "@/types/plugin";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function PluginsPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  
+  const config = useMemo(() => ({
+    pluginId: { defaultValue: undefined },
+  }), []);
+
+  const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
+    config,
+    skipInitialSync: true,
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPluginId, setSelectedPluginId] = useState<string | undefined>(() => initializeFromUrl("pluginId"));
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
   const [editedConfig, setEditedConfig] = useState<PluginConfig>({});
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+
+  // Sync pluginId to URL
+  useEffect(() => {
+    syncToUrl({ pluginId: selectedPluginId });
+  }, [selectedPluginId, syncToUrl]);
 
   // Fetch plugins from API
   const { data: backendPluginsResponse, isLoading: isLoadingPlugins } = useQuery({
@@ -106,7 +127,7 @@ export default function PluginsPage() {
       icon: Puzzle,
       enabled: backendPlugin.enabled,
       category: backendPlugin.category || "Other",
-      imageUrl: backendPlugin.image,
+      image: backendPlugin.image,
       color: "from-gray-500/20 to-gray-600/20",
       details: backendPlugin.details || {
         documentationUrl: null,
@@ -123,12 +144,23 @@ export default function PluginsPage() {
     };
   });
 
+  // Open modal when pluginId is in URL
+  useEffect(() => {
+    if (selectedPluginId && plugins.length > 0 && !selectedPlugin) {
+      const plugin = plugins.find(p => p.id === selectedPluginId);
+      if (plugin) {
+        handleOpenDetails(plugin);
+      }
+    }
+  }, [selectedPluginId, plugins, selectedPlugin]);
+
   const handleTogglePlugin = async (pluginId: string) => {
     togglePluginMutation.mutate(pluginId);
   };
 
   const handleOpenDetails = async (plugin: Plugin) => {
     setSelectedPlugin(plugin);
+    setSelectedPluginId(plugin.id);
     setIsLoadingSettings(true);
 
     try {
@@ -138,8 +170,6 @@ export default function PluginsPage() {
 
       // Parse settings_json if it exists
       let currentSettings: PluginConfig = {};
-
-      console.log("Fetched plugin settings:", pluginData); // Debug log
       if (pluginData.configuration) {
         try {
           const rawSettings = typeof pluginData.configuration === 'string'
@@ -160,18 +190,16 @@ export default function PluginsPage() {
       // Merge with default values from configOptions
       // Normalize keys to lowercase for consistent matching
       const defaultSettings: PluginConfig = {};
-      console.log("Plugin config options:", plugin.details.configOptions); // Debug log
+
       plugin.details.configOptions.forEach((option) => {
         if (option.defaultValue !== undefined) {
           const normalizedKey = toCamelCase(option.key).toLowerCase();
           defaultSettings[normalizedKey] = option.defaultValue;
         }
       });
-      console.log("Default settings:", defaultSettings); // Debug log
-      console.log("Current settings before merge:", currentSettings); // Debug log
+
       setEditedConfig({ ...defaultSettings, ...currentSettings });
     } catch (error: any) {
-      console.error("Failed to fetch plugin settings:", error);
       toast.error("Failed to load plugin settings");
       // Fall back to default values
       // Normalize keys to lowercase for consistent matching
@@ -190,6 +218,7 @@ export default function PluginsPage() {
 
   const handleCloseDetails = () => {
     setSelectedPlugin(null);
+    setSelectedPluginId(undefined);
     setEditedConfig({});
   };
 
@@ -269,6 +298,15 @@ export default function PluginsPage() {
                   </div>
                 </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/admin/plugins/marketplace")}
+                className="gap-2"
+              >
+                <Store className="h-4 w-4" />
+                Browse Marketplace
+              </Button>
             </div>
           </div>
 
@@ -301,14 +339,21 @@ export default function PluginsPage() {
 
         {/* Loading State */}
         {isLoadingPlugins && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-16">
-              <div className="text-center">
-                <Puzzle className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-                <p className="text-muted-foreground">Loading plugins...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-40 w-full" />
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         {/* Plugins Grid */}
@@ -325,10 +370,10 @@ export default function PluginsPage() {
                   <div
                     className={`relative h-40 bg-gradient-to-br ${plugin.color} overflow-hidden`}
                   >
-                    {plugin.imageUrl && (
-                      <img src={plugin.imageUrl} alt={plugin.name} className="w-full h-full object-cover" />
+                    {plugin.image && (
+                      <img src={plugin.image} alt={plugin.name} className="w-full h-full object-cover" />
                     )}
-                    {!plugin.imageUrl && (
+                    {!plugin.image && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Icon className="h-20 w-20 text-slate-600/30" />
                       </div>

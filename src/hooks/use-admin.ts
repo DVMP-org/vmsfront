@@ -1046,29 +1046,29 @@ export function useAdminProfile() {
       const response = await adminService.getAdminProfile();
       const profile = response.data;
       // Persistence: store in localStorage for instant access next time
-      // if (typeof window !== "undefined") {
-      //   try {
-      //     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-      //   } catch (e) {
-      //     console.error(e);
-      //   }
-      // }
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+        } catch (e) {
+          console.error(e);
+        }
+      }
       return profile;
     },
-    // initialData: () => {
-    //   // Synchronous recovery from localStorage for instant Sidebar rendering
-    //   if (typeof window !== "undefined") {
-    //     const cached = localStorage.getItem(STORAGE_KEY);
-    //     if (cached) {
-    //       try {
-    //         return JSON.parse(cached);
-    //       } catch (e) {
-    //         return undefined;
-    //       }
-    //     }
-    //   }
-    //   return undefined;
-    // },
+    initialData: () => {
+      // Synchronous recovery from localStorage for instant Sidebar rendering
+      if (typeof window !== "undefined") {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          try {
+            return JSON.parse(cached);
+          } catch (e) {
+            return undefined;
+          }
+        }
+      }
+      return undefined;
+    },
     staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins
     enabled: _hasHydrated && (!!token || isAuthenticated), // Only fetch when authenticated
