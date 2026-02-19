@@ -222,9 +222,9 @@ export default function IntegrationDetailsPage() {
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 {/* Logo & Info */}
                 <div className="flex items-start gap-4 flex-1">
-                    {integration?.config?.logo_url ? (
+                    {integration?.logo_url ? (
                         <img
-                            src={integration?.config?.logo_url}
+                            src={integration?.logo_url}
                             alt={integration.name}
                             className="h-14 w-14 rounded-lg object-contain bg-muted p-1"
                         />
@@ -417,7 +417,7 @@ export default function IntegrationDetailsPage() {
                     </Card>
 
                     {/* Capabilities */}
-                    {integration?.config?.capabilities && integration?.config?.capabilities.length > 0 && (
+                    {integration?.capabilities && integration?.capabilities.length > 0 && (
                         <Card>
                             <CardHeader className="pb-3 border-b border-zinc-200">
                                 <div className="flex items-center gap-2">
@@ -427,7 +427,7 @@ export default function IntegrationDetailsPage() {
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <ul className="space-y-2">
-                                    {integration?.config?.capabilities?.map((capability) => (
+                                    {integration?.capabilities?.map((capability) => (
                                         <li
                                             key={capability}
                                             className="flex items-center gap-2 text-sm text-muted-foreground"

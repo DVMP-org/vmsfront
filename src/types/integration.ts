@@ -65,6 +65,8 @@ export interface Integration {
   provider: IntegrationType;
   description?: string | null;
   logo_url?: string | null;
+  capabilities: IntegrationCapability[];
+  api_docs_url?: string | null;
   // Runtime state
   enabled: boolean;
   configured: boolean;
