@@ -212,7 +212,7 @@ export default function ResidentDashboardPage() {
     eventType: event.checkout_time ? "Check-out" : "Check-in",
     checkIn: safeFormatDateTime(event.checkin_time) || "Unknown",
     checkOut: safeFormatDateTime(event.checkout_time) || "—",
-    statusLabel: "Approved",
+    statusLabel: event.checkin_time ? "Approved" : "Pending",
   }));
 
   const eventColumns: Column<EventRow>[] = [
@@ -246,7 +246,7 @@ export default function ResidentDashboardPage() {
       key: "statusLabel",
       header: "Status",
       sortable: true,
-      accessor: (row) => <Badge variant="success">{row.statusLabel}</Badge>,
+      accessor: (row) => <Badge variant={row.checkin_time ? "success" : "warning"}>{row.statusLabel}</Badge>,
     },
   ];
 

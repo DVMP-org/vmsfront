@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminPermissionGuard } from "@/components/auth/AdminPermissionGuard";
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { OrganizationMemberGuard } from "@/components/auth/OrganizationMemberGuard";
 
 export default function AdminLayout({
     children,
@@ -9,11 +10,13 @@ export default function AdminLayout({
 }) {
     return (
         <RouteGuard>
-            <DashboardLayout type="admin">
-                <AdminPermissionGuard>
-                    {children}
-                </AdminPermissionGuard>
-            </DashboardLayout>
+            <OrganizationMemberGuard>
+                <DashboardLayout type="admin">
+                    <AdminPermissionGuard>
+                        {children}
+                    </AdminPermissionGuard>
+                </DashboardLayout>
+            </OrganizationMemberGuard>
         </RouteGuard>
     );
 }

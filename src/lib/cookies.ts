@@ -2,15 +2,53 @@
  * Simple client-side cookie utilities
  */
 
+const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "";
+
+/**
+ * Get the root domain for cross-subdomain cookie sharing
+ */
+const getCookieDomain = (): string => {
+    if (typeof window === 'undefined') return '';
+    
+    const hostname = window.location.hostname;
+    
+    // For localhost subdomains (e.g., acme.localhost), omit domain attribute
+    // This allows cookies to be shared between localhost and *.localhost
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+        return '';
+    }
+    
+    // For production, use the base domain with leading dot for subdomain sharing
+    if (BASE_DOMAIN) {
+        return `.${BASE_DOMAIN}`;
+    }
+    
+    // Fallback: extract root domain from hostname (e.g., acme.vmscore.to -> .vmscore.to)
+    const parts = hostname.split('.');
+    if (parts.length >= 2) {
+        // Get last two parts (e.g., vmscore.to from acme.vmscore.to)
+        const rootDomain = parts.slice(-2).join('.');
+        return `.${rootDomain}`;
+    }
+    
+    return '';
+};
+
 export const setCookie = (name: string, value: string, days = 7) => {
     if (typeof document === 'undefined') return;
 
     const date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = "; expires=" + date.toUTCString();
+    
+    const domain = getCookieDomain();
+    const domainAttr = domain ? `; domain=${domain}` : '';
 
-    // Secure and SameSite for production, though we'll keep it simple for now
-    document.cookie = `${name}=${value || ""}${expires}; path=/; SameSite=Lax`;
+    // Secure and SameSite for production
+    // Use SameSite=Lax to allow top-level navigation from external sites
+    // while maintaining CSRF protection for state-changing requests
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${name}=${value || ""}${expires}; path=/${domainAttr}${secure}; SameSite=Lax`;
 };
 
 export const getCookie = (name: string): string | null => {
@@ -28,5 +66,9 @@ export const getCookie = (name: string): string | null => {
 
 export const deleteCookie = (name: string) => {
     if (typeof document === 'undefined') return;
-    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    
+    const domain = getCookieDomain();
+    const domainAttr = domain ? `; domain=${domain}` : '';
+    
+    document.cookie = `${name}=; Path=/${domainAttr}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 };

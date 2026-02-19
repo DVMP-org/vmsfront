@@ -4,6 +4,8 @@ import { DashboardSelect, Residency, ResidentDashboard, ResidentResidency } from
 import { useAuthStore } from "@/store/auth-store";
 
 export function useResidentDashboardSelect() {
+    const { isAuthenticated, _hasHydrated, token } = useAuthStore();
+    
     return useQuery<DashboardSelect>({
         queryKey: ["resident", "dashboard-select"],
         queryFn: async () => {
@@ -12,7 +14,7 @@ export function useResidentDashboardSelect() {
 
             return user;
         },
-        enabled: useAuthStore.getState().isAuthenticated,
+        enabled: _hasHydrated && (isAuthenticated || !!token),
     });
 }
 

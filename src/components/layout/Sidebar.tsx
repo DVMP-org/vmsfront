@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
   const pathname = usePathname();
   const { selectedResidency } = useAppStore();
   const user = useAuthStore((state) => state.user);
-  const { data: adminProfile, isLoading: isAdminProfileLoading } = useAdminProfile();
+  const { data: adminProfile, isPending: isAdminProfilePending } = useAdminProfile();
   const { data: activeTheme } = useActiveBrandingTheme();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -353,7 +353,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     if (actualType === "admin") {
       // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
       // only show non-permission links to avoid flickering.
-      if (!mounted || (!activeRole && isAdminProfileLoading)) {
+      if (!mounted || (!activeRole && isAdminProfilePending)) {
         return baseLinks.filter((link: any) => !link.permission);
       }
 
@@ -392,7 +392,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       seenHrefs.add(link.href);
       return true;
     });
-  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfileLoading, mounted]);
+  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {
     if (!pathname) return null;

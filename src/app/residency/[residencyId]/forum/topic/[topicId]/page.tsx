@@ -315,7 +315,7 @@ export default function ForumTopicPage() {
   return (
     <>
       <div className="space-y-6 pb-24">
-        <section className="sticky top-0 z-20 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
+        <section className="sticky top-0 z-20 rounded-3xl bg-card text-white shadow-xl">
           <div className="flex flex-col gap-5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center gap-1 text-xs text-white/70" aria-label="Breadcrumb">
@@ -418,7 +418,7 @@ export default function ForumTopicPage() {
           </div>
         </section>
 
-        <Card className="border-none shadow-lg shadow-slate-200/60 overflow-hidden">
+        <Card className="border-none  overflow-hidden">
           <CardHeader>
             <CardTitle>
               {/* @ts-expect-error – PaginatedResponse may be array in this branch */}
@@ -444,7 +444,7 @@ export default function ForumTopicPage() {
             ) : (
               <div
                 ref={repliesContainerRef}
-                className="bg-gradient-to-br from-slate-50 via-zinc-50 to-slate-50 min-h-[400px] max-h-[600px] overflow-y-auto p-3 space-y-2"
+                    className=" bg-card min-h-[400px] max-h-[600px] overflow-y-auto p-3 space-y-2"
               >
                 {posts.map((post, index) => {
                   const authorName =
@@ -688,7 +688,7 @@ export default function ForumTopicPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-lg shadow-slate-200/60 lg:sticky lg:bottom-4">
+        <Card className="border-none  lg:sticky lg:bottom-4">
           <CardHeader>
             <CardTitle>Create a Reply</CardTitle>
             <CardDescription>
@@ -708,7 +708,7 @@ export default function ForumTopicPage() {
                 className="space-y-4"
                 onSubmit={handleCreatePost}
               >
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-2 text-xs text-zinc-600">
+                  <div className="rounded-xl border border-dashed border-zinc-500 bg-zinc-50/50 px-4 py-2 text-xs text-zinc-600">
                   Formatting supported — use bold, italics, lists, quotes, code blocks, and links to keep conversations clear.
                 </div>
                 <RichTextEditor
@@ -724,7 +724,7 @@ export default function ForumTopicPage() {
                   className={cn(
                     "rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition",
                     isDragging
-                      ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
+                      ? "border-[rgb(var(--brand-primary))] bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))]"
                       : "border-border/80 text-muted-foreground"
                   )}
                 >
@@ -732,7 +732,7 @@ export default function ForumTopicPage() {
                   Drag & drop files here or{" "}
                   <button
                     type="button"
-                    className="font-semibold text-[var(--brand-primary,#213928)] underline-offset-2 hover:underline"
+                      className="font-semibold text-[rgb(var(--brand-primary))] underline-offset-2 hover:underline"
                     onClick={() => attachmentInputRef.current?.click()}
                   >
                     browse
@@ -805,7 +805,7 @@ export default function ForumTopicPage() {
               onClick={handleFloatingSubmit}
               disabled={!canSubmit || createPost.isPending}
               className={cn(
-                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary,#213928)] text-white shadow-2xl transition lg:hidden",
+                "fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(var(--brand-primary))] text-white shadow-2xl transition lg:hidden",
                 canSubmit
                   ? "translate-y-0 opacity-100"
                   : "pointer-events-none translate-y-3 opacity-0"

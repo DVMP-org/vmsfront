@@ -16,10 +16,10 @@ export function RouteGuard({ children }: RouteGuardProps) {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  console.log("isAuthenticated", isAuthenticated);
-
   useEffect(() => {
-    if (!_hasHydrated) return;
+    if (!_hasHydrated) {
+      return;
+    }
 
     const authCheck = () => {
       if (!isAuthenticated || !token) {
@@ -28,6 +28,8 @@ export function RouteGuard({ children }: RouteGuardProps) {
           const loginUrl = new URL("/auth/login", window.location.origin);
           loginUrl.searchParams.set("redirect_to", pathname || "/");
           router.replace(loginUrl.pathname + loginUrl.search);
+          // Don't set authorized - keep showing loading spinner during redirect
+          return;
         }
       }
       setAuthorized(true);

@@ -21,7 +21,6 @@ import {
 import { Header } from "@/components/layout/Header";
 import type { Residency } from "@/types";
 import { cn } from "@/lib/utils";
-import { useRequireResidentOnboarding } from "@/hooks/use-onboarding-guard";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
@@ -34,13 +33,12 @@ export default function SelectPage() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useRequireEmailVerification(true);
-  useRequireResidentOnboarding(true);
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useResidentDashboardSelect();
   const { data: adminProfile, isLoading: isAdminLoading, isError: isAdminError } = useAdminProfile();
 
   const residencies = useMemo<Residency[]>(() => dashboardData?.residencies ?? [], [dashboardData]);
-  const isAdmin = useMemo(() => !!adminProfile && !isAdminError, [adminProfile, isAdminError]);
+  const isAdmin = adminProfile && !isAdminError; // If we successfully fetch an admin profile, user is admin
   const isLoading = isDashboardLoading || isAdminLoading;
 
   const residencySummary = useMemo(() => {
@@ -93,10 +91,7 @@ export default function SelectPage() {
           </motion.div>
 
           {isLoading ? (
-            <div className="space-y-6">
-              <CardSkeleton />
-              <CardSkeleton />
-            </div>
+            <SelectPageSkeleton />
           ) : (
             <div className="grid grid-cols-1 gap-10">
               {/* Properties Section */}
@@ -270,3 +265,53 @@ function DashboardCard({
 }
 
 
+
+
+export function SelectPageSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-10">
+      {/* Properties Section Skeleton */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 px-1">
+          <div className="h-5 w-1 rounded-full bg-muted animate-pulse" />
+          <div className="h-4 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="flex-1 h-px bg-muted ml-2" />
+        </div>
+        <div className="grid grid-cols-1 gap-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center justify-between rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 bg-white dark:bg-zinc-900 shadow-sm">
+              <div className="flex gap-5 items-center flex-1">
+                <div className="h-12 w-12 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-5 w-40 bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-56 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-muted animate-pulse flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Management Section Skeleton */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 px-1">
+          <div className="h-5 w-1 rounded-full bg-muted animate-pulse" />
+          <div className="h-4 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="flex-1 h-px bg-muted ml-2" />
+        </div>
+        <div className="flex items-center justify-between rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 bg-white dark:bg-zinc-900 shadow-sm">
+          <div className="flex gap-5 items-center flex-1">
+            <div className="h-12 w-12 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-5 w-40 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-56 bg-muted rounded animate-pulse" />
+              <div className="h-6 w-32 bg-muted rounded-full animate-pulse mt-3" />
+            </div>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-muted animate-pulse flex-shrink-0" />
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -50,7 +50,7 @@ import {
     DuePayment,
     ResidencyType,
 } from "@/types";
-import { get } from "http";
+import { BackendPlugin, Plugin, MarketplacePlugin, MarketplaceCategory, InstallPluginResponse } from "@/types/plugin";
 
 export const adminService = {
     // Dashboard
@@ -559,8 +559,12 @@ export const adminService = {
         return apiClient.put(`/admin/plugins/${pluginId}/enable`);
     },
 
-    async getPluginSettings(pluginId: string): Promise<ApiResponse<any>> {
+    async getPluginSettings(pluginId: string): Promise<ApiResponse<BackendPlugin>> {
         return apiClient.get(`/admin/plugins/${pluginId}`);
+    },
+
+    async updatePluginSettings(pluginId: string, settings: any): Promise<ApiResponse<any>> {
+        return apiClient.post(`/admin/plugins/${pluginId}/configure`, settings);
     },
 
     // Branding Themes
@@ -720,7 +724,41 @@ export const adminService = {
         return apiClient.get(`/admin/transactions/${transactionId}`);
     },
 
-    async streamLogs(): Promise<ApiResponse<any>> {
-        return apiClient.get('/admin/logs/stream');
+    // Marketplace
+    async getMarketplacePlugins(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        filters?: string;
+        sort?: string;
+    }): Promise<ApiResponse<PaginatedResponse<MarketplacePlugin>>> {
+        return apiClient.get('/admin/plugins/marketplace', {
+            params: {
+                page: params?.page ?? 1,
+                page_size: params?.pageSize ?? 12,
+                search: params?.search ?? undefined,
+                filters: params?.filters ?? undefined,
+                sort: params?.sort ?? undefined,
+            },
+        });
     },
+
+    async getMarketplacePlugin(pluginId: string): Promise<ApiResponse<MarketplacePlugin>> {
+        return apiClient.get(`/admin/plugins/marketplace/${pluginId}`);
+    },
+
+    async getMarketplaceCategories(): Promise<ApiResponse<MarketplaceCategory[]>> {
+        return apiClient.get('/admin/plugins/marketplace/categories');
+    },
+
+    async installPlugin(pluginId: string): Promise<ApiResponse<InstallPluginResponse>> {
+        return apiClient.post(`/admin/plugins/${pluginId}/marketplace/install`);
+    },
+
+    async uninstallPlugin(pluginId: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+        return apiClient.delete(`/admin/plugins/${pluginId}/marketplace/uninstall`);
+    },
+
+
+
 };

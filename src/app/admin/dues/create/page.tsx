@@ -34,7 +34,7 @@ export default function CreateDuePage() {
             residency_groups_ids: data?.residency_groups_ids,
             residencies_ids: data?.residencies_ids,
             minimum_payment_breakdown: data.recurring ? data.minimum_payment_breakdown : DueTenureLength.ONE_TIME,
-            tenure_length: data.tenure_length,
+            tenure_length: data.recurring ? data.tenure_length : DueTenureLength.ONE_TIME,
             start_date: data.recurring ? data.start_date : undefined,
         };
 

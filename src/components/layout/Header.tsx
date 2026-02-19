@@ -18,7 +18,7 @@ import {
   Shield,
   ArrowRightLeft,
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
 import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
 import { Button } from "../ui/Button";
@@ -42,6 +42,10 @@ export const Header = memo(function Header({
   type,
 }: HeaderProps) {
   const { user, logout } = useAuth();
+  // Fetch user profile if authenticated but user data is missing (cross-subdomain support)
+  const { data: profileData, isLoading: isProfileLoading } = useProfile();
+  const currentUser = user || profileData;
+
   const { selectedResidency, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
@@ -126,7 +130,7 @@ export const Header = memo(function Header({
           </Button>
 
           <div className="flex items-center gap-2">
-            {!isSelectRoute && user && (
+            {!isSelectRoute && currentUser && (
               <WorkspaceSwitcher
                 selectedResidency={selectedResidency}
                 isAdminRoute={isAdminRoute}
@@ -135,7 +139,7 @@ export const Header = memo(function Header({
           </div>
         </div>
 
-        {user && (
+        {currentUser && (
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
@@ -163,11 +167,11 @@ export const Header = memo(function Header({
                 id="profile_dropdown_button"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] text-[10px] font-bold sm:hidden">
-                  {getInitials(user.first_name, user.last_name)}
+                  {getInitials(currentUser.first_name, currentUser.last_name)}
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
-                    {getFullName(user.first_name, user.last_name)}
+                    {getFullName(currentUser.first_name, currentUser.last_name)}
                   </span>
                   {!isSelectRoute && (
                     <span className="text-[9px] uppercase text-muted-foreground">
@@ -187,14 +191,14 @@ export const Header = memo(function Header({
                 <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-64 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-3 text-sm shadow-2xl z-50 ring-1 ring-black/5">
                   <div className="flex items-center gap-3 px-2 py-3 border-b border-border/40 mb-2 sm:hidden">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] font-bold">
-                      {getInitials(user.first_name, user.last_name)}
+                      {getInitials(currentUser.first_name, currentUser.last_name)}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground">
-                        {getFullName(user.first_name, user.last_name)}
+                        {getFullName(currentUser.first_name, currentUser.last_name)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {user.email}
+                        {currentUser.email}
                       </span>
                     </div>
                   </div>
@@ -205,7 +209,7 @@ export const Header = memo(function Header({
                       router.push(profileHref);
                       setMenuOpen(false);
                     }}
-                    description={user.email}
+                    description={currentUser.email}
                   />
                   <MenuAction
                     icon={Settings}

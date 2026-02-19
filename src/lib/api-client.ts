@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
+import { getSubdomain } from "./subdomain-utils";
 
 // Use production API URL in production, fallback to localhost for development
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 class ApiClient {
   private client: AxiosInstance;
 
@@ -19,6 +20,10 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = this.getToken();
+        const subdomain = getSubdomain();
+        if (subdomain) {
+          config.headers["X-Organization"] = subdomain;
+        }
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -64,7 +69,16 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
+      // Try localStorage first, then fall back to cookie for cross-subdomain support
+      const localToken = localStorage.getItem("token");
+      if (localToken) return localToken;
+      
+      // Read from cookie as fallback
+      const cookieToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("auth-token="))
+        ?.split("=")[1];
+      return cookieToken || null;
     }
     return null;
   }
