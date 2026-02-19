@@ -229,7 +229,7 @@ export default function VisitorDetailPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             {/* Movement Dependency Map */}
-            <CardContent className="p-8 pb-12 overflow-auto max-h-[600px] scrollbar-thin">
+            <CardContent className="p-8 pb-12 overflow-auto max-h-[600px] scrollbar-thin bg-zinc-100/50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-zinc-800/50">
               <VisitorDetail visitor={visitor} />
             </CardContent>
           </div>

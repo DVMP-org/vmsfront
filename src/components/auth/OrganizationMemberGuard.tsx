@@ -3,13 +3,13 @@
 import { useMemo } from "react";
 import { useMyOrganizations } from "@/hooks/use-organization";
 import { useCurrentOrganization } from "@/hooks/use-organization";
-import { Building2, Home, ArrowLeft } from "lucide-react";
+import { Building2, Home, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Header } from "../layout/Header";
 import Link from "next/link";
 import { CardSkeleton } from "../ui/Skeleton";
 import { SelectPageSkeleton } from "@/app/select/page";
-
+import { motion, AnimatePresence } from "framer-motion";
 interface OrganizationMemberGuardProps {
     children: React.ReactNode;
 }
@@ -49,8 +49,24 @@ export function OrganizationMemberGuard({ children }: OrganizationMemberGuardPro
                 <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
 
                 <Header type="select" />
-
+                <main className="flex-1 relative z-10 flex flex-col items-center">
+                    <div className="w-full max-w-2xl mx-auto py-12 px-6 sm:py-20 lg:px-8 space-y-10">
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center space-y-4"
+                        >
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50">
+                                <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+                            </div>
+                            <div className="space-y-1">
+                                <CardSkeleton />
+                            </div>
+                        </motion.div>
+                    </div>
                 <SelectPageSkeleton />
+                </main>
             </div>
         );
     }

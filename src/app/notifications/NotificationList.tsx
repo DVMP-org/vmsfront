@@ -35,7 +35,7 @@ export function NotificationList() {
         data,
         isLoading,
         refetch,
-    } = useNotifications(user?.id, { page, pageSize: 5 });
+    } = useNotifications(user?.id || "", { page, pageSize: 5 });
 
     const notifications = useMemo(() => data?.items ?? [], [data]);
     const unreadCount = useMemo(() => notifications.filter(n => !n.is_read).length, [notifications]);
@@ -154,15 +154,15 @@ export function NotificationList() {
                     </AnimatePresence>
                 </div>
 
-                {data.total_pages > 1 && (
+                {data?.total_pages || 0 > 1 && (
                     <div className="p-4 border-border/40">
                         <PaginationBar
-                            page={data.page}
-                            pageSize={data.page_size}
-                            total={data.total}
-                            totalPages={data.total_pages}
-                            hasNext={data.has_next}
-                            hasPrevious={data.has_previous}
+                            page={data?.page || 1}
+                            pageSize={data?.page_size || 10}
+                            total={data?.total || 0}
+                            totalPages={data?.total_pages || 0}
+                            hasNext={data?.has_next || false}
+                            hasPrevious={data?.has_previous || false}
                             onChange={(nextPage) => setPage(nextPage)}
                             isFetching={isLoading}
                             resourceLabel="notifications"
@@ -190,11 +190,11 @@ function NotificationRow({ notification }: { notification: any }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={cn(
-                "group flex items-center gap-4 p-4 border-b rounded-xs border-border/40 transition-all hover:bg-muted/30 cursor-pointer relative dark:bg-white/10",
+                "group flex mx-2 items-center gap-4 p-4 border-b rounded-xs border-border/40 transition-all hover:bg-muted/30 cursor-pointer relative dark:bg-white/10",
                 !is_read && "bg-foreground/10 dark:bg-background/10"
             )}
         >
-            <div className="hidden group-hover:block absolute left-0 top-0 bottom-0 w-1 bg-[rgb(var(--brand-primary,#213928))]/40" />
+            <div className="hidden group-hover:block absolute left-0 top-0 bottom-0 w-1 bg-[rgb(var(--brand-primary,#213928))]/40 " />
 
             <div className={cn("flex-shrink-0 relative")}>
 

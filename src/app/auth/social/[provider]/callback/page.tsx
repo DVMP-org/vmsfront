@@ -14,8 +14,8 @@ export default function SocialCallbackPage() {
     const hasTriggered = useRef(false);
 
     useEffect(() => {
-        const provider = params.provider as string;
-        const code = searchParams.get("code");
+        const provider = params?.provider as string;
+        const code = searchParams?.get("code");
 
         if (provider && code && !hasTriggered.current) {
             hasTriggered.current = true;
@@ -23,7 +23,7 @@ export default function SocialCallbackPage() {
         } else if (!code && !isPending) {
             router.replace("/auth/login");
         }
-    }, [params.provider, searchParams, handleCallback, router, isPending]);
+    }, [params?.provider, searchParams, handleCallback, router, isPending]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
@@ -46,7 +46,7 @@ export default function SocialCallbackPage() {
                 </h1>
 
                 <p className="text-muted-foreground">
-                    Please wait while we complete your sign-in with {titleCase(params.provider)}.
+                    Please wait while we complete your sign-in with {titleCase(params?.provider)}.
                 </p>
 
                 {isError && (
