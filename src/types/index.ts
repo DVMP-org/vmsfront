@@ -957,3 +957,20 @@ export interface CreateGatePassData {
   valid_to?: string | null;
   max_uses?: number | null;
 }
+
+// Mailer Settings
+export interface MailerSettings {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_user?: string | null;
+    smtp_password?: string | null;
+    from_email?: string | null;
+}
+
+export interface UpdateMailerSettingsRequest {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_user?: string | null;
+    smtp_password?: string | null;
+    from_email?: string | null;
+}

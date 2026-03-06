@@ -1,10 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks, FileText } from "lucide-react";
+import { Settings, CreditCard, Palette, Blocks, Mail } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 
-type SettingsTab = "payment" | "branding" | "integrations";
+type SettingsTab = "payment" | "branding" | "integrations" | "mailer";
 
 function SettingsLayoutContent({
     children,
@@ -22,7 +22,7 @@ function SettingsLayoutContent({
         }
 
         const tabParam = searchParams?.get("tab");
-        if (tabParam === "branding" || tabParam === "integrations") {
+        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer") {
             return tabParam as SettingsTab;
         }
 
@@ -50,7 +50,7 @@ function SettingsLayoutContent({
                     <Settings className="h-4 w-4 text-zinc-600" />
                     <h1 className="text-lg font-semibold text-foreground">Platform Settings</h1>
                 </div>
-                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations </p>
+                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations, and mailer settings</p>
             </div>
 
             {/* Tabs */}
@@ -89,6 +89,18 @@ function SettingsLayoutContent({
                     <div className="flex items-center gap-2">
                         <Blocks className="h-3.5 w-3.5" />
                         Integrations
+                    </div>
+                </button>
+                <button
+                    onClick={() => handleTabChange("mailer")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "mailer"
+                        ? "border-zinc-900 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Mail className="h-3.5 w-3.5" />
+                        Mailer
                     </div>
                 </button>
             </div>
