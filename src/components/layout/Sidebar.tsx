@@ -542,7 +542,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "relative flex flex-col border-r bg-background",
+        "sticky top-0 flex flex-col border-r bg-background overflow-hidden",
         "h-screen shadow-sm flex-shrink-0 z-30"
       )}
     >
@@ -624,7 +624,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       <LayoutGroup>
         {/* Navigation Links */}
         <nav className={cn(
-          "flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
+          "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
           isMobile || !collapsed ? "p-3" : "py-4 px-0"
         )}>
           {links.map((link: any) => {
@@ -844,18 +844,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
         </nav>
       </LayoutGroup>
 
-      <div className="p-3 border-t bg-white dark:bg-zinc-900/50 backdrop-blur-sm">
-        <div className={cn(
-          "px-3 py-2 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 transition-all duration-500",
-          collapsed && !isMobile ? "p-1.5 opacity-0 invisible" : "opacity-100 visible"
-        )}>
-          <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Status</p>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-            <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">System Online</span>
-          </div>
-        </div>
-      </div>
+
     </motion.aside>
   );
 });

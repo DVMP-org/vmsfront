@@ -1,10 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks, Mail } from "lucide-react";
+import { Settings, CreditCard, Palette, Blocks, Mail, Crown } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 
-type SettingsTab = "payment" | "branding" | "integrations" | "mailer";
+type SettingsTab = "payment" | "branding" | "integrations" | "mailer" | "subscription";
 
 function SettingsLayoutContent({
     children,
@@ -22,7 +22,7 @@ function SettingsLayoutContent({
         }
 
         const tabParam = searchParams?.get("tab");
-        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer") {
+        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer" || tabParam === "subscription") {
             return tabParam as SettingsTab;
         }
 
@@ -101,6 +101,18 @@ function SettingsLayoutContent({
                     <div className="flex items-center gap-2">
                         <Mail className="h-3.5 w-3.5" />
                         Mailer
+                    </div>
+                </button>
+                <button
+                    onClick={() => handleTabChange("subscription")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "subscription"
+                        ? "border-zinc-900 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Crown className="h-3.5 w-3.5" />
+                        Subscription
                     </div>
                 </button>
             </div>
