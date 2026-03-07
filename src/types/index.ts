@@ -1,4 +1,5 @@
 import { Gate } from "./gate";
+import { Subscription } from "./subscription";
 
 // Enums
 export enum GatePassStatus {
@@ -63,8 +64,8 @@ export interface Organization {
     residencies?: Residency[] | null;
     residents?: Resident[] | null;
     admins?: Admin[] | null;
+    subscription: Subscription | null;
 }
-
 
 
 export interface OrganizationMembership {
@@ -974,3 +975,4 @@ export interface UpdateMailerSettingsRequest {
     smtp_password?: string | null;
     from_email?: string | null;
 }
+

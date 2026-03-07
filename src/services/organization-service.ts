@@ -5,6 +5,7 @@ import {
   OrganizationMembership,
   CreateOrganizationRequest,
 } from "@/types";
+import { Plan } from "@/types/subscription";
 
 export const organizationService = {
   /**
@@ -19,6 +20,10 @@ export const organizationService = {
    */
   async getOrganization(slug: string): Promise<ApiResponse<Organization>> {
     return apiClient.get(`/organizations/${slug}`);
+  },
+
+  async getPlans(): Promise<ApiResponse<Plan[]>> {
+    return apiClient.get("/subscription/plans");
   },
 
   /**

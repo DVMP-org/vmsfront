@@ -19,19 +19,19 @@ export default function PaymentCallbackPage() {
         // PayStack uses: reference, trxref
         // Monify uses: transactionReference
         const reference =
-            searchParams.get("reference") ||
-            searchParams.get("ref") ||
-            searchParams.get("tx_ref") || // Flutterwave
-            searchParams.get("transaction_id") || // Flutterwave
-            searchParams.get("flw_ref") || // Flutterwave
-            searchParams.get("transaction_reference") ||
-            searchParams.get("transactionReference") ||
-            searchParams.get("trxref") || // PayStack
-            searchParams.get("payment_reference") ||
-            searchParams.get("paymentReference");
+            searchParams?.get("reference") ||
+            searchParams?.get("ref") ||
+            searchParams?.get("tx_ref") || // Flutterwave
+            searchParams?.get("transaction_id") || // Flutterwave
+            searchParams?.get("flw_ref") || // Flutterwave
+            searchParams?.get("transaction_reference") ||
+            searchParams?.get("transactionReference") ||
+            searchParams?.get("trxref") || // PayStack
+            searchParams?.get("payment_reference") ||
+            searchParams?.get("paymentReference");
 
         // Extract status if available
-        const status = searchParams.get("status") || searchParams.get("payment_status");
+        const status = searchParams?.get("status") || searchParams?.get("payment_status");
 
         // Build redirect URL with all relevant parameters
         const params = new URLSearchParams();
@@ -39,7 +39,7 @@ export default function PaymentCallbackPage() {
             params.set("reference", reference);
         } else {
             // If no reference found, log available params for debugging
-            const allParams = Array.from(searchParams.entries()).map(([key, value]) => `${key}=${value}`).join(", ");
+            const allParams = Array.from(searchParams?.entries() || []).map(([key, value]) => `${key}=${value}`).join(", ");
             console.warn("Payment callback: reference not found. Available params:", allParams);
         }
         if (status) params.set("status", status);

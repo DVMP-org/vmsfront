@@ -27,6 +27,20 @@ export function useMyOrganizations() {
 }
 
 /**
+ * Hook to fetch available subscription plans
+ */
+export function usePlans() {
+  return useQuery({
+    queryKey: ["plans"],
+    queryFn: async () => {
+      const response = await organizationService.getPlans();
+      return response.data;
+    },
+  });
+}
+
+
+/**
  * Hook to fetch a specific organization by slug
  */
 export function useOrganization(slug: string | null) {

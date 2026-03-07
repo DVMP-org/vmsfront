@@ -16,6 +16,7 @@ import {
     type LucideIcon,
     DoorOpen,
     Blocks,
+    Wallet,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -57,6 +58,7 @@ export const adminLinks: AdminRoute[] = [
         ],
     },
     { href: "/admin/forums", label: "Forums", icon: MessageSquare, permission: "forum_posts.list" },
+    { href: "/admin/billing", label: "Billing", icon: Wallet, permission: "billing.manage" },
     { href: "/admin/settings", label: "Settings", icon: Settings, permission: ["branding.list", 'settings.show'] },
     { href: "/admin/plugins", label: "Plugins", icon: Puzzle, permission: "plugins.list" },
 
