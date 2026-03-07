@@ -1,10 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks, FileText } from "lucide-react";
+import { Settings, CreditCard, Palette, Blocks, Mail, Crown } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 
-type SettingsTab = "payment" | "branding" | "logs" | "integrations";
+type SettingsTab = "payment" | "branding" | "integrations" | "mailer" | "subscription";
 
 function SettingsLayoutContent({
     children,
@@ -22,7 +22,7 @@ function SettingsLayoutContent({
         }
 
         const tabParam = searchParams?.get("tab");
-        if (tabParam === "branding" || tabParam === "logs" || tabParam === "integrations") {
+        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer" || tabParam === "subscription") {
             return tabParam as SettingsTab;
         }
 
@@ -37,15 +37,9 @@ function SettingsLayoutContent({
     }, [pathname, searchParams]);
 
     const handleTabChange = (tab: SettingsTab) => {
-        if (tab === "integrations") {
-            if (pathname?.includes("/admin/settings/integrations/")) {
-                router.push("/admin/settings?tab=integrations");
-            } else {
-                router.push(`/admin/settings?tab=${tab}`);
-            }
-        } else {
-            router.push(`/admin/settings?tab=${tab}`);
-        }
+
+        router.push(`/admin/settings?tab=${tab}`);
+
     };
 
     return (
@@ -56,7 +50,7 @@ function SettingsLayoutContent({
                     <Settings className="h-4 w-4 text-zinc-600" />
                     <h1 className="text-lg font-semibold text-foreground">Platform Settings</h1>
                 </div>
-                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations and view logs</p>
+                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations, and mailer settings</p>
             </div>
 
             {/* Tabs */}
@@ -98,15 +92,27 @@ function SettingsLayoutContent({
                     </div>
                 </button>
                 <button
-                    onClick={() => handleTabChange("logs")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "logs"
+                    onClick={() => handleTabChange("mailer")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "mailer"
                         ? "border-zinc-900 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5" />
-                        Logs
+                        <Mail className="h-3.5 w-3.5" />
+                        Mailer
+                    </div>
+                </button>
+                <button
+                    onClick={() => handleTabChange("subscription")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "subscription"
+                        ? "border-zinc-900 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Crown className="h-3.5 w-3.5" />
+                        Subscription
                     </div>
                 </button>
             </div>

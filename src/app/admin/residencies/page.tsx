@@ -370,16 +370,6 @@ export default function ResidenciesPage() {
       ),
     },
     {
-      key: "type",
-      header: "Type",
-      sortable: true,
-      accessor: (row) => (
-        <span className={`text-sm ${(row as any).type?.is_active ? "text-green-600" : "text-muted-foreground"}`}>
-          {(row as any).type?.name}
-        </span>
-      ),
-    },
-    {
       key: "is_active",
       header: "Status",
       sortable: true,

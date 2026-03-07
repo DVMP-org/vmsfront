@@ -158,6 +158,7 @@ export default function ResidentDueDetailPage() {
     const handleActivate = () => {
         if (!selectedStrategy) return;
         scheduleMutation.mutate({ payment_breakdown: selectedStrategy });
+        router.refresh();
     };
 
     const handlePaySchedule = async (scheduleId: string) => {

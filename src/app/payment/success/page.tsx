@@ -27,22 +27,22 @@ export default function PaymentSuccessPage() {
         // Monify uses: transactionReference
         // Generic: reference, ref, payment_reference, etc.
         const ref =
-            searchParams.get("reference") ||
-            searchParams.get("ref") ||
-            searchParams.get("tx_ref") || // Flutterwave
-            searchParams.get("transaction_id") || // Flutterwave
-            searchParams.get("flw_ref") || // Flutterwave
-            searchParams.get("transaction_reference") ||
-            searchParams.get("transactionReference") ||
-            searchParams.get("trxref") || // PayStack
-            searchParams.get("payment_reference") ||
-            searchParams.get("paymentReference");
+            searchParams?.get("reference") ||
+            searchParams?.get("ref") ||
+            searchParams?.get("tx_ref") || // Flutterwave
+            searchParams?.get("transaction_id") || // Flutterwave
+            searchParams?.get("flw_ref") || // Flutterwave
+            searchParams?.get("transaction_reference") ||
+            searchParams?.get("transactionReference") ||
+            searchParams?.get("trxref") || // PayStack
+            searchParams?.get("payment_reference") ||
+            searchParams?.get("paymentReference");
 
         if (ref) {
             setReference(ref);
         } else {
             // If no reference found, log available params for debugging
-            const allParams = Array.from(searchParams.entries()).map(([key, value]) => `${key}=${value}`).join(", ");
+            const allParams = Array.from(searchParams?.entries() || []).map(([key, value]) => `${key}=${value}`).join(", ");
             console.warn("Payment reference not found in URL. Available params:", allParams);
             toast.error("Payment reference not found");
         }
@@ -202,7 +202,7 @@ export default function PaymentSuccessPage() {
     }
 
     // Show success state
-    if (transaction.status === "success") {
+    if (transaction?.status === "success") {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-4">
                 <Card className="w-full max-w-lg border-2 border-green-200 dark:border-green-800 shadow-2xl overflow-hidden">
@@ -308,7 +308,7 @@ export default function PaymentSuccessPage() {
     }
 
     // Show pending state
-    if (transaction.status === "pending") {
+    if (transaction?.status === "pending") {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-4">
                 <Card className="w-full max-w-lg border-2 border-yellow-200 dark:border-yellow-800 shadow-xl">
@@ -381,7 +381,7 @@ export default function PaymentSuccessPage() {
                             <span className="text-sm text-muted-foreground">Transaction Reference</span>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-mono bg-background px-2 py-1 rounded border">
-                                    {transaction.reference}
+                                    {transaction?.reference}
                                 </span>
                                 <button
                                     onClick={copyReference}
@@ -397,10 +397,10 @@ export default function PaymentSuccessPage() {
                             </div>
                         </div>
 
-                        {transaction.description && (
+                        {transaction?.description && (
                             <div className="flex items-start justify-between pt-3 border-t border-border/50">
                                 <span className="text-sm text-muted-foreground">Description</span>
-                                <span className="text-sm text-right max-w-[60%]">{transaction.description}</span>
+                                <span className="text-sm text-right max-w-[60%]">{transaction?.description}</span>
                             </div>
                         )}
                     </div>

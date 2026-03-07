@@ -25,7 +25,7 @@ export default function VerifyEmailPage() {
   const resendMutation = useResendVerification();
   const verifyMutation = useVerifyEmail();
   const searchParams = useSearchParams();
-  const tokenFromParams = searchParams.get("token");
+  const tokenFromParams = searchParams?.get("token");
   const [countdown, setCountdown] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const verificationAttempted = useRef(false);

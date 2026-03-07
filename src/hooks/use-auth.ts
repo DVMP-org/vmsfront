@@ -84,10 +84,8 @@ export function useAuth() {
       } else {
         router.replace("/select");
       }
-      console.log("router.push called");
     },
     onError: (error: any) => {
-      console.error("Login error:", error);
       const parsedError = parseApiError(error);
       setLoginError(parsedError.message);
       setLoginFieldErrors(parsedError.fieldErrors);
@@ -102,24 +100,19 @@ export function useAuth() {
       setRegisterFieldErrors({});
     },
     onSuccess: (response) => {
-      console.log("Register response:", response);
       const { user, token } = response.data;
 
       // Set auth state
       setAuth(user, token);
-      console.log("Auth state set after registration");
 
       toast.success("Registration successful!");
       setRegisterError(null);
       setRegisterFieldErrors({});
 
       // Navigate immediately
-      console.log("Attempting to navigate to /select...");
       router.replace("/select");
-      console.log("router.replace called");
     },
     onError: (error: any) => {
-      console.error("Register error:", error);
       const parsedError = parseApiError(error);
       setRegisterError(parsedError.message);
       setRegisterFieldErrors(parsedError.fieldErrors);
@@ -195,13 +188,15 @@ export function useProfile() {
 }
 
 export function useVerifyToken() {
+  const { isAuthenticated, _hasHydrated, token } = useAuthStore();
+  
   return useQuery<User>({
     queryKey: ["auth", "verify"],
     queryFn: async () => {
       const response = await authService.verifyToken();
       return response.data;
     },
-    enabled: useAuthStore.getState().isAuthenticated,
+    enabled: _hasHydrated && (isAuthenticated || !!token),
   });
 }
 

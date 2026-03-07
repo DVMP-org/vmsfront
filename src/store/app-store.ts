@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Residency, BrandingConfig, Organization } from "@/types";
+import { deleteCookie, setCookie } from "@/lib/cookies";
 
 interface AppState {
-    organization: Organization| null;
+    organization: Organization | null;
     selectedResidency: Residency | null;
     branding: BrandingConfig | null;
     setSelectedResidency: (residency: Residency | null) => void;
@@ -18,7 +19,14 @@ export const useAppStore = create<AppState>()(
             selectedResidency: null,
             branding: null,
             setSelectedResidency: (residency) => set({ selectedResidency: residency }),
-            setSelectedOrganization: (organization) => set({ organization: organization }),
+            setSelectedOrganization: (organization) => {
+                if (organization?.slug) {
+                    setCookie("selected-organization", organization.slug, 30);
+                } else {
+                    deleteCookie("selected-organization");
+                }
+                set({ organization: organization });
+            },
             setBranding: (branding) => set({ branding }),
         }),
         {

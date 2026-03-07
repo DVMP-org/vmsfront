@@ -116,11 +116,11 @@ export default function IntegrationsSection() {
     const disableMutation = useDisableIntegration();
 
     const handleToggle = (integration: Integration) => {
-        if (!integration.configured && !integration.enabled) {
-            toast.error("Please configure credentials before enabling");
-            router.push(`/admin/settings/integrations/${integration.id}`);
-            return;
-        }
+        // if (!integration.configured && !integration.enabled) {
+        //     toast.error("Please configure credentials before enabling");
+        //     router.push(`/admin/settings/integrations/${integration.id}`);
+        //     return;
+        // }
 
         if (integration.enabled) {
             disableMutation.mutate(integration.name);
@@ -360,7 +360,7 @@ function IntegrationRow({
                 <IntegrationStatusToggle
                     enabled={integration.enabled}
                     onToggle={onToggle}
-                    disabled={isToggling || (!integration.configured && !integration.enabled)}
+                    disabled={isToggling}
                     showLabel
                     size="sm"
                 />

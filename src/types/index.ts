@@ -1,4 +1,5 @@
 import { Gate } from "./gate";
+import { Subscription } from "./subscription";
 
 // Enums
 export enum GatePassStatus {
@@ -56,8 +57,32 @@ export interface Organization {
     id: string;
     name: string;
     slug: string;
+    logo_url?: string | null;
+    description?: string | null;
     created_at: string;
     updated_at: string;
+    residencies?: Residency[] | null;
+    residents?: Resident[] | null;
+    admins?: Admin[] | null;
+    subscription: Subscription | null;
+}
+
+
+export interface OrganizationMembership {
+    id: string;
+    organization: Organization;
+    role: 'owner' | 'admin' | 'member';
+    joined_at: string;
+}
+
+export interface CreateOrganizationRequest {
+    name: string;
+    slug: string;
+    description?: string;
+}
+
+export interface OrganizationsResponse {
+    organizations: OrganizationMembership[];
 }
 export interface ResidencyType{
     id: string;
@@ -933,3 +958,21 @@ export interface CreateGatePassData {
   valid_to?: string | null;
   max_uses?: number | null;
 }
+
+// Mailer Settings
+export interface MailerSettings {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_user?: string | null;
+    smtp_password?: string | null;
+    from_email?: string | null;
+}
+
+export interface UpdateMailerSettingsRequest {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_user?: string | null;
+    smtp_password?: string | null;
+    from_email?: string | null;
+}
+

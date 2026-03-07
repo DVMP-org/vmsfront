@@ -53,7 +53,7 @@ export const authService = {
     return apiClient.post("/auth/onboard", data);
   },
   async resendVerification(): Promise<ApiResponse<{ message: string }>> {
-    return apiClient.post("/auth/verify-email-resent");
+    return apiClient.post("/auth/resend/email/verify");
   },
   async verifyEmail(token: string): Promise<ApiResponse<{ message: string }>> {
     return apiClient.get("/auth/verify-email", { params: { token } });

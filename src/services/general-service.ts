@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import { ApiResponse, Residency, NotificationResponse, Transaction, WalletTransaction, PaginatedResponse } from "@/types";
+import { ApiResponse, Residency, NotificationResponse, Transaction, WalletTransaction, PaginatedResponse, GatePass } from "@/types";
 
 
 
@@ -32,6 +32,10 @@ export const generalService = {
 
     async markAsRead(notificationIds: string[]): Promise<ApiResponse<{ success: boolean }>> {
         return apiClient.post(`/user/notifications/mark-as-read`, notificationIds);
+    },
+
+    async getPublicGatePass(code: string): Promise<ApiResponse<GatePass>> {
+        return apiClient.get(`/gate-pass/${code}`);
     },
 }
 

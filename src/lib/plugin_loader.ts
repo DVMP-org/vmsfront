@@ -1,6 +1,8 @@
 import electricity from "@/plugins/electricity";
 import camera from "@/plugins/camera";
+import { getCookie } from "@/lib/cookies";
 import { isPluginPath } from "./plugin-utils";
+import { getSubdomain } from "./subdomain-utils";
 import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
 import { adminService } from "@/services/admin-service";
 
@@ -80,6 +82,24 @@ function validatePlugin(plugin: any): plugin is {
 const PLUGINS_CACHE_KEY = "vmscore_plugins_cache";
 const PLUGINS_CACHE_TIMESTAMP_KEY = "vmscore_plugins_cache_timestamp";
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
+
+function getPluginCacheScope(): string {
+    return (
+        getSubdomain() ||
+        getCookie("selected-organization") ||
+        DEFAULT_ORGANIZATION_SLUG ||
+        "global"
+    );
+}
+
+function getPluginCacheKey(): string {
+    return `${PLUGINS_CACHE_KEY}:${getPluginCacheScope()}`;
+}
+
+function getPluginCacheTimestampKey(): string {
+    return `${PLUGINS_CACHE_TIMESTAMP_KEY}:${getPluginCacheScope()}`;
+}
 
 /**
  * Gets cached plugins from localStorage
@@ -89,8 +109,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
     if (typeof window === "undefined") return null;
 
     try {
-        const cachedData = localStorage.getItem(PLUGINS_CACHE_KEY);
-        const cachedTimestamp = localStorage.getItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+        const cachedData = localStorage.getItem(getPluginCacheKey());
+        const cachedTimestamp = localStorage.getItem(getPluginCacheTimestampKey());
 
         if (!cachedData || !cachedTimestamp) {
             return null;
@@ -101,8 +121,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
 
         // Check if cache is expired
         if (now - timestamp > CACHE_DURATION_MS) {
-            localStorage.removeItem(PLUGINS_CACHE_KEY);
-            localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+            localStorage.removeItem(getPluginCacheKey());
+            localStorage.removeItem(getPluginCacheTimestampKey());
             return null;
         }
 
@@ -111,8 +131,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
     } catch (error) {
         console.error("Failed to read plugins cache:", error);
         // Clear invalid cache
-        localStorage.removeItem(PLUGINS_CACHE_KEY);
-        localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+        localStorage.removeItem(getPluginCacheKey());
+        localStorage.removeItem(getPluginCacheTimestampKey());
         return null;
     }
 }
@@ -125,16 +145,16 @@ function setCachedPlugins(plugins: BackendPlugin[]): void {
     if (typeof window === "undefined") return;
 
     try {
-        localStorage.setItem(PLUGINS_CACHE_KEY, JSON.stringify(plugins));
-        localStorage.setItem(PLUGINS_CACHE_TIMESTAMP_KEY, Date.now().toString());
+        localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
+        localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
     } catch (error) {
         console.error("Failed to cache plugins:", error);
         // If storage is full or unavailable, clear old cache and try again
         try {
-            localStorage.removeItem(PLUGINS_CACHE_KEY);
-            localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
-            localStorage.setItem(PLUGINS_CACHE_KEY, JSON.stringify(plugins));
-            localStorage.setItem(PLUGINS_CACHE_TIMESTAMP_KEY, Date.now().toString());
+            localStorage.removeItem(getPluginCacheKey());
+            localStorage.removeItem(getPluginCacheTimestampKey());
+            localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
+            localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
         } catch (retryError) {
             console.error("Failed to cache plugins after retry:", retryError);
         }
@@ -146,8 +166,8 @@ function setCachedPlugins(plugins: BackendPlugin[]): void {
  */
 export function clearPluginsCache(): void {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(PLUGINS_CACHE_KEY);
-    localStorage.removeItem(PLUGINS_CACHE_TIMESTAMP_KEY);
+    localStorage.removeItem(getPluginCacheKey());
+    localStorage.removeItem(getPluginCacheTimestampKey());
 }
 
 /**

@@ -503,7 +503,7 @@ bob@example.com,Bob,Wilson,,,"Residency B"`}
               </p>
               {importSummary.failed > 0 && (
                 <p className="text-destructive">
-                  {importSummary.failed} item(s) failed. Review the server logs
+                  {importSummary.failed} item(s) failed. Review the response
                   for details.
                 </p>
               )}

@@ -6,12 +6,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+export function formatDate(date: string | Date, format: "short" | "long" = "long"): string {
+  const options: Intl.DateTimeFormatOptions =
+    format === "short"
+      ? { year: "numeric", month: "short", day: "numeric" }
+      : { year: "numeric", month: "long", day: "numeric" };
+  return new Date(date).toLocaleDateString("en-US", options);
 }
 
 export function formatDateTime(date: string | Date): string {
@@ -229,4 +229,40 @@ export function safeFormatDateTime(value?: string | null): string | null {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return formatDateTime(parsed);
+}
+
+
+export const formatPrice = (price: number, currency?: string) => {
+  if (price === 0) return "Free";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+  }).format(price);
+};
+
+
+export const formatNumber = (num: number) => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num?.toString();
+};
+
+/**
+ * Safely open a URL in a new tab with security measures
+ * Validates URL format and prevents javascript: protocol
+ */
+export function safeOpenUrl(url: string | undefined | null): void {
+  if (!url) return;
+  
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      console.warn('Blocked attempt to open URL with unsafe protocol:', url);
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    console.error('Invalid URL:', url, error);
+  }
 }

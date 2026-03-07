@@ -73,12 +73,12 @@ export function useActiveBrandingTheme() {
             const response = await adminService.getActiveBrandingTheme();
             const theme = response.data;
             // Cache the theme in localStorage
-            setCachedTheme(theme);
+            // setCachedTheme(theme);
             return theme;
         },
         staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
         refetchOnWindowFocus: true,
-        initialData: () => getCachedTheme() ?? undefined,
+        // initialData: () => getCachedTheme() ?? undefined,
     });
 }
 

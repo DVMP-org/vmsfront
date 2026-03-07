@@ -47,6 +47,8 @@ export interface BackendPlugin {
     image?: string;
     details?: PluginDetails;
     [key: string]: any;
+    configuration?: PluginConfig; // Current configuration from backend
+    configured?: boolean; // Whether the plugin has been configured at least once
 }
 
 // Plugin type definition (for UI display)
@@ -58,13 +60,14 @@ export interface Plugin {
     icon: any;
     enabled: boolean;
     category: string;
-    imageUrl?: string;
+    image?: string;
     color: string;
     details: PluginDetails;
     config: PluginConfig;
     backendVersion?: string;
     frontendVersion?: string;
     hasFrontend?: boolean; // Whether frontend plugin exists
+    configuration?: PluginConfig; // Current configuration from backend
 }
 
 export interface PluginManifest {
@@ -111,4 +114,47 @@ export interface LoadedPlugin {
     residentRoutes?: PluginRoute[];
     // Backend plugin ID for enable/disable operations
     backendId?: string;
+}
+
+// Marketplace Plugin Types
+export interface MarketplacePlugin {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    version: string;
+    category: string;
+    author: string;
+    image?: string;
+    screenshots?: string[];
+    details?: PluginDetails;
+    price: number; // 0 for free
+    currency?: string;
+    rating: number; // 0-5
+    review_count: number;
+    installed_count: number;
+    installed: boolean;
+    enabled?: boolean;
+    tags?: string[];
+    requirements?: string[];
+    features?: string[];
+    documentationUrl?: string;
+    supportUrl?: string;
+    lastUpdated?: string;
+    createdAt?: string;
+}
+
+export interface MarketplaceCategory {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    pluginCount: number;
+    icon?: string;
+}
+
+export interface InstallPluginResponse {
+    success: boolean;
+    message: string;
+    plugin?: BackendPlugin;
 }

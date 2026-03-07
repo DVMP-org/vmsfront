@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { adminGateService } from "@/services/admin-gate-service";
+import { useAuthStore } from "@/store/auth-store";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
 import {
   CreateResidencyRequest,
@@ -1036,6 +1037,7 @@ export function useAdminDuePayments(
 
 export function useAdminProfile() {
   const queryClient = useQueryClient();
+  const { token, _hasHydrated, isAuthenticated } = useAuthStore();
   const STORAGE_KEY = "vms_admin_profile";
 
   return useQuery<Admin>({
@@ -1069,6 +1071,7 @@ export function useAdminProfile() {
     },
     staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins
+    enabled: _hasHydrated && (!!token || isAuthenticated), // Only fetch when authenticated
   });
 }
 

@@ -238,7 +238,7 @@ export default function WalletPage() {
                                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Available Balance</h3>
                                 </div>
                                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-sm">
-                                    <Wallet className="h-5 w-5" />
+                                    <Wallet className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
                                 </div>
                             </div>
 
@@ -272,7 +272,7 @@ export default function WalletPage() {
                     {/* Stats Column - Vertical Stack */}
                     <div className="space-y-4">
                         {/* Total In */}
-                        <Card className="border-l-4 border-green-500 bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Total Credits</p>
@@ -287,7 +287,7 @@ export default function WalletPage() {
                         </Card>
 
                         {/* Total Out */}
-                        <Card className="border-l-4 border-red-500 bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Total Debits</p>
@@ -302,7 +302,7 @@ export default function WalletPage() {
                         </Card>
 
                         {/* Pending */}
-                        <Card className="border-l-4 border-amber-500 bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Pending</p>
@@ -323,7 +323,7 @@ export default function WalletPage() {
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 rounded bg-primary/10 text-primary">
-                                <History className="h-4 w-4" />
+                                <History className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
                             </div>
                             <h3 className="text-lg font-bold text-foreground">Recent Activity</h3>
                         </div>
