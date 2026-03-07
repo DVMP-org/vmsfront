@@ -3,6 +3,7 @@ import { RESERVED_SUBDOMAINS } from '@/lib/subdomain-utils';
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
 const PROTOCOL = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 
 /**
  * Construct a URL on the base domain (without subdomain)
@@ -50,11 +51,13 @@ function extractOrgSubdomain(hostname: string): string | null {
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
+  const selectedOrganization = request.cookies.get('selected-organization')?.value || DEFAULT_ORGANIZATION_SLUG;
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
   // Extract organization subdomain
   const orgSubdomain = extractOrgSubdomain(hostname);
+  const effectiveOrganization = orgSubdomain || selectedOrganization || null;
   const isOnSubdomain = !!orgSubdomain;
   const isAuthenticated = !!token;
 
@@ -67,8 +70,8 @@ export function middleware(request: NextRequest) {
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
-  if (orgSubdomain) {
-    requestHeaders.set("X-Organization", orgSubdomain);
+  if (effectiveOrganization) {
+    requestHeaders.set("X-Organization", effectiveOrganization);
   }
 
   // ============================================================
@@ -84,7 +87,7 @@ export function middleware(request: NextRequest) {
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard routes (/admin, /residency, /select) require org context from subdomain
-  if (!isOnSubdomain && (isDashboardPath || isSelectPath)) {
+  if (!isOnSubdomain && !effectiveOrganization && (isDashboardPath || isSelectPath)) {
     if (isAuthenticated) {
       return NextResponse.redirect(getBaseDomainUrl('/organizations'));
     } else {
@@ -102,7 +105,7 @@ export function middleware(request: NextRequest) {
 
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
-    const redirectTo = isOnSubdomain ? '/select' : '/organizations';
+    const redirectTo = effectiveOrganization ? '/select' : '/organizations';
     const destinationUrl = isOnSubdomain
       ? new URL(redirectTo, request.url)
       : getBaseDomainUrl(redirectTo);

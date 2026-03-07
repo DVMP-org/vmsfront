@@ -1,9 +1,11 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
+import { getCookie } from "@/lib/cookies";
 import { getSubdomain } from "./subdomain-utils";
 
 // Use production API URL in production, fallback to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 class ApiClient {
   private client: AxiosInstance;
 
@@ -20,9 +22,13 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = this.getToken();
-        const subdomain = getSubdomain();
-        if (subdomain) {
-          config.headers["X-Organization"] = subdomain;
+        const organizationSlug =
+          getSubdomain() ||
+          getCookie("selected-organization") ||
+          DEFAULT_ORGANIZATION_SLUG ||
+          null;
+        if (organizationSlug) {
+          config.headers["X-Organization"] = organizationSlug;
         }
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
