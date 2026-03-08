@@ -3,10 +3,12 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Eye, Plus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, Plus, XCircle } from "lucide-react";
 
 import {
+    useAcknowledgeEmergency,
     useAdminEmergencies,
+    useResolveEmergency,
     useTriggerEmergencyAdmin,
 } from "@/hooks/use-emergency";
 import {
@@ -26,6 +28,55 @@ import {
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { Emergency, TriggerEmergencyRequest } from "@/types";
+
+// ── Per-row action cell ─────────────────────────────────────────────────────
+function EmergencyRowActions({ emergency }: { emergency: Emergency }) {
+    const router = useRouter();
+    const acknowledge = useAcknowledgeEmergency();
+    const resolve = useResolveEmergency();
+
+    return (
+        <div className="flex items-center gap-1.5">
+            <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => router.push(`/admin/emergencies/${emergency.id}`)}
+                title="View details"
+            >
+                <Eye className="h-4 w-4" />
+            </Button>
+
+            {emergency.status === "active" && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-yellow-700 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-700 dark:hover:bg-yellow-950 gap-1"
+                    disabled={acknowledge.isPending}
+                    onClick={() => acknowledge.mutate(emergency.id)}
+                    title="Acknowledge"
+                >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Acknowledge
+                </Button>
+            )}
+
+            {(emergency.status === "active" || emergency.status === "acknowledged") && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-950 gap-1"
+                    disabled={resolve.isPending}
+                    onClick={() => resolve.mutate(emergency.id)}
+                    title="Resolve"
+                >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Resolve
+                </Button>
+            )}
+        </div>
+    );
+}
 
 const PAGE_SIZE = 20;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -227,16 +278,7 @@ export default function AdminEmergenciesPage() {
         {
             key: "actions",
             header: "Actions",
-            accessor: (row) => (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push(`/admin/emergencies/${row.id}`)}
-                    title="View details"
-                >
-                    <Eye className="h-4 w-4" />
-                </Button>
-            ),
+            accessor: (row) => <EmergencyRowActions emergency={row} />,
         },
     ];
 

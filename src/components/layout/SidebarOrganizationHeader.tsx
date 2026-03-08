@@ -183,7 +183,7 @@ export function SidebarOrganizationHeader({
                             <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                                 Current
                             </p>
-                            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-2 py-2 dark:border-zinc-700/30 dark:bg-zinc-800/50">
+                            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-[rgb(var(--brand-primary)/0.2)] px-2 py-2 dark:border-zinc-700/30 dark:bg-zinc-800/50">
                                 {organization?.logo_url ? (
                                     <img
                                         src={organization.logo_url}

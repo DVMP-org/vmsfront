@@ -74,7 +74,7 @@ export default function SelectPage() {
             className="text-center space-y-4"
           >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50">
-              <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+              <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary))]" />
             </div>
             <div className="space-y-1">
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
@@ -94,7 +94,7 @@ export default function SelectPage() {
               {residencies.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 px-1">
-                    <div className="h-5 w-1 rounded-full bg-[rgb(var(--brand-primary,#213928))]" />
+                      <div className="h-5 w-1 rounded-full bg-[rgb(var(--brand-primary))]" />
                     <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
                       Authorized Properties
                     </h2>
@@ -112,7 +112,7 @@ export default function SelectPage() {
                         >
                           <DashboardCard
                             icon={
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[rgb(var(--brand-primary,#213928))]/10 to-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))] shadow-inner border border-[rgb(var(--brand-primary,#213928))]/10">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[rgb(var(--brand-primary)/0.10)] to-[rgb(var(--brand-primary)/0.05)] text-[rgb(var(--brand-primary))] shadow-inner border border-[rgb(var(--brand-primary)/0.10)]">
                                 <Home className="h-6 w-6" />
                               </div>
                             }
@@ -155,7 +155,7 @@ export default function SelectPage() {
                       onClick={handleSelectAdmin}
                     >
                       <div className="flex items-center gap-2 mt-2 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 w-fit">
-                        <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+                          <ShieldCheck className="h-3.5 w-3.5 text-[rgb(var(--brand-primary))]" />
                         <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
                           Administrator Access
                         </span>
@@ -180,7 +180,7 @@ export default function SelectPage() {
               />
               <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Think this is a mistake? Reach out to <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline decoration-[rgb(var(--brand-primary,#213928))]/30">IT Support</span>
+                  Think this is a mistake? Reach out to <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline decoration-[rgb(var(--brand-primary))]/30">IT Support</span>
                 </p>
               </div>
             </motion.div>
@@ -223,8 +223,8 @@ function DashboardCard({
         "flex items-center justify-between rounded-3xl border p-5 sm:p-6",
         "transition-all duration-300 ease-out",
         "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm",
-        "hover:shadow-xl hover:-translate-y-1 hover:border-[rgb(var(--brand-primary,#213928))]/30 dark:hover:border-[rgb(var(--brand-primary,#213928))]/20",
-        selected && "ring-2 ring-[rgb(var(--brand-primary,#213928))] bg-[rgb(var(--brand-primary,#213928))]/5 border-[rgb(var(--brand-primary,#213928))]/50"
+        "hover:shadow-xl hover:-translate-y-1 hover:border-[rgb(var(--brand-primary)/0.3)] dark:hover:border-[rgb(var(--brand-primary)/0.2)]",
+        selected && "ring-2 ring-[rgb(var(--brand-primary))] bg-[rgb(var(--brand-primary)/0.05)] border-[rgb(var(--brand-primary)/50)]"
       )}
     >
       <div className="flex gap-5 items-center min-w-0">
@@ -246,13 +246,13 @@ function DashboardCard({
       <div className="flex items-center gap-4 shrink-0">
         <div className={cn(
           "flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-800 transition-all duration-300",
-          "group-hover:border-[rgb(var(--brand-primary,#213928))]/50 group-hover:bg-[rgb(var(--brand-primary,#213928))]/10",
-          selected ? "bg-[rgb(var(--brand-primary,#213928))] border-[rgb(var(--brand-primary,#213928))]" : "bg-zinc-50 dark:bg-zinc-800/50"
+          "group-hover:border-[rgb(var(--brand-primary))]/50 group-hover:bg-[rgb(var(--brand-primary))]/10",
+          selected ? "bg-[rgb(var(--brand-primary))] border-[rgb(var(--brand-primary))]" : "bg-zinc-50 dark:bg-zinc-800/50"
         )}>
           {selected ? (
             <CheckCircle2 className="h-5 w-5 text-white" />
           ) : (
-            <ArrowRight className="h-5 w-5 text-zinc-300 group-hover:text-[rgb(var(--brand-primary,#213928))] transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight className="h-5 w-5 text-zinc-300 group-hover:text-[rgb(var(--brand-primary))] transition-transform group-hover:translate-x-0.5" />
           )}
         </div>
       </div>

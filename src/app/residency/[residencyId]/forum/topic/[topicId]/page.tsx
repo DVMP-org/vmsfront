@@ -1252,7 +1252,7 @@ export default function ForumTopicPage() {
         }
         
         .forum-content-other a {
-          color: var(--brand-primary, #213928);
+          color: var(--brand-primary);
         }
       `}</style>
     </>

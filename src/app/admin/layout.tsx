@@ -13,8 +13,8 @@ export default function AdminLayout({
         <RouteGuard>
             <OrganizationMemberGuard>
                 <DashboardLayout type="admin">
+
                     <AdminPermissionGuard>
-                        <ActiveEmergencyBanner />
                         {children}
                     </AdminPermissionGuard>
                 </DashboardLayout>

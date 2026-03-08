@@ -126,7 +126,7 @@ export function NotificationList() {
                         >
                             Unread
                             {unreadCount > 0 && (
-                                <Badge variant="secondary" className="px-1 py-0 h-4 text-[9px] min-w-[14px] bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
+                                <Badge variant="secondary" className="px-1 py-0 h-4 text-[9px] min-w-[14px] bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))]">
                                     {unreadCount}
                                 </Badge>
                             )}
@@ -194,7 +194,7 @@ function NotificationRow({ notification }: { notification: any }) {
                 !is_read && "bg-foreground/10 dark:bg-background/10"
             )}
         >
-            <div className="hidden group-hover:block absolute left-0 top-0 bottom-0 w-1 bg-[rgb(var(--brand-primary,#213928))]/40 " />
+            <div className="hidden group-hover:block absolute left-0 top-0 bottom-0 w-1 bg-[rgb(var(--brand-primary))]/40 " />
 
             <div className={cn("flex-shrink-0 relative")}>
 
@@ -203,7 +203,7 @@ function NotificationRow({ notification }: { notification: any }) {
                     is_read ? "bg-muted/50 border-border/40 text-muted-foreground/60 dark:border-white/20" :
                         payload.intent === "success" ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-sm shadow-green-500/5" :
                             payload.intent === "warning" ? "bg-amber-500/10 border-amber-500/20 text-amber-600 shadow-sm shadow-amber-500/5" :
-                                "bg-[rgb(var(--brand-primary,#213928)/0.1)] border-[rgb(var(--brand-primary,#213928)/0.2)] text-[rgb(var(--brand-primary,#213928))] shadow-sm shadow-[rgb(var(--brand-primary,#213928)/0.05)] dark:text-white/50 dark:border-white/20"
+                                "bg-[rgb(var(--brand-primary)/0.1)] border-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))] shadow-sm shadow-[rgb(var(--brand-primary)/0.05)] dark:text-white/50 dark:border-white/20"
                 )}>
                     {payload.intent === "success" ? <CheckCircle2 className="h-4 w-4" /> :
                         payload.intent === "warning" ? <AlertTriangle className="h-4 w-4" /> :
@@ -247,7 +247,7 @@ function NotificationRow({ notification }: { notification: any }) {
                             variant="outline"
                             size="sm"
                             onClick={handleMarkRead}
-                            className="h-8 w-8 p-0 rounded-lg hover:bg-[rgb(var(--brand-primary,#213928))]/10 hover:text-[rgb(var(--brand-primary,#213928))] border-border/40"
+                            className="h-8 w-8 p-0 rounded-lg hover:bg-[rgb(var(--brand-primary))]/10 hover:text-[rgb(var(--brand-primary))] border-border/40"
                         >
                             <Check className="h-4 w-4" />
                         </Button>

@@ -168,11 +168,11 @@ export function DueForm({
                                     setValue("minimum_payment_breakdown", DueTenureLength.ONE_TIME);
                                 }}
                                 className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-2 text-center ${!recurring
-                                    ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5 text-[var(--brand-primary,#213928)]"
+                                    ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 text-[var(--brand-primary)]"
                                     : "border-zinc-200 hover:border-zinc-300 text-muted-foreground hover:text-foreground"
                                     }`}
                             >
-                                <Zap className={`h-5 w-5 ${!recurring ? "text-[var(--brand-primary,#213928)]" : "text-zinc-400"}`} />
+                                <Zap className={`h-5 w-5 ${!recurring ? "text-[var(--brand-primary)]" : "text-zinc-400"}`} />
                                 <div className="space-y-0.5">
                                     <div className="text-sm font-semibold">One-time</div>
                                     <div className="text-[10px] hidden xs:block opacity-80">Paid once only</div>
@@ -187,11 +187,11 @@ export function DueForm({
                                     setValue("minimum_payment_breakdown", DueTenureLength.MONTHLY);
                                 }}
                                 className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-2 text-center ${recurring
-                                    ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/5 text-[var(--brand-primary,#213928)]"
+                                    ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 text-[var(--brand-primary)]"
                                     : "border-zinc-200 hover:border-zinc-300 text-muted-foreground hover:text-foreground"
                                     }`}
                             >
-                                <Repeat className={`h-5 w-5 ${recurring ? "text-[var(--brand-primary,#213928)]" : "text-zinc-400"}`} />
+                                <Repeat className={`h-5 w-5 ${recurring ? "text-[var(--brand-primary)]" : "text-zinc-400"}`} />
                                 <div className="space-y-0.5">
                                     <div className="text-sm font-semibold">Recurring</div>
                                     <div className="text-[10px] hidden xs:block opacity-80">Periodic billing</div>

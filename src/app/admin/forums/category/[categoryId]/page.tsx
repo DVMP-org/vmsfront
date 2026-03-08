@@ -396,7 +396,7 @@ export default function AdminForumCategoryDetailPage() {
                               onClick={() =>
                                 router.push(`/admin/forums/topic/${topic.id}`)
                               }
-                              className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary,#213928)]"
+                              className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary)]"
                             >
                               {topic.title}
                             </button>

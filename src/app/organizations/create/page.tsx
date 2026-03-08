@@ -139,7 +139,7 @@ export default function CreateOrganizationPage() {
             className="text-center space-y-4"
           >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50">
-              <Building2 className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+              <Building2 className="h-8 w-8 text-[rgb(var(--brand-primary))]" />
             </div>
             <div className="space-y-1">
               <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
@@ -260,7 +260,7 @@ export default function CreateOrganizationPage() {
                     "bg-white dark:bg-zinc-950 px-4 py-3",
                     "text-sm text-zinc-900 dark:text-zinc-100",
                     "placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-                    "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928))]/50 focus:border-transparent",
+                    "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary))]/50 focus:border-transparent",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "resize-none"
                   )}

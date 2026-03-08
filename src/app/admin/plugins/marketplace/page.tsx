@@ -139,10 +139,10 @@ export default function MarketplacePage() {
         <>
             <div className="space-y-6">
                 {/* Header Section */}
-                <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
+                <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary)]/10 via-white to-white p-6 shadow-sm">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary)]">
                                 <Sparkles className="h-3.5 w-3.5" />
                                 Discover & Install
                             </div>
@@ -255,7 +255,7 @@ export default function MarketplacePage() {
                         {plugins.map((plugin) => (
                             <Card
                                 key={plugin.id}
-                                className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#213928)]/50 hover:shadow-lg cursor-pointer"
+                                className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary)]/50 hover:shadow-lg cursor-pointer"
                                 onClick={() => handleOpenDetails(plugin)}
                                 onMouseEnter={() => prefetchPlugin(plugin.id)}
                             >
@@ -528,7 +528,7 @@ export default function MarketplacePage() {
                                 <ul className="space-y-1">
                                     {selectedPlugin.details.useCases.slice(0, 4).map((useCase, i) => (
                                         <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                            <CheckCircle2 className="h-4 w-4 text-[var(--brand-primary,#213928)] flex-shrink-0 mt-0.5" />
+                                            <CheckCircle2 className="h-4 w-4 text-[var(--brand-primary)] flex-shrink-0 mt-0.5" />
                                             <span>{useCase}</span>
                                         </li>
                                     ))}

@@ -77,7 +77,7 @@ const MetricCard = memo(function MetricCard({
     <div className="border border-zinc-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-background dark:bg-card">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs text-zinc-500 uppercase tracking-wide">{title}</div>
-        <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+        <Icon className="h-4 w-4 text-[var(--brand-primary)]" />
       </div>
       <div className="text-2xl font-bold text-foreground mb-1">{value}</div>
       <div className="text-xs text-zinc-500">{subtitle}</div>
@@ -417,7 +417,7 @@ export default function AdminDashboardPage() {
                     <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
                   </div>
                   <div className="ml-4 flex-shrink-0">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--brand-primary,#213928)] text-white">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--brand-primary)] text-white">
                       {resident.residencies?.length || 0} {resident.residencies?.length === 1 ? 'residency' : 'residencies'}
                     </span>
                   </div>

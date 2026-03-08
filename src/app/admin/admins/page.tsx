@@ -224,7 +224,7 @@ export default function AdminManagementPage() {
 
         return (
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold text-[var(--brand-primary,#213928)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold text-[var(--brand-primary)]">
               {initials}
             </div>
             <div>

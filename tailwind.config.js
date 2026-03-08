@@ -10,8 +10,8 @@ module.exports = {
     extend: {
       colors: {
         border: "hsl(var(--border))",
-        "brand-primary": "var(--brand-primary,#1e40af)",
-        "brand-secondary": "var(--brand-secondary,#475569)",
+        "brand-primary": "var(--brand-primary)",
+        "brand-secondary": "var(--brand-secondary)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",

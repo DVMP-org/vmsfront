@@ -46,8 +46,8 @@ export function OrganizationMemberGuard({ children }: OrganizationMemberGuardPro
             <div></div>
             // <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
             //     {/* Decorative background elements */}
-            //     <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-            //     <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
+            //     <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
+            //     <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
 
             //     <Header type="select" />
             //     <main className="flex-1 relative z-10 flex flex-col items-center">
@@ -59,7 +59,7 @@ export function OrganizationMemberGuard({ children }: OrganizationMemberGuardPro
             //                 className="text-center space-y-4"
             //             >
             //                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50">
-            //                     <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+            //                     <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary))]" />
             //                 </div>
             //                 <div className="space-y-1">
             //                     <CardSkeleton />
@@ -76,8 +76,8 @@ export function OrganizationMemberGuard({ children }: OrganizationMemberGuardPro
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
                 {/* Decorative background elements */}
-                <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
 
                 <Header type="select" />
 

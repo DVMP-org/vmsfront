@@ -524,7 +524,7 @@ export default function ResidencyForumPage() {
                 {hasCategoryFilter && (
                   <button
                     type="button"
-                    className="text-xs font-semibold text-[rgb(var(--brand-primary,#213928))] dark:text-white/80 underline-offset-2 hover:underline"
+                    className="text-xs font-semibold text-[rgb(var(--brand-primary))] dark:text-white/80 underline-offset-2 hover:underline"
                     onClick={() => setCategoryFilter("all")}
                   >
                     Clear category filter
@@ -646,7 +646,7 @@ export default function ResidencyForumPage() {
                         </p>
                           <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-muted-foreground sm:gap-3">
                         {topic.category && (
-                              <span className="rounded-full border border-[rgb(var(--brand-primary,#213928))]/15 bg-[rgb(var(--brand-primary,#213928))]/8 px-3 py-1 text-[rgb(var(--brand-primary,#213928))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+                              <span className="rounded-full border border-[rgb(var(--brand-primary))]/15 bg-[rgb(var(--brand-primary))]/8 px-3 py-1 text-[rgb(var(--brand-primary))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                             {topic.category.name}
                           </span>
                         )}
@@ -777,7 +777,7 @@ export default function ResidencyForumPage() {
               }
               className={cn(
                 "min-h-[100px] w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               )}
               placeholder="Share a short summary or the type of updates that belong here."
             />
@@ -837,7 +837,7 @@ export default function ResidencyForumPage() {
                   categoryId: event.target.value,
                 }))
               }
-              className="w-full rounded-xl border border-input bg-card px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
+              className="w-full rounded-xl border border-input bg-card px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               required
             >
               <option value="">Select a category</option>
@@ -872,7 +872,7 @@ export default function ResidencyForumPage() {
               }
               className={cn(
                 "min-h-[160px] w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               )}
               placeholder="Share details or context to kick-start the discussion."
               required

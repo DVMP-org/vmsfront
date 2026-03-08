@@ -17,9 +17,27 @@ function getBaseDomainUrl(pathname: string = '/', search: string = ''): URL {
 }
 
 /**
- * Extract organization slug from hostname
- * Returns null if on base domain or reserved subdomain
+ * Construct a URL on an org subdomain.
+ * Uses the same `host` header + manual port-strip pattern as extractOrgSubdomain
+ * so hostname detection is consistent throughout the middleware.
  */
+function buildSubdomainUrl(slug: string, pathname: string, search: string, request: NextRequest): URL {
+  const hostname = request.headers.get("host") || "";
+  const cleanHostname = hostname.replace(/:\d+$/, "");
+  const port = hostname.match(/:\d+$/)?.[0] ?? "";
+
+  const isLocalhost = cleanHostname === "localhost" || cleanHostname.endsWith(".localhost");
+
+  const host = isLocalhost
+    ? `${slug}.localhost${port}`
+    : `${slug}.${BASE_DOMAIN}`;
+
+  const url = new URL(`${PROTOCOL}://${host}${pathname}`);
+  if (search) url.search = search;
+  return url;
+}
+
+
 function extractOrgSubdomain(hostname: string): string | null {
   // Remove port numbers first
   const cleanHostname = hostname.replace(/:\d+$/, "");
@@ -64,9 +82,11 @@ export function middleware(request: NextRequest) {
   // Classify the path
   const isAuthPath = pathname.startsWith('/auth');
   const isVerifyEmailPath = pathname.startsWith('/auth/verify-email');
+  const isLoginPath = pathname.startsWith('/auth/login');
   const isOrganizationsPath = pathname.startsWith('/organizations');
   const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
   const isSelectPath = pathname.startsWith('/select');
+  const isUserSettingsPath = pathname.startsWith('/user');
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
@@ -78,6 +98,23 @@ export function middleware(request: NextRequest) {
   // ROUTING RULES (in order of priority)
   // ============================================================
 
+  // RULE -1: organization_slug redirect
+  // When a backend-generated email link contains ?organization_slug=<slug>, redirect
+  // the user straight to the correct org subdomain (stripping the param).
+  // We skip auth paths because those always live on the root domain.
+  const myOrgSlug = request.nextUrl.searchParams.get('organization_slug');
+  if (myOrgSlug && !isAuthPath && !RESERVED_SUBDOMAINS.includes(myOrgSlug) && /^[a-z0-9-]+$/.test(myOrgSlug)) {
+    const cleanSearch = new URLSearchParams(request.nextUrl.search);
+    cleanSearch.delete('organization_slug');
+    const redirectUrl = buildSubdomainUrl(
+      myOrgSlug,
+      pathname,
+      cleanSearch.toString() ? `?${cleanSearch.toString()}` : '',
+      request,
+    );
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // RULE 0: Always allow verify-email - users must be able to verify regardless of context
   if (isVerifyEmailPath) {
     return NextResponse.next({
@@ -86,8 +123,9 @@ export function middleware(request: NextRequest) {
   }
 
   // RULE 0.5: On SUBDOMAIN - redirect auth pages to base domain
-  // Auth pages should always be on the root domain
-  if (isOnSubdomain && isAuthPath) {
+  // Login is allowed on subdomains (so users can sign in within org context).
+  // Register and all other auth pages must live on the root domain.
+  if (isOnSubdomain && isAuthPath && !isLoginPath) {
     const baseDomainUrl = getBaseDomainUrl(pathname, request.nextUrl.search);
     return NextResponse.redirect(baseDomainUrl);
   }
@@ -119,10 +157,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(destinationUrl);
   }
 
-  // RULE 4: Protected paths on subdomain require authentication
-  if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
+  // RULE 4: Protected paths require authentication
+  if (!isAuthenticated && (isDashboardPath || isSelectPath || isUserSettingsPath)) {
     const loginUrl = getBaseDomainUrl('/auth/login');
-    loginUrl.searchParams.set('redirect_to', pathname);
+    if (orgSubdomain) {
+      // Embed the org slug in the redirect target so RULE -1 restores subdomain
+      // context after a successful login (e.g. redirect_to=/admin?organization_slug=acme)
+      const redirectSearch = new URLSearchParams({ organization_slug: orgSubdomain });
+      loginUrl.searchParams.set('redirect_to', `${pathname}?${redirectSearch.toString()}`);
+    } else {
+      loginUrl.searchParams.set('redirect_to', pathname);
+    }
     return NextResponse.redirect(loginUrl);
   }
 
@@ -141,10 +186,16 @@ export const config = {
     '/admin/:path*',
     '/residency',
     '/residency/:path*',
+    '/resident',
+    '/resident/:path*',
     '/select',
+    '/gate',
+    '/gate/:path*',
     '/auth/:path*',
     '/visit/:path*',
     '/organizations',
-    '/organizations/:path*'
+    '/organizations/:path*',
+    '/user',
+    '/user/:path*',
   ],
 };

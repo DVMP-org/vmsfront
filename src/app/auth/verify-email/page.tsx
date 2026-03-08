@@ -74,7 +74,7 @@ export default function VerifyEmailPage() {
             className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50/80 dark:bg-[#020617]/80 backdrop-blur-md"
           >
             <div className="relative">
-              <div className="absolute inset-[-20px] bg-[rgb(var(--brand-primary,#213928))]/10 blur-2xl rounded-full animate-pulse" />
+              <div className="absolute inset-[-20px] bg-[rgb(var(--brand-primary))]/10 blur-2xl rounded-full animate-pulse" />
               <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl">
                 <Loader
                   size={48}
@@ -102,7 +102,7 @@ export default function VerifyEmailPage() {
 
       {/* Ambient Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary,#213928))]/5 blur-[120px] rounded-full animate-pulse-slow" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary))]/5 blur-[120px] rounded-full animate-pulse-slow" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow delay-700" />
       </div>
 
@@ -123,7 +123,7 @@ export default function VerifyEmailPage() {
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none"
               >
-                <Mail className="w-10 h-10 text-[rgb(var(--brand-primary,#213928))]" />
+                <Mail className="w-10 h-10 text-[rgb(var(--brand-primary))]" />
                 {verifyMutation.isError ? (
                   <div className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-lg">
                     <ShieldCheck className="w-4 h-4" />
@@ -135,7 +135,7 @@ export default function VerifyEmailPage() {
                       rotate: [0, 10, -10, 0],
                     }}
                     transition={{ duration: 4, repeat: Infinity }}
-                    className="absolute -top-2 -right-2 bg-[rgb(var(--brand-primary,#213928))] text-white p-2 rounded-full shadow-lg"
+                      className="absolute -top-2 -right-2 bg-[rgb(var(--brand-primary))] text-white p-2 rounded-full shadow-lg"
                   >
                     <Sparkles className="w-4 h-4" />
                   </motion.div>
@@ -174,8 +174,8 @@ export default function VerifyEmailPage() {
 
           {/* Info Card */}
           <div className="flex items-start gap-4 p-5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-            <div className="flex-shrink-0 w-12 h-12 bg-[rgb(var(--brand-primary,#213928))]/10 rounded-2xl flex items-center justify-center border border-[rgb(var(--brand-primary,#213928))]/20">
-              <ShieldCheck className="w-6 h-6 text-[rgb(var(--brand-primary,#213928))]" />
+            <div className="flex-shrink-0 w-12 h-12 bg-[rgb(var(--brand-primary))]/10 rounded-2xl flex items-center justify-center border border-[rgb(var(--brand-primary))]/20">
+              <ShieldCheck className="w-6 h-6 text-[rgb(var(--brand-primary))]" />
             </div>
             <div className="space-y-1">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -201,7 +201,7 @@ export default function VerifyEmailPage() {
                 "w-full h-14 text-base font-bold rounded-2xl shadow-lg transition-all active:scale-[0.98]",
                 countdown > 0 || verifyMutation.isSuccess
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-400 border-none"
-                  : "bg-[rgb(var(--brand-primary,#213928))] text-white hover:bg-[rgb(var(--brand-primary,#213928))]/90",
+                  : "bg-[rgb(var(--brand-primary))] text-white hover:bg-[rgb(var(--brand-primary))]/90",
               )}
             >
               {countdown > 0 ? (
@@ -239,7 +239,7 @@ export default function VerifyEmailPage() {
           <div className="flex flex-col items-center gap-6 pt-4">
             <button
               onClick={() => logout()}
-              className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-[rgb(var(--brand-primary,#213928))] dark:text-slate-500 dark:hover:text-white transition-all px-4 py-2 rounded-xl hover:bg-[rgb(var(--brand-primary,#213928))]/5"
+              className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-[rgb(var(--brand-primary))] dark:text-slate-500 dark:hover:text-white transition-all px-4 py-2 rounded-xl hover:bg-[rgb(var(--brand-primary))]/5"
             >
               <ArrowLeft className="w-4 h-4" />
               Account logout
@@ -251,7 +251,7 @@ export default function VerifyEmailPage() {
               </p>
               <Link
                 href="/support"
-                className="text-sm text-[rgb(var(--brand-primary,#213928))] dark:text-white hover:underline font-bold"
+                className="text-sm text-[rgb(var(--brand-primary))] dark:text-white hover:underline font-bold"
               >
                 Contact our support team
               </Link>

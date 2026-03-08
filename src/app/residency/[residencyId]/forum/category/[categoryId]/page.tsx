@@ -199,7 +199,7 @@ export default function ForumCategoryPage() {
                 ← Back to all categories
               </button>
               <div className="space-y-2">
-                <p className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--brand-primary,#213928))]/15 bg-[rgb(var(--brand-primary,#213928))]/8 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--brand-primary,#213928))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+                <p className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--brand-primary))]/15 bg-[rgb(var(--brand-primary))]/8 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--brand-primary))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                   <Sparkles className="h-3 w-3" />
                   Category
                 </p>
@@ -331,7 +331,7 @@ export default function ForumCategoryPage() {
               }
               className={cn(
                 "min-h-[160px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#213928)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               )}
               placeholder="Share some context to kick-start the discussion."
               required
@@ -371,7 +371,7 @@ function StatTile({
   return (
     <div className="min-w-0 rounded-2xl border border-border/60 bg-muted/25 p-4 text-left shadow-sm">
       {Icon ? (
-        <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] dark:bg-white/10 dark:text-white">
+        <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] dark:bg-white/10 dark:text-white">
           <Icon className="h-5 w-5" />
         </div>
       ) : null}
@@ -392,7 +392,7 @@ function TopicCard({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full flex-col gap-3 rounded-2xl border border-border/70 bg-background/90 p-4 text-left shadow-sm transition hover:border-[var(--brand-primary,#213928)]/30 hover:bg-muted/20 hover:shadow-md sm:p-5"
+      className="flex w-full flex-col gap-3 rounded-2xl border border-border/70 bg-background/90 p-4 text-left shadow-sm transition hover:border-[var(--brand-primary)]/30 hover:bg-muted/20 hover:shadow-md sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">

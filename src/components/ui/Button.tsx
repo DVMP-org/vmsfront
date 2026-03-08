@@ -1,21 +1,3 @@
-// const variants = {
-//   primary:
-//     "bg-[var(--brand-primary,#1e40af)] text-primary-foreground hover:bg-[var(--brand-primary,#1e40af)] hover:opacity-90 focus-visible:ring-primary active:bg-[var(--brand-primary,#1e40af)] active:opacity-95 active:scale-[0.98]",
-//   secondary:
-//     "bg-[var(--brand-secondary,#475569)] text-secondary-foreground hover:bg-[var(--brand-secondary,#475569)] hover:opacity-90 focus-visible:ring-secondary active:bg-[var(--brand-secondary,#475569)] active:opacity-95 active:scale-[0.98]",
-//   outline:
-//     "border-2 border-[var(--brand-primary,#1e40af)] bg-white hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
-//   ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 active:scale-[0.98]",
-//   destructive:
-//     "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive active:bg-destructive/95 active:scale-[0.98]",
-// };
-
-// const sizes = {
-//   sm: "h-9 min-h-[36px] px-3 text-xs xs:text-sm",
-//   md: "h-10 min-h-[40px] px-4 py-2 text-sm xs:text-base",
-//   lg: "h-11 min-h-[44px] px-6 xs:px-8 text-base xs:text-lg",
-// };
-
 "use client";
 
 import * as React from "react";
@@ -34,17 +16,17 @@ const buttonVariants = cva(
       variant: {
         primary:
           // "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
-          "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
+          "border-[rgb(var(--brand-primary))] bg-[rgb(var(--brand-primary))] disabled:bg-[rgb(var(--brand-primary)/0.70)] text-white font-bold border-2",
         // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
         destructive:
           "border-red-600 bg-red-600 disabled:bg-red-600/70 text-white font-bold",
         // secondary: "!border-0 bg-transparent text-primary disabled:opacity-60",
         secondary:
-          "bg-[rgb(var(--brand-secondary,#475569))] text-secondary-foreground hover:bg-[rgb(var(--brand-secondary,#475569))] hover:opacity-90 focus-visible:ring-secondary active:bg-[rgb(var(--brand-secondary,#475569))] active:opacity-95 active:scale-[0.98]",
+          "bg-[rgb(var(--brand-secondary))] text-secondary-foreground hover:bg-[rgb(var(--brand-secondary))] hover:opacity-90 focus-visible:ring-secondary active:bg-[rgb(var(--brand-secondary))] active:opacity-95 active:scale-[0.98]",
         // outline: "border border-primary text-primary disabled:opacity-60",
         // "destructive-outlined":
         outline:
-          "border-2 border-[rgb(var(--brand-primary,#1e40af))] bg-background dark:bg-card hover:bg-[rgb(var(--brand-primary,#1e40af))] hover:text-white active:bg-[rgb(var(--brand-primary,#1e40af))] active:text-white active:scale-[0.98]",
+          "border-2 border-[rgb(var(--brand-primary))] bg-background dark:bg-card hover:bg-[rgb(var(--brand-primary))] hover:text-white active:bg-[rgb(var(--brand-primary))] active:text-white active:scale-[0.98]",
         "destructive-outlined":
           "border border-red-600 text-red-600 disabled:opacity-60",
         "light-outlined": "border-white text-white disabled:opacity-60",

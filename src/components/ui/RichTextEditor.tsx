@@ -54,7 +54,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-background dark:bg-background shadow-sm transition focus-within:border-[var(--brand-primary,#213928)] focus-within:ring-2 focus-within:ring-[var(--brand-primary,#213928)]/20",
+        "rounded-xl border border-border bg-background dark:bg-background shadow-sm transition focus-within:border-[var(--brand-primary)] focus-within:ring-2 focus-within:ring-[var(--brand-primary)]/20",
         className
       )}
     >
@@ -109,17 +109,17 @@ export function RichTextEditor({
         .rich-quill .ql-toolbar button:hover,
         .rich-quill .ql-toolbar button:focus,
         .rich-quill .ql-toolbar button.ql-active {
-          color: var(--brand-primary, #213928);
+          color: var(--brand-primary);
         }
         .rich-quill .ql-toolbar button:hover .ql-stroke,
         .rich-quill .ql-toolbar button:focus .ql-stroke,
         .rich-quill .ql-toolbar button.ql-active .ql-stroke {
-          stroke: var(--brand-primary, #213928);
+          stroke: var(--brand-primary);
         }
         .rich-quill .ql-toolbar button:hover .ql-fill,
         .rich-quill .ql-toolbar button:focus .ql-fill,
         .rich-quill .ql-toolbar button.ql-active .ql-fill {
-          fill: var(--brand-primary, #213928);
+          fill: var(--brand-primary);
         }
         .dark .rich-quill .ql-toolbar {
           background: hsl(var(--muted));

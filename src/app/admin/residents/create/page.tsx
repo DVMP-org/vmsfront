@@ -154,7 +154,7 @@ export default function CreateResidentPage() {
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Link
                 href="/admin/residents"
-                className="text-[var(--brand-primary,#213928)] hover:underline"
+                className="text-[var(--brand-primary)] hover:underline"
               >
                 Residents
               </Link>
@@ -162,7 +162,7 @@ export default function CreateResidentPage() {
               <span>Create</span>
             </p>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="h-6 w-6 text-[var(--brand-primary,#213928)]" />
+              <Users className="h-6 w-6 text-[var(--brand-primary)]" />
               Add Resident
             </h1>
             <p className="text-muted-foreground">
@@ -200,7 +200,7 @@ export default function CreateResidentPage() {
                       className={cn(
                         "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
                         mode === value
-                          ? "border-[var(--brand-primary,#213928)] bg-[var(--brand-primary,#213928)]/10 text-[var(--brand-primary,#213928)]"
+                          ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
                           : "border-border text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -305,7 +305,7 @@ export default function CreateResidentPage() {
                 <div className="flex items-center gap-2">
                   <Home className={cn(
                     "h-5 w-5",
-                    errors.residency_slugs ? "text-destructive" : "text-[var(--brand-primary,#213928)]"
+                    errors.residency_slugs ? "text-destructive" : "text-[var(--brand-primary)]"
                   )} />
                   <div>
                     <p className={cn(

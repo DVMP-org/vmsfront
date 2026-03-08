@@ -56,8 +56,8 @@ export function useTriggerEmergencyAdmin() {
             toast.success(res.message ?? "Emergency alert triggered.");
             queryClient.invalidateQueries({ queryKey: ["admin", "emergencies"] });
         },
-        onError: (err) => {
-            toast.error(parseApiError(err));
+        onError: (err: any) => {
+            toast.error(parseApiError(err).message);
         },
     });
 }
@@ -70,8 +70,8 @@ export function useAcknowledgeEmergency() {
             toast.success(res.message ?? "Emergency acknowledged.");
             queryClient.invalidateQueries({ queryKey: ["admin", "emergencies"] });
         },
-        onError: (err) => {
-            toast.error(parseApiError(err));
+        onError: (err: any) => {
+            toast.error(parseApiError(err).message);
         },
     });
 }
@@ -84,8 +84,8 @@ export function useResolveEmergency() {
             toast.success(res.message ?? "Emergency resolved.");
             queryClient.invalidateQueries({ queryKey: ["admin", "emergencies"] });
         },
-        onError: (err) => {
-            toast.error(parseApiError(err));
+        onError: (err: any) => {
+            toast.error(parseApiError(err).message);
         },
     });
 }
@@ -99,8 +99,8 @@ export function useTriggerEmergencyResident() {
         onSuccess: (res) => {
             toast.success(res.message ?? "Emergency alert triggered. Security has been alerted.");
         },
-        onError: (err) => {
-            toast.error(parseApiError(err));
+        onError: (err: any) => {
+            toast.error(parseApiError(err).message);
         },
     });
 }

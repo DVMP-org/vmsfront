@@ -93,7 +93,7 @@ export default function AdminGatePassDetailPage() {
           />
         ) : (
           <>
-            <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-[var(--brand-primary,#213928)]/90 to-indigo-700 text-white shadow-xl">
+                <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-[var(--brand-primary)]/90 to-indigo-700 text-white shadow-xl">
               <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm uppercase tracking-wide text-white/80">Gate pass</p>
@@ -190,7 +190,7 @@ export default function AdminGatePassDetailPage() {
                         return (
                           <div
                             key={event.id}
-                            className="rounded-2xl border border-border/60 p-4 transition hover:border-[var(--brand-primary,#213928)]/50"
+                            className="rounded-2xl border border-border/60 p-4 transition hover:border-[var(--brand-primary)]/50"
                             onClick={() =>
                               setExpandedEventId((prev) =>
                                 prev === event.id ? null : event.id
