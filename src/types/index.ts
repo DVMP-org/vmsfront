@@ -470,7 +470,7 @@ export interface GatePassCheckinRequest {
 }
 
 export interface ForumCategoryPayload {
-    residency_id: string;
+    residency_id?: string | null;
     name: string;
     description?: string;
     is_default?: boolean;
@@ -486,7 +486,8 @@ export interface ForumCategoryUpdatePayload {
 }
 
 export interface ForumTopicCreatePayload {
-    residency_id: string;
+    residency_id?: string | null;
+    residency_group_id?: string | null;
     category_id: string;
     title: string;
     content: string;

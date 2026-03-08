@@ -46,6 +46,16 @@ export default function ResidencyForumPage() {
   const { selectedResidency, setSelectedResidency } = useAppStore();
   const { data: profile } = useProfile();
   const effectiveResidencyId = routeResidencyId ?? selectedResidency?.id ?? null;
+  const residencyMembership = useMemo(
+    () =>
+      profile?.memberships?.find(
+        (membership) => membership.residency.id === effectiveResidencyId
+      ) ?? null,
+    [effectiveResidencyId, profile?.memberships]
+  );
+  const canModerateResidencyForum = Boolean(
+    residencyMembership?.resident_super_user
+  );
 
   useEffect(() => {
     if (!routeResidencyId || !profile?.residencies) return;
@@ -217,7 +227,7 @@ export default function ResidencyForumPage() {
 
   const handleCreateCategory = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!effectiveResidencyId) return;
+    if (!effectiveResidencyId || !canModerateResidencyForum) return;
     createCategory.mutate(
       {
         residency_id: effectiveResidencyId,
@@ -327,6 +337,7 @@ export default function ResidencyForumPage() {
                 <Button
                   variant="secondary"
                   className="bg-white/15 text-white hover:bg-white/25"
+                  disabled={!canModerateResidencyForum}
                   onClick={() => setCategoryModalOpen(true)}
                 >
                   <FolderOpen className="mr-2 h-4 w-4" />
@@ -362,7 +373,10 @@ export default function ResidencyForumPage() {
               setCategoryFilter(next);
               setPage(1);
             }}
-            onCreateCategory={() => setCategoryModalOpen(true)}
+            onCreateCategory={() => {
+              if (!canModerateResidencyForum) return;
+              setCategoryModalOpen(true);
+            }}
             onCreateTopic={(categoryId) => handleOpenTopicModal(categoryId)}
             onViewCategory={(categoryId) =>
               router.push(
@@ -448,7 +462,7 @@ export default function ResidencyForumPage() {
                         )
                       }
                       className={cn(
-                        "flex w-full flex-col gap-3 rounded-2xl border border-border cursor-pointer bg-card p-4 text-left shadow-sm shadow-sm transition",
+                        "flex w-full flex-col gap-3 rounded-2xl border border-border cursor-pointer bg-card p-4 text-left shadow-sm transition",
                         "hover:-translate-y-0.5 hover:border-[rgb(var(--brand-primary)/0.4)] hover:shadow-lg"
                       )}
                     >
@@ -717,7 +731,7 @@ function CategorySidebar({
   const hasCategories = categories.length > 0;
 
   return (
-    <aside className="h-fit rounded-3xl border border-border bg-card shadow-lg shadow-sm lg:sticky lg:top-24">
+    <aside className="h-fit rounded-3xl border border-border bg-card shadow-lg lg:sticky lg:top-24">
       <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Categories</h2>
@@ -750,6 +764,7 @@ function CategorySidebar({
                 key={category.id}
                 label={category.name}
                 description={category.description}
+                scopeLabel={category.residency_id ? "Residency" : "Global"}
                 count={topicCount}
                 isActive={activeCategoryId === category.id}
                 onClick={() => onSelectCategory(category.id)}
@@ -783,6 +798,7 @@ function CategorySidebar({
 interface CategorySidebarItemProps {
   label: string;
   description?: string | null;
+  scopeLabel?: string;
   count: number;
   isActive: boolean;
   onClick: () => void;
@@ -793,6 +809,7 @@ interface CategorySidebarItemProps {
 function CategorySidebarItem({
   label,
   description,
+  scopeLabel,
   count,
   isActive,
   onClick,
@@ -813,7 +830,23 @@ function CategorySidebarItem({
         className="flex w-full items-start justify-between gap-2 text-left"
       >
         <div>
-          <p className={cn("text-sm font-semibold text-foreground", isActive ? "text-white/80 dark:text-foreground" : "")}>{label}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={cn("text-sm font-semibold text-foreground", isActive ? "text-white/80 dark:text-foreground" : "")}>{label}</p>
+            {scopeLabel && (
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                  isActive
+                    ? "bg-white/15 text-white/90"
+                    : scopeLabel === "Global"
+                      ? "bg-sky-100 text-sky-700"
+                      : "bg-emerald-100 text-emerald-700"
+                )}
+              >
+                {scopeLabel}
+              </span>
+            )}
+          </div>
           {description && (
             <p className={cn("text-xs text-foreground/80 dark:text-muted-foreground line-clamp-2", isActive ? "text-white/80 dark:text-foreground" : "")}>
               {description}

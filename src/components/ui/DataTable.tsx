@@ -39,6 +39,10 @@ export interface Column<T> {
   accessor?: (row: T) => ReactNode;
   sortable?: boolean;
   className?: string;
+  /** Hide column at this breakpoint and below: 'sm' = <640px, 'md' = <768px, 'lg' = <1024px */
+  responsiveHide?: "sm" | "md" | "lg";
+  /** Minimum width for this column (prevents squishing) */
+  minWidth?: number;
 }
 
 export interface FilterConfig {
@@ -566,12 +570,12 @@ export function DataTable<T extends Record<string, any>>({
 
           {/* Filters Bar */}
           {availableFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 bg-muted/30 rounded-lg border border-border">
-              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filters:</span>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Filters:</span>
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-x-6 sm:gap-y-3 w-full sm:w-auto">
                 {availableFilters.map((filterDef) => (
-                  <div key={filterDef.field} className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                  <div key={filterDef.field} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                    <label className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
                       {filterDef.label}:
                     </label>
                     {filterDef.type === "select" ? (
@@ -581,13 +585,13 @@ export function DataTable<T extends Record<string, any>>({
                           value={filterValues[filterDef.field] || ""}
                           onChange={(value) => handleFilterChange(filterDef.field, value || "")}
                           placeholder={`All ${filterDef.label}`}
-                          className="min-w-[150px]"
+                          className="w-full sm:w-auto sm:min-w-[150px]"
                         />
                       ) : (
                         <select
                           value={filterValues[filterDef.field] || ""}
                           onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
-                          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px]"
+                            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-full sm:w-auto sm:min-w-[120px]"
                         >
                           <option value="">All</option>
                           {filterDef.options?.map((option) => (
@@ -612,7 +616,7 @@ export function DataTable<T extends Record<string, any>>({
                           isClearable
                           portalId="root"
                           placeholderText={`Select ${filterDef.label}`}
-                          className="h-9 w-[150px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
                       </div>
                     ) : (
@@ -642,7 +646,7 @@ export function DataTable<T extends Record<string, any>>({
                           portalId="root"
                           dateFormat="MMM d, yyyy"
                           placeholderText={`Filter by ${filterDef.label.toLowerCase()} range`}
-                          className="h-9 w-[220px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="h-9 w-full sm:w-[220px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
                         <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                       </div>
@@ -668,47 +672,51 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Bulk Actions Toolbar */}
       {selectable && hasSelectedRows && bulkActions.length > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-3">
           <div className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">
+            <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium">
               {selected.size} {selected.size === 1 ? "item" : "items"} selected
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {bulkActions.map((action, index) => (
               <Button
                 key={index}
                 variant={action.variant || "outline"}
                 size="sm"
                 onClick={() => handleBulkAction(action)}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
               >
-                {action.icon && <action.icon className="h-4 w-4" />}
-                {action.label}
+                {action.icon && <action.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                <span className="hidden xs:inline">{action.label}</span>
+                <span className="xs:hidden">{action.label.split(' ')[0]}</span>
               </Button>
             ))}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelected(new Set())}
-              className="gap-2"
+              className="gap-1.5 h-8 sm:h-9 px-2 sm:px-3"
             >
-              <X className="h-4 w-4" />
-              Clear
+              <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Clear</span>
             </Button>
           </div>
         </div>
       )}
 
       {/* Table */}
-      <div className="rounded-lg  bg-card overflow-hidden">
+      <div className="rounded-lg bg-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-32">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <Table className="min-w-full text-xs sm:text-sm">
+            <div className="relative">
+              {/* Horizontal scroll container with shadow indicators */}
+              <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                <Table className="min-w-full text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
                 {selectable && (
@@ -731,10 +739,16 @@ export function DataTable<T extends Record<string, any>>({
                 {safeColumns.map((column) => (
                   <TableHead
                     key={column.key}
-                    className={column.className}
+                    className={cn(
+                      column.className,
+                      column.responsiveHide === "sm" && "hidden sm:table-cell",
+                      column.responsiveHide === "md" && "hidden md:table-cell",
+                      column.responsiveHide === "lg" && "hidden lg:table-cell"
+                    )}
+                    style={column.minWidth ? { minWidth: column.minWidth } : undefined}
                   >
-                    <div className="flex items-center gap-2">
-                      <span>{column.header}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="whitespace-nowrap">{column.header}</span>
                       {column.sortable && (
                         <button
                           onClick={() => handleSort(column.key)}
@@ -812,7 +826,16 @@ export function DataTable<T extends Record<string, any>>({
                         </TableCell>
                       )}
                       {safeColumns.map((column) => (
-                        <TableCell key={column.key} className={column.className}>
+                        <TableCell
+                          key={column.key}
+                          className={cn(
+                            column.className,
+                            column.responsiveHide === "sm" && "hidden sm:table-cell",
+                            column.responsiveHide === "md" && "hidden md:table-cell",
+                            column.responsiveHide === "lg" && "hidden lg:table-cell"
+                          )}
+                          style={column.minWidth ? { minWidth: column.minWidth } : undefined}
+                        >
                           {column.accessor
                             ? column.accessor(row)
                             : String(row[column.key] ?? "-")}
@@ -824,8 +847,9 @@ export function DataTable<T extends Record<string, any>>({
               )}
             </TableBody>
           </Table>
+              </div>
+            </div>
         )}
-
       </div>
 
       {/* Pagination */}
@@ -860,38 +884,42 @@ export function DataTable<T extends Record<string, any>>({
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-1 xs:gap-2">
+            <div className="flex items-center justify-center gap-1">
+              {/* First/Prev - hidden on very small screens */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="h-9 w-9 p-0"
+                className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
                 aria-label="First page"
               >
-                <ChevronsLeft className="h-4 w-4" />
+                <ChevronsLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="h-9 w-9 p-0"
+                className="h-8 sm:h-9 w-8 sm:w-9 p-0"
                 aria-label="Previous page"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
               </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+
+              {/* Page numbers - show fewer on mobile */}
+              <div className="flex items-center gap-0.5 sm:gap-1">
+                {Array.from({ length: Math.min(typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : 5, totalPages) }, (_, i) => {
+                  const maxPages = typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : 5;
                   let pageNum: number;
-                  if (totalPages <= 5) {
+                  if (totalPages <= maxPages) {
                     pageNum = i + 1;
-                  } else if (currentPage <= 3) {
+                  } else if (currentPage <= Math.ceil(maxPages / 2)) {
                     pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
+                  } else if (currentPage >= totalPages - Math.floor(maxPages / 2)) {
+                    pageNum = totalPages - maxPages + 1 + i;
                   } else {
-                    pageNum = currentPage - 2 + i;
+                    pageNum = currentPage - Math.floor(maxPages / 2) + i;
                   }
 
                   return (
@@ -900,32 +928,34 @@ export function DataTable<T extends Record<string, any>>({
                       variant={currentPage === pageNum ? "primary" : "outline"}
                       size="sm"
                       onClick={() => setCurrentPage(pageNum)}
-                      className="min-w-[2.25rem] h-9 text-xs xs:text-sm"
+                      className="min-w-[1.75rem] sm:min-w-[2.25rem] h-8 sm:h-9 text-xs px-1.5 sm:px-2"
                     >
                       {pageNum}
                     </Button>
                   );
                 })}
               </div>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="h-9 w-9 p-0"
+                className="h-8 sm:h-9 w-8 sm:w-9 p-0"
                 aria-label="Next page"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
               </Button>
+              {/* Last - hidden on very small screens */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="h-9 w-9 p-0"
+                className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
                 aria-label="Last page"
               >
-                <ChevronsRight className="h-4 w-4" />
+                <ChevronsRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
               </Button>
             </div>
           </div>
