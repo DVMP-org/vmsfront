@@ -197,7 +197,7 @@ export default function AdminGatePassesPage() {
   });
 
   const passes = useMemo(() => data?.items ?? [], [data?.items]);
-  const total = data?.total ?? 0;
+  const total = data?.items?.length ?? 0;
 
 
 

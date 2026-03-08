@@ -46,6 +46,7 @@ import { hasPermission } from "@/lib/permissions";
 import { adminLinks } from "@/config/admin-routes";
 import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
 import { LogoFull } from "../LogoFull";
+import { SidebarOrganizationHeader } from "./SidebarOrganizationHeader";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -546,80 +547,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
         "h-screen shadow-sm flex-shrink-0 z-30"
       )}
     >
-      {/* Header with Close/Collapse Button */}
-      <div
-        className={cn(
-          "flex items-center border-b bg-white dark:bg-zinc-900/50 backdrop-blur-sm",
-          isMobile
-            ? "justify-between px-4 py-4"
-            : collapsed
-              ? "justify-center p-3"
-              : "justify-between px-4 py-4"
-        )}
-      >
-        {(!collapsed || isMobile) && (
-          <div className="flex items-center gap-2 overflow-hidden">
-            <Link
-              href="/select"
-              className="flex items-center gap-2 rounded-full transition-all duration-300"
-            >
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={activeTheme?.name || "Logo"}
-                  className={cn(
-                    "h-6 w-auto max-w-[140px] object-contain transition-all duration-300",
-                    isDarkMode && !activeTheme?.dark_logo_url && "brightness-0 invert opacity-90"
-                  )}
-                />
-              ) : (
-                <LogoFull className={cn("h-6", isDarkMode && "brightness-0 invert opacity-90")} />
-              )}
-            </Link>
-            {(!collapsed || isMobile) && (
-              <span className={cn(
-                "text-[10px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border whitespace-nowrap",
-                actualType === "admin"
-                  ? "bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
-                  : "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))] border-[rgb(var(--brand-primary,#213928))]/20"
-              )}>
-                {actualType === "admin" ? "Management" : "Residents"}
-              </span>
-            )}
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          {isMobile && onMobileClose && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onMobileClose}
-              className="h-9 w-9 p-0 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5 text-zinc-500" />
-            </Button>
-          )}
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleCollapse}
-              className={cn(
-                "h-8 w-8 p-0 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-300",
-                collapsed ? "mx-auto" : "ml-auto"
-              )}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <ChevronRight className="h-4 w-4 text-zinc-400" />
-              ) : (
-                <ChevronLeft className="h-4 w-4 text-zinc-400" />
-              )}
-            </Button>
-          )}
-        </div>
+      {/* Organization Header (Admin only) or Logo Header */}
+      <div className="border-b border-zinc-800/60">
+        <SidebarOrganizationHeader
+          collapsed={collapsed}
+          onToggleCollapse={!isMobile ? toggleCollapse : undefined}
+          onMobileClose={onMobileClose}
+          isMobile={isMobile}
+        />
       </div>
+
 
       <LayoutGroup>
         {/* Navigation Links */}

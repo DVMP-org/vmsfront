@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/Table";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { TableSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { useAdminResidencies } from "@/hooks/use-admin";
+import { useAdminResidencies, useAdminResidencyGroups } from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumTopics,
@@ -46,7 +46,7 @@ import {
   useUpdateAdminForumTopic,
   useDeleteAdminForumTopic,
 } from "@/hooks/use-admin-forum";
-import type { ForumCategory, ForumTopic, Residency } from "@/types";
+import type { ForumCategory, ForumTopic, Residency, ResidencyGroup } from "@/types";
 import { cn } from "@/lib/utils";
 import { ActionMenu } from "./components/ActionMenu";
 import {
@@ -71,6 +71,14 @@ export default function AdminForumsPage() {
   const residencies = useMemo(
     () => residenciesData?.items ?? [],
     [residenciesData?.items]
+  );
+  const { data: residencyGroupsData } = useAdminResidencyGroups({
+    page: 1,
+    pageSize: 100,
+  });
+  const residencyGroups = useMemo(
+    () => residencyGroupsData?.items ?? [],
+    [residencyGroupsData?.items]
   );
 
 
@@ -145,9 +153,6 @@ export default function AdminForumsPage() {
   const categoriesResponse = useAdminForumCategories({
     page: 1,
     pageSize: 100,
-    filters: residencyId && residencyId !== "all"
-      ? formatFiltersForAPI([{ field: "residency_id", operator: "eq" as const, value: residencyId }])
-      : undefined,
   });
 
   const topicsResponse = useAdminForumTopics({
@@ -171,7 +176,7 @@ export default function AdminForumsPage() {
   const categoriesByResidency = useMemo(() => {
     if (!residencyId || residencyId === "all") return categories;
     return categories.filter(
-      (category) => category.residency_id === residencyId
+      (category) => !category.residency_id || category.residency_id === residencyId
     );
   }, [categories, residencyId]);
 
@@ -270,6 +275,7 @@ export default function AdminForumsPage() {
   };
 
   const handleCategorySubmit = (values: {
+    scopeType: "organization" | "residency";
     residencyId: string;
     name: string;
     description: string;
@@ -279,7 +285,8 @@ export default function AdminForumsPage() {
     if (categoryModalMode === "create") {
       createCategory.mutate(
         {
-          residency_id: values.residencyId,
+          residency_id:
+            values.scopeType === "organization" ? null : values.residencyId,
           name: values.name,
           description: values.description,
           is_default: values.isDefault,
@@ -300,7 +307,8 @@ export default function AdminForumsPage() {
             description: values.description,
             is_default: values.isDefault,
             is_locked: values.isLocked,
-            residency_id: values.residencyId,
+            residency_id:
+              values.scopeType === "organization" ? undefined : values.residencyId,
           },
         },
         {
@@ -313,7 +321,9 @@ export default function AdminForumsPage() {
   };
 
   const handleTopicSubmit = (values: {
+    targetType: "residency" | "residencyGroup";
     residencyId: string;
+    residencyGroupId: string;
     categoryId: string;
     title: string;
     content: string;
@@ -323,7 +333,12 @@ export default function AdminForumsPage() {
     if (topicModalMode === "create") {
       createTopic.mutate(
         {
-          residency_id: values.residencyId,
+          residency_id:
+            values.targetType === "residency" ? values.residencyId : undefined,
+          residency_group_id:
+            values.targetType === "residencyGroup"
+              ? values.residencyGroupId
+              : undefined,
           category_id: values.categoryId,
           title: values.title,
           content: values.content,
@@ -331,7 +346,7 @@ export default function AdminForumsPage() {
         {
           onSuccess: (response) => {
             setTopicModalOpen(false);
-            if (response.data.id) {
+            if (values.targetType === "residency" && response.data.id) {
               router.push(`/admin/forums/topic/${response.data.id}`);
             }
           },
@@ -344,7 +359,8 @@ export default function AdminForumsPage() {
           data: {
             title: values.title,
             category_id: values.categoryId,
-            residency_id: values.residencyId,
+            residency_id:
+              values.targetType === "residency" ? values.residencyId : undefined,
             is_pinned: values.isPinned,
             is_locked: values.isLocked,
           },
@@ -891,6 +907,7 @@ export default function AdminForumsPage() {
         initialValues={
           activeCategory
             ? {
+              scopeType: activeCategory.residency_id ? "residency" : "organization",
               residencyId: activeCategory.residency_id || "",
               name: activeCategory.name,
               description: activeCategory.description ?? "",
@@ -910,6 +927,7 @@ export default function AdminForumsPage() {
         isOpen={topicModalOpen}
         mode={topicModalMode}
         residencies={residencies}
+        residencyGroups={residencyGroups}
         categories={categories}
         defaultResidencyId={
           residencyId !== "all" ? residencyId : residencies?.[0]?.id
@@ -917,7 +935,9 @@ export default function AdminForumsPage() {
         initialValues={
           activeTopic
             ? {
+              targetType: "residency",
               residencyId: activeTopic.residency_id || "",
+              residencyGroupId: "",
               categoryId: activeTopic.category_id,
               title: activeTopic.title,
               content: activeTopic.initial_post?.content ?? "",

@@ -6,15 +6,17 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token, _hasHydrated } = useAuthStore();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/select");
+    if (!_hasHydrated) return;
+
+    if (isAuthenticated || !!token) {
+      router.replace("/select");
     } else {
-      router.push("/auth/login");
+      router.replace("/auth/login");
     }
-  }, [isAuthenticated, router]);
+  }, [_hasHydrated, isAuthenticated, token, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
