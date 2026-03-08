@@ -14,24 +14,37 @@ import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   FolderOpen,
   Home as HomeIcon,
+  Lock,
   MessageCircle,
   PlusCircle,
+  Pin,
+  Pencil,
   Sparkles,
+  Shield,
+  Trash2,
+  Unlock,
   Users,
   MessageSquare,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 import { useProfile } from "@/hooks/use-auth";
+import { useResidentResidency } from "@/hooks/use-resident";
 import {
   useCreateForumCategory,
   useCreateForumTopic,
+  useDeleteForumCategory,
+  useDeleteForumTopic,
   useForumCategoriesList,
   useForumTopics,
+  useUpdateForumCategory,
+  useUpdateForumTopic,
 } from "@/hooks/use-forum";
-import type { ForumCategory } from "@/types";
+import type { ForumCategory, ForumTopic } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { FilterConfig } from "@/components/ui/DataTable";
+import { ActionMenu } from "@/app/admin/forums/components/ActionMenu";
+import { ConfirmActionModal } from "@/app/admin/forums/components/ForumModals";
 
 interface CategoryWithCount {
   category: ForumCategory;
@@ -46,16 +59,8 @@ export default function ResidencyForumPage() {
   const { selectedResidency, setSelectedResidency } = useAppStore();
   const { data: profile } = useProfile();
   const effectiveResidencyId = routeResidencyId ?? selectedResidency?.id ?? null;
-  const residencyMembership = useMemo(
-    () =>
-      profile?.memberships?.find(
-        (membership) => membership.residency.id === effectiveResidencyId
-      ) ?? null,
-    [effectiveResidencyId, profile?.memberships]
-  );
-  const canModerateResidencyForum = Boolean(
-    residencyMembership?.resident_super_user
-  );
+  const { data: residentResidency } = useResidentResidency(effectiveResidencyId);
+  const canModerateResidencyForum = residentResidency?.is_super_user ?? false;
 
   useEffect(() => {
     if (!routeResidencyId || !profile?.residencies) return;
@@ -211,72 +216,181 @@ export default function ResidencyForumPage() {
   }, [categories.length, topics, topicsResponse?.total]);
 
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">("create");
+  const [activeCategory, setActiveCategory] = useState<ForumCategory | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<ForumCategory | null>(null);
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     description: "",
+    isLocked: false,
   });
   const createCategory = useCreateForumCategory();
+  const updateCategory = useUpdateForumCategory();
+  const deleteCategory = useDeleteForumCategory();
 
   const [isTopicModalOpen, setTopicModalOpen] = useState(false);
+  const [topicModalMode, setTopicModalMode] = useState<"create" | "edit">("create");
+  const [activeTopic, setActiveTopic] = useState<ForumTopic | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null);
   const [topicForm, setTopicForm] = useState({
     title: "",
     content: "",
     categoryId: "",
+    isPinned: false,
+    isLocked: false,
   });
   const createTopic = useCreateForumTopic();
+  const updateTopic = useUpdateForumTopic();
+  const deleteTopic = useDeleteForumTopic();
 
-  const handleCreateCategory = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCategorySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!effectiveResidencyId || !canModerateResidencyForum) return;
-    createCategory.mutate(
+    if (categoryModalMode === "create") {
+      createCategory.mutate(
+        {
+          residency_id: effectiveResidencyId,
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || undefined,
+          is_locked: categoryForm.isLocked,
+        },
+        {
+          onSuccess: (response) => {
+            setCategoryForm({ name: "", description: "", isLocked: false });
+            setManualCategories((prev) => {
+              if (prev.some((cat) => cat.id === response.data.id)) {
+                return prev;
+              }
+              return [...prev, response.data];
+            });
+            resetCategoryModal();
+          },
+        }
+      );
+      return;
+    }
+
+    if (!activeCategory) return;
+    updateCategory.mutate(
       {
-        residency_id: effectiveResidencyId,
-        name: categoryForm.name.trim(),
-        description: categoryForm.description.trim() || undefined,
+        residencyId: effectiveResidencyId,
+        categoryId: activeCategory.id,
+        data: {
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || undefined,
+          is_locked: categoryForm.isLocked,
+        },
       },
       {
-        onSuccess: (response) => {
-          setCategoryForm({ name: "", description: "" });
-          setManualCategories((prev) => {
-            if (prev.some((cat) => cat.id === response.data.id)) {
-              return prev;
-            }
-            return [...prev, response.data];
-          });
-          setCategoryModalOpen(false);
+        onSuccess: () => {
+          resetCategoryModal();
         },
       }
     );
   };
 
-  const handleCreateTopic = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleTopicSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!effectiveResidencyId || !topicForm.categoryId) return;
-    createTopic.mutate(
+    if (topicModalMode === "create") {
+      createTopic.mutate(
+        {
+          residency_id: effectiveResidencyId,
+          category_id: topicForm.categoryId,
+          title: topicForm.title.trim(),
+          content: topicForm.content.trim(),
+        },
+        {
+          onSuccess: (response) => {
+            if (canModerateResidencyForum && (topicForm.isPinned || topicForm.isLocked)) {
+              updateTopic.mutate({
+                residencyId: effectiveResidencyId,
+                topicId: response.data.id,
+                data: {
+                  is_pinned: topicForm.isPinned,
+                  is_locked: topicForm.isLocked,
+                },
+              });
+            }
+            resetTopicModal();
+            router.push(
+              `/residency/${effectiveResidencyId}/forum/topic/${response.data.id}`
+            );
+          },
+        }
+      );
+      return;
+    }
+
+    if (!activeTopic || !canModerateResidencyForum) return;
+    updateTopic.mutate(
       {
-        residency_id: effectiveResidencyId,
-        category_id: topicForm.categoryId,
-        title: topicForm.title.trim(),
-        content: topicForm.content.trim(),
+        residencyId: effectiveResidencyId,
+        topicId: activeTopic.id,
+        data: {
+          title: topicForm.title.trim(),
+          category_id: topicForm.categoryId,
+          is_pinned: topicForm.isPinned,
+          is_locked: topicForm.isLocked,
+        },
       },
       {
-        onSuccess: (response) => {
-          setTopicForm({ title: "", content: "", categoryId: "" });
-          setTopicModalOpen(false);
-          router.push(
-            `/residency/${effectiveResidencyId}/forum/topic/${response.data.id}`
-          );
+        onSuccess: () => {
+          resetTopicModal();
         },
       }
     );
   };
 
   const handleOpenTopicModal = (categoryId?: string) => {
-    setTopicForm((prev) => ({
-      ...prev,
-      categoryId: categoryId ?? prev.categoryId ?? "",
-    }));
+    setTopicModalMode("create");
+    setActiveTopic(null);
+    setTopicForm({
+      title: "",
+      content: "",
+      categoryId: categoryId ?? "",
+      isPinned: false,
+      isLocked: false,
+    });
     setTopicModalOpen(true);
+  };
+
+  const handleOpenCategoryEdit = (category: ForumCategory) => {
+    setCategoryModalMode("edit");
+    setActiveCategory(category);
+    setCategoryForm({
+      name: category.name,
+      description: category.description ?? "",
+      isLocked: Boolean(category.is_locked),
+    });
+    setCategoryModalOpen(true);
+  };
+
+  const handleOpenTopicEdit = (topic: ForumTopic) => {
+    setTopicModalMode("edit");
+    setActiveTopic(topic);
+    setTopicForm({
+      title: topic.title,
+      content: topic.initial_post?.content ?? "",
+      categoryId: topic.category_id,
+      isPinned: Boolean(topic.is_pinned),
+      isLocked: Boolean(topic.is_locked),
+    });
+    setTopicModalOpen(true);
+  };
+
+  const resetCategoryModal = () => {
+    setCategoryModalOpen(false);
+    setCategoryModalMode("create");
+    setActiveCategory(null);
+    setCategoryForm({ name: "", description: "", isLocked: false });
+  };
+
+  const resetTopicModal = () => {
+    setTopicModalOpen(false);
+    setTopicModalMode("create");
+    setActiveTopic(null);
+    setTopicForm({ title: "", content: "", categoryId: "", isPinned: false, isLocked: false });
   };
 
   if (!effectiveResidencyId) {
@@ -306,25 +420,25 @@ export default function ResidencyForumPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary,#213928))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
-          <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-4 max-w-2xl">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+      <div className="space-y-5 sm:space-y-6">
+        <section className="rounded-3xl border border-border/60 bg-card shadow-sm">
+          <div className="flex flex-col gap-5 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-lg space-y-4">
+              <p className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--brand-primary)/0.15)] bg-[rgb(var(--brand-primary)/0.25)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--brand-primary))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                 <Sparkles className="h-3.5 w-3.5" />
                 Resident Community
               </p>
               <div className="space-y-2">
-                <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+                <h1 className="text-2xl font-semibold leading-tight text-foreground sm:text-3xl md:text-4xl">
                   A modern forum for coordinating life inside your estate.
                 </h1>
-                <p className="text-white/85">
+                <p className="text-sm text-muted-foreground sm:text-base">
                   Organize repairs, post announcements, and keep everyone aligned from one beautiful space.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white/90 text-[rgb(var(--brand-primary,#213928))] hover:bg-white/90"
+                  className="shadow-sm"
                   onClick={() =>
                     handleOpenTopicModal(
                       activeCategoryMeta?.id ?? (categoryFilter !== "all" ? categoryFilter : undefined)
@@ -336,7 +450,7 @@ export default function ResidencyForumPage() {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="bg-white/15 text-white hover:bg-white/25"
+                  className="border border-border/60 bg-muted/40 text-foreground hover:bg-muted/70"
                   disabled={!canModerateResidencyForum}
                   onClick={() => setCategoryModalOpen(true)}
                 >
@@ -345,17 +459,19 @@ export default function ResidencyForumPage() {
                 </Button>
               </div>
             </div>
-            <div className="flex flex-1 flex-col gap-4 md:flex-row md:justify-end">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 md:justify-end">
               {forumStats.map((stat) => {
                 const Icon = stat.icon;
                 return (
                   <div
                     key={stat.label}
-                    className="min-w-[140px] rounded-2xl bg-white/10 p-4 text-center shadow-lg backdrop-blur"
+                    className="min-w-0 rounded-2xl border border-border/60 bg-muted/25 p-4 text-left shadow-sm"
                   >
-                    <Icon className="mx-auto mb-3 h-5 w-5 text-white" />
-                    <p className="text-3xl font-semibold">{stat.value}</p>
-                    <p className="text-sm text-white/80">{stat.label}</p>
+                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgb(var(--brand-primary)/0.25)] text-[rgb(var(--brand-primary))] dark:bg-white/10 dark:text-white">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="text-2xl font-semibold text-foreground sm:text-3xl">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
                   </div>
                 );
               })}
@@ -369,12 +485,15 @@ export default function ResidencyForumPage() {
             activeCategoryId={categoryFilter}
             totalTopics={totalTopics}
             isLoading={isCategoriesLoading || isCategoriesFetching}
+            canModerate={canModerateResidencyForum}
+            residencyId={effectiveResidencyId}
             onSelectCategory={(next) => {
               setCategoryFilter(next);
               setPage(1);
             }}
             onCreateCategory={() => {
               if (!canModerateResidencyForum) return;
+              resetCategoryModal();
               setCategoryModalOpen(true);
             }}
             onCreateTopic={(categoryId) => handleOpenTopicModal(categoryId)}
@@ -383,9 +502,18 @@ export default function ResidencyForumPage() {
                 `/residency/${effectiveResidencyId}/forum/category/${categoryId}`
               )
             }
+            onEditCategory={handleOpenCategoryEdit}
+            onToggleCategoryLock={(category) =>
+              updateCategory.mutate({
+                residencyId: effectiveResidencyId,
+                categoryId: category.id,
+                data: { is_locked: !category.is_locked },
+              })
+            }
+            onDeleteCategory={(category) => setCategoryToDelete(category)}
           />
-          <Card>
-            <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <Card className="overflow-hidden border border-border/60 bg-card/95 shadow-sm backdrop-blur">
+            <CardHeader className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Topics</CardTitle>
                 <CardDescription>
@@ -403,7 +531,7 @@ export default function ResidencyForumPage() {
                   </button>
                 )}
               </div>
-              <div className="w-full md:w-64">
+              <div className="w-full md:w-72">
                 <Input
                   placeholder="Search topics..."
                   value={searchInput}
@@ -451,23 +579,26 @@ export default function ResidencyForumPage() {
                   }}
                 />
               ) : (
-                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3 sm:gap-4">
                   {filteredTopics.map((topic) => (
-                    <button
+                    <div
                       key={topic.id}
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          `/residency/${effectiveResidencyId}/forum/topic/${topic.id}`
-                        )
-                      }
                       className={cn(
-                        "flex w-full flex-col gap-3 rounded-2xl border border-border cursor-pointer bg-card p-4 text-left shadow-sm transition",
-                        "hover:-translate-y-0.5 hover:border-[rgb(var(--brand-primary)/0.4)] hover:shadow-lg"
+                        "flex w-full flex-col gap-3 rounded-2xl border border-border/70 bg-background/90 p-4 text-left shadow-sm transition sm:p-5",
+                        "hover:border-[rgb(var(--brand-primary)/0.3)] hover:bg-muted/20 hover:shadow-md"
                       )}
                     >
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/residency/${effectiveResidencyId}/forum/topic/${topic.id}`
+                            )
+                          }
+                          className="flex min-w-0 flex-1 flex-col gap-2 text-left"
+                        >
+                          <div className="flex flex-wrap items-center gap-2.5">
                           {/* Profile image (user avatar) */}
                           {topic.author && topic.author.avatar_url ? (
                             <img
@@ -491,7 +622,7 @@ export default function ResidencyForumPage() {
                                 : ""}
                             </div>
                           )}
-                          <p className="text-lg font-semibold text-foreground">
+                            <p className="text-base font-semibold text-foreground sm:text-lg">
                             {topic.title}
                           </p>
                           {topic.is_pinned && (
@@ -505,7 +636,7 @@ export default function ResidencyForumPage() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground sm:text-sm">
                           Created{" "}
                           {topic.created_at
                             ? formatDistanceToNow(new Date(topic.created_at), {
@@ -513,14 +644,13 @@ export default function ResidencyForumPage() {
                             })
                             : "recently"}
                         </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-muted-foreground sm:gap-3">
                         {topic.category && (
-                          <span className="rounded-full bg-[rgb(var(--brand-primary,#213928)/0.3)] dark:text-white/80 px-3 py-1 text-[rgb(var(--brand-primary,#213928))]">
+                              <span className="rounded-full border border-[rgb(var(--brand-primary,#213928))]/15 bg-[rgb(var(--brand-primary,#213928))]/8 px-3 py-1 text-[rgb(var(--brand-primary,#213928))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                             {topic.category.name}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-muted/80 px-3 py-1 shadow-inner dark:text-foreground">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-3 py-1 dark:text-foreground">
                           {topic.posts_count} {topic.posts_count === 1 ? "reply" : "replies"}
                         </span>
                         {topic.last_post_at && (
@@ -532,7 +662,62 @@ export default function ResidencyForumPage() {
                           </span>
                         )}
                       </div>
-                    </button>
+                        </button>
+                        {canModerateResidencyForum && (
+                          <div className="shrink-0" onClick={(event) => event.stopPropagation()}>
+                            <ActionMenu
+                              size="sm"
+                              align="right"
+                              ariaLabel={`Moderate ${topic.title}`}
+                              options={[
+                                {
+                                  label: "Edit topic",
+                                  icon: Pencil,
+                                  onClick: () => handleOpenTopicEdit(topic),
+                                },
+                                {
+                                  label: topic.is_pinned ? "Unpin topic" : "Pin topic",
+                                  icon: Pin,
+                                  onClick: () =>
+                                    updateTopic.mutate({
+                                      residencyId: effectiveResidencyId,
+                                      topicId: topic.id,
+                                      data: { is_pinned: !topic.is_pinned },
+                                    }),
+                                },
+                                {
+                                  label: topic.is_locked ? "Unlock topic" : "Lock topic",
+                                  icon: topic.is_locked ? Unlock : Lock,
+                                  onClick: () =>
+                                    updateTopic.mutate({
+                                      residencyId: effectiveResidencyId,
+                                      topicId: topic.id,
+                                      data: { is_locked: !topic.is_locked },
+                                    }),
+                                },
+                                {
+                                  label: topic.is_deleted ? "Restore topic" : "Hide topic",
+                                  icon: Shield,
+                                  badge: topic.is_deleted ? "Restore" : "Moderation",
+                                  onClick: () =>
+                                    updateTopic.mutate({
+                                      residencyId: effectiveResidencyId,
+                                      topicId: topic.id,
+                                      data: { is_deleted: !topic.is_deleted },
+                                    }),
+                                },
+                                {
+                                  label: "Delete topic permanently",
+                                  icon: Trash2,
+                                  tone: "destructive",
+                                  onClick: () => setTopicToDelete(topic),
+                                },
+                              ]}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -564,11 +749,11 @@ export default function ResidencyForumPage() {
       {/* Create Category Modal */}
       <Modal
         isOpen={isCategoryModalOpen}
-        onClose={() => setCategoryModalOpen(false)}
-        title="Create Forum Category"
+        onClose={resetCategoryModal}
+        title={categoryModalMode === "create" ? "Create Forum Category" : "Edit Forum Category"}
         className="bg-card"
       >
-        <form className="space-y-4" onSubmit={handleCreateCategory}>
+        <form className="space-y-4" onSubmit={handleCategorySubmit}>
           <Input
             label="Category name"
             value={categoryForm.name}
@@ -597,20 +782,36 @@ export default function ResidencyForumPage() {
               placeholder="Share a short summary or the type of updates that belong here."
             />
           </div>
+          <label className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 px-3 py-3 text-sm text-foreground">
+            <input
+              type="checkbox"
+              checked={categoryForm.isLocked}
+              onChange={(event) =>
+                setCategoryForm((prev) => ({ ...prev, isLocked: event.target.checked }))
+              }
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block font-medium">Lock category</span>
+              <span className="text-xs text-muted-foreground">
+                Locked categories are visible but cannot receive new resident topics.
+              </span>
+            </span>
+          </label>
           <div className="flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setCategoryModalOpen(false)}
+              onClick={resetCategoryModal}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              isLoading={createCategory.isPending}
+              isLoading={createCategory.isPending || updateCategory.isPending}
               disabled={!categoryForm.name.trim() || !effectiveResidencyId}
             >
-              Create
+              {categoryModalMode === "create" ? "Create" : "Save changes"}
             </Button>
           </div>
         </form>
@@ -619,11 +820,11 @@ export default function ResidencyForumPage() {
       {/* Create Topic Modal */}
       <Modal
         isOpen={isTopicModalOpen}
-        onClose={() => setTopicModalOpen(false)}
-        title="Start a New Topic"
+        onClose={resetTopicModal}
+        title={topicModalMode === "create" ? "Start a New Topic" : "Edit Topic"}
         className="bg-card"
       >
-        <form className="space-y-4" onSubmit={handleCreateTopic}>
+        <form className="space-y-4" onSubmit={handleTopicSubmit}>
           <div className="space-y-2">
             <label className="block text-sm font-medium text-foreground">
               Category
@@ -656,6 +857,7 @@ export default function ResidencyForumPage() {
             }
             required
           />
+          {topicModalMode === "create" && (
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground">
               Message
@@ -676,24 +878,57 @@ export default function ResidencyForumPage() {
               required
             />
           </div>
+          )}
+          {canModerateResidencyForum && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 px-3 py-3 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={topicForm.isPinned}
+                  onChange={(event) =>
+                    setTopicForm((prev) => ({ ...prev, isPinned: event.target.checked }))
+                  }
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-medium">Pin topic</span>
+                  <span className="text-xs text-muted-foreground">Keep the topic near the top of the feed.</span>
+                </span>
+              </label>
+              <label className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 px-3 py-3 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={topicForm.isLocked}
+                  onChange={(event) =>
+                    setTopicForm((prev) => ({ ...prev, isLocked: event.target.checked }))
+                  }
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-medium">Lock topic</span>
+                  <span className="text-xs text-muted-foreground">Freeze replies while leaving the thread visible.</span>
+                </span>
+              </label>
+            </div>
+          )}
           <div className="flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setTopicModalOpen(false)}
+              onClick={resetTopicModal}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              isLoading={createTopic.isPending}
+              isLoading={createTopic.isPending || updateTopic.isPending}
               disabled={
                 !topicForm.title.trim() ||
-                !topicForm.content.trim() ||
+                (topicModalMode === "create" && !topicForm.content.trim()) ||
                 !topicForm.categoryId
               }
             >
-              Post topic
+              {topicModalMode === "create" ? "Post topic" : "Save changes"}
             </Button>
           </div>
           {categories.length === 0 && (
@@ -703,6 +938,40 @@ export default function ResidencyForumPage() {
           )}
         </form>
       </Modal>
+
+      <ConfirmActionModal
+        isOpen={!!categoryToDelete}
+        title="Delete category"
+        description={`Permanently delete ${categoryToDelete?.name ?? "this category"}. This action cannot be undone.`}
+        confirmLabel="Delete category"
+        tone="destructive"
+        isLoading={deleteCategory.isPending}
+        onCancel={() => setCategoryToDelete(null)}
+        onConfirm={() => {
+          if (!categoryToDelete || !effectiveResidencyId) return;
+          deleteCategory.mutate(
+            { residencyId: effectiveResidencyId, categoryId: categoryToDelete.id },
+            { onSuccess: () => setCategoryToDelete(null) }
+          );
+        }}
+      />
+
+      <ConfirmActionModal
+        isOpen={!!topicToDelete}
+        title="Delete topic permanently"
+        description={`This will permanently remove ${topicToDelete?.title ?? "this topic"} from the forum.`}
+        confirmLabel="Delete topic"
+        tone="destructive"
+        isLoading={deleteTopic.isPending}
+        onCancel={() => setTopicToDelete(null)}
+        onConfirm={() => {
+          if (!topicToDelete || !effectiveResidencyId) return;
+          deleteTopic.mutate(
+            { residencyId: effectiveResidencyId, topicId: topicToDelete.id },
+            { onSuccess: () => setTopicToDelete(null) }
+          );
+        }}
+      />
     </>
   );
 }
@@ -712,10 +981,15 @@ interface CategorySidebarProps {
   activeCategoryId: string;
   totalTopics: number;
   isLoading: boolean;
+  canModerate: boolean;
+  residencyId: string;
   onSelectCategory: (categoryId: string) => void;
   onCreateCategory: () => void;
   onCreateTopic: (categoryId?: string) => void;
   onViewCategory: (categoryId: string) => void;
+  onEditCategory: (category: ForumCategory) => void;
+  onToggleCategoryLock: (category: ForumCategory) => void;
+  onDeleteCategory: (category: ForumCategory) => void;
 }
 
 function CategorySidebar({
@@ -723,15 +997,20 @@ function CategorySidebar({
   activeCategoryId,
   totalTopics,
   isLoading,
+  canModerate,
+  residencyId,
   onSelectCategory,
   onCreateCategory,
   onCreateTopic,
   onViewCategory,
+  onEditCategory,
+  onToggleCategoryLock,
+  onDeleteCategory,
 }: CategorySidebarProps) {
   const hasCategories = categories.length > 0;
 
   return (
-    <aside className="h-fit rounded-3xl border border-border bg-card shadow-lg lg:sticky lg:top-24">
+    <aside className="h-fit rounded-3xl border border-border/60 bg-card/95 shadow-sm backdrop-blur lg:sticky lg:top-24">
       <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Categories</h2>
@@ -739,7 +1018,7 @@ function CategorySidebar({
             Organize threads into themes.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={onCreateCategory}>
+        <Button variant="outline" size="sm" className="shadow-sm" onClick={onCreateCategory}>
           + New
         </Button>
       </div>
@@ -753,28 +1032,35 @@ function CategorySidebar({
         ) : hasCategories ? (
           <>
             <CategorySidebarItem
+                category={{ id: "all", slug: "all", name: "All topics", is_default: false }}
               label="All topics"
               description="Everything in this residency"
               count={totalTopics}
               isActive={activeCategoryId === "all"}
+                canModerate={false}
               onClick={() => onSelectCategory("all")}
             />
             {categories.map(({ category, topicCount }) => (
               <CategorySidebarItem
                 key={category.id}
+                category={category}
                 label={category.name}
                 description={category.description}
                 scopeLabel={category.residency_id ? "Residency" : "Global"}
                 count={topicCount}
                 isActive={activeCategoryId === category.id}
+                canModerate={canModerate && category.residency_id === residencyId}
                 onClick={() => onSelectCategory(category.id)}
                 onView={() => onViewCategory(category.id)}
                 onStartTopic={() => onCreateTopic(category.id)}
+                onEdit={() => onEditCategory(category)}
+                onToggleLock={() => onToggleCategoryLock(category)}
+                onDelete={() => onDeleteCategory(category)}
               />
             ))}
           </>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+              <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
             No categories yet. Create one to keep conversations organized.
           </div>
         )}
@@ -796,33 +1082,43 @@ function CategorySidebar({
 }
 
 interface CategorySidebarItemProps {
+  category: ForumCategory;
   label: string;
   description?: string | null;
   scopeLabel?: string;
   count: number;
   isActive: boolean;
+  canModerate: boolean;
   onClick: () => void;
   onView?: () => void;
   onStartTopic?: () => void;
+  onEdit?: () => void;
+  onToggleLock?: () => void;
+  onDelete?: () => void;
 }
 
 function CategorySidebarItem({
+  category,
   label,
   description,
   scopeLabel,
   count,
   isActive,
+  canModerate,
   onClick,
   onView,
   onStartTopic,
+  onEdit,
+  onToggleLock,
+  onDelete,
 }: CategorySidebarItemProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border px-4 py-3 hover:shadow-lg hover:-translate-y-0.5 transition cursor-pointer",
+        "rounded-2xl border px-4 py-3 transition cursor-pointer hover:border-[rgb(var(--brand-primary)/0.35)] hover:bg-muted/20 hover:shadow-sm",
         isActive
-          ? "border-border bg-[rgb(var(--brand-primary)/0.9)] text-white/80 dark:text-foreground hover:bg-[rgb(var(--brand-primary))]"
-          : "border-[rgb(var(--brand-primary)/0.4)] bg-muted/30 hover:border-[rgb(var(--brand-primary)/0.9)]"
+          ? "border-[rgb(var(--brand-primary)/0.5)] bg-[rgb(var(--brand-primary)/0.10)] text-foreground"
+          : "border-border/70 bg-background/70"
       )}
       onClick={onClick}
     >
@@ -831,13 +1127,13 @@ function CategorySidebarItem({
       >
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <p className={cn("text-sm font-semibold text-foreground", isActive ? "text-white/80 dark:text-foreground" : "")}>{label}</p>
+            <p className={cn("text-sm font-semibold text-foreground", isActive ? "text-[rgb(var(--brand-primary))] dark:text-white" : "")}>{label}</p>
             {scopeLabel && (
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                   isActive
-                    ? "bg-white/15 text-white/90"
+                    ? "bg-[rgb(var(--brand-primary)/0.12)] text-[rgb(var(--brand-primary))] dark:bg-white/10 dark:text-white/80"
                     : scopeLabel === "Global"
                       ? "bg-sky-100 text-sky-700"
                       : "bg-emerald-100 text-emerald-700"
@@ -848,21 +1144,24 @@ function CategorySidebarItem({
             )}
           </div>
           {description && (
-            <p className={cn("text-xs text-foreground/80 dark:text-muted-foreground line-clamp-2", isActive ? "text-white/80 dark:text-foreground" : "")}>
+            <p className={cn("text-xs text-foreground/80 dark:text-muted-foreground line-clamp-2", isActive ? "text-foreground/70 dark:text-white/70" : "")}>
               {description}
             </p>
           )}
         </div>
-        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-muted-foreground shadow dark:bg-muted/80 dark:text-foreground">
+        <span className="rounded-full border border-border/60 bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground dark:bg-muted/80 dark:text-foreground">
           {count}
         </span>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--brand-primary,#213928)]">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[rgb(var(--brand-primary))]">
         {onView && (
           <button
             type="button"
-            className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#213928)]/15"
-            onClick={onView}
+            className="rounded-full bg-[rgb(var(--brand-primary)/0.10)] px-3 py-1 hover:bg-[rgb(var(--brand-primary)/0.15)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onView();
+            }}
           >
             View
           </button>
@@ -870,11 +1169,41 @@ function CategorySidebarItem({
         {onStartTopic && (
           <button
             type="button"
-            className="rounded-full bg-[var(--brand-primary,#213928)]/10 px-3 py-1 hover:bg-[var(--brand-primary,#213928)]/15"
-            onClick={onStartTopic}
+            className="rounded-full bg-[rgb(var(--brand-primary)/0.10)] px-3 py-1 hover:bg-[rgb(var(--brand-primary)/0.15)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onStartTopic();
+            }}
           >
             Start topic
           </button>
+        )}
+        {canModerate && (onEdit || onToggleLock || onDelete) && (
+          <div onClick={(event) => event.stopPropagation()}>
+            <ActionMenu
+              size="sm"
+              align="right"
+              ariaLabel={`Moderate ${label}`}
+              options={[
+                ...(onEdit ? [{ label: "Edit category", icon: Pencil, onClick: onEdit }] : []),
+                ...(onToggleLock
+                  ? [{
+                    label: category.is_locked ? "Unlock category" : "Lock category",
+                    icon: category.is_locked ? Unlock : Lock,
+                    onClick: onToggleLock,
+                  }]
+                  : []),
+                ...(onDelete
+                  ? [{
+                    label: "Delete category",
+                    icon: Trash2,
+                    tone: "destructive" as const,
+                    onClick: onDelete,
+                  }]
+                  : []),
+              ]}
+            />
+          </div>
         )}
       </div>
     </div>

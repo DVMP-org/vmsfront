@@ -187,32 +187,32 @@ export default function ForumCategoryPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <section className="rounded-3xl bg-gradient-to-br from-[rgb(var(--brand-primary))] to-[rgb(var(--brand-secondary))] text-white shadow-xl">
-          <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-3 max-w-2xl">
+      <div className="space-y-5 sm:space-y-6">
+        <section className="rounded-3xl border border-border/60 bg-card shadow-sm">
+          <div className="flex flex-col gap-5 p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl space-y-3">
               <button
                 type="button"
                 onClick={() => router.push(`/residency/${effectiveResidencyId}/forum`)}
-                className="text-sm text-white/80 hover:text-white hover:underline"
+                className="text-sm text-muted-foreground hover:text-foreground hover:underline"
               >
                 ← Back to all categories
               </button>
               <div className="space-y-2">
-                <p className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                <p className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--brand-primary,#213928))]/15 bg-[rgb(var(--brand-primary,#213928))]/8 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--brand-primary,#213928))] dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                   <Sparkles className="h-3 w-3" />
                   Category
                 </p>
-                <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+                <h1 className="text-2xl font-semibold leading-tight text-foreground sm:text-3xl md:text-4xl">
                   {category?.name ?? "Forum Category"}
                 </h1>
                 {category?.description && (
-                  <p className="text-white/80">{category.description}</p>
+                  <p className="text-sm text-muted-foreground sm:text-base">{category.description}</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  className="bg-white text-[rgb(var(--brand-primary))] hover:bg-white/90"
+                  className="shadow-sm"
                   onClick={() => setTopicModalOpen(true)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -220,7 +220,7 @@ export default function ForumCategoryPage() {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="bg-white/15 text-white hover:bg-white/20"
+                  className="border border-border/60 bg-muted/40 text-foreground hover:bg-muted/70"
                   onClick={() =>
                     router.push(`/residency/${effectiveResidencyId}/forum`)
                   }
@@ -230,7 +230,7 @@ export default function ForumCategoryPage() {
                 </Button>
               </div>
             </div>
-            <div className="flex flex-1 flex-col gap-4 md:flex-row md:justify-end">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 md:justify-end">
               <StatTile
                 label="Topics"
                 value={topicStats.total}
@@ -242,15 +242,15 @@ export default function ForumCategoryPage() {
           </div>
         </section>
 
-        <Card className="border-none shadow-lg shadow-slate-200/60">
-          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <Card className="overflow-hidden border border-border/60 bg-card/95 shadow-sm backdrop-blur">
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Topics</CardTitle>
               <CardDescription>
                 Conversations happening inside {category?.name ?? "this category"}.
               </CardDescription>
             </div>
-            <div className="w-full md:w-64">
+            <div className="w-full md:w-72">
               <Input
                 placeholder="Search topics..."
                 value={search}
@@ -369,10 +369,14 @@ function StatTile({
   icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="min-w-[140px] rounded-2xl bg-white/10 p-4 text-center shadow-lg backdrop-blur">
-      {Icon ? <Icon className="mx-auto mb-2 h-5 w-5 text-white" /> : null}
-      <p className="text-3xl font-semibold">{value}</p>
-      <p className="text-sm text-white/80">{label}</p>
+    <div className="min-w-0 rounded-2xl border border-border/60 bg-muted/25 p-4 text-left shadow-sm">
+      {Icon ? (
+        <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] dark:bg-white/10 dark:text-white">
+          <Icon className="h-5 w-5" />
+        </div>
+      ) : null}
+      <p className="text-2xl font-semibold text-foreground sm:text-3xl">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -388,10 +392,10 @@ function TopicCard({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full flex-col gap-3 rounded-2xl border border-muted bg-gradient-to-r from-white to-slate-50/80 p-4 text-left shadow-md transition hover:border-[var(--brand-primary,#213928)]/40 hover:shadow-md"
+      className="flex w-full flex-col gap-3 rounded-2xl border border-border/70 bg-background/90 p-4 text-left shadow-sm transition hover:border-[var(--brand-primary,#213928)]/30 hover:bg-muted/20 hover:shadow-md sm:p-5"
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
           {/* Profile image (user avatar) */}
           {topic.author && topic.author.avatar_url ? (
             <img
@@ -411,7 +415,7 @@ function TopicCard({
                 : ""}
             </div>
           )}
-          <p className="text-lg font-semibold text-foreground">{topic.title}</p>
+          <p className="min-w-0 text-base font-semibold text-foreground sm:text-lg">{topic.title}</p>
           {topic.is_pinned && (
             <Badge variant="secondary" className="bg-amber-50 text-amber-700">
               Pinned
@@ -423,14 +427,16 @@ function TopicCard({
             </Badge>
           )}
         </div>
-        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+        <div className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/30 text-muted-foreground">
+          <ArrowUpRight className="h-4 w-4" />
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <span>
+      <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted-foreground">
+        <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/35 px-3 py-1 text-xs font-medium">
           {topic.posts_count} {topic.posts_count === 1 ? "reply" : "replies"}
         </span>
         {topic.last_post_at && (
-          <span>
+          <span className="text-xs sm:text-sm">
             Updated{" "}
             {formatDistanceToNow(new Date(topic.last_post_at), {
               addSuffix: true,

@@ -540,6 +540,7 @@ export default function AdminForumCategoryDetailPage() {
         initialValues={
           topicToEdit
             ? {
+              targetType: topicToEdit.residency_id ? "residency" : "global",
               residencyId: topicToEdit.residency_id || category?.residency_id || "",
               categoryId: topicToEdit.category_id,
               title: topicToEdit.title,
@@ -549,6 +550,7 @@ export default function AdminForumCategoryDetailPage() {
             }
             : category
               ? {
+                targetType: category.residency_id ? "residency" : "global",
                 residencyId: category.residency_id || "",
                 categoryId: category.id,
                 title: "",
@@ -585,7 +587,7 @@ export default function AdminForumCategoryDetailPage() {
           } else {
             createTopic.mutate(
               {
-                residency_id: values.residencyId,
+                residency_id: values.targetType === "global" ? null : values.residencyId,
                 category_id: values.categoryId,
                 title: values.title,
                 content: values.content,

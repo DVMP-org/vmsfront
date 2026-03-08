@@ -252,7 +252,7 @@ export function useOnboard() {
       apiClient.setToken(token);
 
       toast.success("Onboarding complete! Welcome.");
-      router.push("/select");
+      router.push("/organizations");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const appDomain = process.env.NEXT_APP_DOMAIN || process.env.NEXT_PUBLIC_BASE_DOMAIN;
+
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
@@ -38,8 +40,8 @@ const nextConfig = {
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://192.168.100.20:3000',
-    'http://192.168.100.20',
-    "dashboard.vmscore.to"
+    'http://192.168.100.20', 'dashboard.vmscore.to',
+    ...(appDomain ? [appDomain, `*.${appDomain}`] : []),
   ],
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vmscore.to'
