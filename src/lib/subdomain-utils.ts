@@ -1,4 +1,4 @@
-const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
+export const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
 
 // Reserved subdomains that are not organization slugs
 export const RESERVED_SUBDOMAINS = ["www", "app", "api", "admin", "visit"];
@@ -29,6 +29,19 @@ export function getSubdomain(): string | null {
 
 export function isBaseDomain(): boolean {
   return getSubdomain() === null;
+}
+
+export function buildRootDomainUrl(path: string = "/"): string {
+  if (typeof window === "undefined") return path;
+
+  const protocol = window.location.protocol;
+  const port = window.location.port ? `:${window.location.port}` : "";
+
+  if (window.location.hostname.includes("localhost")) {
+    return `${protocol}//localhost${port}${path}`;
+  }
+
+  return `${protocol}//${BASE_DOMAIN}${path}`;
 }
 
 export function buildSubdomainUrl(slug: string, path: string = "/"): string {

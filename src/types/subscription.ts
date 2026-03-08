@@ -29,6 +29,8 @@ export interface Subscription {
     organization_id: string,
     plan_id: string
     status: SubscriptionStatus
+    is_active: boolean
+    is_trialing: boolean
     billing_cycle?: string | null
     current_period_start?: string | null
     current_period_end?: string | null

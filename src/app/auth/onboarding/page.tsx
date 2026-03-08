@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useOnboard } from "@/hooks/use-auth";
 import { authService } from "@/services/auth-service";
 import { apiClient } from "@/lib/api-client";
+import { resetAuthenticatedUserCaches } from "@/lib/client-cache";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card";
@@ -65,6 +66,7 @@ export default function OnboardingPage() {
         const verify = async () => {
             try {
                 clearAuth();
+                resetAuthenticatedUserCaches();
                 apiClient.setToken(token);
                 const response = await authService.verifyToken();
                 setUserData(response.data);

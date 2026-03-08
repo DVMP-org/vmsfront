@@ -85,6 +85,13 @@ export function middleware(request: NextRequest) {
     });
   }
 
+  // RULE 0.5: On SUBDOMAIN - redirect auth pages to base domain
+  // Auth pages should always be on the root domain
+  if (isOnSubdomain && isAuthPath) {
+    const baseDomainUrl = getBaseDomainUrl(pathname, request.nextUrl.search);
+    return NextResponse.redirect(baseDomainUrl);
+  }
+
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard routes (/admin, /residency, /select) require org context from subdomain
   if (!isOnSubdomain && !effectiveOrganization && (isDashboardPath || isSelectPath)) {

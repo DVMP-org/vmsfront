@@ -4,20 +4,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { Toaster } from "sonner";
 import { useEffect } from "react";
-import { useAuthStore } from "@/store/auth-store";
-import { apiClient } from "@/lib/api-client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((state) => state.token);
-
-  useEffect(() => {
-    if (token) {
-      apiClient.setToken(token);
-    }
-  }, [token]);
-
   useEffect(() => {
     if (
       typeof window !== "undefined" &&

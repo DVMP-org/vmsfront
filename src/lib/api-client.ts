@@ -1,11 +1,14 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
-import { getSubdomain } from "./subdomain-utils";
+import { getCookie } from "@/lib/cookies";
+import { clearLegacyAuthStorage } from "@/lib/client-cache";
+import { getSubdomain, buildRootDomainUrl } from "./subdomain-utils";
 
 // Use production API URL in production, fallback to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 class ApiClient {
   private client: AxiosInstance;
+  private tokenOverride: string | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -48,19 +51,20 @@ class ApiClient {
               window.location.pathname +
               window.location.search +
               window.location.hash;
-            const loginUrl = new URL("/auth/login", window.location.origin);
             const onAuthRoute = window.location.pathname.startsWith("/auth");
 
+            let redirectTo = "";
             if (!onAuthRoute && currentPath) {
-              loginUrl.searchParams.set("redirect_to", currentPath);
+              redirectTo = `?redirect_to=${encodeURIComponent(currentPath)}`;
             } else if (onAuthRoute) {
               const existingRedirect = new URL(window.location.href).searchParams.get("redirect_to");
               if (existingRedirect) {
-                loginUrl.searchParams.set("redirect_to", existingRedirect);
+                redirectTo = `?redirect_to=${encodeURIComponent(existingRedirect)}`;
               }
             }
 
-            window.location.href = loginUrl.toString();
+            // Always redirect to root domain auth pages
+            window.location.href = buildRootDomainUrl(`/auth/login${redirectTo}`);
           }
         }
         return Promise.reject(error);
@@ -70,31 +74,22 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window !== "undefined") {
-      // Try localStorage first, then fall back to cookie for cross-subdomain support
-      const localToken = localStorage.getItem("token");
-      if (localToken) return localToken;
-      
-      // Read from cookie as fallback
-      const cookieToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth-token="))
-        ?.split("=")[1];
-      return cookieToken || null;
+      const stateToken = useAuthStore.getState().token;
+      if (this.tokenOverride) return this.tokenOverride;
+      if (stateToken) return stateToken;
+
+      return getCookie("auth-token") || null;
     }
     return null;
   }
 
   public setToken(token: string): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("token", token);
-    }
+    this.tokenOverride = token;
   }
 
   public clearToken(): void {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    }
+    this.tokenOverride = null;
+    clearLegacyAuthStorage();
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

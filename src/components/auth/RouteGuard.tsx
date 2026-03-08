@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { Loader } from "@/components/ui/loader";
 
@@ -10,9 +10,8 @@ interface RouteGuardProps {
 }
 
 export function RouteGuard({ children }: RouteGuardProps) {
-  const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, token, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, token, _hasHydrated } = useAuthStore();
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -21,23 +20,24 @@ export function RouteGuard({ children }: RouteGuardProps) {
       return;
     }
 
-    const authCheck = () => {
-      if (!isAuthenticated || !token) {
-        // Middleware usually handles this, but we keep this as a safety layer
-        if (!pathname?.startsWith("/auth")) {
-          const loginUrl = new URL("/auth/login", window.location.origin);
-          loginUrl.searchParams.set("redirect_to", pathname || "/");
-          router.replace(loginUrl.pathname + loginUrl.search);
-          // Don't set authorized - keep showing loading spinner during redirect
-          return;
-        }
-      }
+    // Auth pages are always allowed (middleware handles subdomain redirect)
+    const isAuthPath = pathname?.startsWith("/auth");
+    if (isAuthPath) {
       setAuthorized(true);
       setLoading(false);
-    };
+      return;
+    }
 
-    authCheck();
-  }, [isAuthenticated, token, user, pathname, router, _hasHydrated]);
+    // For protected routes, check client-side auth state
+    // Middleware handles cookie-based auth, but localStorage auth needs client-side check
+    if (isAuthenticated || token) {
+      setAuthorized(true);
+      setLoading(false);
+    } else {
+      // Not authenticated - middleware should have redirected, but show loading while it processes
+      setLoading(true);
+    }
+  }, [isAuthenticated, token, pathname, _hasHydrated]);
 
   if (loading || !authorized) {
     return (

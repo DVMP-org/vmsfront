@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth-service";
 import { useAuthStore } from "@/store/auth-store";
 import { apiClient } from "@/lib/api-client";
+import { resetAuthenticatedUserCaches } from "@/lib/client-cache";
+import { buildRootDomainUrl } from "@/lib/subdomain-utils";
 import {
   LoginRequest,
   RegisterRequest,
@@ -69,6 +71,9 @@ export function useAuth() {
     onSuccess: (response) => {
       const { user, token } = response.data;
 
+      resetAuthenticatedUserCaches(queryClient);
+      apiClient.setToken(token);
+
       // Set auth state
       setAuth(user, token);
       toast.success("Login successful!");
@@ -102,6 +107,9 @@ export function useAuth() {
     onSuccess: (response) => {
       const { user, token } = response.data;
 
+      resetAuthenticatedUserCaches(queryClient);
+      apiClient.setToken(token);
+
       // Set auth state
       setAuth(user, token);
 
@@ -109,8 +117,8 @@ export function useAuth() {
       setRegisterError(null);
       setRegisterFieldErrors({});
 
-      // Navigate immediately
-      router.replace("/select");
+      // Navigate immediately to organizations page
+      router.replace("/organizations");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
@@ -124,23 +132,23 @@ export function useAuth() {
     mutationFn: authService.logout,
     onSuccess: () => {
       clearAuth();
+      resetAuthenticatedUserCaches(queryClient);
       apiClient.clearToken();
-      queryClient.clear();
       if (typeof window !== "undefined") {
-        localStorage.removeItem("vms_admin_profile");
+        toast.success("Logged out successfully");
+        // Always redirect to root domain auth pages
+        window.location.href = buildRootDomainUrl("/auth/login");
       }
-      toast.success("Logged out successfully");
-      router.push("/auth/login");
     },
     onError: () => {
       // Still clear local state even if server logout fails
       clearAuth();
+      resetAuthenticatedUserCaches(queryClient);
       apiClient.clearToken();
-      queryClient.clear();
       if (typeof window !== "undefined") {
-        localStorage.removeItem("vms_admin_profile");
+        // Always redirect to root domain auth pages
+        window.location.href = buildRootDomainUrl("/auth/login");
       }
-      router.push("/auth/login");
     },
   });
 
@@ -239,10 +247,9 @@ export function useOnboard() {
     mutationFn: (data: any) => authService.onboard(data),
     onSuccess: (response) => {
       const { user, token } = response.data;
+      resetAuthenticatedUserCaches(queryClient);
       setAuth(user, token);
       apiClient.setToken(token);
-      queryClient.invalidateQueries({ queryKey: ["resident", "me"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
 
       toast.success("Onboarding complete! Welcome.");
       router.push("/select");
@@ -280,9 +287,9 @@ export function useSocialCallback() {
       authService.socialCallback(provider, code),
     onSuccess: (response) => {
       const { user, token } = response.data;
+      resetAuthenticatedUserCaches(queryClient);
       setAuth(user, token);
       apiClient.setToken(token);
-      queryClient.invalidateQueries({ queryKey: ["auth", "profile"] });
 
       toast.success("Login successful!");
       router.replace("/select");
