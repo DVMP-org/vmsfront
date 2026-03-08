@@ -57,6 +57,7 @@ import {
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { FilterConfig } from "@/components/ui/DataTable";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 const PAGE_SIZE = 100;
 
@@ -114,6 +115,23 @@ export default function AdminForumsPage() {
 
   const [searchInput, setSearchInput] = useState(search);
 
+  const activeStatusFilter = useMemo(() => {
+    if (isPinned) return "pinned";
+    if (isLocked) return "locked";
+    if (isDeleted) return "deleted";
+    return "all";
+  }, [isDeleted, isLocked, isPinned]);
+
+  const setExclusiveStatusFilter = useCallback(
+    (next: "all" | "pinned" | "locked" | "deleted") => {
+      setIsPinned(next === "pinned" ? "true" : undefined);
+      setIsLocked(next === "locked" ? "true" : undefined);
+      setIsDeleted(next === "deleted" ? "true" : undefined);
+      setPage(1);
+    },
+    []
+  );
+
   useEffect(() => {
     syncToUrl({ page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate });
   }, [page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate, syncToUrl]);
@@ -150,6 +168,17 @@ export default function AdminForumsPage() {
     return residencies.find((residency) => residency.id === residencyId);
   }, [residencies, residencyId]);
 
+  const residencyOptions = useMemo(
+    () => [
+      { label: "All residencies", value: "all" },
+      ...residencies.map((residency) => ({
+        label: residency.name,
+        value: residency.id,
+      })),
+    ],
+    [residencies]
+  );
+
   const categoriesResponse = useAdminForumCategories({
     page: 1,
     pageSize: 100,
@@ -179,6 +208,17 @@ export default function AdminForumsPage() {
       (category) => !category.residency_id || category.residency_id === residencyId
     );
   }, [categories, residencyId]);
+
+  const categoryOptions = useMemo(
+    () => [
+      { label: "All categories", value: "all" },
+      ...categoriesByResidency.map((category) => ({
+        label: category.name,
+        value: category.id,
+      })),
+    ],
+    [categoriesByResidency]
+  );
 
   const categoriesWithCounts = useMemo(
     () => {
@@ -321,7 +361,7 @@ export default function AdminForumsPage() {
   };
 
   const handleTopicSubmit = (values: {
-    targetType: "residency" | "residencyGroup";
+    targetType: "global" | "residency" | "residencyGroup";
     residencyId: string;
     residencyGroupId: string;
     categoryId: string;
@@ -334,7 +374,11 @@ export default function AdminForumsPage() {
       createTopic.mutate(
         {
           residency_id:
-            values.targetType === "residency" ? values.residencyId : undefined,
+            values.targetType === "global"
+              ? null
+              : values.targetType === "residency"
+                ? values.residencyId
+                : undefined,
           residency_group_id:
             values.targetType === "residencyGroup"
               ? values.residencyGroupId
@@ -346,7 +390,7 @@ export default function AdminForumsPage() {
         {
           onSuccess: (response) => {
             setTopicModalOpen(false);
-            if (values.targetType === "residency" && response.data.id) {
+            if (values.targetType !== "residencyGroup" && response.data.id) {
               router.push(`/admin/forums/topic/${response.data.id}`);
             }
           },
@@ -394,21 +438,17 @@ export default function AdminForumsPage() {
             <p className="text-xs text-muted-foreground mt-0.5">Moderate and organize estate conversations</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            <select
-              className="rounded border border-foreground/20  px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground h-8 bg-foreground/10"
+            <SearchableSelect
+              options={residencyOptions}
               value={residencyId}
-              onChange={(event) => {
-                setResidencyId(event.target.value);
+              onChange={(value) => {
+                setResidencyId(value || "all");
                 setPage(1);
               }}
-            >
-              <option value="all">All residencies</option>
-              {residencies?.map((residency) => (
-                <option key={residency.id} value={residency.id}>
-                  {residency.name}
-                </option>
-              ))}
-            </select>
+              placeholder="All residencies"
+              isClearable={false}
+              className="min-w-[150px] min-h-[32px] h-[10px]"
+            />
             <Button
               size="sm"
               onClick={() => {
@@ -416,7 +456,7 @@ export default function AdminForumsPage() {
                 setActiveCategory(null);
                 setCategoryModalOpen(true);
               }}
-              className="h-8 text-xs"
+              className="h-8 text-xs px-8 py-4"
             >
               New Category
             </Button>
@@ -428,7 +468,7 @@ export default function AdminForumsPage() {
                 setActiveTopic(null);
                 setTopicModalOpen(true);
               }}
-              className="h-8 text-xs"
+              className="h-8 text-xs px-8 py-4"
             >
               New Topic
             </Button>
@@ -457,95 +497,85 @@ export default function AdminForumsPage() {
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border border-foreground/20 rounded bg-foreground/10 px-4 py-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+        <div className="rounded-2xl border border-border/60 bg-card/95 px-4 py-4 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <Filter className="h-3.5 w-3.5" />
             Filters
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center w-full md:w-auto">
-            <div className="flex flex-1 items-center gap-2 border border-zinc-200 rounded px-3 py-1.5">
-              <SearchField value={searchInput} onChange={setSearchInput} />
+              {activeStatusFilter !== "all" && (
+                <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[10px] uppercase">
+                  {activeStatusFilter}
+                </Badge>
+              )}
             </div>
-            <select
-              className="border border-foreground/20 rounded bg-foreground/10 px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground w-full md:w-48 h-8"
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between xl:flex-1">
+              <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
+                <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-2 shadow-sm min-w-[250px] md:w-auto">
+                  <SearchField value={searchInput} onChange={setSearchInput} />
+            </div>
+                <SearchableSelect
+                  options={categoryOptions}
               value={categoryId}
-              onChange={(event) => {
-                setCategoryId(event.target.value);
+                  onChange={(value) => {
+                    setCategoryId(value || "all");
                 setPage(1);
               }}
-            >
-              <option value="all">All categories</option>
-              {categoriesByResidency.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-1 border border-foreground/20 rounded bg-muted p-0.5">
+                  placeholder="All categories"
+                  isClearable={false}
+                  className="min-w-[150px] min-h-[32px] h-[10px]"
+                />
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border/60 bg-muted/40 p-1">
               <button
                 type="button"
-                onClick={() => {
-                  setIsPinned(undefined);
-                  setIsLocked(undefined);
-                  setIsDeleted(undefined);
-                  setPage(1);
-                }}
+                    onClick={() => setExclusiveStatusFilter("all")}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
-                  (!isPinned && !isLocked && !isDeleted)
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                  "h-8 rounded-lg px-3 py-1 text-xs font-medium uppercase tracking-wide transition",
+                  activeStatusFilter === "all"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 All
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setIsPinned(isPinned ? undefined : "true");
-                  setPage(1);
-                }}
+                    onClick={() => setExclusiveStatusFilter(activeStatusFilter === "pinned" ? "all" : "pinned")}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
-                  isPinned
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                  "h-8 rounded-lg px-3 py-1 text-xs font-medium uppercase tracking-wide transition",
+                  activeStatusFilter === "pinned"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Pinned
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setIsLocked(isLocked ? undefined : "true");
-                  setPage(1);
-                }}
+                    onClick={() => setExclusiveStatusFilter(activeStatusFilter === "locked" ? "all" : "locked")}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
-                  isLocked
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                  "h-8 rounded-lg px-3 py-1 text-xs font-medium uppercase tracking-wide transition",
+                  activeStatusFilter === "locked"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Locked
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setIsDeleted(isDeleted ? undefined : "true");
-                  setPage(1);
-                }}
+                    onClick={() => setExclusiveStatusFilter(activeStatusFilter === "deleted" ? "all" : "deleted")}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
-                  isDeleted
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                  "h-8 rounded-lg px-3 py-1 text-xs font-medium uppercase tracking-wide transition",
+                  activeStatusFilter === "deleted"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Deleted
               </button>
-            </div>
-          </div>
+                </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <DateInput
               label="From"
@@ -567,15 +597,18 @@ export default function AdminForumsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-xs h-8"
+                  className="h-10 gap-2 rounded-xl border border-border/60 px-3 text-xs"
             onClick={handleResetFilters}
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[2fr,3fr]">
+        <div className="grid gap-3 grid-cols-1 lg:grid-cols-[2fr,3fr]">
           {/* Categories List */}
           <div className="border border-foreground/20 rounded-lg shadow-sm">
             <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
@@ -879,16 +912,18 @@ export default function AdminForumsPage() {
                       ))}
                     </TableBody>
                   </Table>
-                  <div className="border-t border-foreground/20 px-4 py-3">
-                    <PaginationBar
-                      page={page}
-                      totalPages={topicsTotalPages}
-                      total={topicsTotal}
-                      pageSize={10}
-                      resourceLabel="topics"
-                      onChange={setPage}
-                      isFetching={topicFetcher.isFetching}
-                    />
+                      <div className="border-t border-border/60 bg-muted/20 px-4 py-3">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <PaginationBar
+                            page={page}
+                            totalPages={topicsTotalPages}
+                            total={topicsTotal}
+                            pageSize={10}
+                            resourceLabel="topics"
+                            onChange={setPage}
+                            isFetching={topicFetcher.isFetching}
+                          />
+                        </div>
                   </div>
                 </>
               )}
@@ -935,7 +970,7 @@ export default function AdminForumsPage() {
         initialValues={
           activeTopic
             ? {
-              targetType: "residency",
+              targetType: activeTopic.residency_id ? "residency" : "global",
               residencyId: activeTopic.residency_id || "",
               residencyGroupId: "",
               categoryId: activeTopic.category_id,
@@ -1002,7 +1037,7 @@ function SearchField({
         placeholder="Search topic titles"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="border-none bg-transparent pl-0 outline-none ring-0 focus-visible:ring-0"
+        className=""
       />
     </>
   );

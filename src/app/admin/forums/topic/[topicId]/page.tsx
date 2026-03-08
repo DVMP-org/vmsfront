@@ -465,6 +465,7 @@ export default function AdminForumTopicDetailPage() {
         initialValues={
           topic
             ? {
+              targetType: topic.residency_id || topic.residency?.id ? "residency" : "global",
               residencyId: topic.residency_id || topic.residency?.id || "",
               categoryId: topic.category_id,
               title: topic.title,

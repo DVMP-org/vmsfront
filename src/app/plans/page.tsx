@@ -101,13 +101,13 @@ function PlanCard({
                 "relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300",
                 "bg-white dark:bg-zinc-900",
                 isSelected
-                    ? "border-[rgb(var(--brand-primary,#213928))] shadow-xl ring-2 ring-[rgb(var(--brand-primary,#213928))]/20"
+                    ? "border-[rgb(var(--brand-primary))] shadow-xl ring-2 ring-[rgb(var(--brand-primary))]/20"
                     : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-lg"
             )}
         >
             {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[rgb(var(--brand-primary,#213928))] text-white text-xs font-semibold">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[rgb(var(--brand-primary))] text-white text-xs font-semibold">
                         <Crown className="h-3 w-3" />
                         Most Popular
                     </span>
@@ -139,7 +139,7 @@ function PlanCard({
                     </p>
                 )}
                 {plan.trial_days && plan.trial_days > 0 && (
-                    <p className="mt-2 text-sm text-[rgb(var(--brand-primary,#213928))] font-medium">
+                    <p className="mt-2 text-sm text-[rgb(var(--brand-primary))] font-medium">
                         {plan.trial_days}-day free trial
                     </p>
                 )}
@@ -579,8 +579,8 @@ export default function PlansPage() {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
             {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary))]/5 rounded-full blur-3xl pointer-events-none" />
 
             <Header type="select" />
 
@@ -594,7 +594,7 @@ export default function PlansPage() {
                         className="text-center mb-12"
                     >
                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 mb-6">
-                            <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+                            <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary))]" />
                         </div>
                         <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
                             Choose Your Plan

@@ -59,25 +59,25 @@ export function SidebarOrganizationHeader({
                         <img
                             src={organization.logo_url}
                             alt={organization.name}
-                            className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-700/50 group-hover:ring-zinc-600 transition-all"
+                            className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-200 transition-all group-hover:ring-zinc-300 dark:ring-zinc-700/50 dark:group-hover:ring-zinc-600"
                         />
                     ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800 ring-2 ring-zinc-700/50 group-hover:ring-zinc-600 transition-all">
-                            <Building2 className="h-5 w-5 text-zinc-300" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted ring-2 ring-zinc-200 transition-all group-hover:ring-zinc-300 dark:bg-gradient-to-br dark:from-zinc-700 dark:to-zinc-800 dark:ring-zinc-700/50 dark:group-hover:ring-zinc-600">
+                                <Building2 className="h-5 w-5 text-zinc-500 dark:text-zinc-300" />
                         </div>
                     )}
                     {/* Status dot */}
-                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-zinc-900" />
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background dark:ring-zinc-900" />
                 </button>
 
                 {/* Expand Button */}
                 {onToggleCollapse && (
                     <button
                         onClick={onToggleCollapse}
-                        className="flex items-center justify-center h-8 w-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/80 transition-colors hover:bg-muted dark:border-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                         aria-label="Expand sidebar"
                     >
-                        <ChevronRight className="h-4 w-4 text-zinc-400" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
                     </button>
                 )}
             </div>
@@ -85,7 +85,7 @@ export function SidebarOrganizationHeader({
     }
 
     return (
-        <div className="flex flex-col bg-zinc-900">
+        <div className="flex flex-col border-b border-border/60 bg-background/95 backdrop-blur dark:border-zinc-800/60 dark:bg-zinc-900">
             {/* Main Header Row */}
             <div className="flex items-center gap-2 p-3">
                 {/* Organization Button - takes most space */}
@@ -94,8 +94,8 @@ export function SidebarOrganizationHeader({
                     className={cn(
                         "flex-1 flex items-center gap-3 p-2 rounded-xl transition-all duration-200 min-w-0",
                         isExpanded
-                            ? "bg-zinc-800/80"
-                            : "hover:bg-zinc-800/60"
+                            ? "bg-muted/80 dark:bg-zinc-800/80"
+                            : "hover:bg-muted/70 dark:hover:bg-zinc-800/60"
                     )}
                 >
                     {/* Logo */}
@@ -104,30 +104,30 @@ export function SidebarOrganizationHeader({
                             <img
                                 src={organization.logo_url}
                                 alt={organization.name}
-                                className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-700/60"
+                                className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-200 dark:ring-zinc-700/60"
                             />
                         ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800 ring-2 ring-zinc-700/60">
-                                <Building2 className="h-5 w-5 text-zinc-400" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted ring-2 ring-zinc-200 dark:bg-gradient-to-br dark:from-zinc-700 dark:to-zinc-800 dark:ring-zinc-700/60">
+                                    <Building2 className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
                             </div>
                         )}
                         {/* Status dot */}
-                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-zinc-900" />
+                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background dark:ring-zinc-900" />
                     </div>
 
                     {/* Name and Details */}
                     <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center gap-1.5">
-                            <h3 className="text-sm font-semibold text-white truncate">
+                            <h3 className="truncate text-sm font-semibold text-foreground dark:text-white">
                                 {organization?.name || "Organization"}
                             </h3>
                             {shortId && (
-                                <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/80 px-1.5 py-0.5 rounded hidden sm:inline">
+                                <span className="hidden rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline dark:bg-zinc-800/80 dark:text-zinc-500">
                                     #{shortId}
                                 </span>
                             )}
                         </div>
-                        <p className="text-xs text-zinc-500 truncate">
+                        <p className="truncate text-xs text-muted-foreground dark:text-zinc-500">
                             {user?.email || "user@example.com"}
                         </p>
                     </div>
@@ -138,7 +138,7 @@ export function SidebarOrganizationHeader({
                         transition={{ duration: 0.2 }}
                         className="flex-shrink-0"
                     >
-                        <ChevronDown className="h-4 w-4 text-zinc-500" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-zinc-500" />
                     </motion.div>
                 </button>
 
@@ -148,10 +148,10 @@ export function SidebarOrganizationHeader({
                     {!isMobile && onToggleCollapse && (
                         <button
                             onClick={onToggleCollapse}
-                            className="flex items-center justify-center h-9 w-9 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 transition-colors"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-background/80 transition-colors hover:bg-muted dark:border-zinc-800 dark:bg-zinc-800/60 dark:hover:bg-zinc-800"
                             aria-label="Collapse sidebar"
                         >
-                            <ChevronLeft className="h-4 w-4 text-zinc-400" />
+                            <ChevronLeft className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
                         </button>
                     )}
 
@@ -159,10 +159,10 @@ export function SidebarOrganizationHeader({
                     {isMobile && onMobileClose && (
                         <button
                             onClick={onMobileClose}
-                            className="flex items-center justify-center h-9 w-9 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 transition-colors"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-background/80 transition-colors hover:bg-muted dark:border-zinc-800 dark:bg-zinc-800/60 dark:hover:bg-zinc-800"
                             aria-label="Close menu"
                         >
-                            <X className="h-4 w-4 text-zinc-400" />
+                            <X className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
                         </button>
                     )}
                 </div>
@@ -176,14 +176,14 @@ export function SidebarOrganizationHeader({
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="overflow-hidden border-t border-zinc-800/60"
+                        className="overflow-hidden border-t border-border/60 dark:border-zinc-800/60"
                     >
                         {/* Current Organization */}
                         <div className="px-3 pt-3 pb-2">
-                            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-2">
+                            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                                 Current
                             </p>
-                            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-zinc-800/50 border border-zinc-700/30">
+                            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-[rgb(var(--brand-primary)/0.2)] px-2 py-2 dark:border-zinc-700/30 dark:bg-zinc-800/50">
                                 {organization?.logo_url ? (
                                     <img
                                         src={organization.logo_url}
@@ -191,11 +191,11 @@ export function SidebarOrganizationHeader({
                                         className="h-7 w-7 rounded-lg object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-700">
-                                        <Building2 className="h-3.5 w-3.5 text-zinc-400" />
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted dark:bg-zinc-700">
+                                            <Building2 className="h-3.5 w-3.5 text-muted-foreground dark:text-zinc-400" />
                                     </div>
                                 )}
-                                <span className="text-sm text-white font-medium truncate flex-1">
+                                <span className="flex-1 truncate text-sm font-medium text-foreground dark:text-white">
                                     {organization?.name}
                                 </span>
                                 <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
@@ -205,7 +205,7 @@ export function SidebarOrganizationHeader({
                         {/* Other Organizations Section */}
                         {otherOrganizations.length > 0 && (
                             <div className="px-3 pb-2">
-                                <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-2 mb-2">
+                                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                                     Switch to
                                 </p>
                                 <div className="space-y-0.5">
@@ -213,20 +213,20 @@ export function SidebarOrganizationHeader({
                                         <button
                                             key={org.id}
                                             onClick={() => handleSwitchOrganization(org.slug)}
-                                            className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-800/60 transition-colors group"
+                                            className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/60 dark:hover:bg-zinc-800/60"
                                         >
                                             {org.logo_url ? (
                                                 <img
                                                     src={org.logo_url}
                                                     alt={org.name}
-                                                    className="h-7 w-7 rounded-lg object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                                                    className="h-7 w-7 rounded-lg object-cover opacity-80 transition-opacity group-hover:opacity-100"
                                                 />
                                             ) : (
-                                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 group-hover:bg-zinc-700 transition-colors">
-                                                    <Building2 className="h-3.5 w-3.5 text-zinc-500" />
+                                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-zinc-200 dark:bg-zinc-800 dark:group-hover:bg-zinc-700">
+                                                        <Building2 className="h-3.5 w-3.5 text-muted-foreground dark:text-zinc-500" />
                                                 </div>
                                             )}
-                                            <span className="text-sm text-zinc-400 group-hover:text-zinc-200 truncate transition-colors">
+                                            <span className="truncate text-sm text-muted-foreground transition-colors group-hover:text-foreground dark:text-zinc-400 dark:group-hover:text-zinc-200">
                                                 {org.name}
                                             </span>
                                         </button>
@@ -236,18 +236,18 @@ export function SidebarOrganizationHeader({
                         )}
 
                         {/* Divider */}
-                        <div className="mx-3 border-t border-zinc-800/60" />
+                        <div className="mx-3 border-t border-border/60 dark:border-zinc-800/60" />
 
                         {/* Add Organization */}
                         <div className="p-3">
                             <button
                                 onClick={handleAddOrganization}
-                                className="w-full flex items-center gap-3 px-2 py-2 rounded-lg border border-dashed border-zinc-700/60 hover:border-zinc-600 hover:bg-zinc-800/40 transition-all group"
+                                className="group flex w-full items-center gap-3 rounded-lg border border-dashed border-border/70 px-2 py-2 transition-all hover:border-zinc-300 hover:bg-muted/40 dark:border-zinc-700/60 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
                             >
-                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 group-hover:bg-zinc-700 transition-colors">
-                                    <Plus className="h-3.5 w-3.5 text-zinc-500 group-hover:text-zinc-400" />
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-zinc-200 dark:bg-zinc-800 dark:group-hover:bg-zinc-700">
+                                    <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground dark:text-zinc-500 dark:group-hover:text-zinc-400" />
                                 </div>
-                                <span className="text-sm text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                                <span className="text-sm text-muted-foreground transition-colors group-hover:text-foreground dark:text-zinc-500 dark:group-hover:text-zinc-400">
                                     Add organization
                                 </span>
                             </button>

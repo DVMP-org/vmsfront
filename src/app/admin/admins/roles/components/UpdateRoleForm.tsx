@@ -88,7 +88,7 @@ export function UpdateRoleForm({
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                            <Shield className="h-4 w-4 text-[var(--brand-primary)]" />
                             Permissions
                         </label>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">

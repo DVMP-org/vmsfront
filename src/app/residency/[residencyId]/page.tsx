@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { differenceInHours, formatDistanceToNow } from "date-fns";
 import { useResidentDashboard, useWallet } from "@/hooks/use-resident";
@@ -14,19 +14,31 @@ import { DataTable, Column } from "@/components/ui/DataTable";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  AlertTriangle,
   ArrowRight,
   CalendarClock,
   Clock3,
+  Hash,
   Home as HomeIcon,
   MessageCircle,
+  MessageSquarePlus,
+  Pin,
   Plus,
   Sparkles,
   Ticket,
+  TrendingUp,
   Users as UsersIcon,
   Wallet,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
+import { useTriggerEmergencyResident } from "@/hooks/use-emergency";
+import { TriggerEmergencyModal } from "@/components/emergencies/TriggerEmergencyModal";
+import { CreateGatePassModal } from "@/components/passes/CreateGatePassModal";
+import { useForumTopics } from "@/hooks/use-forum";
+import { ForumTopic } from "@/types";
 import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
-import { GatePassStatus, type GateEvent, type GatePass } from "@/types";
+import { GatePassStatus, type GateEvent, type GatePass, type PaginatedResponse } from "@/types";
 
 export default function ResidentDashboardPage() {
   const router = useRouter();
@@ -37,6 +49,13 @@ export default function ResidentDashboardPage() {
   const effectiveResidencyId = routeResidencyId ?? selectedResidency?.id ?? null;
   const { data: dashboard, isLoading } = useResidentDashboard(effectiveResidencyId);
   const { data: wallet } = useWallet();
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [isCreatePassModalOpen, setIsCreatePassModalOpen] = useState(false);
+  const triggerEmergency = useTriggerEmergencyResident();
+  const { data: forumData } = useForumTopics(effectiveResidencyId, {
+    pageSize: 5,
+    sort: "-last_post_at",
+  }) as { data: import("@/types").PaginatedResponse<ForumTopic> | undefined };
 
   useEffect(() => {
     if (dashboard?.residency) {
@@ -250,29 +269,8 @@ export default function ResidentDashboardPage() {
     },
   ];
 
-  type ForumOption = {
-    label: string;
-    description: string;
-    icon: LucideIcon;
-  };
-
-  const forumOptions: ForumOption[] = [
-    {
-      label: "Ask for help",
-      description: "Get quick answers from neighbours and estate staff.",
-      icon: MessageCircle,
-    },
-    {
-      label: "Share updates",
-      description: "Post maintenance alerts, deliveries, or safety notes.",
-      icon: Sparkles,
-    },
-    {
-      label: "Plan together",
-      description: "Coordinate events, home services, or group buys.",
-      icon: UsersIcon,
-    },
-  ];
+  const recentTopics: ForumTopic[] = forumData?.items ?? [];
+  const totalTopics = forumData?.total ?? 0;
 
   return (
     <>
@@ -313,7 +311,14 @@ export default function ResidentDashboardPage() {
               <MessageCircle className="h-4 w-4" />
               Community Forum
             </Button>
-            <Button className="gap-2" onClick={() => router.push(`${residencyBase}/passes/create`)}>
+            <Button
+              className="gap-2 bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+              onClick={() => setIsEmergencyModalOpen(true)}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Report Emergency
+            </Button>
+            <Button className="gap-2" onClick={() => setIsCreatePassModalOpen(true)}>
               <Plus className="h-4 w-4" />
               Create Pass
             </Button>
@@ -322,30 +327,56 @@ export default function ResidentDashboardPage() {
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Card
-            className="border border-primary/10 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          <div
+            className="relative overflow-hidden rounded-xl shadow-md cursor-pointer group col-span-1"
+            style={{ background: "linear-gradient(135deg, rgb(var(--brand-primary)) 0%, rgb(var(--brand-secondary)) 100%)" }}
             onClick={() => router.push("/wallet")}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                  <p className="text-3xl font-semibold mt-1">
-                    {wallet ? new Intl.NumberFormat("en-NG", {
-                      style: "currency",
-                      currency: "NGN",
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(wallet.balance) : "₦0"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">Click to manage</p>
+            {/* Decorative circles */}
+            <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/5" />
+            <div className="pointer-events-none absolute right-4 bottom-0 h-20 w-20 rounded-full bg-white/5" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <div className="relative z-10 p-6">
+              {/* Card label row */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-white/15 p-1.5">
+                    <Wallet className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-white/55 uppercase">Resident Wallet</span>
                 </div>
-                <div className="rounded-full bg-primary/10  p-3">
-                  <Wallet className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                <div className="flex gap-0.5">
+                  <div className="h-3 w-3 rounded-full bg-yellow-300/80" />
+                  <div className="h-3 w-3 rounded-full bg-white/30 -ml-1" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              {/* Balance */}
+              <p className="text-[11px] text-white/50 mb-1">Available Balance</p>
+              <p className="text-2xl font-bold text-white tracking-tight">
+                {wallet ? new Intl.NumberFormat("en-NG", {
+                  style: "currency",
+                  currency: "NGN",
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(wallet.balance) : "₦0.00"}
+              </p>
+              {/* Actions */}
+              <div className="flex gap-2 mt-4">
+                <button
+                  className="flex-1 text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 transition-colors rounded-lg py-1.5 px-2"
+                  onClick={(e) => { e.stopPropagation(); router.push("/wallet"); }}
+                >
+                  Fund
+                </button>
+                <button
+                  className="flex-1 text-[11px] font-semibold text-white/65 hover:text-white border border-white/20 hover:border-white/45 transition-colors rounded-lg py-1.5 px-2"
+                  onClick={(e) => { e.stopPropagation(); router.push("/wallet"); }}
+                >
+                  History
+                </button>
+              </div>
+            </div>
+          </div>
 
           <Card className="border border-primary/10 shadow-sm">
             <CardContent className="p-6">
@@ -358,7 +389,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
               </div>
             </CardContent>
@@ -373,7 +404,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Across all passes</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <UsersIcon className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
               </div>
             </CardContent>
@@ -390,7 +421,7 @@ export default function ResidentDashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Activity className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <Activity className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
               </div>
             </CardContent>
@@ -405,7 +436,7 @@ export default function ResidentDashboardPage() {
                   <p className="text-xs text-muted-foreground mt-2">Next 48 hours</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Clock3 className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <Clock3 className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
               </div>
             </CardContent>
@@ -418,7 +449,7 @@ export default function ResidentDashboardPage() {
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <CalendarClock className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Last gate activity</p>
@@ -427,7 +458,7 @@ export default function ResidentDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
-                  <Ticket className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
+                  <Ticket className="h-5 w-5 text-[var(--brand-primary)]" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Expiring soon</p>
@@ -440,48 +471,212 @@ export default function ResidentDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Forum CTA */}
-        <Card className="border border-[rgb(var(--brand-primary)/0.2)] bg-[rgb(var(--brand-primary)/0.2)]">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
-              <CardTitle>Community Forum</CardTitle>
+        {/* Forum Section */}
+        <div className="rounded-xl border bg-card overflow-hidden shadow-md ring-1 ring-border/50">
+          {/* Subtle top accent line */}
+          <div className="h-0.5 bg-gradient-to-r from-[rgb(var(--brand-primary)/0.6)] via-[rgb(var(--brand-primary)/0.2)] to-transparent" />
+          {/* Header bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-[rgb(var(--brand-primary)/0.1)] p-2">
+                <MessageCircle className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base leading-tight">Community Forum</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {totalTopics > 0 ? `${totalTopics} discussion${totalTopics !== 1 ? "s" : ""}` : "Be the first to start a discussion"}
+                </p>
+              </div>
             </div>
-            <CardDescription>
-              Coordinate with neighbours, share recommendations, and keep everyone in the loop.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              {forumOptions.map((option) => (
-                <div
-                  key={option.label}
-                  className="flex gap-3 rounded-lg border border-dashed border-primary/30 bg-background/80 p-3"
-                >
-                  <option.icon className="h-5 w-5 text-[var(--brand-primary,#213928)]" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{option.label}</p>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button className="gap-2" onClick={() => router.push(`${residencyBase}/forum`)}>
-                <MessageCircle className="h-4 w-4" />
-                Visit forum
-              </Button>
+            <div className="flex gap-2">
               <Button
-                variant="secondary"
-                className="gap-2"
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs"
                 onClick={() => router.push(`${residencyBase}/forum`)}
               >
-                <Sparkles className="h-4 w-4" />
-                Share an update
+                <TrendingUp className="h-3.5 w-3.5" />
+                Browse all
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => router.push(`${residencyBase}/forum`)}
+              >
+                <MessageSquarePlus className="h-3.5 w-3.5" />
+                New post
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="grid md:grid-cols-[1fr_300px]">
+            {/* Recent topics feed */}
+            <div className="divide-y">
+              {recentTopics.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                  <div className="rounded-full bg-muted p-4 mb-3">
+                    <MessageCircle className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-sm">No discussions yet</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+                    Start a conversation — ask a question, share an update, or plan something together.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={() => router.push(`${residencyBase}/forum`)}
+                  >
+                    <MessageSquarePlus className="h-4 w-4" />
+                    Start a discussion
+                  </Button>
+                </div>
+              ) : (
+                recentTopics.map((topic) => {
+                  const authorName =
+                    topic.author_name ||
+                    (topic.author
+                      ? `${topic.author.first_name ?? ""} ${topic.author.last_name ?? ""}`.trim() ||
+                      topic.author.email
+                      : "Community member");
+                  const timeAgo = topic.last_post_at
+                    ? formatDistanceToNow(new Date(topic.last_post_at), { addSuffix: true })
+                    : topic.created_at
+                      ? formatDistanceToNow(new Date(topic.created_at), { addSuffix: true })
+                      : null;
+
+                  const isRecent = topic.last_post_at
+                    ? differenceInHours(new Date(), new Date(topic.last_post_at)) < 24
+                    : false;
+
+                  return (
+                    <button
+                      key={topic.id}
+                      onClick={() => router.push(`${residencyBase}/forum`)}
+                      className={`w-full text-left flex items-start gap-4 px-6 py-4 hover:bg-muted/50 transition-colors group relative ${topic.is_pinned ? "border-l-2 border-[rgb(var(--brand-primary)/0.8)]" : "border-l-2 border-transparent"
+                        }`}
+                    >
+                      {/* Avatar */}
+                      <div
+                        className="shrink-0 mt-0.5 h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase shadow-sm ring-2 ring-background"
+                        style={{ background: getAvatarGradient(authorName) }}
+                      >
+                        {authorName.charAt(0)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {topic.is_pinned && (
+                              <Pin className="h-3 w-3 text-amber-500 shrink-0" />
+                            )}
+                            <p className="text-sm font-semibold leading-snug truncate group-hover:text-[rgb(var(--brand-primary))] transition-colors">
+                              {topic.title}
+                            </p>
+                            {isRecent && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 bg-muted rounded-full px-2 py-0.5">
+                            <MessageCircle className="h-3 w-3" />
+                            {topic.posts_count}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {topic.category && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[rgb(var(--brand-primary)/0.08)] text-[rgb(var(--brand-primary))] border border-[rgb(var(--brand-primary)/0.15)]">
+                              <Hash className="h-2.5 w-2.5" />
+                              {topic.category.name}
+                            </span>
+                          )}
+                          {topic.is_locked && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-400/20">
+                              <Lock className="h-2.5 w-2.5" />
+                              Locked
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground">{authorName}</span>
+                          {timeAgo && (
+                            <>
+                              <span className="text-muted-foreground/40 text-xs">·</span>
+                              <span className="text-xs text-muted-foreground">{timeAgo}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-[rgb(var(--brand-primary)/0.5)] transition-colors shrink-0 self-center" />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Right: community quick-actions panel */}
+            <div className="border-l bg-muted/10 flex flex-col gap-0 divide-y">
+              {/* Quick compose */}
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Quick post</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {[
+                    { label: "Ask for help", icon: MessageCircle, desc: "Neighbours & staff can reply" },
+                    { label: "Share an update", icon: Sparkles, desc: "Alerts, deliveries, notices" },
+                    { label: "Plan together", icon: UsersIcon, desc: "Events, group buys & more" },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => router.push(`${residencyBase}/forum`)}
+                      className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 hover:border-[rgb(var(--brand-primary)/0.35)] hover:bg-[rgb(var(--brand-primary)/0.04)] hover:shadow-sm transition-all text-left group"
+                    >
+                      <div className="rounded-md bg-muted p-1.5 group-hover:bg-[rgb(var(--brand-primary)/0.10)] transition-colors shrink-0">
+                        <item.icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[rgb(var(--brand-primary))] transition-colors" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold leading-tight">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{item.desc}</p>
+                      </div>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-[rgb(var(--brand-primary)/0.5)] shrink-0 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Forum stats */}
+              <div className="px-5 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Forum stats</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Total discussions", value: totalTopics, icon: MessageCircle },
+                    { label: "Active topics", value: recentTopics.filter((t) => !t.is_locked).length, icon: TrendingUp },
+                    { label: "Pinned", value: recentTopics.filter((t) => t.is_pinned).length, icon: Pin },
+                    { label: "Locked", value: recentTopics.filter((t) => t.is_locked).length, icon: Lock },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <stat.icon className="h-3 w-3 text-muted-foreground/60" />
+                        <span className="text-xs text-muted-foreground">{stat.label}</span>
+                      </div>
+                      <span className="text-xs font-bold tabular-nums">{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Join CTA */}
+              <div className="px-5 py-4 mt-auto">
+                <button
+                  onClick={() => router.push(`${residencyBase}/forum`)}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-[rgb(var(--brand-primary)/0.08)] hover:bg-[rgb(var(--brand-primary)/0.14)] border border-[rgb(var(--brand-primary)/0.12)] text-[rgb(var(--brand-primary))] text-xs font-semibold py-2.5 transition-all"
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  Open Community Forum
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Passes Table */}
         <Card>
@@ -497,7 +692,7 @@ export default function ResidentDashboardPage() {
                 description="Create your first visitor pass to welcome guests or vendors."
                 action={{
                   label: "Create Pass",
-                  onClick: () => router.push(`${residencyBase}/passes/create`),
+                  onClick: () => setIsCreatePassModalOpen(true),
                 }}
               />
             ) : (
@@ -541,6 +736,29 @@ export default function ResidentDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <TriggerEmergencyModal
+        isOpen={isEmergencyModalOpen}
+        onClose={() => setIsEmergencyModalOpen(false)}
+        onSubmit={(data) =>
+          triggerEmergency.mutate(data, {
+            onSuccess: () => setIsEmergencyModalOpen(false),
+          })
+        }
+        isLoading={triggerEmergency.isPending}
+        residencyId={effectiveResidencyId}
+      />
+
+      <CreateGatePassModal
+        isOpen={isCreatePassModalOpen}
+        onClose={() => setIsCreatePassModalOpen(false)}
+        residencyId={effectiveResidencyId}
+        onSuccess={(passId) =>
+          passId
+            ? router.push(`${residencyBase}/passes/${passId}`)
+            : setIsCreatePassModalOpen(false)
+        }
+      />
     </>
   );
 }
@@ -578,6 +796,21 @@ function isExpiringSoon(validTo?: string | null): boolean {
 
   const hoursUntil = differenceInHours(target, new Date());
   return hoursUntil >= 0 && hoursUntil <= 48;
+}
+
+function getAvatarGradient(name: string): string {
+  const gradients = [
+    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+    "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
+    "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
+  ];
+  const idx = (name.charCodeAt(0) ?? 0) % gradients.length;
+  return gradients[idx];
 }
 
 function getEventActor(event: GateEvent): string {

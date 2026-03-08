@@ -264,10 +264,10 @@ export default function PluginsPage() {
     <>
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary)]/10 via-white to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Extend Functionality
               </div>
@@ -364,7 +364,7 @@ export default function PluginsPage() {
               return (
                 <Card
                   key={plugin.id}
-                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#213928)]/50 hover:shadow-lg"
+                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary)]/50 hover:shadow-lg"
                 >
                   {/* Plugin Image/Icon Area */}
                   <div
@@ -441,7 +441,7 @@ export default function PluginsPage() {
                         </div>
                       </div>
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/20 dark:text-white text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#213928)]/10 group-hover:text-[var(--brand-primary,#213928)]">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/20 dark:text-white text-slate-600 transition-colors group-hover:bg-[var(--brand-primary)]/10 group-hover:text-[var(--brand-primary)]">
                           <Icon className="h-5 w-5" />
                         </div>
                       </div>
@@ -457,8 +457,8 @@ export default function PluginsPage() {
                       <button
                         onClick={() => handleTogglePlugin(plugin.id)}
                         disabled={togglePluginMutation.isPending}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928))] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
-                          ? "bg-[rgb(var(--brand-primary,#213928))]"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary))] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
+                          ? "bg-[rgb(var(--brand-primary))]"
                           : "bg-gray-200"
                           }`}
                         role="switch"
@@ -561,7 +561,7 @@ export default function PluginsPage() {
                       key={index}
                       className="flex items-start gap-2 text-sm text-slate-600"
                     >
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary,#213928)] flex-shrink-0" />
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)] flex-shrink-0" />
                       {useCase}
                     </li>
                   ))}
@@ -617,7 +617,7 @@ export default function PluginsPage() {
                 {isLoadingSettings ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
-                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary,#213928)] border-t-transparent rounded-full animate-spin" />
+                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-muted-foreground">Loading settings...</p>
                     </div>
                   </div>

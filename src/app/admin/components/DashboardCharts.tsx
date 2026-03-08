@@ -66,7 +66,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
             <div className="border border-foreground/20 rounded-lg">
                 <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                     <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                        <ShieldCheck className="h-4 w-4 text-[var(--brand-primary)]" />
                         Pass Status
                     </h2>
                 </div>
@@ -103,7 +103,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
             <div className="border border-foreground/20 rounded-lg">
                 <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                     <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                        <TrendingUp className="h-4 w-4 text-[var(--brand-primary)]" />
                         Activity Trend
                     </h2>
                 </div>
@@ -149,7 +149,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
             <div className="border border-foreground/20 rounded-lg">
                 <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
                     <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
+                        <Clock className="h-4 w-4 text-[var(--brand-primary)]" />
                         Events by Hour
                     </h2>
                 </div>

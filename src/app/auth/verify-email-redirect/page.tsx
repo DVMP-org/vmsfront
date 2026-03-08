@@ -36,7 +36,7 @@ export default function VerifyEmailRedirectPage() {
           setState("success");
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
-            router.push("/select");
+            router.push("/organizations");
           }, 2000);
         } else {
           setErrorMessage(response.message || "Email verification failed. Please try again.");
@@ -58,7 +58,7 @@ export default function VerifyEmailRedirectPage() {
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-slate-50 dark:bg-[#020617]">
       {/* Ambient Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary,#213928))]/5 blur-[120px] rounded-full animate-pulse-slow" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary))]/5 blur-[120px] rounded-full animate-pulse-slow" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow delay-700" />
       </div>
 
@@ -79,7 +79,7 @@ export default function VerifyEmailRedirectPage() {
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none"
               >
-                <Mail className="w-10 h-10 text-[rgb(var(--brand-primary,#213928))]" />
+                <Mail className="w-10 h-10 text-[rgb(var(--brand-primary))]" />
                 {state === "success" && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -119,7 +119,7 @@ export default function VerifyEmailRedirectPage() {
               className="flex justify-center py-12"
             >
               <div className="relative">
-                <div className="absolute inset-[-20px] bg-[rgb(var(--brand-primary,#213928))]/10 blur-2xl rounded-full animate-pulse" />
+                <div className="absolute inset-[-20px] bg-[rgb(var(--brand-primary))]/10 blur-2xl rounded-full animate-pulse" />
                 <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl">
                   <Loader
                     size={48}
@@ -181,7 +181,7 @@ export default function VerifyEmailRedirectPage() {
               </Button>
               <Button
                 asChild
-                className="w-full h-14 text-base font-bold rounded-2xl bg-[rgb(var(--brand-primary,#213928))] text-white hover:bg-[rgb(var(--brand-primary,#213928))]/90 transition-all active:scale-[0.98]"
+                className="w-full h-14 text-base font-bold rounded-2xl bg-[rgb(var(--brand-primary))] text-white hover:bg-[rgb(var(--brand-primary))]/90 transition-all active:scale-[0.98]"
               >
                 <Link href="/auth/verify-email">Request New Link</Link>
               </Button>

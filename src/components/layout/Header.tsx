@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, memo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,6 +13,7 @@ import {
   User,
   ChevronDown,
   ChevronsUpDown,
+  ChevronLeft,
   Moon,
   Sun,
   Bell,
@@ -26,6 +28,7 @@ import { cn, getFullName, getInitials } from "@/lib/utils";
 import { LogoFull } from "../LogoFull";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
+import { buildSubdomainUrl, getSubdomain } from "@/lib/subdomain-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -55,8 +58,8 @@ export const Header = memo(function Header({
   const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
   const isAdminUser = useAdminProfile();
-  const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
-  const dashboardHref = "/select";
+  const profileHref = "/user/settings";
+  const dashboardHref = buildSubdomainUrl(getSubdomain() ?? "", "/select");
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -136,6 +139,16 @@ export const Header = memo(function Header({
                 isAdminRoute={isAdminRoute}
               />
             )}
+            {isSelectRoute && currentUser && pathname !== "/organizations" && (
+              <Link
+                href="/organizations"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+                <Building2 className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Organizations</span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -166,8 +179,22 @@ export const Header = memo(function Header({
                 className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-card/80 backdrop-blur-sm border border-border/40 px-2 py-1.5 sm:px-3 sm:py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
                 id="profile_dropdown_button"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] text-[10px] font-bold sm:hidden">
-                  {getInitials(currentUser.first_name, currentUser.last_name)}
+                {/* Avatar with online indicator */}
+                <div className="relative flex-shrink-0">
+                  {currentUser.avatar_url ? (
+                    <Image
+                      src={currentUser.avatar_url}
+                      alt={getFullName(currentUser.first_name, currentUser.last_name)}
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-full object-cover ring-2 ring-background"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] text-[10px] font-bold">
+                      {getInitials(currentUser.first_name, currentUser.last_name)}
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
@@ -190,8 +217,21 @@ export const Header = memo(function Header({
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-64 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-3 text-sm shadow-2xl z-50 ring-1 ring-black/5">
                   <div className="flex items-center gap-3 px-2 py-3 border-b border-border/40 mb-2 sm:hidden">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] font-bold">
-                      {getInitials(currentUser.first_name, currentUser.last_name)}
+                    <div className="relative flex-shrink-0">
+                      {currentUser.avatar_url ? (
+                        <Image
+                          src={currentUser.avatar_url}
+                          alt={getFullName(currentUser.first_name, currentUser.last_name)}
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-full object-cover ring-2 ring-border/40"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] font-bold">
+                          {getInitials(currentUser.first_name, currentUser.last_name)}
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground">
@@ -227,7 +267,7 @@ export const Header = memo(function Header({
                       logout();
                       setMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-destructive transition hover:bg-muted/50"
+                    className="flex  items-center gap-2 rounded-lg px-2 py-2 text-destructive transition hover:bg-muted/50"
                   >
                     <LogOut className="h-4 w-4" />
                     Sign out
@@ -259,7 +299,7 @@ const MenuAction = memo(function MenuAction({
       onClick={onClick}
       className="flex w-full items-start gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-muted/50"
     >
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
+      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))]">
         <Icon className="h-4 w-4" />
       </div>
       <div>
@@ -293,9 +333,9 @@ function WorkspaceSwitcher({
     : selectedResidency?.name || "Select Estate";
 
   const currentWorkspaceIcon = isAdminRoute ? (
-    <Shield className="h-4 w-4 text-indigo-600" />
+    <Shield className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
   ) : (
-    <Building2 className="h-4 w-4 text-[rgb(var(--brand-primary,#213928))]" />
+      <Building2 className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
   );
 
   useEffect(() => {
@@ -331,7 +371,7 @@ function WorkspaceSwitcher({
         className={cn(
           "flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1.5 transition-all hover:bg-muted/50",
           open &&
-          "ring-2 ring-[rgb(var(--brand-primary,#213928))]/20 border-[rgb(var(--brand-primary,#213928))]/40",
+          "ring-2 ring-[rgb(var(--brand-primary))]/20 border-[rgb(var(--brand-primary))]/40",
         )}
       >
         <div className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg bg-background shadow-sm border border-border/40">
@@ -376,10 +416,10 @@ function WorkspaceSwitcher({
                       onClick={() => handleSwitch(residency)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                        selectedResidency?.id === residency.id && !isAdminRoute && "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]"
+                        selectedResidency?.id === residency.id && !isAdminRoute && "dark:bg-[rgb(var(--brand-primary)/0.30)] bg-[rgb(var(--brand-primary)/0.20)] border-[rgb(var(--brand-primary))]"
                       )}
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary)/0.10)] text-[rgb(var(--brand-primary))]">
                         <Home className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -408,10 +448,10 @@ function WorkspaceSwitcher({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
                       isAdminRoute &&
-                      "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-600",
+                      "bg-[rgb(var(--brand-primary)/0.10)] dark:bg-[rgb(var(--brand-primary)/0.30)] border-[rgb(var(--brand-primary)/0.05)] dark:border-[rgb(var(--brand-primary))]",
                     )}
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary)/0.10)] text-[rgb(var(--brand-primary))]">
                       <Shield className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -431,7 +471,7 @@ function WorkspaceSwitcher({
             <Link
               href="/select"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-bold text-[rgb(var(--brand-primary,#213928))] transition hover:bg-[rgb(var(--brand-primary,#213928))]/5 w-full"
+              className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-bold text-[rgb(var(--brand-primary))] transition hover:bg-[rgb(var(--brand-primary))]/5 w-full"
             >
               <ArrowRightLeft className="h-3.5 w-3.5" />
               Manage Workspaces

@@ -42,11 +42,7 @@ export function RouteGuard({ children }: RouteGuardProps) {
   if (loading || !authorized) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-slate-50 dark:bg-background relative overflow-hidden">
-        {/* Ambient background effect */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary,#213928)/0.05)] blur-[120px] rounded-full animate-pulse-slow" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary,#213928)/0.5)] blur-[120px] rounded-full animate-pulse-slow delay-700" />
-        </div>
+
 
         <div className="flex flex-col items-center gap-6 relative z-10">
           <div className="relative">

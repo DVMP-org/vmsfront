@@ -136,7 +136,7 @@ export default function AdminPurchasesPage() {
                     </p>
                 </div>
                 {totalRevenue > 0 && (
-                    <Card className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
+                    <Card className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white shadow-xl">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 text-white">
 

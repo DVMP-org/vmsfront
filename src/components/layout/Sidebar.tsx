@@ -27,6 +27,7 @@ import {
   Receipt,
   Palette,
   FolderTree,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -83,6 +84,11 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
       icon: Receipt,
     },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
+    {
+      href: residencyId ? `${base}/emergency` : "/select",
+      label: "Emergency",
+      icon: AlertTriangle,
+    },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
 
@@ -125,9 +131,8 @@ const SidebarLink = memo(function SidebarLink({
         "group relative mt-0.5",
         isMobile || !collapsed ? "gap-3 px-3 py-2.5" : "justify-center px-2 py-2.5",
         isActive
-          ? isBrand
-            ? "bg-[rgb(var(--brand-primary,#213928)/0.1)] text-[rgb(var(--brand-primary,#213928))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.2)]"
-            : "bg-indigo-500/10 text-indigo-600 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.2)]"
+          ? "bg-[rgb(var(--brand-primary)/0.1)] dark:text-white text-[rgb(var(--brand-primary)/0.8)] shadow-[inset_0_0_0_1px_rgb(var(--brand-primary)/0.2)]"
+
           : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100"
       )}
       title={collapsed && !isMobile ? link.label : undefined}
@@ -136,8 +141,7 @@ const SidebarLink = memo(function SidebarLink({
         <motion.div
           layoutId="active-indicator"
           className={cn(
-            "absolute left-0 w-1 h-3/5 rounded-full",
-            isBrand ? "bg-[rgb(var(--brand-primary,#213928))]" : "bg-indigo-600"
+            "absolute left-0 w-1 h-3/5 rounded-full", "bg-[rgb(var(--brand-primary))]" 
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -149,9 +153,9 @@ const SidebarLink = memo(function SidebarLink({
         className={cn(
           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
           isActive
-            ? isBrand
-              ? "text-[rgb(var(--brand-primary,#213928))]"
-              : "text-indigo-600"
+
+            ? "text-[rgb(var(--brand-primary))]"
+
             : ""
         )}
       />
@@ -594,7 +598,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                         : "justify-center px-2 py-2.5",
                       activeChild
                         ? isBrand
-                          ? "bg-[rgb(var(--brand-primary,#213928)/0.5)] text-[rgb(var(--brand-primary,#213928))]"
+                          ? "bg-[rgb(var(--brand-primary)/0.5)] text-[rgb(var(--brand-primary))]"
                           : "bg-indigo-500/5 text-indigo-600"
                         : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
                     )}
@@ -604,7 +608,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                       <Icon
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
-                          activeChild && (isBrand ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                          activeChild && (isBrand ? "text-[rgb(var(--brand-primary))]" : "text-indigo-600")
                         )}
                       />
                       {(isMobile || !collapsed) && (
@@ -646,7 +650,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                                   "gap-3 px-3 py-2",
                                   isChildActive
                                     ? isBrand
-                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                      ? "bg-[rgb(var(--brand-primary))] text-white shadow-sm"
                                       : "bg-indigo-600 text-white shadow-sm"
                                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
                                 )}
@@ -698,7 +702,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                         : "justify-center px-2 py-2.5",
                       hasActiveRoute
                         ? actualType === "resident"
-                          ? "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))]"
+                          ? "bg-[rgb(var(--brand-primary))]/5 text-[rgb(var(--brand-primary))]"
                           : "bg-indigo-500/5 text-indigo-600"
                         : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
                     )}
@@ -709,7 +713,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
                           pluginIcon,
-                          hasActiveRoute && (actualType === "resident" ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                          hasActiveRoute && (actualType === "resident" ? "text-[rgb(var(--brand-primary))]" : "text-indigo-600")
                         )}
                       />
                       {(isMobile || !collapsed) && (
@@ -753,7 +757,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                                   "gap-3 px-3 py-2",
                                   isActive
                                     ? actualType === "resident"
-                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
+                                      ? "bg-[rgb(var(--brand-primary))] text-white shadow-sm"
                                       : "bg-indigo-600 text-white shadow-sm"
                                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
                                 )}

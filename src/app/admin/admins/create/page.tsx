@@ -100,14 +100,14 @@ export default function CreateAdminPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin" className="text-[var(--brand-primary,#213928)] hover:underline">
+              <Link href="/admin" className="text-[var(--brand-primary)] hover:underline">
                 Admin dashboard
               </Link>
               <span>/</span>
               <span>Onboard admin</span>
             </p>
             <h1 className="text-2xl sm:text-xl font-bold flex items-center gap-2">
-              <UserPlus2 className="h-6 w-6 text-[var(--brand-primary,#213928)]" />
+              <UserPlus2 className="h-6 w-6 text-[var(--brand-primary)]" />
               Onboard Admin
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
@@ -266,7 +266,7 @@ export default function CreateAdminPage() {
                   Cancel
                 </Button>
                 <Button type="submit"
-                  className="border-[var(--brand-primary,#213928)] gap-2 text-white bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)/90]"
+                  className="border-[var(--brand-primary)] gap-2 text-white bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)/90]"
                   isLoading={createAdmin.isPending}>
                   Onboard admin
                 </Button>

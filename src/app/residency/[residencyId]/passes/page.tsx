@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Column, DataTable, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
 import { Plus, CreditCard, ArrowRight, Home as HomeIcon } from "lucide-react";
+import { CreateGatePassModal } from "@/components/passes/CreateGatePassModal";
 import { formatDate, formatDateTime, formatPassWindow, getPassStatusColor, getTimeRemaining, titleCase } from "@/lib/utils";
 import { GatePassStatus, type GatePass } from "@/types";
 import { PaginationBar } from "@/components/ui/PaginationBar";
@@ -160,6 +161,7 @@ export default function PassesPage() {
   }, [residencyId]);
 
   const residencyBase = residencyId ? `/residency/${residencyId}` : "/select";
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
 
   type PassRow = GatePass & {
@@ -307,7 +309,7 @@ export default function PassesPage() {
             <h1 className="text-3xl font-bold">My Passes</h1>
             <p className="text-muted-foreground">Manage your visitor passes</p>
           </div>
-          <Button onClick={() => router.push(`${residencyBase}/passes/create`)}>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Pass
           </Button>
@@ -377,6 +379,17 @@ export default function PassesPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateGatePassModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        residencyId={residencyId}
+        onSuccess={(passId) =>
+          passId
+            ? router.push(`${residencyBase}/passes/${passId}`)
+            : setIsCreateModalOpen(false)
+        }
+      />
     </>
   );
 }

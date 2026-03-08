@@ -16,10 +16,16 @@ export function SocialLoginButtons() {
         <div className="space-y-4 pt-6">
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
+                    <span className="w-full" style={{ borderTop: "1px solid rgba(148,163,184,0.13)" }} />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span
+                        className="px-3 text-[0.65rem] tracking-widest font-medium"
+                        style={{
+                            background: "rgba(9,9,10,0.88)",
+                            color: "rgba(115,129,154,0.6)",
+                        }}
+                    >
                         Or continue with
                     </span>
                 </div>

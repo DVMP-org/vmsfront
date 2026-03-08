@@ -969,6 +969,64 @@ export interface MailerSettings {
     from_email?: string | null;
 }
 
+// ── Emergency Types ─────────────────────────────────────────────────────────────
+
+export type EmergencyType =
+    | "fire"
+    | "medical"
+    | "security"
+    | "natural_disaster"
+    | "other";
+
+export type EmergencyStatus = "active" | "acknowledged" | "resolved";
+
+export type EmergencySeverity = "low" | "medium" | "high" | "critical";
+
+export interface EmergencyUserLite {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+    phone: string | null;
+}
+
+export interface EmergencyAdminLite {
+    id: string;
+    user: EmergencyUserLite | null;
+}
+
+export interface EmergencyResidencyLite {
+    id: string;
+    name: string;
+    address?: string | null;
+}
+
+export interface Emergency {
+    id: string;
+    type: EmergencyType;
+    severity: EmergencySeverity;
+    description?: string | null;
+    location?: string | null;
+    status: EmergencyStatus;
+    organization_id: string;
+    triggered_by?: EmergencyUserLite | null;
+    acknowledged_by?: EmergencyAdminLite | null;
+    resolved_by?: EmergencyAdminLite | null;
+    residency?: EmergencyResidencyLite | null;
+    created_at: string;
+    updated_at: string;
+    acknowledged_at?: string | null;
+    resolved_at?: string | null;
+}
+
+export interface TriggerEmergencyRequest {
+    type: EmergencyType;
+    severity: EmergencySeverity;
+    description?: string;
+    location?: string;
+    residency_id?: string | null;
+}
+
 export interface UpdateMailerSettingsRequest {
     smtp_host: string;
     smtp_port: number;

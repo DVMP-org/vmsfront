@@ -87,7 +87,7 @@ export function useAuth() {
         router.refresh();
         router.replace(redirectTarget);
       } else {
-        router.replace("/select");
+        router.replace("/organizations");
       }
     },
     onError: (error: any) => {
@@ -252,7 +252,7 @@ export function useOnboard() {
       apiClient.setToken(token);
 
       toast.success("Onboarding complete! Welcome.");
-      router.push("/select");
+      router.push("/organizations");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
@@ -292,7 +292,7 @@ export function useSocialCallback() {
       apiClient.setToken(token);
 
       toast.success("Login successful!");
-      router.replace("/select");
+      router.replace("/organizations");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);

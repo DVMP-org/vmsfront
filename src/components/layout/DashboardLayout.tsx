@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
+import { ActiveEmergencyBanner } from "../emergencies/ActiveEmergencyBanner";
 
 const Sidebar = dynamic(() => import("./Sidebar").then(mod => mod.Sidebar), {
   ssr: false,
@@ -89,6 +90,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex min-h-0 flex-1 flex-col w-full lg:w-auto min-w-0 overflow-hidden">
         <Header onMenuClick={handleMenuClick} sidebarOpen={sidebarOpen} type={type} />
+        {type === "admin" && <ActiveEmergencyBanner />}
         <main
           className={cn(
             "flex-1 min-h-0 overflow-y-auto",

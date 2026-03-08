@@ -17,6 +17,7 @@ import {
     DoorOpen,
     Blocks,
     Wallet,
+    AlertTriangle,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -47,6 +48,7 @@ export const adminLinks: AdminRoute[] = [
     },
     { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
     { href: "/admin/visitors", label: "Visitors", icon: Users, permission: "visitors.list" },
+    { href: "/admin/emergencies", label: "Emergencies", icon: AlertTriangle, permission: "emergencies.list" },
     {
         href: "#",
         label: "Admins",
