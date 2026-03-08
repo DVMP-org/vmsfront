@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
+import { getSubdomain } from "@/lib/subdomain-utils";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,7 +13,9 @@ export default function HomePage() {
     if (!_hasHydrated) return;
 
     if (isAuthenticated || !!token) {
-      router.replace("/select");
+      const subdomain = getSubdomain();
+      // On subdomain, go to select; on root domain, go to organizations
+      router.replace(subdomain ? "/select" : "/organizations");
     } else {
       router.replace("/auth/login");
     }

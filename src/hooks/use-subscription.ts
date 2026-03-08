@@ -57,7 +57,7 @@ export function useSubscribeToPlan() {
         },
         onSuccess: (response) => {
             // Only show success and invalidate if it's a direct subscription (free plan)
-            if (response.data?.subscription) {
+            if (response.data?.is_active) {
                 queryClient.invalidateQueries({ queryKey: ["subscription"] });
                 queryClient.invalidateQueries({ queryKey: ["organization"] });
                 toast.success("Successfully subscribed to plan!");

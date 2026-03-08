@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";
+import { getBrandingBootstrapScript } from "../lib/branding-utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -54,42 +54,7 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const root = document.documentElement;
-                  const darkMode = localStorage.getItem('darkMode');
-                  
-                  if (darkMode === 'true' || (!darkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    root.classList.add('dark');
-                  } else {
-                    root.classList.remove('dark');
-                  }
-
-                  const cached = localStorage.getItem('active-branding-theme');
-                  if (cached) {
-                    const theme = JSON.parse(cached);
-                    if (theme.primary_color) {
-                      root.style.setProperty('--brand-primary', theme.primary_color);
-                    }
-                    if (theme.secondary_color) {
-                      root.style.setProperty('--brand-secondary', theme.secondary_color);
-                    }
-                    if (theme.favicon_url) {
-                      let favicon = document.querySelector("link[rel='icon']");
-                      if (!favicon) {
-                        favicon = document.createElement("link");
-                        favicon.rel = "icon";
-                        document.head.appendChild(favicon);
-                      }
-                      favicon.href = theme.favicon_url;
-                    }
-                  }
-                } catch (e) {
-                  // Ignore errors
-                }
-              })();
-            `,
+            __html: getBrandingBootstrapScript(),
           }}
         />
         <Suspense fallback={<div>Loading...</div>}>

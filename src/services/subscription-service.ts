@@ -24,9 +24,7 @@ export interface SubscribeToPlanRequest {
 }
 
 // Response for subscribe - can be either a direct subscription or payment required
-export interface SubscribeResponse {
-    // For free plans - direct subscription
-    subscription?: Subscription;
+export interface SubscribeResponse extends Subscription {
     // For paid plans - payment required
     authorization_url?: string;
     reference?: string;

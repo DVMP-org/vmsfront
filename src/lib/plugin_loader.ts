@@ -1,6 +1,11 @@
 import electricity from "@/plugins/electricity";
 import camera from "@/plugins/camera";
 import { getCookie } from "@/lib/cookies";
+import {
+    readLocalStorage,
+    removeLocalStorage,
+    writeLocalStorage,
+} from "@/lib/client-cache";
 import { isPluginPath } from "./plugin-utils";
 import { getSubdomain } from "./subdomain-utils";
 import type { LoadedPlugin, PluginRoute } from "@/types/plugin";
@@ -109,8 +114,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
     if (typeof window === "undefined") return null;
 
     try {
-        const cachedData = localStorage.getItem(getPluginCacheKey());
-        const cachedTimestamp = localStorage.getItem(getPluginCacheTimestampKey());
+        const cachedData = readLocalStorage(getPluginCacheKey());
+        const cachedTimestamp = readLocalStorage(getPluginCacheTimestampKey());
 
         if (!cachedData || !cachedTimestamp) {
             return null;
@@ -121,8 +126,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
 
         // Check if cache is expired
         if (now - timestamp > CACHE_DURATION_MS) {
-            localStorage.removeItem(getPluginCacheKey());
-            localStorage.removeItem(getPluginCacheTimestampKey());
+            removeLocalStorage(getPluginCacheKey());
+            removeLocalStorage(getPluginCacheTimestampKey());
             return null;
         }
 
@@ -131,8 +136,8 @@ function getCachedPlugins(): BackendPlugin[] | null {
     } catch (error) {
         console.error("Failed to read plugins cache:", error);
         // Clear invalid cache
-        localStorage.removeItem(getPluginCacheKey());
-        localStorage.removeItem(getPluginCacheTimestampKey());
+        removeLocalStorage(getPluginCacheKey());
+        removeLocalStorage(getPluginCacheTimestampKey());
         return null;
     }
 }
@@ -145,16 +150,16 @@ function setCachedPlugins(plugins: BackendPlugin[]): void {
     if (typeof window === "undefined") return;
 
     try {
-        localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
-        localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
+        writeLocalStorage(getPluginCacheKey(), JSON.stringify(plugins));
+        writeLocalStorage(getPluginCacheTimestampKey(), Date.now().toString());
     } catch (error) {
         console.error("Failed to cache plugins:", error);
         // If storage is full or unavailable, clear old cache and try again
         try {
-            localStorage.removeItem(getPluginCacheKey());
-            localStorage.removeItem(getPluginCacheTimestampKey());
-            localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
-            localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
+            removeLocalStorage(getPluginCacheKey());
+            removeLocalStorage(getPluginCacheTimestampKey());
+            writeLocalStorage(getPluginCacheKey(), JSON.stringify(plugins));
+            writeLocalStorage(getPluginCacheTimestampKey(), Date.now().toString());
         } catch (retryError) {
             console.error("Failed to cache plugins after retry:", retryError);
         }
@@ -166,8 +171,8 @@ function setCachedPlugins(plugins: BackendPlugin[]): void {
  */
 export function clearPluginsCache(): void {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(getPluginCacheKey());
-    localStorage.removeItem(getPluginCacheTimestampKey());
+    removeLocalStorage(getPluginCacheKey());
+    removeLocalStorage(getPluginCacheTimestampKey());
 }
 
 /**

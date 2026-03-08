@@ -542,7 +542,7 @@ export default function PlansPage() {
             const data = response.data;
 
             // Check if it's a free plan (direct subscription returned)
-            if (data?.subscription) {
+            if (data?.is_active) {
                 // Free plan - subscription created directly
                 router.push("/admin");
                 return;

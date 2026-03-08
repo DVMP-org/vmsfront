@@ -1,4 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
+import {
+  getCachedAdminProfile,
+  getOrganizationScope,
+  setCachedAdminProfile,
+} from "@/lib/client-cache";
 import { adminService } from "@/services/admin-service";
 import { adminGateService } from "@/services/admin-gate-service";
 import { useAuthStore } from "@/store/auth-store";
@@ -1036,38 +1042,29 @@ export function useAdminDuePayments(
 }
 
 export function useAdminProfile() {
-  const queryClient = useQueryClient();
+  const pathname = usePathname();
   const { token, _hasHydrated, isAuthenticated } = useAuthStore();
-  const STORAGE_KEY = "vms_admin_profile";
+  const organizationScope = getOrganizationScope();
+  const isAdminRoute = pathname?.startsWith("/admin");
 
   return useQuery<Admin>({
-    queryKey: ["admin", "profile"],
+    queryKey: ["admin", "profile", organizationScope ?? "no-org"],
     queryFn: async () => {
       const response = await adminService.getAdminProfile();
       const profile = response.data;
-      // Persistence: store in localStorage for instant access next time
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-        } catch (e) {
-          console.error(e);
-        }
+
+      if (isAdminRoute && organizationScope) {
+        setCachedAdminProfile(profile);
       }
+
       return profile;
     },
     initialData: () => {
-      // Synchronous recovery from localStorage for instant Sidebar rendering
-      if (typeof window !== "undefined") {
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          try {
-            return JSON.parse(cached);
-          } catch (e) {
-            return undefined;
-          }
-        }
+      if (!isAdminRoute || !organizationScope) {
+        return undefined;
       }
-      return undefined;
+
+      return getCachedAdminProfile<Admin>();
     },
     staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins

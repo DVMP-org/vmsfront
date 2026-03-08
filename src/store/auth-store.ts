@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserProfile } from "@/types";
+import { clearAuthenticatedUserLocalCache } from "@/lib/client-cache";
 import { setCookie, deleteCookie, getCookie } from "@/lib/cookies";
 
 interface AuthState {
@@ -28,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
             },
             clearAuth: () => {
                 deleteCookie("auth-token");
-                localStorage.removeItem("vms_admin_profile")
+                clearAuthenticatedUserLocalCache();
                 set({ user: null, token: null, isAuthenticated: false });
             },
             updateUser: (userData) =>
@@ -53,6 +54,11 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: "auth-storage",
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                isAuthenticated: state.isAuthenticated,
+            }),
             onRehydrateStorage: () => (state) => {
                 state?.setHydrated(true);
                 // After hydration, sync from cookie for cross-subdomain support
