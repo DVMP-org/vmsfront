@@ -5,11 +5,11 @@ const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
   images: {
-    domains: ['localhost', "storage.googleapis.com", "api.vmscore.to", "vmscore.vercel.app"],
+    domains: ['localhost', "storage.googleapis.com", "vmscore.to", "vmscore.vercel.app", "s3.amazonaws.com"],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.vmscore.to',
+        hostname: 'vmscore.to',
         port: '',
         pathname: '/**',
       },
@@ -21,11 +21,38 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api.vmscore.test',
+        hostname: '*.dvmp-staging.com.ng',
         port: '',
         pathname: '/**',
       },
-    ],
+      {
+        protocol: 'https',
+        hostname: '*.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.s3.*.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      }, {
+        protocol: 'https',
+        hostname: 'vmscore-assets-186189159798.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      }, {
+        protocol: 'http',
+        hostname: 'vmscore-assets-186189159798.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '*.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },],
   },
   typescript: {
     ignoreBuildErrors: true,
