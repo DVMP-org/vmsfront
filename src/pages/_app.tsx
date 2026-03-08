@@ -23,11 +23,12 @@ export default function App({ Component, pageProps }: AppProps) {
         }
       `}</style>
       <Head>
-        <title>VMS Core | Enterprise Visitor Management</title>
+        <title>VMS Core — Community Access &amp; Visitor Management</title>
         <meta
           name="description"
-          content="Infrastructure-grade enterprise visitor management system."
+          content="VMS Core is the all-in-one platform for HOAs, gated communities, and apartment buildings to manage visitor access, gate events, resident coordination, and community operations."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className={`${inter.variable} ${jakarta.variable} font-sans`}>
         <Component {...pageProps} />

@@ -24,17 +24,15 @@ export function ClosingCTA() {
         style={{ position: "relative", zIndex: 10 }}
       >
         <h2 className="section-headline" style={{ margin: "0 auto 32px auto" }}>
-          Make the platform choice that feels right in the boardroom
-          <br />
-          and obvious in everyday use.
+          Making the switch is easier than you think.
         </h2>
         <p
           className="section-desc"
           style={{ margin: "0 auto 32px auto", maxWidth: "760px" }}
         >
-          If you are buying for a portfolio, site, estate, or community, VMS
-          Core helps you present a more professional operation while keeping the
-          experience simple for the people who use it every day.
+          Most properties are up and running within a day. No ripping out existing
+          infrastructure — just a cleaner process your gate team, admin, and residents
+          will immediately prefer over whatever you’re doing now.
         </p>
         <div
           style={{
@@ -49,18 +47,17 @@ export function ClosingCTA() {
             className="btn-primary"
             style={{ padding: "14px 28px", fontSize: "1rem" }}
           >
-            Talk to Sales
+            REQUEST A DEMO
           </button>
           <button
             className="btn-secondary"
             style={{ padding: "14px 28px", fontSize: "1rem" }}
           >
-            See the Product
+            See the Platform
           </button>
         </div>
         <p style={{ color: "var(--text-tertiary)", fontSize: "0.9rem" }}>
-          Executive walkthroughs &middot; Guided rollout &middot; Everyday-user
-          friendly experience
+          HOAs · Gated communities · Apartment buildings · Managed properties
         </p>
       </motion.div>
     </section>

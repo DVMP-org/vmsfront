@@ -38,7 +38,12 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>VMS Core | Enterprise Visitor Management</title>
+        <title>VMS Core — Community Access &amp; Visitor Management</title>
+        <meta name="description" content="VMS Core is the all-in-one platform for HOAs, gated communities, and apartment buildings to manage visitor access, gate events, resident coordination, and community operations." />
+        <meta property="og:title" content="VMS Core — Community Access &amp; Visitor Management" />
+        <meta property="og:description" content="Replace scattered approvals, gate codes, and notebooks with one clear, auditable system your whole team will use." />
+        <meta property="og:type" content="website" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Nav />
       <main style={{ position: "relative", overflow: "hidden" }}>

@@ -97,11 +97,12 @@ export default function PricingPage() {
                         </div>
                         <span className="section-label">Pricing</span>
                         <h1 className="section-headline" style={{ margin: "0 auto 16px auto", maxWidth: "760px" }}>
-                            Clear plans for teams that want a better visitor operation.
+                            Simple pricing. No enterprise games.
                         </h1>
                         <p className="section-desc" style={{ margin: "0 auto 28px auto", maxWidth: "700px" }}>
-                            Choose a plan that fits your current site needs, then expand as your workflow,
-                            reporting, and deployment requirements grow.
+                            Monthly plans that scale with your community. Start small, expand
+                            when you need to. No long lock-in contracts — we earn your
+                            business every month.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
                             {[

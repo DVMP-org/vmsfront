@@ -46,9 +46,9 @@ export function SocialProof() {
                 fontStyle: "italic",
               }}
             >
-              "VMS Core allowed us to consolidate six different access products
-              into one unified policy engine. It fundamentally changed our
-              posture."
+              “We used to manage gate approvals over WhatsApp. Now everything is
+              in one place and I can see exactly who approved what, and when. It’s
+              the first system our team actually uses consistently.”
             </p>
             <div
               style={{
@@ -68,7 +68,7 @@ export function SocialProof() {
               ></div>
               <div>
                 <p style={{ fontWeight: 600, margin: 0, fontSize: "0.9rem" }}>
-                  Sarah Jenkins
+                  Marcus D.
                 </p>
                 <p
                   style={{
@@ -77,7 +77,7 @@ export function SocialProof() {
                     fontSize: "0.8rem",
                   }}
                 >
-                  CISO, Global Financial
+                  HOA Board Chair, Riverside Estates
                 </p>
               </div>
             </div>
@@ -101,8 +101,9 @@ export function SocialProof() {
                 fontStyle: "italic",
               }}
             >
-              "We required an access layer that could be deployed entirely
-              on-premise without losing modern integration. This delivered."
+              “Our residents love it. No more ‘what’s the code?’ texts. No more
+              keys left under the mat for the cleaner. Guests get a pass, staff
+              see the audit trail, and I can check the gate log from my phone.”
             </p>
             <div
               style={{
@@ -122,7 +123,7 @@ export function SocialProof() {
               ></div>
               <div>
                 <p style={{ fontWeight: 600, margin: 0, fontSize: "0.9rem" }}>
-                  David Chen
+                  Priya N.
                 </p>
                 <p
                   style={{
@@ -131,7 +132,7 @@ export function SocialProof() {
                     fontSize: "0.8rem",
                   }}
                 >
-                  VP Infra, National Health
+                  Property Manager, Oakview Apartments
                 </p>
               </div>
             </div>
@@ -155,8 +156,10 @@ export function SocialProof() {
                 fontStyle: "italic",
               }}
             >
-              "The ability to govern integrations server-side means our identity
-              data never leaves the compliance boundary."
+              “From a security standpoint, we love it. There’s no gate code that
+              half the city has memorized. We finally have real control over who
+              enters — and a record we can actually reference when something
+              goes wrong.”
             </p>
             <div
               style={{
@@ -176,7 +179,7 @@ export function SocialProof() {
               ></div>
               <div>
                 <p style={{ fontWeight: 600, margin: 0, fontSize: "0.9rem" }}>
-                  Elena Rodriguez
+                  Tanya F.
                 </p>
                 <p
                   style={{
@@ -185,7 +188,7 @@ export function SocialProof() {
                     fontSize: "0.8rem",
                   }}
                 >
-                  IT Director, Nexus Logistics
+                  Operations Director, Greenfield Residences
                 </p>
               </div>
             </div>

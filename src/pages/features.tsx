@@ -9,20 +9,20 @@ export default function FeaturesPage() {
     const overviewCards = [
         {
             label: "Access operations",
-            value: "Visitors, passes, gates",
-            body: "Run invitations, approvals, scans, and gate events from a single operating surface.",
+            value: "Passes, approvals, gate events",
+            body: "The visitor stood at the gate. The approval was in someone’s phone. That’s the last time. Invitations, passes, QR codes, and gate events in one shared view.",
             icon: "🚪",
         },
         {
             label: "Resident workflows",
-            value: "Requests, dues, forum",
-            body: "Support the everyday estate experience with tools residents and staff can actually use.",
-            icon: "🏠",
+            value: "Requests, dues, community",
+            body: "Residents stop calling your front desk for every guest invite, dues question, or announcement. Self-service workflows mean your team handles less repetitive work.",
+            icon: "🏘️",
         },
         {
             label: "Admin control",
-            value: "Residencies, roles, plugins",
-            body: "Manage organizations, teams, settings, and feature growth without stitching together extra systems.",
+            value: "Roles, properties, plugins",
+            body: "One admin layer for residencies, teams, gate hierarchies, branding, billing, and reporting. No more stitching five tools together to run one community.",
             icon: "⚙️",
         },
     ];
@@ -31,10 +31,10 @@ export default function FeaturesPage() {
         {
             id: "visitor-access",
             eyebrow: "Visitor access",
-            title: "Passes, approvals, and guest coordination",
+            title: "Stop finding out about arrivals after the fact",
             description:
-                "Core workflows for inviting guests, issuing passes, reviewing arrivals, and keeping visitor activity visible to the right teams.",
-            bestFor: "Front desks, resident services, reception teams, and property operators",
+                "The visitor is at the gate. The approval is in a WhatsApp thread from three days ago. Nobody can find it. VMS Core gives every role — resident, gate team, and admin — one clear view of who was invited, what they were approved for, and when they arrived.",
+            bestFor: "Front desks, gate teams, resident services, and property operators",
             features: [
                 "Visitor invitations and approval flows",
                 "Resident-created guest passes",
@@ -43,15 +43,15 @@ export default function FeaturesPage() {
                 "Visit request intake for public users",
                 "Expected arrivals and pending action visibility",
             ],
-            highlights: ["Faster arrival handling", "Cleaner approval records", "Lower coordination overhead"],
+            highlights: ["No more 'who approved this?'", "Faster arrivals", "Clean approval records"],
         },
         {
             id: "gate-operations",
             eyebrow: "Gate operations",
-            title: "Gate consoles built for real movement on site",
+            title: "A gate console built for real movement, not just record-keeping",
             description:
-                "The product supports active gate operations, not just passive record keeping, so teams can check people in and out with a clear operational trail.",
-            bestFor: "Security teams, gate operators, checkpoint staff, and estate operations leads",
+                "Gate teams shouldn’t need to check three apps to decide if someone should enter. The gate console gives them one surface for check-in, QR scanning, event history, and pass status — so arrivals flow without back-and-forth.",
+            bestFor: "Security teams, gate operators, checkpoint staff, and operations leads",
             features: [
                 "Dedicated gate console for check-in and check-out",
                 "QR scanning and manual code entry",
@@ -60,15 +60,15 @@ export default function FeaturesPage() {
                 "Multiple gates per property",
                 "Gate dependency tree mapping for parent-child checkpoints",
             ],
-            highlights: ["Operational gate console", "Movement traceability", "Dependency tree mapping"],
+            highlights: ["One console, zero confusion", "Movement traceability", "Gate hierarchy control"],
         },
         {
             id: "resident-experience",
             eyebrow: "Resident experience",
-            title: "Daily estate and community workflows in one place",
+            title: "Residents stop calling. Staff stop repeating themselves.",
             description:
-                "Residents get more than guest access. They can manage repeated estate interactions without switching between disconnected systems.",
-            bestFor: "Residents, estate managers, community coordinators, and service teams",
+                "When a resident can invite their own cleaner, check their dues balance, submit a maintenance visit request, and read community announcements from one place — your front desk handles a fraction of the daily interruptions it used to.",
+            bestFor: "Residents, community managers, estate coordinators, and service teams",
             features: [
                 "Visit requests dashboard",
                 "Visitors list and per-visitor detail views",
@@ -77,15 +77,15 @@ export default function FeaturesPage() {
                 "Wallet visibility and actions",
                 "Residency selection and profile workflows",
             ],
-            highlights: ["Self-service workflows", "Fewer repeat calls", "Stronger community coordination"],
+            highlights: ["Residents self-serve", "Fewer front-desk calls", "Community stays informed"],
         },
         {
             id: "admin-controls",
             eyebrow: "Admin controls",
-            title: "Portfolio, property, and team administration",
+            title: "Portfolio visibility and property control, from one login",
             description:
-                "Admins can manage organizations, sites, users, and operational settings from a broader control layer designed for ongoing operations.",
-            bestFor: "Portfolio operators, admins, operations managers, and leadership teams",
+                "Stop logging into a different dashboard for every site. Admins get one layer for managing organizations, assigning roles, reviewing metrics, and controlling settings — whether you run one community or twenty.",
+            bestFor: "Portfolio operators, community admins, operations managers, and leadership teams",
             features: [
                 "Admin dashboard with operational metrics",
                 "Residencies and residency group management",
@@ -94,15 +94,15 @@ export default function FeaturesPage() {
                 "Admins, roles, and permission-aware navigation",
                 "Analytics, transactions, and settings management",
             ],
-            highlights: ["Role-aware administration", "Portfolio visibility", "Operational governance"],
+            highlights: ["One login, every property", "Role-aware access", "Operational governance"],
         },
         {
             id: "platform-controls",
             eyebrow: "Platform",
-            title: "Branding, billing, plugins, and deployment flexibility",
+            title: "Commercial readiness without enterprise complexity",
             description:
-                "The platform includes the supporting capabilities teams need when the product becomes part of long-term operations, rollout, and growth.",
-            bestFor: "Commercial teams, platform owners, rollout leads, and enterprise buyers",
+                "When VMS Core becomes part of your long-term operation, the platform layer covers branding, billing, plugin discovery, and deployment options — so growth doesn’t mean stitching in a new tool every six months.",
+            bestFor: "Commercial teams, platform owners, rollout leads, and multi-property operators",
             features: [
                 "Organization selection and onboarding flows",
                 "Subscription plans and billing details",
@@ -451,10 +451,14 @@ export default function FeaturesPage() {
                                 <div>
                                     <span className="section-label">Next steps</span>
                                     <h2 className="section-headline" style={{ marginBottom: "18px", maxWidth: "700px" }}>
-                                        Start with one workflow, grow into a complete operations platform.
+                                        Start with one workflow. The rest will make sense once you’re in.
                                     </h2>
                                     <p className="section-desc" style={{ marginBottom: "28px", maxWidth: "680px", fontSize: "1.02rem" }}>
-                                        VMS Core is designed to grow with your operation. Begin with visitor approvals and gate operations, then layer in resident workflows, admin governance, multi-property control, and custom plugins as your needs evolve and your teams discover new use cases.
+                                        Most teams start with visitor approvals and gate operations, then discover
+                                        that resident self-service cuts their daily interruptions in half. Then
+                                        leadership wants the reporting. Then the second property gets added.
+                                        VMS Core is designed to grow with you — not charge you for features you
+                                        haven’t reached yet.
                                     </p>
                                     <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                                         <a href="/#contact" className="btn-primary" style={{ textDecoration: "none" }}>

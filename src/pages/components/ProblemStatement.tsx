@@ -4,13 +4,13 @@ export function ProblemStatement() {
       <div className="container" style={{ position: "relative" }}>
         <div className="problem-shell">
           <div>
-            <span className="section-label">Why both leaders and users switch</span>
-            <p className="problem-copy font-serif">
-              Most systems fail in two directions at once: executives never get
-              the clean oversight they need, and ordinary users get a clunky,
-              frustrating process that slows everyone down. The better answer is
-              one system that feels credible in the boardroom and effortless in
-              the lobby.
+            <span className="section-label">Why community admins and decision-makers switch</span>
+            <p className="problem-copy font-display">
+              Still tracking visitor approvals in a group chat? Still finding out
+              someone entered your property only after the fact? Still issuing gate
+              codes that half the neighborhood already has? You don’t have a
+              software problem. You have a visibility problem — and it gets worse
+              every time your community grows.
             </p>
           </div>
 
@@ -24,7 +24,7 @@ export function ProblemStatement() {
                 marginBottom: "12px",
               }}
             >
-              What buyers want
+              What managers told us
             </div>
             <div
               style={{
@@ -34,7 +34,7 @@ export function ProblemStatement() {
                 marginBottom: "8px",
               }}
             >
-              Less risk. Better experience. Faster adoption.
+              One system the gate team trusts and leadership can actually read.
             </div>
             <div
               style={{
@@ -43,9 +43,9 @@ export function ProblemStatement() {
                 lineHeight: 1.7,
               }}
             >
-              Decision-makers need operational confidence and measurable control.
-              Everyday users need speed, clarity, and fewer steps. VMS Core is
-              designed to deliver both.
+              Decision-makers need a clean audit trail and portfolio-wide visibility.
+              Gate staff need a process that doesn’t slow them down. Residents need
+              fewer steps. VMS Core is designed to deliver all three from one place.
             </div>
           </div>
         </div>

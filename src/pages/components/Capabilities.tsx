@@ -28,13 +28,14 @@ export function Capabilities() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
         >
-          <span className="section-label">Why it works for every audience</span>
+          <span className="section-label">Built around how communities actually run</span>
           <h2 className="section-headline" style={{ margin: "0 auto" }}>
-            One platform for access, resident service, and site operations.
+            One platform. No more app-switching.
           </h2>
           <p className="section-desc" style={{ margin: "24px auto 0 auto" }}>
-            The platform is structured so leadership can see the full operating picture,
-            while staff and residents can handle everyday tasks without workflow sprawl.
+            Most communities are managing gates in one tool, visitors in another,
+            residents in a third, and dues in a spreadsheet. VMS Core is the single
+            system that replaces all of them.
           </p>
         </motion.div>
 
@@ -74,7 +75,7 @@ export function Capabilities() {
                 color: "var(--text-primary)",
               }}
             >
-              Access, resident, and estate workflows together
+              No more “who approved this?” moments
             </h3>
             <p
               style={{
@@ -83,9 +84,10 @@ export function Capabilities() {
                 maxWidth: "600px",
               }}
             >
-              Bring visitor approvals, gate events, visit requests, community updates,
-              dues tracking, and residency operations into one product leaders can review
-              and teams can trust.
+              Remember the last time a visitor stood at your gate while your team
+              scrambled through WhatsApp to find the approval? That’s over. Visitor
+              passes, gate events, visit requests, and resident coordination live in
+              one auditable system your whole team can see in real time.
             </p>
             <div
               style={{
@@ -142,12 +144,13 @@ export function Capabilities() {
               className="font-display"
               style={{ fontSize: "1.25rem", marginBottom: "8px" }}
             >
-              Multi-property oversight with gate hierarchy control
+              See every gate, every property, from one login
             </h3>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-              Give operators a cleaner view across organizations, residencies, groups,
-              and multiple gates, including parent-child dependencies that reflect how movement
-              should flow through a site.
+              Stop logging into five different dashboards for five different sites.
+              Portfolio managers get one view across all properties, residency groups,
+              and gate dependency trees — with the ability to drill in wherever something
+              needs attention.
             </p>
           </motion.div>
 
@@ -178,11 +181,12 @@ export function Capabilities() {
               className="font-display"
               style={{ fontSize: "1.25rem", marginBottom: "8px" }}
             >
-              Resident self-service that reduces pressure on staff
+              Residents handle their own guests. Staff handle less.
             </h3>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-              Reduce calls and back-and-forth with guided passes, visit requests,
-              dues visibility, wallet actions, and a built-in community forum.
+              No more calls asking “what’s the gate code?” Residents invite guests
+              directly, track visit requests, view dues, and post to the community
+              forum — without contacting the front desk for every interaction.
             </p>
           </motion.div>
 
@@ -212,11 +216,12 @@ export function Capabilities() {
               className="font-display"
               style={{ fontSize: "1.25rem", marginBottom: "8px" }}
             >
-              Admin controls beyond the gate
+              Admin control for the whole operation, not just the gate
             </h3>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-              Manage branding, payments, subscriptions, plugins, and operational settings
-              without stitching together separate back-office tools.
+              Branding, billing, plugins, role permissions, and operational settings
+              managed from one back-office layer — so your team isn’t stitching three
+              different tools together to run a single community.
             </p>
           </motion.div>
         </motion.div>

@@ -7,21 +7,58 @@ import { getBrandingBootstrapScript } from "../lib/branding-utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const APP_URL = process.env.VMS_BASE_URL ?? "https://app.vmscore.com";
+const APP_TITLE = "VMSCORE - Visitor Management System";
+const APP_DESCRIPTION =
+  "White-label visitor and resident access management — gate passes, visitor logs, dues, emergencies and more.";
+
 export const metadata: Metadata = {
-  title: "VMSCORE - Visitor Management System",
-  description: "White-label visitor and resident access management",
+  metadataBase: new URL(APP_URL),
+
+  title: {
+    default: APP_TITLE,
+    template: "%s | VMSCORE",
+  },
+  description: APP_DESCRIPTION,
   manifest: "/manifest.webmanifest",
+
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
   },
+
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "VMSCORE",
     startupImage: "/assets/vmscore_logo.png",
   },
+
+  openGraph: {
+    type: "website",
+    url: APP_URL,
+    siteName: "VMSCORE",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "VMSCORE — Visitor Management System",
+      },
+    ],
+    locale: "en_US",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    images: ["/og-image.png"],
+  },
+
   other: {
     "mobile-web-app-capable": "yes",
   },

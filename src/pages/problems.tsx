@@ -5,28 +5,28 @@ import { Nav } from "@/pages/components/Nav";
 export default function Problems() {
   const problemCards = [
     {
-      title: "Front desks end up improvising",
-      body: "Many teams still rely on calls, notebooks, chat messages, and memory to decide who should enter. That makes arrivals slower and more stressful than they need to be.",
+      title: "That visitor has been waiting at the gate for 10 minutes",
+      body: "Your gate team is calling the resident, the resident isn’t picking up, and nobody can find the original approval. Sound familiar? That’s what happens when approvals live in group chats instead of a shared system.",
     },
     {
-      title: "Approvals are hard to track",
-      body: "When approvals are spread across phones, chats, and spreadsheets, nobody has one reliable picture of what was approved, by whom, and for what reason.",
+      title: "Gate codes that half the neighborhood already has",
+      body: "The code went out in a newsletter six months ago. Nobody changed it. Three contractors, two ex-residents, and a delivery driver all still have it. You won’t know until something goes wrong.",
     },
     {
-      title: "Visitors get a poor first impression",
-      body: "A disorganized arrival process does not just slow operations. It makes communities, sites, and organizations feel less professional the moment someone arrives.",
+      title: "The vendor who shows up unannounced on a Saturday",
+      body: "Nobody logged the visit. Nobody sent an access pass. The gate team turns them away, the maintenance job gets delayed, and your property manager gets an angry call. A proper visit request workflow would have prevented all of it.",
     },
     {
-      title: "Leadership cannot see the real picture",
-      body: "Executives and site leaders need visibility into visits, traffic, exceptions, and bottlenecks, but most systems do not turn activity into a clear operating view.",
+      title: "Leadership asks for an access report and nobody has one",
+      body: "How many people entered the property last month? How many visits were approved vs. flagged? Which gate had the most events? Most teams can’t answer these questions without digging through notebooks and chat logs.",
     },
     {
-      title: "Residents and staff repeat work",
-      body: "Without a proper workflow, the same information gets entered, confirmed, and re-confirmed multiple times across residents, security teams, and admins.",
+      title: "Your front desk manually re-enters the same information three times",
+      body: "The resident fills in the form. The gate team re-enters it in their log. The admin copies it into a spreadsheet. Without a shared workflow, every step is a new opportunity for something to get misread or missed.",
     },
     {
-      title: "Records are incomplete when it matters most",
-      body: "If a team needs to review a visit later, fragmented logs and unclear timestamps create avoidable risk, confusion, and wasted time.",
+      title: "Something happened at the gate last night and you have no record",
+      body: "If a resident makes a complaint or a dispute arises, fragmented logs, missing timestamps, and no audit trail turn a recoverable situation into a risk. Clean records are only valuable if the system creates them automatically.",
     },
   ];
 
@@ -38,12 +38,12 @@ export default function Problems() {
   ];
 
   const outcomes = [
-    "A better guest experience",
-    "Fewer front-desk delays",
-    "Cleaner approval records",
-    "More confidence for operators",
-    "Clearer oversight for leadership",
-    "A more professional arrival experience",
+    "No more ‘who approved this?’ moments",
+    "Visitors don’t wait at a locked gate",
+    "Audit trail for every access event",
+    "Leadership sees the real access picture",
+    "Residents handle their own guest passes",
+    "Gate codes that actually expire",
   ];
 
   return (
@@ -79,12 +79,13 @@ export default function Problems() {
           <div className="container" style={{ textAlign: "center" }}>
             <span className="section-label">Problems</span>
             <h1 className="section-headline" style={{ margin: "0 auto 18px auto", maxWidth: "780px" }}>
-              The real problem is not visitor check-in. It is operational uncertainty.
+              Traditional visitor management wasn’t built for communities. It was built for offices.
             </h1>
             <p className="section-desc" style={{ margin: "0 auto 28px auto", maxWidth: "720px" }}>
-              Most visitor systems break down because approvals, arrivals, resident coordination,
-              and site visibility do not live in one dependable workflow. VMS Core is designed to
-              replace that confusion with a calmer, clearer operating model.
+              Clipboards, shared gate codes, and WhatsApp approvals worked when your
+              community was smaller. Now they’re the reason your team is always one
+              unanswered call away from an access incident. VMS Core replaces the mess
+              with a calm, auditable workflow every role can follow.
             </p>
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
               <a href="/#contact" className="btn-primary" style={{ textDecoration: "none" }}>
@@ -156,11 +157,12 @@ export default function Problems() {
                 <div>
                   <span className="section-label">What better looks like</span>
                   <h2 className="section-headline" style={{ marginBottom: "14px", maxWidth: "560px" }}>
-                    One flow that makes sense before, during, and after every visit.
+                    One clear flow, from invite to exit.
                   </h2>
                   <p className="section-desc" style={{ marginBottom: 0, maxWidth: "560px" }}>
-                    A good system does not just record visits. It gives each person involved a clear
-                    next step and leaves the organization with a cleaner record of what happened.
+                    A good system doesn’t just record who came in. It gives every person
+                    involved a clear next step — and leaves your team with a clean record
+                    of what happened and who was responsible.
                   </p>
                 </div>
 
@@ -220,7 +222,7 @@ export default function Problems() {
             <div style={{ textAlign: "center", marginBottom: "28px" }}>
               <span className="section-label">Outcomes</span>
               <h2 className="section-headline" style={{ margin: "0 auto 12px auto", maxWidth: "700px" }}>
-                Better operations are usually the result of better flow design.
+                Switch to a system built for communities that actually care.
               </h2>
             </div>
 

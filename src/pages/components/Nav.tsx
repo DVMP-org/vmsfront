@@ -1,6 +1,24 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 export function Nav() {
+  const { pathname } = useRouter();
+  const [hash, setHash] = useState("");
+
+  useEffect(() => {
+    setHash(window.location.hash);
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const linkClass = (href: string) =>
+    `nav-link${pathname === href ? " nav-link-active" : ""}`;
+
+  const hashLinkClass = (fragment: string) =>
+    `nav-link${hash === fragment ? " nav-link-active" : ""}`;
+
   return (
     <nav className="nav-fixed">
       <div className="container nav-container">
@@ -8,19 +26,19 @@ export function Nav() {
           VMS Core
         </Link>
         <div className="nav-links">
-          <Link href="/features" className="nav-link">
-            Features
+          <Link href="/features" className={linkClass("/features")}>
+            For Communities
           </Link>
-          <Link href="/problems" className="nav-link">
-            Problems
+          <Link href="/problems" className={linkClass("/problems")}>
+            Why VMS Core
           </Link>
-          <Link href="/pricing" className="nav-link">
+          <Link href="/pricing" className={linkClass("/pricing")}>
             Pricing
           </Link>
-          <a href="/#platform" className="nav-link">
+          <a href="/#platform" className={hashLinkClass("#platform")} onClick={() => setHash("#platform")}>
             Platform
           </a>
-          <a href="/#security" className="nav-link">
+          <a href="/#security" className={hashLinkClass("#security")} onClick={() => setHash("#security")}>
             Security
           </a>
 
@@ -36,10 +54,11 @@ export function Nav() {
             className="btn-primary"
             style={{ padding: "8px 16px", fontSize: "0.85rem", textDecoration: "none" }}
           >
-            Register
+            Get Started
           </Link>
         </div>
       </div>
     </nav>
   );
 }
+

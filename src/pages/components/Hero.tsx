@@ -26,7 +26,7 @@ export function Hero() {
     ["Gate team monitoring live", "Leadership sees access, arrivals, and site activity across properties"],
   ];
 
-  const navigationItems = ["Dashboard", "Visitors", "Gates", "Gate Events", "Visit Requests", "Community Forum"];
+  const navigationItems = ["Admin Dashboard", "Visitor Queue", "Gate Control", "Access Audit", "Resident Requests", "Announcements"];
 
   const queue = [
     ["A. Johnson", "Delivery guest", "Approved"],
@@ -76,21 +76,23 @@ export function Hero() {
                   boxShadow: "0 0 0 6px rgba(84, 132, 255, 0.12)",
                 }}
               ></span>
-              Estate and visitor operations software that stays clear under pressure
+              Built for community administrators — HOAs, gated communities, apartments &amp; managed properties
             </motion.div>
 
             <motion.h1
               variants={itemVariants}
               className="section-headline"
               style={{
-                maxWidth: "900px",
+                maxWidth: "760px",
                 margin: "0 0 18px 0",
                 textAlign: "center",
-                fontSize: "clamp(2.15rem, 4.4vw, 3.75rem)",
-                lineHeight: 1.03,
+                fontSize: "clamp(2.4rem, 5vw, 4.2rem)",
+                lineHeight: 1.0,
               }}
             >
-              Run visitor access, resident coordination, and community operations from one clear system.
+              Stop improvising.
+              <br />
+              Start operating.
             </motion.h1>
 
             <motion.p
@@ -98,13 +100,13 @@ export function Hero() {
               className="section-desc"
               style={{
                 margin: "0 0 24px 0",
-                maxWidth: "620px",
+                maxWidth: "560px",
                 textAlign: "center",
-                fontSize: "0.96rem",
+                fontSize: "1.04rem",
               }}
             >
-              VMS Core gives admins, gate teams, and residents one shared operating layer for
-              visitor approvals, gate events, visit requests, dues, forums, and day-to-day site coordination.
+              One platform that replaces the group chats, gate codes, and notebooks
+              your team still relies on.
             </motion.p>
 
             <motion.div
@@ -119,8 +121,8 @@ export function Hero() {
             >
               {[
                 "Visitor approvals",
-                "Gate events",
-                "Gate dependency map",
+                "Gate access & audits",
+                "Resident self-service",
                 "Visit requests",
                 "Dues & wallet",
                 "Community forum",
@@ -221,7 +223,7 @@ export function Hero() {
                           fontSize: "1.08rem",
                         }}
                       >
-                        Estate operations dashboard
+                        Community operations dashboard
                       </div>
                     </div>
                     <div
@@ -267,7 +269,7 @@ export function Hero() {
                             marginBottom: "4px",
                           }}
                         >
-                          Organization
+                          Admin Portal
                         </div>
                         {navigationItems.map((item, index) => (
                           <div

@@ -27,6 +27,7 @@ import {
   Receipt,
   Palette,
   FolderTree,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -83,6 +84,11 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
       icon: Receipt,
     },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
+    {
+      href: residencyId ? `${base}/emergency` : "/select",
+      label: "Emergency",
+      icon: AlertTriangle,
+    },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
 
