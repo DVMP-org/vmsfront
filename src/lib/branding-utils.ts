@@ -53,10 +53,20 @@ function parseCachedTheme(raw: string | null): BrandingTheme | null {
   }
 }
 
+/**
+ * Converts a hex colour to a space-separated RGB channel string
+ * (e.g. "#ff8800" → "255 136 0").
+ *
+ * The output is intentionally NOT wrapped in `rgb()` so it can be used as a
+ * CSS custom-property value and support Tailwind opacity modifiers:
+ *
+ *   --brand-primary: 255 136 0;
+ *   bg-[rgb(var(--brand-primary))]/20   ← works; bg-[rgb(rgb(...))]/20 would not
+ */
 export function hexToRgb(hex: string): string {
   if (!hex) return "0 0 0";
 
-  const sanitized = hex.replace(/^#/, "");
+  const sanitized = hex.replace(/^#/, "").toLowerCase();
 
   let r = 0;
   let g = 0;
@@ -66,11 +76,17 @@ export function hexToRgb(hex: string): string {
     r = parseInt(sanitized[0] + sanitized[0], 16);
     g = parseInt(sanitized[1] + sanitized[1], 16);
     b = parseInt(sanitized[2] + sanitized[2], 16);
-  } else if (sanitized.length === 6) {
+  } else if (sanitized.length === 6 || sanitized.length === 8) {
+    // 8-digit hex includes alpha — we ignore the alpha channel
     r = parseInt(sanitized.substring(0, 2), 16);
     g = parseInt(sanitized.substring(2, 4), 16);
     b = parseInt(sanitized.substring(4, 6), 16);
+  } else {
+    // Invalid hex length
+    return "0 0 0";
   }
+
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return "0 0 0";
 
   return `${r} ${g} ${b}`;
 }
