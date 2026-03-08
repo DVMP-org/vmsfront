@@ -19,8 +19,43 @@ export function SocialProof() {
   };
 
   return (
-    <section className="section" style={{ background: "var(--bg-card)" }}>
-      <div className="container">
+    <section className="section" style={{ background: "var(--bg-card)", position: "relative", overflow: "hidden" }}>
+      {/* Subtle ambient blob */}
+      <div
+        className="glow-blob violet"
+        style={{ width: "500px", height: "500px", top: "-100px", right: "10%", opacity: 0.35 }}
+      />
+
+      <div className="container" style={{ position: "relative", zIndex: 1 }}>
+        {/* Stats row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6 }}
+          className="stats-grid"
+        >
+          {[
+            ["12,000+", "residents managed on platform"],
+            ["99.9%", "platform uptime SLA"],
+            ["~50ms", "gate event response time"],
+          ].map(([num, label]) => (
+            <div
+              key={num}
+              className="stats-cell"
+              style={{
+                background: "var(--bg-card)",
+                textAlign: "center",
+              }}
+            >
+              <div className="stat-number">{num}</div>
+              <div className="stat-label">{label}</div>
+            </div>
+          ))}
+        </motion.div>
+
+        <div className="section-glow-line" style={{ marginBottom: "48px" }} />
+
         <motion.div
           className="bento-grid"
           variants={containerVariants}
@@ -30,12 +65,11 @@ export function SocialProof() {
         >
           <motion.div
             variants={itemVariants}
-            className="bento-card"
+            className="bento-card testimonial-card"
             style={{
               gridColumn: "span 4",
               border: "none",
               background: "var(--bg-base)",
-              padding: "40px",
             }}
           >
             <p
@@ -85,12 +119,11 @@ export function SocialProof() {
 
           <motion.div
             variants={itemVariants}
-            className="bento-card"
+            className="bento-card testimonial-card"
             style={{
               gridColumn: "span 4",
               border: "none",
               background: "var(--bg-base)",
-              padding: "40px",
             }}
           >
             <p
@@ -140,12 +173,11 @@ export function SocialProof() {
 
           <motion.div
             variants={itemVariants}
-            className="bento-card"
+            className="bento-card testimonial-card"
             style={{
               gridColumn: "span 4",
               border: "none",
               background: "var(--bg-base)",
-              padding: "40px",
             }}
           >
             <p

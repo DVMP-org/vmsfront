@@ -1,22 +1,23 @@
 import Head from "next/head";
 import { useEffect } from "react";
-import { Nav } from "@/pages/components/Nav";
-import { Hero } from "@/pages/components/Hero";
-import { ProblemStatement } from "@/pages/components/ProblemStatement";
-import { Capabilities } from "@/pages/components/Capabilities";
-import { TrustStrip } from "@/pages/components/TrustStrip";
-import { ArchitectureStatement } from "@/pages/components/ArchitectureStatement";
-import { MultiTenantArchitecture } from "@/pages/components/MultiTenantArchitecture";
-import { PluginEcosystem } from "@/pages/components/PluginEcosystem";
-import { IdentityWorkflow } from "@/pages/components/IdentityWorkflow";
-import { ComplianceAndAudit } from "@/pages/components/ComplianceAndAudit";
-import { Flow } from "@/pages/components/Flow";
-import { ZeroTrust } from "@/pages/components/ZeroTrust";
-import { Infrastructure } from "@/pages/components/Infrastructure";
-import { IndustryContexts } from "@/pages/components/IndustryContexts";
-import { SocialProof } from "@/pages/components/SocialProof";
-import { ClosingCTA } from "@/pages/components/ClosingCTA";
-import { Footer } from "@/pages/components/Footer";
+import { Nav } from "@/page-components/Nav";
+import { Hero } from "@/page-components/Hero";
+import { SolutionStatement } from "@/page-components/SolutionStatement";
+import { Capabilities } from "@/page-components/Capabilities";
+import { PersonaTabs } from "@/page-components/PersonaTabs";
+import { TrustStrip } from "@/page-components/TrustStrip";
+import { ArchitectureStatement } from "@/page-components/ArchitectureStatement";
+import { MultiTenantArchitecture } from "@/page-components/MultiTenantArchitecture";
+import { PluginEcosystem } from "@/page-components/PluginEcosystem";
+import { IdentityWorkflow } from "@/page-components/IdentityWorkflow";
+import { ComplianceAndAudit } from "@/page-components/ComplianceAndAudit";
+import { Flow } from "@/page-components/Flow";
+import { ZeroTrust } from "@/page-components/ZeroTrust";
+import { Infrastructure } from "@/page-components/Infrastructure";
+import { IndustryContexts } from "@/page-components/IndustryContexts";
+import { SocialProof } from "@/page-components/SocialProof";
+import { ClosingCTA } from "@/page-components/ClosingCTA";
+import { Footer } from "@/page-components/Footer";
 
 export default function Home() {
   useEffect(() => {
@@ -54,8 +55,9 @@ export default function Home() {
             className="bg-glow"
             style={{ top: "4%", left: "-10%", width: "360px", height: "360px", opacity: 0.22 }}
           ></div>
-          <ProblemStatement />
+          <SolutionStatement />
           <Capabilities />
+          <PersonaTabs />
         </div>
 
         <div style={{ position: "relative" }}>
@@ -93,7 +95,7 @@ export default function Home() {
           <Flow />
         </div>
 
-        <ZeroTrust />
+        {/* <ZeroTrust /> */}
         <div style={{ position: "relative" }}>
           <div
             aria-hidden="true"
@@ -112,7 +114,7 @@ export default function Home() {
             className="bg-glow"
             style={{ bottom: "10%", right: "6%", left: "auto", width: "380px", height: "380px", opacity: 0.14 }}
           ></div>
-          <IndustryContexts />
+          {/* <IndustryContexts /> */}
           <Infrastructure />
           <SocialProof />
           <ClosingCTA />

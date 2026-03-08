@@ -1,8 +1,8 @@
 import Head from "next/head";
-import { Footer } from "@/pages/components/Footer";
-import { Nav } from "@/pages/components/Nav";
+import { Footer } from "@/page-components/Footer";
+import { Nav } from "@/page-components/Nav";
 
-export default function Problems() {
+export default function Solutions() {
   const problemCards = [
     {
       title: "That visitor has been waiting at the gate for 10 minutes",
@@ -49,7 +49,7 @@ export default function Problems() {
   return (
     <>
       <Head>
-        <title>Problems We Solve | VMS Core</title>
+        <title>Solutions | VMS Core</title>
         <meta
           name="description"
           content="See the operational problems VMS Core helps teams solve across visitor approvals, gate activity, resident coordination, and site visibility."
@@ -57,7 +57,7 @@ export default function Problems() {
       </Head>
       <Nav />
       <main>
-        <section className="section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
+        <section className="section problems-hero-section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
           <div
             aria-hidden="true"
             className="bg-glow"
@@ -77,17 +77,17 @@ export default function Problems() {
             ✦
           </div>
           <div className="container" style={{ textAlign: "center" }}>
-            <span className="section-label">Problems</span>
-            <h1 className="section-headline" style={{ margin: "0 auto 18px auto", maxWidth: "780px" }}>
+            <span className="section-label">Solutions</span>
+            <h1 className="section-headline problems-hero-headline" style={{ margin: "0 auto 18px auto", maxWidth: "780px" }}>
               Traditional visitor management wasn’t built for communities. It was built for offices.
             </h1>
-            <p className="section-desc" style={{ margin: "0 auto 28px auto", maxWidth: "720px" }}>
+            <p className="section-desc problems-hero-desc" style={{ margin: "0 auto 28px auto", maxWidth: "720px" }}>
               Clipboards, shared gate codes, and WhatsApp approvals worked when your
               community was smaller. Now they’re the reason your team is always one
               unanswered call away from an access incident. VMS Core replaces the mess
               with a calm, auditable workflow every role can follow.
             </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+            <div className="problems-hero-cta" style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
               <a href="/#contact" className="btn-primary" style={{ textDecoration: "none" }}>
                 Book a Demo
               </a>
@@ -112,6 +112,7 @@ export default function Problems() {
           ></div>
           <div className="container">
             <div
+              className="problems-cards-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -121,8 +122,9 @@ export default function Problems() {
               }}
             >
               {problemCards.map((card) => (
-                <div key={card.title} className="card" style={{ padding: "24px", minHeight: "100%" }}>
+                <div key={card.title} className="card problems-card" style={{ padding: "24px", minHeight: "100%" }}>
                   <div
+                    className="problems-card-label"
                     style={{
                       color: "var(--text-tertiary)",
                       fontSize: "0.74rem",
@@ -133,10 +135,10 @@ export default function Problems() {
                   >
                     Common failure point
                   </div>
-                  <h2 className="font-display" style={{ fontSize: "1.08rem", marginBottom: "10px", color: "var(--text-primary)" }}>
+                  <h2 className="font-display problems-card-title" style={{ fontSize: "1.08rem", marginBottom: "10px", color: "var(--text-primary)" }}>
                     {card.title}
                   </h2>
-                  <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: "0.94rem", lineHeight: 1.7 }}>
+                  <p className="problems-card-body" style={{ color: "var(--text-secondary)", margin: 0, fontSize: "0.94rem", lineHeight: 1.7 }}>
                     {card.body}
                   </p>
                 </div>
@@ -152,14 +154,14 @@ export default function Problems() {
             style={{ bottom: "-20%", right: "-4%", left: "auto", width: "420px", height: "420px", opacity: 0.24 }}
           ></div>
           <div className="container">
-            <div className="card" style={{ padding: "30px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)", gap: "28px", alignItems: "start" }}>
+            <div className="card problems-better-card" style={{ padding: "30px" }}>
+              <div className="problems-better-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)", gap: "28px", alignItems: "start" }}>
                 <div>
                   <span className="section-label">What better looks like</span>
-                  <h2 className="section-headline" style={{ marginBottom: "14px", maxWidth: "560px" }}>
+                  <h2 className="section-headline problems-better-headline" style={{ marginBottom: "14px", maxWidth: "560px" }}>
                     One clear flow, from invite to exit.
                   </h2>
-                  <p className="section-desc" style={{ marginBottom: 0, maxWidth: "560px" }}>
+                  <p className="section-desc problems-better-desc" style={{ marginBottom: 0, maxWidth: "560px" }}>
                     A good system doesn’t just record who came in. It gives every person
                     involved a clear next step — and leaves your team with a clean record
                     of what happened and who was responsible.
@@ -197,10 +199,10 @@ export default function Problems() {
                         {String(index + 1).padStart(2, "0")}
                       </div>
                       <div>
-                        <div style={{ color: "var(--text-primary)", fontWeight: 700, marginBottom: "6px", fontSize: "0.98rem" }}>
+                        <div className="problems-flow-title" style={{ color: "var(--text-primary)", fontWeight: 700, marginBottom: "6px", fontSize: "0.98rem" }}>
                           {title}
                         </div>
-                        <div style={{ color: "var(--text-secondary)", fontSize: "0.92rem", lineHeight: 1.65 }}>
+                        <div className="problems-flow-text" style={{ color: "var(--text-secondary)", fontSize: "0.92rem", lineHeight: 1.65 }}>
                           {text}
                         </div>
                       </div>
@@ -221,12 +223,13 @@ export default function Problems() {
           <div className="container">
             <div style={{ textAlign: "center", marginBottom: "28px" }}>
               <span className="section-label">Outcomes</span>
-              <h2 className="section-headline" style={{ margin: "0 auto 12px auto", maxWidth: "700px" }}>
+              <h2 className="section-headline problems-outcomes-headline" style={{ margin: "0 auto 12px auto", maxWidth: "700px" }}>
                 Switch to a system built for communities that actually care.
               </h2>
             </div>
 
             <div
+              className="problems-outcomes-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -236,6 +239,7 @@ export default function Problems() {
               {outcomes.map((item) => (
                 <div
                   key={item}
+                  className="problems-outcome-item"
                   style={{
                     padding: "16px 18px",
                     borderRadius: "18px",

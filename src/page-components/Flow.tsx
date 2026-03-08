@@ -1,4 +1,9 @@
 import { motion } from "framer-motion";
+import {
+  InviteFormIllustration,
+  CheckInPanelIllustration,
+  VisitHistoryIllustration,
+} from "./illustrations/FlowStepIllustrations";
 
 export function Flow() {
   const steps = [
@@ -56,11 +61,7 @@ export function Flow() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7 }}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: "20px",
-          }}
+          className="flow-cards-grid"
         >
           {steps.map((step, index) => (
             <motion.div
@@ -162,14 +163,13 @@ export function Flow() {
                 <div style={{ color: "var(--text-tertiary)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: "10px" }}>
                   What the team sees
                 </div>
-                <div style={{ display: "grid", gap: "8px" }}>
-                  <div style={{ height: "10px", width: index === 0 ? "78%" : index === 1 ? "70%" : "74%", borderRadius: "999px", background: "rgba(255,255,255,0.12)" }}></div>
-                  <div style={{ height: "10px", width: index === 0 ? "58%" : index === 1 ? "62%" : "55%", borderRadius: "999px", background: "rgba(255,255,255,0.08)" }}></div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
-                    <div style={{ height: "54px", borderRadius: "14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)" }}></div>
-                    <div style={{ height: "54px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}></div>
-                  </div>
-                </div>
+                {index === 0 ? (
+                  <InviteFormIllustration />
+                ) : index === 1 ? (
+                  <CheckInPanelIllustration />
+                ) : (
+                  <VisitHistoryIllustration />
+                )}
               </div>
             </motion.div>
           ))}

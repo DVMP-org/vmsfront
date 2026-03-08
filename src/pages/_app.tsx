@@ -1,4 +1,4 @@
-import "@//pages/styles/globals.css";
+import "@/pages/styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";

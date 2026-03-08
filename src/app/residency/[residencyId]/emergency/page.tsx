@@ -10,7 +10,8 @@ import { AlertTriangle, ShieldAlert, Phone } from "lucide-react";
 import { TriggerEmergencyRequest } from "@/types";
 
 export default function ResidentEmergencyPage() {
-    const { residencyId } = useParams<{ residencyId: string }>();
+    const params = useParams<{ residencyId: string }>();
+    const residencyId = params?.residencyId;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [triggered, setTriggered] = useState(false);
 

@@ -29,6 +29,7 @@ export function PluginEcosystem() {
     >
       <div className="container">
         <motion.div
+          className="plugin-ecosystem-header"
           style={{
             display: "flex",
             alignItems: "flex-start",

@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { VisitPassIllustration } from "@/page-components/illustrations/VisitPassIllustration";
+import { QRScanIllustration } from "@/page-components/illustrations/QRScanIllustration";
 
 export function IdentityWorkflow() {
   const containerVariants = {
@@ -22,6 +24,7 @@ export function IdentityWorkflow() {
     <section className="section">
       <div className="container">
         <motion.div
+          className="identity-header"
           style={{ textAlign: "center", marginBottom: "80px" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -30,9 +33,7 @@ export function IdentityWorkflow() {
         >
           <span className="section-label">Identity Workflow</span>
           <h2 className="section-headline" style={{ margin: "0 auto" }}>
-            Guide visitors, residents, and gate teams
-            <br />
-            through the same system.
+            Guide visitors, residents, and gate teams through the same system.
           </h2>
         </motion.div>
 
@@ -45,7 +46,7 @@ export function IdentityWorkflow() {
         >
           <motion.div
             variants={itemVariants}
-            className="bento-card"
+            className="bento-card identity-main-card"
             style={{ gridColumn: "span 8", minHeight: "360px" }}
           >
             <h3
@@ -58,46 +59,8 @@ export function IdentityWorkflow() {
               Let residents or staff create guest access ahead of arrival so names,
               purpose, timing, and approvals are already organized before anyone reaches the gate.
             </p>
-            <div style={{ marginTop: "auto", display: "flex", gap: "16px" }}>
-              <motion.div
-                initial={{ height: 0 }}
-                whileInView={{ height: "120px" }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                style={{
-                  flex: 1,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
-                  borderRadius: "12px",
-                  border: "1px solid var(--border-light)",
-                }}
-              ></motion.div>
-              <motion.div
-                initial={{ height: 0 }}
-                whileInView={{ height: "140px" }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                style={{
-                  flex: 1,
-                  background:
-                    "linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%)",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(59, 130, 246, 0.3)",
-                }}
-              ></motion.div>
-              <motion.div
-                initial={{ height: 0 }}
-                whileInView={{ height: "100px" }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                style={{
-                  flex: 1,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
-                  borderRadius: "12px",
-                  border: "1px solid var(--border-light)",
-                }}
-              ></motion.div>
+            <div style={{ marginTop: "24px" }}>
+              <VisitPassIllustration />
             </div>
           </motion.div>
 
@@ -129,10 +92,11 @@ export function IdentityWorkflow() {
             >
               QR-based gate verification
             </h3>
-            <p style={{ color: "var(--text-secondary)" }}>
+            <p style={{ color: "var(--text-secondary)", marginBottom: "20px" }}>
               Verify passes quickly with codes and QR scanning so check-ins and check-outs
               are captured cleanly at the point of entry.
             </p>
+            <QRScanIllustration />
           </motion.div>
 
           <motion.div

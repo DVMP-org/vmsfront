@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { GateEventIllustration } from "@/page-components/illustrations/GateEventIllustration";
 
 export function Capabilities() {
   const containerVariants = {
@@ -22,6 +23,7 @@ export function Capabilities() {
     <section id="platform" className="section">
       <div className="container">
         <motion.div
+          className="capabilities-header"
           style={{ textAlign: "center", marginBottom: "80px" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,9 +50,11 @@ export function Capabilities() {
         >
           <motion.div
             variants={itemVariants}
-            className="bento-card"
+            className="bento-card capabilities-hero-card"
             style={{ gridColumn: "span 12" }}
           >
+            <div className="capabilities-hero-inner">
+            <div className="capabilities-hero-text">
             <div className="icon-box accent">
               <svg
                 width="24"
@@ -89,32 +93,10 @@ export function Capabilities() {
               passes, gate events, visit requests, and resident coordination live in
               one auditable system your whole team can see in real time.
             </p>
-            <div
-              style={{
-                height: "200px",
-                background:
-                  "radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 70%)",
-                borderRadius: "12px",
-                border: "1px dashed var(--border-strong)",
-                alignSelf: "stretch",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  padding: "8px 16px",
-                  background: "var(--bg-base)",
-                  border: "1px solid var(--accent-primary)",
-                  borderRadius: "100px",
-                  fontSize: "0.875rem",
-                  color: "var(--accent-primary)",
-                  boxShadow: "0 0 20px rgba(59, 130, 246, 0.2)",
-                }}
-              >
-                Gate event recorded
-              </div>
+            </div>
+            <div className="capabilities-hero-illustration">
+              <GateEventIllustration />
+            </div>
             </div>
           </motion.div>
 

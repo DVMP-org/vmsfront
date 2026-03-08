@@ -35,6 +35,7 @@ export function ClosingCTA() {
           will immediately prefer over whatever you’re doing now.
         </p>
         <div
+          className="cta-btn-group"
           style={{
             display: "flex",
             alignItems: "center",

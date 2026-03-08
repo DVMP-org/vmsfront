@@ -3,7 +3,7 @@ export function Footer() {
         <footer style={{ padding: "88px 0 34px 0" }}>
             <div className="container">
                 <div className="card" style={{ padding: "34px", marginBottom: "24px" }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "64px" }}>
+                    <div className="footer-columns" style={{ display: "flex", flexWrap: "wrap", gap: "64px" }}>
                         <div style={{ flex: "1 1 320px" }}>
                             <div
                                 className="font-display"
@@ -32,7 +32,7 @@ export function Footer() {
                             </h4>
                             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
                                 <li><a href="/features" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Features</a></li>
-                                <li><a href="/problems" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Problems</a></li>
+                                <li><a href="/solutions" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Solutions</a></li>
                                 <li><a href="/pricing" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Pricing</a></li>
                                 <li><a href="/#platform" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Core features</a></li>
                                 <li><a href="/#contact" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.92rem" }}>Book a demo</a></li>

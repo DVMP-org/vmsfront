@@ -1,4 +1,4 @@
-export function ProblemStatement() {
+export function SolutionStatement() {
   return (
     <section className="section problem-section scroll-reveal">
       <div className="container" style={{ position: "relative" }}>

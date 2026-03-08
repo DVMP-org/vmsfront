@@ -1,6 +1,6 @@
 import Head from "next/head";
-import { Footer } from "@/pages/components/Footer";
-import { Nav } from "@/pages/components/Nav";
+import { Footer } from "@/page-components/Footer";
+import { Nav } from "@/page-components/Nav";
 
 export default function PricingPage() {
     const plans = [
@@ -69,7 +69,7 @@ export default function PricingPage() {
             </Head>
             <Nav />
             <main>
-                <section className="section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
+                <section className="section pricing-hero-section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
                     <div
                         aria-hidden="true"
                         className="bg-glow"
@@ -96,15 +96,15 @@ export default function PricingPage() {
                             <span style={{ color: "rgba(124,169,255,0.6)", fontSize: "1.1rem" }}>✦</span>
                         </div>
                         <span className="section-label">Pricing</span>
-                        <h1 className="section-headline" style={{ margin: "0 auto 16px auto", maxWidth: "760px" }}>
+                        <h1 className="section-headline pricing-hero-headline" style={{ margin: "0 auto 16px auto", maxWidth: "760px" }}>
                             Simple pricing. No enterprise games.
                         </h1>
-                        <p className="section-desc" style={{ margin: "0 auto 28px auto", maxWidth: "700px" }}>
+                        <p className="section-desc pricing-hero-desc" style={{ margin: "0 auto 28px auto", maxWidth: "700px" }}>
                             Monthly plans that scale with your community. Start small, expand
                             when you need to. No long lock-in contracts — we earn your
                             business every month.
                         </p>
-                        <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
+                        <div className="pricing-hero-pills" style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
                             {[
                                 "Visitor approvals",
                                 "Gate operations",
@@ -149,6 +149,7 @@ export default function PricingPage() {
                     ></div>
                     <div className="container">
                         <div
+                            className="pricing-plans-grid"
                             style={{
                                 display: "grid",
                                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -184,15 +185,15 @@ export default function PricingPage() {
                                         {plan.badge}
                                     </div>
 
-                                    <h2 className="font-display" style={{ fontSize: "1.24rem", marginBottom: "8px", color: "var(--text-primary)" }}>
+                                    <h2 className="font-display pricing-plan-name" style={{ fontSize: "1.24rem", marginBottom: "8px", color: "var(--text-primary)" }}>
                                         {plan.name}
                                     </h2>
-                                    <p style={{ color: "var(--text-secondary)", fontSize: "0.94rem", lineHeight: 1.7, minHeight: "72px" }}>
+                                    <p className="pricing-plan-desc" style={{ color: "var(--text-secondary)", fontSize: "0.94rem", lineHeight: 1.7, minHeight: "72px" }}>
                                         {plan.description}
                                     </p>
 
                                     <div style={{ margin: "20px 0 22px 0", display: "flex", alignItems: "flex-end", gap: "6px" }}>
-                                        <span style={{ color: "var(--text-primary)", fontSize: "2rem", fontWeight: 800, lineHeight: 1 }}>
+                                        <span className="pricing-plan-price" style={{ color: "var(--text-primary)", fontSize: "2rem", fontWeight: 800, lineHeight: 1 }}>
                                             {plan.price}
                                         </span>
                                         <span style={{ color: "var(--text-secondary)", fontSize: "0.92rem" }}>{plan.period}</span>
@@ -212,7 +213,7 @@ export default function PricingPage() {
                                                         flexShrink: 0,
                                                     }}
                                                 ></span>
-                                                <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                                                <span className="pricing-plan-feature" style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>
                                                     {feature}
                                                 </span>
                                             </div>
@@ -238,14 +239,14 @@ export default function PricingPage() {
                         style={{ top: "12%", left: "-6%", width: "320px", height: "320px", opacity: 0.22 }}
                     ></div>
                     <div className="container">
-                        <div className="card" style={{ padding: "30px" }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.05fr)", gap: "28px" }}>
+                        <div className="card pricing-included-card" style={{ padding: "30px" }}>
+                            <div className="pricing-included-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.05fr)", gap: "28px" }}>
                                 <div>
                                     <span className="section-label">What is included</span>
-                                    <h2 className="section-headline" style={{ marginBottom: "14px", maxWidth: "560px" }}>
+                                    <h2 className="section-headline pricing-included-headline" style={{ marginBottom: "14px", maxWidth: "560px" }}>
                                         Pricing should be easier to understand than the problem you are fixing.
                                     </h2>
-                                    <p className="section-desc" style={{ marginBottom: 0, maxWidth: "560px" }}>
+                                    <p className="section-desc pricing-included-desc" style={{ marginBottom: 0, maxWidth: "560px" }}>
                                         Every plan is built around the same goal: reduce arrival friction, improve
                                         approval clarity, and give teams a more reliable operating system for site access.
                                     </p>
@@ -262,10 +263,10 @@ export default function PricingPage() {
                                                 background: "rgba(255,255,255,0.02)",
                                             }}
                                         >
-                                            <div style={{ color: "var(--text-primary)", fontWeight: 700, marginBottom: "8px", fontSize: "0.98rem" }}>
+                                            <div className="pricing-faq-title" style={{ color: "var(--text-primary)", fontWeight: 700, marginBottom: "8px", fontSize: "0.98rem" }}>
                                                 {title}
                                             </div>
-                                            <div style={{ color: "var(--text-secondary)", fontSize: "0.92rem", lineHeight: 1.65 }}>
+                                            <div className="pricing-faq-answer" style={{ color: "var(--text-secondary)", fontSize: "0.92rem", lineHeight: 1.65 }}>
                                                 {answer}
                                             </div>
                                         </div>

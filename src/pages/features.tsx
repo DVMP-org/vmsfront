@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useState } from "react";
-import { Footer } from "@/pages/components/Footer";
-import { Nav } from "@/pages/components/Nav";
+import { Footer } from "@/page-components/Footer";
+import { Nav } from "@/page-components/Nav";
 
 export default function FeaturesPage() {
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -138,7 +138,7 @@ export default function FeaturesPage() {
             <Nav />
             <main>
                 {/* Hero Section */}
-                <section className="section" style={{ paddingTop: "140px", paddingBottom: "80px", overflow: "hidden", position: "relative" }}>
+                <section className="section features-hero-section" style={{ paddingTop: "140px", paddingBottom: "80px", overflow: "hidden", position: "relative" }}>
                     <div
                         aria-hidden="true"
                         className="bg-glow"
@@ -151,15 +151,46 @@ export default function FeaturesPage() {
                     ></div>
 
                     <div className="container" style={{ position: "relative", zIndex: 1 }}>
+                        <div
+                            aria-hidden="true"
+                            className="bg-glow"
+                            style={{ top: "-16%", left: "10%", width: "400px", height: "400px", opacity: 0.42 }}
+                        ></div>
+                        <div
+                            aria-hidden="true"
+                            style={{
+                                position: "absolute",
+                                right: "18%",
+                                top: "20%",
+                                color: "rgba(124,169,255,0.6)",
+                                fontSize: "1.15rem",
+                                opacity: 0.7,
+                            }}
+                        >
+                            ✦
+                        </div>
                         <div style={{ maxWidth: "900px", marginBottom: "48px" }}>
+                            <div
+                                aria-hidden="true"
+                                style={{
+                                    display: "flex",
+                                    gap: "120px",
+                                    marginBottom: "18px",
+                                    opacity: 0.65,
+                                }}
+                            >
+                                <span style={{ color: "rgba(124,169,255,0.7)", fontSize: "1.4rem" }}>✦</span>
+                                <span style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.9rem", marginTop: "10px" }}>✦</span>
+                                <span style={{ color: "rgba(124,169,255,0.6)", fontSize: "1.1rem" }}>✦</span>
+                            </div>
                             <span className="section-label">Features</span>
-                            <h1 className="section-headline" style={{ marginBottom: "20px", maxWidth: "800px", lineHeight: 1.15 }}>
+                            <h1 className="section-headline features-hero-headline" style={{ marginBottom: "20px", maxWidth: "800px", lineHeight: 1.15 }}>
                                 One platform built around the actual workflows of access, resident operations, and property control
                             </h1>
-                            <p className="section-desc" style={{ marginBottom: "32px", maxWidth: "700px", fontSize: "1.05rem" }}>
+                            <p className="section-desc features-hero-desc" style={{ marginBottom: "32px", maxWidth: "700px", fontSize: "1.05rem" }}>
                                 Whether you're opening gates, approving visitors, managing dues, or coordinating across five properties, VMS Core brings clarity to operations that usually stay disconnected.
                             </p>
-                            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+                            <div className="features-hero-cta" style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
                                 <a href="/pricing" className="btn-primary" style={{ textDecoration: "none" }}>
                                     View Pricing
                                 </a>
@@ -170,7 +201,7 @@ export default function FeaturesPage() {
                         </div>
 
                         {/* Overview Cards Grid */}
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "18px" }}>
+                        <div className="features-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "18px" }}>
                             {overviewCards.map((card) => (
                                 <div
                                     key={card.label}
@@ -198,10 +229,10 @@ export default function FeaturesPage() {
                                     <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px", fontWeight: 600 }}>
                                         {card.label}
                                     </div>
-                                    <div style={{ color: "var(--text-primary)", fontSize: "1.15rem", fontWeight: 700, marginBottom: "10px", lineHeight: 1.3 }}>
+                                    <div className="features-overview-value" style={{ color: "var(--text-primary)", fontSize: "1.15rem", fontWeight: 700, marginBottom: "10px", lineHeight: 1.3 }}>
                                         {card.value}
                                     </div>
-                                    <div style={{ color: "var(--text-secondary)", fontSize: "0.93rem", lineHeight: 1.65 }}>
+                                    <div className="features-overview-body" style={{ color: "var(--text-secondary)", fontSize: "0.93rem", lineHeight: 1.65 }}>
                                         {card.body}
                                     </div>
                                 </div>
@@ -214,7 +245,7 @@ export default function FeaturesPage() {
                 <section className="section" style={{ paddingTop: "0px", paddingBottom: "32px", overflow: "hidden" }}>
                     <div className="container">
                         <div className="card" style={{ padding: "24px", background: "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(84,132,255,0.03), rgba(255,255,255,0.02))" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
+                            <div className="features-quick-nav-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
                                 <div>
                                     <div style={{ color: "var(--text-tertiary)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "6px", fontWeight: 600 }}>
                                         Navigate
@@ -275,7 +306,7 @@ export default function FeaturesPage() {
                             <div
                                 id={group.id}
                                 key={group.title}
-                                className="card"
+                                className="card features-group-card"
                                 style={{
                                     padding: "40px",
                                     background:
@@ -303,6 +334,7 @@ export default function FeaturesPage() {
                                 }}
                             >
                                 <div
+                                    className="features-group-inner"
                                     style={{
                                         display: "grid",
                                         gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)",
@@ -314,10 +346,10 @@ export default function FeaturesPage() {
                                         <span className="section-label" style={{ color: index === 1 ? "rgb(84,132,255)" : undefined }}>
                                             {group.eyebrow}
                                         </span>
-                                        <h2 className="section-headline" style={{ marginBottom: "16px", maxWidth: "580px", fontSize: "clamp(1.6rem, 2.8vw, 2.4rem)", lineHeight: 1.2 }}>
+                                        <h2 className="section-headline features-group-headline" style={{ marginBottom: "16px", maxWidth: "580px", fontSize: "clamp(1.6rem, 2.8vw, 2.4rem)", lineHeight: 1.2 }}>
                                             {group.title}
                                         </h2>
-                                        <p className="section-desc" style={{ marginBottom: "24px", maxWidth: "560px", fontSize: "1.01rem" }}>
+                                        <p className="section-desc features-group-desc" style={{ marginBottom: "24px", maxWidth: "560px", fontSize: "1.01rem" }}>
                                             {group.description}
                                         </p>
 
@@ -333,7 +365,7 @@ export default function FeaturesPage() {
                                             <div style={{ color: "var(--text-tertiary)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "8px", fontWeight: 600 }}>
                                                 Best aligned to
                                             </div>
-                                            <div style={{ color: "var(--text-primary)", fontSize: "0.97rem", lineHeight: 1.6, fontWeight: 500 }}>
+                                            <div className="features-best-for" style={{ color: "var(--text-primary)", fontSize: "0.97rem", lineHeight: 1.6, fontWeight: 500 }}>
                                                 {group.bestFor}
                                             </div>
                                         </div>
@@ -368,6 +400,7 @@ export default function FeaturesPage() {
                                     </div>
 
                                     <div
+                                        className="features-items-grid"
                                         style={{
                                             display: "grid",
                                             gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -420,7 +453,7 @@ export default function FeaturesPage() {
                                                             fill="currentColor"
                                                         />
                                                     </svg>
-                                                    <span>{feature}</span>
+                                                    <span className="features-item-text">{feature}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -440,27 +473,27 @@ export default function FeaturesPage() {
                     ></div>
                     <div className="container">
                         <div
-                            className="card"
+                            className="card features-closing-card"
                             style={{
                                 padding: "40px",
                                 background: "linear-gradient(135deg, rgba(84,132,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
                                 border: "1px solid rgba(84,132,255,0.2)",
                             }}
                         >
-                            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 0.9fr)", gap: "40px", alignItems: "center" }}>
+                            <div className="features-closing-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 0.9fr)", gap: "40px", alignItems: "center" }}>
                                 <div>
                                     <span className="section-label">Next steps</span>
-                                    <h2 className="section-headline" style={{ marginBottom: "18px", maxWidth: "700px" }}>
+                                    <h2 className="section-headline features-closing-headline" style={{ marginBottom: "18px", maxWidth: "700px" }}>
                                         Start with one workflow. The rest will make sense once you’re in.
                                     </h2>
-                                    <p className="section-desc" style={{ marginBottom: "28px", maxWidth: "680px", fontSize: "1.02rem" }}>
+                                    <p className="section-desc features-closing-desc" style={{ marginBottom: "28px", maxWidth: "680px", fontSize: "1.02rem" }}>
                                         Most teams start with visitor approvals and gate operations, then discover
                                         that resident self-service cuts their daily interruptions in half. Then
                                         leadership wants the reporting. Then the second property gets added.
                                         VMS Core is designed to grow with you — not charge you for features you
                                         haven’t reached yet.
                                     </p>
-                                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                                    <div className="features-closing-cta" style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                                         <a href="/#contact" className="btn-primary" style={{ textDecoration: "none" }}>
                                             Request Demo
                                         </a>

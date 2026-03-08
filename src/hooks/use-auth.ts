@@ -87,7 +87,7 @@ export function useAuth() {
         router.refresh();
         router.replace(redirectTarget);
       } else {
-        router.replace("/select");
+        router.replace("/organizations");
       }
     },
     onError: (error: any) => {
@@ -292,7 +292,7 @@ export function useSocialCallback() {
       apiClient.setToken(token);
 
       toast.success("Login successful!");
-      router.replace("/select");
+      router.replace("/organizations");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
