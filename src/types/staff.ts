@@ -10,7 +10,6 @@ export interface StaffProfileCreate {
     last_name?: string | null;
     phone?: string | null;
     staff_type?: string | null;
-    role_title?: string | null;
 }
 
 export interface StaffProfileUpdate {
@@ -23,7 +22,7 @@ export interface StaffStatusUpdate {
 }
 
 export interface StaffAssignmentUpdate {
-    role_title?: string | null;
+    notes?: string | null;
     is_active?: boolean;
     valid_from?: string | null;
     valid_to?: string | null;
@@ -88,7 +87,7 @@ export interface StaffResidencyAssignment {
     staff_profile_id?: string | null;
     residency_id?: string | null;
     sponsor_resident_id?: string | null;
-    role_title?: string | null;
+    notes?: string | null;
     is_active?: boolean;
     valid_from?: string | null;
     valid_to?: string | null;
@@ -104,7 +103,6 @@ export interface StaffMember {
     user_id?: string | null;
     staff_type?: string | null;
     status?: StaffStatus | null;
-    role_title?: string | null;
     created_at?: string;
     updated_at?: string;
     user?: User | null;

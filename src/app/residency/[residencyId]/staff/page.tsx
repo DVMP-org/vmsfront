@@ -24,7 +24,6 @@ const initialCreateForm: StaffProfileCreate = {
   last_name: "",
   phone: "",
   staff_type: "",
-  role_title: "",
 };
 
 export default function ResidencyStaffPage() {
@@ -114,11 +113,6 @@ export default function ResidencyStaffPage() {
       key: "staff_type",
       header: "Type",
       accessor: (row) => titleCase(row.staff_type ?? "unknown"),
-    },
-    {
-      key: "role_title",
-      header: "Role",
-      accessor: (row) => row.assignment?.role_title || row.role_title || "—",
     },
     {
       key: "status",
@@ -322,12 +316,7 @@ export default function ResidencyStaffPage() {
                 <option value="other">Other</option>
               </select>
             </div>
-            <Input
-              label="Role title"
-              value={form.role_title ?? ""}
-              onChange={(e) => setForm((prev) => ({ ...prev, role_title: e.target.value }))}
-              placeholder="Head driver"
-            />
+
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>

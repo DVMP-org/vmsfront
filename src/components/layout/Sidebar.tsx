@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
@@ -201,6 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { selectedResidency } = useAppStore();
   const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isPending: isAdminProfilePending } = useAdminProfile();
@@ -257,6 +258,21 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     if (!pathname || !href) return false;
     return pathname === href || pathname.startsWith(href + "/");
   }, [pathname]);
+
+  // Helper for child links that may include query params (e.g. /admin/gate?tab=console)
+  const isChildLinkActive = useCallback((href: string) => {
+    if (!pathname || !href) return false;
+    const [hrefPath, hrefQuery] = href.split("?");
+    if (!hrefQuery) return pathname === hrefPath || pathname.startsWith(hrefPath + "/");
+    if (pathname !== hrefPath) return false;
+    const hrefParams = new URLSearchParams(hrefQuery);
+    if (!searchParams) return false;
+    let match = true;
+    hrefParams.forEach((value, key) => {
+      if (searchParams.get(key) !== value) match = false;
+    });
+    return match;
+  }, [pathname, searchParams]);
 
   // Load plugins from cache first, then refresh from API in background
   // Only load plugins for admin or resident users (NOT staff-only users)
@@ -625,7 +641,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
 
             if (hasChildren) {
               const activeChild = link.children.find((child: any) =>
-                child.href === activeLink?.href
+                isChildLinkActive(child.href)
               );
               const isBrand = actualType === "resident";
 
@@ -681,7 +697,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
                       >
                         {link.children.map((child: any) => {
                           const ChildIcon = child.icon;
-                          const isChildActive = child.href === activeLink?.href;
+                          const isChildActive = isChildLinkActive(child.href);
 
                           return (
                             <li key={child.href} className="pl-3 py-0.5">
@@ -723,6 +739,19 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
               />
             );
           })}
+          {filteredPlugins.length > 0 && (
+            <div className={cn(
+              "my-2",
+              isMobile || !collapsed ? "px-3" : "px-2"
+            )}>
+              <hr className="border-zinc-200 dark:border-zinc-800" />
+              {(isMobile || !collapsed) && (
+                <p className="mt-2 mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                  Plugins
+                </p>
+              )}
+            </div>
+          )}
           <>
 
             {filteredPlugins.map(plugin => {

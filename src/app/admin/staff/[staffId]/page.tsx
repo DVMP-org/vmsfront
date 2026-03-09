@@ -128,7 +128,7 @@ export default function AdminStaffDetailPage() {
                                 Staff overview
                             </CardTitle>
                             <CardDescription>
-                                Residency: {staff.assignment?.residency?.name || staff.residency?.name || "—"} · Role: {staff.assignment?.role_title || staff.role_title || "—"}
+                                Residency: {staff.assignment?.residency?.name || staff.residency?.name || "—"}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4 md:grid-cols-2">

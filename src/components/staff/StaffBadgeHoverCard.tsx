@@ -147,12 +147,7 @@ export function StaffBadgeHoverCard({
                             {assignment && (
                                 <>
 
-                                    {assignment.role_title && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="text-foreground">{assignment.role_title}</span>
-                                        </div>
-                                    )}
+
                                     {assignment.sponsor_resident && (
                                         <div className="flex items-center gap-2 text-xs">
                                             <User className="h-3.5 w-3.5 text-muted-foreground" />

@@ -21,8 +21,9 @@ export interface SearchableSelectOption {
     label: string;
 }
 
-export interface SearchableSelectProps<IsMulti extends boolean = false> extends Omit<SelectProps<SearchableSelectOption, IsMulti, GroupBase<SearchableSelectOption>>, 'onChange' | 'value' | 'inputId' | 'instanceId'> {
+export interface SearchableSelectProps<IsMulti extends boolean = false> extends Omit<SelectProps<SearchableSelectOption, IsMulti, GroupBase<SearchableSelectOption>>, 'onChange' | 'value' | 'defaultValue' | 'inputId' | 'instanceId'> {
     value?: IsMulti extends true ? string[] : string;
+    defaultValue?: IsMulti extends true ? string[] : string;
     onChange?: (value: IsMulti extends true ? string[] : string | undefined) => void;
     options: SearchableSelectOption[];
     placeholder?: string;
@@ -40,6 +41,7 @@ export interface SearchableSelectProps<IsMulti extends boolean = false> extends 
 
 export function SearchableSelect<IsMulti extends boolean = false>({
     value,
+    defaultValue,
     onChange,
     options,
     placeholder = "Select...",
@@ -62,16 +64,25 @@ export function SearchableSelect<IsMulti extends boolean = false>({
     const inputId = id ?? `searchable-select-${generatedId}`;
     const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
+    // Support uncontrolled usage via defaultValue
+    const isControlled = value !== undefined;
+    const [uncontrolledValue, setUncontrolledValue] = useState<string | string[] | undefined>(defaultValue);
+
     useEffect(() => {
         setPortalTarget(document.body);
     }, []);
 
+    const resolvedValue = isControlled ? value : uncontrolledValue;
+
     const selectedOption = useMemo(() => {
-        if (isMulti && Array.isArray(value)) {
-            return options.filter(opt => value.includes(opt.value));
+        if (isMulti) {
+            const ids = Array.isArray(resolvedValue) ? (resolvedValue as string[]) : [];
+            if (ids.length === 0) return [];
+            return options.filter(opt => ids.includes(opt.value));
         }
-        return options.find(opt => opt.value === value) || null;
-    }, [options, value, isMulti]);
+        if (!resolvedValue) return null;
+        return options.find(opt => opt.value === (resolvedValue as string)) ?? null;
+    }, [options, resolvedValue, isMulti]);
 
     let containerStatus: VariantProps<typeof inputContainerVariants>["status"] = status;
 
@@ -93,11 +104,14 @@ export function SearchableSelect<IsMulti extends boolean = false>({
 
     const handleChange = (newValue: OnChangeValue<SearchableSelectOption, IsMulti>) => {
         if (isMulti) {
-            onChange?.((((newValue as SearchableSelectOption[] | null) ?? []).map((option) => option.value)) as IsMulti extends true ? string[] : never);
+            const next = ((newValue as SearchableSelectOption[] | null) ?? []).map((option) => option.value);
+            if (!isControlled) setUncontrolledValue(next);
+            onChange?.(next as IsMulti extends true ? string[] : never);
             return;
         }
-
-        onChange?.(((newValue as SearchableSelectOption | null)?.value) as IsMulti extends true ? never : string | undefined);
+        const next = (newValue as SearchableSelectOption | null)?.value;
+        if (!isControlled) setUncontrolledValue(next);
+        onChange?.(next as IsMulti extends true ? never : string | undefined);
     };
 
     return (

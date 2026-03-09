@@ -27,7 +27,8 @@ import {
 } from "@/hooks/use-staff";
 import { formatDateTime, getFullName, titleCase } from "@/lib/utils";
 import type { StaffAssignmentUpdate, StaffKYCSubmit, StaffMovementPermissionCreate } from "@/types/staff";
-
+import { useGates } from "@/hooks/use-resident";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 function toDateTimeLocal(value?: string | null) {
     if (!value) return "";
     const date = new Date(value);
@@ -58,9 +59,18 @@ export default function ResidencyStaffDetailPage() {
         sort: "-created_at",
     });
     const { data: kycHistory } = useStaffKycHistory(residencyId ?? null, staffId ?? null);
+    const { data: gatesData } = useGates(residencyId ?? null, {
+        page: 1,
+        pageSize: 100,
+    });
 
+    const gates = gatesData?.items ?? [];
+    const gateOptions = useMemo(
+        () => gates.map((gate) => ({ label: gate.name, value: gate.id })),
+        [gates]
+    );
     const [assignmentForm, setAssignmentForm] = useState<StaffAssignmentUpdate>({
-        role_title: "",
+        notes: "",
         is_active: true,
         valid_from: "",
         valid_to: "",
@@ -80,13 +90,10 @@ export default function ResidencyStaffDetailPage() {
         document_number_masked: "",
         provider: "manual",
     });
-    const [allowedGatesValue, setAllowedGatesValue] = useState("");
-    const [allowedDaysValue, setAllowedDaysValue] = useState("");
-
     useEffect(() => {
         if (!staff) return;
         setAssignmentForm({
-            role_title: staff.assignment?.role_title ?? staff.role_title ?? "",
+            notes: staff.assignment?.notes ?? "",
             is_active: staff.assignment?.is_active ?? true,
             valid_from: toDateTimeLocal(staff.assignment?.valid_from),
             valid_to: toDateTimeLocal(staff.assignment?.valid_to),
@@ -101,8 +108,6 @@ export default function ResidencyStaffDetailPage() {
             requires_host_confirmation: staff.movement_permission?.requires_host_confirmation ?? false,
             notes: staff.movement_permission?.notes ?? "",
         });
-        setAllowedGatesValue((staff.movement_permission?.allowed_gates ?? []).join(", "));
-        setAllowedDaysValue((staff.movement_permission?.allowed_days ?? []).join(", "));
     }, [staff]);
 
     const logColumns: Column<any>[] = [
@@ -135,7 +140,7 @@ export default function ResidencyStaffDetailPage() {
     const handleAssignmentSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         updateMutation.mutate({
-            role_title: assignmentForm.role_title || undefined,
+            notes: assignmentForm.notes || undefined,
             is_active: assignmentForm.is_active,
             valid_from: assignmentForm.valid_from || undefined,
             valid_to: assignmentForm.valid_to || undefined,
@@ -144,17 +149,22 @@ export default function ResidencyStaffDetailPage() {
 
     const handlePermissionSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        permissionMutation.mutate({
-            ...permissionForm,
-            allowed_days: allowedDaysValue
-                .split(",")
-                .map((item) => item.trim().toLowerCase())
-                .filter(Boolean),
-            allowed_gates: allowedGatesValue
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean),
-        });
+        permissionMutation.mutate(permissionForm);
+    };
+
+    const DAYS_OF_WEEK = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+    const DAY_LABELS: Record<string, string> = {
+        monday: "Mon", tuesday: "Tue", wednesday: "Wed", thursday: "Thu",
+        friday: "Fri", saturday: "Sat", sunday: "Sun",
+    };
+
+    const toggleDay = (day: string) => {
+        setPermissionForm((prev) => ({
+            ...prev,
+            allowed_days: prev.allowed_days?.includes(day)
+                ? prev.allowed_days.filter((d) => d !== day)
+                : [...(prev.allowed_days ?? []), day],
+        }));
     };
 
     const handleKycSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -189,18 +199,18 @@ export default function ResidencyStaffDetailPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" onClick={() => router.push(`/residency/${residencyId}/staff`)} className="-ml-3">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                </Button>
-            </div>
+            {/* Back navigation */}
+            <Button variant="ghost" size="sm" onClick={() => router.push(`/residency/${residencyId}/staff`)} className="-ml-3">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Staff
+            </Button>
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            {/* Hero header */}
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserCircle2 className="h-4 w-4" />
-                        <span className="text-sm uppercase tracking-wide">Staff profile</span>
+                        <span className="text-xs uppercase tracking-widest">Staff profile</span>
                     </div>
                     <h1 className="text-3xl font-bold">{getFullName(staff.user?.first_name, staff.user?.last_name)}</h1>
                     <div className="flex flex-wrap items-center gap-2">
@@ -217,6 +227,8 @@ export default function ResidencyStaffDetailPage() {
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
+
+                    {/* ── Assignment ───────────────────────────────────── */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -224,54 +236,78 @@ export default function ResidencyStaffDetailPage() {
                                 Assignment
                             </CardTitle>
                             <CardDescription>
-                                Update the residency-scoped assignment, validity window, and active state.
+                                Control whether this staff member is active and define the validity window for the assignment.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form className="space-y-4" onSubmit={handleAssignmentSubmit}>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <Input
-                                        label="Role title"
-                                        value={assignmentForm.role_title ?? ""}
-                                        onChange={(e) => setAssignmentForm((prev) => ({ ...prev, role_title: e.target.value }))}
-                                    />
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium">Assignment status</label>
-                                        <select
-                                            value={assignmentForm.is_active ? "active" : "inactive"}
-                                            onChange={(e) => setAssignmentForm((prev) => ({ ...prev, is_active: e.target.value === "active" }))}
-                                            className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                            <form className="space-y-6" onSubmit={handleAssignmentSubmit}>
+                                {/* Status */}
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Status</p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAssignmentForm((prev) => ({ ...prev, is_active: true }))}
+                                            className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors ${assignmentForm.is_active ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : "border-border text-muted-foreground hover:bg-muted"}`}
                                         >
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium">Valid from</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={assignmentForm.valid_from ?? ""}
-                                            onChange={(e) => setAssignmentForm((prev) => ({ ...prev, valid_from: e.target.value }))}
-                                            className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium">Valid to</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={assignmentForm.valid_to ?? ""}
-                                            onChange={(e) => setAssignmentForm((prev) => ({ ...prev, valid_to: e.target.value }))}
-                                            className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
-                                        />
+                                            Active
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAssignmentForm((prev) => ({ ...prev, is_active: false }))}
+                                            className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors ${!assignmentForm.is_active ? "border-zinc-400 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" : "border-border text-muted-foreground hover:bg-muted"}`}
+                                        >
+                                            Inactive
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex justify-end">
+
+                                {/* Validity window */}
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Validity window</p>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium">From</label>
+                                            <input
+                                                type="datetime-local"
+                                                value={assignmentForm.valid_from ?? ""}
+                                                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, valid_from: e.target.value }))}
+                                                className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium">To</label>
+                                            <input
+                                                type="datetime-local"
+                                                value={assignmentForm.valid_to ?? ""}
+                                                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, valid_to: e.target.value }))}
+                                                className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Leave blank to allow access indefinitely.</p>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Notes</p>
+                                    <textarea
+                                        value={assignmentForm.notes ?? ""}
+                                        onChange={(e) => setAssignmentForm((prev) => ({ ...prev, notes: e.target.value }))}
+                                        rows={3}
+                                        className="w-full rounded-[8px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                        placeholder="Internal notes about this assignment…"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end border-t pt-4">
                                     <Button type="submit" isLoading={updateMutation.isPending}>Save Assignment</Button>
                                 </div>
                             </form>
                         </CardContent>
                     </Card>
 
+                    {/* ── Movement permissions ─────────────────────────── */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -279,85 +315,123 @@ export default function ResidencyStaffDetailPage() {
                                 Movement permissions
                             </CardTitle>
                             <CardDescription>
-                                Create or replace the permission record that controls when and how this staff member can move.
+                                Define when and how this staff member may enter or exit the residency.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form className="space-y-4" onSubmit={handlePermissionSubmit}>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <Input
-                                        label="Allowed days"
-                                        value={allowedDaysValue}
-                                        onChange={(e) => setAllowedDaysValue(e.target.value)}
-                                        placeholder="monday, tuesday, friday"
-                                    />
-                                    <Input
-                                        label="Allowed gates"
-                                        value={allowedGatesValue}
-                                        onChange={(e) => setAllowedGatesValue(e.target.value)}
-                                        placeholder="gate-id-1, gate-id-2"
-                                    />
-                                    <Input
-                                        label="Time start"
-                                        type="time"
-                                        value={(permissionForm.time_start ?? "08:00:00").slice(0, 5)}
-                                        onChange={(e) => setPermissionForm((prev) => ({ ...prev, time_start: `${e.target.value}:00` }))}
-                                    />
-                                    <Input
-                                        label="Time end"
-                                        type="time"
-                                        value={(permissionForm.time_end ?? "18:00:00").slice(0, 5)}
-                                        onChange={(e) => setPermissionForm((prev) => ({ ...prev, time_end: `${e.target.value}:00` }))}
-                                    />
+                            <form className="space-y-6" onSubmit={handlePermissionSubmit}>
+                                {/* Schedule */}
+                                <div className="space-y-3">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Schedule</p>
+
                                     <div className="space-y-1">
-                                        <label className="text-sm font-medium">Entry mode</label>
-                                        <select
-                                            value={permissionForm.entry_mode ?? "free"}
-                                            onChange={(e) => setPermissionForm((prev) => ({ ...prev, entry_mode: e.target.value }))}
-                                            className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
-                                        >
-                                            <option value="free">Free</option>
-                                            <option value="approval_required">Approval required</option>
-                                            <option value="blocked">Blocked</option>
-                                        </select>
+                                        <label className="text-sm font-medium">Allowed days</label>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {DAYS_OF_WEEK.map((day) => {
+                                                const active = permissionForm.allowed_days?.includes(day);
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        type="button"
+                                                        onClick={() => toggleDay(day)}
+                                                        className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-muted"}`}
+                                                    >
+                                                        {DAY_LABELS[day]}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Leave all unselected to allow any day.</p>
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium">Exit mode</label>
-                                        <select
-                                            value={permissionForm.exit_mode ?? "free"}
-                                            onChange={(e) => setPermissionForm((prev) => ({ ...prev, exit_mode: e.target.value }))}
-                                            className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
-                                        >
-                                            <option value="free">Free</option>
-                                            <option value="approval_required">Approval required</option>
-                                            <option value="blocked">Blocked</option>
-                                        </select>
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <Input
+                                            label="Time start"
+                                            type="time"
+                                            value={(permissionForm.time_start ?? "08:00:00").slice(0, 5)}
+                                            onChange={(e) => setPermissionForm((prev) => ({ ...prev, time_start: `${e.target.value}:00` }))}
+                                        />
+                                        <Input
+                                            label="Time end"
+                                            type="time"
+                                            value={(permissionForm.time_end ?? "18:00:00").slice(0, 5)}
+                                            onChange={(e) => setPermissionForm((prev) => ({ ...prev, time_end: `${e.target.value}:00` }))}
+                                        />
                                     </div>
                                 </div>
-                                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <input
-                                        type="checkbox"
-                                        checked={permissionForm.requires_host_confirmation ?? false}
-                                        onChange={(e) => setPermissionForm((prev) => ({ ...prev, requires_host_confirmation: e.target.checked }))}
+
+                                {/* Access control */}
+                                <div className="space-y-3">
+                                    <p className="text-xs font-semibold uppercase tracking-widest ">Access control</p>
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium">Entry mode</label>
+                                            <select
+                                                value={permissionForm.entry_mode ?? "free"}
+                                                onChange={(e) => setPermissionForm((prev) => ({ ...prev, entry_mode: e.target.value }))}
+                                                className="flex h-10 w-full rounded-[4px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                            >
+                                                <option value="free">Free</option>
+                                                <option value="approval_required">Approval required</option>
+                                                <option value="blocked">Blocked</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium">Exit mode</label>
+                                            <select
+                                                value={permissionForm.exit_mode ?? "free"}
+                                                onChange={(e) => setPermissionForm((prev) => ({ ...prev, exit_mode: e.target.value }))}
+                                                className="flex h-10 w-full rounded-[4px] bg-white border border-[#DEDEDE] px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                            >
+                                                <option value="free">Free</option>
+                                                <option value="approval_required">Approval required</option>
+                                                <option value="blocked">Blocked</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <SearchableSelect
+                                        options={gateOptions}
+                                        label="Allowed gates"
+                                        isMulti
+                                        placeholder="Select gates…"
+                                        value={permissionForm.allowed_gates ?? []}
+                                        onChange={(values) => setPermissionForm((prev) => ({ ...prev, allowed_gates: values ?? [] }))}
                                     />
-                                    Requires host confirmation
-                                </label>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium">Notes</label>
+
+                                    <label className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={permissionForm.requires_host_confirmation ?? false}
+                                            onChange={(e) => setPermissionForm((prev) => ({ ...prev, requires_host_confirmation: e.target.checked }))}
+                                            className="h-4 w-4"
+                                        />
+                                        <span className="font-medium">Requires host confirmation</span>
+                                        <span className="ml-auto text-xs text-muted-foreground">Host must approve each entry</span>
+                                    </label>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Notes</p>
                                     <textarea
                                         value={permissionForm.notes ?? ""}
                                         onChange={(e) => setPermissionForm((prev) => ({ ...prev, notes: e.target.value }))}
-                                        className="min-h-28 w-full rounded-[8px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
-                                        placeholder="Access guidance for the gate team"
+                                        rows={3}
+                                        className="w-full rounded-[8px] border border-[#DEDEDE] bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+                                        placeholder="Access guidance for the gate team…"
                                     />
                                 </div>
-                                <div className="flex justify-end">
+
+                                <div className="flex justify-end border-t pt-4">
                                     <Button type="submit" isLoading={permissionMutation.isPending}>Save Permission</Button>
                                 </div>
                             </form>
                         </CardContent>
                     </Card>
 
+                    {/* ── Movement logs ────────────────────────────────── */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -365,7 +439,7 @@ export default function ResidencyStaffDetailPage() {
                                 Movement logs
                             </CardTitle>
                             <CardDescription>
-                                Entry and exit records are derived directly from gate events for this staff identity.
+                                Entry and exit records derived from gate events for this staff identity.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -394,6 +468,7 @@ export default function ResidencyStaffDetailPage() {
                     </Card>
                 </div>
 
+                {/* ── KYC (sidebar) ────────────────────────────────── */}
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
@@ -402,10 +477,10 @@ export default function ResidencyStaffDetailPage() {
                                 KYC
                             </CardTitle>
                             <CardDescription>
-                                Submit or resubmit KYC for this staff profile and review previous submissions.
+                                Submit or resubmit identity verification for this staff profile.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-5">
                             <form className="space-y-4" onSubmit={handleKycSubmit}>
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium">Document type</label>
@@ -440,7 +515,7 @@ export default function ResidencyStaffDetailPage() {
                             </form>
 
                             <div className="space-y-3 border-t pt-4">
-                                <p className="text-sm font-medium">Submission history</p>
+                                <p className="text-sm font-semibold">Submission history</p>
                                 {kycHistory?.length ? (
                                     <div className="space-y-3">
                                         {kycHistory.map((record) => (

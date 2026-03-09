@@ -69,7 +69,7 @@ export const staffService = {
         staffId: string,
         data: StaffMovementPermissionCreate,
     ): Promise<ApiResponse<StaffMovementPermission>> {
-        return apiClient.post(`${residentBase(residencyId)}/${staffId}/permissions`, data);
+        return apiClient.post(`${residentBase(residencyId)}/${staffId}/movement-permission`, data);
     },
 
     async getStaffMovementLogs(

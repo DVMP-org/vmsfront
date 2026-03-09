@@ -611,14 +611,7 @@ export function StaffDashboard() {
                                                             </p>
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                                            Role Title
-                                                        </p>
-                                                        <p className="text-sm font-semibold text-foreground mt-1">
-                                                            {currentAssignment.role_title ?? titleCase(staff.staff_type ?? "Staff")}
-                                                        </p>
-                                                    </div>
+
                                                 </div>
                                                 <div className="space-y-3">
                                                     <div>
