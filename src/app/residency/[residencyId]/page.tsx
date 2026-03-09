@@ -35,6 +35,7 @@ import {
 import { useTriggerEmergencyResident } from "@/hooks/use-emergency";
 import { TriggerEmergencyModal } from "@/components/emergencies/TriggerEmergencyModal";
 import { CreateGatePassModal } from "@/components/passes/CreateGatePassModal";
+import { FundWalletModal } from "@/components/ui/FundWalletModal";
 import { useForumTopics } from "@/hooks/use-forum";
 import { ForumTopic } from "@/types";
 import { formatDateTime, getPassStatusColor, titleCase } from "@/lib/utils";
@@ -47,8 +48,10 @@ export default function ResidentDashboardPage() {
   const routeResidencyId = Array.isArray(rawResidencyId) ? rawResidencyId[0] : rawResidencyId;
   const { selectedResidency, setSelectedResidency } = useAppStore();
   const effectiveResidencyId = routeResidencyId ?? selectedResidency?.id ?? null;
+
   const { data: dashboard, isLoading } = useResidentDashboard(effectiveResidencyId);
   const { data: wallet } = useWallet();
+  const [isFundModalOpen, setIsFundModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [isCreatePassModalOpen, setIsCreatePassModalOpen] = useState(false);
   const triggerEmergency = useTriggerEmergencyResident();
@@ -330,7 +333,7 @@ export default function ResidentDashboardPage() {
           <div
             className="relative overflow-hidden rounded-xl shadow-md cursor-pointer group col-span-1"
             style={{ background: "linear-gradient(135deg, rgb(var(--brand-primary)) 0%, rgb(var(--brand-secondary)) 100%)" }}
-            onClick={() => router.push("/wallet")}
+
           >
             {/* Decorative circles */}
             <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/5" />
@@ -364,13 +367,13 @@ export default function ResidentDashboardPage() {
               <div className="flex gap-2 mt-4">
                 <button
                   className="flex-1 text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 transition-colors rounded-lg py-1.5 px-2"
-                  onClick={(e) => { e.stopPropagation(); router.push("/wallet"); }}
+                  onClick={() => setIsFundModalOpen(true)}
                 >
                   Fund
                 </button>
                 <button
                   className="flex-1 text-[11px] font-semibold text-white/65 hover:text-white border border-white/20 hover:border-white/45 transition-colors rounded-lg py-1.5 px-2"
-                  onClick={(e) => { e.stopPropagation(); router.push("/wallet"); }}
+                  onClick={(e) => { e.stopPropagation(); router.push("/resident/wallet/history"); }}
                 >
                   History
                 </button>
@@ -758,6 +761,11 @@ export default function ResidentDashboardPage() {
             ? router.push(`${residencyBase}/passes/${passId}`)
             : setIsCreatePassModalOpen(false)
         }
+      />
+
+      <FundWalletModal
+        isOpen={isFundModalOpen}
+        onClose={() => setIsFundModalOpen(false)}
       />
     </>
   );

@@ -8,6 +8,7 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Home,
   Users,
+  Briefcase,
   CreditCard,
   Building2,
   BarChart3,
@@ -69,6 +70,11 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
       icon: Users,
     },
     {
+      href: residencyId ? `${base}/staff` : "/select",
+      label: "Staff",
+      icon: Briefcase,
+    },
+    {
       href: residencyId ? `${base}/forum` : "/select",
       label: "Forum",
       icon: MessageSquare,
@@ -101,6 +107,15 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
   }
 
   return links;
+}
+
+// Links for staff-only users (is_staff && !is_resident)
+function buildStaffOnlyLinks(residencyId?: string) {
+  const base = residencyId ? `/residency/${residencyId}/staff` : "/select";
+  return [
+    { href: base, label: "Dashboard", icon: Home },
+    { href: "/user/settings", label: "Profile", icon: UserCog },
+  ];
 }
 
 
@@ -219,6 +234,23 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     setMounted(true);
   }, []);
 
+  // Extract residency ID from route early (needed for workspace context)
+  const routeResidencyId = useMemo(() => {
+    const match = pathname?.match(/^\/residency\/([^/]+)/);
+    return match ? match[1] : undefined;
+  }, [pathname]);
+
+  // Determine user workspace capabilities from profile
+  // Staff-only users (is_staff && !is_resident) should not see plugins or resident-specific features
+  const isResident = user?.is_resident ?? false;
+  const isStaffOnly = (user?.is_staff ?? false) && !isResident;
+
+  // Check if the user is in the staff workspace context (e.g., /residency/{id}/staff/...)
+  // This is still useful for URL routing but workspace restrictions are based on user profile
+  const isStaffWorkspace = useMemo(() => {
+    if (!pathname || !routeResidencyId) return false;
+    return pathname.startsWith(`/residency/${routeResidencyId}/staff`);
+  }, [pathname, routeResidencyId]);
 
   // Helper to determine active state consistently
   const isLinkActive = useCallback((href: string) => {
@@ -227,7 +259,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
   }, [pathname]);
 
   // Load plugins from cache first, then refresh from API in background
+  // Only load plugins for admin or resident users (NOT staff-only users)
   useEffect(() => {
+    // Skip plugin loading for staff-only users
+    if (isStaffOnly) {
+      setPlugins([]);
+      return;
+    }
+
     let isMounted = true;
     let hasSetInitialPlugins = false;
 
@@ -271,12 +310,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  const routeResidencyId = useMemo(() => {
-    const match = pathname?.match(/^\/residency\/([^/]+)/);
-    return match ? match[1] : undefined;
-  }, [pathname]);
+  }, [isStaffOnly]);
 
   // Determine actual type based on which plugin routes array contains the active route
   // This ensures we show the correct sidebar based on the plugin's route definitions
@@ -343,10 +377,19 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
     return selectedResidency?.id ?? routeResidencyId;
   }, [actualType, selectedResidency?.id, routeResidencyId]);
 
-  const { data: residentResidency } = useResidentResidency(effectiveResidencyId ?? null);
+  // Only call useResidentResidency for users who are residents
+  // Staff-only users would get 401 from the resident endpoint
+  const { data: residentResidency } = useResidentResidency(
+    isResident ? (effectiveResidencyId ?? null) : null
+  );
   const isSuperUser = residentResidency?.is_super_user ?? false;
 
   const links = useMemo(() => {
+    // Staff-only users get minimal links
+    if (isStaffOnly && actualType === "resident") {
+      return buildStaffOnlyLinks(effectiveResidencyId);
+    }
+
     let baseLinks =
       actualType === "resident"
         ? buildResidentLinks(effectiveResidencyId, isSuperUser)
@@ -397,7 +440,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) =>
       seenHrefs.add(link.href);
       return true;
     });
-  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted]);
+  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted, isStaffOnly]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {
     if (!pathname) return null;

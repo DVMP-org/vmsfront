@@ -29,6 +29,12 @@ import { LogoFull } from "../LogoFull";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { buildSubdomainUrl, getSubdomain } from "@/lib/subdomain-utils";
+import {
+  getResidencyRoles,
+  getResidencyWorkspacePath,
+  getWorkspaceRoleLabel,
+  resolveResidencyRole,
+} from "@/lib/workspace-context";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -49,7 +55,7 @@ export const Header = memo(function Header({
   const { data: profileData, isLoading: isProfileLoading } = useProfile();
   const currentUser = user || profileData;
 
-  const { selectedResidency, branding } = useAppStore();
+  const { selectedResidency, selectedResidencyRole, branding } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -57,6 +63,7 @@ export const Header = memo(function Header({
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
   const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
+  const isStaffResidencyRoute = pathname?.includes("/staff") ?? false;
   const isAdminUser = useAdminProfile();
   const profileHref = "/user/settings";
   const dashboardHref = buildSubdomainUrl(getSubdomain() ?? "", "/select");
@@ -202,7 +209,17 @@ export const Header = memo(function Header({
                   </span>
                   {!isSelectRoute && (
                     <span className="text-[9px] uppercase text-muted-foreground">
-                      {isAdminUser ? "Admin" : "Resident"}
+                      {isAdminRoute
+                        ? "Admin"
+                        : isResidencyRoute
+                          ? getWorkspaceRoleLabel(
+                            isStaffResidencyRoute
+                              ? "staff"
+                              : selectedResidencyRole,
+                          )
+                          : isAdminUser
+                            ? "Admin"
+                            : "Resident"}
                     </span>
                   )}
                 </div>
@@ -320,7 +337,11 @@ function WorkspaceSwitcher({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
-  const { setSelectedResidency } = useAppStore();
+  const {
+    selectedResidencyRole,
+    setSelectedResidency,
+    setSelectedResidencyRole,
+  } = useAppStore();
 
   const { data: dashboardData } = useResidentDashboardSelect();
   const { data: adminProfile, isError: isAdminError } = useAdminProfile();
@@ -330,7 +351,7 @@ function WorkspaceSwitcher({
 
   const currentWorkspaceName = isAdminRoute
     ? "Admin Console"
-    : selectedResidency?.name || "Select Estate";
+    : selectedResidency?.name || "Choose residency";
 
   const currentWorkspaceIcon = isAdminRoute ? (
     <Shield className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
@@ -354,8 +375,15 @@ function WorkspaceSwitcher({
 
   const handleSwitch = (residency: Residency | null) => {
     if (residency) {
+      const nextRole = resolveResidencyRole(
+        dashboardData,
+        residency.id,
+        selectedResidencyRole,
+        dashboardData?.user,
+      );
       setSelectedResidency(residency);
-      router.push(`/residency/${residency.id}`);
+      setSelectedResidencyRole(nextRole);
+      router.push(getResidencyWorkspacePath(residency.id, nextRole));
     } else {
       setSelectedResidency(null);
       router.push("/admin");
@@ -397,7 +425,7 @@ function WorkspaceSwitcher({
           >
             <div className="px-2 py-1.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Switch Workspace
+                Workspace launcher
               </p>
             </div>
 
@@ -406,7 +434,7 @@ function WorkspaceSwitcher({
                 <>
                   <div className="px-2 pt-1 pb-0.5">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
-                      Properties
+                      Residency workspaces
                     </p>
                   </div>
                   {residencies.map((residency) => (
@@ -423,9 +451,26 @@ function WorkspaceSwitcher({
                         <Home className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold truncate text-foreground">
-                          {residency.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold truncate text-foreground">
+                            {residency.name}
+                          </p>
+                          <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {getWorkspaceRoleLabel(
+                              resolveResidencyRole(
+                                dashboardData,
+                                residency.id,
+                                selectedResidencyRole,
+                                dashboardData?.user,
+                              ),
+                            )}
+                          </span>
+                          {getResidencyRoles(dashboardData, residency.id).length > 1 && (
+                            <span className="rounded-full bg-[rgb(var(--brand-primary))/0.08] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[rgb(var(--brand-primary))]">
+                              Multi-role
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-muted-foreground truncate">
                           {residency.address}
                         </p>
@@ -439,7 +484,7 @@ function WorkspaceSwitcher({
                 <>
                   <div className="px-2 pt-2 pb-0.5 border-t border-border/40 mt-1">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
-                      Management
+                      Organization workspace
                     </p>
                   </div>
                   <button
@@ -474,7 +519,7 @@ function WorkspaceSwitcher({
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-bold text-[rgb(var(--brand-primary))] transition hover:bg-[rgb(var(--brand-primary))]/5 w-full"
             >
               <ArrowRightLeft className="h-3.5 w-3.5" />
-              Manage Workspaces
+              Open Launcher
             </Link>
           </motion.div>
         )}

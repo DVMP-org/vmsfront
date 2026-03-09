@@ -39,7 +39,8 @@ export function getInitials(firstName?: string | null, lastName?: string | null)
 
 export function getFullName(firstName?: string | null, lastName?: string | null): string {
   const parts = [firstName, lastName].filter(Boolean);
-  return parts.length > 0 ? parts.join(" ") : "Unknown User";
+  const fullName = parts.length > 0 ? parts.join(" ") : "Unknown User";
+  return truncateText(fullName, 25);
 }
 
 export function formatCurrency(value: number): string {

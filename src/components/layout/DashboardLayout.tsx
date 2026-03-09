@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { ActiveEmergencyBanner } from "../emergencies/ActiveEmergencyBanner";
+import { ResidencyRoleSwitcher } from "./ResidencyRoleSwitcher";
 
 const Sidebar = dynamic(() => import("./Sidebar").then(mod => mod.Sidebar), {
   ssr: false,
@@ -103,6 +104,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
               "gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8"
             )}
           >
+            {type === "resident" && <ResidencyRoleSwitcher />}
             {children}
           </div>
         </main>

@@ -1,5 +1,6 @@
 import { Gate } from "./gate";
 import { Subscription } from "./subscription";
+import type { StaffMember } from "./staff";
 
 // Enums
 export enum GatePassStatus {
@@ -138,6 +139,14 @@ export interface UserResidencyMembership {
     resident_super_user?: boolean;
     created_at?: string;
     updated_at?: string;
+}
+
+export type ResidencyWorkspaceRole = "resident" | "staff";
+
+export interface ResidencyWorkspaceAccess {
+    residency_id: string;
+    roles: ResidencyWorkspaceRole[];
+    default_role?: ResidencyWorkspaceRole;
 }
 
 export interface ResidentProfileUpdatePayload {
@@ -366,12 +375,14 @@ export interface UserProfile extends User {
     user_type?: UserType | null;
     resident?: Resident | null;
     admin?: Admin | null;
+    staff?: StaffMember | null;
     residencies?: Residency[];
     memberships?: UserResidencyMembership[];
     roles?: AdminRole[];
     admin_roles?: AdminRole[];
     is_admin?: boolean;
     is_resident?: boolean;
+    is_staff?: boolean;
     permissions?: string[] | Record<string, unknown> | null;
 }
 
@@ -387,6 +398,7 @@ export interface AdminSummary {
 export interface DashboardSelect {
     user: UserProfile;
     residencies: Residency[];
+    residency_access?: ResidencyWorkspaceAccess[];
     // admin: AdminSummary | null;
 }
 
@@ -522,7 +534,12 @@ export interface AuthResponse {
     user: UserProfile;
     token: string;
 }
-
+export interface CurrentUser {
+    user: UserProfile;
+    resident?: Resident | null;
+    staff?: StaffMember | null;
+    admin?: Admin | null;
+}
 export interface ApiResponse<T> {
     success: boolean;
     message: string;

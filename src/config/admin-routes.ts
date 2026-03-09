@@ -6,6 +6,7 @@ import {
     BarChart3,
     Settings,
     Shield,
+    Briefcase,
     Scan,
     Activity,
     Receipt,
@@ -47,6 +48,7 @@ export const adminLinks: AdminRoute[] = [
         ],
     },
     { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
+    { href: "/admin/staff", label: "Staff", icon: Briefcase, permission: "residents.list" },
     { href: "/admin/visitors", label: "Visitors", icon: Users, permission: "visitors.list" },
     { href: "/admin/emergencies", label: "Emergencies", icon: AlertTriangle, permission: "emergencies.list" },
     {
