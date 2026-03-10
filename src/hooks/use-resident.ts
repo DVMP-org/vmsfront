@@ -16,6 +16,7 @@ import {
   Transaction,
   CreateGatePassData,
   VisitResponse,
+  Gate,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -126,6 +127,23 @@ export function useGatePass(residencyId: string | null, passId: string | null) {
       return response.data;
     },
     enabled: !!residencyId && !!passId,
+  });
+}
+
+export function useGates(residencyId: string | null, params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sort?: string;
+  filters?: string
+}) {
+  return useQuery<PaginatedResponse<Gate>>({
+    queryKey: ["resident", "gates", residencyId, params],
+    queryFn: async () => {
+      if (!residencyId) throw new Error("Residency ID is required");
+      const response = await residentService.getGates(residencyId, params);
+      return response?.data;
+    },
   });
 }
 
@@ -306,9 +324,9 @@ export function useFundWallet() {
 
   return useMutation({
     mutationFn: (data: FundWalletRequest) => residentService.fundWallet(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resident", "wallet"] });
-      return response.data;
+      toast.success("Wallet funded successfully!");
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);

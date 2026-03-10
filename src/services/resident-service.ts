@@ -34,6 +34,7 @@ import {
   CreateGatePassData,
   ApproveVisitResponse,
   VisitResponse,
+  Gate,
 } from "@/types";
 import { getValueAsType } from "framer-motion";
 import { get } from "http";
@@ -75,6 +76,24 @@ export const residentService = {
 
   async createGatePass(residencyId: string, data: CreateGatePassRequest): Promise<ApiResponse<GatePass>> {
     return apiClient.post(`/resident/residency/${residencyId}/gate-passes`, data);
+  },
+
+  async getGates(residencyId: string, params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sort?: string;
+    filters?: string
+  }): Promise<ApiResponse<PaginatedResponse<Gate>>> {
+    return apiClient.get(`/resident/residency/${residencyId}/gates`, {
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        search: params.search,
+        sort: params.sort,
+        filters: params.filters,
+      },
+    });
   },
 
   async getGatePasses(

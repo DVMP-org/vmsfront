@@ -43,28 +43,38 @@ class ApiClient {
       (response) => response,
       async (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid
-          useAuthStore.getState().clearAuth();
-          this.clearToken();
-          if (typeof window !== "undefined") {
-            const currentPath =
-              window.location.pathname +
-              window.location.search +
-              window.location.hash;
-            const onAuthRoute = window.location.pathname.startsWith("/auth");
+          // Check if this is an authentication failure (invalid token) vs authorization failure (no access)
+          // Don't auto-logout if it's just an authorization failure for a specific resource
+          const requestUrl = error.config?.url || "";
+          const isAuthEndpoint = requestUrl.includes("/auth/");
+          const isUserMeEndpoint = requestUrl.includes("/user/me");
 
-            let redirectTo = "";
-            if (!onAuthRoute && currentPath) {
-              redirectTo = `?redirect_to=${encodeURIComponent(currentPath)}`;
-            } else if (onAuthRoute) {
-              const existingRedirect = new URL(window.location.href).searchParams.get("redirect_to");
-              if (existingRedirect) {
-                redirectTo = `?redirect_to=${encodeURIComponent(existingRedirect)}`;
+          // Only auto-logout for auth endpoints or user/me endpoint 401s
+          // For other 401s (like resident-only endpoints), let the error propagate
+          // without logging out - the user may still have a valid token for other resources
+          if (isAuthEndpoint || isUserMeEndpoint) {
+            useAuthStore.getState().clearAuth();
+            this.clearToken();
+            if (typeof window !== "undefined") {
+              const currentPath =
+                window.location.pathname +
+                window.location.search +
+                window.location.hash;
+              const onAuthRoute = window.location.pathname.startsWith("/auth");
+
+              let redirectTo = "";
+              if (!onAuthRoute && currentPath) {
+                redirectTo = `?redirect_to=${encodeURIComponent(currentPath)}`;
+              } else if (onAuthRoute) {
+                const existingRedirect = new URL(window.location.href).searchParams.get("redirect_to");
+                if (existingRedirect) {
+                  redirectTo = `?redirect_to=${encodeURIComponent(existingRedirect)}`;
+                }
               }
-            }
 
-            // Always redirect to root domain auth pages
-            window.location.href = buildRootDomainUrl(`/auth/login${redirectTo}`);
+              // Always redirect to root domain auth pages
+              window.location.href = buildRootDomainUrl(`/auth/login${redirectTo}`);
+            }
           }
         }
         return Promise.reject(error);

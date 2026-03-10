@@ -25,11 +25,21 @@ import { useRequireEmailVerification } from "@/hooks/use-email-verification-guar
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
+import {
+  getResidencyRoles,
+  getResidencyWorkspacePath,
+  getWorkspaceRoleLabel,
+  resolveResidencyRole,
+} from "@/lib/workspace-context";
 
 export default function SelectPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { setSelectedResidency } = useAppStore();
+  const {
+    selectedResidencyRole,
+    setSelectedResidency,
+    setSelectedResidencyRole,
+  } = useAppStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useRequireEmailVerification(true);
@@ -48,9 +58,16 @@ export default function SelectPage() {
 
   const handleSelectResidency = (residency: Residency) => {
     const cardId = `residency-${residency.id}`;
+    const nextRole = resolveResidencyRole(
+      dashboardData,
+      residency.id,
+      selectedResidencyRole,
+      dashboardData?.user,
+    );
     setSelectedCard(cardId);
     setSelectedResidency(residency);
-    router.push(`/residency/${residency.id}`);
+    setSelectedResidencyRole(nextRole);
+    router.push(getResidencyWorkspacePath(residency.id, nextRole));
   };
 
   const handleSelectAdmin = () => {
@@ -81,7 +98,7 @@ export default function SelectPage() {
                 Welcome back, {user?.first_name || 'Resident'}
               </h1>
               <p className="text-lg text-zinc-500 dark:text-zinc-400 font-medium">
-                Select a workspace to manage your estate operations.
+                Choose the organization workspace you want to enter.
               </p>
             </div>
           </motion.div>
@@ -96,7 +113,7 @@ export default function SelectPage() {
                   <div className="flex items-center gap-3 px-1">
                       <div className="h-5 w-1 rounded-full bg-[rgb(var(--brand-primary))]" />
                     <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
-                      Authorized Properties
+                        Residency workspaces
                     </h2>
                     <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800/50 ml-2" />
                   </div>
@@ -120,7 +137,23 @@ export default function SelectPage() {
                             subtitle={residency.address}
                             selected={selectedCard === cardId}
                             onClick={() => handleSelectResidency(residency)}
-                          />
+                          >
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {getResidencyRoles(dashboardData, residency.id).map((role) => (
+                                <span
+                                  key={role}
+                                  className="rounded-full border border-border/60 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                                >
+                                  {getWorkspaceRoleLabel(role)}
+                                </span>
+                              ))}
+                              {getResidencyRoles(dashboardData, residency.id).length > 1 && (
+                                <span className="rounded-full bg-[rgb(var(--brand-primary))/0.08] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--brand-primary))]">
+                                  Local role switch
+                                </span>
+                              )}
+                            </div>
+                          </DashboardCard>
                         </motion.div>
                       );
                     })}
@@ -134,7 +167,7 @@ export default function SelectPage() {
                   <div className="flex items-center gap-3 px-1">
                     <div className="h-5 w-1 rounded-full bg-indigo-600" />
                     <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
-                      Operations & Management
+                        Organization workspace
                     </h2>
                     <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800/50 ml-2" />
                   </div>
@@ -150,7 +183,7 @@ export default function SelectPage() {
                         </div>
                       }
                       title="Admin Console"
-                      subtitle="Full access to estate operations and community analytics."
+                        subtitle="Organization-wide administration, controls, and analytics."
                       selected={selectedCard === "admin"}
                       onClick={handleSelectAdmin}
                     >
@@ -199,7 +232,6 @@ interface DashboardCardProps {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  badge?: string;
   selected?: boolean;
   onClick: () => void;
   children?: React.ReactNode;
@@ -209,7 +241,6 @@ function DashboardCard({
   icon,
   title,
   subtitle,
-  badge,
   selected = false,
   onClick,
   children,

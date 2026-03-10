@@ -5,7 +5,8 @@ import { authService } from "@/services/auth-service";
 import { useAuthStore } from "@/store/auth-store";
 import { apiClient } from "@/lib/api-client";
 import { resetAuthenticatedUserCaches } from "@/lib/client-cache";
-import { buildRootDomainUrl } from "@/lib/subdomain-utils";
+import { getCookie } from "@/lib/cookies";
+import { buildRootDomainUrl, buildSubdomainUrl, getSubdomain } from "@/lib/subdomain-utils";
 import {
   LoginRequest,
   RegisterRequest,
@@ -15,6 +16,7 @@ import {
   ResetPasswordRequest,
   AuthResponse,
   User,
+  CurrentUser,
 } from "@/types";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -46,6 +48,62 @@ function clearRedirectQueryParam() {
   url.searchParams.delete("redirect_to");
   const sanitized = url.pathname + (url.search || "") + (url.hash || "");
   window.history.replaceState(null, "", sanitized);
+}
+
+function getOrganizationSlugForRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+
+  return getSubdomain() || getCookie("selected-organization") || null;
+}
+
+function getPostLoginDestination(): string {
+  if (typeof window === "undefined") return "/organizations";
+
+  const redirectTarget = getRedirectFromQuery();
+
+  if (redirectTarget) {
+    try {
+      const redirectUrl = new URL(redirectTarget, window.location.origin);
+      const orgSlug =
+        redirectUrl.searchParams.get("organization_slug") ||
+        getOrganizationSlugForRedirect();
+
+      if (orgSlug) {
+        redirectUrl.searchParams.delete("organization_slug");
+        const path =
+          redirectUrl.pathname +
+          (redirectUrl.search || "") +
+          (redirectUrl.hash || "");
+
+        return buildSubdomainUrl(orgSlug, path || "/select");
+      }
+
+      return redirectUrl.pathname + redirectUrl.search + redirectUrl.hash;
+    } catch {
+      return redirectTarget;
+    }
+  }
+
+  const orgSlug = getOrganizationSlugForRedirect();
+  if (orgSlug) {
+    return buildSubdomainUrl(orgSlug, "/select");
+  }
+
+  return "/organizations";
+}
+
+function navigateAfterLogin(router: ReturnType<typeof useRouter>) {
+  const destination = getPostLoginDestination();
+
+  clearRedirectQueryParam();
+
+  if (/^https?:\/\//i.test(destination)) {
+    window.location.href = destination;
+    return;
+  }
+
+  router.refresh();
+  router.replace(destination);
 }
 
 export function useAuth() {
@@ -80,15 +138,7 @@ export function useAuth() {
       setLoginError(null);
       setLoginFieldErrors({});
 
-      // Navigate immediately without setTimeout
-      const redirectTarget = getRedirectFromQuery();
-      if (redirectTarget) {
-        clearRedirectQueryParam();
-        router.refresh();
-        router.replace(redirectTarget);
-      } else {
-        router.replace("/organizations");
-      }
+      navigateAfterLogin(router);
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
@@ -181,15 +231,27 @@ export function useAuth() {
 
 export function useProfile() {
   const { setAuth, token } = useAuthStore();
-  return useQuery<AuthResponse["user"]>({
+  return useQuery<CurrentUser["user"]>({
     queryKey: ["auth", "profile"],
     queryFn: async () => {
       const response = await authService.getUser();
-      const user = response.data;
-      if (user && token) {
-        setAuth(user, token);
+      const { user, resident, staff, admin } = response.data;
+
+      console.log("Fetched user profile:", response.data);
+      // Merge the profile data with flags
+      const userProfile = {
+        ...user,
+        resident: resident ?? null,
+        staff: staff ?? null,
+        admin: admin ?? null,
+        is_resident: !!resident,
+        is_staff: !!staff,
+        is_admin: !!admin,
+      };
+      if (userProfile && token) {
+        setAuth(userProfile, token);
       }
-      return user;
+      return userProfile;
     },
     enabled: !!token,
   });
@@ -292,7 +354,7 @@ export function useSocialCallback() {
       apiClient.setToken(token);
 
       toast.success("Login successful!");
-      router.replace("/organizations");
+      navigateAfterLogin(router);
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);

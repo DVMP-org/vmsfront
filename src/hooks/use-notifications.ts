@@ -7,7 +7,7 @@ import { NotificationResponse, PaginatedResponse } from "@/types";
 
 
 
-export function useNotifications(userId: string, params: {
+export function useNotifications(userId: string | null, params: {
     page: number;
     pageSize: number;
     search?: string;
@@ -18,6 +18,7 @@ export function useNotifications(userId: string, params: {
     return useQuery<PaginatedResponse<NotificationResponse>>({
         queryKey: ["notifications", userId, params],
         queryFn: async () => {
+            if (!userId) throw new Error("User ID is required");
             const response = await generalService.getNotifications(userId, params);
             return response.data;
         },

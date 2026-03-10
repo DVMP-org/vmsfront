@@ -8,6 +8,7 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   User,
+  CurrentUser,
 } from "@/types";
 
 export const authService = {
@@ -27,7 +28,7 @@ export const authService = {
     return apiClient.get("/auth/verify");
   },
 
-  async getUser(): Promise<ApiResponse<AuthResponse["user"]>> {
+  async getUser(): Promise<ApiResponse<CurrentUser>> {
     return apiClient.get("/user/me");
   },
 

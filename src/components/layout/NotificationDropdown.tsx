@@ -14,7 +14,7 @@ export function NotificationDropdown() {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const user = useAuthStore((state) => state.user);
-    const { data, isLoading } = useNotifications(user.id, { page: 1, pageSize: 10 });
+    const { data, isLoading } = useNotifications(user?.id ?? null, { page: 1, pageSize: 10 });
 
     const notifications = useMemo(() => data?.items ?? [], [data])
     const unreadCount = useMemo(() => notifications.filter(n => !n.is_read).length, [notifications])
