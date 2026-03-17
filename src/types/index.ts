@@ -1047,11 +1047,3 @@ export interface TriggerEmergencyRequest {
     residency_id?: string | null;
 }
 
-export interface UpdateMailerSettingsRequest {
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user?: string | null;
-    smtp_password?: string | null;
-    from_email?: string | null;
-}
-

@@ -110,7 +110,7 @@ export default function FeaturesPage() {
                 "Organization selection and onboarding flows",
                 "Subscription plans and billing details",
                 "Payment gateway configuration",
-                "Branding, mailer, and integrations settings",
+                "Branding, notifications, and integrations settings",
                 "Installed plugins management and marketplace discovery",
                 "Deployment options for managed or controlled environments",
             ],
