@@ -145,8 +145,10 @@ const NotificationItem = memo(function NotificationItem({
     notification: any;
     onClick: () => void;
 }) {
-    const { payload, created_at, is_read, id } = notification;
+    const { body, title, intent, created_at, is_read, id } = notification;
     const { mutateAsync: markAsRead } = useMarkAsRead();
+
+
 
     const handleItemClick = () => {
         if (!is_read) {
@@ -171,10 +173,10 @@ const NotificationItem = memo(function NotificationItem({
                     "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
                     is_read ? "bg-muted/50" : "bg-[rgb(var(--brand-primary))]/10"
                 )}>
-                    {payload.intent === "success" && <CheckCircle2 className={cn("h-4 w-4", is_read ? "text-green-500/50" : "text-green-500")} />}
-                    {payload.intent === "warning" && <AlertTriangle className={cn("h-4 w-4", is_read ? "text-amber-500/50" : "text-amber-500")} />}
-                    {payload.intent === "info" && <Info className={cn("h-4 w-4", is_read ? "text-blue-500/50" : "text-blue-500")} />}
-                    {!["success", "warning", "info"].includes(payload.intent?.toLowerCase()) && (
+                    {intent === "success" && <CheckCircle2 className={cn("h-4 w-4", is_read ? "text-green-500/50" : "text-green-500")} />}
+                    {intent === "warning" && <AlertTriangle className={cn("h-4 w-4", is_read ? "text-amber-500/50" : "text-amber-500")} />}
+                    {intent === "info" && <Info className={cn("h-4 w-4", is_read ? "text-blue-500/50" : "text-blue-500")} />}
+                    {!["success", "warning", "info"].includes(intent?.toLowerCase()) && (
                         <Bell className={cn("h-4 w-4", is_read ? "text-muted-foreground/50" : "text-muted-foreground")} />
                     )}
                 </div>
@@ -184,13 +186,13 @@ const NotificationItem = memo(function NotificationItem({
                     "text-sm font-bold leading-tight mb-0.5",
                     is_read ? "text-foreground/70" : "text-foreground"
                 )}>
-                    {payload.title}
+                    {title}
                 </p>
                 <p className={cn(
                     "text-xs line-clamp-2 mb-1.5",
                     is_read ? "text-muted-foreground/70" : "text-muted-foreground"
                 )}>
-                    {payload.message}
+                    {body}
                 </p>
                 <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-tight">
                     {formatDateTime(created_at)}

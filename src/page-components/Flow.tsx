@@ -155,8 +155,8 @@ export function Flow() {
                   border: "1px solid rgba(255,255,255,0.08)",
                   background:
                     index === 1
-                      ? "linear-gradient(180deg, rgba(84, 132, 255, 0.1), rgba(255,255,255,0.02))"
-                      : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
+                      ? "linear-gradient(180deg, #080810, #080810)"
+                      : "linear-gradient(180deg, #080810, #080810)",
                   padding: "16px",
                 }}
               >

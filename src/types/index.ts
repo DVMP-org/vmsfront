@@ -886,7 +886,10 @@ export interface NotificationResponse {
     id: string;
     event: string;
     recipient: string;
-    payload: DatabaseNotification;
+    title: string;
+    body: string;
+    data: Record<string, any> | null;
+    category: string | null;
     is_read: boolean;
     read_at: string | null;
     created_at: string;

@@ -1,8 +1,10 @@
 import Head from "next/head";
 import { Footer } from "@/page-components/Footer";
 import { Nav } from "@/page-components/Nav";
+import { useAppContext } from "@/lib/app_context";
 
 export default function Solutions() {
+  const { appName } = useAppContext();
   const problemCards = [
     {
       title: "That visitor has been waiting at the gate for 10 minutes",
@@ -49,10 +51,10 @@ export default function Solutions() {
   return (
     <>
       <Head>
-        <title>Solutions | VMS Core</title>
+        <title>Solutions | {appName}</title>
         <meta
           name="description"
-          content="See the operational problems VMS Core helps teams solve across visitor approvals, gate activity, resident coordination, and site visibility."
+          content={`See the operational problems ${appName} helps teams solve across visitor approvals, gate activity, resident coordination, and site visibility.`}
         />
       </Head>
       <Nav />
@@ -84,7 +86,7 @@ export default function Solutions() {
             <p className="section-desc problems-hero-desc" style={{ margin: "0 auto 28px auto", maxWidth: "720px" }}>
               Clipboards, shared gate codes, and WhatsApp approvals worked when your
               community was smaller. Now they’re the reason your team is always one
-              unanswered call away from an access incident. VMS Core replaces the mess
+              unanswered call away from an access incident. {appName} replaces the mess
               with a calm, auditable workflow every role can follow.
             </p>
             <div className="problems-hero-cta" style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>

@@ -1,8 +1,10 @@
 import Head from "next/head";
 import { Footer } from "@/page-components/Footer";
 import { Nav } from "@/page-components/Nav";
-
+import { useAppContext } from "@/lib/app_context";
 export default function PricingPage() {
+
+    const { appName } = useAppContext();
     const plans = [
         {
             name: "Starter",
@@ -61,10 +63,10 @@ export default function PricingPage() {
     return (
         <>
             <Head>
-                <title>Pricing | VMS Core</title>
+                <title>Pricing | {appName}</title>
                 <meta
                     name="description"
-                    content="Compare VMS Core pricing plans for visitor management, approvals, gate operations, resident coordination, and enterprise rollout support."
+                    content={`Compare ${appName} pricing plans for visitor management, approvals, gate operations, resident coordination, and enterprise rollout support.`}
                 />
             </Head>
             <Nav />

@@ -138,7 +138,7 @@ export function InviteFormIllustration() {
 // ── Card 02 ── Check-in Panel Illustration
 // Phase 0: waiting for scan/code  |  1: visitor matched  |  2: gates approved  |  3: notifications sent
 const GATES = ["Main Entrance", "North Block"];
-
+const passPrefix = "GATE";
 export function CheckInPanelIllustration() {
     // 0=awaiting, 1=matched, 2=gates approved, 3=notified — then loops
     const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
@@ -153,7 +153,7 @@ export function CheckInPanelIllustration() {
             setGatesApproved([false, false]);
 
             // type in code  
-            const chars = "VMS-4821";
+            const chars = `${passPrefix}-4821`;
             chars.split("").forEach((_, i) => {
                 timers.push(setTimeout(() => setCodeInput(chars.slice(0, i + 1)), 300 + i * 90));
             });
@@ -245,7 +245,7 @@ export function CheckInPanelIllustration() {
                                 </div>
                                 <div>
                                     <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#4ade80" }}>James Okafor</div>
-                                    <div style={{ fontSize: "0.65rem", color: "var(--text-tertiary)" }}>VMS-4821 &middot; Pre-approved</div>
+                                        <div style={{ fontSize: "0.65rem", color: "var(--text-tertiary)" }}>{`${passPrefix}-4821 · Pre-approved`}</div>
                                 </div>
                             </motion.div>
                         )}

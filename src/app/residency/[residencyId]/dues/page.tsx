@@ -18,7 +18,7 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 const PAGE_SIZE = 20;
-
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
 export default function ResidentDuesPage() {
     const params = useParams<{ residencyId: string }>();
     const router = useRouter(); // Error check: next/navigation is standard in this project
@@ -321,7 +321,7 @@ export default function ResidentDuesPage() {
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-muted-foreground/60 uppercase font-bold tracking-widest px-2">
-                <span>VMS Core Property Ledger</span>
+                <span>{appName} Property Ledger</span>
                 <span>Entry Synchronization Active</span>
             </div>
         </div>

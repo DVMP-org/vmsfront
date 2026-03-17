@@ -5,7 +5,7 @@ import {
     ResidentMockup,
     SecurityMockup,
 } from "./illustrations/PersonaMockups";
-
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
 /* ─── Data ─────────────────────────────────────────────────────────────── */
 
 type Persona = {
@@ -180,7 +180,7 @@ export function PersonaTabs() {
                         One platform. Every stakeholder.
                     </h2>
                     <p className="section-desc" style={{ maxWidth: "520px", margin: "0 auto" }}>
-                        VMS Core adapts to how each person in your community actually works.
+                        {appName} adapts to how each person in your community actually works.
                     </p>
                 </div>
 

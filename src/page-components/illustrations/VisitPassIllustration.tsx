@@ -231,7 +231,7 @@ export function VisitPassIllustration() {
             style={{
                 width: "100%",
                 borderRadius: "12px",
-                background: "rgba(6,7,10,0.6)",
+                background: "#080810",
                 border: "1px solid rgba(255,255,255,0.06)",
                 overflow: "hidden",
                 fontFamily: "var(--font-sans, sans-serif)",

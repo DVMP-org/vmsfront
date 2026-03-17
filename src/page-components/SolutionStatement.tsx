@@ -1,3 +1,4 @@
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
 export function SolutionStatement() {
   return (
     <section className="section problem-section scroll-reveal">
@@ -45,7 +46,7 @@ export function SolutionStatement() {
             >
               Decision-makers need a clean audit trail and portfolio-wide visibility.
               Gate staff need a process that doesn’t slow them down. Residents need
-              fewer steps. VMS Core is designed to deliver all three from one place.
+              fewer steps. {appName} is designed to deliver all three from one place.
             </div>
           </div>
         </div>

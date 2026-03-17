@@ -33,6 +33,7 @@ import {
 } from "@/lib/workspace-context";
 
 export default function SelectPage() {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMSCORE";
   const router = useRouter();
   const { user } = useAuthStore();
   const {
@@ -222,7 +223,7 @@ export default function SelectPage() {
       </main>
 
       <footer className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-600 relative z-10">
-        <p>&copy; {new Date().getFullYear()} VMS Core. Enterprise Estate Management.</p>
+        <p>&copy; {new Date().getFullYear()} {appName}. Enterprise Estate Management.</p>
       </footer>
     </div>
   );

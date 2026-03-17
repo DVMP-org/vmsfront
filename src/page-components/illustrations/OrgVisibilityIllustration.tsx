@@ -86,7 +86,7 @@ export function OrgVisibilityIllustration() {
             style={{
                 width: "100%",
                 height: "100%",
-                background: "var(--bg-base)",
+                background: "#080810",
                 borderRadius: "10px",
                 overflow: "hidden",
                 display: "flex",

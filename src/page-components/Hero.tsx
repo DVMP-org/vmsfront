@@ -2,9 +2,12 @@ import Link from "next/link";
 import { Fragment, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CommunityDashboardIllustration } from "./illustrations/CommunityDashboardIllustration";
+import { useTheme } from "@/lib/theme_context";
 
 export function Hero() {
   const heroRef = useRef<HTMLElement>(null);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const onMouseMove = useCallback((e: MouseEvent) => {
     const el = heroRef.current;
@@ -190,9 +193,15 @@ export function Hero() {
                   maxWidth: "920px",
                   borderRadius: "32px",
                   padding: "14px",
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025))",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 48px 120px -70px rgba(0, 0, 0, 1)",
+                  background: isLight
+                    ? "linear-gradient(180deg, rgba(15,23,42,0.07), rgba(15,23,42,0.03))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025))",
+                  border: isLight
+                    ? "1px solid rgba(15,23,42,0.12)"
+                    : "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: isLight
+                    ? "0 24px 80px -40px rgba(67,97,244,0.18), 0 4px 24px -8px rgba(15,23,42,0.1)"
+                    : "0 48px 120px -70px rgba(0, 0, 0, 1)",
                 }}
               >
                 <div
@@ -208,12 +217,12 @@ export function Hero() {
                       width: "56px",
                       height: "6px",
                       borderRadius: "999px",
-                      background: "rgba(255, 255, 255, 0.18)",
+                      background: isLight ? "rgba(15,23,42,0.14)" : "rgba(255, 255, 255, 0.18)",
                     }}
                   ></span>
                 </div>
 
-                <div className="card hero-illustration-card" style={{ padding: "0", borderRadius: "24px", background: "rgba(8, 9, 11, 0.96)", overflow: "hidden" }}>
+                <div className="card hero-illustration-card" style={{ padding: "0", borderRadius: "24px", background: "#080810", overflow: "hidden" }}>
                   <CommunityDashboardIllustration />
                 </div>  
               </div>
@@ -224,9 +233,11 @@ export function Hero() {
                   width: "140px",
                   height: "24px",
                   marginTop: "-2px",
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(110,110,110,0.08))",
-                  borderLeft: "1px solid rgba(255,255,255,0.1)",
-                  borderRight: "1px solid rgba(255,255,255,0.1)",
+                  background: isLight
+                    ? "linear-gradient(180deg, rgba(15,23,42,0.1), rgba(15,23,42,0.04))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(110,110,110,0.08))",
+                  borderLeft: isLight ? "1px solid rgba(15,23,42,0.08)" : "1px solid rgba(255,255,255,0.1)",
+                  borderRight: isLight ? "1px solid rgba(15,23,42,0.08)" : "1px solid rgba(255,255,255,0.1)",
                   borderBottomLeftRadius: "18px",
                   borderBottomRightRadius: "18px",
                 }}
@@ -237,8 +248,12 @@ export function Hero() {
                   width: "240px",
                   height: "18px",
                   borderRadius: "999px",
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(110,110,110,0.08))",
-                  boxShadow: "0 26px 60px -26px rgba(0, 0, 0, 0.9)",
+                  background: isLight
+                    ? "linear-gradient(180deg, rgba(15,23,42,0.09), rgba(15,23,42,0.03))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(110,110,110,0.08))",
+                  boxShadow: isLight
+                    ? "0 16px 40px -16px rgba(67,97,244,0.15)"
+                    : "0 26px 60px -26px rgba(0, 0, 0, 0.9)",
                 }}
               ></div>
             </div>

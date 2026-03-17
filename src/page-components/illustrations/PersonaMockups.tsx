@@ -12,6 +12,8 @@ const GATE_ROWS = [
   { label: "East Parking", info: "Gate C · 3 today", color: "#facc15" },
 ];
 
+const passPrefix = process.env.NEXT_PUBLIC_PASS_PREFIX || "GATE";
+
 const BAR_HEIGHTS_A = [24, 38, 20, 46, 32, 54, 40];
 const BAR_HEIGHTS_B = [32, 22, 40, 30, 50, 28, 44];
 
@@ -613,8 +615,8 @@ export function ResidentMockup({ color }: { color: string }) {
 type ScanPhase = "waiting" | "scanning" | "matched" | "granted" | "denied";
 
 const VISITORS = [
-  { initials: "JO", name: "James Okafor", ref: "VMS-4821", gates: ["Main", "North"], result: "granted" as const },
-  { initials: "SC", name: "Sarah Chen", ref: "VMS-1193", gates: ["Main"], result: "granted" as const },
+  { initials: "JO", name: "James Okafor", ref: `${passPrefix}-4821`, gates: ["Main", "North"], result: "granted" as const },
+  { initials: "SC", name: "Sarah Chen", ref: `${passPrefix}-1193`, gates: ["Main"], result: "granted" as const },
   { initials: "XX", name: "Unknown Vehicle", ref: "LP-7G4R", gates: [], result: "denied" as const },
 ];
 

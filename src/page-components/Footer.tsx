@@ -1,4 +1,5 @@
 export function Footer() {
+    const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
     return (
         <footer style={{ padding: "88px 0 34px 0" }}>
             <div className="container">
@@ -9,7 +10,7 @@ export function Footer() {
                                 className="font-display"
                                 style={{ fontSize: "1.45rem", fontWeight: 800, marginBottom: "14px" }}
                             >
-                                VMS<span style={{ color: "var(--accent-primary)" }}>Core</span>
+                                {appName}
                             </div>
                             <p
                                 style={{
@@ -64,7 +65,7 @@ export function Footer() {
                     }}
                 >
                     <p style={{ color: "var(--text-tertiary)", fontSize: "0.85rem", margin: 0 }}>
-                        &copy; {new Date().getFullYear()} VMS Core. All rights reserved.
+                        &copy; {new Date().getFullYear()} {appName}. All rights reserved.
                     </p>
                     <div style={{ display: "flex", gap: "22px", flexWrap: "wrap" }}>
                         <a href="#" style={{ color: "var(--text-tertiary)", textDecoration: "none", fontSize: "0.85rem" }}>Privacy Policy</a>

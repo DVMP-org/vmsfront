@@ -52,6 +52,16 @@ const nextConfig = {
         hostname: '*.s3.amazonaws.com',
         port: '',
         pathname: '/**',
+      }, {
+        protocol: 'http',
+        hostname: '*.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      }, {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        port: '',
+        pathname: '/**',
       },],
   },
   typescript: {
