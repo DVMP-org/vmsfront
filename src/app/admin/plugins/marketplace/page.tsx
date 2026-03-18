@@ -150,7 +150,7 @@ export default function MarketplacePage() {
                                 Plugin Marketplace
                             </h1>
                             <p className="text-sm sm:text-base text-muted-foreground">
-                                Browse and install plugins to extend your VMS capabilities
+                                Browse and install plugins to extend your capabilities
                             </p>
                         </div>
                         <div className="flex flex-col gap-2">

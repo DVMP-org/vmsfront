@@ -19,8 +19,10 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useMyOrganizations, useSelectOrganization } from "@/hooks/use-organization";
 import type { Organization, OrganizationMembership } from "@/types";
+import { useAppContext } from "@/lib/app_context";
 
 export default function OrganizationsPage() {
+    const { appName } = useAppContext()
     const router = useRouter();
     const { user } = useAuthStore();
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export default function OrganizationsPage() {
             </main>
 
             <footer className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-600 relative z-10">
-                <p>&copy; {new Date().getFullYear()} VMS Core. Enterprise Estate Management.</p>
+                <p>&copy; {new Date().getFullYear()} {appName}. Enterprise Estate Management.</p>
             </footer>
         </div>
     );

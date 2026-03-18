@@ -2,27 +2,30 @@ import Head from "next/head";
 import { useState } from "react";
 import { Footer } from "@/page-components/Footer";
 import { Nav } from "@/page-components/Nav";
+import { useAppContext } from "@/lib/app_context";
+
 
 export default function FeaturesPage() {
+    const { appName } = useAppContext();
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
     const overviewCards = [
         {
             label: "Access operations",
             value: "Passes, approvals, gate events",
-            body: "The visitor stood at the gate. The approval was in someone’s phone. That’s the last time. Invitations, passes, QR codes, and gate events in one shared view.",
+            body: `The visitor stood at the gate. The approval was in someone’s phone. That’s the last time. Invitations, passes, QR codes, and gate events in one shared view.`,
             icon: "🚪",
         },
         {
             label: "Resident workflows",
             value: "Requests, dues, community",
-            body: "Residents stop calling your front desk for every guest invite, dues question, or announcement. Self-service workflows mean your team handles less repetitive work.",
+            body: `${appName} stops residents from calling your front desk for every guest invite, dues question, or announcement. Self-service workflows mean your team handles less repetitive work.`,
             icon: "🏘️",
         },
         {
             label: "Admin control",
             value: "Roles, properties, plugins",
-            body: "One admin layer for residencies, teams, gate hierarchies, branding, billing, and reporting. No more stitching five tools together to run one community.",
+            body: `One admin layer for residencies, teams, gate hierarchies, branding, billing, and reporting. No more stitching five tools together to run one community.`,
             icon: "⚙️",
         },
     ];
@@ -33,7 +36,7 @@ export default function FeaturesPage() {
             eyebrow: "Visitor access",
             title: "Stop finding out about arrivals after the fact",
             description:
-                "The visitor is at the gate. The approval is in a WhatsApp thread from three days ago. Nobody can find it. VMS Core gives every role — resident, gate team, and admin — one clear view of who was invited, what they were approved for, and when they arrived.",
+                `The visitor is at the gate. The approval is in a WhatsApp thread from three days ago. Nobody can find it. ${appName} gives every role — resident, gate team, and admin — one clear view of who was invited, what they were approved for, and when they arrived.`,
             bestFor: "Front desks, gate teams, resident services, and property operators",
             features: [
                 "Visitor invitations and approval flows",
@@ -50,7 +53,7 @@ export default function FeaturesPage() {
             eyebrow: "Gate operations",
             title: "A gate console built for real movement, not just record-keeping",
             description:
-                "Gate teams shouldn’t need to check three apps to decide if someone should enter. The gate console gives them one surface for check-in, QR scanning, event history, and pass status — so arrivals flow without back-and-forth.",
+                `Gate teams shouldn’t need to check three apps to decide if someone should enter. The gate console gives them one surface for check-in, QR scanning, event history, and pass status — so arrivals flow without back-and-forth.`,
             bestFor: "Security teams, gate operators, checkpoint staff, and operations leads",
             features: [
                 "Dedicated gate console for check-in and check-out",
@@ -101,13 +104,13 @@ export default function FeaturesPage() {
             eyebrow: "Platform",
             title: "Commercial readiness without enterprise complexity",
             description:
-                "When VMS Core becomes part of your long-term operation, the platform layer covers branding, billing, plugin discovery, and deployment options — so growth doesn’t mean stitching in a new tool every six months.",
+                `When ${appName} becomes part of your long-term operation, the platform layer covers branding, billing, plugin discovery, and deployment options — so growth doesn’t mean stitching in a new tool every six months.`,
             bestFor: "Commercial teams, platform owners, rollout leads, and multi-property operators",
             features: [
                 "Organization selection and onboarding flows",
                 "Subscription plans and billing details",
                 "Payment gateway configuration",
-                "Branding, mailer, and integrations settings",
+                "Branding, notifications, and integrations settings",
                 "Installed plugins management and marketplace discovery",
                 "Deployment options for managed or controlled environments",
             ],
@@ -129,10 +132,10 @@ export default function FeaturesPage() {
     return (
         <>
             <Head>
-                <title>Features | VMS Core</title>
+                <title>Features | {appName}</title>
                 <meta
                     name="description"
-                    content="Explore VMS Core features across visitor access, gate operations, gate dependency mapping, resident workflows, admin controls, plugins, billing, and deployment."
+                    content={`Explore ${appName} features across visitor access, gate operations, gate dependency mapping, resident workflows, admin controls, plugins, billing, and deployment.`}
                 />
             </Head>
             <Nav />
@@ -188,7 +191,7 @@ export default function FeaturesPage() {
                                 One platform built around the actual workflows of access, resident operations, and property control
                             </h1>
                             <p className="section-desc features-hero-desc" style={{ marginBottom: "32px", maxWidth: "700px", fontSize: "1.05rem" }}>
-                                Whether you're opening gates, approving visitors, managing dues, or coordinating across five properties, VMS Core brings clarity to operations that usually stay disconnected.
+                                Whether you're opening gates, approving visitors, managing dues, or coordinating across five properties, {appName} brings clarity to operations that usually stay disconnected.
                             </p>
                             <div className="features-hero-cta" style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
                                 <a href="/pricing" className="btn-primary" style={{ textDecoration: "none" }}>
@@ -490,7 +493,7 @@ export default function FeaturesPage() {
                                         Most teams start with visitor approvals and gate operations, then discover
                                         that resident self-service cuts their daily interruptions in half. Then
                                         leadership wants the reporting. Then the second property gets added.
-                                        VMS Core is designed to grow with you — not charge you for features you
+                                        {appName} is designed to grow with you — not charge you for features you
                                         haven’t reached yet.
                                     </p>
                                     <div className="features-closing-cta" style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>

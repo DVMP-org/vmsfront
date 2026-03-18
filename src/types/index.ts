@@ -886,7 +886,10 @@ export interface NotificationResponse {
     id: string;
     event: string;
     recipient: string;
-    payload: DatabaseNotification;
+    title: string;
+    body: string;
+    data: Record<string, any> | null;
+    category: string | null;
     is_read: boolean;
     read_at: string | null;
     created_at: string;
@@ -1042,13 +1045,5 @@ export interface TriggerEmergencyRequest {
     description?: string;
     location?: string;
     residency_id?: string | null;
-}
-
-export interface UpdateMailerSettingsRequest {
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user?: string | null;
-    smtp_password?: string | null;
-    from_email?: string | null;
 }
 

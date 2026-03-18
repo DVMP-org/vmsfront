@@ -275,7 +275,7 @@ export default function PluginsPage() {
                 Plugins
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Enhance your VMS with powerful integrations and features
+                Enhance your workspace with powerful integrations and features
               </p>
             </div>
             <div className="flex flex-col gap-2">

@@ -50,8 +50,8 @@ export function NotificationList() {
             .filter(n => {
                 const searchLower = searchTerm.toLowerCase();
                 return (
-                    n.payload.title.toLowerCase().includes(searchLower) ||
-                    n.payload.message.toLowerCase().includes(searchLower) ||
+                    n.title.toLowerCase().includes(searchLower) ||
+                    n.body.toLowerCase().includes(searchLower) ||
                     n.event.toLowerCase().includes(searchLower)
                 );
             });
@@ -175,13 +175,15 @@ export function NotificationList() {
 }
 
 function NotificationRow({ notification }: { notification: any }) {
-    const { payload, created_at, event, is_read, id } = notification;
+    const { title, body, intent, created_at, event, is_read, id } = notification;
     const { mutateAsync: markAsRead } = useMarkAsRead();
 
     const handleMarkRead = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!is_read) markAsRead([id]);
     };
+
+
 
     return (
         <motion.div
@@ -201,13 +203,16 @@ function NotificationRow({ notification }: { notification: any }) {
                 <div className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg border transition-all",
                     is_read ? "bg-muted/50 border-border/40 text-muted-foreground/60 dark:border-white/20" :
-                        payload.intent === "success" ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-sm shadow-green-500/5" :
-                            payload.intent === "warning" ? "bg-amber-500/10 border-amber-500/20 text-amber-600 shadow-sm shadow-amber-500/5" :
-                                "bg-[rgb(var(--brand-primary)/0.1)] border-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))] shadow-sm shadow-[rgb(var(--brand-primary)/0.05)] dark:text-white/50 dark:border-white/20"
+                        intent === "success" ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-sm shadow-green-500/5" :
+                            intent === "warning" ? "bg-amber-500/10 border-amber-500/20 text-amber-600 shadow-sm shadow-amber-500/5" :
+                                intent === "info" ?
+                                    "bg-[rgb(var(--brand-primary)/0.1)] border-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))] shadow-sm shadow-[rgb(var(--brand-primary)/0.05)] dark:text-white/50 dark:border-white/20" :
+                                    "bg-muted/10 border-border/40 text-muted-foreground/60 dark:border-white/20"
                 )}>
-                    {payload.intent === "success" ? <CheckCircle2 className="h-4 w-4" /> :
-                        payload.intent === "warning" ? <AlertTriangle className="h-4 w-4" /> :
-                            <Info className="h-4 w-4" />}
+                    {intent === "success" ? <CheckCircle2 className="h-4 w-4" /> :
+                        intent === "warning" ? <AlertTriangle className="h-4 w-4" /> :
+                            intent === "info" ? <AlertTriangle className="h-4 w-4" /> :
+                                <Info className="h-4 w-4" />}
                 </div>
             </div>
 
@@ -217,7 +222,7 @@ function NotificationRow({ notification }: { notification: any }) {
                         "text-sm font-bold truncate",
                         is_read ? "text-foreground/70" : "text-foreground"
                     )}>
-                        {payload.title}
+                        {title}
                     </h3>
                     <Badge variant="outline" className="text-[9px] uppercase font-black tracking-widest h-4 px-1 py-0 border-border/40 text-muted-foreground/50 bg-muted/20">
                         {event.replace(/_/g, " ")}
@@ -227,7 +232,7 @@ function NotificationRow({ notification }: { notification: any }) {
                     "text-xs line-clamp-1 font-medium",
                     is_read ? "text-muted-foreground/60" : "text-muted-foreground"
                 )}>
-                    {payload.message}
+                    {body}
                 </p>
             </div>
 

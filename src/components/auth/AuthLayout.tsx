@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 import { LogoFull } from "@/components/LogoFull";
 import { ArrowLeft, Shield, Users, Zap } from "lucide-react";
 import NextLink from "next/link";
-
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
 /* Floating glass bubble definitions for the left panel */
 const BUBBLES = [
     { size: 88, top: "8%", left: "72%", delay: 0, duration: 7, color: "rgba(84,132,255,0.13)", border: "rgba(84,132,255,0.28)", borderRadius: "26px", yRange: [-22, 0, -10, 0], rotRange: [0, 6, -3, 0] },
@@ -444,7 +444,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                             letterSpacing: "0.01em",
                         }}
                     >
-                        &copy; {new Date().getFullYear()} VMS Core. All rights reserved.
+                        &copy; {new Date().getFullYear()} {appName}. All rights reserved.
                     </p>
                 </motion.div>
             </div>

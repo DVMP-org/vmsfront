@@ -194,7 +194,10 @@ export default function ResidencyStaffPage() {
             Register staff for this residency, manage permissions, review KYC, and inspect movement logs.
           </p>
           {/* Show hover card if user is both resident and staff in this residency */}
-          {isResidentAndStaff && isStaffInThisResidency && (
+          {isResidentAndStaff
+            // && isStaffInThisResidency 
+            &&
+            (
             <StaffBadgeHoverCard
               staff={userStaff}
               user={profile}

@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/lib/theme_context";
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
 export function Nav() {
   const { pathname } = useRouter();
   const [hash, setHash] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     setHash(window.location.hash);
@@ -76,16 +79,16 @@ export function Nav() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
-                VMS
+                {appName.split(" ")[0]}
               </span>
-              <span style={{ color: "var(--accent-primary)" }}>Core</span>
+              <span style={{ color: "var(--accent-primary)" }}>{appName.split(" ")[1]}</span>
             </Link>
             <div className="nav-links">
               <Link href="/features" className={linkClass("/features")}>
                 For Communities
               </Link>
               <Link href="/solutions" className={linkClass("/solutions")}>
-                Why VMS Core
+                Why {appName}
               </Link>
               <Link href="/pricing" className={linkClass("/pricing")}>
                 Pricing
@@ -97,6 +100,29 @@ export function Nav() {
                 Security
               </a>
 
+              <button
+                onClick={toggleTheme}
+                aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+                className="theme-toggle-btn"
+              >
+                {theme === "light" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                )}
+              </button>
               <Link
                 href="/auth/login"
                 className="btn-secondary"
@@ -131,7 +157,7 @@ export function Nav() {
           For Communities
         </Link>
         <Link href="/solutions" className="mobile-nav-link" onClick={() => setMenuOpen(false)}>
-          Why VMS Core
+          Why {appName}
         </Link>
         <Link href="/pricing" className="mobile-nav-link" onClick={() => setMenuOpen(false)}>
           Pricing
@@ -143,6 +169,36 @@ export function Nav() {
           Security
         </a>
 
+        <button
+          onClick={() => { toggleTheme(); setMenuOpen(false); }}
+          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+          className="mobile-nav-link"
+          style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", border: "none", background: "none", width: "100%", textAlign: "left" }}
+        >
+          {theme === "light" ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+              Dark mode
+            </>
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+              Light mode
+            </>
+          )}
+        </button>
         <div className="mobile-nav-cta">
           <Link
             href="/auth/login"

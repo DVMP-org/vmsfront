@@ -1,10 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks, Mail, Crown } from "lucide-react";
+import { Settings, CreditCard, Palette, Blocks, Bell, Crown } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 
-type SettingsTab = "payment" | "branding" | "integrations" | "mailer" | "subscription";
+type SettingsTab = "payment" | "branding" | "integrations" | "notifications" | "subscription";
 
 function SettingsLayoutContent({
     children,
@@ -22,10 +22,9 @@ function SettingsLayoutContent({
         }
 
         const tabParam = searchParams?.get("tab");
-        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer" || tabParam === "subscription") {
+        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "notifications" || tabParam === "subscription") {
             return tabParam as SettingsTab;
         }
-
         return "payment";
     };
 
@@ -50,7 +49,7 @@ function SettingsLayoutContent({
                     <Settings className="h-4 w-4 text-zinc-600" />
                     <h1 className="text-lg font-semibold text-foreground">Platform Settings</h1>
                 </div>
-                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations, and mailer settings</p>
+                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations, notifications, and more</p>
             </div>
 
             {/* Tabs */}
@@ -92,15 +91,15 @@ function SettingsLayoutContent({
                     </div>
                 </button>
                 <button
-                    onClick={() => handleTabChange("mailer")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "mailer"
+                    onClick={() => handleTabChange("notifications")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "notifications"
                         ? "border-zinc-900 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <Mail className="h-3.5 w-3.5" />
-                        Mailer
+                        <Bell className="h-3.5 w-3.5" />
+                        Notifications
                     </div>
                 </button>
                 <button

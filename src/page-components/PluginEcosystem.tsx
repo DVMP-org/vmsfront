@@ -164,7 +164,7 @@ export function PluginEcosystem() {
             </h3>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
               Turn plugins on or off, manage configuration, and pair them with branding,
-              payment, mailer, and integration settings from the admin side.
+              payment, notifications, and integration settings from the admin side.
             </p>
           </motion.div>
         </motion.div>

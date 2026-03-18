@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { GateEventIllustration } from "@/page-components/illustrations/GateEventIllustration";
 
 export function Capabilities() {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -36,7 +37,7 @@ export function Capabilities() {
           </h2>
           <p className="section-desc" style={{ margin: "24px auto 0 auto" }}>
             Most communities are managing gates in one tool, visitors in another,
-            residents in a third, and dues in a spreadsheet. VMS Core is the single
+            residents in a third, and dues in a spreadsheet. {appName} is the single
             system that replaces all of them.
           </p>
         </motion.div>

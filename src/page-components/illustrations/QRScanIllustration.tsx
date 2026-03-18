@@ -64,7 +64,7 @@ export function QRScanIllustration() {
             style={{
                 width: "100%",
                 borderRadius: "18px",
-                background: "rgba(255,255,255,0.03)",
+                background: "#080810",
                 border: "1px solid rgba(255,255,255,0.07)",
                 padding: "20px",
                 display: "flex",

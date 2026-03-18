@@ -1,14 +1,19 @@
+
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "./dashboard.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";
 import { getBrandingBootstrapScript } from "../lib/branding-utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const APP_URL = process.env.VMS_BASE_URL ?? "https://app.vmscore.com";
-const APP_TITLE = "VMSCORE - Visitor Management System";
+const APP_URL = process.env.NEXT_PUBLIC_BASE_URL;
+if (!APP_URL) {
+  throw new Error("NEXT_PUBLIC_BASE_URL environment variable is not set");
+}
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMSCORE";
+const APP_TITLE = `${appName} - Visitor Management System`;
 const APP_DESCRIPTION =
   "White-label visitor and resident access management — gate passes, visitor logs, dues, emergencies and more.";
 
@@ -17,7 +22,7 @@ export const metadata: Metadata = {
 
   title: {
     default: APP_TITLE,
-    template: "%s | VMSCORE",
+    template: `%s | ${appName}`,
   },
   description: APP_DESCRIPTION,
   manifest: "/manifest.webmanifest",
@@ -31,14 +36,14 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "VMSCORE",
+    title: appName,
     startupImage: "/assets/vmscore_logo.png",
   },
 
   openGraph: {
     type: "website",
     url: APP_URL,
-    siteName: "VMSCORE",
+    siteName: appName,
     title: APP_TITLE,
     description: APP_DESCRIPTION,
     images: [
@@ -46,7 +51,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "VMSCORE — Visitor Management System",
+        alt: `${appName} — Visitor Management System`,
       },
     ],
     locale: "en_US",

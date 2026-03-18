@@ -224,7 +224,7 @@ export function GateEventIllustration() {
                     transform: `scale(${scale})`,
                     borderRadius: "18px",
                     border: "1px solid rgba(255,255,255,0.07)",
-                    background: "rgba(6, 7, 10, 0.85)",
+                    background: "#080810",
                     overflow: "hidden",
                     fontFamily: "var(--font-sans), system-ui, sans-serif",
                     display: "flex",
@@ -236,7 +236,7 @@ export function GateEventIllustration() {
                     style={{
                         padding: "12px 18px",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
-                        background: "rgba(255,255,255,0.02)",
+                        background: "#080810",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -271,7 +271,7 @@ export function GateEventIllustration() {
                             gap: "14px",
                             padding: "14px 16px",
                             borderRadius: "12px",
-                            background: "rgba(255,255,255,0.03)",
+                            background: "#080810",
                             border: "1px solid rgba(255,255,255,0.07)",
                         }}
                     >
