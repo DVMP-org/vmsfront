@@ -42,7 +42,7 @@ export function SubscriptionSection() {
                                 className={cn(
                                     "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                                     isActive
-                                        ? "bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] border-l-2 border-[rgb(var(--brand-primary))]"
+                                        ? "bg-[rgb(var(--brand-primary)/0.10)] text-[rgb(var(--brand-primary))] "
                                         : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-50"
                                 )}
                             >

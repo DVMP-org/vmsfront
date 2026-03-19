@@ -70,17 +70,41 @@ export default function PricingPage() {
                 />
             </Head>
             <Nav />
-            <main>
+            {/* Distinctive geometric background layer */}
+            <div className="landing-geometric-bg" aria-hidden="true" />
+            <main style={{ position: "relative", overflow: "hidden" }}>
+                {/* Floating geometric shapes */}
+                <div
+                    className="geo-ring geo-shape"
+                    aria-hidden="true"
+                    style={{ width: "280px", height: "280px", top: "20%", right: "-5%", opacity: 0.65 }}
+                />
+                <div
+                    className="geo-diamond geo-shape"
+                    aria-hidden="true"
+                    style={{ width: "45px", height: "45px", top: "35%", left: "8%", opacity: 0.75 }}
+                />
+                <div
+                    className="glow-orb glow-orb--primary"
+                    aria-hidden="true"
+                    style={{ width: "450px", height: "300px", top: "-60px", left: "-80px" }}
+                />
+                <div
+                    className="dot-grid-accent"
+                    aria-hidden="true"
+                    style={{ width: "200px", height: "200px", top: "15%", right: "5%", opacity: 0.8 }}
+                />
+
                 <section className="section pricing-hero-section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
                     <div
                         aria-hidden="true"
                         className="bg-glow"
-                        style={{ top: "-18%", left: "8%", width: "420px", height: "420px", opacity: 0.55 }}
+                        style={{ top: "-18%", left: "8%", width: "420px", height: "420px", opacity: 0.6 }}
                     ></div>
                     <div
                         aria-hidden="true"
                         className="bg-glow"
-                        style={{ top: "-8%", right: "4%", left: "auto", width: "360px", height: "360px", opacity: 0.42 }}
+                        style={{ top: "-8%", right: "4%", left: "auto", width: "360px", height: "360px", opacity: 0.5 }}
                     ></div>
                     <div className="container" style={{ textAlign: "center" }}>
                         <div

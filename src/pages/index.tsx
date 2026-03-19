@@ -39,16 +39,53 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>{appName} — Community Access &amp; Visitor Management</title>
-        <meta name="description" content={`${appName} is the all-in-one platform for HOAs, gated communities, and apartment buildings to manage visitor access, gate events, resident coordination, and community operations.`} />
-        <meta property="og:title" content={`${appName} — Community Access &amp; Visitor Management`} />
-        <meta property="og:description" content={`Replace scattered approvals, gate codes, and notebooks with one clear, auditable system your whole team will use.`} />
-        <meta property="og:type" content="website" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
+
       <Nav />
+      {/* Distinctive geometric background layer */}
+      <div className="landing-geometric-bg" aria-hidden="true" />
+
       <main style={{ position: "relative", overflow: "hidden" }}>
+        {/* Floating geometric shapes for visual interest */}
+        <div
+          className="geo-ring geo-shape"
+          aria-hidden="true"
+          style={{ width: "400px", height: "400px", top: "10%", left: "-5%", opacity: 0.8 }}
+        />
+        <div
+          className="geo-ring geo-shape"
+          aria-hidden="true"
+          style={{ width: "200px", height: "200px", top: "40%", right: "8%", opacity: 0.6, animationDelay: "-10s" }}
+        />
+        <div
+          className="geo-diamond geo-shape"
+          aria-hidden="true"
+          style={{ width: "60px", height: "60px", top: "25%", left: "15%", opacity: 0.8 }}
+        />
+        <div
+          className="geo-diamond geo-shape"
+          aria-hidden="true"
+          style={{ width: "40px", height: "40px", bottom: "30%", right: "20%", opacity: 0.7, animationDelay: "-15s" }}
+        />
+
+        {/* Dot grid accent near hero */}
+        <div
+          className="dot-grid-accent"
+          aria-hidden="true"
+          style={{ width: "300px", height: "300px", top: "5%", right: "5%", opacity: 0.9 }}
+        />
+
+        {/* Organic glow orbs */}
+        <div
+          className="glow-orb glow-orb--primary"
+          aria-hidden="true"
+          style={{ width: "600px", height: "400px", top: "-100px", left: "-150px" }}
+        />
+        <div
+          className="glow-orb glow-orb--secondary"
+          aria-hidden="true"
+          style={{ width: "400px", height: "500px", top: "200px", right: "-100px", animationDelay: "-4s" }}
+        />
+
         <Hero />
         <div style={{ position: "relative" }}>
           <div
@@ -61,35 +98,50 @@ export default function Home() {
           <PersonaTabs />
         </div>
 
+        {/* Section divider */}
+        <div className="section-divider" aria-hidden="true" />
+
         <div style={{ position: "relative" }}>
           <div
             aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: "2%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "72%",
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
-            }}
-          ></div>
+            className="geo-cross geo-shape"
+            style={{ top: "10%", left: "8%", opacity: 0.8 }}
+          />
+          <div
+            aria-hidden="true"
+            className="geo-cross geo-shape"
+            style={{ top: "60%", right: "12%", opacity: 0.7, animationDelay: "-8s" }}
+          />
           <div
             aria-hidden="true"
             className="bg-glow"
-            style={{ top: "26%", right: "-12%", left: "auto", width: "420px", height: "420px", opacity: 0.18 }}
+            style={{ top: "26%", right: "-12%", left: "auto", width: "420px", height: "420px", opacity: 0.25 }}
           ></div>
           <MultiTenantArchitecture />
           <PluginEcosystem />
         </div>
 
         <TrustStrip />
+
+        {/* Section divider */}
+        <div className="section-divider" aria-hidden="true" />
+
         <ArchitectureStatement />
         <div style={{ position: "relative" }}>
           <div
             aria-hidden="true"
+            className="glow-orb glow-orb--accent"
+            style={{ width: "350px", height: "350px", top: "20%", left: "0" }}
+          />
+          <div
+            aria-hidden="true"
+            className="dot-grid-accent"
+            style={{ width: "200px", height: "200px", bottom: "10%", left: "5%", opacity: 0.8 }}
+          />
+          <div
+            aria-hidden="true"
             className="bg-glow"
-            style={{ top: "14%", left: "8%", width: "300px", height: "300px", opacity: 0.15 }}
+            style={{ top: "14%", left: "8%", width: "300px", height: "300px", opacity: 0.22 }}
           ></div>
           <IdentityWorkflow />
           <ComplianceAndAudit />
@@ -97,23 +149,20 @@ export default function Home() {
         </div>
 
         {/* <ZeroTrust /> */}
+
+        {/* Section divider */}
+        <div className="section-divider" aria-hidden="true" />
+
         <div style={{ position: "relative" }}>
           <div
             aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: "0",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "68%",
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)",
-            }}
-          ></div>
+            className="geo-ring geo-shape"
+            style={{ width: "300px", height: "300px", bottom: "20%", left: "-5%", opacity: 0.5 }}
+          />
           <div
             aria-hidden="true"
             className="bg-glow"
-            style={{ bottom: "10%", right: "6%", left: "auto", width: "380px", height: "380px", opacity: 0.14 }}
+            style={{ bottom: "10%", right: "6%", left: "auto", width: "380px", height: "380px", opacity: 0.2 }}
           ></div>
           {/* <IndustryContexts /> */}
           <Infrastructure />

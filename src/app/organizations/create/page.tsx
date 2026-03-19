@@ -13,7 +13,7 @@ import {
   useCheckSlugAvailability,
   generateSlugFromName,
 } from "@/hooks/use-organization";
-
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 export default function CreateOrganizationPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -288,7 +288,7 @@ export default function CreateOrganizationPage() {
       </main>
 
       <footer className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-600 relative z-10">
-        <p>&copy; {new Date().getFullYear()} VMS Core. Enterprise Estate Management.</p>
+        <p>&copy; {new Date().getFullYear()} {appName}. Enterprise Estate Management.</p>
       </footer>
     </div>
   );

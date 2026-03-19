@@ -76,7 +76,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             error={errors.email || loginFieldErrors.email}
-            className="h-12"
+            className="h-12 dark:border-muted-foreground/50 dark:text-white/80"
             id="login_email_input"
           />
 
@@ -112,12 +112,12 @@ export default function LoginPage() {
         </Button>
 
         <div className="text-center text-sm">
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground dark:text-white/70">
             Don&apos;t have an account?{" "}
           </span>
           <Link
             href="/auth/register"
-            className="text-[rgb(var(--brand-primary))] dark:text-white/70 hover:underline font-bold transition-all"
+            className="text-dark  hover:underline font-bold transition-all"
           >
             Create account
           </Link>

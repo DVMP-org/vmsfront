@@ -60,7 +60,7 @@ function Sidebar({ activeItem }: { activeItem: string }) {
             style={{
                 width: "180px",
                 flexShrink: 0,
-                borderRight: "1px solid rgba(255,255,255,0.06)",
+                borderRight: "1px solid var(--illus-border)",
                 padding: "18px 0",
                 display: "flex",
                 flexDirection: "column",
@@ -71,7 +71,7 @@ function Sidebar({ activeItem }: { activeItem: string }) {
                 style={{
                     fontSize: "0.6rem",
                     letterSpacing: "0.16em",
-                    color: "rgba(255,255,255,0.22)",
+                    color: "var(--illus-text-muted)",
                     textTransform: "uppercase",
                     padding: "0 16px 10px",
                 }}
@@ -91,7 +91,7 @@ function Sidebar({ activeItem }: { activeItem: string }) {
                             border: active ? "1px solid rgba(84,132,255,0.28)" : "1px solid transparent",
                             fontSize: "0.82rem",
                             fontWeight: active ? 600 : 400,
-                            color: active ? "#93b4ff" : "rgba(255,255,255,0.42)",
+                            color: active ? "#93b4ff" : "var(--illus-text-secondary)",
                             cursor: "default",
                             transition: "all 0.25s",
                         }}
@@ -150,8 +150,8 @@ function VisitorCard({ row, delay }: { row: VisitorRow; delay: number }) {
                 gap: "12px",
                 padding: "14px 16px",
                 borderRadius: "10px",
-                border: "1px solid rgba(255,255,255,0.07)",
-                background: "rgba(255,255,255,0.025)",
+                border: "1px solid var(--illus-border)",
+                background: "var(--illus-bg-card)",
             }}
         >
             {/* Name + sub */}
@@ -160,19 +160,19 @@ function VisitorCard({ row, delay }: { row: VisitorRow; delay: number }) {
                     style={{
                         fontSize: "0.9rem",
                         fontWeight: 600,
-                        color: "var(--text-primary)",
+                        color: "var(--illus-text)",
                         marginBottom: "2px",
                     }}
                 >
                     {row.name}
                 </div>
-                <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--illus-text-tertiary)" }}>
                     {row.sub}
                 </div>
             </div>
 
             {/* Type label */}
-            <div style={{ flex: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.38)" }}>
+            <div style={{ flex: 1, fontSize: "0.82rem", color: "var(--illus-text-tertiary)" }}>
                 {row.type}
             </div>
 
@@ -188,8 +188,8 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
             <div
                 style={{
                     borderRadius: "14px",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid var(--illus-border)",
+                    background: "var(--illus-bg-elevated)",
                     padding: "18px 20px",
                     marginBottom: "12px",
                 }}
@@ -209,13 +209,13 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                             style={{
                                 fontSize: "1rem",
                                 fontWeight: 700,
-                                color: "var(--text-primary)",
+                                color: "var(--illus-text)",
                                 marginBottom: "4px",
                             }}
                         >
                             Today's operations queue
                         </div>
-                        <div style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.35)", lineHeight: 1.5, maxWidth: "380px" }}>
+                        <div style={{ fontSize: "0.76rem", color: "var(--illus-text-tertiary)", lineHeight: 1.5, maxWidth: "380px" }}>
                             Visit requests, expected arrivals, gate dependencies, and pending approvals in one view.
                         </div>
                     </div>
@@ -225,7 +225,7 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                         animate={{ opacity: 1 }}
                         style={{
                             fontSize: "0.68rem",
-                            color: "rgba(255,255,255,0.3)",
+                            color: "var(--illus-text-tertiary)",
                             whiteSpace: "nowrap",
                             flexShrink: 0,
                             marginTop: "2px",
@@ -250,8 +250,8 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                 <div
                     style={{
                         borderRadius: "14px",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        background: "linear-gradient(160deg, rgba(84,132,255,0.08), rgba(255,255,255,0.015))",
+                        border: "1px solid var(--illus-border)",
+                        background: "linear-gradient(160deg, rgba(84,132,255,0.08), var(--illus-bg-elevated))",
                         padding: "16px 18px",
                     }}
                 >
@@ -259,7 +259,7 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                         style={{
                             fontSize: "0.58rem",
                             letterSpacing: "0.14em",
-                            color: "rgba(255,255,255,0.22)",
+                            color: "var(--illus-text-muted)",
                             textTransform: "uppercase",
                             marginBottom: "6px",
                         }}
@@ -269,7 +269,7 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                     <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>
                         Fewer handoffs
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--illus-text-tertiary)", lineHeight: 1.6 }}>
                         Residents can manage guests, visit requests, dues, and updates without switching tools.
                     </div>
                 </div>
@@ -277,7 +277,7 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                     style={{
                         borderRadius: "14px",
                         border: "1px solid rgba(84,132,255,0.15)",
-                        background: "linear-gradient(160deg, rgba(84,132,255,0.12), rgba(255,255,255,0.02))",
+                        background: "linear-gradient(160deg, rgba(84,132,255,0.12), var(--illus-bg-elevated))",
                         padding: "16px 18px",
                     }}
                 >
@@ -295,7 +295,7 @@ function QueuePanel({ visitors, tick }: { visitors: VisitorRow[]; tick: number }
                     <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>
                         Cleaner control
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--illus-text-tertiary)", lineHeight: 1.6 }}>
                         Teams get one place for residencies, visitors, gate events, forums, plugins, and reporting.
                     </div>
                 </div>
@@ -319,8 +319,8 @@ function GateMap() {
         <div
             style={{
                 borderRadius: "14px",
-                border: "1px solid rgba(255,255,255,0.07)",
-                background: "rgba(255,255,255,0.02)",
+                border: "1px solid var(--illus-border)",
+                background: "var(--illus-bg-elevated)",
                 padding: "16px 18px",
             }}
         >
@@ -334,10 +334,10 @@ function GateMap() {
                 }}
             >
                 <div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px" }}>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--illus-text)", marginBottom: "4px" }}>
                         Gate dependency map
                     </div>
-                    <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: 1.5 }}>
+                    <div style={{ fontSize: "0.72rem", color: "var(--illus-text-tertiary)", lineHeight: 1.5 }}>
                         Model how visitors move through main gates, inner checkpoints, and dependent access points.
                     </div>
                 </div>
@@ -364,7 +364,7 @@ function GateMap() {
                             animate={
                                 i === activeNode
                                     ? { background: "rgba(84,132,255,0.18)", borderColor: "rgba(84,132,255,0.45)", color: "#93b4ff" }
-                                    : { background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }
+                                    : { background: "var(--illus-bg-card-hover)", borderColor: "var(--illus-border)", color: "var(--illus-text-secondary)" }
                             }
                             transition={{ duration: 0.35 }}
                             style={{
@@ -451,8 +451,8 @@ export function CommunityDashboardIllustration() {
                     transformOrigin: "top left",
                     transform: `scale(${scale})`,
                     borderRadius: "20px",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(8, 9, 11, 0.96)",
+                    border: "1px solid var(--illus-border)",
+                    background: "var(--illus-bg)",
                     overflow: "hidden",
                     fontSize: "1rem",
                     display: "flex",
@@ -463,12 +463,12 @@ export function CommunityDashboardIllustration() {
                 <div
                     style={{
                         padding: "16px 24px",
-                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        borderBottom: "1px solid var(--illus-border)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         gap: "12px",
-                        background: "rgba(255,255,255,0.02)",
+                        background: "var(--illus-bg-elevated)",
                         flexShrink: 0,
                     }}
                 >
@@ -477,7 +477,7 @@ export function CommunityDashboardIllustration() {
                             style={{
                                 fontSize: "0.6rem",
                                 letterSpacing: "0.18em",
-                                color: "rgba(255,255,255,0.22)",
+                                color: "var(--illus-text-muted)",
                                 textTransform: "uppercase",
                                 marginBottom: "3px",
                             }}
@@ -488,7 +488,7 @@ export function CommunityDashboardIllustration() {
                             style={{
                                 fontSize: "1.1rem",
                                 fontWeight: 700,
-                                color: "var(--text-primary)",
+                                color: "var(--illus-text)",
                                 letterSpacing: "-0.02em",
                             }}
                         >

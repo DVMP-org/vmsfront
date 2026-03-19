@@ -1,5 +1,8 @@
+import { useTheme } from "@/lib/theme_context";
+import Image from "next/image";
 export function Footer() {
-    const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+    const { theme } = useTheme();
+    const appName = process.env.NEXT_PUBLIC_APP_NAME;
     return (
         <footer style={{ padding: "88px 0 34px 0" }}>
             <div className="container">
@@ -10,7 +13,13 @@ export function Footer() {
                                 className="font-display"
                                 style={{ fontSize: "1.45rem", fontWeight: 800, marginBottom: "14px" }}
                             >
-                                {appName}
+                                <Image
+                                    src={theme === "dark" ? "/gardvix-logo-dark.svg" : "/gardvix-logo-light.svg"}
+                                    alt="Gardvix"
+                                    width={140}
+                                    height={45}
+                                    priority
+                                />
                             </div>
                             <p
                                 style={{

@@ -83,9 +83,9 @@ function validatePlugin(plugin: any): plugin is {
 
     return true;
 }
-
-const PLUGINS_CACHE_KEY = "vmscore_plugins_cache";
-const PLUGINS_CACHE_TIMESTAMP_KEY = "vmscore_plugins_cache_timestamp";
+const appName = process.env.NEXT_PUBLIC_APP_NAME?.toLowerCase().replace(/\s+/g, "-");
+const PLUGINS_CACHE_KEY = `${appName}_plugins_cache`;
+const PLUGINS_CACHE_TIMESTAMP_KEY = `${appName}_plugins_cache_timestamp`;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 

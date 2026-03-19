@@ -18,7 +18,7 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 const PAGE_SIZE = 20;
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 export default function ResidentDuesPage() {
     const params = useParams<{ residencyId: string }>();
     const router = useRouter(); // Error check: next/navigation is standard in this project

@@ -120,7 +120,7 @@ export default function VisitSuccessPage() {
                     </Button>
                     <Button
                         onClick={() => {
-                            const domain = process.env.NEXT_APP_DOMAIN || "vmscore.to";
+                            const domain = process.env.NEXT_APP_DOMAIN
                             window.location.href = `https://dashboard.${domain}/select`;
                         }}
                         variant="outline"

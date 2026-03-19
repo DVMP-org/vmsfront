@@ -139,13 +139,42 @@ export default function FeaturesPage() {
                 />
             </Head>
             <Nav />
-            <main>
+            {/* Distinctive geometric background layer */}
+            <div className="landing-geometric-bg" aria-hidden="true" />
+            <main style={{ position: "relative", overflow: "hidden" }}>
+                {/* Floating geometric shapes */}
+                <div
+                    className="geo-ring geo-shape"
+                    aria-hidden="true"
+                    style={{ width: "350px", height: "350px", top: "15%", left: "-8%", opacity: 0.7 }}
+                />
+                <div
+                    className="geo-diamond geo-shape"
+                    aria-hidden="true"
+                    style={{ width: "50px", height: "50px", top: "30%", right: "10%", opacity: 0.75 }}
+                />
+                <div
+                    className="glow-orb glow-orb--primary"
+                    aria-hidden="true"
+                    style={{ width: "500px", height: "350px", top: "-80px", left: "-100px" }}
+                />
+                <div
+                    className="glow-orb glow-orb--secondary"
+                    aria-hidden="true"
+                    style={{ width: "380px", height: "450px", top: "300px", right: "-80px", animationDelay: "-4s" }}
+                />
+
                 {/* Hero Section */}
                 <section className="section features-hero-section" style={{ paddingTop: "140px", paddingBottom: "80px", overflow: "hidden", position: "relative" }}>
                     <div
+                        className="dot-grid-accent"
+                        aria-hidden="true"
+                        style={{ width: "250px", height: "250px", top: "10%", right: "8%", opacity: 0.85 }}
+                    />
+                    <div
                         aria-hidden="true"
                         className="bg-glow"
-                        style={{ top: "-8%", left: "10%", width: "500px", height: "500px", opacity: 0.35 }}
+                        style={{ top: "-8%", left: "10%", width: "500px", height: "500px", opacity: 0.45 }}
                     ></div>
                     <div
                         aria-hidden="true"

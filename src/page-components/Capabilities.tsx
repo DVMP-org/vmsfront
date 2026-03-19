@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { GateEventIllustration } from "@/page-components/illustrations/GateEventIllustration";
 
 export function Capabilities() {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+  const appName = process.env.NEXT_PUBLIC_APP_NAME;
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

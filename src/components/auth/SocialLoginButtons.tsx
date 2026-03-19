@@ -4,9 +4,12 @@ import { useSocialLogin } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useTheme } from "@/lib/theme_context";
 
 export function SocialLoginButtons() {
     const { mutate: loginWithSocial, isPending } = useSocialLogin();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
 
     const handleSocialLogin = (provider: string) => {
         loginWithSocial(provider);
@@ -16,14 +19,21 @@ export function SocialLoginButtons() {
         <div className="space-y-4 pt-6">
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                    <span className="w-full" style={{ borderTop: "1px solid rgba(148,163,184,0.13)" }} />
+                    <span
+                        className="w-full"
+                        style={{
+                            borderTop: isDark
+                                ? "1px solid rgba(148,163,184,0.13)"
+                                : "1px solid rgba(148,163,184,0.25)"
+                        }}
+                    />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                     <span
                         className="px-3 text-[0.65rem] tracking-widest font-medium"
                         style={{
-                            background: "rgba(9,9,10,0.88)",
-                            color: "rgba(115,129,154,0.6)",
+                            background: isDark ? "rgba(9,9,10,0.88)" : "rgba(255,255,255,0.95)",
+                            color: isDark ? "rgba(115,129,154,0.6)" : "rgba(100,116,139,0.7)",
                         }}
                     >
                         Or continue with

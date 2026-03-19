@@ -47,8 +47,9 @@
     /* Default */
 
     /* Brand colors - more distinctive (using RGB format for opacity support) */
-    /* --brand-primary: ;
-    --brand-secondary: ; */
+    /* Default brand colors - can be overridden by organization branding */
+    --brand-primary: 67 97 244;
+    --brand-secondary: 100 116 139;
   }
 
   .dark {
@@ -85,7 +86,9 @@
     --input: 240 4% 16%;
     --ring: 220 90% 61%;
 
-    /* Brand colors - adjusted for dark */
+    /* Brand colors - adjusted for dark (same as light, overridden by org branding) */
+    --brand-primary: 99 132 255;
+    --brand-secondary: 148 163 184;
   }
 
 

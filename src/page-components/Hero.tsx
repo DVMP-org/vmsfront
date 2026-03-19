@@ -222,7 +222,7 @@ export function Hero() {
                   ></span>
                 </div>
 
-                <div className="card hero-illustration-card" style={{ padding: "0", borderRadius: "24px", background: "#080810", overflow: "hidden" }}>
+                <div className=" hero-illustration-card" style={{ padding: "0", borderRadius: "24px", background: "#080810 !important;", overflow: "hidden" }}>
                   <CommunityDashboardIllustration />
                 </div>  
               </div>

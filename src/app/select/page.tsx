@@ -33,7 +33,7 @@ import {
 } from "@/lib/workspace-context";
 
 export default function SelectPage() {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMSCORE";
+  const appName = process.env.NEXT_PUBLIC_APP_NAME;
   const router = useRouter();
   const { user } = useAuthStore();
   const {

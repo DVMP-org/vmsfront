@@ -2,10 +2,12 @@
 
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import { LogoFull } from "@/components/LogoFull";
-import { ArrowLeft, Shield, Users, Zap } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Shield, Users, Zap, Moon, Sun } from "lucide-react";
 import NextLink from "next/link";
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+import { useTheme } from "@/lib/theme_context";
+import { VisitorFlowIllustration } from "@/page-components/illustrations/VisitorFlowIllustration";
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 /* Floating glass bubble definitions for the left panel */
 const BUBBLES = [
     { size: 88, top: "8%", left: "72%", delay: 0, duration: 7, color: "rgba(84,132,255,0.13)", border: "rgba(84,132,255,0.28)", borderRadius: "26px", yRange: [-22, 0, -10, 0], rotRange: [0, 6, -3, 0] },
@@ -54,9 +56,24 @@ const FEATURES = [
 ] as const;
 
 export function AuthLayout({ children, title, description }: AuthLayoutProps) {
+    const { theme, toggleTheme } = useTheme();
+    const isDark = theme === "dark";
+
+    // Theme-aware colors
+    const bgColor = isDark ? "#000000" : "#f8fafc";
+    const panelBorder = isDark ? "rgba(148,163,184,0.07)" : "rgba(148,163,184,0.15)";
+    const cardBg = isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.8)";
+    const cardBorder = isDark ? "rgba(148,163,184,0.08)" : "rgba(148,163,184,0.2)";
+    const textPrimary = isDark ? "rgba(255,255,255,0.95)" : "rgba(15,23,42,0.95)";
+    const textSecondary = isDark ? "rgba(148,163,184,0.75)" : "rgba(100,116,139,0.85)";
+    const gridColor = isDark ? "rgba(84,132,255,0.03)" : "rgba(84,132,255,0.06)";
+    const featureCardBg = isDark ? "rgba(9,9,10,0.72)" : "rgba(255,255,255,0.85)";
+    const featureCardTitle = isDark ? "#f5f8fc" : "#0f172a";
+    const featureCardDesc = isDark ? "rgba(165,178,199,0.65)" : "rgba(71,85,105,0.85)";
+
     return (
-        /* Force dark mode so form inputs/buttons use dark Tailwind variables */
-        <div className="dark" style={{ minHeight: "100vh", display: "flex", background: "#000000", overflow: "hidden" }}>
+        /* Theme is now managed on document.documentElement by theme_context */
+        <div style={{ minHeight: "100vh", display: "flex", background: bgColor, overflow: "hidden" }}>
 
             {/* ── Left decorative panel ─────────────────────────── */}
             <div
@@ -66,11 +83,11 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                     maxWidth: "50%",
                     flexDirection: "column",
                     justifyContent: "center",
-                    padding: "64px 52px",
+                    padding: "50px 40px",
                     position: "relative",
                     overflow: "hidden",
-                    background: "#000000",
-                    borderRight: "1px solid rgba(148,163,184,0.07)",
+                    background: bgColor,
+                    borderRight: `1px solid ${panelBorder}`,
                     flexShrink: 0,
                 }}
             >
@@ -83,7 +100,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                         pointerEvents: "none",
                         zIndex: 0,
                         backgroundImage:
-                            "linear-gradient(rgba(255,255,255,0.042) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.042) 1px, transparent 1px)",
+                            `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`,
                         backgroundSize: "64px 64px",
                         maskImage: "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)",
                     }}
@@ -98,7 +115,9 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                         left: "-80px",
                         width: "520px",
                         height: "520px",
-                        background: "radial-gradient(circle, rgba(84,132,255,0.2) 0%, transparent 70%)",
+                        background: isDark
+                            ? "radial-gradient(circle, rgba(84,132,255,0.2) 0%, transparent 70%)"
+                            : "radial-gradient(circle, rgba(84,132,255,0.12) 0%, transparent 70%)",
                         borderRadius: "50%",
                         filter: "blur(50px)",
                         pointerEvents: "none",
@@ -113,7 +132,9 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                         right: "-60px",
                         width: "440px",
                         height: "440px",
-                        background: "radial-gradient(circle, rgba(155,124,255,0.16) 0%, transparent 70%)",
+                        background: isDark
+                            ? "radial-gradient(circle, rgba(155,124,255,0.16) 0%, transparent 70%)"
+                            : "radial-gradient(circle, rgba(155,124,255,0.1) 0%, transparent 70%)",
                         borderRadius: "50%",
                         filter: "blur(60px)",
                         pointerEvents: "none",
@@ -171,7 +192,13 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                 >
                     {/* Logo */}
                     <NextLink href="/" style={{ display: "inline-block", marginBottom: "52px" }}>
-                        <LogoFull width={152} height={38} />
+                        <Image
+                            src={isDark ? "/gardvix-logo-dark.svg" : "/gardvix-logo-light.svg"}
+                            alt="Gardvix"
+                            width={152}
+                            height={48}
+                            priority
+                        />
                     </NextLink>
 
                     {/* Platform badge */}
@@ -219,14 +246,10 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                             letterSpacing: "-0.04em",
                             lineHeight: 1.06,
                             marginBottom: "18px",
-                            background: "linear-gradient(180deg, #ffffff 0%, #dde7f6 100%)",
-                            backgroundClip: "text",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
+
                         }}
                     >
-                        Control every gate,<br />
-                        every visit,<br />
+                        Control every gate, every visit,
                         from one platform.
                     </h1>
 
@@ -235,14 +258,19 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                             fontSize: "0.9rem",
                             lineHeight: 1.65,
                             letterSpacing: "-0.01em",
-                            color: "rgba(165,178,199,0.75)",
-                            marginBottom: "44px",
-                            maxWidth: "380px",
+                            color: textSecondary,
+                            marginBottom: "32px",
+                            maxWidth: "400px",
                         }}
                     >
                         Replace scattered approvals, gate codes, and notebooks with one
                         clear, auditable system your whole team will use.
                     </p>
+
+                    {/* Visitor flow illustration */}
+                    <div style={{ marginBottom: "32px" }}>
+                        <VisitorFlowIllustration />
+                    </div>
 
                     {/* Feature cards */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -254,11 +282,13 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                                     alignItems: "flex-start",
                                     gap: "14px",
                                     padding: "14px 16px",
-                                    background: "rgba(9,9,10,0.72)",
+                                    background: featureCardBg,
                                     border: `1px solid ${border}`,
                                     borderRadius: "14px",
                                     backdropFilter: "blur(18px)",
-                                    boxShadow: `0 0 24px -10px ${glow}, inset 0 1px 0 rgba(255,255,255,0.04)`,
+                                    boxShadow: isDark
+                                        ? `0 0 24px -10px ${glow}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                                        : `0 0 24px -10px ${glow}, 0 4px 12px -4px rgba(0,0,0,0.08)`,
                                 }}
                             >
                                 <div
@@ -281,7 +311,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                                         style={{
                                             fontSize: "0.81rem",
                                             fontWeight: 600,
-                                            color: "#f5f8fc",
+                                            color: featureCardTitle,
                                             marginBottom: "2px",
                                             letterSpacing: "-0.01em",
                                         }}
@@ -291,7 +321,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                                     <div
                                         style={{
                                             fontSize: "0.75rem",
-                                            color: "rgba(165,178,199,0.65)",
+                                            color: featureCardDesc,
                                             lineHeight: 1.45,
                                         }}
                                     >
@@ -314,7 +344,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                     alignItems: "center",
                     padding: "40px 24px",
                     position: "relative",
-                    background: "#050505",
+                    background: isDark ? "#050505" : "#ffffff",
                     overflow: "hidden",
                 }}
             >
@@ -327,7 +357,9 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                         right: "-15%",
                         width: "480px",
                         height: "480px",
-                        background: "radial-gradient(circle, rgba(84,132,255,0.055) 0%, transparent 70%)",
+                        background: isDark
+                            ? "radial-gradient(circle, rgba(84,132,255,0.055) 0%, transparent 70%)"
+                            : "radial-gradient(circle, rgba(84,132,255,0.08) 0%, transparent 70%)",
                         borderRadius: "50%",
                         filter: "blur(60px)",
                         pointerEvents: "none",
@@ -337,53 +369,95 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                 {/* Mobile logo */}
                 <div className="md:hidden" style={{ position: "absolute", top: "24px", left: "24px" }}>
                     <NextLink href="/">
-                        <LogoFull width={120} height={30} />
+                        <Image
+                            src={isDark ? "/gardvix-logo-dark.svg" : "/gardvix-logo-light.svg"}
+                            alt="Gardvix"
+                            width={120}
+                            height={38}
+                            priority
+                        />
                     </NextLink>
                 </div>
 
-                {/* Back to site */}
-                <NextLink
-                    href="/"
+                {/* Top right controls: Theme toggle + Back to site */}
+                <div
                     style={{
                         position: "absolute",
                         top: "24px",
                         right: "24px",
-                        display: "inline-flex",
+                        display: "flex",
                         alignItems: "center",
-                        gap: "5px",
-                        fontSize: "0.76rem",
-                        fontWeight: 500,
-                        color: "rgba(115,129,154,0.7)",
-                        textDecoration: "none",
-                        padding: "6px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(148,163,184,0.1)",
-                        background: "rgba(9,9,10,0.5)",
-                        backdropFilter: "blur(12px)",
-                        transition: "color 0.2s",
+                        gap: "10px",
                         zIndex: 10,
                     }}
                 >
-                    <ArrowLeft size={12} />
-                    Back to site
-                </NextLink>
+                    {/* Theme toggle button */}
+                    <button
+                        onClick={toggleTheme}
+                        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "10px",
+                            border: `1px solid ${cardBorder}`,
+                            background: cardBg,
+                            backdropFilter: "blur(12px)",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            color: textSecondary,
+                        }}
+                    >
+                        {isDark ? (
+                            <Sun size={16} />
+                        ) : (
+                            <Moon size={16} />
+                        )}
+                    </button>
+
+                    {/* Back to site */}
+                    <NextLink
+                        href="/"
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            fontSize: "0.76rem",
+                            fontWeight: 500,
+                            color: textSecondary,
+                            textDecoration: "none",
+                            padding: "6px 12px",
+                            borderRadius: "8px",
+                            border: `1px solid ${cardBorder}`,
+                            background: cardBg,
+                            backdropFilter: "blur(12px)",
+                            transition: "color 0.2s",
+                        }}
+                    >
+                        <ArrowLeft size={12} />
+                        Back to site
+                    </NextLink>
+                </div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    style={{ width: "100%", maxWidth: "420px", position: "relative", zIndex: 1 }}
+                    style={{ width: "100%", maxWidth: "420px", position: "relative", zIndex: 1, marginTop: "3rem" }}
                 >
                     {/* Glass form card */}
                     <div
                         style={{
-                            background: "rgba(9,9,10,0.88)",
-                            border: "1px solid rgba(148,163,184,0.11)",
+                            background: isDark ? "rgba(9,9,10,0.88)" : "rgba(255,255,255,0.95)",
+                            border: `1px solid ${cardBorder}`,
                             borderRadius: "20px",
                             padding: "36px 32px 32px",
                             backdropFilter: "blur(24px)",
-                            boxShadow:
-                                "0 32px 64px -24px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            boxShadow: isDark
+                                ? "0 32px 64px -24px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.04)"
+                                : "0 32px 64px -24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)",
                             position: "relative",
                             overflow: "hidden",
                         }}
@@ -404,7 +478,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                         />
 
                         {/* Heading */}
-                        <div style={{ marginBottom: "28px" }}>
+                        <div style={{ marginBottom: "28px", }}>
                             <h2
                                 style={{
                                     fontSize: "1.5rem",
@@ -412,18 +486,15 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                                     letterSpacing: "-0.04em",
                                     lineHeight: 1.1,
                                     marginBottom: "7px",
-                                    background: "linear-gradient(180deg, #ffffff 0%, #dde7f6 100%)",
-                                    backgroundClip: "text",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
                                 }}
+                                className="text-dark/70 dark:text-white/90"
                             >
                                 {title}
                             </h2>
                             <p
                                 style={{
                                     fontSize: "0.82rem",
-                                    color: "rgba(165,178,199,0.65)",
+                                    color: textSecondary,
                                     letterSpacing: "-0.01em",
                                     lineHeight: 1.5,
                                 }}
@@ -440,7 +511,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                             marginTop: "18px",
                             textAlign: "center",
                             fontSize: "0.7rem",
-                            color: "rgba(115,129,154,0.45)",
+                            color: textSecondary,
                             letterSpacing: "0.01em",
                         }}
                     >

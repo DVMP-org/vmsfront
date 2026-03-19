@@ -113,10 +113,10 @@ function PassCard({
             onClick={onClick}
             style={{
                 borderRadius: "12px",
-                border: isSelected ? "1px solid rgba(124,169,255,0.45)" : "1px solid rgba(255,255,255,0.07)",
+                border: isSelected ? "1px solid rgba(124,169,255,0.45)" : "1px solid var(--illus-border)",
                 background: isSelected
                     ? "rgba(124,169,255,0.07)"
-                    : "rgba(255,255,255,0.025)",
+                    : "var(--illus-bg-card)",
                 padding: "14px",
                 cursor: "pointer",
                 transition: "all 0.25s ease",
@@ -149,10 +149,10 @@ function PassCard({
                     {pass.initials}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.9)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--illus-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {pass.guestName}
                     </div>
-                    <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.38)", marginTop: "1px" }}>
+                    <div style={{ fontSize: "0.65rem", color: "var(--illus-text-tertiary)", marginTop: "1px" }}>
                         {pass.purpose} · {pass.unit}
                     </div>
                 </div>
@@ -180,16 +180,16 @@ function PassCard({
                 gap: "6px",
                 padding: "6px 8px",
                 borderRadius: "7px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.05)",
+                background: "var(--illus-bg-card)",
+                border: "1px solid var(--illus-border)",
             }}>
                 <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="6.5" stroke="rgba(255,255,255,0.3)" strokeWidth="1.4" />
-                    <path d="M8 5v3.5l2 1.5" stroke="rgba(255,255,255,0.3)" strokeWidth="1.4" strokeLinecap="round" />
+                    <circle cx="8" cy="8" r="6.5" stroke="var(--illus-text-tertiary)" strokeWidth="1.4" />
+                    <path d="M8 5v3.5l2 1.5" stroke="var(--illus-text-tertiary)" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.45)" }}>{pass.date}</span>
-                <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.2)" }}>·</span>
-                <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.45)" }}>{pass.timeWindow}</span>
+                <span style={{ fontSize: "0.65rem", color: "var(--illus-text-secondary)" }}>{pass.date}</span>
+                <span style={{ fontSize: "0.6rem", color: "var(--illus-text-muted)" }}>·</span>
+                <span style={{ fontSize: "0.65rem", color: "var(--illus-text-secondary)" }}>{pass.timeWindow}</span>
             </div>
 
             {/* QR + ref — only show when selected */}
@@ -197,7 +197,7 @@ function PassCard({
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                     <QrMock color="#7ca9ff" />
                     <div style={{ flex: 1, textAlign: "right" }}>
-                        <div style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "2px" }}>
+                        <div style={{ fontSize: "0.6rem", color: "var(--illus-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "2px" }}>
                             Pass Ref
                         </div>
                         <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "#7ca9ff", letterSpacing: "0.04em" }}>
@@ -231,8 +231,8 @@ export function VisitPassIllustration() {
             style={{
                 width: "100%",
                 borderRadius: "12px",
-                background: "#080810",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "var(--illus-bg)",
+                border: "1px solid var(--illus-border)",
                 overflow: "hidden",
                 fontFamily: "var(--font-sans, sans-serif)",
                 display: "flex",
@@ -245,17 +245,17 @@ export function VisitPassIllustration() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "10px 14px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-                background: "rgba(255,255,255,0.02)",
+                borderBottom: "1px solid var(--illus-border)",
+                background: "var(--illus-bg-elevated)",
                 flexShrink: 0,
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                        <rect x="1" y="3" width="14" height="10" rx="2" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" />
-                        <path d="M4 7h4m-4 3h6" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" strokeLinecap="round" />
+                        <rect x="1" y="3" width="14" height="10" rx="2" stroke="var(--illus-text-secondary)" strokeWidth="1.4" />
+                        <path d="M4 7h4m-4 3h6" stroke="var(--illus-text-secondary)" strokeWidth="1.4" strokeLinecap="round" />
                         <circle cx="12" cy="7" r="1.5" fill="#7ca9ff" />
                     </svg>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", letterSpacing: "0.01em" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--illus-text-secondary)", letterSpacing: "0.01em" }}>
                         Guest Passes
                     </span>
                 </div>
@@ -268,9 +268,9 @@ export function VisitPassIllustration() {
                         {PASSES.filter(p => p.status !== "expired").length} active
                     </span>
                     <span style={{
-                        fontSize: "0.62rem", color: "rgba(255,255,255,0.22)",
+                        fontSize: "0.62rem", color: "var(--illus-text-muted)",
                         padding: "2px 7px", borderRadius: "4px",
-                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                        background: "var(--illus-bg-card)", border: "1px solid var(--illus-border)",
                     }}>
                         + New pass
                     </span>
@@ -296,10 +296,10 @@ export function VisitPassIllustration() {
                                 borderRadius: "10px",
                                 border: isActive
                                     ? "1px solid rgba(124,169,255,0.4)"
-                                    : "1px solid rgba(255,255,255,0.07)",
+                                    : "1px solid var(--illus-border)",
                                 background: isActive
                                     ? "rgba(124,169,255,0.08)"
-                                    : "rgba(255,255,255,0.025)",
+                                    : "var(--illus-bg-card)",
                                 cursor: "pointer",
                                 transition: "all 0.2s ease",
                                 opacity: pass.status === "expired" && !isActive ? 0.5 : 1,
@@ -328,7 +328,7 @@ export function VisitPassIllustration() {
                                     fontSize: "0.58rem",
                                     fontWeight: 600,
                                     letterSpacing: "0.03em",
-                                    color: isActive ? ts.color : "rgba(255,255,255,0.3)",
+                                    color: isActive ? ts.color : "var(--illus-text-tertiary)",
                                     background: isActive ? ts.bg : "transparent",
                                     border: `1px solid ${isActive ? ts.border : "transparent"}`,
                                     padding: "1px 5px",
@@ -356,8 +356,8 @@ export function VisitPassIllustration() {
                 margin: "0 14px 14px",
                 padding: "10px 12px",
                 borderRadius: "9px",
-                background: "rgba(255,255,255,0.025)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "var(--illus-bg-card)",
+                border: "1px solid var(--illus-border)",
                 display: "grid",
                 gridTemplateColumns: "1fr 1px 1fr 1px 1fr",
                 gap: "0",
@@ -372,13 +372,13 @@ export function VisitPassIllustration() {
                     { label: "Status", value: s.label, color: s.color },
                 ].map((item, i) =>
                     item === null ? (
-                        <div key={i} style={{ width: "1px", height: "28px", background: "rgba(255,255,255,0.06)", margin: "0 auto" }} />
+                        <div key={i} style={{ width: "1px", height: "28px", background: "var(--illus-border)", margin: "0 auto" }} />
                     ) : (
                         <div key={i} style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.28)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: "3px" }}>
+                                <div style={{ fontSize: "0.58rem", color: "var(--illus-text-muted)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: "3px" }}>
                                 {item.label}
                             </div>
-                            <div style={{ fontSize: "0.72rem", fontWeight: 600, color: (item as { label: string; value: string; color?: string }).color ?? "rgba(255,255,255,0.8)" }}>
+                                <div style={{ fontSize: "0.72rem", fontWeight: 600, color: (item as { label: string; value: string; color?: string }).color ?? "var(--illus-text)" }}>
                                 {item.value}
                             </div>
                         </div>

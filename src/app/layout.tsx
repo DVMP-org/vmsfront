@@ -12,7 +12,7 @@ const APP_URL = process.env.NEXT_PUBLIC_BASE_URL;
 if (!APP_URL) {
   throw new Error("NEXT_PUBLIC_BASE_URL environment variable is not set");
 }
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMSCORE";
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 const APP_TITLE = `${appName} - Visitor Management System`;
 const APP_DESCRIPTION =
   "White-label visitor and resident access management — gate passes, visitor logs, dues, emergencies and more.";
@@ -28,16 +28,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: appName,
-    startupImage: "/assets/vmscore_logo.png",
+    startupImage: "/gardvix-logo-dark.svg",
   },
 
   openGraph: {
