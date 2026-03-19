@@ -148,6 +148,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(getBaseDomainUrl('/organizations'));
   }
 
+  // RULE 2.5: On SUBDOMAIN - redirect landing pages to base domain
+  // Landing/marketing pages should only be accessible from the base domain
+  const isLandingPage = pathname === '/';
+  if (isOnSubdomain && isLandingPage) {
+    return NextResponse.redirect(getBaseDomainUrl('/'));
+  }
+
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
     const redirectTo = effectiveOrganization ? '/select' : '/organizations';
@@ -182,6 +189,7 @@ export function middleware(request: NextRequest) {
 // Run middleware for these routes
 export const config = {
   matcher: [
+    '/',
     '/admin',
     '/admin/:path*',
     '/residency',

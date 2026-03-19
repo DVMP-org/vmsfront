@@ -9,12 +9,12 @@ export const LOCAL_STORAGE_KEYS = {
     legacyUser: "user",
     darkMode: "darkMode",
 } as const;
-
+const appName = process.env.NEXT_PUBLIC_APP_NAME?.toLowerCase().replace(/\s+/g, "-");
 export const LOCAL_STORAGE_PREFIXES = {
-    adminProfile: "vms_admin_profile:",
-    brandingTheme: "branding-theme-cache",
-    plugins: "vmscore_plugins_cache:",
-    pluginsTimestamp: "vmscore_plugins_cache_timestamp:",
+    adminProfile: `${appName}_admin_profile:`,
+    brandingTheme: `${appName}_branding_theme_cache`,
+    plugins: `${appName}_plugins_cache:`,
+    pluginsTimestamp: `${appName}_plugins_cache_timestamp:`,
 } as const;
 
 const DEFAULT_ORGANIZATION_SLUG =

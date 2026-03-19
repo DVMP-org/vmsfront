@@ -38,7 +38,7 @@ function Stat({ label, value, color }: { label: string; value: number | string; 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
             <span style={{ fontSize: "1rem", fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
-            <span style={{ fontSize: "0.64rem", color: "rgba(255,255,255,0.38)", letterSpacing: "0.03em", textTransform: "uppercase" }}>{label}</span>
+            <span style={{ fontSize: "0.64rem", color: "var(--illus-text-tertiary)", letterSpacing: "0.03em", textTransform: "uppercase" }}>{label}</span>
         </div>
     );
 }
@@ -49,17 +49,17 @@ function GateRow({ label, status, ok, color }: { label: string; status: string; 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
             <div style={{
                 width: "6px", height: "6px", borderRadius: "50%",
-                background: ok ? color : "rgba(255,255,255,0.15)",
+                background: ok ? color : "var(--illus-dot-inactive)",
                 boxShadow: ok ? `0 0 5px ${color}` : "none",
                 flexShrink: 0,
             }} />
-            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", flex: 1 }}>{label}</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--illus-text-secondary)", flex: 1 }}>{label}</span>
             <span style={{
                 fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em",
-                color: ok ? color : "rgba(255,255,255,0.25)",
+                color: ok ? color : "var(--illus-text-muted)",
                 padding: "2px 6px", borderRadius: "4px",
-                background: ok ? `${color}14` : "rgba(255,255,255,0.04)",
-                border: `1px solid ${ok ? `${color}30` : "rgba(255,255,255,0.06)"}`,
+                background: ok ? `${color}14` : "var(--illus-bg-card)",
+                border: `1px solid ${ok ? `${color}30` : "var(--illus-border)"}`,
             }}>{status}</span>
         </div>
     );
@@ -86,7 +86,7 @@ export function OrgVisibilityIllustration() {
             style={{
                 width: "100%",
                 height: "100%",
-                background: "#080810",
+                background: "var(--illus-bg)",
                 borderRadius: "10px",
                 overflow: "hidden",
                 display: "flex",
@@ -111,8 +111,8 @@ export function OrgVisibilityIllustration() {
             <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 16px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
-                background: "rgba(255,255,255,0.02)",
+                borderBottom: "1px solid var(--illus-border)",
+                background: "var(--illus-bg-elevated)",
                 flexShrink: 0,
             }}>
                 {/* logo mark */}
@@ -125,25 +125,25 @@ export function OrgVisibilityIllustration() {
                         <path d="M2 10V5l4-3 4 3v5H8V8H4v2H2z" fill="white" />
                     </svg>
                 </div>
-                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: "0.01em" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--illus-text)", letterSpacing: "0.01em" }}>
                     ACME Communities
                 </span>
                 <span style={{
-                    marginLeft: "4px", fontSize: "0.6rem", color: "rgba(255,255,255,0.3)",
+                    marginLeft: "4px", fontSize: "0.6rem", color: "var(--illus-text-tertiary)",
                     padding: "1px 6px", borderRadius: "4px",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    border: "1px solid var(--illus-border)",
                 }}>ORG</span>
                 {/* right side */}
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
                     <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#3dd68c", boxShadow: "0 0 5px #3dd68c" }} />
-                    <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)" }}>2 properties</span>
+                    <span style={{ fontSize: "0.65rem", color: "var(--illus-text-tertiary)" }}>2 properties</span>
                 </div>
             </div>
 
             {/* Property tab strip */}
             <div style={{
                 display: "flex", gap: "6px", padding: "10px 16px 6px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid var(--illus-border)",
                 flexShrink: 0,
             }}>
                 {PROPERTIES.map((p) => {
@@ -155,9 +155,9 @@ export function OrgVisibilityIllustration() {
                             style={{
                                 padding: "5px 14px",
                                 borderRadius: "7px",
-                                border: isActive ? `1px solid ${p.color}40` : "1px solid rgba(255,255,255,0.08)",
+                                border: isActive ? `1px solid ${p.color}40` : "1px solid var(--illus-border)",
                                 background: isActive ? `${p.color}14` : "transparent",
-                                color: isActive ? p.color : "rgba(255,255,255,0.38)",
+                                color: isActive ? p.color : "var(--illus-text-tertiary)",
                                 fontSize: "0.75rem",
                                 fontWeight: isActive ? 600 : 400,
                                 cursor: "pointer",
@@ -197,17 +197,17 @@ export function OrgVisibilityIllustration() {
                         </svg>
                     </div>
                     <div>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--illus-text)" }}>
                             {prop.name}
                         </div>
-                        <div style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.04em" }}>
+                        <div style={{ fontSize: "0.62rem", color: "var(--illus-text-tertiary)", letterSpacing: "0.04em" }}>
                             {prop.tag} · {prop.gates} gates
                         </div>
                     </div>
                     {/* live dot */}
                     <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "5px" }}>
                         <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: prop.color, boxShadow: `0 0 4px ${prop.color}` }} />
-                        <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.3)" }}>LIVE</span>
+                        <span style={{ fontSize: "0.6rem", color: "var(--illus-text-tertiary)" }}>LIVE</span>
                     </div>
                 </div>
 
@@ -216,19 +216,19 @@ export function OrgVisibilityIllustration() {
                     display: "flex",
                     justifyContent: "space-around",
                     padding: "10px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.06)",
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    borderTop: "1px solid var(--illus-border)",
+                    borderBottom: "1px solid var(--illus-border)",
                 }}>
                     <Stat label="Residents" value={prop.residents} color={prop.color} />
-                    <div style={{ width: "1px", background: "rgba(255,255,255,0.07)" }} />
+                    <div style={{ width: "1px", background: "var(--illus-border)" }} />
                     <Stat label="Visitors today" value={prop.visitors} color={prop.color} />
-                    <div style={{ width: "1px", background: "rgba(255,255,255,0.07)" }} />
+                    <div style={{ width: "1px", background: "var(--illus-border)" }} />
                     <Stat label="Gates" value={prop.gates} color={prop.color} />
                 </div>
 
                 {/* Gate rows */}
                 <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.28)", letterSpacing: "0.07em", marginBottom: "6px", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.63rem", color: "var(--illus-text-muted)", letterSpacing: "0.07em", marginBottom: "6px", textTransform: "uppercase" }}>
                         Gate Status
                     </div>
                     {prop.events.map((ev) => (
@@ -240,15 +240,15 @@ export function OrgVisibilityIllustration() {
                 <div style={{
                     padding: "7px 12px",
                     borderRadius: "8px",
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "var(--illus-bg-card)",
+                    border: "1px solid var(--illus-border)",
                     display: "flex", alignItems: "center", gap: "8px",
                 }}>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="7" width="12" height="8" rx="2" stroke="rgba(255,255,255,0.3)" strokeWidth="1.4" />
-                        <path d="M5 7V5a3 3 0 016 0v2" stroke="rgba(255,255,255,0.3)" strokeWidth="1.4" strokeLinecap="round" />
+                        <rect x="2" y="7" width="12" height="8" rx="2" stroke="var(--illus-text-tertiary)" strokeWidth="1.4" />
+                        <path d="M5 7V5a3 3 0 016 0v2" stroke="var(--illus-text-tertiary)" strokeWidth="1.4" strokeLinecap="round" />
                     </svg>
-                    <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)" }}>
+                    <span style={{ fontSize: "0.68rem", color: "var(--illus-text-tertiary)" }}>
                         Operationally isolated from other properties
                     </span>
                 </div>

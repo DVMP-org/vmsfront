@@ -1,4 +1,4 @@
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 export function SolutionStatement() {
   return (
     <section className="section problem-section scroll-reveal">

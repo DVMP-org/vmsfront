@@ -5,7 +5,7 @@ import {
     ResidentMockup,
     SecurityMockup,
 } from "./illustrations/PersonaMockups";
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "VMS Core";
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 /* ─── Data ─────────────────────────────────────────────────────────────── */
 
 type Persona = {

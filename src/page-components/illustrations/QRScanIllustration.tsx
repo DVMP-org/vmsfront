@@ -144,8 +144,7 @@ export function QRScanIllustration() {
                         width={c.w * UNIT - 3}
                         height={c.h * UNIT - 3}
                         rx="4"
-                        fill="var(--text-primary, #ffffff)"
-                        fillOpacity="0.85"
+                        fill="#ffffff"
                     />
                 ))}
 
@@ -171,8 +170,7 @@ export function QRScanIllustration() {
                         width={c.w * UNIT - 3}
                         height={c.h * UNIT - 3}
                         rx="3"
-                        fill="var(--text-primary, #ffffff)"
-                        fillOpacity="0.85"
+                        fill="#ffffff"
                     />
                 ))}
 

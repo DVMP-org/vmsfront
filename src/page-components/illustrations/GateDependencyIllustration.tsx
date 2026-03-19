@@ -83,7 +83,7 @@ export function GateDependencyIllustration() {
             style={{
                 width: "100%",
                 height: "100%",
-                background: "#080810",
+                background: "var(--illus-bg)",
                 borderRadius: "10px",
                 overflow: "hidden",
                 display: "flex",
@@ -96,20 +96,20 @@ export function GateDependencyIllustration() {
             <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 16px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
-                background: "rgba(255,255,255,0.02)",
+                borderBottom: "1px solid var(--illus-border)",
+                background: "var(--illus-bg-elevated)",
                 flexShrink: 0,
             }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <path d="M8 1L1 5v6l7 4 7-4V5L8 1z" stroke="#7ca9ff" strokeWidth="1.4" strokeLinejoin="round" />
                     <path d="M8 1v14M1 5l7 4 7-4" stroke="#7ca9ff" strokeWidth="1.4" strokeLinejoin="round" />
                 </svg>
-                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--illus-text-secondary)" }}>
                     Gate Dependency Tree
                 </span>
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "5px" }}>
                     <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3dd68c", boxShadow: "0 0 4px #3dd68c" }} />
-                    <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.3)" }}>LIVE TRACE</span>
+                    <span style={{ fontSize: "0.6rem", color: "var(--illus-text-tertiary)" }}>LIVE TRACE</span>
                 </div>
             </div>
 
@@ -158,7 +158,7 @@ export function GateDependencyIllustration() {
                                 {/* Ghost track */}
                                 <path
                                     d={`M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`}
-                                    stroke="rgba(255,255,255,0.07)"
+                                    stroke="var(--illus-border)"
                                     strokeWidth="1.5"
                                     fill="none"
                                 />
@@ -209,7 +209,7 @@ export function GateDependencyIllustration() {
                                     cx={cx} cy={cy}
                                     r={r + 3}
                                     fill="none"
-                                    stroke={isTraced ? node.color : "rgba(255,255,255,0.06)"}
+                                    stroke={isTraced ? node.color : "var(--illus-border)"}
                                     strokeWidth={isTraced ? 1 : 0.5}
                                     strokeOpacity={isTraced ? 0.35 : 1}
                                     style={{ transition: "stroke 0.4s, stroke-opacity 0.4s" }}
@@ -218,8 +218,8 @@ export function GateDependencyIllustration() {
                                 <circle
                                     cx={cx} cy={cy}
                                     r={r}
-                                    fill={isTraced ? `${node.color}22` : "rgba(20,20,32,0.9)"}
-                                    stroke={isTraced ? node.color : "rgba(255,255,255,0.12)"}
+                                    fill={isTraced ? `${node.color}22` : "var(--illus-bg)"}
+                                    stroke={isTraced ? node.color : "var(--illus-border-strong)"}
                                     strokeWidth={isRoot ? 1.5 : 1}
                                     style={{
                                         filter: isActive ? "url(#glow)" : "none",
@@ -230,7 +230,7 @@ export function GateDependencyIllustration() {
                                 {isRoot && (
                                     <path
                                         d="M50 4L44 8v6l6 3 6-3V8L50 4z"
-                                        fill={isTraced ? node.color : "rgba(255,255,255,0.3)"}
+                                        fill={isTraced ? node.color : "var(--illus-text-tertiary)"}
                                         transform={`translate(${cx - 50}, ${cy - 10})`}
                                         style={{ transition: "fill 0.4s" }}
                                     />
@@ -240,7 +240,7 @@ export function GateDependencyIllustration() {
                                     <circle
                                         cx={cx} cy={cy}
                                         r={3}
-                                        fill={isTraced ? node.color : "rgba(255,255,255,0.2)"}
+                                        fill={isTraced ? node.color : "var(--illus-dot-inactive)"}
                                         style={{ transition: "fill 0.4s" }}
                                     />
                                 )}
@@ -250,7 +250,7 @@ export function GateDependencyIllustration() {
                                     textAnchor="middle"
                                     fontSize="6.5"
                                     fontWeight={isActive ? "700" : "500"}
-                                    fill={isTraced ? node.color : "rgba(255,255,255,0.35)"}
+                                    fill={isTraced ? node.color : "var(--illus-text-tertiary)"}
                                     style={{ transition: "fill 0.4s", fontFamily: "var(--font-sans, sans-serif)" }}
                                 >
                                     {node.label}
@@ -259,7 +259,7 @@ export function GateDependencyIllustration() {
                                     x={cx} y={cy + r + 16}
                                     textAnchor="middle"
                                     fontSize="5.5"
-                                    fill="rgba(255,255,255,0.22)"
+                                    fill="var(--illus-text-muted)"
                                     style={{ fontFamily: "var(--font-sans, sans-serif)" }}
                                 >
                                     {node.sublabel}
@@ -273,7 +273,7 @@ export function GateDependencyIllustration() {
             {/* Footer — active path breadcrumb */}
             <div style={{
                 padding: "8px 16px",
-                borderTop: "1px solid rgba(255,255,255,0.06)",
+                borderTop: "1px solid var(--illus-border)",
                 display: "flex",
                 alignItems: "center",
                 gap: "4px",
@@ -283,7 +283,7 @@ export function GateDependencyIllustration() {
                 <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
                     <path d="M4 8h8M9 5l3 3-3 3" stroke="#7ca9ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.25)", whiteSpace: "nowrap" }}>Active path:</span>
+                <span style={{ fontSize: "0.62rem", color: "var(--illus-text-muted)", whiteSpace: "nowrap" }}>Active path:</span>
                 {Array.from(traceSet).map((id, i, arr) => (
                     <span key={id} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <span style={{
@@ -296,7 +296,7 @@ export function GateDependencyIllustration() {
                             {nodeById(id).label}
                         </span>
                         {i < arr.length - 1 && (
-                            <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.2)" }}>›</span>
+                            <span style={{ fontSize: "0.6rem", color: "var(--illus-text-muted)" }}>›</span>
                         )}
                     </span>
                 ))}

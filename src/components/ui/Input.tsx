@@ -131,7 +131,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     if (disabled) containerStatus = "prefilled";
 
     return (
-      <div className="relative space-y-1 w-full">
+      <div className="relative space-y-1 w-full text-muted">
         {label && (
           <FormLabel showAsterisk={showAsterisk} error={error}>
             {label}
@@ -173,6 +173,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               "!pl-9": !!Icon && !leftNode,
               "!pr-3": rightNode && status !== "neutral",
               "sentry-mask": !!isContentSensitive,
+              "text-dark": true,
             })}
             {...props}
           />
@@ -191,7 +192,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ) : null}
         </div>
         {description && (
-          <FormDescription className="text-muted-foreground text-sm !font-normal">
+          <FormDescription className="text-muted-foreground text-sm !font-normal dark:text-white/10">
             {description}
           </FormDescription>
         )}

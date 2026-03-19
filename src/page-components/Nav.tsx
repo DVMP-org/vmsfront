@@ -1,4 +1,6 @@
+
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/lib/theme_context";
@@ -73,15 +75,13 @@ export function Nav() {
               )}
             </button>
             <Link href="/" className="nav-logo" style={{ textDecoration: "none" }}>
-              <span style={{
-                background: "linear-gradient(135deg, #ffffff 0%, var(--accent-secondary) 60%, var(--accent-violet) 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}>
-                {appName.split(" ")[0]}
-              </span>
-              <span style={{ color: "var(--accent-primary)" }}>{appName.split(" ")[1]}</span>
+              <Image
+                src={theme === "dark" ? "/gardvix-logo-dark.svg" : "/gardvix-logo-light.svg"}
+                alt="Gardvix"
+                width={140}
+                height={45}
+                priority
+              />
             </Link>
             <div className="nav-links">
               <Link href="/features" className={linkClass("/features")}>

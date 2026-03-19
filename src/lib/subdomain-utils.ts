@@ -1,4 +1,4 @@
-export const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
+export const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmscore.to";
 
 // Reserved subdomains that are not organization slugs
 export const RESERVED_SUBDOMAINS = ["www", "app", "api", "admin", "visit"];

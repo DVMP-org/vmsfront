@@ -58,12 +58,41 @@ export default function Solutions() {
         />
       </Head>
       <Nav />
-      <main>
+      {/* Distinctive geometric background layer */}
+      <div className="landing-geometric-bg" aria-hidden="true" />
+      <main style={{ position: "relative", overflow: "hidden" }}>
+        {/* Floating geometric shapes */}
+        <div
+          className="geo-ring geo-shape"
+          aria-hidden="true"
+          style={{ width: "320px", height: "320px", top: "12%", left: "-6%", opacity: 0.7 }}
+        />
+        <div
+          className="geo-diamond geo-shape"
+          aria-hidden="true"
+          style={{ width: "55px", height: "55px", top: "40%", right: "12%", opacity: 0.75 }}
+        />
+        <div
+          className="geo-cross geo-shape"
+          aria-hidden="true"
+          style={{ top: "60%", left: "6%", opacity: 0.75 }}
+        />
+        <div
+          className="glow-orb glow-orb--secondary"
+          aria-hidden="true"
+          style={{ width: "420px", height: "350px", top: "-50px", right: "-100px" }}
+        />
+        <div
+          className="dot-grid-accent"
+          aria-hidden="true"
+          style={{ width: "180px", height: "180px", bottom: "20%", left: "3%", opacity: 0.85 }}
+        />
+
         <section className="section problems-hero-section" style={{ paddingTop: "152px", paddingBottom: "72px", overflow: "hidden" }}>
           <div
             aria-hidden="true"
             className="bg-glow"
-            style={{ top: "-16%", left: "10%", width: "400px", height: "400px", opacity: 0.42 }}
+            style={{ top: "-16%", left: "10%", width: "400px", height: "400px", opacity: 0.55 }}
           ></div>
           <div
             aria-hidden="true"

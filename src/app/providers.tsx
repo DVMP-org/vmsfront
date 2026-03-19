@@ -4,7 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { Toaster } from "sonner";
 import { useEffect } from "react";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider as BrandingThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider as LightDarkThemeProvider } from "@/lib/theme_context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -28,10 +29,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <ThemeProvider>
-          {children}
-          <Toaster position="top-right" richColors />
-        </ThemeProvider>
+        <LightDarkThemeProvider>
+          <BrandingThemeProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+          </BrandingThemeProvider>
+        </LightDarkThemeProvider>
       </ErrorBoundary>
     </QueryClientProvider>
   );

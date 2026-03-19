@@ -53,7 +53,7 @@ function StepBadge({
                     width: "32px",
                     height: "32px",
                     borderRadius: "50%",
-                    border: `2px solid ${done ? color : active ? color : "rgba(255,255,255,0.14)"}`,
+                    border: `2px solid ${done ? color : active ? color : "var(--illus-dot-inactive)"}`,
                     background: done
                         ? `${color}22`
                         : active
@@ -89,7 +89,7 @@ function StepBadge({
                             width: "8px",
                             height: "8px",
                             borderRadius: "50%",
-                            background: "rgba(255,255,255,0.14)",
+                                    background: "var(--illus-dot-inactive)",
                         }}
                     />
                 )}
@@ -223,8 +223,8 @@ export function GateEventIllustration() {
                     transformOrigin: "top left",
                     transform: `scale(${scale})`,
                     borderRadius: "18px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    background: "#080810",
+                    border: "1px solid var(--illus-border)",
+                    background: "var(--illus-bg)",
                     overflow: "hidden",
                     fontFamily: "var(--font-sans), system-ui, sans-serif",
                     display: "flex",
@@ -235,8 +235,8 @@ export function GateEventIllustration() {
                 <div
                     style={{
                         padding: "12px 18px",
-                        borderBottom: "1px solid rgba(255,255,255,0.06)",
-                        background: "#080810",
+                        borderBottom: "1px solid var(--illus-border)",
+                        background: "var(--illus-bg-elevated)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -244,7 +244,7 @@ export function GateEventIllustration() {
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Dot color="var(--accent-green)" pulse />
-                        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-primary)", letterSpacing: "0.01em" }}>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--illus-text)", letterSpacing: "0.01em" }}>
                             Main Gate · Live Access Event
                         </span>
                     </div>
@@ -252,10 +252,10 @@ export function GateEventIllustration() {
                         style={{
                             fontSize: "0.7rem",
                             color: "var(--text-tertiary)",
-                            background: "rgba(255,255,255,0.04)",
+                            background: "var(--illus-bg-card)",
                             padding: "3px 8px",
                             borderRadius: "999px",
-                            border: "1px solid rgba(255,255,255,0.07)",
+                            border: "1px solid var(--illus-border)",
                         }}
                     >
                         Ref #VE-00841
@@ -271,8 +271,8 @@ export function GateEventIllustration() {
                             gap: "14px",
                             padding: "14px 16px",
                             borderRadius: "12px",
-                            background: "#080810",
-                            border: "1px solid rgba(255,255,255,0.07)",
+                            // background: "var(--illus-bg)",
+                            border: "1px solid var(--illus-border)",
                         }}
                     >
                         {/* avatar */}
@@ -294,7 +294,7 @@ export function GateEventIllustration() {
                             AJ
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "2px" }}>
+                            <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--illus-text)", marginBottom: "2px" }}>
                                 A. Johnson
                             </div>
                             <div style={{ fontSize: "0.76rem", color: "var(--text-tertiary)" }}>
@@ -336,7 +336,7 @@ export function GateEventIllustration() {
                                             left: "calc(50% + 16px)",
                                             right: "calc(-50% + 16px)",
                                             height: "2px",
-                                            background: "rgba(255,255,255,0.07)",
+                                            background: "var(--illus-border)",
                                             borderRadius: "999px",
                                             overflow: "hidden",
                                         }}
@@ -366,7 +366,7 @@ export function GateEventIllustration() {
                     <div
                         style={{
                             borderRadius: "12px",
-                            border: "1px solid rgba(255,255,255,0.06)",
+                            border: "1px solid var(--illus-border)",
                             overflow: "hidden",
                             display: "flex",
                             flexDirection: "column",
@@ -377,8 +377,8 @@ export function GateEventIllustration() {
                         <div
                             style={{
                                 padding: "9px 14px",
-                                borderBottom: "1px solid rgba(255,255,255,0.05)",
-                                background: "rgba(255,255,255,0.02)",
+                                borderBottom: "1px solid var(--illus-border)",
+                                background: "var(--illus-bg-elevated)",
                                 display: "flex",
                                 alignItems: "center",
                                 gap: "6px",
@@ -407,7 +407,7 @@ export function GateEventIllustration() {
                                             alignItems: "center",
                                             gap: "8px",
                                             padding: "7px 14px",
-                                            borderBottom: i < visibleLogs - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                                            borderBottom: i < visibleLogs - 1 ? "1px solid var(--illus-border)" : "none",
                                         }}
                                     >
                                         {/* timestamp */}
