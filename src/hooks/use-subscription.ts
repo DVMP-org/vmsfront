@@ -7,6 +7,7 @@ import {
     UpdateSubscriptionRequest,
     UpdateBillingSettingsRequest,
     SubscribeResponse,
+    isDirectSubscriptionResponse,
 } from "@/services/subscription-service";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
@@ -57,7 +58,7 @@ export function useSubscribeToPlan() {
         },
         onSuccess: (response) => {
             // Only show success and invalidate if it's a direct subscription (free plan)
-            if (response.data?.subscription) {
+            if (isDirectSubscriptionResponse(response.data)) {
                 queryClient.invalidateQueries({ queryKey: ["subscription"] });
                 queryClient.invalidateQueries({ queryKey: ["organization"] });
                 toast.success("Successfully subscribed to plan!");

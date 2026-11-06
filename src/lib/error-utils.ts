@@ -7,6 +7,10 @@ export interface ParsedApiError {
 
 const FALLBACK_ERROR_MESSAGE = "Something went wrong. Please try again.";
 
+export function getApiErrorStatus(error: unknown): number | undefined {
+  return axios.isAxiosError(error) ? error.response?.status : undefined;
+}
+
 export function parseApiError(error: unknown): ParsedApiError {
   let message = FALLBACK_ERROR_MESSAGE;
   const fieldErrors: Record<string, string> = {};

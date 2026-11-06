@@ -23,13 +23,22 @@ export interface SubscribeToPlanRequest {
     billing_details?: BillingDetails;
 }
 
-// Response for subscribe - can be either a direct subscription or payment required
-export interface SubscribeResponse {
-    // For free plans - direct subscription
-    subscription?: Subscription;
-    // For paid plans - payment required
+export type SubscribeResponse =
+    | Subscription
+    | {
     authorization_url?: string;
     reference?: string;
+};
+
+export function isDirectSubscriptionResponse(
+    value: SubscribeResponse | null | undefined
+): value is Subscription {
+    return Boolean(
+        value &&
+        "id" in value &&
+        "plan_id" in value &&
+        "status" in value
+    );
 }
 
 export interface UpdateSubscriptionRequest {

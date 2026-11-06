@@ -104,8 +104,8 @@ export function useCreateOrganization() {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       toast.success("Organization created successfully!");
 
-      // Redirect to the new organization's subdomain
-      const redirectUrl = buildSubdomainUrl(org.slug, "/select");
+      // A new organization chooses a plan before entering the workspace.
+      const redirectUrl = buildSubdomainUrl(org.slug, "/plans");
       window.location.href = redirectUrl;
     },
     onError: (err: any) => {

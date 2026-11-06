@@ -53,5 +53,5 @@ export function buildSubdomainUrl(slug: string, path: string = "/"): string {
     return `${protocol}//${slug}.localhost${port}${path}`;
   }
 
-  return `${protocol}//${slug}.${BASE_DOMAIN}${path}`;
+  return `${protocol}//${slug}.${BASE_DOMAIN}${port}${path}`;
 }
