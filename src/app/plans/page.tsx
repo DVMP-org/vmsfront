@@ -30,7 +30,10 @@ import { useCurrentOrganization, usePlans } from "@/hooks/use-organization";
 import { openPaymentPopup } from "@/lib/payment-popup";
 import { toast } from "sonner";
 import type { Plan } from "@/types/subscription";
-import { BillingDetails } from "@/services/subscription-service";
+import {
+    BillingDetails,
+    isDirectSubscriptionResponse,
+} from "@/services/subscription-service";
 import { formatPrice } from "@/lib/utils";
 import { useTransaction } from "@/hooks/use-resident";
 type BillingCycle = "monthly" | "yearly";
@@ -449,6 +452,21 @@ export default function PlansPage() {
     const activePlans = plans?.filter((p) => p.is_active).sort((a, b) => a.sort_order - b.sort_order) || [];
     const selectedPlan = activePlans.find(p => p.id === selectedPlanId);
 
+    useEffect(() => {
+        if (selectedPlanId || plansLoading || !plans?.length) return;
+
+        const defaultPlan =
+            plans.find(
+                (plan) =>
+                    plan.is_active &&
+                    plan.price_monthly === 0 &&
+                    plan.price_yearly === 0
+            ) || plans.find((plan) => plan.is_active);
+        if (defaultPlan) {
+            setSelectedPlanId(defaultPlan.id);
+        }
+    }, [plans, plansLoading, selectedPlanId]);
+
     // Determine if selected plan requires payment
     const requiresPayment = selectedPlan && (
         (billingCycle === "monthly" && selectedPlan.price_monthly > 0) ||
@@ -541,8 +559,8 @@ export default function PlansPage() {
 
             const data = response.data;
 
-            // Check if it's a free plan (direct subscription returned)
-            if (data?.subscription) {
+            // Free plans return the subscription directly.
+            if (isDirectSubscriptionResponse(data)) {
                 // Free plan - subscription created directly
                 router.push("/admin");
                 return;
