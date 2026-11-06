@@ -47,11 +47,11 @@ export function buildSubdomainUrl(slug: string, path: string = "/"): string {
   }
 
   const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : "";
 
   if (window.location.hostname.includes("localhost")) {
+    const port = window.location.port ? `:${window.location.port}` : "";
     return `${protocol}//${slug}.localhost${port}${path}`;
   }
 
-  return `${protocol}//${slug}.${BASE_DOMAIN}${port}${path}`;
+  return `${protocol}//${slug}.${BASE_DOMAIN}${path}`;
 }

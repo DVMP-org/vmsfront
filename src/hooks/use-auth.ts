@@ -2,8 +2,12 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth-service";
+import { organizationService } from "@/services/organization-service";
 import { useAuthStore } from "@/store/auth-store";
+import { useAppStore } from "@/store/app-store";
 import { apiClient } from "@/lib/api-client";
+import { resolvePostAuthDestination } from "@/lib/post-auth-routing";
+import { getSubdomain } from "@/lib/subdomain-utils";
 import {
   LoginRequest,
   RegisterRequest,
@@ -66,22 +70,36 @@ export function useAuth() {
       setLoginError(null);
       setLoginFieldErrors({});
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const { user, token } = response.data;
 
-      // Set auth state
+      useAppStore.getState().resetTenantContext();
       setAuth(user, token);
       toast.success("Login successful!");
       setLoginError(null);
       setLoginFieldErrors({});
 
-      // Navigate immediately without setTimeout
       const redirectTarget = getRedirectFromQuery();
-      if (redirectTarget) {
-        clearRedirectQueryParam();
+      const tenantSlug = getSubdomain();
+
+      if (tenantSlug) {
+        if (redirectTarget) {
+          clearRedirectQueryParam();
+        }
         router.refresh();
-        router.replace(redirectTarget);
-      } else {
+        router.replace(redirectTarget || "/select");
+        return;
+      }
+
+      try {
+        const organizations = await organizationService.getMyOrganizations();
+        const destination = resolvePostAuthDestination(organizations.data);
+        if (redirectTarget) {
+          clearRedirectQueryParam();
+        }
+        router.refresh();
+        router.replace(destination);
+      } catch {
         router.replace("/organizations");
       }
     },
@@ -102,14 +120,13 @@ export function useAuth() {
     onSuccess: (response) => {
       const { user, token } = response.data;
 
-      // Set auth state
+      useAppStore.getState().resetTenantContext();
       setAuth(user, token);
 
       toast.success("Registration successful!");
       setRegisterError(null);
       setRegisterFieldErrors({});
 
-      // Navigate immediately
       router.replace("/organizations");
     },
     onError: (error: any) => {
