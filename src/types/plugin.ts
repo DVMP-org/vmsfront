@@ -49,6 +49,17 @@ export interface BackendPlugin {
     [key: string]: any;
     configuration?: PluginConfig; // Current configuration from backend
     configured?: boolean; // Whether the plugin has been configured at least once
+    installed?: boolean;
+    licensed?: boolean;
+    access_ready?: boolean;
+    entitlement_status?: string;
+    entitlement_source?: string | null;
+    entitlement_reason?: string | null;
+    plan_id?: string | null;
+    plan_name?: string | null;
+    grace_ends_at?: string | null;
+    can_enable?: boolean;
+    can_configure?: boolean;
 }
 
 // Plugin type definition (for UI display)
@@ -68,6 +79,18 @@ export interface Plugin {
     frontendVersion?: string;
     hasFrontend?: boolean; // Whether frontend plugin exists
     configuration?: PluginConfig; // Current configuration from backend
+    installed: boolean;
+    configured: boolean;
+    licensed: boolean;
+    access_ready: boolean;
+    entitlementStatus?: string;
+    entitlementSource?: string | null;
+    entitlementReason?: string | null;
+    planId?: string | null;
+    planName?: string | null;
+    graceEndsAt?: string | null;
+    canEnable: boolean;
+    canConfigure: boolean;
 }
 
 export interface PluginManifest {
@@ -135,6 +158,18 @@ export interface MarketplacePlugin {
     installed_count: number;
     installed: boolean;
     enabled?: boolean;
+    configured?: boolean;
+    licensed?: boolean;
+    access_ready?: boolean;
+    entitlement_status?: string;
+    entitlement_source?: string | null;
+    entitlement_reason?: string | null;
+    plan_id?: string | null;
+    plan_name?: string | null;
+    grace_ends_at?: string | null;
+    can_install?: boolean;
+    can_enable?: boolean;
+    can_configure?: boolean;
     tags?: string[];
     requirements?: string[];
     features?: string[];
