@@ -24,7 +24,7 @@ interface SubscriptionGuardProps {
 export function SubscriptionGuard({
     children,
     requireActive = true,
-    redirectTo = "/organizations/plans",
+    redirectTo = "/plans",
 }: SubscriptionGuardProps) {
     const router = useRouter();
     const { organization, isLoading: orgLoading } = useCurrentOrganization();
@@ -36,18 +36,27 @@ export function SubscriptionGuard({
         subscription &&
         (subscription.status === SubscriptionStatus.ACTIVE ||
             subscription.status === SubscriptionStatus.PAST_DUE);
+    const shouldEnforceSubscription =
+        requireActive &&
+        process.env.NEXT_PUBLIC_ENFORCE_SUBSCRIPTIONS === "true";
 
     useEffect(() => {
-        if (!isLoading && requireActive && !hasActiveSubscription) {
+        if (!isLoading && shouldEnforceSubscription && !hasActiveSubscription) {
             router.push(redirectTo);
         }
-    }, [isLoading, requireActive, hasActiveSubscription, redirectTo, router]);
+    }, [
+        isLoading,
+        shouldEnforceSubscription,
+        hasActiveSubscription,
+        redirectTo,
+        router,
+    ]);
 
     useEffect(() => {
-        if (isSubError) {
+        if (isSubError && shouldEnforceSubscription) {
             router.push('/plans');
         }
-    }, [isSubError]);
+    }, [isSubError, shouldEnforceSubscription, router]);
 
     if (isLoading) {
         return (
@@ -57,7 +66,7 @@ export function SubscriptionGuard({
         );
     }
 
-    if (requireActive && !hasActiveSubscription) {
+    if (shouldEnforceSubscription && !hasActiveSubscription) {
         // Will redirect, show loading in the meantime
         return (
             <div className="min-h-[400px] flex items-center justify-center">
