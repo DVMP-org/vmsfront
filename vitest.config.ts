@@ -11,7 +11,7 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx,js,jsx}"],
     environmentOptions: {
       jsdom: {
-        url: "http://vmsfront.to:3000/",
+        url: "https://vmsfront.to/",
       },
     },
   },

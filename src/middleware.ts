@@ -13,10 +13,14 @@ function getBaseDomainUrl(
   search: string = '',
   request?: NextRequest
 ): URL {
-  const requestUrl = request ? new URL(request.url) : null;
-  const protocol = requestUrl?.port ? requestUrl.protocol : `${PROTOCOL}:`;
-  const port = requestUrl?.port ? `:${requestUrl.port}` : '';
-  const url = new URL(`${protocol}//${BASE_DOMAIN}${port}${pathname}`);
+  const forwardedProtocol = request?.headers
+    .get('x-forwarded-proto')
+    ?.split(',')[0]
+    .trim();
+  const protocol =
+    forwardedProtocol ||
+    (request ? new URL(request.url).protocol.replace(':', '') : PROTOCOL);
+  const url = new URL(`${protocol}://${BASE_DOMAIN}${pathname}`);
   if (search) {
     url.search = search;
   }
@@ -58,14 +62,15 @@ function extractOrgSubdomain(hostname: string): string | null {
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
-  const selectedOrganization = request.cookies.get('selected-organization')?.value || DEFAULT_ORGANIZATION_SLUG;
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
   // Extract organization subdomain
   const orgSubdomain = extractOrgSubdomain(hostname);
-  const effectiveOrganization = orgSubdomain || selectedOrganization || null;
   const isOnSubdomain = !!orgSubdomain;
+  const effectiveOrganization = isOnSubdomain
+    ? orgSubdomain
+    : DEFAULT_ORGANIZATION_SLUG || null;
   const isAuthenticated = !!token;
 
   // Classify the path
@@ -94,7 +99,7 @@ export function middleware(request: NextRequest) {
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard routes (/admin, /residency, /select) require org context from subdomain
-  if (!isOnSubdomain && !effectiveOrganization && (isDashboardPath || isSelectPath)) {
+  if (!isOnSubdomain && (isDashboardPath || isSelectPath)) {
     if (isAuthenticated) {
       return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
     } else {
@@ -112,17 +117,21 @@ export function middleware(request: NextRequest) {
 
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
-    const redirectTo = effectiveOrganization ? '/select' : '/organizations';
     const destinationUrl = isOnSubdomain
-      ? new URL(redirectTo, request.url)
-      : getBaseDomainUrl(redirectTo, '', request);
+      ? new URL('/select', request.url)
+      : getBaseDomainUrl('/organizations', '', request);
     return NextResponse.redirect(destinationUrl);
   }
 
   // RULE 4: Protected paths on subdomain require authentication
   if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
-    const loginUrl = getBaseDomainUrl('/auth/login', '', request);
-    loginUrl.searchParams.set('redirect_to', pathname);
+    const loginUrl = isOnSubdomain
+      ? new URL('/auth/login', request.url)
+      : getBaseDomainUrl('/auth/login', '', request);
+    loginUrl.searchParams.set(
+      'redirect_to',
+      `${pathname}${request.nextUrl.search}`,
+    );
     return NextResponse.redirect(loginUrl);
   }
 

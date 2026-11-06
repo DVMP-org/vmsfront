@@ -10,6 +10,7 @@ interface AppState {
     setSelectedResidency: (residency: Residency | null) => void;
     setBranding: (branding: BrandingConfig) => void;
     setSelectedOrganization: (organization: Organization | null) => void;
+    resetTenantContext: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -28,6 +29,17 @@ export const useAppStore = create<AppState>()(
                 set({ organization: organization });
             },
             setBranding: (branding) => set({ branding }),
+            resetTenantContext: () => {
+                deleteCookie("selected-organization");
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("app-storage");
+                }
+                set({
+                    organization: null,
+                    selectedResidency: null,
+                    branding: null,
+                });
+            },
         }),
         {
             name: "app-storage",

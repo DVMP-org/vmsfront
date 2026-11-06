@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserProfile } from "@/types";
 import { setCookie, deleteCookie, getCookie } from "@/lib/cookies";
+import { useAppStore } from "@/store/app-store";
 
 interface AuthState {
   user: UserProfile | null;
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user, token, isAuthenticated: true });
       },
       clearAuth: () => {
+        useAppStore.getState().resetTenantContext();
         deleteCookie("auth-token");
         localStorage.removeItem("vms_admin_profile");
         set({ user: null, token: null, isAuthenticated: false });

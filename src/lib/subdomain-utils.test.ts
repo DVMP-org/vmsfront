@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { buildSubdomainUrl, getSubdomain } from "@/lib/subdomain-utils";
 
 describe("subdomain URLs", () => {
-  it("preserves the local HTTP port when navigating to a tenant", () => {
+  it("builds a portless HTTPS tenant URL through the Valet proxy", () => {
     expect(buildSubdomainUrl("acme", "/select")).toBe(
-      "http://acme.vmsfront.to:3000/select",
+      "https://acme.vmsfront.to/select",
     );
   });
 

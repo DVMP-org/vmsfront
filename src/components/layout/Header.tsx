@@ -171,7 +171,11 @@ export const Header = memo(function Header({
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
-                    {getFullName(currentUser.first_name, currentUser.last_name)}
+                    {getFullName(
+                      currentUser.first_name,
+                      currentUser.last_name,
+                      currentUser.email,
+                    )}
                   </span>
                   {!isSelectRoute && (
                     <span className="text-[9px] uppercase text-muted-foreground">
@@ -195,7 +199,11 @@ export const Header = memo(function Header({
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground">
-                        {getFullName(currentUser.first_name, currentUser.last_name)}
+                        {getFullName(
+                          currentUser.first_name,
+                          currentUser.last_name,
+                          currentUser.email,
+                        )}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {currentUser.email}
