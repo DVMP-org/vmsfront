@@ -31,9 +31,11 @@ import {
   ExternalLink,
   Save,
   Store,
+  Lock,
 } from "lucide-react";
 import { Plugin, PluginConfig, BackendPlugin } from "@/types/plugin";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { pluginEntitlementLabel } from "@/lib/plugin-utils";
 
 export default function PluginsPage() {
   const router = useRouter();
@@ -141,6 +143,18 @@ export default function PluginsPage() {
       backendVersion: backendPlugin.version,
       frontendVersion: frontendPlugin?.manifest.version,
       hasFrontend: !!frontendPlugin,
+      installed: backendPlugin.installed ?? true,
+      configured: backendPlugin.configured ?? false,
+      licensed: backendPlugin.licensed ?? false,
+      access_ready: backendPlugin.access_ready ?? false,
+      entitlementStatus: backendPlugin.entitlement_status,
+      entitlementSource: backendPlugin.entitlement_source,
+      entitlementReason: backendPlugin.entitlement_reason,
+      planId: backendPlugin.plan_id,
+      planName: backendPlugin.plan_name,
+      graceEndsAt: backendPlugin.grace_ends_at,
+      canEnable: backendPlugin.can_enable ?? false,
+      canConfigure: backendPlugin.can_configure ?? false,
     };
   });
 
@@ -389,7 +403,11 @@ export default function PluginsPage() {
                             : ""
                         }
                       >
-                        {plugin.enabled ? "Active" : "Inactive"}
+                        {plugin.enabled
+                          ? "Enabled"
+                          : plugin.licensed
+                            ? "Inactive"
+                            : pluginEntitlementLabel(plugin.entitlementStatus)}
                       </Badge>
                     </div>
 
@@ -451,18 +469,31 @@ export default function PluginsPage() {
                   <CardContent className="pt-0 space-y-3">
                     {/* Toggle Switch */}
                     <div className="flex items-center justify-between rounded-xl border bg-muted/50 px-4 py-3">
-                      <span className="text-sm font-medium">
-                        {plugin.enabled ? "Enabled" : "Disabled"}
-                      </span>
+                      <div>
+                        <span className="text-sm font-medium">
+                          {plugin.enabled ? "Enabled" : "Disabled"}
+                        </span>
+                        <p className="text-xs text-muted-foreground">
+                          {plugin.licensed
+                            ? "Included in the current plan"
+                            : plugin.planName
+                              ? `Not licensed under ${plugin.planName}`
+                              : pluginEntitlementLabel(plugin.entitlementStatus)}
+                        </p>
+                      </div>
                       <button
                         onClick={() => handleTogglePlugin(plugin.id)}
-                        disabled={togglePluginMutation.isPending}
+                        disabled={
+                          togglePluginMutation.isPending ||
+                          (!plugin.enabled && !plugin.canEnable)
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928))] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
                           ? "bg-[rgb(var(--brand-primary,#213928))]"
                           : "bg-gray-200"
                           }`}
                         role="switch"
                         aria-checked={plugin.enabled}
+                        aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.name}`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${plugin.enabled ? "translate-x-6" : "translate-x-1"
@@ -540,7 +571,11 @@ export default function PluginsPage() {
                           : "bg-white/90"
                       }
                     >
-                      {selectedPlugin.enabled ? "Active" : "Inactive"}
+                      {selectedPlugin.enabled
+                        ? "Enabled"
+                        : selectedPlugin.licensed
+                          ? "Inactive"
+                          : pluginEntitlementLabel(selectedPlugin.entitlementStatus)}
                     </Badge>
                   </div>
                 </div>
@@ -549,6 +584,54 @@ export default function PluginsPage() {
 
             {/* Modal Content */}
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="rounded-2xl border bg-muted/40 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-muted-foreground">
+                      Entitlement and activation
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedPlugin.planName
+                        ? `Current plan: ${selectedPlugin.planName}`
+                        : "No eligible commercial plan is currently attached."}
+                    </p>
+                  </div>
+                  <Badge variant={selectedPlugin.licensed ? "default" : "secondary"}>
+                    {selectedPlugin.licensed && <CheckCircle2 className="mr-1 h-3 w-3" />}
+                    {!selectedPlugin.licensed && <Lock className="mr-1 h-3 w-3" />}
+                    {pluginEntitlementLabel(selectedPlugin.entitlementStatus)}
+                  </Badge>
+                </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {[
+                    ["Installed", selectedPlugin.installed],
+                    ["Enabled", selectedPlugin.enabled],
+                    ["Configured", selectedPlugin.configured],
+                    ["Licensed", selectedPlugin.licensed],
+                  ].map(([label, active]) => (
+                    <div
+                      key={String(label)}
+                      className="flex items-center gap-2 rounded-lg border bg-background/70 px-3 py-2 text-sm"
+                    >
+                      <CheckCircle2
+                        className={`h-4 w-4 ${active ? "text-emerald-500" : "text-muted-foreground"}`}
+                      />
+                      {label}
+                    </div>
+                  ))}
+                </div>
+                {selectedPlugin.entitlementStatus === "grace" && (
+                  <p className="mt-3 text-xs font-medium text-amber-600">
+                    Access is temporarily available during the billing grace period.
+                  </p>
+                )}
+                {!selectedPlugin.licensed && (
+                  <p className="mt-3 text-xs font-medium text-amber-600">
+                    Installation is preserved, but enable and configure actions are locked until the plan is upgraded.
+                  </p>
+                )}
+              </div>
+
               {/* Use Cases */}
               <div>
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
@@ -645,10 +728,11 @@ export default function PluginsPage() {
                                   !editedConfig[normalizedKey]
                                 )
                               }
+                              disabled={!selectedPlugin.canConfigure}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
                                 ? "bg-[rgb(var(--brand-primary))]"
                                 : "bg-gray-300"
-                                }`}
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
@@ -666,6 +750,7 @@ export default function PluginsPage() {
                               onChange={(e) =>
                                 handleConfigChange(option.key, e.target.value)
                               }
+                              disabled={!selectedPlugin.canConfigure}
                               className="bg-white"
                             />
                           )}
@@ -700,6 +785,7 @@ export default function PluginsPage() {
                                   }
                                 }
                               }}
+                              disabled={!selectedPlugin.canConfigure}
                               className="bg-white"
                             />
                           )}
@@ -712,10 +798,11 @@ export default function PluginsPage() {
                                   !editedConfig[normalizedKey]
                                 )
                               }
+                              disabled={!selectedPlugin.canConfigure}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
                                 ? "bg-[rgb(var(--brand-primary))]"
                                 : "bg-gray-300"
-                                }`}
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
@@ -734,6 +821,7 @@ export default function PluginsPage() {
                               onChange={(e) =>
                                 handleConfigChange(option.key, e.target.value)
                               }
+                              disabled={!selectedPlugin.canConfigure}
                               className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
                             >
                               {option.options.map((opt) => (
@@ -770,7 +858,11 @@ export default function PluginsPage() {
                   <Button
                     className="gap-2 bg-[rgb(var(--brand-primary))] hover:bg-[rgb(var(--brand-primary)/0.9)]0"
                     onClick={handleSaveConfig}
-                    disabled={updateSettingsMutation.isPending || isLoadingSettings}
+                    disabled={
+                      updateSettingsMutation.isPending ||
+                      isLoadingSettings ||
+                      !selectedPlugin.canConfigure
+                    }
                   >
                     <Save className="h-4 w-4" />
                     {updateSettingsMutation.isPending ? "Saving..." : "Save Configuration"}

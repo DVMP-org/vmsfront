@@ -14,6 +14,23 @@ export function normalizePath(path: string): string {
     return path.replace(/^\/+|\/+$/g, '');
 }
 
+export function pluginEntitlementLabel(status?: string): string {
+    switch (status) {
+        case "active":
+            return "Licensed";
+        case "free":
+            return "Included";
+        case "grace":
+            return "Grace period";
+        case "subscription_required":
+            return "Subscription required";
+        case "plan_upgrade_required":
+            return "Plan upgrade required";
+        default:
+            return "Availability unknown";
+    }
+}
+
 /**
  * Normalizes a route path, treating "/" and "" as root
  * @param path The route path

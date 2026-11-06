@@ -555,6 +555,14 @@ export const adminService = {
         return apiClient.get("/admin/plugins");
     },
 
+    async getPluginEntitlements(): Promise<ApiResponse<any[]>> {
+        return apiClient.get("/admin/plugins/entitlements");
+    },
+
+    async getPluginEntitlement(pluginId: string): Promise<ApiResponse<any>> {
+        return apiClient.get(`/admin/plugins/entitlements/${pluginId}`);
+    },
+
     async togglePlugin(pluginId: string): Promise<ApiResponse<any>> {
         return apiClient.put(`/admin/plugins/${pluginId}/enable`);
     },
