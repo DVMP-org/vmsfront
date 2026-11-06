@@ -8,8 +8,15 @@ const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_S
 /**
  * Construct a URL on the base domain (without subdomain)
  */
-function getBaseDomainUrl(pathname: string = '/', search: string = ''): URL {
-  const url = new URL(`${PROTOCOL}://${BASE_DOMAIN}${pathname}`);
+function getBaseDomainUrl(
+  pathname: string = '/',
+  search: string = '',
+  request?: NextRequest
+): URL {
+  const requestUrl = request ? new URL(request.url) : null;
+  const protocol = requestUrl?.port ? requestUrl.protocol : `${PROTOCOL}:`;
+  const port = requestUrl?.port ? `:${requestUrl.port}` : '';
+  const url = new URL(`${protocol}//${BASE_DOMAIN}${port}${pathname}`);
   if (search) {
     url.search = search;
   }
@@ -89,9 +96,9 @@ export function middleware(request: NextRequest) {
   // Dashboard routes (/admin, /residency, /select) require org context from subdomain
   if (!isOnSubdomain && !effectiveOrganization && (isDashboardPath || isSelectPath)) {
     if (isAuthenticated) {
-      return NextResponse.redirect(getBaseDomainUrl('/organizations'));
+      return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
     } else {
-      const loginUrl = getBaseDomainUrl('/auth/login');
+      const loginUrl = getBaseDomainUrl('/auth/login', '', request);
       loginUrl.searchParams.set('redirect_to', '/organizations');
       return NextResponse.redirect(loginUrl);
     }
@@ -100,7 +107,7 @@ export function middleware(request: NextRequest) {
   // RULE 2: On SUBDOMAIN - redirect /organizations to base domain
   // Organizations list is only available on base domain
   if (isOnSubdomain && isOrganizationsPath) {
-    return NextResponse.redirect(getBaseDomainUrl('/organizations'));
+    return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
   }
 
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
@@ -108,13 +115,13 @@ export function middleware(request: NextRequest) {
     const redirectTo = effectiveOrganization ? '/select' : '/organizations';
     const destinationUrl = isOnSubdomain
       ? new URL(redirectTo, request.url)
-      : getBaseDomainUrl(redirectTo);
+      : getBaseDomainUrl(redirectTo, '', request);
     return NextResponse.redirect(destinationUrl);
   }
 
   // RULE 4: Protected paths on subdomain require authentication
   if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
-    const loginUrl = getBaseDomainUrl('/auth/login');
+    const loginUrl = getBaseDomainUrl('/auth/login', '', request);
     loginUrl.searchParams.set('redirect_to', pathname);
     return NextResponse.redirect(loginUrl);
   }

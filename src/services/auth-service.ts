@@ -28,7 +28,10 @@ export const authService = {
   },
 
   async getUser(): Promise<ApiResponse<AuthResponse["user"]>> {
-    return apiClient.get("/user/me");
+    const response = await apiClient.get<
+      ApiResponse<{ user: AuthResponse["user"] }>
+    >("/user/me");
+    return { ...response, data: response.data.user };
   },
 
   async updateProfile(

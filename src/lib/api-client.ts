@@ -1,9 +1,25 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { useAuthStore } from "@/store/auth-store";
 import { getSubdomain } from "./subdomain-utils";
+import { getCookie } from "./cookies";
 
 // Use production API URL in production, fallback to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+export function getStoredAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const cookieToken = getCookie("auth-token");
+  if (cookieToken) {
+    // Older builds stored a token independently on each subdomain. The
+    // shared cookie is the only source that is guaranteed to follow the user.
+    localStorage.removeItem("token");
+    return cookieToken;
+  }
+
+  return localStorage.getItem("token");
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -32,7 +48,7 @@ class ApiClient {
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor to handle errors
@@ -54,7 +70,9 @@ class ApiClient {
             if (!onAuthRoute && currentPath) {
               loginUrl.searchParams.set("redirect_to", currentPath);
             } else if (onAuthRoute) {
-              const existingRedirect = new URL(window.location.href).searchParams.get("redirect_to");
+              const existingRedirect = new URL(
+                window.location.href,
+              ).searchParams.get("redirect_to");
               if (existingRedirect) {
                 loginUrl.searchParams.set("redirect_to", existingRedirect);
               }
@@ -64,24 +82,12 @@ class ApiClient {
           }
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
   private getToken(): string | null {
-    if (typeof window !== "undefined") {
-      // Try localStorage first, then fall back to cookie for cross-subdomain support
-      const localToken = localStorage.getItem("token");
-      if (localToken) return localToken;
-      
-      // Read from cookie as fallback
-      const cookieToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth-token="))
-        ?.split("=")[1];
-      return cookieToken || null;
-    }
-    return null;
+    return getStoredAuthToken();
   }
 
   public setToken(token: string): void {
@@ -102,17 +108,29 @@ class ApiClient {
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
