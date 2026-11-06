@@ -36,8 +36,11 @@ import {
     Shield,
     ArrowRight,
     Loader2,
+    Lock,
 } from "lucide-react";
+import { toast } from "sonner";
 import { formatNumber, formatPrice, titleCase, safeOpenUrl } from "@/lib/utils";
+import { pluginEntitlementLabel } from "@/lib/plugin-utils";
 import { FilterConfig } from "@/components/ui/DataTable";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 
@@ -93,6 +96,14 @@ export default function MarketplacePage() {
     const installedCount = plugins.filter((p) => p.installed).length;
 
     const handleInstall = async (plugin: MarketplacePlugin) => {
+        if (!plugin.can_install) {
+            toast.error(
+                plugin.entitlement_reason === "subscription_required"
+                    ? "Choose a subscription plan before installing paid plugins."
+                    : "Upgrade your plan to install this plugin."
+            );
+            return;
+        }
         // Prevent duplicate installs by checking if already installing
         if (installingPluginId === plugin.id || installPluginMutation.isPending) {
             return;
@@ -288,7 +299,7 @@ export default function MarketplacePage() {
                                     </div>
 
                                     {/* Installed Badge */}
-                                    {plugin.installed && (
+                                    {plugin.installed && plugin.licensed && (
                                         <div className="absolute top-3 left-3">
                                             <Badge
                                                 variant="default"
@@ -296,6 +307,18 @@ export default function MarketplacePage() {
                                             >
                                                 <CheckCircle2 className="h-3 w-3" />
                                                 Installed
+                                            </Badge>
+                                        </div>
+                                    )}
+
+                                    {!plugin.licensed && (
+                                        <div className="absolute top-3 left-3">
+                                            <Badge
+                                                variant="secondary"
+                                                className="bg-amber-500 text-white gap-1"
+                                            >
+                                                <Lock className="h-3 w-3" />
+                                                {pluginEntitlementLabel(plugin.entitlement_status)}
                                             </Badge>
                                         </div>
                                     )}
@@ -346,15 +369,20 @@ export default function MarketplacePage() {
                                     <Button
                                         variant={plugin.installed ? "outline" : "primary"}
                                         className="w-full gap-2"
-                                        disabled={installingPluginId === plugin.id}
+                                        disabled={
+                                            installingPluginId === plugin.id ||
+                                            (!plugin.installed && !plugin.can_install)
+                                        }
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             if (plugin.installed) {
                                                 // Sanitize plugin ID before using in URL
                                                 const sanitizedId = encodeURIComponent(plugin.id);
                                                 router.push(`/admin/plugins?pluginId=${sanitizedId}`);
-                                            } else {
+                                            } else if (plugin.can_install) {
                                                 handleInstall(plugin);
+                                            } else {
+                                                router.push("/plans");
                                             }
                                         }}
                                     >
@@ -368,10 +396,15 @@ export default function MarketplacePage() {
                                                 <CheckCircle2 className="h-4 w-4" />
                                                 Manage Plugin
                                             </>
-                                        ) : (
+                                        ) : plugin.can_install ? (
                                             <>
                                                 <Download className="h-4 w-4" />
                                                 Install Plugin
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lock className="h-4 w-4" />
+                                                View Plans
                                             </>
                                         )}
                                     </Button>
@@ -494,6 +527,50 @@ export default function MarketplacePage() {
                             </p>
                         </div>
 
+                        <div className="rounded-2xl border bg-muted/40 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold">Plugin availability</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Installation, activation, setup, and licensing are tracked independently.
+                                    </p>
+                                </div>
+                                <Badge variant={selectedPlugin.licensed ? "default" : "secondary"}>
+                                    {pluginEntitlementLabel(selectedPlugin.entitlement_status)}
+                                </Badge>
+                            </div>
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                                {[
+                                    ["Installed", selectedPlugin.installed],
+                                    ["Enabled", selectedPlugin.enabled],
+                                    ["Configured", selectedPlugin.configured],
+                                    ["Licensed", selectedPlugin.licensed],
+                                ].map(([label, enabled]) => (
+                                    <div key={String(label)} className="flex items-center gap-2 text-sm">
+                                        <CheckCircle2
+                                            className={`h-4 w-4 ${enabled ? "text-emerald-500" : "text-muted-foreground"}`}
+                                        />
+                                        <span>{label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            {selectedPlugin.plan_name && (
+                                <p className="mt-3 text-xs text-muted-foreground">
+                                    Plan: {selectedPlugin.plan_name}
+                                </p>
+                            )}
+                            {selectedPlugin.entitlement_status === "grace" && (
+                                <p className="mt-2 text-xs font-medium text-amber-600">
+                                    Access remains available during the billing grace period.
+                                </p>
+                            )}
+                            {!selectedPlugin.licensed && (
+                                <p className="mt-2 text-xs font-medium text-amber-600">
+                                    The plugin record remains installed, but enabling or configuring it requires an eligible plan.
+                                </p>
+                            )}
+                        </div>
+
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-4">
                             <div className="rounded-xl border bg-muted/50 p-4 text-center">
@@ -568,15 +645,21 @@ export default function MarketplacePage() {
                             <Button
                                 variant={selectedPlugin.installed ? "outline" : "primary"}
                                 className="flex-1 gap-2"
-                                disabled={installingPluginId === selectedPlugin.id}
+                                disabled={
+                                    installingPluginId === selectedPlugin.id ||
+                                    (!selectedPlugin.installed && !selectedPlugin.can_install)
+                                }
                                 onClick={() => {
                                     if (selectedPlugin.installed) {
                                         // Sanitize plugin ID before using in URL
                                         const sanitizedId = encodeURIComponent(selectedPlugin.id);
                                         router.push(`/admin/plugins?pluginId=${sanitizedId}`);
                                         handleCloseDetails();
-                                    } else {
+                                    } else if (selectedPlugin.can_install) {
                                         handleInstall(selectedPlugin);
+                                    } else {
+                                        router.push("/plans");
+                                        handleCloseDetails();
                                     }
                                 }}
                             >
@@ -590,10 +673,15 @@ export default function MarketplacePage() {
                                         <CheckCircle2 className="h-4 w-4" />
                                         Manage Plugin
                                     </>
-                                ) : (
+                                ) : selectedPlugin.can_install ? (
                                     <>
                                         <Download className="h-4 w-4" />
                                         Install Plugin
+                                    </>
+                                ) : (
+                                    <>
+                                        <Lock className="h-4 w-4" />
+                                        View Plans
                                     </>
                                 )}
                             </Button>

@@ -17,6 +17,7 @@ import {
     DoorOpen,
     Blocks,
     Wallet,
+    RadioTower,
 } from "lucide-react";
 
 export interface AdminRoute {
@@ -33,6 +34,7 @@ export const adminLinks: AdminRoute[] = [
     { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
     { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
     { href: "/admin/gates", label: "Gates", icon: DoorOpen, permission: "gates.list" },
+    { href: "/admin/gates/simulator", label: "Access Simulator", icon: RadioTower, permission: "gates.list" },
     { href: "/admin/residencies", label: "Residencies", icon: Building2, permission: "residencies.list" },
     { href: "/admin/residency-groups", label: "Residency Groups", icon: FolderTree, permission: "residency_groups.list" },
     {
