@@ -191,8 +191,59 @@ function PeopleContent({
   onChanged: () => void;
 }) {
   const total = people.administrators.length + people.occupants.length;
+  const [notice, setNotice] = useState("");
+  const [removeError, setRemoveError] = useState("");
+  const remove = useMutation({
+    mutationFn: (person: PlacePerson) =>
+      peopleApi.remove(people.place.id, person.source, person.assignment_id),
+    onMutate: () => {
+      setNotice("");
+      setRemoveError("");
+    },
+    onSuccess: (result, person) => {
+      setNotice(
+        result.source === "administration"
+          ? `${person.party.display_name} no longer administers this site.`
+          : `${person.party.display_name}'s access to this property has ended.`,
+      );
+      onChanged();
+    },
+    onError: (error) => setRemoveError(parseApiError(error).message),
+  });
+
+  function requestRemoval(person: PlacePerson) {
+    const action =
+      person.source === "administration"
+        ? "deactivate this site administrator"
+        : "end this person's property access";
+    if (
+      !window.confirm(
+        `Are you sure you want to ${action} for ${person.party.display_name}?`,
+      )
+    ) {
+      return;
+    }
+    remove.mutate(person);
+  }
+
   return (
     <>
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
+          {notice}
+        </p>
+      ) : null}
+      {removeError ? (
+        <p
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          {removeError}
+        </p>
+      ) : null}
       <section
         className="grid overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:grid-cols-3"
         aria-label="People summary"
@@ -229,6 +280,8 @@ function PeopleContent({
               description="Manage the site and its operating workflows."
               items={people.administrators}
               empty="No site administrator is assigned in this context."
+              onRemove={requestRemoval}
+              removing={remove.isPending ? remove.variables?.assignment_id : undefined}
             />
             <Roster
               icon={UserRound}
@@ -237,6 +290,8 @@ function PeopleContent({
               items={people.occupants}
               empty={`No ${occupantLabel(people.effective_use_case).toLowerCase()} have been added.`}
               divided
+              onRemove={requestRemoval}
+              removing={remove.isPending ? remove.variables?.assignment_id : undefined}
             />
           </div>
         </section>
@@ -428,6 +483,8 @@ function Roster({
   items,
   empty,
   divided = false,
+  onRemove,
+  removing,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
@@ -435,6 +492,8 @@ function Roster({
   items: PlacePerson[];
   empty: string;
   divided?: boolean;
+  onRemove: (person: PlacePerson) => void;
+  removing?: string;
 }) {
   return (
     <div
@@ -463,9 +522,23 @@ function Roster({
                   {item.party.email || "No email"}
                 </span>
               </span>
-              <span className="shrink-0 rounded-full border border-[#dce3ee] bg-[#f8faff] px-2 py-1 text-[10px] font-semibold capitalize">
-                {roleLabel(item.role)}
-                {item.is_super_admin ? " · Primary" : ""}
+              <span className="flex shrink-0 flex-col items-end gap-1.5">
+                <span className="rounded-full border border-[#dce3ee] bg-[#f8faff] px-2 py-1 text-[10px] font-semibold capitalize">
+                  {roleLabel(item.role)}
+                  {item.is_super_admin ? " · Primary" : ""}
+                </span>
+                <button
+                  type="button"
+                  disabled={removing === item.assignment_id}
+                  onClick={() => onRemove(item)}
+                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {removing === item.assignment_id
+                    ? "Removing…"
+                    : item.source === "administration"
+                      ? "Deactivate"
+                      : "End access"}
+                </button>
               </span>
             </li>
           ))}

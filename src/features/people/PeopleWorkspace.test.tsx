@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   },
   get: vi.fn(),
   add: vi.fn(),
+  remove: vi.fn(),
   setProperty: vi.fn(),
 }));
 
@@ -59,6 +60,7 @@ const people = {
   effective_use_case: "residential" as const,
   administrators: [
     {
+      assignment_id: "manager-assignment",
       party: {
         id: "manager",
         kind: "person",
@@ -74,6 +76,7 @@ const people = {
   ],
   occupants: [
     {
+      assignment_id: "resident-assignment",
       party: {
         id: "resident",
         kind: "person",
@@ -180,5 +183,30 @@ describe("property people", () => {
       name: "Selected property",
     });
     expect(mocks.get).not.toHaveBeenCalled();
+  });
+
+  it("ends an occupant assignment after manager confirmation", async () => {
+    mocks.remove.mockResolvedValue({
+      assignment_id: "resident-assignment",
+      source: "occupancy",
+      status: "ended",
+    });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mount();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "End access" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.remove).toHaveBeenCalledWith(
+        "unit",
+        "occupancy",
+        "resident-assignment",
+      ),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "access to this property has ended",
+    );
   });
 });
