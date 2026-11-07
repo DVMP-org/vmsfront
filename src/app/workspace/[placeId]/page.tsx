@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -19,6 +20,8 @@ import {
   workspaceAreaMeta,
 } from "@/features/workspaces/catalog";
 import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
+import { contextApi } from "@/features/context/api";
+import { ManagementAuthorityCard } from "@/features/management/ManagementAuthorityCard";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -39,6 +42,12 @@ export default function WorkspacePage() {
       ),
     [context.data, params.placeId],
   );
+  const placeContext = useQuery({
+    queryKey: ["workspace-place-context", params.placeId],
+    queryFn: () => contextApi.workspace(params.placeId),
+    enabled: !!relationship,
+    retry: false,
+  });
   const area = relationship ? areaForRelationship(relationship) : "occupancy";
   const meta = workspaceAreaMeta[area];
   const Icon = areaIcon[area];
@@ -125,6 +134,12 @@ export default function WorkspacePage() {
                     ? `From ${formatDate(relationship.effective_from)}`
                     : "No start date recorded"
                 }
+              />
+            </div>
+
+            <div className="mt-4">
+              <ManagementAuthorityCard
+                management={placeContext.data?.management}
               />
             </div>
 
