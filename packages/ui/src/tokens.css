@@ -1,0 +1,28 @@
+/* Semantic defaults; tenant overrides are produced by the validated brand kit. */
+[data-vms-theme="light"] {
+  color-scheme: light;
+  --vms-surface: #faf9f6;
+  --vms-text: #202a2a;
+  --vms-primary: #175e56;
+  --vms-on-primary: #ffffff;
+  --vms-focus: #175e56;
+  --vms-border: #76817e;
+  --vms-danger: #a12222;
+  --vms-radius: 0.375rem;
+  --vms-space-control: 0.625rem;
+  --vms-font-interface: Inter, system-ui, sans-serif;
+  --vms-font-display: Georgia, serif;
+  --vms-motion: 150ms;
+}
+[data-vms-theme="dark"] {
+  color-scheme: dark;
+  --vms-surface: #18211f;
+  --vms-text: #f4f5ef;
+  --vms-primary: #8bd7c6;
+  --vms-on-primary: #000000;
+  --vms-focus: #8bd7c6;
+  --vms-border: #aab7b1;
+  --vms-danger: #ffb4ab;
+}
+[data-vms-density="compact"] { --vms-space-control: 0.375rem; }
+@media (prefers-reduced-motion: reduce) { [data-vms-theme] { --vms-motion: 0ms; } }
