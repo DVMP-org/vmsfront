@@ -1,0 +1,128 @@
+.checkpoint-page {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px 0;
+  color: var(--foreground);
+  line-height: 1.55;
+}
+.checkpoint-page h1 {
+  font:
+    38px Georgia,
+    serif;
+  margin: 12px 0;
+}
+.checkpoint-page h2 {
+  font:
+    26px Georgia,
+    serif;
+  margin: 20px 0 12px;
+}
+.checkpoint-page header {
+  margin: 24px 0;
+  border-bottom: 1px solid #8a94a6;
+  padding-bottom: 24px;
+}
+.checkpoint-page header > p:first-child {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+}
+.checkpoint-page form,
+.checkpoint-page section {
+  margin: 24px 0;
+}
+.checkpoint-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0;
+}
+.checkpoint-page input,
+.checkpoint-page select,
+.checkpoint-page button {
+  border: 1px solid #8a94a6;
+  border-radius: 5px;
+  padding: 10px 14px;
+  background: transparent;
+  color: inherit;
+  min-height: 44px;
+}
+.checkpoint-page input {
+  max-width: 100%;
+}
+.checkpoint-page button {
+  cursor: pointer;
+  margin: 6px 8px 6px 0;
+  font-weight: 600;
+}
+.checkpoint-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.checkpoint-page :focus-visible {
+  outline: 3px solid #635bdb;
+  outline-offset: 3px;
+}
+.checkpoint-page fieldset {
+  padding: 16px;
+  border: 1px solid #8a94a6;
+  border-radius: 8px;
+}
+.checkpoint-page fieldset:disabled {
+  opacity: 0.6;
+}
+.checkpoint-directory,
+.checkpoint-history {
+  list-style: none;
+  padding: 0;
+}
+.checkpoint-directory li,
+.checkpoint-history li {
+  border-bottom: 1px solid #8a94a6;
+}
+.checkpoint-directory a,
+.checkpoint-history a {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 4px;
+}
+.checkpoint-page nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.checkpoint-outcome {
+  padding: 20px;
+  border-left: 5px solid #777;
+  background: rgba(120, 120, 120, 0.08);
+}
+.checkpoint-outcome.allowed {
+  border-color: #288157;
+}
+.checkpoint-outcome.denied {
+  border-color: #cb4a4a;
+}
+.checkpoint-page [role="alert"] {
+  padding: 16px;
+  border: 1px solid #cb4a4a;
+}
+.checkpoint-page > a {
+  text-decoration: underline;
+}
+@media (max-width: 600px) {
+  .checkpoint-page h1 {
+    font-size: 30px;
+  }
+  .checkpoint-history a {
+    flex-direction: column;
+  }
+  .checkpoint-page {
+    padding: 12px 0;
+  }
+  .checkpoint-page input,
+  .checkpoint-page select {
+    width: 100%;
+  }
+}
