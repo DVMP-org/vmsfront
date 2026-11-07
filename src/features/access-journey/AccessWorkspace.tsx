@@ -503,6 +503,12 @@ function InvitationDetail({
     queryFn: () => accessJourneyApi.get(invitationId),
     retry: false,
   });
+  const checkpointEvents = useQuery({
+    queryKey: ["workspace", "visit-checkpoint-events", invitationId],
+    queryFn: () => accessJourneyApi.checkpointEvents(invitationId),
+    enabled: invitation.isSuccess,
+    retry: false,
+  });
   const data = invitation.data;
   const status = data ? statusMeta[data.status] : null;
 
@@ -672,6 +678,17 @@ function InvitationDetail({
               </div>
             </div>
 
+            <ArrivalHistory
+              events={checkpointEvents.data?.items || []}
+              loading={checkpointEvents.isPending}
+              error={
+                checkpointEvents.isError
+                  ? parseApiError(checkpointEvents.error).message
+                  : null
+              }
+              onRetry={() => checkpointEvents.refetch()}
+            />
+
             {data.decline_reason ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
                 <p className="font-semibold">Declined</p>
@@ -703,6 +720,84 @@ function InvitationDetail({
         )}
       </section>
     </div>
+  );
+}
+
+function ArrivalHistory({
+  events,
+  loading,
+  error,
+  onRetry,
+}: {
+  events: Array<{
+    id: string;
+    direction: "entry" | "exit";
+    outcome: "allowed" | "denied";
+    reason_code: string;
+    occurred_at: string;
+    gate_id: string;
+  }>;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  return (
+    <section aria-labelledby="arrival-history-title">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 id="arrival-history-title" className="text-sm font-semibold">
+            Arrival history
+          </h3>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            Checkpoint decisions recorded for this invitation.
+          </p>
+        </div>
+        <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          {events.length} {events.length === 1 ? "event" : "events"}
+        </span>
+      </div>
+
+      {loading ? (
+        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          Loading arrival history…
+        </p>
+      ) : error ? (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+          <span>{error}</span>
+          <button type="button" onClick={onRetry} className="font-semibold">
+            Retry
+          </button>
+        </div>
+      ) : events.length === 0 ? (
+        <p className="mt-3 rounded-lg border border-dashed border-zinc-200 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          No checkpoint events yet.
+        </p>
+      ) : (
+        <ol className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+          {events.map((event) => (
+            <li
+              key={event.id}
+              className="flex items-center justify-between gap-3 px-3 py-2.5"
+            >
+              <div>
+                <p className="text-sm font-medium capitalize">
+                  {event.direction} · {event.outcome}
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  Gate {event.gate_id.slice(0, 8)} · {event.reason_code}
+                </p>
+              </div>
+              <time
+                dateTime={event.occurred_at}
+                className="text-right text-xs text-zinc-500 dark:text-zinc-400"
+              >
+                {formatDateTime(event.occurred_at)}
+              </time>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }
 
