@@ -94,14 +94,14 @@ describe("operating dashboard", () => {
     });
     render(<AdminDashboardPage />);
     expect(
-      screen.getByRole("heading", { name: "Operating dashboard" }),
+      screen.getByRole("heading", { name: "Management overview" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Harbour Hotel" })).toHaveAttribute(
       "href",
       "/admin/properties/place",
     );
     expect(screen.getByText("Guest arrival")).toBeInTheDocument();
-    expect(screen.getByText("Check-in · allowed")).toBeInTheDocument();
+    expect(screen.getByText(/Check-in allowed/)).toBeInTheDocument();
   });
 
   it("warns when refresh fails but cached data remains", () => {
@@ -147,9 +147,8 @@ describe("operating dashboard", () => {
       refetch: mocks.refetch,
     });
     render(<AdminDashboardPage />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /Manage people/ }),
-    );
-    expect(mocks.push).toHaveBeenCalledWith("/admin/people");
+    expect(
+      screen.getByRole("link", { name: /active relationships/ }),
+    ).toHaveAttribute("href", "/admin/people");
   });
 });

@@ -28,13 +28,13 @@ import { ButtonHTMLAttributes } from "react";
 import { DetailedHTMLProps } from "react";
 
 const buttonVariants = cva(
-  "overflow-hidden isolate inline-flex h-fit items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background dark:ring-offset-transparent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:!pointer-events-none",
+  "inline-flex h-fit items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:!pointer-events-none",
   {
     variants: {
       variant: {
         primary:
           // "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
-          "border-[rgb(var(--brand-primary,#1e40af))] bg-[rgb(var(--brand-primary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#1e40af))]/70 text-white font-bold border-2",
+          "border border-[rgb(var(--brand-primary,#2563eb))] bg-[rgb(var(--brand-primary,#2563eb))] text-white font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.18)] hover:border-[rgb(var(--brand-secondary,#1e40af))] hover:bg-[rgb(var(--brand-secondary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#2563eb))]/60",
         // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
         destructive:
           "border-red-600 bg-red-600 disabled:bg-red-600/70 text-white font-bold",
@@ -44,7 +44,7 @@ const buttonVariants = cva(
         // outline: "border border-primary text-primary disabled:opacity-60",
         // "destructive-outlined":
         outline:
-          "border-2 border-[rgb(var(--brand-primary,#1e40af))] bg-background dark:bg-card hover:bg-[rgb(var(--brand-primary,#1e40af))] hover:text-white active:bg-[rgb(var(--brand-primary,#1e40af))] active:text-white active:scale-[0.98]",
+          "border border-[#cbd5e1] bg-white text-[#344054] hover:border-[#94a3b8] hover:bg-[#f8faff] hover:text-[#0f1b31]",
         "destructive-outlined":
           "border border-red-600 text-red-600 disabled:opacity-60",
         "light-outlined": "border-white text-white disabled:opacity-60",
@@ -59,10 +59,10 @@ const buttonVariants = cva(
         // lg: "h-15 px-8 items-center",
         // sm: "h-10 px-3.5 items-center text-sm",
         default:
-          "py-[0.625rem] px-[1.5rem] text-[0.875rem] leading-[1.25rem] font-medium rounded-sm",
-        sm: "py-[0.375rem] px-[1rem]  leading-[1rem] font-normal text-sm rounded-sm",
-        lg: "py-[0.75rem] px-[1.5rem] text-[1rem] leading-[1.5rem] font-medium rounded-sm",
-        md: "py-[0.625rem] px-[1.5rem] text-[0.875rem] leading-[1.25rem] font-medium rounded-sm",
+          "rounded-md px-[1.25rem] py-[0.625rem] text-[0.875rem] font-medium leading-[1.25rem]",
+        sm: "rounded-md px-[0.875rem] py-[0.5rem] text-[0.8125rem] font-semibold leading-[1rem]",
+        lg: "rounded-md px-[1.5rem] py-[0.75rem] text-[1rem] font-medium leading-[1.5rem]",
+        md: "rounded-md px-[1.25rem] py-[0.625rem] text-[0.875rem] font-medium leading-[1.25rem]",
         "icon-sm":
           "h-[1.75rem] w-[1.75rem] flex justify-center items-center font-medium rounded-sm",
         icon: "h-[2.5rem] w-[2.75rem] flex justify-center items-center font-medium rounded-sm",

@@ -4,51 +4,48 @@
 
 @layer base {
   :root {
-    /* Base colors - warmer, more natural tones */
-    --background: 240 20% 99%;
-    --foreground: 240 10% 4%;
+    /* VMSCore light operations palette. Dark mode is intentionally deferred. */
+    color-scheme: light;
+    --background: 216 33% 97%;
+    --foreground: 219 48% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 219 48% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 219 48% 11%;
 
-    /* Primary - deeper, more confident blue */
-    --primary: 220 90% 56%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - warmer gray with subtle warmth */
-    --secondary: 240 6% 90%;
-    --secondary-foreground: 240 10% 4%;
+    --secondary: 216 30% 94%;
+    --secondary-foreground: 219 48% 11%;
 
-    /* Muted - softer, more refined */
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 216 28% 95%;
+    --muted-foreground: 217 13% 44%;
 
-    /* Accent - complementary warm tone */
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 4%;
+    --accent: 217 42% 95%;
+    --accent-foreground: 221 72% 42%;
 
-    /* Destructive - more vibrant, less generic */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs - sharper definition */
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 220 90% 56%;
+    --border: 216 25% 87%;
+    --input: 216 25% 87%;
+    --ring: 221 83% 53%;
 
-    /* Border radius - varied, more organic values */
     --radius-xs: 0.25rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.625rem;
-    --radius-lg: 0.875rem;
-    --radius-xl: 1.125rem;
-    --radius: 0.875rem;
-    /* Default */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 0.875rem;
+    --radius: 0.625rem;
 
-    /* Brand colors - more distinctive (using RGB format for opacity support) */
-    --brand-primary: 33 57 10;
-    --brand-secondary: 71 85 105;
+    --brand-primary: 37 99 235;
+    --brand-secondary: 30 64 175;
+    --canvas: #f4f7fb;
+    --ink: #0f1b31;
+    --muted-ink: #667085;
+    --line: #dce3ee;
+    --action: #2563eb;
   }
 
   .dark {
@@ -132,6 +129,15 @@
   *::-webkit-scrollbar-thumb:hover {
     @apply bg-zinc-300 dark:bg-zinc-700;
   }
+}
+
+html.dark {
+  color-scheme: light;
+}
+
+html.dark body {
+  background: var(--canvas);
+  color: var(--ink);
 }
 
 @layer components {
