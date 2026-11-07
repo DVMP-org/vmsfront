@@ -1,70 +1,43 @@
-import {
-    Home,
-    Users,
-    CreditCard,
-    Building2,
-    BarChart3,
-    Settings,
-    Shield,
-    Scan,
-    Activity,
-    Receipt,
-    FolderTree,
-    Puzzle,
-    UserCog,
-    MessageSquare,
-    type LucideIcon,
-    DoorOpen,
-    Blocks,
-    Wallet,
-    RadioTower,
-} from "lucide-react";
-
-export interface AdminRoute {
-    href: string;
-    label: string;
-    icon: LucideIcon;
-    permission?: string | string[];
-    children?: AdminRoute[];
-}
-
+import { Home, Users, Building2, Settings, Shield, Scan, Receipt, Puzzle, UserCog, MessageSquare, DoorOpen, Blocks, RadioTower, type LucideIcon } from "lucide-react";
+import type { ModuleGroup } from "@/features/context/api";
+export interface AdminRoute { href:string; label:string; icon:LucideIcon; permission?:string|string[]; module?:string; group?:string; children?:AdminRoute[] }
 export const adminLinks: AdminRoute[] = [
-    { href: "/admin/properties", label: "Properties", icon: Building2, permission: "places.list" },
-    { href: "/admin/hospitality", label: "Hospitality", icon: Building2, permission: "hospitality_stays.list" },
-    { href: "/admin", label: "Dashboard", icon: Home },
-    { href: "/admin/gate", label: "Gate Console", icon: Scan, permission: "gate_passes.console" },
-    { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
-    { href: "/admin/gate/events", label: "Gate Events", icon: Activity, permission: "gate_passes.list" },
-    { href: "/admin/gates", label: "Gates", icon: DoorOpen, permission: "gates.list" },
-    { href: "/admin/gates/simulator", label: "Access Simulator", icon: RadioTower, permission: "gates.list" },
-    { href: "/admin/residencies", label: "Residencies", icon: Building2, permission: "residencies.list" },
-    { href: "/admin/residency-groups", label: "Residency Groups", icon: FolderTree, permission: "residency_groups.list" },
-    {
-        href: "/admin/dues",
-        label: "Dues",
-        icon: Receipt,
-        permission: ["dues.list", "dues.residencies"],
-        children: [
-            { href: "/admin/dues", label: "All Dues", icon: Receipt, permission: "dues.list" },
-
-        ],
-    },
-    { href: "/admin/residents", label: "Residents", icon: Users, permission: "residents.list" },
-    { href: "/admin/visitors", label: "Visitors", icon: Users, permission: "visitors.list" },
-    {
-        href: "#",
-        label: "Admins",
-        icon: UserCog,
-        permission: ["admins.list", "roles.list"],
-        children: [
-            { href: "/admin/admins", label: "Admins", icon: UserCog, permission: "admins.list" },
-            { href: "/admin/admins/roles", label: "Roles", icon: Shield, permission: "roles.list" },
-        ],
-    },
-    { href: "/admin/forums", label: "Forums", icon: MessageSquare, permission: "forum_posts.list" },
-    { href: "/admin/settings", label: "Settings", icon: Settings, permission: ["branding.list", 'settings.show'] },
-    { href: "/admin/plugins", label: "Plugins", icon: Puzzle, permission: "plugins.list" },
-    { href: "/admin/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.summary" },
-    { href: "/admin/transactions", label: "Transactions", icon: CreditCard, permission: "transactions.list" },
-    { href: "/admin/profile", label: "Profile", icon: UserCog },
+ {href:"/admin",label:"Dashboard",icon:Home,module:"dashboard",group:"Workspace"},
+ {href:"/admin/properties",label:"Properties",icon:Building2,permission:"places.list",module:"properties",group:"Workspace"},
+ {href:"/admin/checkpoints",label:"Check-in / check-out",icon:Scan,permission:"gates.list",module:"check_in_out",group:"Operations"},
+ {href:"/admin/charges",label:"Charges",icon:Receipt,permission:"charges.list",module:"charges",group:"Operations"},
+ {href:"/admin/forums",label:"Forums",icon:MessageSquare,permission:"forum_posts.list",module:"forums",group:"Operations"},
+ {href:"/admin/gates",label:"Gates",icon:DoorOpen,permission:"gates.list",module:"gates",group:"Operations"},
+ {href:"/admin/gates/simulator",label:"Hardware lab",icon:RadioTower,permission:"gates.list",module:"gates",group:"Operations"},
+ {href:"/admin/hospitality",label:"Guest stays",icon:Building2,permission:"hospitality_stays.list",module:"hospitality",group:"Workflows"},
+ {href:"/admin/admins",label:"Administrators",icon:UserCog,permission:"admins.list",module:"admins",group:"Organization"},
+ {href:"/admin/admins/roles",label:"Roles & permissions",icon:Shield,permission:"roles.list",module:"roles",group:"Organization"},
+ {href:"/admin/organization",label:"Organization settings",icon:Settings,permission:"organizations.show",module:"organization_settings",group:"Organization"},
+ {href:"/admin/plugins",label:"Plugins",icon:Puzzle,permission:"plugins.list",module:"plugins",group:"Organization"},
+ {href:"/admin/settings?tab=integrations",label:"Integrations",icon:Blocks,permission:"integrations.list",module:"integrations",group:"Organization"},
+ {href:"/admin/settings",label:"Configuration",icon:Settings,permission:["branding.list","settings.show"],module:"organization_settings",group:"Organization"},
+ {href:"/admin/profile",label:"Profile",icon:UserCog,group:"Account"},
 ];
+export function contextualAdminLinks(
+  modules: readonly string[] | undefined,
+  moduleGroups: readonly ModuleGroup[] = [],
+): AdminRoute[] {
+  const groupByModule = new Map(
+    moduleGroups.flatMap((group, index) =>
+      group.modules.map((module) => [module, { ...group, index }] as const),
+    ),
+  );
+  const rank = (link: AdminRoute) =>
+    link.module ? (groupByModule.get(link.module)?.index ?? moduleGroups.length) : -1;
+  return adminLinks
+    .filter((link) => !link.module || !!modules?.includes(link.module))
+    .map((link, index) => ({
+      ...link,
+      group: link.module
+        ? (groupByModule.get(link.module)?.label ?? link.group)
+        : link.group,
+      index,
+    }))
+    .sort((left, right) => rank(left) - rank(right) || left.index - right.index)
+    .map(({ index: _index, ...link }) => link);
+}

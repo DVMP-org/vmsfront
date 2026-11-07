@@ -23,7 +23,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { generalService } from "@/services/general-service";
 
 
-export function useResidentDashboardSelect() {
+export function useResidentDashboardSelect(enabled = true) {
   const { isAuthenticated, _hasHydrated, token } = useAuthStore();
   
   return useQuery<DashboardSelect>({
@@ -34,7 +34,7 @@ export function useResidentDashboardSelect() {
 
       return user;
     },
-    enabled: _hasHydrated && (isAuthenticated || !!token),
+    enabled: enabled && _hasHydrated && (isAuthenticated || !!token),
   });
 }
 

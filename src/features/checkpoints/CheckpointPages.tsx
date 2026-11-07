@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
-import { hasPermission } from "@/lib/permissions";
+import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { checkpointsApi, Passage, PassageInput } from "./api";
 import "./styles.css";
@@ -26,7 +26,7 @@ function useAccess() {
     allowed: (p: string) =>
       profile.isFetchedAfterMount &&
       !profile.isError &&
-      hasPermission(profile.data?.role, p),
+      hasAdminPermission(profile.data, p),
   };
 }
 function Failure({ error, retry }: { error: unknown; retry: () => void }) {

@@ -26,10 +26,13 @@ import { cn, getFullName, getInitials } from "@/lib/utils";
 import { LogoFull } from "../LogoFull";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
+import { hasAdminPermission } from "@/lib/permissions";
+import { propertiesApi } from "@/features/properties/api";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
 
@@ -52,6 +55,7 @@ export const Header = memo(function Header({
   const { selectedResidency, branding, organization } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
+  const workspaceContext=useWorkspaceContext();
   const router = useRouter();
 
   const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
@@ -166,7 +170,7 @@ export const Header = memo(function Header({
               )}
             </Button>
 
-            {isAdminRoute && <CommandNavigation role={commandProfile.isFetchedAfterMount && !commandProfile.isError ? commandProfile.data?.role : null} contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`} navigate={(href) => router.push(href)} />}
+            {isAdminRoute && <CommandNavigation modules={workspaceContext.data?.modules || []} moduleGroups={workspaceContext.data?.module_groups || []} role={commandProfile.isFetchedAfterMount && !commandProfile.isError ? commandProfile.data : null} contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`} navigate={(href) => router.push(href)} />}
             <NotificationDropdown />
 
             <div className="relative" ref={menuRef}>
@@ -296,18 +300,37 @@ function WorkspaceSwitcher({
   isAdminRoute?: boolean | null;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
-  const { setSelectedResidency } = useAppStore();
+  const {
+    setSelectedResidency,
+    selectedProperty,
+    setSelectedProperty,
+    organization,
+  } = useAppStore();
 
-  const { data: dashboardData } = useResidentDashboardSelect();
+  const { data: dashboardData } = useResidentDashboardSelect(!isAdminRoute);
   const { data: adminProfile, isError: isAdminError } = useAdminProfile();
 
   const residencies = dashboardData?.residencies ?? [];
   const isAdmin = !!adminProfile && !isAdminError;
+  const canListPlaces =
+    isAdmin && hasAdminPermission(adminProfile, "places.list");
+  const properties = useQuery({
+    queryKey: ["header-properties", organization?.id],
+    queryFn: () =>
+      propertiesApi.list({
+        page: 1,
+        page_size: 100,
+        is_active: true,
+      }),
+    enabled: !!isAdminRoute && !!organization?.id && canListPlaces,
+    retry: false,
+  });
 
   const currentWorkspaceName = isAdminRoute
-    ? "Admin Console"
+    ? selectedProperty?.name || organization?.name || "Organization overview"
     : selectedResidency?.name || "Select Estate";
 
   const currentWorkspaceIcon = isAdminRoute ? (
@@ -339,6 +362,14 @@ function WorkspaceSwitcher({
       router.push("/admin");
     }
     setOpen(false);
+  };
+
+  const handlePropertySwitch = (
+    property: { id: string; name: string } | null,
+  ) => {
+    setSelectedProperty(property);
+    setOpen(false);
+    router.push(pathname || "/admin");
   };
 
   return (
@@ -375,84 +406,160 @@ function WorkspaceSwitcher({
           >
             <div className="px-2 py-1.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Switch Workspace
+                Organization / Property / Workspace
               </p>
             </div>
 
-            <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar">
-              {residencies.length > 0 && (
+            <div className="space-y-1 max-h-[360px] overflow-y-auto custom-scrollbar">
+              {isAdminRoute ? (
                 <>
-                  <div className="px-2 pt-1 pb-0.5">
+                  <div className="px-2 pb-0.5 pt-1">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
-                      Properties
+                      Organization
                     </p>
                   </div>
-                  {residencies.map((residency) => (
-                    <button
-                      key={residency.id}
-                      type="button"
-                      onClick={() => handleSwitch(residency)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                        selectedResidency?.id === residency.id && !isAdminRoute && "bg-[rgb(var(--brand-primary,#213928))]/5  border-[rgb(var(--brand-primary,#213928))]"
-                      )}
+                  <div className="rounded-lg border border-border/50 px-3 py-2">
+                    <p className="truncate text-sm font-semibold">
+                      {organization?.name || "Current organization"}
+                    </p>
+                    <Link
+                      href="/organizations"
+                      onClick={() => setOpen(false)}
+                      className="mt-1 inline-flex text-[11px] font-semibold underline"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
-                        <Home className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold truncate text-foreground">
-                          {residency.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {residency.address}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-
-              {isAdmin && (
-                <>
-                  <div className="px-2 pt-2 pb-0.5 border-t border-border/40 mt-1">
+                      Switch organization
+                    </Link>
+                  </div>
+                  <div className="mt-1 border-t border-border/40 px-2 pb-0.5 pt-2">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
-                      Management
+                      Property
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleSwitch(null)}
+                    onClick={() => handlePropertySwitch(null)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                      isAdminRoute &&
-                      "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-600",
+                      !selectedProperty &&
+                        "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10",
                     )}
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        Admin Console
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        Estate Operations
-                      </p>
-                    </div>
+                    <Shield className="h-4 w-4 text-indigo-600" />
+                    <span>
+                      <span className="block text-sm font-semibold">
+                        Organization overview
+                      </span>
+                      <span className="block text-[10px] text-muted-foreground">
+                        All tenant properties
+                      </span>
+                    </span>
                   </button>
+                  {properties.isPending && (
+                    <p className="px-2 py-2 text-xs" role="status">
+                      Loading properties…
+                    </p>
+                  )}
+                  {properties.isError && (
+                    <button
+                      type="button"
+                      className="px-2 py-2 text-xs underline"
+                      onClick={() => properties.refetch()}
+                    >
+                      Retry properties
+                    </button>
+                  )}
+                  {properties.data?.items
+                    .filter((property) => property.kind !== "site")
+                    .map((property) => (
+                      <button
+                        key={property.id}
+                        type="button"
+                        onClick={() =>
+                          handlePropertySwitch({
+                            id: property.id,
+                            name: property.name,
+                          })
+                        }
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
+                          selectedProperty?.id === property.id &&
+                            "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10",
+                        )}
+                      >
+                        <Building2 className="h-4 w-4 text-indigo-600" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold">
+                            {property.name}
+                          </span>
+                          <span className="block truncate text-[10px] text-muted-foreground">
+                            {property.kind} · {property.address || "No address"}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  <Link
+                    href="/admin/properties"
+                    onClick={() => setOpen(false)}
+                    className="mt-1 flex items-center justify-center rounded-lg border border-border/60 px-2 py-2 text-xs font-bold"
+                  >
+                    Browse all properties
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {residencies.length > 0 && (
+                    <>
+                      <div className="px-2 pb-0.5 pt-1">
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                          Properties
+                        </p>
+                      </div>
+                      {residencies.map((residency) => (
+                        <button
+                          key={residency.id}
+                          type="button"
+                          onClick={() => handleSwitch(residency)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
+                            selectedResidency?.id === residency.id &&
+                              "border-[rgb(var(--brand-primary,#213928))] bg-[rgb(var(--brand-primary,#213928))]/5",
+                          )}
+                        >
+                          <Home className="h-4 w-4 text-[rgb(var(--brand-primary,#213928))]" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">
+                              {residency.name}
+                            </span>
+                            <span className="block truncate text-[10px] text-muted-foreground">
+                              {residency.address}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitch(null)}
+                      className="mt-1 flex w-full items-center gap-3 rounded-lg border-t border-border/40 px-2 py-2 text-left hover:bg-muted/50"
+                    >
+                      <Shield className="h-4 w-4 text-indigo-600" />
+                      Admin Console
+                    </button>
+                  )}
                 </>
               )}
             </div>
 
             <div className="border-t border-border/60 my-2" />
             <Link
-              href="/select"
+              href={isAdminRoute ? "/organizations" : "/select"}
               onClick={() => setOpen(false)}
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-bold text-[rgb(var(--brand-primary,#213928))] transition hover:bg-[rgb(var(--brand-primary,#213928))]/5 w-full"
             >
               <ArrowRightLeft className="h-3.5 w-3.5" />
-              Manage Workspaces
+              {isAdminRoute ? "Switch organization" : "Manage Workspaces"}
             </Link>
           </motion.div>
         )}

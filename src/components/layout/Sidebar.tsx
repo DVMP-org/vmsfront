@@ -42,8 +42,9 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 import { useResidentResidency } from "@/hooks/use-resident-data";
 import { useAdminProfile } from "@/hooks/use-admin";
-import { hasPermission } from "@/lib/permissions";
-import { adminLinks } from "@/config/admin-routes";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { hasAdminPermission } from "@/lib/permissions";
+import { contextualAdminLinks } from "@/config/admin-routes";
 import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
 import { LogoFull } from "../LogoFull";
 import { SidebarOrganizationHeader } from "./SidebarOrganizationHeader";
@@ -185,7 +186,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedResidency } = useAppStore();
+  const { selectedResidency, selectedProperty, setSelectedProperty } = useAppStore();
+  const workspaceContext=useWorkspaceContext();
   const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isPending: isAdminProfilePending } = useAdminProfile();
   const { data: activeTheme } = useActiveBrandingTheme();
@@ -349,10 +351,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     let baseLinks =
       actualType === "resident"
         ? buildResidentLinks(effectiveResidencyId, isSuperUser)
-        : [...adminLinks];
+        : contextualAdminLinks(
+            workspaceContext.isError
+              ? undefined
+              : workspaceContext.data?.modules,
+            workspaceContext.data?.module_groups,
+          );
 
     // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User
-    const activeRole = actualType === "admin" ? (adminProfile?.role || user?.admin?.role) : null;
+    const activeRole = actualType === "admin" ? adminProfile : null;
 
     if (actualType === "admin") {
       // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
@@ -370,7 +377,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         .filter((link: any) => {
           if (!link.permission) return true;
           if (!activeRole) return false;
-          return hasPermission(activeRole, link.permission);
+          return hasAdminPermission(activeRole, link.permission);
         })
         .map((link: any) => {
           const l = link as any;
@@ -379,7 +386,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             ...link,
             children: l.children.filter((child: any) => {
               if (!child.permission) return true;
-              return hasPermission(activeRole, child.permission);
+              return hasAdminPermission(activeRole, child.permission);
             }),
           };
         })
@@ -396,7 +403,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       seenHrefs.add(link.href);
       return true;
     });
-  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted]);
+  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted, workspaceContext.data, workspaceContext.isError]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {
     if (!pathname) return null;
@@ -567,7 +574,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
           isMobile || !collapsed ? "p-3" : "py-4 px-0"
         )}>
-          {links.map((link: any) => {
+          {actualType === "admin" && <div className="px-3 py-3 border-b mb-3 text-xs"><p className="font-semibold uppercase tracking-wider">{workspaceContext.data?.effective_use_case?.replaceAll("_"," ") || "Workspace"}</p>{selectedProperty ? <><p className="mt-1">{selectedProperty.name}</p><button className="underline mt-2" onClick={()=>setSelectedProperty(null)}>Organization overview</button></> : <p className="mt-1 text-muted-foreground">Organization overview</p>}{workspaceContext.isError&&<button onClick={()=>workspaceContext.refetch()}>Retry workspace</button>}</div>}
+          {links.map((link: any, index: number) => {
             const Icon = link.icon;
             const isParentActive = activeLink?.href === link.href ||
               link.children?.some((child: any) => child.href === activeLink?.href);
@@ -668,15 +676,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             }
 
             return (
+              <div key={linkKey}>
+              {actualType === "admin" && (!collapsed||isMobile) && link.group !== (links[index-1] as any)?.group && <p className="px-3 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-[.15em] text-muted-foreground">{link.group}</p>}
               <SidebarLink
-                key={linkKey}
                 link={link}
                 isActive={isActive}
                 collapsed={collapsed}
                 isMobile={isMobile}
                 onClick={handleLinkClick}
                 accentColor={actualType === "resident" ? "brand" : "admin"}
-              />
+              /></div>
             );
           })}
           <>
