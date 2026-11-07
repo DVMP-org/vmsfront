@@ -39,7 +39,6 @@ export function usePlans() {
   });
 }
 
-
 /**
  * Hook to fetch a specific organization by slug
  */
@@ -66,7 +65,10 @@ export function useCurrentOrganization() {
 
   // Update app store when org data is fetched
   useEffect(() => {
-    if (query.data && (!organization || organization.slug !== query.data.slug)) {
+    if (
+      query.data &&
+      (!organization || organization.slug !== query.data.slug)
+    ) {
       setSelectedOrganization(query.data);
     }
   }, [query.data, organization, setSelectedOrganization]);
@@ -81,7 +83,10 @@ export function useCurrentOrganization() {
 /**
  * Hook to create a new organization
  */
-export function useCreateOrganization() {
+export function useCreateOrganization(options?: {
+  onSuccess?: (organization: Organization) => void;
+  redirectTo?: string;
+}) {
   const queryClient = useQueryClient();
   const { setSelectedOrganization } = useAppStore();
   const [error, setError] = useState<string | null>(null);
@@ -103,9 +108,12 @@ export function useCreateOrganization() {
       setSelectedOrganization(org);
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       toast.success("Organization created successfully!");
+      options?.onSuccess?.(org);
 
-      // A new organization chooses a plan before entering the workspace.
-      const redirectUrl = buildSubdomainUrl(org.slug, "/plans");
+      const redirectUrl = buildSubdomainUrl(
+        org.slug,
+        options?.redirectTo || "/plans",
+      );
       window.location.href = redirectUrl;
     },
     onError: (err: any) => {
@@ -138,13 +146,13 @@ export function useCheckSlugAvailability() {
 
   const checkSlug = useCallback(async (slug: string): Promise<boolean> => {
     if (!slug || slug.length < 2) return false;
-    
+
     setIsChecking(true);
     try {
       const response = await organizationService.checkSlugAvailability(slug);
       return !response.data.exists;
     } catch (error) {
-      console.error('Failed to check slug availability:', error);
+      console.error("Failed to check slug availability:", error);
       return false;
     } finally {
       setIsChecking(false);
