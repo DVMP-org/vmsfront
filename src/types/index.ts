@@ -54,6 +54,7 @@ export interface User {
     name?: string | null
 }
 export interface Organization {
+    use_case?: import("@/features/context/api").UseCase;
     id: string;
     name: string;
     slug: string;
@@ -76,6 +77,7 @@ export interface OrganizationMembership {
 }
 
 export interface CreateOrganizationRequest {
+    use_case: import("@/features/context/api").UseCase;
     name: string;
     slug: string;
     description?: string;
@@ -352,6 +354,9 @@ export interface AdminRole {
 }
 
 export interface Admin {
+    roles?: AdminRole[];
+    role_ids?: string[];
+    effective_permissions?: string[];
     id: string;
     user: User;
     role_id: string | null;

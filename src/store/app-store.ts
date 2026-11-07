@@ -4,6 +4,8 @@ import { Residency, BrandingConfig, Organization } from "@/types";
 import { deleteCookie, setCookie } from "@/lib/cookies";
 
 interface AppState {
+    selectedProperty: {id:string;name:string} | null;
+    setSelectedProperty: (property: {id:string;name:string} | null) => void;
     organization: Organization | null;
     selectedResidency: Residency | null;
     branding: BrandingConfig | null;
@@ -16,6 +18,8 @@ interface AppState {
 export const useAppStore = create<AppState>()(
     persist(
         (set) => ({
+            selectedProperty: null,
+            setSelectedProperty: (selectedProperty) => set({selectedProperty}),
             organization: null,
             selectedResidency: null,
             branding: null,
@@ -26,7 +30,7 @@ export const useAppStore = create<AppState>()(
                 } else {
                     deleteCookie("selected-organization");
                 }
-                set({ organization: organization });
+                set({ organization, selectedProperty: null });
             },
             setBranding: (branding) => set({ branding }),
             resetTenantContext: () => {
@@ -35,6 +39,7 @@ export const useAppStore = create<AppState>()(
                     localStorage.removeItem("app-storage");
                 }
                 set({
+                    selectedProperty: null,
                     organization: null,
                     selectedResidency: null,
                     branding: null,

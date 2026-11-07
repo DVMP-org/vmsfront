@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
-import { hasPermission } from "@/lib/permissions";
+import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { hospitalityApi } from "@/features/hospitality/api";
@@ -52,7 +52,7 @@ function HospitalityWorkspace({
   const allowed = (action: string) =>
     profile.isFetchedAfterMount &&
     !profile.isError &&
-    hasPermission(profile.data?.role, `hospitality_stays.${action}`);
+    hasAdminPermission(profile.data, `hospitality_stays.${action}`);
   const list = useQuery({
     queryKey: ["hospitality", context, "list", page, status],
     queryFn: () => hospitalityApi.list(page, status),

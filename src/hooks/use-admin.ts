@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { adminGateService } from "@/services/admin-gate-service";
+import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
 import {
@@ -1036,43 +1037,9 @@ export function useAdminDuePayments(
 }
 
 export function useAdminProfile() {
-  const queryClient = useQueryClient();
-  const { token, _hasHydrated, isAuthenticated } = useAuthStore();
-  const STORAGE_KEY = "vms_admin_profile";
-
-  return useQuery<Admin>({
-    queryKey: ["admin", "profile"],
-    queryFn: async () => {
-      const response = await adminService.getAdminProfile();
-      const profile = response.data;
-      // Persistence: store in localStorage for instant access next time
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      return profile;
-    },
-    initialData: () => {
-      // Synchronous recovery from localStorage for instant Sidebar rendering
-      if (typeof window !== "undefined") {
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          try {
-            return JSON.parse(cached);
-          } catch (e) {
-            return undefined;
-          }
-        }
-      }
-      return undefined;
-    },
-    staleTime: 10 * 60 * 1000, // Keep fresh for 10 mins (was 5)
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 mins
-    enabled: _hasHydrated && (!!token || isAuthenticated), // Only fetch when authenticated
-  });
+  const {token,_hasHydrated,isAuthenticated,user}=useAuthStore();
+  const organization=useAppStore(s=>s.organization);
+  return useQuery<Admin>({queryKey:["admin","profile",organization?.id,user?.id],queryFn:async()=>(await adminService.getAdminProfile()).data,staleTime:0,refetchOnMount:"always",enabled:_hasHydrated&&!!organization?.id&&(!!token||isAuthenticated),retry:false});
 }
 
 // Transactions

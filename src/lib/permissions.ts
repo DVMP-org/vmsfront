@@ -61,3 +61,32 @@ export function hasPermission(
 
     return false;
 }
+
+/**
+ * Administrative grants use the effective RBAC union when available and fall
+ * back to the current server role payload until RBAC-01 is integrated.
+ */
+export function hasAdminPermission(
+    admin:
+        | {
+              effective_permissions?: string[];
+              roles?: AdminRole[];
+              role?: AdminRole | null;
+          }
+        | null
+        | undefined,
+    requirement: string | string[],
+): boolean {
+    if (!admin) return false;
+    if (Array.isArray(admin.effective_permissions)) {
+        const permissions = admin.effective_permissions;
+        if (permissions.includes("*")) return true;
+        return (Array.isArray(requirement) ? requirement : [requirement]).some(
+            (permission) =>
+                permissions.includes(permission) ||
+                permissions.includes(`${permission.split(".")[0]}.*`),
+        );
+    }
+    const roles = admin.roles?.length ? admin.roles : admin.role ? [admin.role] : [];
+    return roles.some((role) => hasPermission(role, requirement));
+}

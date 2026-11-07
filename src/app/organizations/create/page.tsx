@@ -1,5 +1,7 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { contextApi, UseCase } from "@/features/context/api";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Building2, Loader2 } from "lucide-react";
@@ -19,7 +21,9 @@ export default function CreateOrganizationPage() {
     name: "",
     slug: "",
     description: "",
+    use_case: "" as UseCase | "",
   });
+  const catalog=useQuery({queryKey:["context-catalog"],queryFn:contextApi.catalog,retry:false});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
@@ -83,6 +87,7 @@ export default function CreateOrganizationPage() {
 
     // Validation
     const newErrors: Record<string, string> = {};
+    if (!formData.use_case) newErrors.use_case = "Choose an operating use case";
     if (!formData.name.trim()) newErrors.name = "Organization name is required";
     if (!formData.slug.trim()) newErrors.slug = "URL slug is required";
     if (formData.slug.length < 2) newErrors.slug = "Slug must be at least 2 characters";
@@ -99,7 +104,9 @@ export default function CreateOrganizationPage() {
     }
 
     setErrors({});
+    if (!formData.use_case) return;
     createOrganization({
+      use_case: formData.use_case,
       name: formData.name.trim(),
       slug: formData.slug.trim(),
       description: formData.description.trim() || undefined,
@@ -153,6 +160,12 @@ export default function CreateOrganizationPage() {
             </div>
           </motion.div>
 
+          <label className="block font-medium">Operating use case
+            <select required value={formData.use_case} onChange={e=>setFormData({...formData,use_case:e.target.value as UseCase})} className="mt-2 block w-full rounded border p-3 bg-background"><option value="">Choose your organization’s use case</option>{catalog.data?.use_cases.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
+            <small className="block mt-2 text-muted-foreground">This is fixed at creation and sets the workflows available to your organization. Mixed use allows properties with distinct operating contexts.</small>
+            {catalog.isError&&<span role="alert">Could not load use cases. <button type="button" onClick={()=>catalog.refetch()}>Retry</button></span>}
+            {combinedErrors.use_case&&<span role="alert">{combinedErrors.use_case}</span>}
+          </label>
           {/* Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -3,7 +3,8 @@
 import { usePathname } from "next/navigation";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { adminLinks } from "@/config/admin-routes";
-import { hasPermission } from "@/lib/permissions";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { hasAdminPermission } from "@/lib/permissions";
 import { ShieldAlert, Home, ArrowLeft } from "lucide-react";
 import { Button } from "../ui/Button";
 import Link from "next/link";
@@ -17,10 +18,11 @@ interface AdminPermissionGuardProps {
 
 export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     const pathname = usePathname();
+    const workspace=useWorkspaceContext();
     const { data: adminProfile, isLoading } = useAdminProfile();
     const user = useAuthStore((state) => state.user);
 
-    const activeRole = useMemo(() => adminProfile?.role || user?.admin?.role, [adminProfile, user]);
+    const activeRole = useMemo(() => adminProfile, [adminProfile, user]);
 
     const requiredPermission = useMemo(() => {
         // Flatten links to find the match for the current pathname
@@ -45,7 +47,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     const hasAccess = useMemo(() => {
         if (!requiredPermission) return true;
         if (!activeRole) return false;
-        return hasPermission(activeRole, requiredPermission);
+        return hasAdminPermission(activeRole, requiredPermission);
     }, [activeRole, requiredPermission]);
 
     if (isLoading) {
@@ -60,7 +62,10 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         );
     }
 
-    if (!hasAccess) {
+    const moduleRoute=adminLinks.filter(r=>r.href!=="#").sort((a,b)=>b.href.length-a.href.length).find(r=>pathname===r.href||pathname?.startsWith(r.href+"/"));
+    if(moduleRoute?.module && workspace.isPending) return <p role="status">Loading workspace context…</p>;
+    if(moduleRoute?.module && workspace.isError) return <div role="alert">Workspace could not be verified. <button onClick={()=>workspace.refetch()}>Retry</button></div>;
+    if (!hasAccess || (moduleRoute?.module && !workspace.data?.modules.includes(moduleRoute.module))) {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">

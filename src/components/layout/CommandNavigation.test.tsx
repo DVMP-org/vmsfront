@@ -1,18 +1,49 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CommandNavigation, permittedCommands } from "./CommandNavigation";
-import type { AdminRole } from "@/types";
+import type { Admin } from "@/types";
 
-const role = (permissions: string[]) => ({ permissions }) as AdminRole;
+const role = (permissions: string[]) => ({ effective_permissions:permissions }) as Admin;
 
 describe("command navigation", () => {
   it("fails closed without role data, honors child permissions, and deduplicates routes", () => {
     expect(permittedCommands(null).map((entry) => entry.label)).toEqual(["Dashboard", "Profile"]);
     const commands = permittedCommands(role(["roles.list"]));
-    expect(commands.some((entry) => entry.label === "Roles")).toBe(true);
+    expect(commands.some((entry) => entry.label === "Roles & permissions")).toBe(true);
     expect(commands.some((entry) => entry.href === "/admin/admins")).toBe(false);
     const all = permittedCommands(role(["*"]));
     expect(new Set(all.map((entry) => entry.href)).size).toBe(all.length);
+  });
+  it("uses the server module groups for contextual command grouping", () => {
+    const moduleGroups = [
+      { key: "finance", label: "Finance", modules: ["charges"] },
+      {
+        key: "hospitality",
+        label: "Hospitality operations",
+        modules: ["hospitality"],
+      },
+    ];
+    const commands = permittedCommands(
+      role(["*"]),
+      ["charges", "hospitality"],
+      moduleGroups,
+    );
+    expect(commands.find((entry) => entry.label === "Charges")?.group).toBe(
+      "Finance",
+    );
+    expect(commands.find((entry) => entry.label === "Guest stays")?.group).toBe(
+      "Hospitality operations",
+    );
+  });
+  it("supports the current single-role payload until RBAC union grants land", () => {
+    const currentAdmin = {
+      role: {
+        permissions: ["places.list"],
+        permissions_parsed: ["places.list"],
+      },
+    } as unknown as Admin;
+    expect(permittedCommands(currentAdmin).some((entry) => entry.href === "/admin/properties")).toBe(true);
+    expect(permittedCommands(currentAdmin).some((entry) => entry.href === "/admin/charges")).toBe(false);
   });
   it("searches permitted routes, handles empty results, and navigates with Enter", () => {
     HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
