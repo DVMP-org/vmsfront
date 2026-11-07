@@ -1,25 +1,28 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { adminLinks, type AdminRoute } from "@/config/admin-routes";
-import { hasPermission } from "@/lib/permissions";
-import type { AdminRole } from "@/types";
+import { adminLinks, contextualAdminLinks, type AdminRoute } from "@/config/admin-routes";
+import type { ModuleGroup } from "@/features/context/api";
+import { hasAdminPermission } from "@/lib/permissions";
+import type { Admin } from "@/types";
 import styles from "./CommandNavigation.module.css";
 
-export function permittedCommands(role: AdminRole | null | undefined): AdminRoute[] {
+export function permittedCommands(role: Admin | null | undefined, modules?: readonly string[], moduleGroups?: readonly ModuleGroup[]): AdminRoute[] {
   const result: AdminRoute[] = [];
   const visit = (routes: AdminRoute[]) => routes.forEach((route) => {
-    if (route.permission && !hasPermission(role, route.permission)) return;
+    if (route.permission && !hasAdminPermission(role, route.permission)) return;
     if (route.href.startsWith("/") && !result.some((entry) => entry.href === route.href)) result.push(route);
     if (route.children) visit(route.children);
   });
-  visit(adminLinks);
+  visit(modules ? contextualAdminLinks(modules, moduleGroups) : adminLinks);
   return result;
 }
 
 /** Navigation uses only the current role and local routes; no tenant selection is persisted. */
-export function CommandNavigation({ role, contextKey, navigate }: {
-  role?: AdminRole | null;
+export function CommandNavigation({ role, contextKey, navigate, modules, moduleGroups = [] }: {
+  role?: Admin | null;
+  modules?: readonly string[];
+  moduleGroups?: readonly ModuleGroup[];
   contextKey: string;
   navigate: (href: string) => void;
 }) {
@@ -29,7 +32,7 @@ export function CommandNavigation({ role, contextKey, navigate }: {
   const restoreFocus = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const commands = useMemo(() => permittedCommands(role), [role]);
+  const commands = useMemo(() => permittedCommands(role, modules, moduleGroups), [role, modules, moduleGroups]);
   const matches = commands.filter((entry) => entry.label.toLowerCase().includes(query.trim().toLowerCase()));
 
   const close = () => dialog.current?.close();

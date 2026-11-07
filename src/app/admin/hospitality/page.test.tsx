@@ -59,7 +59,7 @@ function mount() {
 }
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.profile.mockResolvedValue({ data: { role: { permissions: ["*"] } } });
+  mocks.profile.mockResolvedValue({ data: { effective_permissions: ["*"] } });
   mocks.list.mockResolvedValue({
     items: [stay],
     page: 1,
@@ -84,9 +84,7 @@ it("renders empty and failed lists explicitly with retry", async () => {
 it("hides lifecycle actions from read-only operators", async () => {
   mocks.profile.mockResolvedValue({
     data: {
-      role: {
-        permissions: ["hospitality_stays.list", "hospitality_stays.show"],
-      },
+      effective_permissions: ["hospitality_stays.list", "hospitality_stays.show"],
     },
   });
   mount();
@@ -128,13 +126,11 @@ it("preserves the editor and surfaces a conflict for retry", async () => {
 it("uses canonical checkin grants for a scoped operator", async () => {
   mocks.profile.mockResolvedValue({
     data: {
-      role: {
-        permissions: [
+      effective_permissions: [
           "hospitality_stays.list",
           "hospitality_stays.show",
           "hospitality_stays.checkin",
         ],
-      },
     },
   });
   mount();

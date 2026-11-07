@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
+import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { getSubdomain } from "./subdomain-utils";
 import { getCookie } from "./cookies";
@@ -41,6 +42,8 @@ class ApiClient {
         if (subdomain) {
           config.headers["X-Organization"] = subdomain;
         }
+        const selectedProperty = useAppStore.getState().selectedProperty;
+        if (selectedProperty && subdomain) config.headers["X-Property"] = selectedProperty.id;
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }

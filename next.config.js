@@ -24,6 +24,9 @@ const nextConfig = {
   allowedDevOrigins: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    '*.localhost',
+    'context-acceptance.localhost',
+    'http://context-acceptance.localhost:3003',
     'http://192.168.100.20:3000',
     'http://192.168.100.20',
     "vmsfront.to",
