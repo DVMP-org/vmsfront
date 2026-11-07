@@ -29,6 +29,7 @@ export interface AdminRoute {
 }
 
 export const adminLinks: AdminRoute[] = [
+    { href: "/admin/hospitality", label: "Hospitality", icon: Building2, permission: "hospitality_stays.list" },
     { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/admin/gate", label: "Gate Console", icon: Scan, permission: "gate_passes.console" },
     { href: "/admin/gate/passes", label: "Gate Passes", icon: CreditCard, permission: "gate_passes.list" },
