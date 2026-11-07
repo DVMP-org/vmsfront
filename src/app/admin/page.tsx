@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FirstWorkspaceSetup } from "@/components/onboarding/FirstWorkspaceSetup";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { useAdminDashboard } from "@/hooks/use-admin";
 import { parseApiError } from "@/lib/error-utils";
@@ -68,6 +70,16 @@ export default function AdminDashboardPage() {
   const context = useWorkspaceContext();
   const data = dashboard.data as CanonicalDashboard | undefined;
   const metrics = data?.metrics;
+  const [showFirstWorkspaceSetup, setShowFirstWorkspaceSetup] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requested =
+      params.get("setup") === "first-workspace" ||
+      window.sessionStorage.getItem("organization-setup-step") ===
+        "first-workspace";
+    if (requested) setShowFirstWorkspaceSetup(true);
+  }, []);
 
   if (dashboard.isPending) return <DashboardSkeleton />;
   if (dashboard.isError && !data) {
@@ -138,6 +150,25 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
       </header>
+
+      {showFirstWorkspaceSetup ? (
+        <FirstWorkspaceSetup
+          rootPlaceCount={data?.root_places.length || 0}
+          onOpenProperties={() => {
+            window.sessionStorage.removeItem("organization-setup-step");
+            setShowFirstWorkspaceSetup(false);
+            router.push(
+              data?.root_places.length
+                ? "/admin/properties"
+                : "/admin/properties/new",
+            );
+          }}
+          onDismiss={() => {
+            window.sessionStorage.removeItem("organization-setup-step");
+            setShowFirstWorkspaceSetup(false);
+          }}
+        />
+      ) : null}
 
       <section
         aria-label="Operating metrics"
@@ -215,7 +246,10 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="px-4 py-3.5 capitalize text-slate-600 dark:text-slate-300">
                       {place.use_case?.replaceAll("_", " ") ||
-                        context.data?.effective_use_case?.replaceAll("_", " ") ||
+                        context.data?.effective_use_case?.replaceAll(
+                          "_",
+                          " ",
+                        ) ||
                         "Inherited"}
                     </td>
                     <td className="px-4 py-3.5">
@@ -262,16 +296,15 @@ export default function AdminDashboardPage() {
                       </p>
                       <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
                         {item.host_party?.display_name || "Host"} ·{" "}
-                        {item.destination_place?.name ||
-                          "Selected destination"}
+                        {item.destination_place?.name || "Selected destination"}
                       </p>
                     </div>
                   </div>
                 </div>
               ))}
-            {!(
-              data?.recent_visit_authorizations || []
-            ).some((item) => item.status === "requested") && (
+            {!(data?.recent_visit_authorizations || []).some(
+              (item) => item.status === "requested",
+            ) && (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-4 dark:border-emerald-900 dark:bg-emerald-950/30">
                 <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                   <CheckCircle2 className="h-4 w-4" />
@@ -292,8 +325,8 @@ export default function AdminDashboardPage() {
                   >
                     <div>
                       <p className="text-sm font-medium capitalize">
-                        {event.direction === "entry" ? "Check-in" : "Check-out"} ·{" "}
-                        {event.outcome}
+                        {event.direction === "entry" ? "Check-in" : "Check-out"}{" "}
+                        · {event.outcome}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {event.reason_code.replaceAll("_", " ")}
@@ -377,7 +410,9 @@ function Metric({
         </div>
       </div>
       <p className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{value}</p>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{detail}</p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        {detail}
+      </p>
     </div>
   );
 }
