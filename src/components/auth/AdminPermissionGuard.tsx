@@ -24,7 +24,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
 
     const activeRole = useMemo(() => adminProfile, [adminProfile, user]);
 
-    const requiredPermission = useMemo(() => {
+    const matchedRoute = useMemo(() => {
         // Flatten links to find the match for the current pathname
         const flattened: any[] = [];
         adminLinks.forEach((link) => {
@@ -37,18 +37,25 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         // Find the link that matches the current pathname
         // Sort by length descending to match most specific route first
         const sorted = [...flattened].sort((a, b) => (b.href?.length || 0) - (a.href?.length || 0));
-        const match = sorted.find(link =>
+        return sorted.find(link =>
             link.href !== "#" && (pathname === link.href || pathname?.startsWith(link.href + "/"))
         );
-
-        return match?.permission;
     }, [pathname]);
+    const requiredPermission = matchedRoute?.permission;
 
     const hasAccess = useMemo(() => {
         if (!requiredPermission) return true;
         if (!activeRole) return false;
         return hasAdminPermission(activeRole, requiredPermission);
     }, [activeRole, requiredPermission]);
+    const managementAccess = useMemo(() => {
+        if (!matchedRoute?.managementOnly) return true;
+        if (workspace.data?.management?.is_administrator) return true;
+        return hasAdminPermission(activeRole, [
+            "parties.create",
+            "place_relationships.create",
+        ]);
+    }, [activeRole, matchedRoute?.managementOnly, workspace.data?.management?.is_administrator]);
 
     if (isLoading) {
         return (
@@ -62,10 +69,10 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         );
     }
 
-    const moduleRoute=adminLinks.filter(r=>r.href!=="#").sort((a,b)=>b.href.length-a.href.length).find(r=>pathname===r.href||pathname?.startsWith(r.href+"/"));
+    const moduleRoute=matchedRoute;
     if(moduleRoute?.module && workspace.isPending) return <p role="status">Loading workspace context…</p>;
     if(moduleRoute?.module && workspace.isError) return <div role="alert">Workspace could not be verified. <button onClick={()=>workspace.refetch()}>Retry</button></div>;
-    if (!hasAccess || (moduleRoute?.module && !workspace.data?.modules.includes(moduleRoute.module))) {
+    if (!hasAccess || !managementAccess || (moduleRoute?.module && !workspace.data?.modules.includes(moduleRoute.module))) {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">

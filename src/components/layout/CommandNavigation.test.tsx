@@ -49,6 +49,24 @@ describe("command navigation", () => {
     expect(permittedCommands(currentAdmin).some((entry) => entry.href === "/admin/properties")).toBe(true);
     expect(permittedCommands(currentAdmin).some((entry) => entry.href === "/admin/charges")).toBe(false);
   });
+  it("shows property people only to a property manager", () => {
+    expect(
+      permittedCommands(
+        role(["places.list"]),
+        ["dashboard", "people"],
+        [],
+        false,
+      ).some((entry) => entry.href === "/admin/people"),
+    ).toBe(false);
+    expect(
+      permittedCommands(
+        null,
+        ["dashboard", "people"],
+        [],
+        true,
+      ).some((entry) => entry.href === "/admin/people"),
+    ).toBe(true);
+  });
   it("searches permitted routes, handles empty results, and navigates with Enter", () => {
     HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
     HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); };

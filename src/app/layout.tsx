@@ -27,11 +27,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#f4f7fb",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 }
 
 export default function RootLayout({
@@ -40,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="light" suppressHydrationWarning>
       <body className="font-sans" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
@@ -48,13 +46,9 @@ export default function RootLayout({
               (function() {
                 try {
                   const root = document.documentElement;
-                  const darkMode = localStorage.getItem('darkMode');
-                  
-                  if (darkMode === 'true' || (!darkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    root.classList.add('dark');
-                  } else {
-                    root.classList.remove('dark');
-                  }
+                  root.classList.remove('dark');
+                  root.classList.add('light');
+                  localStorage.removeItem('darkMode');
 
                   const cached = localStorage.getItem('active-branding-theme');
                   if (cached) {

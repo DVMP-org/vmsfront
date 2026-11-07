@@ -694,6 +694,7 @@ function PropertyDetails({
       </div>
       <div className="property-actions property-record-actions">
         <button className="property-primary" onClick={()=>{setSelectedProperty({id:property.id,name:property.name});router.push("/admin");}}>Open workspace</button>
+        <button onClick={()=>{setSelectedProperty({id:property.id,name:property.name});router.push("/admin/people");}}>Manage people</button>
         {allowed("update") && (
           <button disabled={mutation.isPending} onClick={() => setMode("edit")}>
             Edit details

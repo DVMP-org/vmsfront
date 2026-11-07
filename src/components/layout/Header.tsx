@@ -12,8 +12,6 @@ import {
   User,
   ChevronDown,
   ChevronsUpDown,
-  Moon,
-  Sun,
   Bell,
   Shield,
   ArrowRightLeft,
@@ -40,6 +38,7 @@ import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { hasAdminPermission } from "@/lib/permissions";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -77,26 +76,7 @@ export const Header = memo(function Header({
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
   const dashboardHref = "/select";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return document.documentElement.classList.contains("dark");
-  });
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  const toggleDarkMode = () => {
-    const root = document.documentElement;
-    const newDarkMode = !root.classList.contains("dark");
-
-    if (newDarkMode) {
-      root.classList.add("dark");
-      localStorage.setItem("darkMode", "true");
-    } else {
-      root.classList.remove("dark");
-      localStorage.setItem("darkMode", "false");
-    }
-
-    setIsDarkMode(newDarkMode);
-  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -109,33 +89,13 @@ export const Header = memo(function Header({
     return () => window.removeEventListener("click", handleClick);
   }, [menuOpen]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-
-    // Initial check just in case
-    setIsDarkMode(root.classList.contains("dark"));
-
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(root.classList.contains("dark"));
-    });
-
-    observer.observe(root, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   const logoUrl = useMemo(() => {
     if (!activeTheme) return null;
-    return isDarkMode && activeTheme.dark_logo_url
-      ? activeTheme.dark_logo_url
-      : activeTheme.logo_url;
-  }, [activeTheme, isDarkMode]);
+    return activeTheme.logo_url;
+  }, [activeTheme]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 shadow-sm dark:border-zinc-800 dark:bg-background/95">
+    <header className="sticky top-0 z-40 w-full border-b border-[#dce3ee] bg-white/95 shadow-[0_1px_2px_rgba(15,27,49,0.04)] backdrop-blur">
       <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           <Button
@@ -149,6 +109,15 @@ export const Header = memo(function Header({
           </Button>
 
           <div className="flex items-center gap-2">
+            {isSelectRoute ? (
+              <Link
+                href="/"
+                aria-label="VMSCore home"
+                className="flex items-center text-[#0f1b31]"
+              >
+                <LogoFull width={92} height={34} color="#0f1b31" />
+              </Link>
+            ) : null}
             {!isSelectRoute && currentUser && (
               <WorkspaceSwitcher
                 selectedResidency={selectedResidency}
@@ -160,26 +129,17 @@ export const Header = memo(function Header({
 
         {currentUser && (
           <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleDarkMode}
-              className="h-9 w-9 p-0 rounded-full hover:bg-muted/50 transition-colors"
-              aria-label={
-                isDarkMode ? "Switch to light mode" : "Switch to dark mode"
-              }
-            >
-              {isDarkMode ? (
-                <Sun className="h-5 w-5 text-amber-500" />
-              ) : (
-                <Moon className="h-5 w-5 text-zinc-700" />
-              )}
-            </Button>
-
             {isAdminRoute && (
               <CommandNavigation
                 modules={workspaceContext.data?.modules || []}
                 moduleGroups={workspaceContext.data?.module_groups || []}
+                canManage={
+                  !!workspaceContext.data?.management?.is_administrator ||
+                  hasAdminPermission(commandProfile.data, [
+                    "parties.create",
+                    "place_relationships.create",
+                  ])
+                }
                 role={
                   commandProfile.isFetchedAfterMount && !commandProfile.isError
                     ? commandProfile.data

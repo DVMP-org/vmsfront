@@ -94,14 +94,14 @@ describe("operating dashboard", () => {
     });
     render(<AdminDashboardPage />);
     expect(
-      screen.getByRole("heading", { name: "Operating dashboard" }),
+      screen.getByRole("heading", { name: "Management overview" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Harbour Hotel" })).toHaveAttribute(
       "href",
       "/admin/properties/place",
     );
     expect(screen.getByText("Guest arrival")).toBeInTheDocument();
-    expect(screen.getByText("Check-in · allowed")).toBeInTheDocument();
+    expect(screen.getByText(/Check-in allowed/)).toBeInTheDocument();
   });
 
   it("warns when refresh fails but cached data remains", () => {
@@ -137,5 +137,18 @@ describe("operating dashboard", () => {
       screen.getByRole("button", { name: /Review first site/ }),
     );
     expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
+  });
+
+  it("routes people work to the canonical property roster", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    expect(
+      screen.getByRole("link", { name: /active relationships/ }),
+    ).toHaveAttribute("href", "/admin/people");
   });
 });
