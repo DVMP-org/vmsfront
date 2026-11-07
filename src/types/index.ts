@@ -65,6 +65,8 @@ export interface Organization {
     residencies?: Residency[] | null;
     residents?: Resident[] | null;
     admins?: Admin[] | null;
+    places?: WorkspacePlace[] | null;
+    needs_first_site?: boolean;
     subscription: Subscription | null;
 }
 

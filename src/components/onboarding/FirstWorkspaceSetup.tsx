@@ -29,18 +29,20 @@ export function FirstWorkspaceSetup({
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[rgb(var(--brand-primary,#213928))] dark:text-emerald-300">
             <CheckCircle2 className="h-4 w-4" />
-            Setup complete
+            {propertyReady ? "Setup complete" : "Organization ready"}
           </p>
           <h2
             id="first-workspace-title"
             className="mt-2 text-xl font-semibold tracking-[-0.025em]"
           >
-            Your management workspace is ready
+            {propertyReady
+              ? "Your management workspace is ready"
+              : "Create your first site"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-            The organization, plan and management context are active. Review the
-            first property hierarchy before inviting people or configuring
-            access.
+            {propertyReady
+              ? "The organization, plan and management context are active. Review the first site hierarchy before inviting people or configuring access."
+              : "The organization and management role are active. Create the top-level site that will own its people, gates, policies and visitor access."}
           </p>
         </div>
         <button
@@ -64,8 +66,8 @@ export function FirstWorkspaceSetup({
           label="Property hierarchy"
           detail={
             propertyReady
-              ? `${rootPlaceCount} root ${rootPlaceCount === 1 ? "property" : "properties"}`
-              : "No property created yet"
+              ? `${rootPlaceCount} root ${rootPlaceCount === 1 ? "site" : "sites"}`
+              : "No site created yet"
           }
           attention={!propertyReady}
         />
@@ -74,8 +76,8 @@ export function FirstWorkspaceSetup({
           label="Next step"
           detail={
             propertyReady
-              ? "Review the first property"
-              : "Create the first property"
+              ? "Review the first site"
+              : "Create the first site"
           }
         />
       </div>
@@ -85,7 +87,7 @@ export function FirstWorkspaceSetup({
           You can return to this checklist from the Properties page.
         </p>
         <Button type="button" onClick={onOpenProperties}>
-          {propertyReady ? "Review first property" : "Create first property"}
+          {propertyReady ? "Review first site" : "Create your first site"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
