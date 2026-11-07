@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types";
 
 export interface PlacePerson {
+  assignment_id: string;
   party: {
     id: string;
     kind: string;
@@ -60,5 +61,19 @@ export const peopleApi = {
         `/admin/places/${placeId}/parties`,
         body,
       )
+    ).data,
+  remove: async (
+    placeId: string,
+    source: PlacePerson["source"],
+    assignmentId: string,
+  ) =>
+    (
+      await apiClient.delete<
+        ApiResponse<{
+          assignment_id: string;
+          source: PlacePerson["source"];
+          status: string;
+        }>
+      >(`/admin/places/${placeId}/people/${source}/${assignmentId}`)
     ).data,
 };
