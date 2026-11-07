@@ -26,8 +26,13 @@ import { cn, getFullName, getInitials } from "@/lib/utils";
 import { LogoFull } from "../LogoFull";
 import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
-import { propertiesApi } from "@/features/properties/api";
+import { useVerifyToken } from "@/hooks/use-auth";
+import {
+  buildWorkspaceCards,
+  workspaceAreaMeta,
+  type WorkspaceArea,
+  type WorkspaceCard,
+} from "@/features/workspaces/catalog";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
 import { useQuery } from "@tanstack/react-query";
@@ -55,12 +60,13 @@ export const Header = memo(function Header({
   const { selectedResidency, branding, organization } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
-  const workspaceContext=useWorkspaceContext();
+  const workspaceContext = useWorkspaceContext();
   const router = useRouter();
 
-  const isAdminRoute = type == 'admin' || pathname?.startsWith("/admin");
-  const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
-  const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
+  const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
+  const isResidencyRoute =
+    type == "resident" || pathname?.startsWith("/residency");
+  const isSelectRoute = type == "select" || pathname?.startsWith("/select");
   const isAdminUser = useAdminProfile();
   const commandProfile = useQuery({
     queryKey: ["command-profile", organization?.id, currentUser?.id],
@@ -129,7 +135,7 @@ export const Header = memo(function Header({
   }, [activeTheme, isDarkMode]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 shadow-sm dark:border-zinc-800 dark:bg-background/95">
       <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           <Button
@@ -166,18 +172,30 @@ export const Header = memo(function Header({
               {isDarkMode ? (
                 <Sun className="h-5 w-5 text-amber-500" />
               ) : (
-                <Moon className="h-5 w-5 text-slate-700" />
+                <Moon className="h-5 w-5 text-zinc-700" />
               )}
             </Button>
 
-            {isAdminRoute && <CommandNavigation modules={workspaceContext.data?.modules || []} moduleGroups={workspaceContext.data?.module_groups || []} role={commandProfile.isFetchedAfterMount && !commandProfile.isError ? commandProfile.data : null} contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`} navigate={(href) => router.push(href)} />}
+            {isAdminRoute && (
+              <CommandNavigation
+                modules={workspaceContext.data?.modules || []}
+                moduleGroups={workspaceContext.data?.module_groups || []}
+                role={
+                  commandProfile.isFetchedAfterMount && !commandProfile.isError
+                    ? commandProfile.data
+                    : null
+                }
+                contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`}
+                navigate={(href) => router.push(href)}
+              />
+            )}
             <NotificationDropdown />
 
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-card/80 backdrop-blur-sm border border-border/40 px-2 py-1.5 sm:px-3 sm:py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 sm:px-3 sm:py-2"
                 id="profile_dropdown_button"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] text-[10px] font-bold sm:hidden">
@@ -209,7 +227,10 @@ export const Header = memo(function Header({
                 <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-64 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-3 text-sm shadow-2xl z-50 ring-1 ring-black/5">
                   <div className="flex items-center gap-3 px-2 py-3 border-b border-border/40 mb-2 sm:hidden">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))] font-bold">
-                      {getInitials(currentUser.first_name, currentUser.last_name)}
+                      {getInitials(
+                        currentUser.first_name,
+                        currentUser.last_name,
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground">
@@ -300,7 +321,6 @@ function WorkspaceSwitcher({
   isAdminRoute?: boolean | null;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
   const {
@@ -312,25 +332,29 @@ function WorkspaceSwitcher({
 
   const { data: dashboardData } = useResidentDashboardSelect(!isAdminRoute);
   const { data: adminProfile, isError: isAdminError } = useAdminProfile();
+  const currentContext = useVerifyToken();
 
   const residencies = dashboardData?.residencies ?? [];
   const isAdmin = !!adminProfile && !isAdminError;
-  const canListPlaces =
-    isAdmin && hasAdminPermission(adminProfile, "places.list");
-  const properties = useQuery({
-    queryKey: ["header-properties", organization?.id],
-    queryFn: () =>
-      propertiesApi.list({
-        page: 1,
-        page_size: 100,
-        is_active: true,
-      }),
-    enabled: !!isAdminRoute && !!organization?.id && canListPlaces,
-    retry: false,
-  });
+  const workspaceCards = buildWorkspaceCards(
+    isAdmin ? adminProfile : null,
+    currentContext.data?.workspaces || [],
+  );
+  const managementWorkspace = workspaceCards.find(
+    (card) => card.area === "management",
+  );
+  const personalWorkspaces = workspaceCards.filter(
+    (card) => card.area !== "management",
+  );
+  const personalGroups = (["occupancy", "staff", "guest"] as WorkspaceArea[])
+    .map((area) => ({
+      area,
+      cards: personalWorkspaces.filter((card) => card.area === area),
+    }))
+    .filter((group) => group.cards.length > 0);
 
   const currentWorkspaceName = isAdminRoute
-    ? selectedProperty?.name || organization?.name || "Organization overview"
+    ? selectedProperty?.name || "Management workspace"
     : selectedResidency?.name || "Select Estate";
 
   const currentWorkspaceIcon = isAdminRoute ? (
@@ -364,12 +388,17 @@ function WorkspaceSwitcher({
     setOpen(false);
   };
 
-  const handlePropertySwitch = (
-    property: { id: string; name: string } | null,
-  ) => {
-    setSelectedProperty(property);
+  const handleWorkspaceSwitch = (card: WorkspaceCard) => {
+    if (card.area === "management") {
+      setSelectedProperty(null);
+    } else if (card.relationship) {
+      setSelectedProperty({
+        id: card.relationship.place.id,
+        name: card.relationship.place.name,
+      });
+    }
     setOpen(false);
-    router.push(pathname || "/admin");
+    router.push(card.href);
   };
 
   return (
@@ -378,9 +407,9 @@ function WorkspaceSwitcher({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1.5 transition-all hover:bg-muted/50",
+          "flex h-10 max-w-[240px] items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
           open &&
-          "ring-2 ring-[rgb(var(--brand-primary,#213928))]/20 border-[rgb(var(--brand-primary,#213928))]/40",
+            "border-indigo-300 ring-2 ring-indigo-100 dark:border-indigo-700 dark:ring-indigo-950",
         )}
       >
         <div className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg bg-background shadow-sm border border-border/40">
@@ -402,7 +431,7 @@ function WorkspaceSwitcher({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-0 mt-3 w-64 rounded-xl border border-border/60 bg-background p-2 shadow-xl z-50 ring-1 ring-black/5"
+            className="absolute left-0 z-50 mt-2 w-80 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
           >
             <div className="px-2 py-1.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -430,79 +459,77 @@ function WorkspaceSwitcher({
                       Switch organization
                     </Link>
                   </div>
-                  <div className="mt-1 border-t border-border/40 px-2 pb-0.5 pt-2">
-                    <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
-                      Property
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handlePropertySwitch(null)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                      !selectedProperty &&
-                        "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10",
-                    )}
-                  >
-                    <Shield className="h-4 w-4 text-indigo-600" />
-                    <span>
-                      <span className="block text-sm font-semibold">
-                        Organization overview
-                      </span>
-                      <span className="block text-[10px] text-muted-foreground">
-                        All tenant properties
-                      </span>
-                    </span>
-                  </button>
-                  {properties.isPending && (
-                    <p className="px-2 py-2 text-xs" role="status">
-                      Loading properties…
-                    </p>
-                  )}
-                  {properties.isError && (
-                    <button
-                      type="button"
-                      className="px-2 py-2 text-xs underline"
-                      onClick={() => properties.refetch()}
-                    >
-                      Retry properties
-                    </button>
-                  )}
-                  {properties.data?.items
-                    .filter((property) => property.kind !== "site")
-                    .map((property) => (
+                  {managementWorkspace && (
+                    <>
+                      <div className="mt-1 border-t border-border/40 px-2 pb-0.5 pt-2">
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                          Management
+                        </p>
+                      </div>
                       <button
-                        key={property.id}
                         type="button"
                         onClick={() =>
-                          handlePropertySwitch({
-                            id: property.id,
-                            name: property.name,
-                          })
+                          handleWorkspaceSwitch(managementWorkspace)
                         }
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                          selectedProperty?.id === property.id &&
-                            "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10",
+                          "flex w-full items-center gap-3 rounded-lg border px-2 py-2 text-left transition-colors hover:bg-muted/50",
+                          !selectedProperty
+                            ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10"
+                            : "border-transparent",
                         )}
                       >
-                        <Building2 className="h-4 w-4 text-indigo-600" />
+                        <Shield className="h-4 w-4 text-indigo-600" />
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold">
-                            {property.name}
+                            {managementWorkspace.title}
                           </span>
                           <span className="block truncate text-[10px] text-muted-foreground">
-                            {property.kind} · {property.address || "No address"}
+                            {managementWorkspace.roleLabel}
                           </span>
                         </span>
                       </button>
-                    ))}
+                    </>
+                  )}
+                  {personalGroups.map((group) => (
+                    <div key={group.area}>
+                      <div className="mt-1 border-t border-border/40 px-2 pb-0.5 pt-2">
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">
+                          {workspaceAreaMeta[group.area].title}
+                        </p>
+                      </div>
+                      {group.cards.map((workspace) => (
+                        <button
+                          key={workspace.key}
+                          type="button"
+                          onClick={() => handleWorkspaceSwitch(workspace)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg border px-2 py-2 text-left transition-colors hover:bg-muted/50",
+                            selectedProperty?.id ===
+                              workspace.relationship?.place.id
+                              ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10"
+                              : "border-transparent",
+                          )}
+                        >
+                          <Building2 className="h-4 w-4 text-indigo-600" />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold">
+                              {workspace.title}
+                            </span>
+                            <span className="block truncate text-[10px] text-muted-foreground">
+                              {workspace.roleLabel} ·{" "}
+                              {workspace.relationship?.place.kind}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
                   <Link
-                    href="/admin/properties"
+                    href="/select"
                     onClick={() => setOpen(false)}
                     className="mt-1 flex items-center justify-center rounded-lg border border-border/60 px-2 py-2 text-xs font-bold"
                   >
-                    Browse all properties
+                    View all workspaces
                   </Link>
                 </>
               ) : (

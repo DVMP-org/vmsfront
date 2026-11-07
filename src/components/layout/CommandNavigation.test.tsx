@@ -7,7 +7,11 @@ const role = (permissions: string[]) => ({ effective_permissions:permissions }) 
 
 describe("command navigation", () => {
   it("fails closed without role data, honors child permissions, and deduplicates routes", () => {
-    expect(permittedCommands(null).map((entry) => entry.label)).toEqual(["Dashboard", "Profile"]);
+    expect(permittedCommands(null).map((entry) => entry.label)).toEqual([
+      "Dashboard",
+      "Workspaces",
+      "Profile",
+    ]);
     const commands = permittedCommands(role(["roles.list"]));
     expect(commands.some((entry) => entry.label === "Roles & permissions")).toBe(true);
     expect(commands.some((entry) => entry.href === "/admin/admins")).toBe(false);

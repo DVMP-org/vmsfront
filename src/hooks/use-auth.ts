@@ -13,6 +13,7 @@ import {
   RegisterRequest,
   UserProfile,
   DashboardSelect,
+  CurrentUserContext,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   AuthResponse,
@@ -207,7 +208,7 @@ export function useProfile() {
 export function useVerifyToken() {
   const { isAuthenticated, _hasHydrated, token } = useAuthStore();
   
-  return useQuery<User>({
+  return useQuery<CurrentUserContext>({
     queryKey: ["auth", "verify"],
     queryFn: async () => {
       const response = await authService.verifyToken();

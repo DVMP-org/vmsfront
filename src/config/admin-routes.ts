@@ -1,8 +1,9 @@
-import { Home, Users, Building2, Settings, Shield, Scan, Receipt, Puzzle, UserCog, MessageSquare, DoorOpen, Blocks, RadioTower, type LucideIcon } from "lucide-react";
+import { Home, Users, Building2, Settings, Shield, Scan, Receipt, Puzzle, UserCog, MessageSquare, DoorOpen, Blocks, RadioTower, LayoutGrid, type LucideIcon } from "lucide-react";
 import type { ModuleGroup } from "@/features/context/api";
 export interface AdminRoute { href:string; label:string; icon:LucideIcon; permission?:string|string[]; module?:string; group?:string; children?:AdminRoute[] }
 export const adminLinks: AdminRoute[] = [
  {href:"/admin",label:"Dashboard",icon:Home,module:"dashboard",group:"Workspace"},
+ {href:"/select",label:"Workspaces",icon:LayoutGrid,group:"Workspace"},
  {href:"/admin/properties",label:"Properties",icon:Building2,permission:"places.list",module:"properties",group:"Workspace"},
  {href:"/admin/checkpoints",label:"Check-in / check-out",icon:Scan,permission:"gates.list",module:"check_in_out",group:"Operations"},
  {href:"/admin/charges",label:"Charges",icon:Receipt,permission:"charges.list",module:"charges",group:"Operations"},

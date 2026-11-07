@@ -126,3 +126,62 @@
     width: 100%;
   }
 }
+
+.checkpoint-page {
+  max-width: 1280px;
+  padding: 24px 4px 56px;
+}
+.checkpoint-page h1 {
+  font: 650 clamp(30px, 4vw, 42px)/1.08 Inter, ui-sans-serif, system-ui,
+    sans-serif;
+  letter-spacing: -0.045em;
+}
+.checkpoint-page h2 {
+  font: 650 24px/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.035em;
+}
+.checkpoint-page header {
+  border-color: var(--border);
+}
+.checkpoint-page header > p:first-child {
+  color: #6366f1;
+  font-weight: 700;
+}
+.checkpoint-page form,
+.checkpoint-page section,
+.checkpoint-page fieldset,
+.checkpoint-outcome {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 1px 3px rgb(16 24 40 / 0.05);
+}
+.checkpoint-page form,
+.checkpoint-page section {
+  padding: 20px;
+}
+.checkpoint-page input,
+.checkpoint-page select,
+.checkpoint-page button {
+  border-color: var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+.checkpoint-directory,
+.checkpoint-history {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.checkpoint-directory li,
+.checkpoint-history li {
+  border-color: var(--border);
+}
+.checkpoint-directory a,
+.checkpoint-history a {
+  padding: 16px 18px;
+}
+.checkpoint-directory li:hover,
+.checkpoint-history li:hover {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
