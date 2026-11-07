@@ -10,6 +10,7 @@ import {
   MapPin,
   Plus,
   Search,
+  Users,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
@@ -694,7 +695,6 @@ function PropertyDetails({
       </div>
       <div className="property-actions property-record-actions">
         <button className="property-primary" onClick={()=>{setSelectedProperty({id:property.id,name:property.name});router.push("/admin");}}>Open workspace</button>
-        <button onClick={()=>{setSelectedProperty({id:property.id,name:property.name});router.push("/admin/people");}}>Manage people</button>
         {allowed("update") && (
           <button disabled={mutation.isPending} onClick={() => setMode("edit")}>
             Edit details
@@ -747,6 +747,34 @@ function PropertyDetails({
           </dd>
         </div>
       </dl>
+      <section className="property-people-callout">
+        <span className="property-people-callout-icon">
+          <Users size={18} aria-hidden="true" />
+        </span>
+        <div>
+          <p className="property-eyebrow">PEOPLE &amp; ACCESS</p>
+          <h3>
+            {property.kind === "site"
+              ? "Manage site administrators"
+              : "Assign the people who belong here"}
+          </h3>
+          <p>
+            {property.kind === "site"
+              ? "Site administration stays separate from resident, employee and guest access."
+              : "Add occupants using the roles allowed by this property’s operating context. New accounts receive onboarding."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedProperty({ id: property.id, name: property.name });
+            router.push("/admin/people");
+          }}
+        >
+          Manage people
+          <ArrowUpRight size={15} aria-hidden="true" />
+        </button>
+      </section>
       <section className="property-structure" aria-label="Property structure">
         <div className="property-section-heading">
           <div>
