@@ -16,6 +16,7 @@ vi.mock("./api", async () => {
     accessJourneyApi: {
       list: vi.fn(),
       create: vi.fn(),
+      get: vi.fn(),
       cancel: vi.fn(),
     },
   };
@@ -106,6 +107,7 @@ describe("AccessWorkspace", () => {
       total_pages: 1,
     });
     vi.mocked(accessJourneyApi.create).mockResolvedValue(invitation);
+    vi.mocked(accessJourneyApi.get).mockResolvedValue(invitation);
   });
 
   it("shows the host's invitations and active pass", async () => {
@@ -142,5 +144,23 @@ describe("AccessWorkspace", () => {
         ],
       }),
     );
+  });
+
+  it("opens the reusable invitation detail and QR", async () => {
+    renderWorkspace();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /view details/i }),
+    );
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(accessJourneyApi.get).toHaveBeenCalledWith("invite");
+    expect(
+      await screen.findByRole("button", { name: /share invitation/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Present this code at arrival"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
   });
 });
