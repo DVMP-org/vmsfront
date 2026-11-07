@@ -59,6 +59,11 @@ const statusMeta: Record<
     className:
       "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
   },
+  revoked: {
+    label: "Revoked",
+    className:
+      "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200",
+  },
 };
 
 export function AccessWorkspace({

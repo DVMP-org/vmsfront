@@ -2,7 +2,12 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export type VisitAuthorizationStatus =
-  "requested" | "approved" | "declined" | "expired" | "cancelled";
+  | "requested"
+  | "approved"
+  | "declined"
+  | "expired"
+  | "cancelled"
+  | "revoked";
 
 export interface VisitGuest {
   id: string;
