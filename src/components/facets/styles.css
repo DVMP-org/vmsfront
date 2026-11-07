@@ -1,0 +1,35 @@
+.facet-picker {
+  border: 1px solid var(--property-line, var(--stay-line, #d6dbe5));
+  padding: 12px;
+  border-radius: 5px;
+  margin: 16px 0;
+}
+.facet-picker legend {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 6px;
+}
+.facet-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+.facet-options {
+  list-style: none;
+  max-height: 160px;
+  overflow: auto;
+  padding: 0;
+}
+.facet-options button {
+  width: 100%;
+  border: 0;
+  min-height: 40px;
+}
+.facet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}

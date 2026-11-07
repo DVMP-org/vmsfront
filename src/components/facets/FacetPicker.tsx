@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@/lib/error-utils";
 import { loadFacets, FacetItem } from "./client";
+import "./styles.css";
 export type { FacetItem } from "./client";
 export function FacetPicker({
   facet,
@@ -11,13 +12,15 @@ export function FacetPicker({
   value,
   onChange,
   contextKey,
+  excludeIds = [],
 }: {
   facet: "parties" | "places";
-  kind: string;
+  kind?: string;
   label: string;
   value: FacetItem | null;
   onChange: (item: FacetItem | null) => void;
   contextKey: string;
+  excludeIds?: string[];
 }) {
   const [search, setSearch] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
@@ -25,7 +28,10 @@ export function FacetPicker({
     queryKey: ["facets", contextKey, facet, kind, search, cursor],
     queryFn: ({ signal }) =>
       loadFacets(facet, {
-        filters: { kind: kind as "person" | "organization", is_active: true },
+        filters: {
+          ...(kind ? { kind: kind as "person" | "organization" } : {}),
+          is_active: true,
+        },
         search,
         cursor,
         signal,
@@ -37,7 +43,10 @@ export function FacetPicker({
     queryKey: ["facets", contextKey, facet, kind, "selected", value?.value],
     queryFn: ({ signal }) =>
       loadFacets(facet, {
-        filters: { kind: kind as "person" | "organization", is_active: true },
+        filters: {
+          ...(kind ? { kind: kind as "person" | "organization" } : {}),
+          is_active: true,
+        },
         ids: [value!.value],
         signal,
       }),
@@ -55,10 +64,10 @@ export function FacetPicker({
       onChange(null);
   }, [value, selected.isSuccess, selected.data, onChange]);
   return (
-    <fieldset className="stay-picker">
+    <fieldset className="stay-picker facet-picker">
       <legend>{label}</legend>
       {value ? (
-        <div className="stay-selected">
+        <div className="stay-selected facet-selected">
           {selected.data?.items.find((item) => item.value === value.value)
             ?.label || value.label}
           {selected.isError && (
@@ -97,12 +106,14 @@ export function FacetPicker({
             </div>
           ) : (
             <>
-              <ul className="stay-options">
+              <ul className="stay-options facet-options">
                 {query.data?.items.map((item) => (
                   <li key={item.value}>
                     <button
                       type="button"
-                      disabled={item.disabled}
+                      disabled={
+                        item.disabled || excludeIds.includes(item.value)
+                      }
                       onClick={() => onChange(item)}
                     >
                       {item.label}
@@ -112,7 +123,7 @@ export function FacetPicker({
               </ul>
               {!query.data?.items.length && <p>No matching options.</p>}
               {(query.data?.has_more || cursor) && (
-                <div className="stay-actions">
+                <div className="stay-actions facet-actions">
                   <button
                     type="button"
                     disabled={!cursor}
