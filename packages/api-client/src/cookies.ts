@@ -57,8 +57,9 @@ function getCookieDomain(options: CookieUtilityOptions): string {
 
 /**
  * Build cookie helpers with an injected base domain and browser. Production
- * cookies are shared across tenant subdomains; localhost deliberately omits
- * the domain attribute so browser subdomains can share the same session.
+ * cookies are shared across tenant subdomains; localhost omits the domain
+ * attribute and should use a local wildcard domain such as `lvh.me` when
+ * cross-subdomain browser acceptance is required.
  */
 export function createCookieUtilities(
   options: CookieUtilityOptions = {},

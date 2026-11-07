@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const localBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "localhost";
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
@@ -26,6 +27,9 @@ const nextConfig = {
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     '*.localhost',
+    `*.${localBaseDomain}`,
+    `http://*.${localBaseDomain}:3001`,
+    `http://*.${localBaseDomain}:3000`,
     'context-acceptance.localhost',
     'http://context-acceptance.localhost:3003',
     'http://192.168.100.20:3000',

@@ -5,6 +5,7 @@ import {
   CheckpointConsole,
   CheckpointDirectory,
   CheckpointRecord,
+  createIdempotencyKey,
 } from "./CheckpointPages";
 const m = vi.hoisted(() => ({
   profile: vi.fn(),
@@ -58,6 +59,21 @@ beforeEach(() => {
   m.gate.mockResolvedValue({ id: "gate", name: "Main entrance" });
   m.history.mockResolvedValue({ items: [], total_pages: 0 });
   m.event.mockResolvedValue(event);
+});
+it("creates idempotency keys without crypto.randomUUID on local HTTP", () => {
+  vi.stubGlobal("crypto", {
+    getRandomValues: (bytes: Uint8Array) => {
+      bytes.fill(7);
+      return bytes;
+    },
+  });
+  try {
+    expect(createIdempotencyKey()).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 it("uses real routes for gate directory and passage drilldown", async () => {
   mount(<CheckpointDirectory />);
