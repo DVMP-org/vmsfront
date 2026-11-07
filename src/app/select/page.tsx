@@ -267,7 +267,7 @@ function DashboardCard({
 
 
 
-export function SelectPageSkeleton() {
+function SelectPageSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-10">
       {/* Properties Section Skeleton */}

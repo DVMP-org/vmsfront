@@ -20,7 +20,10 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useAuth } from "@/hooks/use-auth";
 import { toRenderableHtml, hasMeaningfulContent } from "@/lib/safe-html";
-import { useAdminResidencies } from "@/hooks/use-admin";
+import {
+  useAdminResidencies,
+  useAdminResidencyGroups,
+} from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumTopic,
@@ -56,6 +59,11 @@ export default function AdminForumTopicDetailPage() {
     pageSize: 100,
   });
   const residencies = residenciesData?.items ?? [];
+  const { data: residencyGroupsData } = useAdminResidencyGroups({
+    page: 1,
+    pageSize: 100,
+  });
+  const residencyGroups = residencyGroupsData?.items ?? [];
   const categoriesQuery = useAdminForumCategories({
     page: 1,
     pageSize: 100,
@@ -460,6 +468,7 @@ export default function AdminForumTopicDetailPage() {
         isOpen={topicModalOpen}
         mode="edit"
         residencies={residencies}
+        residencyGroups={residencyGroups}
         categories={categoriesForModal}
         defaultResidencyId={topic?.residency_id || topic?.residency?.id}
         initialValues={

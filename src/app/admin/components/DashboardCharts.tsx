@@ -25,13 +25,11 @@ const COLORS = {
     zinc: "#71717a",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChartTooltip({ active, payload, label }: any) {
     if (!active || !payload?.length) return null;
     return (
         <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-lg">
             <p className="font-semibold text-zinc-900 mb-1">{label}</p>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {payload.map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
                     <span className="flex items-center gap-2">
@@ -50,11 +48,8 @@ function ChartTooltip({ active, payload, label }: any) {
 
 interface DashboardChartsProps {
     chartData: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         statusChartData: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         eventsByHour: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         activityTrend: any[];
     } | null;
 }

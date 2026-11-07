@@ -119,29 +119,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={reference || ref}
         disabled={disabled || isLoading}
         {...rest}
-        children={
-          <div className="flex font-medium justify-center items-center gap-2">
-            {/* {leftNode}
+      >
+        <div className="flex font-medium justify-center items-center gap-2">
+          {/* {leftNode}
         {children}
         {rightNode}
         {isLoading && <Loader />} */}
 
-            {isLoading ? (
-              <>
-                <span className="mx-auto">
-                  <Loader size={LoaderSize} colour="secondary" />
-                </span>
-              </>
-            ) : (
-              <>
-                {leftNode}
-                {children}
-                {rightNode}
-              </>
-            )}
-          </div>
-        }
-      />
+          {isLoading ? (
+            <>
+              <span className="mx-auto">
+                <Loader size={LoaderSize} colour="secondary" />
+              </span>
+            </>
+          ) : (
+            <>
+              {leftNode}
+              {children}
+              {rightNode}
+            </>
+          )}
+        </div>
+      </Component>
     );
   }
 );

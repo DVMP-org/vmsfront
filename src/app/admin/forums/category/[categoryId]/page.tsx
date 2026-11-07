@@ -36,7 +36,10 @@ import {
 import { Checkbox } from "@/components/ui/Checkbox";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { useAdminResidencies } from "@/hooks/use-admin";
+import {
+  useAdminResidencies,
+  useAdminResidencyGroups,
+} from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumCategory,
@@ -70,6 +73,11 @@ export default function AdminForumCategoryDetailPage() {
     pageSize: 100,
   });
   const residencies = residenciesData?.items ?? [];
+  const { data: residencyGroupsData } = useAdminResidencyGroups({
+    page: 1,
+    pageSize: 100,
+  });
+  const residencyGroups = residencyGroupsData?.items ?? [];
 
   const categoryQuery = useAdminForumCategory(normalizedCategoryId || "");
   const categoriesQuery = useAdminForumCategories({
@@ -535,6 +543,7 @@ export default function AdminForumCategoryDetailPage() {
         isOpen={topicModalOpen}
         mode={topicToEdit ? "edit" : "create"}
         residencies={residencies}
+        residencyGroups={residencyGroups}
         categories={categoriesForModal}
         defaultResidencyId={category?.residency_id || ""}
         initialValues={
