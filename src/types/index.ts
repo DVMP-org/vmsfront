@@ -389,6 +389,46 @@ export interface AdminSummary {
     updated_at: string;
 }
 
+export interface WorkspacePlace {
+    id: string;
+    name: string;
+    slug: string;
+    kind: string;
+    is_active: boolean;
+    address?: string;
+    parent_id?: string | null;
+    building_type?: string | null;
+    use_case?: string | null;
+}
+
+export interface WorkspaceRelationship {
+    id: string;
+    organization_id: string;
+    role: string;
+    status: string;
+    effective_from: string | null;
+    effective_to: string | null;
+    created_at: string;
+    updated_at: string;
+    party: WorkspaceParty;
+    place: WorkspacePlace;
+}
+
+export interface WorkspaceParty {
+    id: string;
+    kind: string;
+    display_name: string;
+    email: string | null;
+    is_active: boolean;
+}
+
+export interface CurrentUserContext {
+    user: User;
+    party: WorkspaceParty | null;
+    admin: AdminSummary | null;
+    workspaces: WorkspaceRelationship[];
+}
+
 export interface DashboardSelect {
     user: UserProfile;
     residencies: Residency[];
@@ -657,10 +697,38 @@ export interface UpdateBrandingThemeRequest {
 }
 
 export interface AdminDashboard {
-    residencies: Residency[];
-    residents: ResidentUser[];
-    gate_passes: GatePass[];
-    gate_events: GateEvent[];
+    metrics: {
+        total_places: number;
+        total_parties: number;
+        active_relationships: number;
+        active_visit_authorizations: number;
+        pending_visit_authorizations: number;
+        active_visit_sessions: number;
+        active_checkpoint_presences: number;
+        checkpoint_events_today: number;
+    };
+    root_places: WorkspacePlace[];
+    recent_visit_authorizations: Array<{
+        id: string;
+        code: string;
+        status: string;
+        purpose: string | null;
+        valid_from: string;
+        valid_to: string;
+        uses_count: number;
+        max_uses: number | null;
+        host_party?: { display_name?: string } | null;
+        destination_place?: { name?: string } | null;
+    }>;
+    recent_checkpoint_events: Array<{
+        id: string;
+        direction: string;
+        outcome: string;
+        reason_code: string;
+        occurred_at: string;
+        place_id: string;
+        gate_id: string;
+    }>;
 }
 
 // Wallet Types

@@ -5,6 +5,7 @@ import {
   AuthResponse,
   ApiResponse,
   DashboardSelect,
+  CurrentUserContext,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   User,
@@ -23,7 +24,7 @@ export const authService = {
     return apiClient.post("/auth/logout");
   },
 
-  async verifyToken(): Promise<ApiResponse<User>> {
+  async verifyToken(): Promise<ApiResponse<CurrentUserContext>> {
     return apiClient.get("/auth/verify");
   },
 

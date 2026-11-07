@@ -1,437 +1,489 @@
 "use client";
 
-import { useMemo, memo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { useAdminDashboard } from "@/hooks/use-admin";
-import { GatePassStatus } from "@/types";
-import { Button } from "@/components/ui/Button";
-import { DashboardError } from "./components/DashboardError";
-import { formatDate, getFullName } from "@/lib/utils";
 import {
-  Building2,
-  Users,
-  CreditCard,
   Activity,
   ArrowUpRight,
-  PieChartIcon,
-  UserPlus,
+  Building2,
+  CalendarClock,
+  CheckCircle2,
+  CreditCard,
+  DoorOpen,
+  KeyRound,
+  Plus,
+  ShieldAlert,
+  Users,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { useAdminDashboard } from "@/hooks/use-admin";
+import { parseApiError } from "@/lib/error-utils";
 
-// Lazy load the charts component
-const DashboardCharts = dynamic(
-  () => import("./components/DashboardCharts"),
-  {
-    loading: () => (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="border border-zinc-200 rounded-lg h-[280px] bg-background dark:bg-card animate-pulse" />
-        ))}
-      </div>
-    ),
-    ssr: false, // Charts are client-side only
-  }
-);
-
-const COLORS = {
-  primary: "#3b82f6",
-  success: "#10b981",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-  purple: "#8b5cf6",
-  zinc: "#71717a",
-};
-
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-[rgb(var(--brand-primary))] bg-white px-3 py-2 text-sm shadow-lg">
-      <p className="font-semibold text-[rgb(var(--brand-primary))] mb-1">{label}</p>
-      {payload.map((item: any, idx: number) => (
-        <div key={idx} className="flex items-center justify-between gap-4 text-zinc-600">
-          <span className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            {item.name}
-          </span>
-          <span className="font-medium text-[var(--brand-primary)]">{item.value}</span>
-        </div>
-      ))}
-    </div>
-  );
+interface CanonicalDashboard {
+  metrics: {
+    total_places: number;
+    total_parties: number;
+    active_relationships: number;
+    active_visit_authorizations: number;
+    pending_visit_authorizations: number;
+    active_visit_sessions: number;
+    active_checkpoint_presences: number;
+    checkpoint_events_today: number;
+  };
+  root_places: Array<{
+    id: string;
+    name: string;
+    kind: string;
+    address: string;
+    is_active: boolean;
+    use_case: string | null;
+  }>;
+  recent_visit_authorizations: Array<{
+    id: string;
+    code: string;
+    status: string;
+    purpose: string | null;
+    valid_from: string;
+    valid_to: string;
+    uses_count: number;
+    max_uses: number | null;
+    host_party?: { display_name?: string } | null;
+    destination_place?: { name?: string } | null;
+  }>;
+  recent_checkpoint_events: Array<{
+    id: string;
+    direction: string;
+    outcome: string;
+    reason_code: string;
+    occurred_at: string;
+    place_id: string;
+    gate_id: string;
+  }>;
 }
 
-const MetricCard = memo(function MetricCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-}: {
-  title: string;
-  value: string | number;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="border border-zinc-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-background dark:bg-card">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-xs text-zinc-500 uppercase tracking-wide">{title}</div>
-        <Icon className="h-4 w-4 text-[var(--brand-primary,#213928)]" />
-      </div>
-      <div className="text-2xl font-bold text-foreground mb-1">{value}</div>
-      <div className="text-xs text-zinc-500">{subtitle}</div>
-    </div>
-  );
-});
-
 export default function AdminDashboardPage() {
-  const { data: dashboard, isLoading, isError, isFetching, refetch } = useAdminDashboard();
   const router = useRouter();
+  const dashboard = useAdminDashboard();
+  const context = useWorkspaceContext();
+  const data = dashboard.data as CanonicalDashboard | undefined;
+  const metrics = data?.metrics;
 
-  // Process data for charts and stats
-  const { chartData, stats } = useMemo(() => {
-    if (!dashboard) return { chartData: null, stats: null };
-
-    const gatePasses = dashboard.gate_passes || [];
-    const gateEvents = dashboard.gate_events || [];
-    const residencies = dashboard.residencies || [];
-    const residents = dashboard.residents || [];
-
-    // All-in-one pass for stats and grouping
-    const statusCounts: Record<string, number> = {};
-    let activeGatePasses = 0;
-    gatePasses.forEach(p => {
-      statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-      if (p.status === GatePassStatus.CHECKED_IN || p.status === GatePassStatus.ACTIVE) activeGatePasses++;
-    });
-
-    const hourStats = new Map<string, { checkins: number; checkouts: number }>();
-    const dayStats = new Map<string, { checkins: number; checkouts: number }>();
-    let totalCheckouts = 0;
-
-    gateEvents.forEach(event => {
-      if (event.checkin_time) {
-        const time = new Date(event.checkin_time).getTime();
-        const hourKey = new Date(time).setMinutes(0, 0, 0).toString();
-        const dayKey = new Date(time).setHours(0, 0, 0, 0).toString();
-
-        const hStat = hourStats.get(hourKey) || { checkins: 0, checkouts: 0 };
-        hStat.checkins++;
-        hourStats.set(hourKey, hStat);
-
-        const dStat = dayStats.get(dayKey) || { checkins: 0, checkouts: 0 };
-        dStat.checkins++;
-        dayStats.set(dayKey, dStat);
-      }
-
-      if (event.checkout_time) {
-        totalCheckouts++;
-        const time = new Date(event.checkout_time).getTime();
-        const hourKey = new Date(time).setMinutes(0, 0, 0).toString();
-        const dayKey = new Date(time).setHours(0, 0, 0, 0).toString();
-
-        const hStat = hourStats.get(hourKey) || { checkins: 0, checkouts: 0 };
-        hStat.checkouts++;
-        hourStats.set(hourKey, hStat);
-
-        const dStat = dayStats.get(dayKey) || { checkins: 0, checkouts: 0 };
-        dStat.checkouts++;
-        dayStats.set(dayKey, dStat);
-      }
-    });
-
-    const statusChartData = [
-      { name: "Active", value: statusCounts[GatePassStatus.ACTIVE] || 0, color: COLORS.success },
-      { name: "Checked In", value: statusCounts[GatePassStatus.CHECKED_IN] || 0, color: COLORS.success },
-      { name: "Checked Out", value: statusCounts[GatePassStatus.CHECKED_OUT] || 0, color: COLORS.zinc },
-      { name: "Pending", value: statusCounts[GatePassStatus.PENDING] || 0, color: COLORS.warning },
-      { name: "Expired", value: statusCounts[GatePassStatus.EXPIRED] || 0, color: COLORS.danger },
-      { name: "Completed", value: statusCounts[GatePassStatus.COMPLETED] || 0, color: COLORS.primary },
-      { name: "Revoked", value: statusCounts[GatePassStatus.REVOKED] || 0, color: "#6b7280" },
-    ].filter((item) => item.value > 0);
-
-    const now = new Date();
-    const eventsByHour = Array.from({ length: 24 }, (_, i) => {
-      const hour = new Date(now);
-      hour.setHours(hour.getHours() - (23 - i), 0, 0, 0);
-      return {
-        hour: hour.getHours(),
-        label: hour.toLocaleTimeString("en-US", { hour: "numeric", hour12: true }),
-        ...(hourStats.get(hour.getTime().toString()) || { checkins: 0, checkouts: 0 })
-      };
-    });
-
-    const activityTrend = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      date.setHours(0, 0, 0, 0);
-      return {
-        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        ...(dayStats.get(date.getTime().toString()) || { checkins: 0, checkouts: 0 })
-      };
-    });
-
-    return {
-      chartData: { statusChartData, eventsByHour, activityTrend },
-      stats: {
-        totalResidencies: residencies.length,
-        totalResidents: residents.length,
-        activeGatePasses,
-        totalGatePasses: gatePasses.length,
-        totalGateScans: gateEvents.length + totalCheckouts,
-        passUtilization: gatePasses.length ? Math.round((activeGatePasses / gatePasses.length) * 100) : 0,
-        avgResidentsPerResidency: residencies.length ? Math.round(residents.length / residencies.length) : 0,
-      }
-    };
-  }, [dashboard]);
-
-  if (isLoading) {
+  if (dashboard.isPending) return <DashboardSkeleton />;
+  if (dashboard.isError && !data) {
     return (
-      <div className="space-y-4">
-        <div className="h-16 bg-muted animate-pulse rounded-lg" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-muted dark:bg-background animate-pulse rounded-lg" />
-          ))}
-        </div>
+      <div
+        role="alert"
+        className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+      >
+        <p className="font-semibold">Dashboard unavailable</p>
+        <p className="mt-1">{parseApiError(dashboard.error).message}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => dashboard.refetch()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
 
-  if (isError && !dashboard) {
-    return <DashboardError isFetching={isFetching} onRetry={() => void refetch()} />;
-  }
-
-  const residencies = dashboard?.residencies || [];
-  const residents = dashboard?.residents || [];
-  const {
-    totalResidencies,
-    totalResidents,
-    activeGatePasses,
-    totalGatePasses,
-    totalGateScans,
-    passUtilization,
-    avgResidentsPerResidency
-  } = stats || {
-    totalResidencies: 0,
-    totalResidents: 0,
-    activeGatePasses: 0,
-    totalGatePasses: 0,
-    totalGateScans: 0,
-    passUtilization: 0,
-    avgResidentsPerResidency: 0
-  };
-
   return (
-    <div className="space-y-4">
-      {isError && <DashboardError isFetching={isFetching} onRetry={() => void refetch()} hasCachedData />}
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Admin Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">System overview and operations</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/admin/analytics")}
-            className="text-xs h-8"
+    <div className="space-y-6 pb-10">
+      {dashboard.isError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          <span>Showing the last successful snapshot. Refresh failed.</span>
+          <button
+            type="button"
+            className="font-semibold underline"
+            onClick={() => dashboard.refetch()}
           >
-            <PieChartIcon className="h-4 w-4 mr-2" />
-            Analytics
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => router.push("/admin/admins/create")}
-            className="text-xs h-8"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Onboard Admin
-          </Button>
+            Retry
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* Enhanced Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard
-          title="Residencies"
-          value={totalResidencies}
-          subtitle="Managed properties"
+      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-400">
+            Operations overview ·{" "}
+            {context.data?.effective_use_case?.replaceAll("_", " ") ||
+              "workspace"}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white sm:text-4xl">
+            Operating dashboard
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+            Property operations, access activity and items that need attention
+            across the selected context.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/checkpoints">
+              <DoorOpen className="mr-2 h-4 w-4" />
+              Open Access
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/admin/properties/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New property
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      <section
+        aria-label="Operating metrics"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <Metric
+          label="Properties"
+          value={metrics?.total_places || 0}
+          detail="Active property hierarchy"
           icon={Building2}
         />
-        <MetricCard
-          title="Residents"
-          value={totalResidents}
-          subtitle="Active profiles"
+        <Metric
+          label="People"
+          value={metrics?.total_parties || 0}
+          detail={`${metrics?.active_relationships || 0} active relationships`}
           icon={Users}
         />
-        <MetricCard
-          title="Active Passes"
-          value={activeGatePasses}
-          subtitle={`${totalGatePasses} total issued`}
-          icon={CreditCard}
+        <Metric
+          label="Visit access"
+          value={metrics?.active_visit_authorizations || 0}
+          detail={`${metrics?.pending_visit_authorizations || 0} awaiting approval`}
+          icon={KeyRound}
+          attention={(metrics?.pending_visit_authorizations || 0) > 0}
         />
-        <MetricCard
-          title="Gate Events"
-          value={totalGateScans}
-          subtitle="Total scans"
+        <Metric
+          label="On site"
+          value={metrics?.active_checkpoint_presences || 0}
+          detail={`${metrics?.active_visit_sessions || 0} active visit sessions`}
           icon={Activity}
         />
-      </div>
+      </section>
 
-      {/* Charts Section */}
-      <DashboardCharts chartData={chartData} />
-
-      {/* Operational Metrics, Quick Actions, and Activity Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Operational Metrics */}
-        <div className="border border-foreground/20 rounded-lg">
-          <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
-            <h2 className="text-sm font-semibold text-foreground">Operational Metrics</h2>
+      <section className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+        <Panel
+          title="Properties"
+          description="Top-level operating contexts in this organization."
+          action={
+            <Link
+              href="/admin/properties"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+            >
+              View directory <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-y border-slate-200 bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Property</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
+                  <th className="px-4 py-3 font-semibold">Context</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data?.root_places || []).map((place) => (
+                  <tr
+                    key={place.id}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40"
+                  >
+                    <td className="px-4 py-3.5">
+                      <Link
+                        href={`/admin/properties/${place.id}`}
+                        className="font-semibold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
+                      >
+                        {place.name}
+                      </Link>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {place.address || "No address"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3.5 capitalize text-slate-600 dark:text-slate-300">
+                      {place.kind}
+                    </td>
+                    <td className="px-4 py-3.5 capitalize text-slate-600 dark:text-slate-300">
+                      {place.use_case?.replaceAll("_", " ") ||
+                        context.data?.effective_use_case?.replaceAll("_", " ") ||
+                        "Inherited"}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Status tone={place.is_active ? "success" : "muted"}>
+                        {place.is_active ? "Active" : "Archived"}
+                      </Status>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!data?.root_places.length && (
+              <EmptyRow text="No top-level properties in this context." />
+            )}
           </div>
-          <div className="p-4 space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-foreground">Pass utilization</span>
-                <span className="text-sm font-semibold text-muted-foreground">{passUtilization}%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
+        </Panel>
+
+        <Panel
+          title="Needs attention"
+          description="Pending approvals and recent access outcomes."
+          action={
+            <Link
+              href="/admin/checkpoints"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+            >
+              Access console <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        >
+          <div className="space-y-2 p-3">
+            {(data?.recent_visit_authorizations || [])
+              .filter((item) => item.status === "requested")
+              .slice(0, 4)
+              .map((item) => (
                 <div
-                  className="bg-emerald-500 h-2 rounded-full transition-all"
-                  style={{ width: `${passUtilization}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-between py-2 border-t border-zinc-100">
-              <span className="text-sm text-foreground">Total gate passes</span>
-              <span className="text-sm font-semibold text-muted-foreground">{totalGatePasses}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-t border-zinc-100">
-              <span className="text-sm text-foreground">Active check-ins</span>
-              <span className="text-sm font-semibold text-muted-foreground">{activeGatePasses}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-t border-zinc-100">
-              <span className="text-sm text-foreground">Residents per residency</span>
-              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerResidency}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="border border-foreground/20 rounded-lg">
-          <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
-            <h2 className="text-sm font-semibold text-foreground">Quick Actions</h2>
-          </div>
-          <div className="p-3 space-y-2">
-            {[
-              { label: "Create residency", sub: "Add a property profile", href: "/admin/residencies", icon: Building2 },
-              { label: "Add resident", sub: "Link a user to residencies", href: "/admin/residents/create", icon: Users },
-              { label: "Issue gate pass", sub: "Manage visitor access", href: "/admin/gate", icon: CreditCard },
-            ].map((action) => (
-              <button
-                key={action.href}
-                onClick={() => router.push(action.href)}
-                className="w-full flex items-center justify-between px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-foreground/10 rounded-md transition-colors border border-transparent hover:border-foreground/20"
-              >
-                <div>
-                  <div className="font-medium text-foreground">{action.label}</div>
-                  <div className="text-xs text-zinc-500">{action.sub}</div>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-zinc-400" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Activity Summary */}
-        <div className="border border-foreground/20 rounded-lg">
-          <div className="border-b border-foreground/20 px-4 py-3 rounded-t-lg">
-            <h2 className="text-sm font-semibold text-foreground">Activity Summary</h2>
-          </div>
-          <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">Recent residencies</span>
-              <span className="text-sm font-semibold text-muted-foreground">{residencies.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">Recent residents</span>
-              <span className="text-sm font-semibold text-muted-foreground">{residents.length}</span>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-foreground/20">
-              <span className="text-sm text-foreground">Avg. residents/residency</span>
-              <span className="text-sm font-semibold text-muted-foreground">{avgResidentsPerResidency}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent residencies table */}
-        <div className="border border-foreground/20 rounded-lg overflow-hidden">
-          <div className="border-b border-foreground/20 px-4 py-3 bg-muted/50">
-            <h2 className="text-sm font-semibold text-foreground">Recent Residencies</h2>
-          </div>
-          {!residencies || residencies.length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No residencies yet</div>
-          ) : (
-            <div className="divide-y divide-zinc-100">
-              {residencies.slice(0, 5).map((residency) => (
-                <div
-                  key={residency.id}
-                  className="px-4 py-3 hover:bg-foreground/5 transition-colors cursor-pointer flex items-center justify-between"
-                  onClick={() => router.push(`/admin/residencies/${residency.id}`)}
+                  key={item.id}
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 dark:border-amber-900 dark:bg-amber-950/30"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-foreground truncate">{residency.name}</div>
-                    <div className="text-xs text-muted-foreground truncate mt-0.5">{residency.address}</div>
-                  </div>
-                  {residency.created_at && (
-                    <div className="text-right ml-4 flex-shrink-0">
-                      <div className="text-xs text-zinc-500">{formatDate(residency.created_at)}</div>
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 text-amber-600" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-amber-950 dark:text-amber-100">
+                        {item.purpose || "Visitor approval requested"}
+                      </p>
+                      <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                        {item.host_party?.display_name || "Host"} ·{" "}
+                        {item.destination_place?.name ||
+                          "Selected destination"}
+                      </p>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent residents table */}
-        <div className="border border-foreground/20 rounded-lg overflow-hidden">
-          <div className="border-b border-foreground/20 px-4 py-3 bg-muted/50">
-            <h2 className="text-sm font-semibold text-foreground">Recent Residents</h2>
-          </div>
-          {!residents || residents.length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No residents yet</div>
-          ) : (
-            <div className="divide-y divide-zinc-100">
-              {residents.slice(0, 5).map((resident) => (
-                <div
-                  key={resident.user.id}
-                  className="px-4 py-3 hover:bg-foreground/5 transition-colors cursor-pointer flex items-center justify-between"
-                  onClick={() => router.push(`/admin/residents/${resident.user.id}`)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-foreground truncate">
-                      {getFullName(resident.user.first_name, resident.user.last_name)}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate mt-0.5">{resident.user.email}</div>
-                  </div>
-                  <div className="ml-4 flex-shrink-0">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--brand-primary,#213928)] text-white">
-                      {resident.residencies?.length || 0} {resident.residencies?.length === 1 ? 'residency' : 'residencies'}
-                    </span>
                   </div>
                 </div>
               ))}
+            {!(
+              data?.recent_visit_authorizations || []
+            ).some((item) => item.status === "requested") && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+                  <CheckCircle2 className="h-4 w-4" />
+                  No pending visitor approvals
+                </p>
+              </div>
+            )}
+            <div className="pt-2">
+              <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                Recent checkpoints
+              </p>
+              {(data?.recent_checkpoint_events || [])
+                .slice(0, 5)
+                .map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between gap-3 border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800"
+                  >
+                    <div>
+                      <p className="text-sm font-medium capitalize">
+                        {event.direction === "entry" ? "Check-in" : "Check-out"} ·{" "}
+                        {event.outcome}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {event.reason_code.replaceAll("_", " ")}
+                      </p>
+                    </div>
+                    <time className="text-xs text-slate-500 dark:text-slate-400">
+                      {new Date(event.occurred_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </div>
+                ))}
+              {!data?.recent_checkpoint_events.length && (
+                <p className="py-4 text-sm text-slate-500 dark:text-slate-400">
+                  No checkpoint activity recorded yet.
+                </p>
+              )}
             </div>
-          )}
+          </div>
+        </Panel>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <QuickAction
+          icon={CalendarClock}
+          label="Review visit access"
+          detail={`${metrics?.pending_visit_authorizations || 0} pending`}
+          onClick={() => router.push("/admin/checkpoints")}
+        />
+        <QuickAction
+          icon={CreditCard}
+          label="Manage charges"
+          detail="Definitions, assignments and schedules"
+          onClick={() => router.push("/admin/charges")}
+        />
+        <QuickAction
+          icon={Users}
+          label="Manage people"
+          detail="Parties and workspace relationships"
+          onClick={() => router.push("/admin/admins")}
+        />
+        <QuickAction
+          icon={Activity}
+          label="Checkpoint scans today"
+          detail={`${metrics?.checkpoint_events_today || 0} recorded`}
+          onClick={() => router.push("/admin/checkpoints")}
+        />
+      </section>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  attention = false,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  icon: React.ComponentType<{ className?: string }>;
+  attention?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-start justify-between">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          {label}
+        </p>
+        <div
+          className={
+            attention
+              ? "grid h-8 w-8 place-items-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
+              : "grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          }
+        >
+          <Icon className="h-4 w-4" />
         </div>
+      </div>
+      <p className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{value}</p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{detail}</p>
+    </div>
+  );
+}
+
+function Panel({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <header className="flex items-start justify-between gap-4 px-4 py-4">
+        <div>
+          <h2 className="text-base font-semibold">{title}</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
+        </div>
+        {action}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function Status({
+  tone,
+  children,
+}: {
+  tone: "success" | "muted";
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={
+        tone === "success"
+          ? "rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+          : "rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  detail,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  detail: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+    >
+      <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <Icon className="h-4 w-4" />
+      </div>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold">{label}</span>
+        <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
+          {detail}
+        </span>
+      </span>
+      <ArrowUpRight className="h-4 w-4 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+    </button>
+  );
+}
+
+function EmptyRow({ text }: { text: string }) {
+  return (
+    <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+      {text}
+    </p>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6" role="status">
+      <span className="sr-only">Loading dashboard</span>
+      <div className="h-20 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((item) => (
+          <div
+            key={item}
+            className="h-32 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800"
+          />
+        ))}
+      </div>
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+        <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
       </div>
     </div>
   );
