@@ -7,6 +7,7 @@ import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
+import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
@@ -29,6 +30,7 @@ export default function HospitalityPage() {
       key={context}
       context={context}
       enabled={!!organization?.id && !!user?.id}
+      propertyId={selectedProperty?.id}
       propertyName={selectedProperty?.name}
     />
   );
@@ -36,10 +38,12 @@ export default function HospitalityPage() {
 function HospitalityWorkspace({
   context,
   enabled,
+  propertyId,
   propertyName,
 }: {
   context: string;
   enabled: boolean;
+  propertyId?: string;
   propertyName?: string;
 }) {
   const client = useQueryClient();
@@ -73,6 +77,12 @@ function HospitalityWorkspace({
     queryKey: ["hospitality", context, "people"],
     queryFn: hospitalityPeopleApi.list,
     enabled: allowed("list"),
+  });
+  const workspaceContext = useQuery({
+    queryKey: ["hospitality", context, "workspace-context", propertyId],
+    queryFn: () => contextApi.workspace(propertyId!),
+    enabled: enabled && !!propertyId && allowed("list"),
+    retry: false,
   });
   const changed = async (stay: Stay, message: string) => {
     setSelected(stay.id);
@@ -126,10 +136,26 @@ function HospitalityWorkspace({
       )}
       {!list.isPending ? (
         <HotelAdministrationSummary
+          administrators={
+            workspaceContext.data?.management?.administrators || []
+          }
+          authorityMode={workspaceContext.data?.management?.mode}
+          authoritativePlaceName={
+            workspaceContext.data?.management?.authoritative_place?.name
+          }
           relationships={people.data?.items || []}
           stays={list.data?.items || []}
-          loading={people.isPending}
-          error={people.isError ? parseApiError(people.error).message : null}
+          loading={
+            people.isPending ||
+            (!!propertyId && workspaceContext.isPending)
+          }
+          error={
+            people.isError
+              ? parseApiError(people.error).message
+              : workspaceContext.isError
+                ? parseApiError(workspaceContext.error).message
+                : null
+          }
           onRetry={() => people.refetch()}
           onOpenStay={(id) => {
             setSelected(id);

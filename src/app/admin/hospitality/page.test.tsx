@@ -10,9 +10,14 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   create: vi.fn(),
   people: vi.fn(),
+  context: vi.fn(),
 }));
 vi.mock("@/store/app-store", () => ({
-  useAppStore: (select: any) => select({ organization: { id: "org" } }),
+  useAppStore: (select: any) =>
+    select({
+      organization: { id: "org" },
+      selectedProperty: { id: "hotel", name: "Harbour Hotel" },
+    }),
 }));
 vi.mock("@/store/auth-store", () => ({
   useAuthStore: (select: any) => select({ user: { id: "user" } }),
@@ -23,6 +28,9 @@ vi.mock("@/services/admin-service", () => ({
 vi.mock("@/features/hospitality/api", () => ({ hospitalityApi: mocks }));
 vi.mock("@/features/hospitality/people-api", () => ({
   hospitalityPeopleApi: { list: mocks.people },
+}));
+vi.mock("@/features/context/api", () => ({
+  contextApi: { workspace: mocks.context },
 }));
 vi.mock("@/components/facets/FacetPicker", () => ({ FacetPicker: () => null }));
 const stay = {
@@ -71,32 +79,29 @@ beforeEach(() => {
     total_pages: 1,
   });
   mocks.get.mockResolvedValue(stay);
-  mocks.people.mockResolvedValue({
-    items: [
-      {
-        id: "admin-link",
-        organization_id: "org",
-        role: "admin",
-        status: "active",
-        effective_from: null,
-        effective_to: null,
-        created_at: "2026-01-01",
-        updated_at: "2026-01-01",
-        party: {
-          id: "admin-party",
-          kind: "person",
+  mocks.context.mockResolvedValue({
+    management: {
+      mode: "local",
+      management_required: true,
+      is_administrator: true,
+      authoritative_place: {
+        id: "hotel",
+        name: "Harbour Hotel",
+        slug: "harbour-hotel",
+        kind: "site",
+      },
+      administrators: [
+        {
+          party_id: "admin-party",
           display_name: "Dana Admin",
           email: "dana@example.test",
-          is_active: true,
+          role: "place_admin",
         },
-        place: {
-          id: "hotel",
-          name: "Harbour Hotel",
-          slug: "harbour-hotel",
-          kind: "site",
-          is_active: true,
-        },
-      },
+      ],
+    },
+  });
+  mocks.people.mockResolvedValue({
+    items: [
       {
         id: "guest-link",
         organization_id: "org",
@@ -134,6 +139,7 @@ it("shows site administrators, occupants and the live arrival queue", async () =
     await screen.findByText("Administration and occupancy"),
   ).toBeInTheDocument();
   expect(screen.getByText("Dana Admin")).toBeInTheDocument();
+  expect(mocks.context).toHaveBeenCalledWith("hotel");
   expect(screen.getByText("Gina Guest")).toBeInTheDocument();
   expect(screen.getAllByText("Expected arrivals").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
