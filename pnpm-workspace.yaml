@@ -1,0 +1,10 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "plugins/*"
+  - "playwright"
+
+onlyBuiltDependencies:
+  - "@sentry/cli"
+  - "esbuild"
+  - "unrs-resolver"
