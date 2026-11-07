@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useAdminDashboard } from "@/hooks/use-admin";
 import { GatePassStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { DashboardError } from "./components/DashboardError";
 import { formatDate, getFullName } from "@/lib/utils";
 import {
   Building2,
@@ -86,7 +87,7 @@ const MetricCard = memo(function MetricCard({
 });
 
 export default function AdminDashboardPage() {
-  const { data: dashboard, isLoading } = useAdminDashboard();
+  const { data: dashboard, isLoading, isError, isFetching, refetch } = useAdminDashboard();
   const router = useRouter();
 
   // Process data for charts and stats
@@ -200,6 +201,10 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (isError && !dashboard) {
+    return <DashboardError isFetching={isFetching} onRetry={() => void refetch()} />;
+  }
+
   const residencies = dashboard?.residencies || [];
   const residents = dashboard?.residents || [];
   const {
@@ -222,6 +227,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-4">
+      {isError && <DashboardError isFetching={isFetching} onRetry={() => void refetch()} hasCachedData />}
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
         <div>
