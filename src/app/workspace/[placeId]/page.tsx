@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -18,6 +19,9 @@ import {
   roleLabel,
   workspaceAreaMeta,
 } from "@/features/workspaces/catalog";
+import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
+import { contextApi } from "@/features/context/api";
+import { ManagementAuthorityCard } from "@/features/management/ManagementAuthorityCard";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -38,6 +42,12 @@ export default function WorkspacePage() {
       ),
     [context.data, params.placeId],
   );
+  const placeContext = useQuery({
+    queryKey: ["workspace-place-context", params.placeId],
+    queryFn: () => contextApi.workspace(params.placeId),
+    enabled: !!relationship,
+    retry: false,
+  });
   const area = relationship ? areaForRelationship(relationship) : "occupancy";
   const meta = workspaceAreaMeta[area];
   const Icon = areaIcon[area];
@@ -68,7 +78,9 @@ export default function WorkspacePage() {
           </div>
         ) : !relationship ? (
           <section className="rounded-xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
-            <h1 className="text-2xl font-semibold">Workspace access unavailable</h1>
+            <h1 className="text-2xl font-semibold">
+              Workspace access unavailable
+            </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               This workspace is not active for your account in the selected
               organization.
@@ -77,11 +89,11 @@ export default function WorkspacePage() {
         ) : (
           <>
             <header className="mb-6 border-b border-slate-200 pb-6 dark:border-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--brand-primary,#213928))] dark:text-emerald-300">
                 {meta.title}
               </p>
               <div className="mt-3 flex items-start gap-4">
-                <div className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-indigo-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-300">
+                <div className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-[rgb(var(--brand-primary,#213928))] shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-emerald-300">
                   <Icon className="h-6 w-6" />
                 </div>
                 <div>
@@ -125,14 +137,34 @@ export default function WorkspacePage() {
               />
             </div>
 
+            <div className="mt-4">
+              <ManagementAuthorityCard
+                management={placeContext.data?.management}
+              />
+            </div>
+
+            <div className="mt-6">
+              <AccessWorkspace
+                relationship={relationship}
+                partyName={
+                  context.data?.party?.display_name ||
+                  context.data?.user.name ||
+                  context.data?.user.email
+                }
+                partyEmail={
+                  context.data?.party?.email || context.data?.user.email
+                }
+              />
+            </div>
+
             <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="text-lg font-semibold">{meta.title} workspace</h2>
+              <h2 className="text-lg font-semibold">Workspace access</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
                 {area === "guest"
-                  ? "This workspace reflects guest access only. Hotel staff manage reservations, room assignment and check-in; guest access never grants those controls."
+                  ? "This is your personal stay workspace. You can invite visitors here; hotel staff retain reservations, room assignment and stay-management controls."
                   : area === "staff"
-                    ? "This workspace reflects assigned operational access. Organization-wide administration remains a separate permission boundary."
-                    : `This workspace reflects your ${roleLabel(relationship.role).toLowerCase()} access. Management tools are available only through a separate administrative workspace.`}
+                    ? "This is your assigned staff workspace. You can create visitor invitations for this property; site administration remains a separate permission boundary."
+                    : `This is your personal ${roleLabel(relationship.role).toLowerCase()} workspace. You can create and manage visitor invitations for this property.`}
               </p>
               <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">

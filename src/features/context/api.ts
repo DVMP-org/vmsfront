@@ -1,7 +1,8 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, Organization } from "@/types";
 
-export type UseCase = "residential" | "commercial" | "mixed_use" | "hospitality";
+export type UseCase =
+  "residential" | "commercial" | "mixed_use" | "hospitality";
 
 export interface ModuleGroup {
   key: string;
@@ -33,24 +34,38 @@ export interface WorkspaceContext {
   context_scope: "organization" | "administration" | "membership";
   modules: string[];
   module_groups: ModuleGroup[];
+  management?: {
+    mode: "local" | "inherited" | "none";
+    management_required: boolean;
+    is_administrator: boolean;
+    authoritative_place: {
+      id: string;
+      name: string;
+      slug: string;
+      kind: string;
+    } | null;
+    administrators: Array<{
+      party_id: string;
+      display_name: string;
+      email: string | null;
+      role: string;
+    }>;
+  };
 }
 
 export const contextApi = {
   catalog: async () =>
-    (
-      await apiClient.get<ApiResponse<ContextCatalog>>("/catalog/use-cases")
-    ).data,
+    (await apiClient.get<ApiResponse<ContextCatalog>>("/catalog/use-cases"))
+      .data,
   workspace: async (placeId?: string | null) =>
     (
-      await apiClient.get<ApiResponse<WorkspaceContext>>(
-        "/workspace/context",
-        { params: placeId ? { place_id: placeId } : {} },
-      )
+      await apiClient.get<ApiResponse<WorkspaceContext>>("/workspace/context", {
+        params: placeId ? { place_id: placeId } : {},
+      })
     ).data,
   organization: async () =>
-    (
-      await apiClient.get<ApiResponse<Organization>>("/admin/organization")
-    ).data,
+    (await apiClient.get<ApiResponse<Organization>>("/admin/organization"))
+      .data,
   updateOrganization: async (body: {
     name: string;
     description: string | null;
