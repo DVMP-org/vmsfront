@@ -83,7 +83,6 @@ export const sideVariants = cva(
     },
     defaultVariants: {
       status: "default",
-      side: "left",
     },
   }
 );
@@ -150,7 +149,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className={cn(
                 sideVariants({
                   status: containerStatus,
-                  side: "left",
                 }),
                 sideNodeClassName
               )}
@@ -181,7 +179,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className={cn(
                 sideVariants({
                   status: containerStatus,
-                  side: "right",
                 }),
                 sideNodeClassName
               )}

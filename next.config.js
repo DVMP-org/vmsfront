@@ -2,12 +2,13 @@
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
+  output: "standalone",
   images: {
-    domains: ['localhost', "storage.googleapis.com", "api.vmscore.to", "vmscore.vercel.app"],
+    domains: ['localhost', "storage.googleapis.com", "vmscore.to", "vmscore.vercel.app"],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.vmscore.to',
+        hostname: 'vmscore.to',
         port: '',
         pathname: '/**',
       },
@@ -17,32 +18,19 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'api.vmscore.test',
-        port: '',
-        pathname: '/**',
-      },
     ],
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // ⛔️ Skips eslint errors at build time
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Allow dev origins for cross-origin requests in development
   allowedDevOrigins: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://192.168.100.20:3000',
     'http://192.168.100.20',
+    "vmsfront.to",
     "dashboard.vmscore.to"
   ],
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vmscore.to'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vmscore.to'
     return [
       {
         source: '/api/:path*',

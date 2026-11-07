@@ -15,7 +15,7 @@ export class TestDataGenerator {
    * Generate a phone number
    */
   static generatePhone(): string {
-    return faker.phone.number("080########");
+    return `080${faker.string.numeric(8)}`;
   }
 
   /**

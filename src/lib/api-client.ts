@@ -3,8 +3,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { getSubdomain } from "./subdomain-utils";
 import { getCookie } from "./cookies";
 
-// Use production API URL in production, fallback to localhost for development
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// The Valet gateway exposes the API without a port in local and hosted use.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://vmscore.to";
 
 export function getStoredAuthToken(): string | null {
   if (typeof window === "undefined") return null;

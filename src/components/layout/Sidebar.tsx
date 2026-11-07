@@ -171,7 +171,10 @@ const SidebarLink = memo(function SidebarLink({
   );
 });
 
-export const Sidebar: React.FC<SidebarProps> = memo(({ type, onMobileClose }) => {
+export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
+  type,
+  onMobileClose,
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
