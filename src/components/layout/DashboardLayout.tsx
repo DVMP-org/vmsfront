@@ -3,13 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "./Header";
+import { RecentContextBar } from "./RecentContextBar";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 
-const Sidebar = dynamic(() => import("./Sidebar").then(mod => mod.Sidebar), {
+const Sidebar = dynamic(() => import("./Sidebar").then((mod) => mod.Sidebar), {
   ssr: false,
-  loading: () => <div className="hidden lg:block w-64 h-full border-r bg-background flex-shrink-0" />
+  loading: () => (
+    <div className="hidden lg:block w-64 h-full border-r bg-background flex-shrink-0" />
+  ),
 });
 
 interface DashboardLayoutProps {
@@ -44,7 +47,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   }, []);
 
   const handleMenuClick = useCallback(() => {
-    setSidebarOpen(prev => !prev);
+    setSidebarOpen((prev) => !prev);
   }, []);
 
   return (
@@ -77,7 +80,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
               "z-50 flex-shrink-0",
               isMobile
                 ? "fixed inset-y-0 left-0 w-64 lg:hidden"
-                : "sticky top-0 hidden h-screen self-start overflow-hidden lg:block"
+                : "sticky top-0 hidden h-screen self-start overflow-hidden lg:block",
             )}
             style={{ willChange: "transform, width" }}
           >
@@ -88,19 +91,24 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <div className="flex min-h-0 flex-1 flex-col w-full lg:w-auto min-w-0 overflow-hidden">
-        <Header onMenuClick={handleMenuClick} sidebarOpen={sidebarOpen} type={type} />
+        <Header
+          onMenuClick={handleMenuClick}
+          sidebarOpen={sidebarOpen}
+          type={type}
+        />
         <main
           className={cn(
             "flex-1 min-h-0 overflow-y-auto",
-            "px-3 py-4 xs:px-4 xs:py-5 sm:px-5 sm:py-6 md:px-6 md:py-7 lg:px-8 lg:py-8 xl:px-12"
+            "px-3 py-4 xs:px-4 xs:py-5 sm:px-5 sm:py-6 md:px-6 md:py-7 lg:px-8 lg:py-8 xl:px-12",
           )}
         >
           <div
             className={cn(
               "mx-auto flex w-full max-w-6xl flex-col",
-              "gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8"
+              "gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8",
             )}
           >
+            {type === "admin" ? <RecentContextBar /> : null}
             {children}
           </div>
         </main>
