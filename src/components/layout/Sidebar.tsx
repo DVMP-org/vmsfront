@@ -27,6 +27,8 @@ import {
   Receipt,
   Palette,
   FolderTree,
+  RefreshCw,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -54,7 +56,10 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) {
+function buildResidentLinks(
+  residencyId?: string,
+  isSuperUser: boolean = false,
+) {
   const base = residencyId ? `/residency/${residencyId}` : "/select";
   const links = [
     { href: residencyId ? base : "/select", label: "Dashboard", icon: Home },
@@ -98,24 +103,20 @@ function buildResidentLinks(residencyId?: string, isSuperUser: boolean = false) 
   return links;
 }
 
-
 const SidebarLink = memo(function SidebarLink({
   link,
   isActive,
   collapsed,
   isMobile,
   onClick,
-  accentColor = "brand",
 }: {
   link: any;
   isActive: boolean;
   collapsed: boolean;
   isMobile: boolean;
   onClick: () => void;
-  accentColor?: "brand" | "admin";
 }) {
   const Icon = link.icon;
-  const isBrand = accentColor === "brand";
 
   return (
     <Link
@@ -124,12 +125,12 @@ const SidebarLink = memo(function SidebarLink({
       className={cn(
         "flex items-center rounded-md text-sm font-medium transition-all duration-300",
         "group relative mt-0.5",
-        isMobile || !collapsed ? "gap-3 px-3 py-2.5" : "justify-center px-2 py-2.5",
+        isMobile || !collapsed
+          ? "gap-3 px-3 py-2.5"
+          : "justify-center px-2 py-2.5",
         isActive
-          ? isBrand
-            ? "bg-[rgb(var(--brand-primary,#213928)/0.1)] text-[rgb(var(--brand-primary,#213928))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.2)]"
-            : "bg-indigo-500/10 text-indigo-600 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.2)]"
-          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+          ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.16)]"
+          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100",
       )}
       title={collapsed && !isMobile ? link.label : undefined}
     >
@@ -138,7 +139,7 @@ const SidebarLink = memo(function SidebarLink({
           layoutId="active-indicator"
           className={cn(
             "absolute left-0 w-1 h-3/5 rounded-full",
-            isBrand ? "bg-[rgb(var(--brand-primary,#213928))]" : "bg-indigo-600"
+            "bg-[rgb(var(--brand-primary,#213928))]",
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -149,11 +150,7 @@ const SidebarLink = memo(function SidebarLink({
       <Icon
         className={cn(
           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
-          isActive
-            ? isBrand
-              ? "text-[rgb(var(--brand-primary,#213928))]"
-              : "text-indigo-600"
-            : ""
+          isActive ? "text-[rgb(var(--brand-primary,#213928))]" : "",
         )}
       />
 
@@ -164,13 +161,81 @@ const SidebarLink = memo(function SidebarLink({
       )}
 
       {collapsed && !isMobile && (
-        <div className="absolute left-full ml-4 px-2.5 py-1.5 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100] shadow-xl translate-x-1 group-hover:translate-x-0 border border-zinc-700">
+        <div className="absolute left-full ml-4 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-popover rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100] shadow-xl translate-x-1 group-hover:translate-x-0 border border-border">
           {link.label}
         </div>
       )}
     </Link>
   );
 });
+
+function WorkspaceContextPanel({
+  collapsed,
+  isMobile,
+  propertyName,
+  useCase,
+  hasError,
+  onReset,
+  onRetry,
+}: {
+  collapsed: boolean;
+  isMobile: boolean;
+  propertyName?: string;
+  useCase?: string;
+  hasError: boolean;
+  onReset: () => void;
+  onRetry: () => void;
+}) {
+  if (collapsed && !isMobile) {
+    return (
+      <div className="mx-auto mb-4 grid h-10 w-10 place-items-center rounded-xl border border-[rgb(var(--brand-primary,#213928)/0.18)] bg-[rgb(var(--brand-primary,#213928)/0.06)] text-[rgb(var(--brand-primary,#213928))] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <ShieldCheck className="h-5 w-5" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))] dark:bg-emerald-950/40 dark:text-emerald-200">
+          <ShieldCheck className="h-4 w-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+            Management
+          </span>
+          <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {propertyName || "Organization overview"}
+          </span>
+        </span>
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="rounded-md bg-zinc-100 px-2 py-1 text-[10px] font-semibold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          {useCase || "Loading context"}
+        </span>
+        {propertyName ? (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-[11px] font-semibold text-[rgb(var(--brand-primary,#213928))] hover:underline dark:text-emerald-300"
+          >
+            Organization view
+          </button>
+        ) : null}
+      </div>
+      {hasError ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300"
+        >
+          <RefreshCw className="h-3 w-3" />
+          Retry workspace
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   type,
@@ -182,14 +247,18 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     return window.innerWidth < 1024;
   });
   const [mounted, setMounted] = useState(false);
-  const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
+  const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(
+    new Set(),
+  );
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedResidency, selectedProperty, setSelectedProperty } = useAppStore();
-  const workspaceContext=useWorkspaceContext();
+  const { selectedResidency, selectedProperty, setSelectedProperty } =
+    useAppStore();
+  const workspaceContext = useWorkspaceContext();
   const user = useAuthStore((state) => state.user);
-  const { data: adminProfile, isPending: isAdminProfilePending } = useAdminProfile();
+  const { data: adminProfile, isPending: isAdminProfilePending } =
+    useAdminProfile();
   const { data: activeTheme } = useActiveBrandingTheme();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -220,12 +289,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     setMounted(true);
   }, []);
 
-
   // Helper to determine active state consistently
-  const isLinkActive = useCallback((href: string) => {
-    if (!pathname || !href) return false;
-    return pathname === href || pathname.startsWith(href + "/");
-  }, [pathname]);
+  const isLinkActive = useCallback(
+    (href: string) => {
+      if (!pathname || !href) return false;
+      return pathname === href || pathname.startsWith(href + "/");
+    },
+    [pathname],
+  );
 
   // Load plugins from cache first, then refresh from API in background
   useEffect(() => {
@@ -251,11 +322,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         if (loadedPlugins && isMounted) {
           setPlugins((prevPlugins) => {
             // Only update if the plugins actually changed (by comparing names)
-            const prevNames = new Set(prevPlugins.map(p => p.name));
-            const newNames = new Set(loadedPlugins.map(p => p.name));
+            const prevNames = new Set(prevPlugins.map((p) => p.name));
+            const newNames = new Set(loadedPlugins.map((p) => p.name));
 
-            if (prevNames.size !== newNames.size ||
-              Array.from(prevNames).some(name => !newNames.has(name))) {
+            if (
+              prevNames.size !== newNames.size ||
+              Array.from(prevNames).some((name) => !newNames.has(name))
+            ) {
               return loadedPlugins;
             }
             return prevPlugins;
@@ -300,7 +373,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   // Helper function to get routes for a plugin based on user type - memoized
   // Strictly filters by type - no fallback to avoid showing wrong routes
   const getPluginRoutesMemoized = useMemo(() => {
-    return (plugin: typeof plugins[0]): typeof plugin.adminRoutes => {
+    return (plugin: (typeof plugins)[0]): typeof plugin.adminRoutes => {
       // Strict type-based filtering - only return routes for the current sidebar type
       // Use actualType to ensure consistency with pathname
       if (actualType === "admin") {
@@ -344,7 +417,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     return selectedResidency?.id ?? routeResidencyId;
   }, [actualType, selectedResidency?.id, routeResidencyId]);
 
-  const { data: residentResidency } = useResidentResidency(effectiveResidencyId ?? null);
+  const { data: residentResidency } = useResidentResidency(
+    effectiveResidencyId ?? null,
+  );
   const isSuperUser = residentResidency?.is_super_user ?? false;
 
   const links = useMemo(() => {
@@ -403,7 +478,17 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       seenHrefs.add(link.href);
       return true;
     });
-  }, [actualType, effectiveResidencyId, isSuperUser, adminProfile, user, isAdminProfilePending, mounted, workspaceContext.data, workspaceContext.isError]);
+  }, [
+    actualType,
+    effectiveResidencyId,
+    isSuperUser,
+    adminProfile,
+    user,
+    isAdminProfilePending,
+    mounted,
+    workspaceContext.data,
+    workspaceContext.isError,
+  ]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {
     if (!pathname) return null;
@@ -416,8 +501,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     });
 
     // Sort by length descending to match most specific route first
-    const sorted = [...flattened].sort((a, b) => (b.href?.length || 0) - (a.href?.length || 0));
-    return sorted.find(l => l.href && (pathname === l.href || pathname.startsWith(l.href + "/"))) || null;
+    const sorted = [...flattened].sort(
+      (a, b) => (b.href?.length || 0) - (a.href?.length || 0),
+    );
+    return (
+      sorted.find(
+        (l) =>
+          l.href && (pathname === l.href || pathname.startsWith(l.href + "/")),
+      ) || null
+    );
   }, [links, pathname]);
 
   // Auto-collapse on smaller screens, but keep sidebar visible
@@ -435,7 +527,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
-
 
   const toggleCollapse = () => {
     if (!isMobile) {
@@ -489,7 +580,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       if (routes?.length === 0) continue;
 
       const routePath = extractRoutePath(pathname, plugin.basePath);
-      const matchingRoute = findMatchingRoute(routePath, routes, { checkPrefix: true });
+      const matchingRoute = findMatchingRoute(routePath, routes, {
+        checkPrefix: true,
+      });
 
       if (matchingRoute) {
         map.set(plugin.name, matchingRoute.path);
@@ -499,7 +592,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   }, [pathname, plugins, getPluginRoutesMemoized]);
 
   // Check if a specific plugin route is active (strict matching)
-  const isPluginRouteActive = (pluginName: string, routePath: string): boolean => {
+  const isPluginRouteActive = (
+    pluginName: string,
+    routePath: string,
+  ): boolean => {
     const activeRoute = activeRoutesMap.get(pluginName);
     return activeRoute === routePath;
   };
@@ -513,7 +609,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   // Only checks filteredPlugins which already ensures correct type
   // Auto-expand plugins and menus with active routes - Consolidated
   useEffect(() => {
-    if (!pathname || (filteredPlugins.length === 0 && links.length === 0)) return;
+    if (!pathname || (filteredPlugins.length === 0 && links.length === 0))
+      return;
 
     let expandedNeedsUpdate = false;
     const nextExpandedPlugins = new Set(expandedPlugins);
@@ -521,7 +618,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     // Auto-expand plugins
     filteredPlugins.forEach((plugin) => {
-      if (activeRoutesMap.has(plugin.name) && !nextExpandedPlugins.has(plugin.name)) {
+      if (
+        activeRoutesMap.has(plugin.name) &&
+        !nextExpandedPlugins.has(plugin.name)
+      ) {
         nextExpandedPlugins.add(plugin.name);
         expandedNeedsUpdate = true;
       }
@@ -529,9 +629,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     // Auto-expand admin menus
     if (actualType === "admin") {
-      links.forEach(link => {
+      links.forEach((link) => {
         const l = link as any;
-        const hasActiveInMenu = l.children?.some((child: any) => child.href === activeLink?.href);
+        const hasActiveInMenu = l.children?.some(
+          (child: any) => child.href === activeLink?.href,
+        );
         if (hasActiveInMenu && !nextExpandedMenus.has(l.label)) {
           nextExpandedMenus.add(l.label);
           expandedNeedsUpdate = true;
@@ -543,7 +645,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       setExpandedPlugins(nextExpandedPlugins);
       setExpandedMenus(nextExpandedMenus);
     }
-  }, [pathname, actualType, filteredPlugins, activeRoutesMap, links, isLinkActive]);
+  }, [
+    pathname,
+    actualType,
+    filteredPlugins,
+    activeRoutesMap,
+    links,
+    isLinkActive,
+  ]);
 
   return (
     <motion.aside
@@ -554,11 +663,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       style={{ willChange: "width" }}
       className={cn(
         "sticky top-0 flex flex-col border-r bg-background overflow-hidden",
-        "h-screen shadow-sm flex-shrink-0 z-30"
+        "h-screen shadow-sm flex-shrink-0 z-30",
       )}
     >
       {/* Organization Header (Admin only) or Logo Header */}
-      <div className="border-b border-zinc-800/60">
+      <div className="border-b border-zinc-200 dark:border-zinc-800">
         <SidebarOrganizationHeader
           collapsed={collapsed}
           onToggleCollapse={!isMobile ? toggleCollapse : undefined}
@@ -567,18 +676,35 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         />
       </div>
 
-
       <LayoutGroup>
         {/* Navigation Links */}
-        <nav className={cn(
-          "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
-          isMobile || !collapsed ? "p-3" : "py-4 px-0"
-        )}>
-          {actualType === "admin" && <div className="px-3 py-3 border-b mb-3 text-xs"><p className="font-semibold uppercase tracking-wider">{workspaceContext.data?.effective_use_case?.replaceAll("_"," ") || "Workspace"}</p>{selectedProperty ? <><p className="mt-1">{selectedProperty.name}</p><button className="underline mt-2" onClick={()=>setSelectedProperty(null)}>Organization overview</button></> : <p className="mt-1 text-muted-foreground">Organization overview</p>}{workspaceContext.isError&&<button onClick={()=>workspaceContext.refetch()}>Retry workspace</button>}</div>}
+        <nav
+          className={cn(
+            "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
+            isMobile || !collapsed ? "p-3" : "py-4 px-0",
+          )}
+        >
+          {actualType === "admin" ? (
+            <WorkspaceContextPanel
+              collapsed={collapsed}
+              isMobile={isMobile}
+              propertyName={selectedProperty?.name}
+              useCase={workspaceContext.data?.effective_use_case?.replaceAll(
+                "_",
+                " ",
+              )}
+              hasError={workspaceContext.isError}
+              onReset={() => setSelectedProperty(null)}
+              onRetry={() => workspaceContext.refetch()}
+            />
+          ) : null}
           {links.map((link: any, index: number) => {
             const Icon = link.icon;
-            const isParentActive = activeLink?.href === link.href ||
-              link.children?.some((child: any) => child.href === activeLink?.href);
+            const isParentActive =
+              activeLink?.href === link.href ||
+              link.children?.some(
+                (child: any) => child.href === activeLink?.href,
+              );
 
             const isActive = activeLink?.href === link.href;
             const isExpanded = expandedMenus.has(link.label);
@@ -588,11 +714,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             const linkKey = `${link.href}-${link.label}`;
 
             if (hasChildren) {
-              const activeChild = link.children.find((child: any) =>
-                child.href === activeLink?.href
+              const activeChild = link.children.find(
+                (child: any) => child.href === activeLink?.href,
               );
-              const isBrand = actualType === "resident";
-
               return (
                 <div key={linkKey} className="mb-0.5">
                   <button
@@ -604,22 +728,31 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         ? "gap-3 px-3 py-2.5 justify-between"
                         : "justify-center px-2 py-2.5",
                       activeChild
-                        ? isBrand
-                          ? "bg-[rgb(var(--brand-primary,#213928)/0.5)] text-[rgb(var(--brand-primary,#213928))]"
-                          : "bg-indigo-500/5 text-indigo-600"
-                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                        ? "bg-[rgb(var(--brand-primary,#213928)/0.06)] text-[rgb(var(--brand-primary,#213928))]"
+                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
                     )}
                     title={collapsed && !isMobile ? link.label : undefined}
                   >
-                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 min-w-0",
+                        (isMobile || !collapsed) && "flex-1",
+                      )}
+                    >
                       <Icon
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
-                          activeChild && (isBrand ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                          activeChild &&
+                            "text-[rgb(var(--brand-primary,#213928))]",
                         )}
                       />
                       {(isMobile || !collapsed) && (
-                        <span className={cn("flex-1 truncate text-left", activeChild && "font-bold")}>
+                        <span
+                          className={cn(
+                            "flex-1 truncate text-left",
+                            activeChild && "font-bold",
+                          )}
+                        >
                           {link.label}
                         </span>
                       )}
@@ -640,7 +773,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 35,
+                          mass: 0.5,
+                        }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
                         {link.children.map((child: any) => {
@@ -656,14 +794,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
                                   "gap-3 px-3 py-2",
                                   isChildActive
-                                    ? isBrand
-                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                                      : "bg-indigo-600 text-white shadow-sm"
-                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                                    ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))]"
+                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
                                 )}
                               >
                                 <ChildIcon className="h-4 w-4 flex-shrink-0" />
-                                <span className="flex-1 truncate">{child.label}</span>
+                                <span className="flex-1 truncate">
+                                  {child.label}
+                                </span>
                               </Link>
                             </li>
                           );
@@ -677,25 +815,30 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
             return (
               <div key={linkKey}>
-              {actualType === "admin" && (!collapsed||isMobile) && link.group !== (links[index-1] as any)?.group && <p className="px-3 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-[.15em] text-muted-foreground">{link.group}</p>}
-              <SidebarLink
-                link={link}
-                isActive={isActive}
-                collapsed={collapsed}
-                isMobile={isMobile}
-                onClick={handleLinkClick}
-                accentColor={actualType === "resident" ? "brand" : "admin"}
-              /></div>
+                {actualType === "admin" &&
+                  (!collapsed || isMobile) &&
+                  link.group !== (links[index - 1] as any)?.group && (
+                    <p className="px-3 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-[.15em] text-muted-foreground">
+                      {link.group}
+                    </p>
+                  )}
+                <SidebarLink
+                  link={link}
+                  isActive={isActive}
+                  collapsed={collapsed}
+                  isMobile={isMobile}
+                  onClick={handleLinkClick}
+                />
+              </div>
             );
           })}
           <>
-
-            {filteredPlugins.map(plugin => {
+            {filteredPlugins.map((plugin) => {
               const isExpanded = expandedPlugins.has(plugin.name);
               const hasActiveRoute = isPluginActive(plugin.name);
               const pluginIcon = plugin.manifest.icon
                 ? `fa fa-${plugin.manifest.icon}`
-                : 'fa fa-cube';
+                : "fa fa-cube";
 
               return (
                 <div key={plugin.name} className="mb-0.5">
@@ -709,23 +852,34 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         ? "gap-3 px-3 py-2.5 justify-between"
                         : "justify-center px-2 py-2.5",
                       hasActiveRoute
-                        ? actualType === "resident"
-                          ? "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))]"
-                          : "bg-indigo-500/5 text-indigo-600"
-                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                        ? "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))]"
+                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
                     )}
-                    title={collapsed && !isMobile ? plugin.manifest.title : undefined}
+                    title={
+                      collapsed && !isMobile ? plugin.manifest.title : undefined
+                    }
                   >
-                    <div className={cn("flex items-center gap-3 min-w-0", (isMobile || !collapsed) && "flex-1")}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 min-w-0",
+                        (isMobile || !collapsed) && "flex-1",
+                      )}
+                    >
                       <i
                         className={cn(
                           "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
                           pluginIcon,
-                          hasActiveRoute && (actualType === "resident" ? "text-[rgb(var(--brand-primary,#213928))]" : "text-indigo-600")
+                          hasActiveRoute &&
+                            "text-[rgb(var(--brand-primary,#213928))]",
                         )}
                       />
                       {(isMobile || !collapsed) && (
-                        <span className={cn("flex-1 truncate text-left", hasActiveRoute && "font-bold")}>
+                        <span
+                          className={cn(
+                            "flex-1 truncate text-left",
+                            hasActiveRoute && "font-bold",
+                          )}
+                        >
                           {plugin.manifest.title}
                         </span>
                       )}
@@ -747,13 +901,25 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 35, mass: 0.5 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 35,
+                          mass: 0.5,
+                        }}
                         className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
                       >
-                        {getPluginRoutesMemoized(plugin)?.map(route => {
-                          const isActive = isPluginRouteActive(plugin.name, route.path);
-                          const routeHref = buildPluginPath(plugin.basePath, route.path);
-                          const routeTitle = route.title || route.path || "Route";
+                        {getPluginRoutesMemoized(plugin)?.map((route) => {
+                          const isActive = isPluginRouteActive(
+                            plugin.name,
+                            route.path,
+                          );
+                          const routeHref = buildPluginPath(
+                            plugin.basePath,
+                            route.path,
+                          );
+                          const routeTitle =
+                            route.title || route.path || "Route";
                           const routeIcon = route.icon || "circle";
                           return (
                             <li key={route.path} className="pl-3 py-0.5">
@@ -764,10 +930,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   "group relative",
                                   "gap-3 px-3 py-2",
                                   isActive
-                                    ? actualType === "resident"
-                                      ? "bg-[rgb(var(--brand-primary,#213928))] text-white shadow-sm"
-                                      : "bg-indigo-600 text-white shadow-sm"
-                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900"
+                                    ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))]"
+                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
                                 )}
                                 href={routeHref}
                               >
@@ -775,10 +939,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   className={cn(
                                     "h-4 w-4 flex-shrink-0",
                                     `fa fa-${routeIcon}`,
-                                    isActive && "text-primary-foreground"
+                                    isActive && "text-primary-foreground",
                                   )}
                                 />
-                                <span className="flex-1 truncate">{routeTitle}</span>
+                                <span className="flex-1 truncate">
+                                  {routeTitle}
+                                </span>
                               </Link>
                             </li>
                           );
@@ -792,8 +958,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           </>
         </nav>
       </LayoutGroup>
-
-
     </motion.aside>
   );
 });
