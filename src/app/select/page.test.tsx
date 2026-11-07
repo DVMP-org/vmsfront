@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import SelectPage from "./page";
 
@@ -136,18 +136,24 @@ describe("workspaces page", () => {
   it("groups management, occupancy, and guest access by property", () => {
     render(<SelectPage />);
     expect(
-      screen.getByRole("heading", { name: "Your workspaces" }),
+      screen.getByRole("heading", { name: "Workspace access" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Properties" }),
+      screen.getByRole("heading", { name: /Properties \(3\)/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Management console/ }),
     ).toHaveTextContent("Super administrator");
-    expect(screen.getByText("1 Harbour Way")).toBeInTheDocument();
+    expect(screen.getAllByText("1 Harbour Way").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Apartment A-101/ }));
+    expect(screen.getByText("Resident workspace")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Harbour Hotel/ }));
     expect(screen.getByText("Guest stay")).toBeInTheDocument();
-    expect(screen.getByText("Harbour Hotel")).toBeInTheDocument();
-    expect(screen.getByText("Apartment A-101")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Harbour Hotel" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Book stay/i })).toBeNull();
   });
 });

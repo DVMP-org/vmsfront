@@ -455,7 +455,7 @@ function PropertyForm({
               : initialParent.kind === "unit"
                 ? "room"
                 : "space"
-          : "building"),
+          : "site"),
     ),
     [address, setAddress] = useState(property?.address || ""),
     [description, setDescription] = useState(property?.description || "");
@@ -502,12 +502,6 @@ function PropertyForm({
       mutation.mutate({ mode: "update", body });
       return;
     }
-    if (kind === "site") {
-      setValidation(
-        "Organization sites are created during organization setup.",
-      );
-      return;
-    }
     mutation.mutate({
       mode: "create",
       body: { ...body, kind, building_type: buildingType||null, use_case: useCase||null, parent_id: asChild ? parent?.value : null },
@@ -548,21 +542,19 @@ function PropertyForm({
               value={kind}
               onChange={(e) => {setKind(e.target.value as PropertyKind);setBuildingType("");}}
             >
-              {Object.entries(propertyKinds)
-                .filter(([value]) => value !== "site")
-                .map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
+              {Object.entries(propertyKinds).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
             <small>
-              The organization site is created during organization setup.
+              Use a site for a top-level property or a separately managed estate.
             </small>
           </label>
         )}
         {!property ? <>
-          <label>Building type<select value={buildingType} onChange={e=>setBuildingType(e.target.value)}><option value="">Unspecified</option>{catalog.data?.building_types.filter(t=>t.kinds.includes(kind)).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+          {kind !== "site" && <label>Building type<select value={buildingType} onChange={e=>setBuildingType(e.target.value)}><option value="">Unspecified</option>{catalog.data?.building_types.filter(t=>t.kinds.includes(kind)).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}</select></label>}
           {organization?.use_case==="mixed_use"&&<label>Operating use case<select value={useCase} onChange={e=>setUseCase(e.target.value as UseCase|"")}><option value="">Inherit parent context</option>{catalog.data?.use_cases.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select><small>Fixed at creation; this governs workflows within this property.</small></label>}
           {catalog.isError&&<p role="alert">Could not load building types. <button type="button" onClick={()=>catalog.refetch()}>Retry</button></p>}
         </> : <div className="property-fixed-kind"><span>Building type / operating context</span><strong>{catalog.data?.building_types.find(t=>t.value===property.building_type)?.label||"Unspecified"} · {catalog.data?.use_cases.find(c=>c.value===property.use_case)?.label||"Inherited"}</strong><small>Classification is fixed at creation.</small></div>}
