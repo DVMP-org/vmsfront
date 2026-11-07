@@ -3,19 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Building2,
-  Check,
-  Circle,
-  Layers3,
-  Loader2,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, Building2, Loader2, Sparkles } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SetupProgress } from "@/components/onboarding/SetupProgress";
 import { contextApi, type UseCase } from "@/features/context/api";
 import {
   generateSlugFromName,
@@ -55,6 +47,7 @@ export default function CreateOrganizationPage() {
   });
   const { createOrganization, isLoading, error, fieldErrors } =
     useCreateOrganization({
+      redirectTo: "/plans?setup=first-workspace",
       onSuccess: () => {
         window.localStorage.removeItem(DRAFT_KEY);
       },
@@ -176,7 +169,7 @@ export default function CreateOrganizationPage() {
           </p>
         </header>
 
-        <SetupProgress />
+        <SetupProgress currentStep="organization" />
 
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-7">
@@ -374,37 +367,6 @@ export default function CreateOrganizationPage() {
         </div>
       </main>
     </div>
-  );
-}
-
-function SetupProgress() {
-  const steps = ["Organization", "Plan", "Workspace"];
-  return (
-    <ol
-      aria-label="Organization setup progress"
-      className="grid gap-2 rounded-xl border border-zinc-200/80 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-3"
-    >
-      {steps.map((step, index) => (
-        <li
-          key={step}
-          className={cn(
-            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-            index === 0
-              ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] font-semibold text-zinc-900 dark:bg-emerald-950/30 dark:text-white"
-              : "text-zinc-500 dark:text-zinc-400",
-          )}
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[10px] shadow-sm dark:bg-zinc-800">
-            {index === 0 ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Circle className="h-3 w-3" />
-            )}
-          </span>
-          {step}
-        </li>
-      ))}
-    </ol>
   );
 }
 
