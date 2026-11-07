@@ -18,6 +18,7 @@ vi.mock("./api", async () => {
       create: vi.fn(),
       get: vi.fn(),
       cancel: vi.fn(),
+      checkpointEvents: vi.fn(),
     },
   };
 });
@@ -108,6 +109,13 @@ describe("AccessWorkspace", () => {
     });
     vi.mocked(accessJourneyApi.create).mockResolvedValue(invitation);
     vi.mocked(accessJourneyApi.get).mockResolvedValue(invitation);
+    vi.mocked(accessJourneyApi.checkpointEvents).mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      page_size: 100,
+      total_pages: 0,
+    });
   });
 
   it("shows the host's invitations and active pass", async () => {
@@ -162,5 +170,44 @@ describe("AccessWorkspace", () => {
       screen.getByText("Present this code at arrival"),
     ).toBeInTheDocument();
     expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
+    expect(await screen.findByText("No checkpoint events yet.")).toBeInTheDocument();
+  });
+
+  it("shows host-owned checkpoint arrival history", async () => {
+    vi.mocked(accessJourneyApi.checkpointEvents).mockResolvedValue({
+      items: [
+        {
+          id: "event",
+          organization_id: "org",
+          visit_authorization_id: "invite",
+          visit_session_id: "session",
+          visit_guest_id: "guest",
+          checkpoint_presence_id: null,
+          place_id: "place",
+          gate_id: "gate-12345678",
+          lane_id: null,
+          direction: "entry",
+          outcome: "allowed",
+          reason_code: "active_authorization",
+          idempotency_key: "scan-1",
+          scanned_by_admin_id: null,
+          occurred_at: "2026-01-01T10:00:00.000Z",
+          created_at: "2026-01-01T10:00:00.000Z",
+        },
+      ],
+      total: 1,
+      page: 1,
+      page_size: 100,
+      total_pages: 1,
+    });
+    renderWorkspace();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /view details/i }),
+    );
+
+    expect(await screen.findByText("entry · allowed")).toBeInTheDocument();
+    expect(screen.getByText(/Gate gate-123/)).toBeInTheDocument();
+    expect(screen.getByText(/active_authorization/)).toBeInTheDocument();
   });
 });
