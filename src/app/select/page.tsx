@@ -5,18 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
   Building2,
   ConciergeBell,
   Home,
   KeyRound,
+  LayoutGrid,
   MapPin,
   RefreshCw,
+  Settings,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { LogoFull } from "@/components/LogoFull";
 import {
   buildPropertyWorkspaces,
   type PropertyAccess,
@@ -109,22 +113,29 @@ export default function SelectPage() {
   function openAccess(workspace: PropertyWorkspace, access: PropertyAccess) {
     setSelectedProperty({
       id: workspace.place.id,
-      name: workspace.place.name,
+      name: workspaceDisplayName(workspace),
     });
     router.push(access.href);
   }
 
   return (
     <div className="workspace-switcher min-h-screen bg-[#f4f7fb] text-[#0f1b31]">
-      <Header type="select" />
-      <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
+      <div className="flex min-h-screen">
+        <WorkspaceSelectSidebar
+          organizationName={organization?.name || "Organization"}
+          userName={userName}
+          userInitials={initials(userName)}
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header type="select" />
+          <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
         <header className="mb-5">
           <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#2563eb]">
             <Building2 className="h-4 w-4" />
             {organization?.name || "Organization"}
           </p>
           <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#0f1b31] sm:text-[40px]">
-            Workspace access
+            Choose your workspace
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#667085]">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#eaf1ff] text-[11px] font-semibold uppercase text-[#1d4ed8]">
@@ -249,8 +260,85 @@ export default function SelectPage() {
             Switch organization
           </Link>
         </footer>
-      </main>
+          </main>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function WorkspaceSelectSidebar({
+  organizationName,
+  userName,
+  userInitials,
+}: {
+  organizationName: string;
+  userName: string;
+  userInitials: string;
+}) {
+  return (
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-[#dce3ee] bg-white lg:sticky lg:top-0 lg:flex">
+      <div className="border-b border-[#edf0f5] px-4 py-4">
+        <Link href="/" aria-label="VMSCore home" className="inline-flex text-[#0f1b31]">
+          <LogoFull width={92} height={34} color="#0f1b31" />
+        </Link>
+        <div className="mt-4 flex items-center gap-2.5 rounded-lg bg-[#f8faff] p-2.5 ring-1 ring-[#e4eaf3]">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eaf1ff] text-[11px] font-bold text-[#1d4ed8]">
+            {userInitials}
+          </span>
+          <span className="min-w-0">
+            <strong className="block truncate text-xs font-semibold">
+              {organizationName}
+            </strong>
+            <span className="mt-0.5 block truncate text-[10px] text-[#667085]">
+              {userName}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <nav aria-label="Workspace navigation" className="flex-1 p-3">
+        <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+          Workspace
+        </p>
+        <span className="flex items-center gap-2.5 rounded-md bg-[#edf3ff] px-3 py-2.5 text-xs font-semibold text-[#1d4ed8]">
+          <LayoutGrid className="h-4 w-4" />
+          Choose workspace
+        </span>
+        <Link
+          href="/admin"
+          className="mt-1 flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <Home className="h-4 w-4" />
+          Management dashboard
+        </Link>
+
+        <p className="px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+          Organization
+        </p>
+        <Link
+          href="/admin/organization"
+          className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <Settings className="h-4 w-4" />
+          Settings
+        </Link>
+        <Link
+          href="/organizations"
+          className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Switch organization
+        </Link>
+      </nav>
+
+      <div className="border-t border-[#edf0f5] p-3">
+        <p className="px-2 text-[10px] leading-4 text-[#98a2b3]">
+          Choose a role and property here. Management and personal access stay
+          independent.
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -307,7 +395,7 @@ function PropertyListItem({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">
-          {workspace.place.name}
+          {workspaceDisplayName(workspace)}
         </span>
         <span className="mt-0.5 block truncate text-[11px] capitalize text-zinc-500 dark:text-zinc-400">
           {details.kind} · {details.useCase} · {details.address}
@@ -363,7 +451,7 @@ function PropertyWorkspaceDetail({
               </p>
             ) : null}
             <h2 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              {workspace.place.name}
+              {workspaceDisplayName(workspace)}
             </h2>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
               <MapPin className="h-4 w-4 shrink-0" />
@@ -507,6 +595,12 @@ function propertyDetails(
     useCase,
     kind: workspace.place.kind.replaceAll("_", " "),
   };
+}
+
+function workspaceDisplayName(workspace: PropertyWorkspace) {
+  if (workspace.place.kind === "site") return workspace.place.name;
+  const site = workspace.placePath.find((place) => place.kind === "site");
+  return site ? `${site.name} - ${workspace.place.name}` : workspace.place.name;
 }
 
 function initials(value: string) {
