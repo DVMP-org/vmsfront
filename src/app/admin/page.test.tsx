@@ -5,6 +5,7 @@ import AdminDashboardPage from "./page";
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
   refetch: vi.fn(),
+  push: vi.fn(),
 }));
 
 vi.mock("@/hooks/use-admin", () => ({ useAdminDashboard: mocks.query }));
@@ -13,7 +14,7 @@ vi.mock("@/features/context/use-workspace-context", () => ({
     data: { effective_use_case: "mixed_use" },
   }),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 
 const dashboard = {
   metrics: {
@@ -66,6 +67,8 @@ const dashboard = {
 describe("operating dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/admin");
+    window.sessionStorage.clear();
   });
 
   it("offers retry after an initial failure", () => {
@@ -113,5 +116,26 @@ describe("operating dashboard", () => {
       "Showing the last successful snapshot",
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+  });
+
+  it("continues the first-workspace setup checklist after plan activation", async () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    window.history.replaceState({}, "", "/admin?setup=first-workspace");
+    render(<AdminDashboardPage />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Your management workspace is ready",
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Review first property/ }),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
   });
 });
