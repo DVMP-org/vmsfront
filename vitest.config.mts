@@ -11,7 +11,10 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx,js,jsx}"],
+    include: [
+      "src/**/*.{test,spec}.{ts,tsx,js,jsx}",
+      "packages/**/test/**/*.{test,spec}.{ts,tsx,js,jsx}",
+    ],
     environmentOptions: {
       jsdom: {
         url: "https://vmsfront.to/",
@@ -24,4 +27,3 @@ export default defineConfig({
     },
   },
 });
-
