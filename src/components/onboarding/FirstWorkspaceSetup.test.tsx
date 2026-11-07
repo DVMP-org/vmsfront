@@ -18,15 +18,15 @@ describe("FirstWorkspaceSetup", () => {
         name: "Your management workspace is ready",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("1 root property")).toBeInTheDocument();
+    expect(screen.getByText("1 root site")).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Review first property/ }),
+      screen.getByRole("button", { name: /Review first site/ }),
     );
     expect(openProperties).toHaveBeenCalledOnce();
   });
 
-  it("guides users to create a property when none exists", () => {
+  it("guides users to create their first site when none exists", () => {
     render(
       <FirstWorkspaceSetup
         rootPlaceCount={0}
@@ -35,9 +35,12 @@ describe("FirstWorkspaceSetup", () => {
       />,
     );
 
-    expect(screen.getByText("No property created yet")).toBeInTheDocument();
+    expect(screen.getByText("No site created yet")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Create first property/ }),
+      screen.getByRole("button", { name: /Create your first site/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Create your first site" }),
     ).toBeInTheDocument();
   });
 });
