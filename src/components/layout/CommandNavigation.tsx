@@ -7,9 +7,10 @@ import { hasAdminPermission } from "@/lib/permissions";
 import type { Admin } from "@/types";
 import styles from "./CommandNavigation.module.css";
 
-export function permittedCommands(role: Admin | null | undefined, modules?: readonly string[], moduleGroups?: readonly ModuleGroup[]): AdminRoute[] {
+export function permittedCommands(role: Admin | null | undefined, modules?: readonly string[], moduleGroups?: readonly ModuleGroup[], canManage = false): AdminRoute[] {
   const result: AdminRoute[] = [];
   const visit = (routes: AdminRoute[]) => routes.forEach((route) => {
+    if (route.managementOnly && !canManage) return;
     if (route.permission && !hasAdminPermission(role, route.permission)) return;
     if (route.href.startsWith("/") && !result.some((entry) => entry.href === route.href)) result.push(route);
     if (route.children) visit(route.children);
@@ -19,12 +20,13 @@ export function permittedCommands(role: Admin | null | undefined, modules?: read
 }
 
 /** Navigation uses only the current role and local routes; no tenant selection is persisted. */
-export function CommandNavigation({ role, contextKey, navigate, modules, moduleGroups = [] }: {
+export function CommandNavigation({ role, contextKey, navigate, modules, moduleGroups = [], canManage = false }: {
   role?: Admin | null;
   modules?: readonly string[];
   moduleGroups?: readonly ModuleGroup[];
   contextKey: string;
   navigate: (href: string) => void;
+  canManage?: boolean;
 }) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -32,7 +34,7 @@ export function CommandNavigation({ role, contextKey, navigate, modules, moduleG
   const restoreFocus = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const commands = useMemo(() => permittedCommands(role, modules, moduleGroups), [role, modules, moduleGroups]);
+  const commands = useMemo(() => permittedCommands(role, modules, moduleGroups, canManage), [role, modules, moduleGroups, canManage]);
   const matches = commands.filter((entry) => entry.label.toLowerCase().includes(query.trim().toLowerCase()));
 
   const close = () => dialog.current?.close();

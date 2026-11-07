@@ -40,6 +40,7 @@ import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { hasAdminPermission } from "@/lib/permissions";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -180,6 +181,13 @@ export const Header = memo(function Header({
               <CommandNavigation
                 modules={workspaceContext.data?.modules || []}
                 moduleGroups={workspaceContext.data?.module_groups || []}
+                canManage={
+                  !!workspaceContext.data?.management?.is_administrator ||
+                  hasAdminPermission(commandProfile.data, [
+                    "parties.create",
+                    "place_relationships.create",
+                  ])
+                }
                 role={
                   commandProfile.isFetchedAfterMount && !commandProfile.isError
                     ? commandProfile.data

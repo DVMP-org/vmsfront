@@ -450,6 +450,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
       baseLinks = baseLinks
         .filter((link: any) => {
+          if (
+            link.managementOnly &&
+            !workspaceContext.data?.management?.is_administrator &&
+            !hasAdminPermission(activeRole, [
+              "parties.create",
+              "place_relationships.create",
+            ])
+          )
+            return false;
           if (!link.permission) return true;
           if (!activeRole) return false;
           return hasAdminPermission(activeRole, link.permission);

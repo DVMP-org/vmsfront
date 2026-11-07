@@ -367,7 +367,7 @@ export default function AdminDashboardPage() {
           icon={Users}
           label="Manage people"
           detail="Parties and workspace relationships"
-          onClick={() => router.push("/admin/admins")}
+          onClick={() => router.push("/admin/people")}
         />
         <QuickAction
           icon={Activity}

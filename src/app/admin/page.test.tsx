@@ -138,4 +138,18 @@ describe("operating dashboard", () => {
     );
     expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
   });
+
+  it("routes people work to the canonical property roster", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Manage people/ }),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/admin/people");
+  });
 });
