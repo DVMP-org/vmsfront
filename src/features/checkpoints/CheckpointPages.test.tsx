@@ -50,7 +50,7 @@ const event = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
-  m.profile.mockResolvedValue({ data: { effective_permissions: ["*"] } });
+  m.profile.mockResolvedValue({ data: { role: { permissions: ["*"] } } });
   m.gates.mockResolvedValue({
     items: [{ id: "gate", name: "Main entrance" }],
     total_pages: 1,
@@ -110,7 +110,7 @@ it("distinguishes denied result and checkout direction", async () => {
   expect(screen.getByText(/Hardware command/)).toBeInTheDocument();
 });
 it("fails closed for missing permission instead of loading forever", async () => {
-  m.profile.mockResolvedValue({ data: { effective_permissions: [] } });
+  m.profile.mockResolvedValue({ data: { role: { permissions: [] } } });
   mount(<CheckpointConsole gateId="gate" />);
   await screen.findByText("You do not have permission to open this gate.");
   expect(m.gate).not.toHaveBeenCalled();
