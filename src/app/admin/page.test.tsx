@@ -134,7 +134,7 @@ describe("operating dashboard", () => {
       }),
     ).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /Review first property/ }),
+      screen.getByRole("button", { name: /Review first site/ }),
     );
     expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
   });
