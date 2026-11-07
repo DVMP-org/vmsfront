@@ -77,12 +77,15 @@ const assignment = {
   outstanding_amount: "15000.00",
 };
 
-function mount(action?: "new" | "definition" | "assign" | "assignment") {
+function mount(
+  action?: "new" | "definition" | "assign" | "assignment",
+  id = "charge",
+) {
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ChargesWorkspace action={action} id="charge" />
+      <ChargesWorkspace action={action} id={id} />
     </QueryClientProvider>,
   );
 }
@@ -179,6 +182,82 @@ describe("charge routes", () => {
       expect(mocks.push).toHaveBeenCalledWith(
         "/admin/charges/assignments/assignment",
       ),
+    );
+  });
+
+  it("shows the responsible payer and schedule balances on an assignment", async () => {
+    mocks.schedules.mockResolvedValue({
+      items: [
+        {
+          id: "schedule",
+          due_date: "2026-12-10T00:00:00Z",
+          amount: "15000.00",
+          balance: "15000.00",
+          currency: "NGN",
+          status: "scheduled",
+        },
+      ],
+      total: 1,
+      total_pages: 1,
+    });
+
+    mount("assignment", "assignment");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Service charge",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Ade Resident").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/15,000\.00/).length).toBeGreaterThan(0);
+    expect(screen.getByText("scheduled")).toBeInTheDocument();
+  });
+
+  it("reviews and transfers an unpaid responsibility", async () => {
+    mocks.transfer.mockResolvedValue({});
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    mount("assignment", "assignment");
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Choose New responsible person or organization",
+      }),
+    );
+    fireEvent.change(screen.getByLabelText("Reason"), {
+      target: { value: "Occupancy changed" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Review and transfer" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.transfer).toHaveBeenCalledWith("assignment", {
+        responsible_party_id: "selected-party",
+        expected_responsibility_id: "responsibility",
+        reason: "Occupancy changed",
+      }),
+    );
+    expect(confirm).toHaveBeenCalledOnce();
+    confirm.mockRestore();
+  });
+
+  it("generates additional schedules for an assignment", async () => {
+    mocks.generate.mockResolvedValue([]);
+
+    mount("assignment", "assignment");
+
+    fireEvent.change(await screen.findByLabelText("Schedules"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Generate schedules" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.generate).toHaveBeenCalledWith("assignment", {
+        schedule_count: 3,
+      }),
     );
   });
 });

@@ -1,0 +1,36 @@
+.charge-directory-header,
+.charge-directory-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.charge-schedule-header {
+  display: none;
+}
+
+.charge-schedule-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .charge-directory-header,
+  .charge-directory-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(9rem, 1fr) minmax(8rem, 1fr) 6rem 1.5rem;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .charge-schedule-header,
+  .charge-schedule-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(8rem, 1fr)) 7rem;
+    align-items: center;
+    gap: 1rem;
+  }
+}
