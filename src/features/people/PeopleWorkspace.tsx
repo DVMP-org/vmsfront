@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ArrowRight,
   Building2,
   CheckCircle2,
   Mail,
@@ -23,7 +24,6 @@ import {
   PlacePeople,
   PlacePerson,
 } from "./api";
-import "@/app/admin/properties/styles.css";
 
 const OCCUPANCY_ROLES = {
   residential: ["resident", "owner", "tenant"],
@@ -61,50 +61,72 @@ export default function PeopleWorkspace() {
   }
 
   return (
-    <main className="property-workspace">
-      <header className="property-heading flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="property-eyebrow flex items-center gap-2">
-            <Users className="h-3.5 w-3.5" aria-hidden="true" />
-            PROPERTY OPERATIONS / PEOPLE
-          </p>
-          <h1>
-            People<span className="property-heading-period">.</span>
-          </h1>
-          <p className="property-heading-copy">
-            Add the people responsible for a property, onboard occupants, and
-            keep administrators separate from the people who live or work
-            there.
-          </p>
+    <main className="space-y-4 pb-8 text-[#0f1b31]">
+      <header className="border-b border-[#dce3ee] pb-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#667085]">
+          <Users className="h-3.5 w-3.5 text-[#2563eb]" />
+          <span>{organization?.name || "Organization"}</span>
+          <span className="text-[#c3cad6]">/</span>
+          <Link href="/admin/people" className="text-[#344054]">
+            People
+          </Link>
+          {selectedProperty ? (
+            <>
+              <span className="text-[#c3cad6]">/</span>
+              <span className="font-semibold text-[#0f1b31]">
+                {selectedProperty.name}
+              </span>
+            </>
+          ) : null}
         </div>
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--property-accent)]"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back to dashboard
-        </Link>
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] sm:text-[36px]">
+              People
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-[#667085]">
+              Assign administrators and occupants to a property. Onboarding is
+              prepared when a new person is added.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/properties"
+              className="inline-flex items-center gap-2 rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-xs font-semibold text-[#344054] transition hover:border-[#94a3b8] hover:bg-[#f8faff]"
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              Manage properties
+            </Link>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-[#2563eb] hover:bg-[#edf3ff]"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Dashboard
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <section className="property-registry mb-5">
+      <section className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="property-view-index">01</p>
-            <h2 className="mt-1 text-base font-semibold">Property context</h2>
-            <p className="mt-1 text-xs text-[var(--property-muted)]">
-              People belong to the selected property or space. Choose one before
-              adding or reviewing its roster.
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2563eb]">
+              Property context
+            </p>
+            <p className="mt-1 text-xs text-[#667085]">
+              The selected property determines the available roles and scope.
             </p>
           </div>
           <div className="w-full lg:max-w-xl">
             {selectedProperty ? (
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--property-line)] bg-[var(--property-canvas)] px-4 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-md border border-[#dce3ee] bg-[#f8faff] px-3 py-2.5">
                 <span className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-white text-[var(--property-accent)] shadow-sm dark:bg-slate-900">
+                  <span className="grid h-8 w-8 place-items-center rounded-md bg-white text-[#2563eb] shadow-sm ring-1 ring-[#dce3ee]">
                     <Building2 className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
-                    <small className="block text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--property-muted)]">
+                    <small className="block text-[9px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
                       Selected property
                     </small>
                     <strong className="block truncate text-sm">
@@ -114,7 +136,7 @@ export default function PeopleWorkspace() {
                 </span>
                 <button
                   type="button"
-                  className="shrink-0 text-xs font-semibold text-[var(--property-accent)]"
+                  className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-[#2563eb] hover:bg-[#edf3ff]"
                   onClick={() => chooseProperty(null)}
                 >
                   Change
@@ -138,10 +160,7 @@ export default function PeopleWorkspace() {
       ) : people.isPending ? (
         <PeopleSkeleton />
       ) : people.isError ? (
-        <PeopleFailure
-          error={people.error}
-          retry={() => people.refetch()}
-        />
+        <PeopleFailure error={people.error} retry={() => people.refetch()} />
       ) : (
         <PeopleContent
           people={people.data}
@@ -175,31 +194,39 @@ function PeopleContent({
   return (
     <>
       <section
-        className="mb-5 grid gap-3 sm:grid-cols-3"
+        className="grid overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:grid-cols-3"
         aria-label="People summary"
       >
-        <Summary label="Property administrators" value={people.administrators.length} />
-        <Summary
+        <PersonMetric
+          label="Property administrators"
+          value={people.administrators.length}
+          detail="Site management authority"
+        />
+        <PersonMetric
           label={occupantLabel(people.effective_use_case)}
           value={people.occupants.length}
+          detail={`${roleLabel(people.effective_use_case)} operating context`}
         />
-        <Summary label="People in this context" value={total} />
+        <PersonMetric
+          label="People in this context"
+          value={total}
+          detail="Administration and occupancy"
+        />
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
-        <section className="overflow-hidden rounded-xl border border-[var(--property-line)] bg-[var(--property-paper)] shadow-sm">
-          <div className="border-b border-[var(--property-line)] px-5 py-4">
-            <h2 className="text-base font-semibold">Property roster</h2>
-            <p className="mt-1 text-xs text-[var(--property-muted)]">
-              Administration and occupancy are shown separately so an
-              administrator is never mistaken for an occupant.
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
+        <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+          <div className="border-b border-[#dce3ee] px-4 py-3.5">
+            <h2 className="text-sm font-semibold">Property roster</h2>
+            <p className="mt-0.5 text-xs text-[#667085]">
+              Administration remains separate from occupancy and tenancy.
             </p>
           </div>
-          <div className="grid gap-0 md:grid-cols-2">
+          <div className="grid md:grid-cols-2">
             <Roster
               icon={ShieldCheck}
               title="Administrators"
-              description="Manage this site and its operating workflows."
+              description="Manage the site and its operating workflows."
               items={people.administrators}
               empty="No site administrator is assigned in this context."
             />
@@ -277,65 +304,66 @@ function AddPersonForm({
   }
 
   return (
-    <section className="rounded-xl border border-[var(--property-line)] bg-[var(--property-paper)] p-5 shadow-sm">
+    <section className="rounded-lg border border-[#cddbf5] bg-[#f4f8ff] p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
       <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--property-accent)_10%,transparent)] text-[var(--property-accent)]">
-          <Plus className="h-5 w-5" aria-hidden="true" />
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white text-[#2563eb] shadow-sm ring-1 ring-[#d6e2f8]">
+          <Plus className="h-4 w-4" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-base font-semibold">
-            {isSite ? "Add a property administrator" : `Add ${useCase === "hospitality" ? "a guest" : "an occupant"}`}
-          </h2>
-          <p className="mt-1 text-xs leading-5 text-[var(--property-muted)]">
+          <h2 className="text-sm font-semibold">
             {isSite
-              ? "This adds a site-level manager. Administration stays separate from occupancy."
-              : `This creates or reuses the person’s account, assigns them to ${place.name}, and prepares onboarding.`}
+              ? "Add a property administrator"
+              : `Add ${useCase === "hospitality" ? "a guest" : "an occupant"}`}
+          </h2>
+          <p className="mt-0.5 text-xs leading-5 text-[#667085]">
+            {isSite
+              ? "Adds a site-level manager. It does not create occupancy."
+              : `Assign this person to ${place.name} and prepare onboarding.`}
           </p>
         </div>
       </div>
 
-      <form className="mt-5 space-y-4" onSubmit={submit}>
-        <fieldset className="space-y-4" disabled={mutation.isPending}>
-          <label className="block text-xs font-semibold">
-            Full name
+      <form className="mt-4 space-y-3" onSubmit={submit}>
+        <fieldset className="space-y-3" disabled={mutation.isPending}>
+          <Field label="Full name">
             <input
               required
               maxLength={255}
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-[var(--property-line)] bg-transparent px-3 py-2.5 text-sm"
+              className="w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
               placeholder="Ada Okafor"
             />
-          </label>
-          <label className="block text-xs font-semibold">
-            Email
+          </Field>
+          <Field label="Email">
             <input
               required
               type="email"
               maxLength={255}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-[var(--property-line)] bg-transparent px-3 py-2.5 text-sm"
+              className="w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
               placeholder="ada@example.com"
             />
-          </label>
-          <label className="block text-xs font-semibold">
-            Phone <span className="font-normal text-[var(--property-muted)]">(optional)</span>
+          </Field>
+          <Field label="Phone (optional)">
             <input
               maxLength={32}
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-[var(--property-line)] bg-transparent px-3 py-2.5 text-sm"
+              className="w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
               placeholder="+234 800 000 0000"
             />
-          </label>
+          </Field>
           {!isSite ? (
-            <label className="block text-xs font-semibold">
-              Role in this property
+            <Field
+              label="Role in this property"
+              hint={`Available roles follow the ${roleLabel(useCase)} use case.`}
+            >
               <select
                 value={role}
                 onChange={(event) => setRole(event.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-[var(--property-line)] bg-[var(--property-paper)] px-3 py-2.5 text-sm"
+                className="w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
               >
                 <option value="">Use the property default</option>
                 {roles.map((item) => (
@@ -344,18 +372,13 @@ function AddPersonForm({
                   </option>
                 ))}
               </select>
-              <span className="mt-1.5 block font-normal leading-5 text-[var(--property-muted)]">
-                {isSite
-                  ? "Site assignments always use the place administrator role."
-                  : `Available roles follow the ${roleLabel(useCase)} use case.`}
-              </span>
-            </label>
+            </Field>
           ) : (
-            <div className="rounded-lg border border-[var(--property-line)] bg-[var(--property-canvas)] px-3 py-3 text-xs">
+            <div className="rounded-md border border-[#d6e2f8] bg-white px-3 py-3 text-xs">
               <strong className="block">Role: Property administrator</strong>
-              <span className="mt-1 block text-[var(--property-muted)]">
-                The role is applied by the server; it cannot be changed into an
-                occupancy role.
+              <span className="mt-1 block text-[#667085]">
+                The server applies this role; it cannot become an occupancy
+                role.
               </span>
             </div>
           )}
@@ -364,7 +387,7 @@ function AddPersonForm({
         {mutation.isError ? (
           <p
             role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
           >
             {parseApiError(mutation.error).message}
           </p>
@@ -372,23 +395,23 @@ function AddPersonForm({
         {success ? (
           <p
             role="status"
-            className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
+            className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
           >
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
             {success}
           </p>
         ) : null}
 
         <button
           type="submit"
-          className="property-primary inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#93b4f6]"
           disabled={mutation.isPending || !displayName.trim() || !email.trim()}
         >
           {mutation.isPending ? (
             "Adding person…"
           ) : (
             <>
-              <Mail className="h-4 w-4" aria-hidden="true" />
+              <Mail className="h-4 w-4" />
               Add person and prepare onboarding
             </>
           )}
@@ -415,20 +438,18 @@ function Roster({
 }) {
   return (
     <div
-      className={`p-5 ${divided ? "border-t border-[var(--property-line)] md:border-l md:border-t-0" : ""}`}
+      className={`p-4 ${divided ? "border-t border-[#edf0f5] md:border-l md:border-t-0" : ""}`}
     >
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[var(--property-accent)]" />
+        <Icon className="h-4 w-4 text-[#2563eb]" />
         <h3 className="text-sm font-semibold">{title}</h3>
-        <span className="rounded-full bg-[var(--property-canvas)] px-2 py-0.5 text-[10px] font-bold">
+        <span className="rounded bg-[#f1f6ff] px-1.5 py-0.5 text-[10px] font-bold text-[#2563eb]">
           {items.length}
         </span>
       </div>
-      <p className="mt-1 text-xs leading-5 text-[var(--property-muted)]">
-        {description}
-      </p>
+      <p className="mt-1 text-xs leading-5 text-[#667085]">{description}</p>
       {items.length ? (
-        <ul className="mt-4 divide-y divide-[var(--property-line)]">
+        <ul className="mt-3 divide-y divide-[#edf0f5]">
           {items.map((item) => (
             <li
               key={`${item.source}:${item.party.id}:${item.role}`}
@@ -438,11 +459,11 @@ function Roster({
                 <strong className="block truncate text-sm">
                   {item.party.display_name}
                 </strong>
-                <span className="mt-0.5 block truncate text-xs text-[var(--property-muted)]">
+                <span className="mt-0.5 block truncate text-xs text-[#667085]">
                   {item.party.email || "No email"}
                 </span>
               </span>
-              <span className="shrink-0 rounded-full border border-[var(--property-line)] px-2 py-1 text-[10px] font-semibold capitalize">
+              <span className="shrink-0 rounded-full border border-[#dce3ee] bg-[#f8faff] px-2 py-1 text-[10px] font-semibold capitalize">
                 {roleLabel(item.role)}
                 {item.is_super_admin ? " · Primary" : ""}
               </span>
@@ -450,7 +471,7 @@ function Roster({
           ))}
         </ul>
       ) : (
-        <p className="mt-4 rounded-lg border border-dashed border-[var(--property-line)] px-3 py-4 text-xs text-[var(--property-muted)]">
+        <p className="mt-3 rounded-md border border-dashed border-[#cbd5e1] px-3 py-4 text-xs leading-5 text-[#667085]">
           {empty}
         </p>
       )}
@@ -458,31 +479,65 @@ function Roster({
   );
 }
 
-function Summary({ label, value }: { label: string; value: number }) {
+function PersonMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-        {label}
+    <div className="border-b border-[#edf0f5] px-4 py-3.5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <p className="text-xs font-medium text-[#667085]">{label}</p>
+      <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-[-0.04em]">
+        {value}
       </p>
-      <p className="mt-2 text-2xl font-semibold tracking-[-0.03em]">{value}</p>
+      <p className="mt-1.5 text-[11px] text-[#98a2b3]">{detail}</p>
     </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block text-xs font-semibold">
+      {label}
+      <span className="mt-1.5 block">{children}</span>
+      {hint ? (
+        <span className="mt-1.5 block font-normal leading-5 text-[#667085]">
+          {hint}
+        </span>
+      ) : null}
+    </label>
   );
 }
 
 function EmptyProperty() {
   return (
-    <section className="property-editor text-center">
-      <Building2 className="mx-auto h-8 w-8 text-[var(--property-accent)]" />
-      <h2 className="mt-4">Choose a property to manage people</h2>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--property-muted)]">
-        Select a property or space above. Its use case determines whether the
-        people you add are residents, employees, members, or guests.
+    <section className="rounded-lg border border-dashed border-[#c8d1df] bg-white p-8 text-center sm:p-10">
+      <Building2 className="mx-auto h-8 w-8 text-[#2563eb]" />
+      <h2 className="mt-3 text-base font-semibold">
+        Choose a property to manage people
+      </h2>
+      <p className="mx-auto mt-1.5 max-w-xl text-sm leading-6 text-[#667085]">
+        Select a property or space above. Its use case determines whether you
+        add residents, employees, members or guests.
       </p>
       <Link
         href="/admin/properties"
-        className="mt-5 inline-flex text-sm font-semibold text-[var(--property-accent)]"
+        className="mt-4 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-[#2563eb] hover:bg-[#edf3ff]"
       >
         Review properties
+        <ArrowRight className="h-4 w-4" />
       </Link>
     </section>
   );
@@ -496,14 +551,17 @@ function PeopleFailure({
   retry: () => void;
 }) {
   return (
-    <section className="property-editor" role="alert">
-      <h2>People unavailable</h2>
-      <p className="mt-2 text-sm text-[var(--property-muted)]">
+    <section
+      className="rounded-lg border border-red-200 bg-red-50 p-5"
+      role="alert"
+    >
+      <h2 className="text-sm font-semibold">People unavailable</h2>
+      <p className="mt-1 text-sm text-red-800">
         {parseApiError(error).message}
       </p>
       <button
         type="button"
-        className="mt-5 rounded-lg border border-[var(--property-line)] px-4 py-2 text-sm font-semibold"
+        className="mt-4 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-800"
         onClick={retry}
       >
         Retry
@@ -514,19 +572,12 @@ function PeopleFailure({
 
 function PeopleSkeleton() {
   return (
-    <div className="space-y-5" role="status">
+    <div className="space-y-4" role="status">
       <span className="sr-only">Loading property people</span>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[0, 1, 2].map((item) => (
-          <div
-            key={item}
-            className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800"
-          />
-        ))}
-      </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <div className="h-80 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-80 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+      <div className="h-24 animate-pulse rounded-lg bg-[#e8edf5]" />
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="h-80 animate-pulse rounded-lg bg-[#e8edf5]" />
+        <div className="h-80 animate-pulse rounded-lg bg-[#e8edf5]" />
       </div>
     </div>
   );
@@ -543,9 +594,9 @@ function occupantDescription(useCase: PlacePeople["effective_use_case"]) {
     return "People staying in this property or room.";
   }
   if (useCase === "commercial") {
-    return "Employees, members, and tenants assigned to this space.";
+    return "Employees, members and tenants assigned to this space.";
   }
-  return "Residents, owners, and tenants assigned to this space.";
+  return "Residents, owners and tenants assigned to this space.";
 }
 
 function roleLabel(role: string) {
