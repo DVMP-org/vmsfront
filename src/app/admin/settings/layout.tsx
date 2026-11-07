@@ -43,23 +43,23 @@ function SettingsLayoutContent({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 text-[#0f1b31]">
             {/* Header */}
-            <div className="border-b border-zinc-200 pb-3">
+            <div className="border-b border-[#dce3ee] pb-4">
                 <div className="flex items-center gap-2 mb-1">
-                    <Settings className="h-4 w-4 text-zinc-600" />
-                    <h1 className="text-lg font-semibold text-foreground">Platform Settings</h1>
+                    <Settings className="h-4 w-4 text-[#2563eb]" />
+                    <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-[#0f1b31]">Organization configuration</h1>
                 </div>
-                <p className="text-xs text-muted-foreground">Configure payment gateways, branding, integrations, and mailer settings</p>
+                <p className="text-sm text-[#667085]">Configure branding, integrations, mail delivery, payments and the organization subscription.</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 border-b border-zinc-200">
+            <div className="flex gap-1 overflow-x-auto border-b border-[#dce3ee]">
                 <button
                     onClick={() => handleTabChange("payment")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "payment"
-                        ? "border-zinc-900 text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-[#2563eb] text-[#1d4ed8]"
+                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -70,8 +70,8 @@ function SettingsLayoutContent({
                 <button
                     onClick={() => handleTabChange("branding")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "branding"
-                        ? "border-zinc-900 text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-[#2563eb] text-[#1d4ed8]"
+                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -82,8 +82,8 @@ function SettingsLayoutContent({
                 <button
                     onClick={() => handleTabChange("integrations")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "integrations"
-                        ? "border-zinc-900 text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-[#2563eb] text-[#1d4ed8]"
+                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -94,8 +94,8 @@ function SettingsLayoutContent({
                 <button
                     onClick={() => handleTabChange("mailer")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "mailer"
-                        ? "border-zinc-900 text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-[#2563eb] text-[#1d4ed8]"
+                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -106,8 +106,8 @@ function SettingsLayoutContent({
                 <button
                     onClick={() => handleTabChange("subscription")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "subscription"
-                        ? "border-zinc-900 text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-[#2563eb] text-[#1d4ed8]"
+                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
                         }`}
                 >
                     <div className="flex items-center gap-2">
