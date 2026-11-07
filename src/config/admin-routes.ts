@@ -6,6 +6,7 @@ export const adminLinks: AdminRoute[] = [
  {href:"/select",label:"Workspaces",icon:LayoutGrid,group:"Workspace"},
  {href:"/admin/properties",label:"Properties",icon:Building2,permission:"places.list",module:"properties",group:"Workspace"},
  {href:"/admin/checkpoints",label:"Check-in / check-out",icon:Scan,permission:"gates.list",module:"check_in_out",group:"Operations"},
+ {href:"/admin/invitations",label:"Visitor approvals",icon:Shield,permission:"visit_authorizations.list",module:"check_in_out",group:"Operations"},
  {href:"/admin/charges",label:"Charges",icon:Receipt,permission:"charges.list",module:"charges",group:"Operations"},
  {href:"/admin/forums",label:"Forums",icon:MessageSquare,permission:"forum_posts.list",module:"forums",group:"Operations"},
  {href:"/admin/gates",label:"Gates",icon:DoorOpen,permission:"gates.list",module:"gates",group:"Operations"},

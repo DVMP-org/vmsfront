@@ -20,6 +20,7 @@ import {
   workspaceAreaMeta,
 } from "@/features/workspaces/catalog";
 import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
+import { GuestStayDashboard } from "@/features/guest-stay/GuestStayDashboard";
 import { contextApi } from "@/features/context/api";
 import { ManagementAuthorityCard } from "@/features/management/ManagementAuthorityCard";
 import { useVerifyToken } from "@/hooks/use-auth";
@@ -136,6 +137,12 @@ export default function WorkspacePage() {
                 }
               />
             </div>
+
+            {area === "guest" ? (
+              <div className="mt-4">
+                <GuestStayDashboard />
+              </div>
+            ) : null}
 
             <div className="mt-4">
               <ManagementAuthorityCard

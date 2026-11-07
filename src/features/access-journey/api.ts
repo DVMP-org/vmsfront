@@ -2,7 +2,12 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export type VisitAuthorizationStatus =
-  "requested" | "approved" | "declined" | "expired" | "cancelled";
+  | "requested"
+  | "approved"
+  | "declined"
+  | "expired"
+  | "cancelled"
+  | "revoked";
 
 export interface VisitGuest {
   id: string;
@@ -38,6 +43,25 @@ export interface VisitAuthorization {
     address: string;
   };
   guests: VisitGuest[];
+}
+
+export interface CheckpointEvent {
+  id: string;
+  organization_id: string;
+  visit_authorization_id: string;
+  visit_session_id: string | null;
+  visit_guest_id: string;
+  checkpoint_presence_id: string | null;
+  place_id: string;
+  gate_id: string;
+  lane_id: string | null;
+  direction: "entry" | "exit";
+  outcome: "allowed" | "denied";
+  reason_code: string;
+  idempotency_key: string;
+  scanned_by_admin_id: string | null;
+  occurred_at: string;
+  created_at: string;
 }
 
 export interface CreateVisitAuthorizationInput {
@@ -84,6 +108,18 @@ export const accessJourneyApi = {
     (
       await apiClient.post<ApiResponse<VisitAuthorization>>(
         `/workspace/visit-authorizations/${authorizationId}/cancel`,
+      )
+    ).data,
+  checkpointEvents: async (authorizationId: string) =>
+    (
+      await apiClient.get<ApiResponse<PaginatedResponse<CheckpointEvent>>>(
+        `/workspace/visit-authorizations/${authorizationId}/checkpoint-events`,
+        {
+          params: {
+            page: 1,
+            page_size: 100,
+          },
+        },
       )
     ).data,
 };

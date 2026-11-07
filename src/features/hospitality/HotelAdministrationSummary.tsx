@@ -10,7 +10,6 @@ import {
 import type { WorkspaceRelationship } from "@/types";
 import { guestName, type Stay } from "./contracts";
 
-const ADMIN_ROLES = new Set(["admin", "super_admin"]);
 const OCCUPANCY_ROLES = new Set([
   "resident",
   "resident_of",
@@ -28,7 +27,17 @@ const STAFF_ROLES = new Set([
 ]);
 const GUEST_ROLES = new Set(["guest", "guest_of"]);
 
+export interface SiteAdministrator {
+  party_id: string;
+  display_name: string;
+  email: string | null;
+  role: string;
+}
+
 export function HotelAdministrationSummary({
+  administrators,
+  authorityMode,
+  authoritativePlaceName,
   relationships,
   stays,
   loading,
@@ -36,6 +45,9 @@ export function HotelAdministrationSummary({
   onRetry,
   onOpenStay,
 }: {
+  administrators: SiteAdministrator[];
+  authorityMode?: "local" | "inherited" | "none";
+  authoritativePlaceName?: string | null;
   relationships: WorkspaceRelationship[];
   stays: Stay[];
   loading: boolean;
@@ -74,7 +86,7 @@ export function HotelAdministrationSummary({
         <Metric
           icon={ShieldCheck}
           label="Administrators"
-          value={people.admins.length}
+          value={administrators.length}
         />
         <Metric
           icon={UserRound}
@@ -98,7 +110,11 @@ export function HotelAdministrationSummary({
           <div className="hotel-panel-heading">
             <div>
               <h3>People in this site</h3>
-              <p>Administration remains separate from occupancy and stays.</p>
+              <p>
+                {authorityMode === "inherited" && authoritativePlaceName
+                  ? `Administration is inherited from ${authoritativePlaceName}.`
+                  : "Administration remains separate from occupancy and stays."}
+              </p>
             </div>
           </div>
           {loading ? (
@@ -112,25 +128,44 @@ export function HotelAdministrationSummary({
                 Retry people
               </button>
             </div>
-          ) : relationships.length ? (
+          ) : administrators.length || relationships.length ? (
             <ul className="hotel-people-list">
-              {relationships.slice(0, 8).map((relationship) => (
-                <li key={relationship.id}>
+              {administrators.slice(0, 4).map((administrator) => (
+                <li key={administrator.party_id}>
                   <span className="hotel-person-icon">
-                    {ADMIN_ROLES.has(relationship.role.toLowerCase()) ? (
-                      <ShieldCheck className="h-4 w-4" />
-                    ) : (
-                      <UserRound className="h-4 w-4" />
-                    )}
+                    <ShieldCheck className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <strong>{relationship.party.display_name}</strong>
+                    <strong>{administrator.display_name}</strong>
                     <small>
-                      {roleLabel(relationship.role)} · {relationship.place.name}
+                      {roleLabel(administrator.role)}
+                      {administrator.email ? ` · ${administrator.email}` : ""}
                     </small>
                   </span>
                 </li>
               ))}
+              {relationships
+                .filter(
+                  (relationship) =>
+                    !["admin", "super_admin"].includes(
+                      relationship.role.toLowerCase(),
+                    ),
+                )
+                .slice(0, Math.max(0, 8 - administrators.length))
+                .map((relationship) => (
+                  <li key={relationship.id}>
+                    <span className="hotel-person-icon">
+                      <UserRound className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong>{relationship.party.display_name}</strong>
+                      <small>
+                        {roleLabel(relationship.role)} ·{" "}
+                        {relationship.place.name}
+                      </small>
+                    </span>
+                  </li>
+                ))}
             </ul>
           ) : (
             <p className="stay-muted">No active people relationships found.</p>
@@ -207,14 +242,12 @@ function groupPeople(relationships: WorkspaceRelationship[]) {
   return relationships.reduce(
     (groups, relationship) => {
       const role = relationship.role.toLowerCase();
-      if (ADMIN_ROLES.has(role)) groups.admins.push(relationship);
-      else if (OCCUPANCY_ROLES.has(role)) groups.occupants.push(relationship);
+      if (OCCUPANCY_ROLES.has(role)) groups.occupants.push(relationship);
       else if (STAFF_ROLES.has(role)) groups.staff.push(relationship);
       else if (GUEST_ROLES.has(role)) groups.guests.push(relationship);
       return groups;
     },
     {
-      admins: [] as WorkspaceRelationship[],
       occupants: [] as WorkspaceRelationship[],
       staff: [] as WorkspaceRelationship[],
       guests: [] as WorkspaceRelationship[],
