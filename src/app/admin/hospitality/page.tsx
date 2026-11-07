@@ -8,6 +8,8 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { hospitalityApi } from "@/features/hospitality/api";
+import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
+import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import {
   guestName,
   interval,
@@ -19,6 +21,7 @@ import "./styles.css";
 
 export default function HospitalityPage() {
   const organization = useAppStore((s) => s.organization);
+  const selectedProperty = useAppStore((s) => s.selectedProperty);
   const user = useAuthStore((s) => s.user);
   const context = `${organization?.id}:${user?.id}`;
   return (
@@ -26,15 +29,18 @@ export default function HospitalityPage() {
       key={context}
       context={context}
       enabled={!!organization?.id && !!user?.id}
+      propertyName={selectedProperty?.name}
     />
   );
 }
 function HospitalityWorkspace({
   context,
   enabled,
+  propertyName,
 }: {
   context: string;
   enabled: boolean;
+  propertyName?: string;
 }) {
   const client = useQueryClient();
   const [page, setPage] = useState(1);
@@ -63,6 +69,11 @@ function HospitalityWorkspace({
     queryFn: () => hospitalityApi.get(selected!),
     enabled: !!selected && allowed("show"),
   });
+  const people = useQuery({
+    queryKey: ["hospitality", context, "people"],
+    queryFn: hospitalityPeopleApi.list,
+    enabled: allowed("list"),
+  });
   const changed = async (stay: Stay, message: string) => {
     setSelected(stay.id);
     setCreating(false);
@@ -87,9 +98,13 @@ function HospitalityWorkspace({
     <main className="stay-workspace">
       <header className="stay-heading">
         <div>
-          <p className="stay-eyebrow">PROPERTY OPERATIONS / HOSPITALITY</p>
-          <h1>Stays</h1>
-          <p>Coordinate guest reservations, rooms and arrivals.</p>
+          <p className="stay-eyebrow">SITE MANAGEMENT / HOTEL OPERATIONS</p>
+          <h1>Hotel operations</h1>
+          <p>
+            {propertyName
+              ? `Manage ${propertyName}, its people, stays and guest arrivals.`
+              : "Manage the selected site, its people, stays and guest arrivals."}
+          </p>
         </div>
         {allowed("create") && (
           <button
@@ -109,6 +124,20 @@ function HospitalityWorkspace({
           {notice}
         </p>
       )}
+      {!list.isPending ? (
+        <HotelAdministrationSummary
+          relationships={people.data?.items || []}
+          stays={list.data?.items || []}
+          loading={people.isPending}
+          error={people.isError ? parseApiError(people.error).message : null}
+          onRetry={() => people.refetch()}
+          onOpenStay={(id) => {
+            setSelected(id);
+            setCreating(false);
+            setNotice("");
+          }}
+        />
+      ) : null}
       <div className="stay-layout">
         <section className="stay-panel" aria-label="Stay list">
           <div className="stay-list-heading">

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   action: vi.fn(),
   update: vi.fn(),
   create: vi.fn(),
+  people: vi.fn(),
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (select: any) => select({ organization: { id: "org" } }),
@@ -20,6 +21,9 @@ vi.mock("@/services/admin-service", () => ({
   adminService: { getAdminProfile: mocks.profile },
 }));
 vi.mock("@/features/hospitality/api", () => ({ hospitalityApi: mocks }));
+vi.mock("@/features/hospitality/people-api", () => ({
+  hospitalityPeopleApi: { list: mocks.people },
+}));
 vi.mock("@/components/facets/FacetPicker", () => ({ FacetPicker: () => null }));
 const stay = {
   id: "stay",
@@ -67,6 +71,72 @@ beforeEach(() => {
     total_pages: 1,
   });
   mocks.get.mockResolvedValue(stay);
+  mocks.people.mockResolvedValue({
+    items: [
+      {
+        id: "admin-link",
+        organization_id: "org",
+        role: "admin",
+        status: "active",
+        effective_from: null,
+        effective_to: null,
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01",
+        party: {
+          id: "admin-party",
+          kind: "person",
+          display_name: "Dana Admin",
+          email: "dana@example.test",
+          is_active: true,
+        },
+        place: {
+          id: "hotel",
+          name: "Harbour Hotel",
+          slug: "harbour-hotel",
+          kind: "site",
+          is_active: true,
+        },
+      },
+      {
+        id: "guest-link",
+        organization_id: "org",
+        role: "guest_of",
+        status: "active",
+        effective_from: null,
+        effective_to: null,
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01",
+        party: {
+          id: "guest-party",
+          kind: "person",
+          display_name: "Gina Guest",
+          email: "gina@example.test",
+          is_active: true,
+        },
+        place: {
+          id: "room",
+          name: "Suite 12",
+          slug: "suite-12",
+          kind: "room",
+          is_active: true,
+        },
+      },
+    ],
+    page: 1,
+    total: 2,
+    total_pages: 1,
+  });
+});
+it("shows site administrators, occupants and the live arrival queue", async () => {
+  mount();
+  await screen.findByRole("heading", { name: "Hotel operations" });
+  expect(
+    await screen.findByText("Administration and occupancy"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Dana Admin")).toBeInTheDocument();
+  expect(screen.getByText("Gina Guest")).toBeInTheDocument();
+  expect(screen.getAllByText("Expected arrivals").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
 });
 it("renders empty and failed lists explicitly with retry", async () => {
   mocks.list.mockRejectedValueOnce(new Error("unavailable"));
@@ -84,7 +154,10 @@ it("renders empty and failed lists explicitly with retry", async () => {
 it("hides lifecycle actions from read-only operators", async () => {
   mocks.profile.mockResolvedValue({
     data: {
-      effective_permissions: ["hospitality_stays.list", "hospitality_stays.show"],
+      effective_permissions: [
+        "hospitality_stays.list",
+        "hospitality_stays.show",
+      ],
     },
   });
   mount();
@@ -127,10 +200,10 @@ it("uses canonical checkin grants for a scoped operator", async () => {
   mocks.profile.mockResolvedValue({
     data: {
       effective_permissions: [
-          "hospitality_stays.list",
-          "hospitality_stays.show",
-          "hospitality_stays.checkin",
-        ],
+        "hospitality_stays.list",
+        "hospitality_stays.show",
+        "hospitality_stays.checkin",
+      ],
     },
   });
   mount();
