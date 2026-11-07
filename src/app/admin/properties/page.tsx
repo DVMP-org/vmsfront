@@ -1,5 +1,14 @@
 "use client";
 import { FormEvent, useState } from "react";
+import {
+  ArrowUpRight,
+  ChevronRight,
+  CornerDownRight,
+  FolderTree,
+  MapPin,
+  Plus,
+  Search,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -25,6 +34,7 @@ export default function PropertiesPage() {
       key={context}
       context={context}
       enabled={!!organization?.id && !!user?.id}
+      organizationName={organization?.name || "Organization"}
     />
   );
 }
@@ -39,9 +49,11 @@ function ErrorState({ error, retry }: { error: unknown; retry: () => void }) {
 function Workspace({
   context,
   enabled,
+  organizationName,
 }: {
   context: string;
   enabled: boolean;
+  organizationName: string;
 }) {
   const client = useQueryClient();
   const [page, setPage] = useState(1),
@@ -109,13 +121,23 @@ function Workspace({
     return <ErrorState error={profile.error} retry={() => profile.refetch()} />;
   if (!allowed("list"))
     return <p role="alert">You do not have permission to view properties.</p>;
+  const inRecord = !!selected || creating;
   return (
     <main className="property-workspace">
       <header className="property-heading">
         <div>
-          <p className="property-eyebrow">PROPERTY OPERATIONS</p>
-          <h1>Properties</h1>
-          <p>Organize properties, buildings and the spaces within them.</p>
+          <p className="property-eyebrow">
+            <FolderTree size={14} aria-hidden="true" />
+            {organizationName}
+            <span>/</span>Property directory
+          </p>
+          <h1>
+            Properties<span className="property-heading-period">.</span>
+          </h1>
+          <p className="property-heading-copy">
+            The properties your organization operates. Every building, room and
+            space in context.
+          </p>
         </div>
         {allowed("create") && (
           <button
@@ -127,82 +149,134 @@ function Workspace({
               setNotice("");
             }}
           >
+            <Plus size={16} aria-hidden="true" />
             New property or space
           </button>
         )}
       </header>
+      <div className="property-viewline">
+        <div>
+          <span className="property-view-index">01</span>
+          {inRecord ? (
+            <button
+              className="property-directory-back"
+              onClick={() => {
+                setSelected(null);
+                setCreating(false);
+                setNotice("");
+              }}
+            >
+              Directory
+            </button>
+          ) : (
+            <strong>Directory</strong>
+          )}
+          {inRecord && (
+            <>
+              <ChevronRight size={14} aria-hidden="true" />
+              <span>{creating ? "New structure" : "Property workspace"}</span>
+            </>
+          )}
+        </div>
+        <span className="property-view-hint">
+          {inRecord
+            ? "Organization / Property / Space"
+            : "A connected record of your properties"}
+        </span>
+      </div>
       {notice && (
         <p className="property-notice" role="status">
           {notice}
         </p>
       )}
-      <div className="property-layout">
-        <section className="property-panel" aria-label="Property list">
-          <form
-            className="property-search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSearch(searchInput.trim());
-              setPage(1);
-            }}
-          >
-            <label>
-              Search properties
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                maxLength={100}
-                type="search"
-              />
-            </label>
-            <button>Search</button>
-          </form>
-          <div className="property-filters">
-            <label>
-              Type
-              <select
-                value={kind}
-                onChange={(e) => {
-                  setKind(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">All types</option>
-                {Object.entries(propertyKinds).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Status
-              <select
-                value={status}
-                onChange={(e) => {
-                  setStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-                <option value="all">All statuses</option>
-              </select>
-            </label>
-          </div>
-          <label className="property-checkbox">
-            <input
-              type="checkbox"
-              checked={rootOnly}
-              onChange={(e) => {
-                setRootOnly(e.target.checked);
+      {!inRecord ? (
+        <section className="property-registry" aria-label="Property list">
+          <div className="property-toolbar">
+            <form
+              className="property-search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setSearch(searchInput.trim());
                 setPage(1);
               }}
-            />
-            Top-level properties only
-          </label>
+            >
+              <label>
+                <span className="sr-only">Search properties</span>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  placeholder="Find a property or space…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  maxLength={100}
+                  type="search"
+                />
+              </label>
+              <button>Search</button>
+            </form>
+            <div className="property-filters">
+              <label>
+                <span>Type</span>
+                <select
+                  value={kind}
+                  onChange={(e) => {
+                    setKind(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">All types</option>
+                  {Object.entries(propertyKinds).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Status</span>
+                <select
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="active">Active</option>
+                  <option value="archived">Archived</option>
+                  <option value="all">All statuses</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div className="property-registry-meta">
+            <label className="property-checkbox">
+              <input
+                type="checkbox"
+                checked={rootOnly}
+                onChange={(e) => {
+                  setRootOnly(e.target.checked);
+                  setPage(1);
+                }}
+              />
+              Top-level within this organization
+            </label>
+            <span>
+              {list.data?.total ?? "—"} records{" "}
+              {search && <span>matching “{search}”</span>}
+            </span>
+          </div>
+          <div className="property-registry-columns" aria-hidden="true">
+            <span>Property or space</span>
+            <span>Structure</span>
+            <span>Location</span>
+            <span />
+          </div>
           {list.isPending ? (
-            <p role="status">Loading properties…</p>
+            <div className="property-loading" role="status">
+              <span className="property-skeleton" />
+              <span className="property-skeleton" />
+              <span className="property-skeleton" />
+              Loading properties…
+            </div>
           ) : list.isError ? (
             <ErrorState error={list.error} retry={() => list.refetch()} />
           ) : (
@@ -212,35 +286,48 @@ function Workspace({
                   {list.data.items.map((property) => (
                     <li key={property.id}>
                       <button
+                        aria-label={`${property.name} ${property.is_active ? "Active" : "Archived"}`}
                         disabled={!allowed("show")}
-                        aria-current={
-                          selected === property.id ? "true" : undefined
-                        }
                         onClick={() => select(property.id)}
                       >
-                        <span className="property-item-title">
-                          {property.name}
-                          <span
-                            className={`property-status ${property.is_active ? "active" : "archived"}`}
-                          >
-                            {property.is_active ? "Active" : "Archived"}
+                        <span className="property-registry-place">
+                          <StructureMark kind={property.kind} />
+                          <span>
+                            <strong>{property.name}</strong>
+                            <span
+                              className={`property-status ${property.is_active ? "active" : "archived"}`}
+                            >
+                              {property.is_active ? "Active" : "Archived"}
+                            </span>
                           </span>
                         </span>
-                        <span>
-                          {propertyKinds[property.kind] || property.kind}
+                        <span className="property-registry-kind">
+                          {propertyKinds[property.kind] || "Space"}
                         </span>
-                        {property.address && <small>{property.address}</small>}
+                        <span className="property-registry-location">
+                          <MapPin size={14} aria-hidden="true" />
+                          {property.address ||
+                            (property.parent_id
+                              ? "Inside another property or space"
+                              : "Top level in organization")}
+                        </span>
+                        <ArrowUpRight
+                          className="property-open-arrow"
+                          size={19}
+                          aria-hidden="true"
+                        />
                       </button>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className="property-empty">
+                  <StructureMark kind="building" />
                   <h2>No properties found</h2>
                   <p>
                     {search || kind || status !== "active"
-                      ? "Try changing your search or filters."
-                      : "Create a property to begin organizing your spaces."}
+                      ? "Try a different search or filter to find your property."
+                      : "Add a building or space to begin mapping your organization’s structure."}
                   </p>
                 </div>
               )}
@@ -248,29 +335,34 @@ function Workspace({
                 className="property-pagination"
                 aria-label="Property pagination"
               >
-                <button
-                  disabled={page === 1 || list.isFetching}
-                  onClick={() => setPage(page - 1)}
-                >
-                  Previous
-                </button>
                 <span>
-                  Page {page} · {list.data?.total || 0} records
+                  Showing {list.data?.items.length || 0} of{" "}
+                  {list.data?.total || 0} properties and spaces
                 </span>
-                <button
-                  disabled={
-                    page >= (list.data?.total_pages || 0) || list.isFetching
-                  }
-                  onClick={() => setPage(page + 1)}
-                >
-                  Next
-                </button>
+                <div>
+                  <button
+                    disabled={page === 1 || list.isFetching}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span>Page {page}</span>
+                  <button
+                    disabled={
+                      page >= (list.data?.total_pages || 0) || list.isFetching
+                    }
+                    onClick={() => setPage(page + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
               </nav>
             </>
           )}
         </section>
+      ) : (
         <section
-          className="property-panel property-detail"
+          className={`property-record ${creating ? "is-editing" : ""}`}
           aria-label="Property details"
         >
           {creating && allowed("create") ? (
@@ -283,7 +375,9 @@ function Workspace({
             />
           ) : selected && allowed("show") ? (
             detail.isPending ? (
-              <p role="status">Loading property…</p>
+              <p className="property-loading" role="status">
+                Loading property…
+              </p>
             ) : detail.isError ? (
               <ErrorState error={detail.error} retry={() => detail.refetch()} />
             ) : detail.data ? (
@@ -303,17 +397,37 @@ function Workspace({
               />
             ) : null
           ) : (
-            <div className="property-empty">
-              <h2>A place for every operation</h2>
-              <p>
-                Select a property to explore its hierarchy, details and
-                available actions.
-              </p>
-            </div>
+            <p className="property-empty">
+              Select a record from the directory to continue.
+            </p>
           )}
         </section>
-      </div>
+      )}
     </main>
+  );
+}
+function StructureMark({ kind }: { kind: PropertyKind }) {
+  const paths: Record<PropertyKind, string> = {
+    site: "M8 38V16L24 6l16 10v22M4 38h40M18 38V26h12v12M15 18h3m12 0h3",
+    building:
+      "M12 39V8h24v31M7 39h34M19 15h3m4 0h3m-10 7h3m4 0h3m-10 7h3m4 0h3M21 39v-5h6v5",
+    unit: "M8 39V20l16-12 16 12v19M5 39h38M20 39V27h8v12M14 23h3m14 0h3",
+    room: "M12 39V8h24v31M7 39h34M17 39V13h14v26M25 26h2",
+    space: "M8 10h32v28H8zM8 24h32M24 10v28M12 14h7m10 0h7m-24 17h7m10 0h7",
+  };
+  return (
+    <span className={`property-structure-mark kind-${kind}`} aria-hidden="true">
+      <svg
+        viewBox="0 0 48 48"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={paths[kind] || paths.space} />
+      </svg>
+    </span>
   );
 }
 function PropertyForm({
@@ -340,7 +454,7 @@ function PropertyForm({
               : initialParent.kind === "unit"
                 ? "room"
                 : "space"
-          : "site"),
+          : "building"),
     ),
     [address, setAddress] = useState(property?.address || ""),
     [description, setDescription] = useState(property?.description || "");
@@ -361,10 +475,14 @@ function PropertyForm({
     [asChild, setAsChild] = useState(!!initialParent),
     [validation, setValidation] = useState("");
   const mutation = useMutation({
-    mutationFn: (body: PropertyInput) =>
-      property
-        ? propertiesApi.update(property.id, body)
-        : propertiesApi.create(body),
+    mutationFn: (
+      input:
+        | { mode: "create"; body: PropertyInput }
+        | { mode: "update"; body: Omit<PropertyInput, "kind" | "parent_id"> },
+    ) =>
+      input.mode === "update"
+        ? propertiesApi.update(property!.id, input.body)
+        : propertiesApi.create(input.body),
     onSuccess: onSaved,
   });
   function submit(e: FormEvent) {
@@ -378,16 +496,31 @@ function PropertyForm({
       return;
     }
     setValidation("");
+    const body = { name: name.trim(), address, description };
+    if (property) {
+      mutation.mutate({ mode: "update", body });
+      return;
+    }
+    if (kind === "site") {
+      setValidation(
+        "Organization sites are created during organization setup.",
+      );
+      return;
+    }
     mutation.mutate({
-      name: name.trim(),
-      kind,
-      address,
-      description,
-      ...(!property ? { parent_id: asChild ? parent?.value : null } : {}),
+      mode: "create",
+      body: { ...body, kind, parent_id: asChild ? parent?.value : null },
     });
   }
   return (
-    <form onSubmit={submit}>
+    <form className="property-editor" onSubmit={submit}>
+      <p className="property-eyebrow">
+        {property
+          ? property.name
+          : initialParent
+            ? `Inside ${initialParent.name}`
+            : "Top level within your organization"}
+      </p>
       <h2>{property ? "Edit details" : "Create property or space"}</h2>
       <fieldset disabled={mutation.isPending}>
         <label>
@@ -399,19 +532,34 @@ function PropertyForm({
             onChange={(e) => setName(e.target.value)}
           />
         </label>
-        <label>
-          Type
-          <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as PropertyKind)}
-          >
-            {Object.entries(propertyKinds).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {property ? (
+          <div className="property-fixed-kind">
+            <span>Structure type</span>
+            <strong>{propertyKinds[property.kind]}</strong>
+            <small>
+              This structure is fixed. Use Move to change where it belongs.
+            </small>
+          </div>
+        ) : (
+          <label>
+            Structure type
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value as PropertyKind)}
+            >
+              {Object.entries(propertyKinds)
+                .filter(([value]) => value !== "site")
+                .map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+            </select>
+            <small>
+              The organization site is created during organization setup.
+            </small>
+          </label>
+        )}
         <label>
           Address
           <input
@@ -527,11 +675,13 @@ function PropertyDetails({
         <span aria-current="page">{property.name}</span>
       </nav>
       <div className="property-detail-heading">
+        <StructureMark kind={property.kind} />
         <div>
           <p className="property-eyebrow">
-            {propertyKinds[property.kind] || property.kind}
+            {propertyKinds[property.kind] || "Space"}
           </p>
           <h2>{property.name}</h2>
+          {property.description && <p>{property.description}</p>}
         </div>
         <span
           className={`property-status ${property.is_active ? "active" : "archived"}`}
@@ -539,54 +689,13 @@ function PropertyDetails({
           {property.is_active ? "Active" : "Archived"}
         </span>
       </div>
-      {property.description && <p>{property.description}</p>}
-      <dl className="property-facts">
-        <div>
-          <dt>Address</dt>
-          <dd>{property.address || "No address provided"}</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>
-            {property.ancestors.length
-              ? property.ancestors.map((a) => a.name).join(" / ")
-              : "Top-level property"}
-          </dd>
-        </div>
-      </dl>
-      <h3>Spaces within {property.name}</h3>
-      {allowed("create") && (
-        <button
-          disabled={!property.is_active}
-          onClick={() => onCreateChild(property)}
-        >
-          Add child space
-        </button>
-      )}
-      {property.children.length ? (
-        <ul className="property-children">
-          {property.children.map((child) => (
-            <li key={child.id}>
-              <button onClick={() => onSelect(child.id)}>
-                {child.name}
-                <small>
-                  {propertyKinds[child.kind] || child.kind} ·{" "}
-                  {child.is_active ? "Active" : "Archived"}
-                </small>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="property-muted">No spaces within this property yet.</p>
-      )}
-      <div className="property-actions">
+      <div className="property-actions property-record-actions">
         {allowed("update") && (
           <button disabled={mutation.isPending} onClick={() => setMode("edit")}>
             Edit details
           </button>
         )}
-        {allowed("move") && (
+        {property.kind !== "site" && allowed("move") && (
           <button
             disabled={mutation.isPending}
             onClick={() => {
@@ -597,7 +706,7 @@ function PropertyDetails({
             Move property or space
           </button>
         )}
-        {allowed("toggle_active") && (
+        {property.kind !== "site" && allowed("toggle_active") && (
           <button
             disabled={mutation.isPending}
             onClick={() => setConfirm(true)}
@@ -606,6 +715,102 @@ function PropertyDetails({
           </button>
         )}
       </div>
+      <dl className="property-facts">
+        <div>
+          <dt>
+            <MapPin size={13} aria-hidden="true" />
+            Address
+          </dt>
+          <dd>{property.address || "No address provided"}</dd>
+        </div>
+        <div>
+          <dt>
+            <CornerDownRight size={13} aria-hidden="true" />
+            Belongs to
+          </dt>
+          <dd>
+            {property.ancestors.length
+              ? property.ancestors.map((a) => a.name).join(" / ")
+              : "Top level within this organization"}
+          </dd>
+        </div>
+        <div>
+          <dt>Structure</dt>
+          <dd>
+            {propertyKinds[property.kind]}
+            <small>Fixed at creation</small>
+          </dd>
+        </div>
+      </dl>
+      <section className="property-structure" aria-label="Property structure">
+        <div className="property-section-heading">
+          <div>
+            <p className="property-eyebrow">SPATIAL HIERARCHY</p>
+            <h3>Inside {property.name}</h3>
+          </div>
+          <span className="property-child-count">
+            {property.children.length} direct{" "}
+            {property.children.length === 1 ? "space" : "spaces"}
+          </span>
+          {allowed("create") && (
+            <button
+              disabled={!property.is_active}
+              onClick={() => onCreateChild(property)}
+            >
+              <Plus size={15} aria-hidden="true" />
+              Add child space
+            </button>
+          )}
+        </div>
+        <div className="property-structure-canvas">
+          <div className="property-current-node">
+            <StructureMark kind={property.kind} />
+            <span>
+              <small>{propertyKinds[property.kind]}</small>
+              <strong>{property.name}</strong>
+            </span>
+            <span
+              className={`property-node-dot ${property.is_active ? "active" : "archived"}`}
+              title={property.is_active ? "Active" : "Archived"}
+            />
+          </div>
+          {property.children.length ? (
+            <ul className="property-children">
+              {property.children.map((child) => (
+                <li key={child.id}>
+                  <button
+                    className={child.is_active ? "" : "is-archived"}
+                    onClick={() => onSelect(child.id)}
+                  >
+                    <StructureMark kind={child.kind} />
+                    <span>
+                      <strong>{child.name}</strong>
+                      <small>
+                        {propertyKinds[child.kind]} ·{" "}
+                        {child.is_active ? "Active" : "Archived"}
+                      </small>
+                    </span>
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="property-structure-empty">
+              <span className="property-empty-connector" />
+              <p>
+                No spaces inside this{" "}
+                {propertyKinds[property.kind].toLowerCase()} yet.
+              </p>
+              <small>
+                {property.is_active
+                  ? "Add a child space to extend this hierarchy."
+                  : "Activate this property before adding child spaces."}
+              </small>
+            </div>
+          )}
+        </div>
+      </section>
       {confirm && (
         <section
           className="property-confirm"
@@ -640,6 +845,7 @@ function PropertyDetails({
       )}
       {mode === "move" && (
         <form
+          className="property-editor property-move-editor"
           onSubmit={(e) => {
             e.preventDefault();
             if (!toRoot && !parent) {

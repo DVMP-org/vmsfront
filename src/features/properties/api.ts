@@ -1,13 +1,14 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
 export const propertyKinds = {
-  site: "Property",
+  site: "Organization site",
   building: "Building",
   unit: "Unit",
   room: "Room",
   space: "Space",
 } as const;
 export type PropertyKind = keyof typeof propertyKinds;
+export type StructureKind = Exclude<PropertyKind, "site">;
 export interface Property {
   id: string;
   parent_id: string | null;
@@ -24,7 +25,7 @@ export interface PropertyDetail extends Property {
 }
 export type PropertyInput = {
   name: string;
-  kind: PropertyKind;
+  kind: StructureKind;
   description: string;
   address: string;
   parent_id?: string | null;
@@ -48,7 +49,7 @@ export const propertiesApi = {
     (await apiClient.get<ApiResponse<PropertyDetail>>(`${base}/${id}`)).data,
   create: async (body: PropertyInput) =>
     (await apiClient.post<ApiResponse<Property>>(base, body)).data,
-  update: async (id: string, body: Omit<PropertyInput, "parent_id">) =>
+  update: async (id: string, body: Omit<PropertyInput, "parent_id" | "kind">) =>
     (await apiClient.patch<ApiResponse<Property>>(`${base}/${id}`, body)).data,
   move: async (id: string, parent_id: string | null) =>
     (

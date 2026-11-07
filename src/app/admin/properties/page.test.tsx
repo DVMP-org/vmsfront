@@ -56,7 +56,7 @@ const child = {
 const root = {
   id: "root",
   name: "Harbour Property",
-  kind: "site",
+  kind: "building",
   parent_id: null,
   description: "Property operations",
   address: "Main Street",
@@ -221,7 +221,7 @@ it("creates a child with the current property selected", async () => {
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "East Building",
-        kind: "building",
+        kind: "unit",
         parent_id: "root",
       }),
     ),
@@ -280,9 +280,58 @@ it("clears selected details and drafts when organization or user changes", async
   identity.organizationId = "second-org";
   identity.userId = "second-user";
   view.rerender(element());
-  await screen.findByText("A place for every operation");
+  await screen.findByRole("region", { name: "Property list" });
   expect(screen.queryByDisplayValue("Unsaved private draft")).toBeNull();
   expect(
     screen.queryByRole("heading", { name: "Harbour Property" }),
   ).toBeNull();
+});
+
+it("does not offer organization site creation", async () => {
+  mount();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "New property or space" }),
+  );
+  const types = screen.getByRole("combobox", { name: /Structure type/ });
+  expect(types).toHaveValue("building");
+  expect(types.querySelector('option[value="site"]')).toBeNull();
+});
+it("shows existing type as fixed and never patches it when editing", async () => {
+  mocks.update.mockResolvedValue(root);
+  mount();
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Harbour Property Active/ }),
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Edit details" }));
+  expect(screen.queryByRole("combobox", { name: /Structure type/ })).toBeNull();
+  await screen.findByText(
+    "This structure is fixed. Use Move to change where it belongs.",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalled());
+  expect(mocks.update.mock.calls[0][1]).not.toHaveProperty("kind");
+});
+
+it("treats the organization site as context rather than a movable or archivable space", async () => {
+  const site = { ...root, kind: "site" };
+  mocks.list.mockResolvedValue({
+    items: [site],
+    total: 1,
+    page: 1,
+    total_pages: 1,
+  });
+  mocks.get.mockResolvedValue(site);
+  mount();
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Harbour Property Active/ }),
+  );
+  await screen.findByRole("heading", { name: "Harbour Property" });
+  expect(
+    screen.queryByRole("button", { name: "Move property or space" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Archive", exact: true }),
+  ).toBeNull();
+  expect(screen.getByRole("button", { name: "Add child space" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Edit details" })).toBeEnabled();
 });
