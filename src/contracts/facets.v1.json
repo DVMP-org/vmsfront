@@ -1,0 +1,180 @@
+{
+  "contract_version": "vmscore.facets/v1",
+  "facets": {
+    "parties": {
+      "default_limit": 20,
+      "filters": {
+        "additionalProperties": false,
+        "properties": {
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Active"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "person",
+                  "organization"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Kind"
+          },
+          "place_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Place Id"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Role"
+          }
+        },
+        "title": "PartyFilters",
+        "type": "object"
+      },
+      "max_limit": 100,
+      "meta": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "user_linked": {
+            "title": "User Linked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "user_linked"
+        ],
+        "title": "PartyMeta",
+        "type": "object"
+      },
+      "permission": "parties.list"
+    },
+    "places": {
+      "default_limit": 20,
+      "filters": {
+        "additionalProperties": false,
+        "properties": {
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Active"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "site",
+                  "building",
+                  "unit",
+                  "room",
+                  "space"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Kind"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Id"
+          },
+          "root_only": {
+            "default": false,
+            "title": "Root Only",
+            "type": "boolean"
+          }
+        },
+        "title": "PlaceFilters",
+        "type": "object"
+      },
+      "max_limit": 100,
+      "meta": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "slug",
+          "parent_id"
+        ],
+        "title": "PlaceMeta",
+        "type": "object"
+      },
+      "permission": "places.list"
+    }
+  }
+}
