@@ -1,14 +1,14 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
 export const propertyKinds = {
-  site: "Organization site",
+  site: "Site / property",
   building: "Building",
   unit: "Unit",
   room: "Room",
   space: "Space",
 } as const;
 export type PropertyKind = keyof typeof propertyKinds;
-export type StructureKind = Exclude<PropertyKind, "site">;
+export type StructureKind = PropertyKind;
 export interface Property {
   id: string;
   parent_id: string | null;
