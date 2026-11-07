@@ -1,0 +1,129 @@
+import { describe, expect, it } from "vitest";
+import type { Admin, WorkspaceRelationship } from "@/types";
+import {
+  areaForRelationship,
+  buildPropertyWorkspaces,
+  buildWorkspaceCards,
+  roleLabel,
+} from "./catalog";
+
+function relationship(role: string, placeId: string): WorkspaceRelationship {
+  return {
+    id: `relationship-${role}`,
+    organization_id: "org",
+    role,
+    status: "active",
+    effective_from: null,
+    effective_to: null,
+    created_at: "2026-01-01",
+    updated_at: "2026-01-01",
+    party: {
+      id: "party",
+      kind: "person",
+      display_name: "Alex Morgan",
+      email: "alex@example.com",
+      is_active: true,
+    },
+    place: {
+      id: placeId,
+      name: `Place ${placeId}`,
+      slug: placeId,
+      kind: "unit",
+      is_active: true,
+    },
+  };
+}
+
+describe("workspace catalog", () => {
+  it("keeps management, occupancy, staff and guest access separate", () => {
+    const admin = {
+      role: { name: "Super Admin", permissions_parsed: ["*"] },
+    } as Admin;
+    const cards = buildWorkspaceCards(admin, [
+      relationship("admin", "organization"),
+      relationship("resident", "home"),
+      relationship("tenant", "office"),
+      relationship("employee", "hotel"),
+      relationship("guest_of", "hotel"),
+    ]);
+
+    expect(cards.map((card) => card.area)).toEqual([
+      "management",
+      "occupancy",
+      "occupancy",
+      "staff",
+      "guest",
+    ]);
+    expect(cards[0].roleLabel).toBe("Super administrator");
+    expect(cards.at(-1)?.href).toBe("/workspace/hotel");
+    expect(cards.find((card) => card.area === "guest")?.title).toMatch(
+      /Stay at/,
+    );
+  });
+
+  it("classifies tenant roles as occupancy and formats labels", () => {
+    expect(areaForRelationship(relationship("resident_of", "home"))).toBe(
+      "occupancy",
+    );
+    expect(areaForRelationship(relationship("hotel_staff", "hotel"))).toBe(
+      "staff",
+    );
+    expect(areaForRelationship(relationship("guest", "hotel"))).toBe("guest");
+    expect(roleLabel("guest_of")).toBe("Guest");
+  });
+
+  it("only attaches management to the place that grants administration", () => {
+    const admin = {
+      role: { name: "Super Admin", permissions_parsed: ["*"] },
+    } as Admin;
+    const workspaces = buildPropertyWorkspaces({
+      admin,
+      relationships: [
+        relationship("admin", "organization"),
+        relationship("resident", "home"),
+        relationship("guest_of", "hotel"),
+      ],
+      managedPlaces: [relationship("admin", "organization").place],
+    });
+
+    expect(workspaces).toHaveLength(3);
+    expect(
+      workspaces
+        .find((workspace) => workspace.place.id === "organization")
+        ?.accesses.map((access) => access.area),
+    ).toEqual(["management"]);
+    expect(
+      workspaces
+        .find((workspace) => workspace.place.id === "home")
+        ?.accesses.map((access) => access.area),
+    ).toEqual(["occupancy"]);
+    expect(
+      workspaces
+        .find((workspace) => workspace.place.id === "hotel")
+        ?.accesses.map((access) => access.area),
+    ).toEqual(["guest"]);
+  });
+
+  it("keeps independent management and tenancy access on one property", () => {
+    const admin = {
+      role: { name: "Estate Manager", permissions_parsed: [] },
+    } as Admin;
+    const main = relationship("admin", "office");
+    const tenancy = {
+      ...relationship("tenant", "office"),
+      id: "tenancy",
+    };
+    const [workspace] = buildPropertyWorkspaces({
+      admin,
+      relationships: [main, tenancy],
+      managedPlaces: [main.place],
+    });
+
+    expect(workspace.accesses.map((access) => access.area)).toEqual([
+      "management",
+      "occupancy",
+    ]);
+    expect(workspace.accesses[0].roleLabel).toBe("Estate Manager");
+    expect(workspace.accesses[1].roleLabel).toBe("Tenant");
+  });
+});

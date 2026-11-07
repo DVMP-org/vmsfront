@@ -1,26 +1,117 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminDashboardPage from "./page";
 
-const { query, refetch } = vi.hoisted(() => ({ query: vi.fn(), refetch: vi.fn() }));
-vi.mock("@/hooks/use-admin", () => ({ useAdminDashboard: query }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("next/dynamic", () => ({ default: () => () => null }));
+const mocks = vi.hoisted(() => ({
+  query: vi.fn(),
+  refetch: vi.fn(),
+}));
 
-describe("admin dashboard request failures", () => {
-  it("offers retry instead of showing zero metrics after an initial failure", () => {
-    query.mockReturnValue({ isLoading: false, isError: true, isFetching: false, refetch });
-    render(<AdminDashboardPage />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Dashboard unavailable");
-    expect(screen.queryByText("Residencies")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(refetch).toHaveBeenCalledOnce();
+vi.mock("@/hooks/use-admin", () => ({ useAdminDashboard: mocks.query }));
+vi.mock("@/features/context/use-workspace-context", () => ({
+  useWorkspaceContext: () => ({
+    data: { effective_use_case: "mixed_use" },
+  }),
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
+const dashboard = {
+  metrics: {
+    total_places: 4,
+    total_parties: 3,
+    active_relationships: 3,
+    active_visit_authorizations: 2,
+    pending_visit_authorizations: 1,
+    active_visit_sessions: 1,
+    active_checkpoint_presences: 1,
+    checkpoint_events_today: 5,
+  },
+  root_places: [
+    {
+      id: "place",
+      name: "Harbour Hotel",
+      kind: "building",
+      address: "2 Harbour Way",
+      is_active: true,
+      use_case: "hospitality",
+    },
+  ],
+  recent_visit_authorizations: [
+    {
+      id: "visit",
+      code: "VISIT01",
+      status: "requested",
+      purpose: "Guest arrival",
+      valid_from: "2026-01-01",
+      valid_to: "2026-01-02",
+      uses_count: 0,
+      max_uses: 1,
+      host_party: { display_name: "Alex Host" },
+      destination_place: { name: "Harbour Hotel" },
+    },
+  ],
+  recent_checkpoint_events: [
+    {
+      id: "event",
+      direction: "entry",
+      outcome: "allowed",
+      reason_code: "authorization_valid",
+      occurred_at: "2026-01-01T10:00:00Z",
+      place_id: "place",
+      gate_id: "gate",
+    },
+  ],
+};
+
+describe("operating dashboard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
-  it("warns when a refresh fails but cached data remains", () => {
-    query.mockReturnValue({ data: {}, isLoading: false, isError: true, isFetching: true, refetch });
+
+  it("offers retry after an initial failure", () => {
+    mocks.query.mockReturnValue({
+      isPending: false,
+      isError: true,
+      refetch: mocks.refetch,
+    });
     render(<AdminDashboardPage />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Showing the last available results");
-    expect(screen.getByRole("button", { name: "Retrying…" })).toBeDisabled();
-    expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Dashboard unavailable",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mocks.refetch).toHaveBeenCalledOnce();
+  });
+
+  it("renders canonical property, visit, and checkpoint data", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    expect(
+      screen.getByRole("heading", { name: "Operating dashboard" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Harbour Hotel" })).toHaveAttribute(
+      "href",
+      "/admin/properties/place",
+    );
+    expect(screen.getByText("Guest arrival")).toBeInTheDocument();
+    expect(screen.getByText("Check-in · allowed")).toBeInTheDocument();
+  });
+
+  it("warns when refresh fails but cached data remains", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: true,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Showing the last successful snapshot",
+    );
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 });
