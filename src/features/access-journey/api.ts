@@ -74,6 +74,12 @@ export const accessJourneyApi = {
         body,
       )
     ).data,
+  get: async (authorizationId: string) =>
+    (
+      await apiClient.get<ApiResponse<VisitAuthorization>>(
+        `/workspace/visit-authorizations/${authorizationId}`,
+      )
+    ).data,
   cancel: async (authorizationId: string) =>
     (
       await apiClient.post<ApiResponse<VisitAuthorization>>(

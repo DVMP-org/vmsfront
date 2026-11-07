@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   Clock3,
@@ -12,10 +13,12 @@ import {
   Plus,
   RefreshCw,
   ShieldAlert,
+  Share2,
   UserRound,
   Users,
   XCircle,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -69,6 +72,9 @@ export function AccessWorkspace({
 }) {
   const queryClient = useQueryClient();
   const [showComposer, setShowComposer] = useState(false);
+  const [selectedInvitationId, setSelectedInvitationId] = useState<
+    string | null
+  >(null);
   const queryKey = ["workspace", "visit-authorizations", relationship.place.id];
   const invitations = useQuery({
     queryKey,
@@ -79,7 +85,9 @@ export function AccessWorkspace({
     mutationFn: accessJourneyApi.cancel,
     onSuccess: async () => {
       toast.success("Invitation cancelled");
-      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace", "visit-authorizations"],
+      });
     },
     onError: (error) => toast.error(parseApiError(error).message),
   });
@@ -184,6 +192,7 @@ export function AccessWorkspace({
                   cancelInvitation.variables === invitation.id
                 }
                 onCopy={() => copyCode(invitation.code)}
+                onOpen={() => setSelectedInvitationId(invitation.id)}
                 onCancel={() => cancelInvitation.mutate(invitation.id)}
               />
             ))}
@@ -201,6 +210,18 @@ export function AccessWorkspace({
             </p>
           </div>
         </section>
+      ) : null}
+
+      {selectedInvitationId ? (
+        <InvitationDetail
+          invitationId={selectedInvitationId}
+          onClose={() => setSelectedInvitationId(null)}
+          onCancel={() => cancelInvitation.mutate(selectedInvitationId)}
+          cancelling={
+            cancelInvitation.isPending &&
+            cancelInvitation.variables === selectedInvitationId
+          }
+        />
       ) : null}
     </div>
   );
@@ -388,11 +409,13 @@ function InvitationRow({
   invitation,
   cancelling,
   onCopy,
+  onOpen,
   onCancel,
 }: {
   invitation: VisitAuthorization;
   cancelling: boolean;
   onCopy: () => void;
+  onOpen: () => void;
   onCancel: () => void;
 }) {
   const status = statusMeta[invitation.status];
@@ -435,6 +458,14 @@ function InvitationRow({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
+          onClick={onOpen}
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+        >
+          View details
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
           onClick={onCopy}
           className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
@@ -453,6 +484,249 @@ function InvitationRow({
         ) : null}
       </div>
     </article>
+  );
+}
+
+function InvitationDetail({
+  invitationId,
+  onClose,
+  onCancel,
+  cancelling,
+}: {
+  invitationId: string;
+  onClose: () => void;
+  onCancel: () => void;
+  cancelling: boolean;
+}) {
+  const invitation = useQuery({
+    queryKey: ["workspace", "visit-authorization", invitationId],
+    queryFn: () => accessJourneyApi.get(invitationId),
+    retry: false,
+  });
+  const data = invitation.data;
+  const status = data ? statusMeta[data.status] : null;
+
+  async function shareInvitation() {
+    if (!data) return;
+    const text = [
+      `Visitor invitation for ${data.destination_place.name}`,
+      `Code: ${data.code}`,
+      `Valid: ${formatWindow(data.valid_from, data.valid_to)}`,
+    ].join("\n");
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Visitor invitation", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Invitation details copied");
+      }
+    } catch {
+      toast.error("Could not share the invitation");
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-zinc-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invitation-detail-title"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl sm:rounded-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+              Visitor invitation
+            </p>
+            <h2
+              id="invitation-detail-title"
+              className="mt-1 text-lg font-semibold"
+            >
+              {data
+                ? data.guests
+                    .map((guest) => guest.display_name_snapshot)
+                    .join(", ")
+                : "Loading invitation"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close invitation details"
+            className="grid h-9 w-9 place-items-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
+        </div>
+
+        {invitation.isError ? (
+          <div className="p-5">
+            <ErrorState
+              message={parseApiError(invitation.error).message}
+              onRetry={() => invitation.refetch()}
+            />
+          </div>
+        ) : invitation.isPending || !data ? (
+          <LoadingRows />
+        ) : (
+          <div className="space-y-5 p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              {status ? (
+                <span
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs font-semibold",
+                    status.className,
+                  )}
+                >
+                  {status.label}
+                </span>
+              ) : null}
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Requested {formatDateTime(data.requested_at)}
+              </span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+              <div className="space-y-4">
+                <DetailLine
+                  icon={MapPin}
+                  label="Destination"
+                  value={`${data.destination_place.name}${
+                    data.destination_place.address
+                      ? ` · ${data.destination_place.address}`
+                      : ""
+                  }`}
+                />
+                <DetailLine
+                  icon={CalendarClock}
+                  label="Access window"
+                  value={formatWindow(data.valid_from, data.valid_to)}
+                />
+                <DetailLine
+                  icon={CheckCircle2}
+                  label="Entry allowance"
+                  value={`${data.uses_count} used${
+                    data.max_uses ? ` of ${data.max_uses}` : " · unlimited"
+                  }`}
+                />
+                <DetailLine
+                  icon={UserRound}
+                  label="Host"
+                  value={data.host_party.display_name}
+                />
+                {data.purpose ? (
+                  <DetailLine
+                    icon={KeyRound}
+                    label="Purpose"
+                    value={data.purpose}
+                  />
+                ) : null}
+              </div>
+
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-700 dark:bg-zinc-800/60">
+                <div className="mx-auto grid h-36 w-36 place-items-center rounded-lg bg-white p-3 shadow-sm">
+                  <QRCodeSVG
+                    value={data.qr_code_url || data.code}
+                    size={120}
+                    level="M"
+                  />
+                </div>
+                <p className="mt-3 break-all font-mono text-sm font-semibold tracking-[0.08em]">
+                  {data.code}
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Present this code at arrival
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold">Guests</h3>
+              <div className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+                {data.guests.map((guest) => (
+                  <div
+                    key={guest.id}
+                    className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {guest.display_name_snapshot}
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        {guest.email_snapshot ||
+                          guest.phone_snapshot ||
+                          "No contact provided"}
+                      </p>
+                    </div>
+                    <span className="rounded bg-zinc-100 px-2 py-1 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      {guest.suffix}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {data.decline_reason ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                <p className="font-semibold">Declined</p>
+                <p className="mt-1">{data.decline_reason}</p>
+              </div>
+            ) : null}
+
+            <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800 sm:flex-row sm:justify-end">
+              {(data.status === "requested" || data.status === "approved") && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={cancelling}
+                  className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                >
+                  {cancelling ? "Cancelling…" : "Cancel invitation"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={shareInvitation}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[rgb(var(--brand-primary,#213928))] px-4 py-2 text-sm font-semibold text-white"
+              >
+                <Share2 className="h-4 w-4" />
+                Share invitation
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function DetailLine({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {label}
+        </p>
+        <p className="mt-0.5 text-sm font-medium">{value}</p>
+      </div>
+    </div>
   );
 }
 
@@ -566,6 +840,15 @@ function formatWindow(from: string, to: string) {
     minute: "2-digit",
   });
   return `${formatter.format(new Date(from))} – ${formatter.format(new Date(to))}`;
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function toLocalInput(date: Date) {
