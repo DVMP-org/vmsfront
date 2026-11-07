@@ -129,8 +129,8 @@ const SidebarLink = memo(function SidebarLink({
           ? "gap-3 px-3 py-2.5"
           : "justify-center px-2 py-2.5",
         isActive
-          ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.16)]"
-          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100",
+          ? "bg-[rgb(var(--brand-primary,#2563eb)/0.08)] text-[rgb(var(--brand-primary,#2563eb))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.12)]"
+          : "text-[#667085] hover:bg-[#f4f7fb] hover:text-[#0f1b31]",
       )}
       title={collapsed && !isMobile ? link.label : undefined}
     >
@@ -195,29 +195,29 @@ function WorkspaceContextPanel({
   }
 
   return (
-    <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="mb-3 rounded-lg border border-[#dce3ee] bg-[#f8faff] p-3">
       <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))] dark:bg-emerald-950/40 dark:text-emerald-200">
+        <span className="grid h-8 w-8 place-items-center rounded-md bg-white text-[rgb(var(--brand-primary,#2563eb))] shadow-sm">
           <ShieldCheck className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#98a2b3]">
             Management
           </span>
-          <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="block truncate text-sm font-semibold text-[#0f1b31]">
             {propertyName || "Organization overview"}
           </span>
         </span>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="rounded-md bg-zinc-100 px-2 py-1 text-[10px] font-semibold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="rounded bg-white px-2 py-1 text-[10px] font-semibold capitalize text-[#475467] ring-1 ring-[#dce3ee]">
           {useCase || "Loading context"}
         </span>
         {propertyName ? (
           <button
             type="button"
             onClick={onReset}
-            className="text-[11px] font-semibold text-[rgb(var(--brand-primary,#213928))] hover:underline dark:text-emerald-300"
+            className="text-[11px] font-semibold text-[rgb(var(--brand-primary,#2563eb))] hover:underline"
           >
             Organization view
           </button>
@@ -227,7 +227,7 @@ function WorkspaceContextPanel({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300"
+          className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700"
         >
           <RefreshCw className="h-3 w-3" />
           Retry workspace
@@ -671,12 +671,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "sticky top-0 flex flex-col border-r bg-background overflow-hidden",
-        "h-screen shadow-sm flex-shrink-0 z-30",
+        "sticky top-0 flex flex-col border-r border-[#dce3ee] bg-white overflow-hidden",
+        "h-screen flex-shrink-0 z-30",
       )}
     >
       {/* Organization Header (Admin only) or Logo Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800">
+      <div className="border-b border-[#dce3ee]">
         <SidebarOrganizationHeader
           collapsed={collapsed}
           onToggleCollapse={!isMobile ? toggleCollapse : undefined}
@@ -827,7 +827,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                 {actualType === "admin" &&
                   (!collapsed || isMobile) &&
                   link.group !== (links[index - 1] as any)?.group && (
-                    <p className="px-3 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-[.15em] text-muted-foreground">
+                  <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#98a2b3]">
                       {link.group}
                     </p>
                   )}
@@ -967,6 +967,29 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           </>
         </nav>
       </LayoutGroup>
+
+      {actualType === "admin" && (isMobile || !collapsed) ? (
+        <div className="border-t border-[#dce3ee] p-3">
+          <p className="px-2 text-[10px] leading-4 text-[#98a2b3]">
+            Organization access only. Occupant and staff workspaces remain
+            separate.
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <Link
+              href="/admin/organization"
+              className="rounded-md px-2 py-2 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+            >
+              Settings
+            </Link>
+            <a
+              href="mailto:support@vmscore.to"
+              className="rounded-md px-2 py-2 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+            >
+              Help & support
+            </a>
+          </div>
+        </div>
+      ) : null}
     </motion.aside>
   );
 });
