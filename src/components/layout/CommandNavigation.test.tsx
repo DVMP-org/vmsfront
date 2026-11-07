@@ -9,7 +9,6 @@ describe("command navigation", () => {
   it("fails closed without role data, honors child permissions, and deduplicates routes", () => {
     expect(permittedCommands(null).map((entry) => entry.label)).toEqual([
       "Dashboard",
-      "Workspaces",
       "Profile",
     ]);
     const commands = permittedCommands(role(["roles.list"]));

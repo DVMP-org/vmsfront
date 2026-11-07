@@ -97,6 +97,7 @@ vi.mock("@/hooks/use-auth", () => ({
             name: "Apartment A-101",
             slug: "apartment-a-101",
             kind: "unit",
+            parent_id: "organization",
             is_active: true,
           },
         },
@@ -136,8 +137,12 @@ describe("workspaces page", () => {
   it("groups management, occupancy, and guest access by property", () => {
     render(<SelectPage />);
     expect(
-      screen.getByRole("heading", { name: "Workspace access" }),
+      screen.getByRole("heading", { name: "Choose your workspace" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Organization settings" })).toHaveAttribute(
+      "href",
+      "/admin/organization",
+    );
     expect(
       screen.getByRole("heading", { name: /Properties \(3\)/ }),
     ).toBeInTheDocument();
@@ -147,6 +152,11 @@ describe("workspaces page", () => {
     expect(screen.getAllByText("1 Harbour Way").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Apartment A-101/ }));
+    expect(
+      screen.getByRole("heading", {
+        name: "Harbour Estate - Apartment A-101",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Resident workspace")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Harbour Hotel/ }));

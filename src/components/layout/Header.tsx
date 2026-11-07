@@ -113,7 +113,7 @@ export const Header = memo(function Header({
               <Link
                 href="/"
                 aria-label="VMSCore home"
-                className="flex items-center text-[#0f1b31]"
+                className="flex items-center text-[#0f1b31] lg:hidden"
               >
                 <LogoFull width={92} height={34} color="#0f1b31" />
               </Link>
