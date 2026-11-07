@@ -144,6 +144,35 @@ it("shows site administrators, occupants and the live arrival queue", async () =
   expect(screen.getAllByText("Expected arrivals").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
 });
+it("shows inherited site administration provenance", async () => {
+  mocks.context.mockResolvedValue({
+    management: {
+      mode: "inherited",
+      management_required: false,
+      is_administrator: true,
+      authoritative_place: {
+        id: "parent",
+        name: "Harbour Group",
+        slug: "harbour-group",
+        kind: "site",
+      },
+      administrators: [
+        {
+          party_id: "parent-admin",
+          display_name: "Morgan Manager",
+          email: "morgan@example.test",
+          role: "place_admin",
+        },
+      ],
+    },
+  });
+  mount();
+
+  expect(
+    await screen.findByText("Administration is inherited from Harbour Group."),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Morgan Manager")).toBeInTheDocument();
+});
 it("renders empty and failed lists explicitly with retry", async () => {
   mocks.list.mockRejectedValueOnce(new Error("unavailable"));
   mount();
