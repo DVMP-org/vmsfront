@@ -37,9 +37,13 @@ export function getInitials(firstName?: string | null, lastName?: string | null)
   return (first + last).toUpperCase() || "U";
 }
 
-export function getFullName(firstName?: string | null, lastName?: string | null): string {
+export function getFullName(
+  firstName?: string | null,
+  lastName?: string | null,
+  fallback: string = "Unknown User",
+): string {
   const parts = [firstName, lastName].filter(Boolean);
-  return parts.length > 0 ? parts.join(" ") : "Unknown User";
+  return parts.length > 0 ? parts.join(" ") : fallback;
 }
 
 export function formatCurrency(value: number): string {

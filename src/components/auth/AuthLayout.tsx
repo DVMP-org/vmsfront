@@ -38,7 +38,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
                 >
                     <div className="mb-8 inline-block">
                         <div className="bg-white p-4 rounded-2xl shadow-2xl">
-                            <LogoFull width={240} height={60} />
+                            <LogoFull width={240} height={60} color="#213928" />
                         </div>
                     </div>
                     <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-tight">
@@ -88,7 +88,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
             </div>
 
             {/* Main Panel - Right/Center */}
-            <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 lg:p-16 bg-background relative">
+            <div className="flex-1 flex flex-col justify-start items-center px-6 pb-6 pt-28 md:justify-center md:p-12 lg:p-16 bg-background relative">
                 <div className="absolute top-8 left-8 md:hidden">
                     <LogoFull width={120} height={40} />
                 </div>

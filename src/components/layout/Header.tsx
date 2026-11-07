@@ -28,6 +28,9 @@ import { useResidentDashboardSelect } from "@/hooks/use-resident";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { adminService } from "@/services/admin-service";
+import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
 
 interface HeaderProps {
@@ -46,7 +49,7 @@ export const Header = memo(function Header({
   const { data: profileData, isLoading: isProfileLoading } = useProfile();
   const currentUser = user || profileData;
 
-  const { selectedResidency, branding } = useAppStore();
+  const { selectedResidency, branding, organization } = useAppStore();
   const { data: activeTheme } = useActiveBrandingTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -55,6 +58,12 @@ export const Header = memo(function Header({
   const isResidencyRoute = type == 'resident' || pathname?.startsWith("/residency");
   const isSelectRoute = type == 'select' || pathname?.startsWith("/select");
   const isAdminUser = useAdminProfile();
+  const commandProfile = useQuery({
+    queryKey: ["command-profile", organization?.id, currentUser?.id],
+    queryFn: async () => (await adminService.getAdminProfile()).data,
+    enabled: isAdminRoute && !!organization?.id && !!currentUser?.id,
+    staleTime: 0,
+  });
   const profileHref = isAdminUser ? "/admin/profile" : "resident/profile";
   const dashboardHref = "/select";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -157,6 +166,7 @@ export const Header = memo(function Header({
               )}
             </Button>
 
+            {isAdminRoute && <CommandNavigation role={commandProfile.isFetchedAfterMount && !commandProfile.isError ? commandProfile.data?.role : null} contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`} navigate={(href) => router.push(href)} />}
             <NotificationDropdown />
 
             <div className="relative" ref={menuRef}>
@@ -171,7 +181,11 @@ export const Header = memo(function Header({
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-semibold text-foreground truncate max-w-[120px] xl:max-w-none">
-                    {getFullName(currentUser.first_name, currentUser.last_name)}
+                    {getFullName(
+                      currentUser.first_name,
+                      currentUser.last_name,
+                      currentUser.email,
+                    )}
                   </span>
                   {!isSelectRoute && (
                     <span className="text-[9px] uppercase text-muted-foreground">
@@ -195,7 +209,11 @@ export const Header = memo(function Header({
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground">
-                        {getFullName(currentUser.first_name, currentUser.last_name)}
+                        {getFullName(
+                          currentUser.first_name,
+                          currentUser.last_name,
+                          currentUser.email,
+                        )}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {currentUser.email}
