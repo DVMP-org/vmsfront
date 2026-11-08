@@ -19,11 +19,11 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import {
   Puzzle,
   Search,
   Sparkles,
-  X,
   Settings,
   CheckCircle2,
   AlertCircle,
@@ -66,7 +66,6 @@ export default function PluginsPage() {
     queryKey: ["admin", "plugins"],
     queryFn: async () => {
       const response = await adminService.getPlugins();
-      console.log(response.data);
       return response.data as BackendPlugin[];
     },
   });
@@ -74,7 +73,7 @@ export default function PluginsPage() {
   // Load frontend plugins
   const [frontendPlugins, setFrontendPlugins] = useState<any[]>([]);
   useEffect(() => {
-    loadPlugins().then(setFrontendPlugins).catch(console.error);
+    loadPlugins().then(setFrontendPlugins).catch(() => setFrontendPlugins([]));
   }, []);
 
   // Toggle plugin enable/disable mutation
@@ -196,8 +195,8 @@ export default function PluginsPage() {
           for (const key in camelCaseSettings) {
             currentSettings[key.toLowerCase()] = camelCaseSettings[key];
           }
-        } catch (e) {
-          console.error("Failed to parse configuration:", e);
+        } catch {
+          currentSettings = {};
         }
       }
 
@@ -278,36 +277,36 @@ export default function PluginsPage() {
     <>
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed  border-[var(--vms-line-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Extend Functionality
               </div>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-foreground">
+              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-[var(--vms-ink)]">
                 Plugins
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
+              <p className="text-sm sm:text-base text-[var(--vms-ink-muted)]">
                 Enhance your VMS with powerful integrations and features
               </p>
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">
+                  <div className="text-2xl font-bold text-[var(--vms-ink)]">
                     {enabledCount}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
                     Active
                   </div>
                 </div>
                 <div className="h-10 w-px bg-border" />
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">
+                  <div className="text-2xl font-bold text-[var(--vms-ink)]">
                     {plugins.length}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
                     Total
                   </div>
                 </div>
@@ -326,13 +325,13 @@ export default function PluginsPage() {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]" />
             <Input
               type="text"
               placeholder="Search plugins..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white"
+              className="pl-10  bg-[var(--vms-surface)]"
             />
           </div>
 
@@ -378,18 +377,18 @@ export default function PluginsPage() {
               return (
                 <Card
                   key={plugin.id}
-                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#213928)]/50 hover:shadow-lg"
+                  className="group overflow-hidden border transition-all duration-300 hover:border-[var(--vms-line-strong)] "
                 >
                   {/* Plugin Image/Icon Area */}
                   <div
-                    className={`relative h-40 bg-gradient-to-br ${plugin.color} overflow-hidden`}
+                    className={`relative h-40 bg-[var(--vms-surface-subtle)] overflow-hidden`}
                   >
                     {plugin.image && (
                       <img src={plugin.image} alt={plugin.name} className="w-full h-full object-cover" />
                     )}
                     {!plugin.image && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon className="h-20 w-20 text-slate-600/30" />
+                        <Icon className="h-20 w-20 text-[var(--vms-ink-muted)]/30" />
                       </div>
                     )}
 
@@ -415,7 +414,7 @@ export default function PluginsPage() {
                     <div className="absolute bottom-3 left-3">
                       <Badge
                         variant="secondary"
-                        className="bg-white/90 backdrop-blur-sm"
+                        className=" bg-[var(--vms-surface)]/90 "
                       >
                         {plugin.category}
                       </Badge>
@@ -442,14 +441,14 @@ export default function PluginsPage() {
                               </Badge>
                             )}
                         </div>
-                        <span className="text-[13px] font-medium truncate text-muted-foreground">
+                        <span className="text-[13px] font-medium truncate text-[var(--vms-ink-muted)]">
                           {titleCase(plugin.name)}
                         </span>
                         <CardDescription className="mt-1.5 line-clamp-2">
                           {plugin.description}
                         </CardDescription>
                         {/* Version Info */}
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--vms-ink-muted)]">
                           {plugin.backendVersion && (
                             <span>Backend: v{plugin.backendVersion}</span>
                           )}
@@ -459,7 +458,7 @@ export default function PluginsPage() {
                         </div>
                       </div>
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/20 dark:text-white text-slate-600 transition-colors group-hover:bg-[var(--brand-primary,#213928)]/10 group-hover:text-[var(--brand-primary,#213928)]">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)] transition-colors group-hover:text-[var(--vms-ink)]">
                           <Icon className="h-5 w-5" />
                         </div>
                       </div>
@@ -473,7 +472,7 @@ export default function PluginsPage() {
                         <span className="text-sm font-medium">
                           {plugin.enabled ? "Enabled" : "Disabled"}
                         </span>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-[var(--vms-ink-muted)]">
                           {plugin.licensed
                             ? "Included in the current plan"
                             : plugin.planName
@@ -487,8 +486,8 @@ export default function PluginsPage() {
                           togglePluginMutation.isPending ||
                           (!plugin.enabled && !plugin.canEnable)
                         }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928))] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
-                          ? "bg-[rgb(var(--brand-primary,#213928))]"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus-visible:ring-[var(--vms-focus)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
+                          ? "bg-[var(--vms-action)]"
                           : "bg-gray-200"
                           }`}
                         role="switch"
@@ -496,7 +495,7 @@ export default function PluginsPage() {
                         aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.name}`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${plugin.enabled ? "translate-x-6" : "translate-x-1"
+                          className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${plugin.enabled ? "translate-x-6" : "translate-x-1"
                             }`}
                         />
                       </button>
@@ -523,10 +522,10 @@ export default function PluginsPage() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                <Puzzle className="h-10 w-10 text-muted-foreground" />
+                <Puzzle className="h-10 w-10 text-[var(--vms-ink-muted)]" />
               </div>
               <h3 className="mt-4 text-lg font-semibold">No plugins found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-[var(--vms-ink-muted)]">
                 Try adjusting your search query
               </p>
             </CardContent>
@@ -535,40 +534,42 @@ export default function PluginsPage() {
       </div>
 
       {/* Plugin Details Modal */}
-      {selectedPlugin && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="relative w-full max-w-4xl my-8 bg-card rounded-2xl shadow-2xl">
+      <Modal
+        isOpen={!!selectedPlugin}
+        onClose={handleCloseDetails}
+        title={
+          selectedPlugin ? titleCase(selectedPlugin.name) : "Plugin details"
+        }
+        size="xl"
+        className="max-w-4xl"
+      >
+        {selectedPlugin && (
+          <div>
             {/* Modal Header */}
             <div
-              className={`relative rounded-t-2xl bg-gradient-to-br ${selectedPlugin.color} p-6`}
+              className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-6"
             >
-              <button
-                onClick={handleCloseDetails}
-                className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 transition-colors hover:bg-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
               <div className="flex items-start gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/90 backdrop-blur-sm">
-                  <selectedPlugin.icon className="h-8 w-8 text-slate-600" />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)]">
+                  <selectedPlugin.icon className="h-8 w-8 text-[var(--vms-ink-muted)]" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-muted-foreground">
+                  <p className="text-sm font-semibold text-[var(--vms-ink)]">
                     {titleCase(selectedPlugin.name)}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-600">
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
                     {selectedPlugin.description}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="bg-white/90">
+                    <Badge variant="secondary">
                       {selectedPlugin.category}
                     </Badge>
                     <Badge
                       variant={selectedPlugin.enabled ? "default" : "secondary"}
                       className={
                         selectedPlugin.enabled
-                          ? "bg-emerald-500 text-white"
-                          : "bg-white/90"
+                          ? ""
+                          : ""
                       }
                     >
                       {selectedPlugin.enabled
@@ -583,14 +584,14 @@ export default function PluginsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              <div className="rounded-2xl border bg-muted/40 p-4">
+            <div className="max-h-[70vh] space-y-6 overflow-y-auto p-6">
+              <div className="rounded-[var(--vms-radius-surface)] border bg-muted/40 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-muted-foreground">
+                    <h3 className="font-semibold text-[var(--vms-ink-muted)]">
                       Entitlement and activation
                     </h3>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-[var(--vms-ink-muted)]">
                       {selectedPlugin.planName
                         ? `Current plan: ${selectedPlugin.planName}`
                         : "No eligible commercial plan is currently attached."}
@@ -614,7 +615,7 @@ export default function PluginsPage() {
                       className="flex items-center gap-2 rounded-lg border bg-background/70 px-3 py-2 text-sm"
                     >
                       <CheckCircle2
-                        className={`h-4 w-4 ${active ? "text-emerald-500" : "text-muted-foreground"}`}
+                        className={`h-4 w-4 ${active ? "text-emerald-500" : "text-[var(--vms-ink-muted)]"}`}
                       />
                       {label}
                     </div>
@@ -634,7 +635,7 @@ export default function PluginsPage() {
 
               {/* Use Cases */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--vms-ink-muted)] mb-3">
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   Use Cases
                 </h3>
@@ -642,9 +643,9 @@ export default function PluginsPage() {
                   {selectedPlugin.details.useCases?.map((useCase, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-2 text-sm text-slate-600"
+                      className="flex items-start gap-2 text-sm text-[var(--vms-ink-muted)]"
                     >
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary,#213928)] flex-shrink-0" />
+                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--vms-action)]" />
                       {useCase}
                     </li>
                   ))}
@@ -653,7 +654,7 @@ export default function PluginsPage() {
 
               {/* Requirements */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--vms-ink-muted)] mb-3">
                   <AlertCircle className="h-5 w-5 text-amber-500" />
                   Requirements
                 </h3>
@@ -661,7 +662,7 @@ export default function PluginsPage() {
                   {selectedPlugin.details.requirements.map((req, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                      className="flex items-start gap-2 text-sm text-[var(--vms-ink-muted)]"
                     >
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
                       {req}
@@ -672,15 +673,15 @@ export default function PluginsPage() {
 
               {/* Setup Steps */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
-                  <Info className="h-5 w-5 text-muted-foreground" />
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--vms-ink-muted)] mb-3">
+                  <Info className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                   Setup Steps
                 </h3>
                 <ol className="space-y-3">
                   {selectedPlugin.details.setupSteps.map((step, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-3 text-sm text-muted-foreground"
+                      className="flex items-start gap-3 text-sm text-[var(--vms-ink-muted)]"
                     >
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600 flex-shrink-0">
                         {index + 1}
@@ -693,15 +694,15 @@ export default function PluginsPage() {
 
               {/* Configuration Options */}
               <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-muted-foreground mb-3">
-                  <Settings className="h-5 w-5 text-slate-600" />
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--vms-ink-muted)] mb-3">
+                  <Settings className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                   Configuration
                 </h3>
                 {isLoadingSettings ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
-                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--brand-primary,#213928)] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-muted-foreground">Loading settings...</p>
+                      <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--vms-action)] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-[var(--vms-ink-muted)]">Loading settings...</p>
                     </div>
                   </div>
                 ) : (
@@ -713,10 +714,10 @@ export default function PluginsPage() {
                           key={option.key}
                           className="rounded-xl border bg-muted/30 p-4"
                         >
-                          <label className="block text-sm font-medium text-muted-foreground mb-1">
+                          <label className="block text-sm font-medium text-[var(--vms-ink-muted)] mb-1">
                             {option.label}
                           </label>
-                          <p className="text-xs text-muted-foreground mb-3">
+                          <p className="text-xs text-[var(--vms-ink-muted)] mb-3">
                             {option.description}
                           </p>
 
@@ -730,12 +731,12 @@ export default function PluginsPage() {
                               }
                               disabled={!selectedPlugin.canConfigure}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
-                                ? "bg-[rgb(var(--brand-primary))]"
+                                ? "bg-[var(--vms-action)]"
                                 : "bg-gray-300"
                                 } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
+                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${editedConfig[normalizedKey]
                                   ? "translate-x-6"
                                   : "translate-x-1"
                                   }`}
@@ -751,7 +752,7 @@ export default function PluginsPage() {
                                 handleConfigChange(option.key, e.target.value)
                               }
                               disabled={!selectedPlugin.canConfigure}
-                              className="bg-white"
+                              className=" bg-[var(--vms-surface)]"
                             />
                           )}
 
@@ -786,7 +787,7 @@ export default function PluginsPage() {
                                 }
                               }}
                               disabled={!selectedPlugin.canConfigure}
-                              className="bg-white"
+                              className=" bg-[var(--vms-surface)]"
                             />
                           )}
 
@@ -800,12 +801,12 @@ export default function PluginsPage() {
                               }
                               disabled={!selectedPlugin.canConfigure}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
-                                ? "bg-[rgb(var(--brand-primary))]"
+                                ? "bg-[var(--vms-action)]"
                                 : "bg-gray-300"
                                 } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editedConfig[normalizedKey]
+                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${editedConfig[normalizedKey]
                                   ? "translate-x-6"
                                   : "translate-x-1"
                                   }`}
@@ -840,7 +841,7 @@ export default function PluginsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t bg-muted/30 px-6 py-4 rounded-b-2xl">
+            <div className="border-t border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-6 py-4">
               <div className="flex items-center justify-between gap-4">
                 <Button variant="outline" onClick={handleCloseDetails}>
                   Cancel
@@ -856,7 +857,7 @@ export default function PluginsPage() {
                     Documentation
                   </Button>
                   <Button
-                    className="gap-2 bg-[rgb(var(--brand-primary))] hover:bg-[rgb(var(--brand-primary)/0.9)]0"
+                    className="gap-2"
                     onClick={handleSaveConfig}
                     disabled={
                       updateSettingsMutation.isPending ||
@@ -871,8 +872,8 @@ export default function PluginsPage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </ >
   );
 }

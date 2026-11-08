@@ -1,134 +1,109 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Settings, CreditCard, Palette, Blocks, Mail, Crown } from "lucide-react";
-import { useEffect, useState, Suspense } from "react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  Blocks,
+  CreditCard,
+  Crown,
+  Mail,
+  Palette,
+  Settings,
+} from "lucide-react";
+import { Suspense } from "react";
 
-type SettingsTab = "payment" | "branding" | "integrations" | "mailer" | "subscription";
+const settingsTabs = [
+  { id: "payment", label: "Payment gateways", icon: CreditCard },
+  { id: "branding", label: "Branding", icon: Palette },
+  { id: "integrations", label: "Integrations", icon: Blocks },
+  { id: "mailer", label: "Mail delivery", icon: Mail },
+  { id: "subscription", label: "Subscription", icon: Crown },
+] as const;
 
-function SettingsLayoutContent({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+type SettingsTab = (typeof settingsTabs)[number]["id"];
 
-    // Determine active tab based on pathname or query param
-    const getActiveTab = (): SettingsTab => {
-        if (pathname?.includes("/admin/settings/integrations")) {
-            return "integrations";
-        }
+function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const requested = searchParams?.get("tab");
+  const activeTab: SettingsTab = settingsTabs.some(
+    (tab) => tab.id === requested,
+  )
+    ? (requested as SettingsTab)
+    : pathname?.includes("/admin/settings/integrations")
+      ? "integrations"
+      : "payment";
 
-        const tabParam = searchParams?.get("tab");
-        if (tabParam === "branding" || tabParam === "integrations" || tabParam === "mailer" || tabParam === "subscription") {
-            return tabParam as SettingsTab;
-        }
-
-        return "payment";
-    };
-
-    const [activeTab, setActiveTab] = useState<SettingsTab>("payment");
-
-    // Sync active state when URL changes
-    useEffect(() => {
-        setActiveTab(getActiveTab());
-    }, [pathname, searchParams]);
-
-    const handleTabChange = (tab: SettingsTab) => {
-
-        router.push(`/admin/settings?tab=${tab}`);
-
-    };
-
-    return (
-        <div className="space-y-4 text-[#0f1b31]">
-            {/* Header */}
-            <div className="border-b border-[#dce3ee] pb-4">
-                <div className="flex items-center gap-2 mb-1">
-                    <Settings className="h-4 w-4 text-[#2563eb]" />
-                    <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-[#0f1b31]">Organization configuration</h1>
-                </div>
-                <p className="text-sm text-[#667085]">Configure branding, integrations, mail delivery, payments and the organization subscription.</p>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 overflow-x-auto border-b border-[#dce3ee]">
-                <button
-                    onClick={() => handleTabChange("payment")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "payment"
-                        ? "border-[#2563eb] text-[#1d4ed8]"
-                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <CreditCard className="h-3.5 w-3.5" />
-                        Payment Gateways
-                    </div>
-                </button>
-                <button
-                    onClick={() => handleTabChange("branding")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "branding"
-                        ? "border-[#2563eb] text-[#1d4ed8]"
-                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Palette className="h-3.5 w-3.5" />
-                        Branding
-                    </div>
-                </button>
-                <button
-                    onClick={() => handleTabChange("integrations")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "integrations"
-                        ? "border-[#2563eb] text-[#1d4ed8]"
-                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Blocks className="h-3.5 w-3.5" />
-                        Integrations
-                    </div>
-                </button>
-                <button
-                    onClick={() => handleTabChange("mailer")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "mailer"
-                        ? "border-[#2563eb] text-[#1d4ed8]"
-                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Mail className="h-3.5 w-3.5" />
-                        Mailer
-                    </div>
-                </button>
-                <button
-                    onClick={() => handleTabChange("subscription")}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "subscription"
-                        ? "border-[#2563eb] text-[#1d4ed8]"
-                        : "border-transparent text-[#667085] hover:text-[#0f1b31]"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Crown className="h-3.5 w-3.5" />
-                        Subscription
-                    </div>
-                </button>
-            </div>
-
-            {/* Content (Rendered by page.tsx or children routes) */}
-            <div className="pt-4">
-                {children}
-            </div>
+  return (
+    <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <div className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+          <Settings
+            className="h-4 w-4 text-[var(--vms-action)]"
+            aria-hidden="true"
+          />
+          Organization administration
         </div>
-    );
+        <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
+          Organization configuration
+        </h1>
+        <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
+          Configure branding, integrations, mail delivery, payments and the
+          organization subscription.
+        </p>
+      </header>
+
+      <nav
+        aria-label="Organization configuration sections"
+        className="overflow-x-auto border-b border-[var(--vms-line)]"
+      >
+        <div className="flex min-w-max gap-1">
+          {settingsTabs.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
+              <Link
+                key={id}
+                href={`/admin/settings?tab=${id}`}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "relative inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-inset",
+                  active
+                    ? "text-[var(--vms-ink)] after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-[var(--vms-active-accent)]"
+                    : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div>{children}</div>
+    </div>
+  );
 }
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" /></div>}>
-            <SettingsLayoutContent>{children}</SettingsLayoutContent>
-        </Suspense>
-    )
+export default function SettingsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-48 items-center justify-center text-sm text-[var(--vms-ink-muted)]"
+          role="status"
+          aria-busy="true"
+        >
+          Loading configuration…
+        </div>
+      }
+    >
+      <SettingsLayoutContent>{children}</SettingsLayoutContent>
+    </Suspense>
+  );
 }

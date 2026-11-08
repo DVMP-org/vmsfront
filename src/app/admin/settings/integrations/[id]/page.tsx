@@ -181,7 +181,7 @@ export default function IntegrationDetailsPage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--vms-ink-muted)]" />
             </div>
         );
     }
@@ -277,8 +277,8 @@ export default function IntegrationDetailsPage() {
                 </div>
 
                 {/* Status Toggle */}
-                <div className="flex items-center gap-4 p-4 border border-zinc-200 rounded-lg bg-muted/30">
-                    <div className="pr-4 border-r border-zinc-200">
+                <div className="flex items-center gap-4 p-4 border border-[var(--vms-line)] rounded-lg bg-muted/30">
+                    <div className="pr-4 border-r border-[var(--vms-line)]">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</p>
                         <IntegrationStatusToggle
                             enabled={integration.enabled}
@@ -312,7 +312,7 @@ export default function IntegrationDetailsPage() {
                 {/* Main Content - Credentials Form */}
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
-                        <CardHeader className="pb-4 border-b border-zinc-200">
+                        <CardHeader className="pb-4 border-b border-[var(--vms-line)]">
                             <div className="flex items-center gap-2">
                                 <Settings className="h-4 w-4 text-muted-foreground" />
                                 <CardTitle className="text-base">Credentials Configuration</CardTitle>
@@ -331,7 +331,7 @@ export default function IntegrationDetailsPage() {
                             />
 
                             {/* Save Button */}
-                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-200">
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--vms-line)]">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -365,7 +365,7 @@ export default function IntegrationDetailsPage() {
                 <div className="space-y-6">
                     {/* Integration Info */}
                     <Card>
-                        <CardHeader className="pb-3 border-b border-zinc-200">
+                        <CardHeader className="pb-3 border-b border-[var(--vms-line)]">
                             <div className="flex items-center gap-2">
                                 <Info className="h-4 w-4 text-muted-foreground" />
                                 <CardTitle className="text-base">Details</CardTitle>
@@ -419,7 +419,7 @@ export default function IntegrationDetailsPage() {
                     {/* Capabilities */}
                     {integration?.capabilities && integration?.capabilities.length > 0 && (
                         <Card>
-                            <CardHeader className="pb-3 border-b border-zinc-200">
+                            <CardHeader className="pb-3 border-b border-[var(--vms-line)]">
                                 <div className="flex items-center gap-2">
                                     <Zap className="h-4 w-4 text-muted-foreground" />
                                     <CardTitle className="text-base">Capabilities</CardTitle>

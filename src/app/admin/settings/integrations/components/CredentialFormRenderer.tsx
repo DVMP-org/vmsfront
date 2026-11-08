@@ -127,7 +127,7 @@ function renderField(
                         disabled={disabled}
                         className={cn(
                             "flex h-10 w-full rounded-[4px] border px-3 py-2 text-sm",
-                            "border-[#DEDEDE] bg-white dark:border-white/20 dark:bg-transparent",
+                            "border-[var(--vms-line)] bg-[var(--vms-surface)]",
                             "focus:outline-none focus:ring-2 focus:ring-offset-2",
                             "disabled:cursor-not-allowed disabled:opacity-50",
                             error && "border-red-500"
@@ -165,7 +165,7 @@ function renderField(
                         rows={3}
                         className={cn(
                             "flex w-full rounded-[4px] border px-3 py-2 text-sm",
-                            "border-[#DEDEDE] bg-white dark:border-white/20 dark:bg-transparent",
+                            "border-[var(--vms-line)] bg-[var(--vms-surface)]",
                             "focus:outline-none focus:ring-2 focus:ring-offset-2",
                             "disabled:cursor-not-allowed disabled:opacity-50",
                             "resize-none",
@@ -218,7 +218,7 @@ export function CredentialFormRenderer({
 }: CredentialFormRendererProps) {
     if (!credentials) {
         return (
-            <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-zinc-200 rounded-lg">
+            <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-[var(--vms-line)] rounded-lg">
                 No configuration required for this integration.
             </div>
         );
@@ -227,7 +227,7 @@ export function CredentialFormRenderer({
 
     if (credentialEntries.length === 0) {
         return (
-            <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-zinc-200 rounded-lg">
+            <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-[var(--vms-line)] rounded-lg">
                 No configuration required for this integration.
             </div>
         );

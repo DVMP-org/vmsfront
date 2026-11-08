@@ -93,14 +93,14 @@ function ChangePlanModal({
             <div className="space-y-6">
                 {/* Billing Cycle Toggle */}
                 <div className="flex justify-center">
-                    <div className="inline-flex items-center gap-2 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                    <div className="inline-flex items-center gap-2 p-1 rounded-lg bg-[var(--vms-surface-subtle)] ">
                         <button
                             onClick={() => setBillingCycle("monthly")}
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                 billingCycle === "monthly"
-                                    ? "bg-white dark:bg-zinc-900 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700"
+                                    ? "bg-[var(--vms-surface)] shadow-sm"
+                                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"
                             )}
                         >
                             Monthly
@@ -110,8 +110,8 @@ function ChangePlanModal({
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                 billingCycle === "yearly"
-                                    ? "bg-white dark:bg-zinc-900 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700"
+                                    ? "bg-[var(--vms-surface)] shadow-sm"
+                                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"
                             )}
                         >
                             Yearly
@@ -140,16 +140,16 @@ function ChangePlanModal({
                                     className={cn(
                                         "w-full p-4 rounded-lg border-2 text-left transition-all",
                                         isCurrentPlan
-                                            ? "border-zinc-200 bg-zinc-50 dark:bg-zinc-800/50 cursor-not-allowed opacity-60"
+                                            ? "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] cursor-not-allowed opacity-60"
                                             : isSelected
-                                                ? "border-[rgb(var(--brand-primary))] bg-[rgb(var(--brand-primary))]/5"
-                                                : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                                                ? "border-[var(--vms-action)] bg-[var(--vms-action)]/5"
+                                                : "border-[var(--vms-line)] hover:border-[var(--vms-line)]"
                                     )}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                                                <span className="font-semibold text-[var(--vms-ink)] ">
                                                     {plan.name}
                                                 </span>
                                                 {isCurrentPlan && (
@@ -159,14 +159,14 @@ function ChangePlanModal({
                                                 )}
                                             </div>
                                             {plan.description && (
-                                                <p className="text-sm text-zinc-500 mt-1">{plan.description}</p>
+                                                <p className="text-sm text-[var(--vms-ink-muted)] mt-1">{plan.description}</p>
                                             )}
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                                            <span className="text-lg font-bold text-[var(--vms-ink)] ">
                                                 {formatPrice(price)}
                                             </span>
-                                            <span className="text-sm text-zinc-500">
+                                            <span className="text-sm text-[var(--vms-ink-muted)]">
                                                 /{billingCycle === "monthly" ? "mo" : "yr"}
                                             </span>
                                         </div>
@@ -212,49 +212,49 @@ function CancelSubscriptionModal({
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Cancel Subscription">
             <div className="space-y-6">
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200 ">
                     <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-medium text-amber-800 dark:text-amber-200">
+                        <h4 className="font-medium text-amber-800 ">
                             Are you sure you want to cancel?
                         </h4>
-                        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        <p className="text-sm text-amber-700 mt-1">
                             You will lose access to premium features when your subscription ends.
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    <label className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <label className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer hover:bg-[var(--vms-surface-subtle)] ">
                         <input
                             type="radio"
                             name="cancelType"
                             checked={!cancelImmediately}
                             onChange={() => setCancelImmediately(false)}
-                            className="h-4 w-4 text-[rgb(var(--brand-primary))]"
+                            className="h-4 w-4 text-[var(--vms-ink)]"
                         />
                         <div>
-                            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <span className="font-medium text-[var(--vms-ink)] ">
                                 Cancel at period end
                             </span>
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-[var(--vms-ink-muted)]">
                                 Keep access until your current billing period ends
                             </p>
                         </div>
                     </label>
-                    <label className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <label className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer hover:bg-[var(--vms-surface-subtle)] ">
                         <input
                             type="radio"
                             name="cancelType"
                             checked={cancelImmediately}
                             onChange={() => setCancelImmediately(true)}
-                            className="h-4 w-4 text-[rgb(var(--brand-primary))]"
+                            className="h-4 w-4 text-[var(--vms-ink)]"
                         />
                         <div>
-                            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <span className="font-medium text-[var(--vms-ink)] ">
                                 Cancel immediately
                             </span>
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-[var(--vms-ink-muted)]">
                                 Lose access right away (no refund)
                             </p>
                         </div>
@@ -312,13 +312,13 @@ export function SubscriptionSection() {
                 <Card>
                     <CardContent className="py-12">
                         <div className="text-center max-w-md mx-auto">
-                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[rgb(var(--brand-primary))]/10 mb-6">
-                                <Zap className="h-8 w-8 text-[rgb(var(--brand-primary))]" />
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--vms-action)]/10 mb-6">
+                                <Zap className="h-8 w-8 text-[var(--vms-ink)]" />
                             </div>
-                            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                            <h2 className="text-2xl font-bold text-[var(--vms-ink)] mb-2">
                                 No Active Subscription
                             </h2>
-                            <p className="text-zinc-500 dark:text-zinc-400 mb-6">
+                            <p className="text-[var(--vms-ink-muted)] mb-6">
                                 {organization?.name} doesn&apos;t have an active subscription. Subscribe to a plan to
                                 unlock all features.
                             </p>
@@ -329,8 +329,8 @@ export function SubscriptionSection() {
                             </Button>
 
                             {subscription?.status === SubscriptionStatus.CANCELED && !subscription?.cancel_at_period_end && (
-                                <div className="mt-6 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+                                <div className="mt-6 p-4 rounded-lg bg-[var(--vms-surface-subtle)] ">
+                                    <p className="text-sm text-[var(--vms-ink-muted)] mb-3">
                                         Your subscription was cancelled. You can reactivate it to continue where you left off.
                                     </p>
                                     <Button
@@ -363,7 +363,7 @@ export function SubscriptionSection() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-3">
-                                <Crown className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+                                <Crown className="h-5 w-5 text-[var(--vms-ink)]" />
                                 Current Plan
                             </CardTitle>
                             <CardDescription className="mt-1">
@@ -375,21 +375,21 @@ export function SubscriptionSection() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Plan Details */}
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-[rgb(var(--brand-primary))]/5 to-[rgb(var(--brand-primary))]/10 border border-[rgb(var(--brand-primary))]/20">
+                    <div className="p-6 rounded-xl    border border-[var(--vms-line)]">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                                <h3 className="text-xl font-bold text-[var(--vms-ink)] ">
                                     {plan?.name || "Unknown Plan"}
                                 </h3>
-                                <p className="text-zinc-500 dark:text-zinc-400 mt-1">
+                                <p className="text-[var(--vms-ink-muted)] mt-1">
                                     {plan?.description}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                                <div className="text-2xl font-bold text-[var(--vms-ink)] ">
                                     {currentPrice ? formatPrice(currentPrice) : "—"}
                                 </div>
-                                <div className="text-sm text-zinc-500">
+                                <div className="text-sm text-[var(--vms-ink-muted)]">
                                     per {subscription.billing_cycle === "yearly" ? "year" : "month"}
                                 </div>
                             </div>
@@ -397,12 +397,12 @@ export function SubscriptionSection() {
 
                         {/* Features */}
                         {plan?.features && (
-                            <div className="mt-4 pt-4 border-t border-[rgb(var(--brand-primary))]/20">
+                            <div className="mt-4 pt-4 border-t border-[var(--vms-line)]">
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(plan.features).slice(0, 5).map(([key, value]) => (
                                         <span
                                             key={key}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-800 text-sm text-zinc-600 dark:text-zinc-300"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--vms-surface)] text-sm text-[var(--vms-ink-muted)] "
                                         >
                                             <Check className="h-3.5 w-3.5 text-green-500" />
                                             {typeof value === "boolean" ? key : `${key}: ${value}`}
@@ -415,12 +415,12 @@ export function SubscriptionSection() {
 
                     {/* Billing Info */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 mb-1">
+                        <div className="p-4 rounded-lg bg-[var(--vms-surface-subtle)] ">
+                            <div className="flex items-center gap-2 text-[var(--vms-ink-muted)] mb-1">
                                 <Calendar className="h-4 w-4" />
                                 <span className="text-sm">Current Period</span>
                             </div>
-                            <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <div className="font-medium text-[var(--vms-ink)] ">
                                 {subscription.current_period_start && subscription.current_period_end
                                     ? `${formatDateShort(subscription.current_period_start)} - ${formatDateShort(
                                         subscription.current_period_end
@@ -428,23 +428,23 @@ export function SubscriptionSection() {
                                     : "—"}
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 mb-1">
+                        <div className="p-4 rounded-lg bg-[var(--vms-surface-subtle)] ">
+                            <div className="flex items-center gap-2 text-[var(--vms-ink-muted)] mb-1">
                                 <CreditCard className="h-4 w-4" />
                                 <span className="text-sm">Next Billing</span>
                             </div>
-                            <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <div className="font-medium text-[var(--vms-ink)] ">
                                 {subscription.current_period_end
                                     ? formatDateLong(subscription.current_period_end)
                                     : "—"}
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 mb-1">
+                        <div className="p-4 rounded-lg bg-[var(--vms-surface-subtle)] ">
+                            <div className="flex items-center gap-2 text-[var(--vms-ink-muted)] mb-1">
                                 <RefreshCw className="h-4 w-4" />
                                 <span className="text-sm">Billing Cycle</span>
                             </div>
-                            <div className="font-medium text-zinc-900 dark:text-zinc-50 capitalize">
+                            <div className="font-medium text-[var(--vms-ink)] capitalize">
                                 {subscription.billing_cycle || "Monthly"}
                             </div>
                         </div>
@@ -452,13 +452,13 @@ export function SubscriptionSection() {
 
                     {/* Cancellation Warning */}
                     {subscription.cancel_at_period_end && (
-                        <div className="flex items-start gap-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-start gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200 ">
                             <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                             <div className="flex-1">
-                                <h4 className="font-medium text-amber-800 dark:text-amber-200">
+                                <h4 className="font-medium text-amber-800 ">
                                     Subscription Ending
                                 </h4>
-                                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                                <p className="text-sm text-amber-700 mt-1">
                                     Your subscription will end on{" "}
                                     {subscription.current_period_end
                                         ? formatDateLong(subscription.current_period_end)
@@ -479,11 +479,11 @@ export function SubscriptionSection() {
 
                     {/* Trial Info */}
                     {subscription.trial_ends_at && new Date(subscription.trial_ends_at) > new Date() && (
-                        <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50 border border-blue-200 ">
                             <Zap className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="font-medium text-blue-800 dark:text-blue-200">Trial Active</h4>
-                                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                <h4 className="font-medium text-blue-800 ">Trial Active</h4>
+                                <p className="text-sm text-blue-700 mt-1">
                                     Your trial ends on {formatDateLong(subscription.trial_ends_at)}. Add a payment
                                     method to continue after the trial.
                                 </p>

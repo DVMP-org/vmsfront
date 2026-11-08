@@ -62,13 +62,13 @@ function EmailStatus({ formState }: { formState: MailerFormState }) {
 
     if (isConfigured) {
         return (
-            <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
                 <div>
-                    <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                    <p className="text-sm font-medium text-emerald-800 ">
                         Email Sending Enabled
                     </p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    <p className="text-xs text-emerald-600 ">
                         Your SMTP configuration is complete. Emails can be sent from this platform.
                     </p>
                 </div>
@@ -77,16 +77,16 @@ function EmailStatus({ formState }: { formState: MailerFormState }) {
     }
 
     return (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                <p className="text-sm font-medium text-amber-800 ">
                     Email Sending Disabled
                 </p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                <p className="text-xs text-amber-600 mt-1">
                     Complete the following to enable email sending:
                 </p>
-                <ul className="text-xs text-amber-600 dark:text-amber-400 mt-1 list-disc list-inside">
+                <ul className="text-xs text-amber-600 mt-1 list-disc list-inside">
                     {missingFields.map((field) => (
                         <li key={field}>{field}</li>
                     ))}
@@ -139,7 +139,7 @@ function SmtpCredentialsTab({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 space-y-5">
+            <div className="border border-[var(--vms-line)] rounded-lg p-6 space-y-5">
                 {/* SMTP Host */}
                 <div className="space-y-2">
                     <label htmlFor="smtp_host" className="text-sm font-medium text-foreground">
@@ -212,7 +212,7 @@ function SmtpCredentialsTab({
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink-muted)]"
                         >
                             {showPassword ? (
                                 <EyeOff className="h-4 w-4" />
@@ -253,9 +253,9 @@ function SmtpCredentialsTab({
 // Templates Tab Content (Placeholder)
 function TemplatesTab() {
     return (
-        <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
+        <div className="border border-[var(--vms-line)] rounded-lg p-6">
             <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+                <FileText className="h-12 w-12 text-[var(--vms-ink-muted)] mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">Email Templates</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                     Customize email templates for notifications, welcome emails, password resets, and more.
@@ -305,7 +305,7 @@ function SenderSettingsTab({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 space-y-5">
+            <div className="border border-[var(--vms-line)] rounded-lg p-6 space-y-5">
                 {/* From Email */}
                 <div className="space-y-2">
                     <label htmlFor="from_email" className="text-sm font-medium text-foreground">
@@ -373,7 +373,7 @@ export function MailerSettingsSection() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--vms-ink-muted)]" />
             </div>
         );
     }
@@ -383,7 +383,7 @@ export function MailerSettingsSection() {
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg">
-                    <Mail className="h-5 w-5 text-zinc-600" />
+                    <Mail className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                 </div>
                 <div>
                     <h2 className="text-base font-semibold text-foreground">Mailer Settings</h2>
@@ -412,8 +412,8 @@ export function MailerSettingsSection() {
                                     className={cn(
                                         "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                                         isActive
-                                            ? "bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] border-l-2 border-[rgb(var(--brand-primary))]"
-                                            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-50"
+                                            ? "bg-[var(--vms-action)]/10 text-[var(--vms-ink)] border-l-2 border-[var(--vms-action)]"
+                                            : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] "
                                     )}
                                 >
                                     <Icon className="h-4 w-4" />
