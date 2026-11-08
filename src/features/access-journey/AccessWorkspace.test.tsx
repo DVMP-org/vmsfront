@@ -224,6 +224,25 @@ describe("AccessWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps invitation details keyboard-contained and restores focus", async () => {
+    renderWorkspace();
+    const openButton = await screen.findByRole("button", {
+      name: /view details/i,
+    });
+    openButton.focus();
+    fireEvent.click(openButton);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close invitation details" }),
+    ).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(openButton).toHaveFocus();
+  });
+
   it("shows host-owned checkpoint arrival history", async () => {
     vi.mocked(accessJourneyApi.checkpointEvents).mockResolvedValue({
       items: [

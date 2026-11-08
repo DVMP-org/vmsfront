@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpRight,
@@ -103,6 +103,7 @@ export function AccessWorkspace({
     [invitations.data?.items],
   );
   const stats = useMemo(() => countInvitations(items), [items]);
+  const closeInvitation = useCallback(() => setSelectedInvitationId(null), []);
 
   async function copyCode(code: string) {
     try {
@@ -222,7 +223,7 @@ export function AccessWorkspace({
       {selectedInvitationId ? (
         <InvitationDetail
           invitationId={selectedInvitationId}
-          onClose={() => setSelectedInvitationId(null)}
+          onClose={closeInvitation}
           onCancel={() => cancelInvitation.mutate(selectedInvitationId)}
           cancelling={
             cancelInvitation.isPending &&
@@ -627,6 +628,8 @@ function InvitationDetail({
   onCancel: () => void;
   cancelling: boolean;
 }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const invitation = useQuery({
     queryKey: ["workspace", "visit-authorization", invitationId],
     queryFn: () => accessJourneyApi.get(invitationId),
@@ -640,6 +643,46 @@ function InvitationDetail({
   });
   const data = invitation.data;
   const status = data ? statusMeta[data.status] : null;
+
+  useEffect(() => {
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute("hidden"));
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [onClose]);
 
   async function shareInvitation() {
     if (!data) return;
@@ -669,6 +712,7 @@ function InvitationDetail({
       }}
     >
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="invitation-detail-title"
@@ -691,6 +735,7 @@ function InvitationDetail({
             </h2>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Close invitation details"
