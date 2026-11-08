@@ -54,13 +54,14 @@ export function RecentContextBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
         {canViewWorkQueue ? <WorkQueueSummary /> : null}
         <Link
           href="/organization/workspaces"
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-2 font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50"
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-zinc-200 px-2.5 py-2 font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50"
         >
-          Switch workspace
+          Switch
+          <span className="hidden sm:inline">workspace</span>
           <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -144,7 +145,7 @@ function ContextMetric({
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      <span>{label}</span>
+      <span className="hidden sm:inline">{label}</span>
       <span className="font-semibold tabular-nums">{value ?? "–"}</span>
     </Link>
   );

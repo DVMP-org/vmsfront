@@ -141,7 +141,7 @@ it("creates idempotency keys without crypto.randomUUID on local HTTP", () => {
 it("uses real routes for gate directory and passage drilldown", async () => {
   mount(<CheckpointDirectory />);
   expect(
-    await screen.findByRole("link", { name: /Main entrance/ }),
+    (await screen.findAllByRole("link", { name: /Main entrance/ }))[0],
   ).toHaveAttribute("href", "/admin/checkpoints/gate");
 });
 it("retries the same immutable passage after unknown failure then offers next person", async () => {
@@ -171,7 +171,9 @@ it("retries the same immutable passage after unknown failure then offers next pe
       outcome: "allowed",
     }),
   );
-  expect(screen.getByText("Waiting for device acknowledgement")).toBeInTheDocument();
+  expect(
+    screen.getByText("Waiting for device acknowledgement"),
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Next person" }));
   await waitFor(() =>
     expect(screen.getByLabelText("Authorization code")).toHaveValue(""),
@@ -224,9 +226,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   });
   fireEvent.click(screen.getByRole("button", { name: "Queue offline check" }));
 
-  expect(
-    screen.getByText("1 provisional passage queued"),
-  ).toBeInTheDocument();
+  expect(screen.getByText("1 provisional passage queued")).toBeInTheDocument();
   expect(
     screen.getByText(
       "These are not checked in. Keep this device online until the server confirms each result.",

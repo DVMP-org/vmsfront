@@ -7,15 +7,14 @@ import {
 
 describe("OrganizationSettingsTabs", () => {
   it("uses organization routes and marks the active configuration section", () => {
-    render(<OrganizationSettingsTabs active="plugins" />);
+    render(<OrganizationSettingsTabs active="roles" />);
 
     expect(
       screen.getByRole("link", { name: "General details" }),
     ).toHaveAttribute("href", "/organization/settings");
-    expect(screen.getByRole("link", { name: "Plugins" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    expect(
+      screen.getByRole("link", { name: "Roles & permissions" }),
+    ).toHaveAttribute("aria-current", "page");
     expect(
       screen.getByRole("link", { name: "Administrators" }),
     ).toHaveAttribute("href", "/organization/settings/administrators");
@@ -23,9 +22,8 @@ describe("OrganizationSettingsTabs", () => {
       "href",
       "/organization/settings/payment",
     );
-    expect(screen.getByRole("link", { name: "Integrations" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(screen.queryByRole("link", { name: "Plugins" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Integrations" })).toBeNull();
   });
 
   it("derives the active section from settings paths", () => {
@@ -38,7 +36,7 @@ describe("OrganizationSettingsTabs", () => {
       ),
     ).toBe("administrators");
     expect(
-      organizationSettingsSectionFromPath("/organization/settings/plugins"),
-    ).toBe("plugins");
+      organizationSettingsSectionFromPath("/organization/settings/roles"),
+    ).toBe("roles");
   });
 });

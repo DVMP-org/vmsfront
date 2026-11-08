@@ -22,6 +22,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import type { WorkspaceRelationship } from "@/types";
 import {
   accessJourneyApi,
@@ -112,6 +117,109 @@ export function AccessWorkspace({
     }
   }
 
+  const invitationColumns: Column<VisitAuthorization>[] = [
+    {
+      key: "guests",
+      header: "Guest",
+      sortable: true,
+      accessor: (invitation) => (
+        <div className="min-w-0">
+          <strong className="block truncate text-sm">
+            {invitation.guests
+              .map((guest) => guest.display_name_snapshot)
+              .join(", ")}
+          </strong>
+          <span className="font-mono text-xs font-semibold tracking-[0.08em] text-[var(--vms-ink-muted)]">
+            {invitation.code}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "valid_from",
+      header: "Validity",
+      sortable: true,
+      accessor: (invitation) => (
+        <span className="whitespace-nowrap text-xs text-[var(--vms-ink-muted)]">
+          {formatWindow(invitation.valid_from, invitation.valid_to)}
+        </span>
+      ),
+    },
+    {
+      key: "uses_count",
+      header: "Uses",
+      sortable: true,
+      accessor: (invitation) => (
+        <span className="whitespace-nowrap text-sm tabular-nums">
+          {invitation.uses_count}
+          {invitation.max_uses ? ` / ${invitation.max_uses}` : ""}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      accessor: (invitation) => {
+        const status = statusMeta[invitation.status];
+        return (
+          <span
+            className={cn(
+              "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+              status.className,
+            )}
+          >
+            {status.label}
+          </span>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "",
+      mobileHide: true,
+      accessor: (invitation) => (
+        <div className="flex justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => setSelectedInvitationId(invitation.id)}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 text-xs font-semibold hover:bg-[var(--vms-surface-subtle)]"
+          >
+            View
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => copyCode(invitation.code)}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 text-xs font-semibold hover:bg-[var(--vms-surface-subtle)]"
+          >
+            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+            Copy
+          </button>
+        </div>
+      ),
+    },
+  ];
+  const invitationBulkActions: BulkAction[] = [
+    {
+      label: "Copy selected codes",
+      icon: Copy,
+      onClick: async (ids) => {
+        const codes = items
+          .filter((invitation) => ids.includes(invitation.id))
+          .map((invitation) => invitation.code);
+        try {
+          await navigator.clipboard.writeText(codes.join("\n"));
+          toast.success(
+            `${codes.length} invitation code${codes.length === 1 ? "" : "s"} copied.`,
+          );
+        } catch {
+          toast.error("Invitation codes could not be copied.");
+        }
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <section className="grid gap-3 sm:grid-cols-3">
@@ -171,27 +279,27 @@ export function AccessWorkspace({
           />
         ) : null}
 
-        {invitations.isError ? (
-          <ErrorState
-            message={parseApiError(invitations.error).message}
+        <div className="p-3">
+          <DataTable
+            data={items}
+            columns={invitationColumns}
+            tableLabel="Workspace visitor invitations"
+            searchPlaceholder="Search invitations"
+            isLoading={invitations.isPending}
+            errorMessage={
+              invitations.isError
+                ? parseApiError(invitations.error).message
+                : undefined
+            }
             onRetry={() => invitations.refetch()}
-          />
-        ) : invitations.isPending ? (
-          <LoadingRows />
-        ) : items.length === 0 ? (
-          <div className="p-10 text-center">
-            <KeyRound className="mx-auto h-10 w-10 text-zinc-400" />
-            <h3 className="mt-4 text-base font-semibold">No invitations yet</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 ">
-              Create a visitor invitation for this workspace. Site approval may
-              be required before the pass becomes active.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-zinc-200 ">
-            {items.map((invitation) => (
+            emptyMessage="No invitations yet"
+            selectable
+            getRowId={(invitation) => invitation.id}
+            bulkActions={invitationBulkActions}
+            showPagination={items.length > 10}
+            pageSize={10}
+            mobileSummary={(invitation) => (
               <InvitationRow
-                key={invitation.id}
                 invitation={invitation}
                 cancelling={
                   cancelInvitation.isPending &&
@@ -201,9 +309,9 @@ export function AccessWorkspace({
                 onOpen={() => setSelectedInvitationId(invitation.id)}
                 onCancel={() => cancelInvitation.mutate(invitation.id)}
               />
-            ))}
-          </div>
-        )}
+            )}
+          />
+        </div>
       </section>
 
       {relationship.place.address ? (

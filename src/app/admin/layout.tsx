@@ -5,22 +5,19 @@ import { OrganizationMemberGuard } from "@/components/auth/OrganizationMemberGua
 import { OrganizationSetupGuard } from "@/components/auth/OrganizationSetupGuard";
 
 export default function AdminLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <RouteGuard>
-            <OrganizationMemberGuard>
-                <OrganizationSetupGuard>
-                    <DashboardLayout type="admin">
-                        <AdminPermissionGuard>
-                            {children}
-                        </AdminPermissionGuard>
-                    </DashboardLayout>
-                </OrganizationSetupGuard>
-            </OrganizationMemberGuard>
-        </RouteGuard>
-    );
+  return (
+    <RouteGuard>
+      <DashboardLayout type="admin">
+        <OrganizationMemberGuard>
+          <OrganizationSetupGuard>
+            <AdminPermissionGuard>{children}</AdminPermissionGuard>
+          </OrganizationSetupGuard>
+        </OrganizationMemberGuard>
+      </DashboardLayout>
+    </RouteGuard>
+  );
 }
-

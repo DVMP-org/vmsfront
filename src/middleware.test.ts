@@ -27,4 +27,38 @@ describe("organization routing", () => {
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
+
+  it("keeps first-place setup inside an authenticated tenant context", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/setup/first-place/",
+      {
+        headers: {
+          host: "harbour.vmsfront.to",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("redirects the retired admin first-place URL to standalone setup", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/admin/properties/new/?setup=first-place",
+      {
+        headers: {
+          host: "harbour.vmsfront.to",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.pathname).toBe("/setup/first-place");
+  });
 });

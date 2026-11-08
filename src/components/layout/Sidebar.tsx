@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
   Settings,
@@ -33,7 +33,6 @@ import {
   findMatchingRoute,
   findPluginRouteAndType,
 } from "@/lib/plugin-utils";
-import { useAuthStore } from "@/store/auth-store";
 import { useResidentResidency } from "@/hooks/use-resident-data";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
@@ -87,34 +86,28 @@ const SidebarLink = memo(function SidebarLink({
       href={link.href}
       onClick={onClick}
       className={cn(
-        "flex items-center rounded-md text-sm font-medium transition-all duration-300",
+        "flex items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
         "group relative mt-0.5",
         isMobile || !collapsed
           ? "gap-3 px-3 py-2.5"
           : "justify-center px-2 py-2.5",
         isActive
-          ? "bg-transparent font-semibold text-[#1F2933]"
-          : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
+          ? "bg-transparent font-semibold text-[var(--vms-ink)]"
+          : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
       )}
       title={collapsed && !isMobile ? link.label : undefined}
     >
-      {isActive && (
-        <motion.div
-          layoutId="active-indicator"
-          className={cn(
-            "absolute left-0 h-3/5 w-0.5 rounded-full",
-            "bg-[#E85D3F]",
-          )}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+      {isActive ? (
+        <span
+          aria-hidden="true"
+          className="absolute left-0 h-3/5 w-0.5 rounded-full bg-[var(--vms-active-accent)]"
         />
-      )}
+      ) : null}
 
       <Icon
         className={cn(
           "h-5 w-5 flex-shrink-0",
-          isActive ? "text-[#1F2933]" : "",
+          isActive ? "text-[var(--vms-ink)]" : "",
         )}
       />
 
@@ -125,7 +118,7 @@ const SidebarLink = memo(function SidebarLink({
       )}
 
       {collapsed && !isMobile && (
-        <div className="absolute left-full ml-4 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-popover rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100] shadow-xl translate-x-1 group-hover:translate-x-0 border border-border">
+        <div className="pointer-events-none absolute left-full z-[100] ml-3 translate-x-1 whitespace-nowrap rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 py-1.5 text-xs font-semibold text-[var(--vms-ink)] opacity-0 shadow-[var(--vms-shadow-overlay)] transition-[opacity,transform] duration-[var(--vms-motion)] group-hover:translate-x-0 group-hover:opacity-100">
           {link.label}
         </div>
       )}
@@ -138,10 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   onMobileClose,
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 1024;
-  });
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(
     new Set(),
@@ -151,7 +141,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const pathname = usePathname();
   const { selectedResidency, selectedProperty } = useAppStore();
   const workspaceContext = useWorkspaceContext();
-  const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isPending: isAdminProfilePending } =
     useAdminProfile();
 
@@ -177,7 +166,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     loadPlugins(true)
       .then((loadedPlugins) => {
         if (isMounted && !hasSetInitialPlugins) {
-          console.log("Sidebar: Loaded plugins (cached):", loadedPlugins);
           setPlugins(loadedPlugins);
           hasSetInitialPlugins = true;
         }
@@ -369,7 +357,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     effectiveResidencyId,
     isSuperUser,
     adminProfile,
-    user,
     isAdminProfilePending,
     mounted,
     selectedProperty,
@@ -538,22 +525,25 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     filteredPlugins,
     activeRoutesMap,
     links,
+    activeLink?.href,
+    expandedMenus,
+    expandedPlugins,
     isLinkActive,
   ]);
 
   return (
     <motion.aside
       animate={{
-        width: !isMobile && collapsed ? 80 : 256,
+        width: !isMobile && collapsed ? 72 : 256,
       }}
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "sticky top-0 flex flex-col overflow-hidden border-r border-[#E5E7EB] bg-white",
+        "sticky top-0 flex flex-col overflow-hidden border-r border-[var(--vms-line)] bg-[var(--vms-surface)]",
         "h-full flex-shrink-0 z-30",
       )}
     >
-      <div className="border-b border-[#E5E7EB]">
+      <div className="border-b border-[var(--vms-line)]">
         <WorkspaceSwitcher
           collapsed={collapsed}
           onToggleCollapse={!isMobile ? toggleCollapse : undefined}
@@ -562,277 +552,274 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         />
       </div>
 
-      <LayoutGroup>
-        <nav
-          className={cn(
-            "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
-            isMobile || !collapsed ? "p-3" : "py-4 px-0",
-          )}
-        >
-          {links.map((link: any, index: number) => {
-            const Icon = link.icon;
-            const isParentActive =
-              activeLink?.href === link.href ||
-              link.children?.some(
-                (child: any) => child.href === activeLink?.href,
-              );
+      <nav
+        className={cn(
+          "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
+          isMobile || !collapsed ? "p-3" : "py-4 px-0",
+        )}
+      >
+        {links.map((link: any, index: number) => {
+          const Icon = link.icon;
+          const isParentActive =
+            activeLink?.href === link.href ||
+            link.children?.some(
+              (child: any) => child.href === activeLink?.href,
+            );
 
-            const isActive = activeLink?.href === link.href;
-            const isExpanded = expandedMenus.has(link.label);
-            const hasChildren = link.children && link.children.length > 0;
+          const isActive = activeLink?.href === link.href;
+          const isExpanded = expandedMenus.has(link.label);
+          const hasChildren = link.children && link.children.length > 0;
 
-            // Use a stable key that combines href and label to ensure uniqueness
-            const linkKey = `${link.href}-${link.label}`;
+          // Use a stable key that combines href and label to ensure uniqueness
+          const linkKey = `${link.href}-${link.label}`;
 
-            if (hasChildren) {
-              const activeChild = link.children.find(
-                (child: any) => child.href === activeLink?.href,
-              );
-              return (
-                <div key={linkKey} className="mb-0.5">
-                  <button
-                    onClick={() => toggleMenu(link.label)}
+          if (hasChildren) {
+            const activeChild = link.children.find(
+              (child: any) => child.href === activeLink?.href,
+            );
+            return (
+              <div key={linkKey} className="mb-0.5">
+                <button
+                  onClick={() => toggleMenu(link.label)}
+                  className={cn(
+                    "flex w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
+                    "group relative",
+                    isMobile || !collapsed
+                      ? "gap-3 px-3 py-2.5 justify-between"
+                      : "justify-center px-2 py-2.5",
+                    activeChild
+                      ? "bg-transparent font-semibold text-[var(--vms-ink)]"
+                      : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                  )}
+                  title={collapsed && !isMobile ? link.label : undefined}
+                >
+                  <div
                     className={cn(
-                      "flex items-center w-full rounded-xl text-sm font-medium transition-all duration-300 ease-out",
-                      "group relative",
-                      isMobile || !collapsed
-                        ? "gap-3 px-3 py-2.5 justify-between"
-                        : "justify-center px-2 py-2.5",
-                      activeChild
-                        ? "bg-transparent font-semibold text-[#1F2933]"
-                        : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
+                      "flex items-center gap-3 min-w-0",
+                      (isMobile || !collapsed) && "flex-1",
                     )}
-                    title={collapsed && !isMobile ? link.label : undefined}
                   >
-                    <div
+                    <Icon
                       className={cn(
-                        "flex items-center gap-3 min-w-0",
-                        (isMobile || !collapsed) && "flex-1",
+                        "h-5 w-5 flex-shrink-0",
+                        activeChild && "text-[var(--vms-ink)]",
                       )}
-                    >
-                      <Icon
-                        className={cn(
-                          "h-5 w-5 flex-shrink-0",
-                          activeChild && "text-[#1F2933]",
-                        )}
-                      />
-                      {(isMobile || !collapsed) && (
-                        <span
-                          className={cn(
-                            "flex-1 truncate text-left",
-                            activeChild && "font-bold",
-                          )}
-                        >
-                          {link.label}
-                        </span>
-                      )}
-                    </div>
+                    />
                     {(isMobile || !collapsed) && (
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 180 : 0 }}
-                        className="flex-shrink-0"
+                      <span
+                        className={cn(
+                          "flex-1 truncate text-left",
+                          activeChild && "font-bold",
+                        )}
                       >
-                        <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-                      </motion.div>
+                        {link.label}
+                      </span>
                     )}
-                  </button>
+                  </div>
+                  {(isMobile || !collapsed) && (
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      className="flex-shrink-0"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5 text-[var(--vms-ink-muted)]" />
+                    </motion.div>
+                  )}
+                </button>
 
-                  <AnimatePresence>
-                    {isExpanded && (isMobile || !collapsed) && (
-                      <motion.ul
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 35,
-                          mass: 0.5,
-                        }}
-                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 "
-                      >
-                        {link.children.map((child: any) => {
-                          const ChildIcon = child.icon;
-                          const isChildActive = child.href === activeLink?.href;
+                <AnimatePresence>
+                  {isExpanded && (isMobile || !collapsed) && (
+                    <motion.ul
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 35,
+                        mass: 0.5,
+                      }}
+                      className="ml-4 mt-1 space-y-0.5 overflow-hidden border-l border-[var(--vms-line)]"
+                    >
+                      {link.children.map((child: any) => {
+                        const ChildIcon = child.icon;
+                        const isChildActive = child.href === activeLink?.href;
 
-                          return (
-                            <li key={child.href} className="pl-3 py-0.5">
-                              <Link
-                                href={child.href}
-                                onClick={handleLinkClick}
-                                className={cn(
-                                  "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
-                                  "gap-3 px-3 py-2",
-                                  isChildActive
-                                    ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
-                                    : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
-                                )}
-                              >
-                                <ChildIcon className="h-4 w-4 flex-shrink-0" />
-                                <span className="flex-1 truncate">
-                                  {child.label}
-                                </span>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            }
+                        return (
+                          <li key={child.href} className="pl-3 py-0.5">
+                            <Link
+                              href={child.href}
+                              onClick={handleLinkClick}
+                              className={cn(
+                                "flex items-center rounded-[var(--vms-radius-control)] text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
+                                "gap-3 px-3 py-2",
+                                isChildActive
+                                  ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
+                                  : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                              )}
+                            >
+                              <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                              <span className="flex-1 truncate">
+                                {child.label}
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
+
+          return (
+            <div key={linkKey}>
+              {actualType === "admin" &&
+                (!collapsed || isMobile) &&
+                link.group !== (links[index - 1] as any)?.group && (
+                  <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+                    {link.group}
+                  </p>
+                )}
+              <SidebarLink
+                link={link}
+                isActive={isActive}
+                collapsed={collapsed}
+                isMobile={isMobile}
+                onClick={handleLinkClick}
+              />
+            </div>
+          );
+        })}
+        <>
+          {filteredPlugins.map((plugin) => {
+            const isExpanded = expandedPlugins.has(plugin.name);
+            const hasActiveRoute = isPluginActive(plugin.name);
+            const pluginIcon = plugin.manifest.icon
+              ? `fa fa-${plugin.manifest.icon}`
+              : "fa fa-cube";
 
             return (
-              <div key={linkKey}>
-                {actualType === "admin" &&
-                  (!collapsed || isMobile) &&
-                  link.group !== (links[index - 1] as any)?.group && (
-                    <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#98a2b3]">
-                      {link.group}
-                    </p>
+              <div key={plugin.name} className="mb-0.5">
+                {/* Plugin Dropdown Header */}
+                <button
+                  onClick={() => togglePlugin(plugin.name)}
+                  className={cn(
+                    "flex w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
+                    "group relative",
+                    isMobile || !collapsed
+                      ? "gap-3 px-3 py-2.5 justify-between"
+                      : "justify-center px-2 py-2.5",
+                    hasActiveRoute
+                      ? "bg-transparent font-semibold text-[var(--vms-ink)]"
+                      : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                   )}
-                <SidebarLink
-                  link={link}
-                  isActive={isActive}
-                  collapsed={collapsed}
-                  isMobile={isMobile}
-                  onClick={handleLinkClick}
-                />
+                  title={
+                    collapsed && !isMobile ? plugin.manifest.title : undefined
+                  }
+                >
+                  <div
+                    className={cn(
+                      "flex items-center gap-3 min-w-0",
+                      (isMobile || !collapsed) && "flex-1",
+                    )}
+                  >
+                    <i
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        pluginIcon,
+                        hasActiveRoute && "text-[var(--vms-action)]",
+                      )}
+                    />
+                    {(isMobile || !collapsed) && (
+                      <span
+                        className={cn(
+                          "flex-1 truncate text-left",
+                          hasActiveRoute && "font-bold",
+                        )}
+                      >
+                        {plugin.manifest.title}
+                      </span>
+                    )}
+                  </div>
+                  {(isMobile || !collapsed) && (
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      className="flex-shrink-0"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5 text-[var(--vms-ink-muted)]" />
+                    </motion.div>
+                  )}
+                </button>
+
+                {/* Plugin Routes Submenu */}
+                <AnimatePresence>
+                  {isExpanded && (isMobile || !collapsed) && (
+                    <motion.ul
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 35,
+                        mass: 0.5,
+                      }}
+                      className="ml-4 mt-1 space-y-0.5 overflow-hidden border-l border-[var(--vms-line)]"
+                    >
+                      {getPluginRoutesMemoized(plugin)?.map((route) => {
+                        const isActive = isPluginRouteActive(
+                          plugin.name,
+                          route.path,
+                        );
+                        const routeHref = buildPluginPath(
+                          plugin.basePath,
+                          route.path,
+                        );
+                        const routeTitle = route.title || route.path || "Route";
+                        const routeIcon = route.icon || "circle";
+                        return (
+                          <li key={route.path} className="pl-3 py-0.5">
+                            <Link
+                              onClick={handleLinkClick}
+                              className={cn(
+                                "flex items-center rounded-[var(--vms-radius-control)] text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
+                                "group relative",
+                                "gap-3 px-3 py-2",
+                                isActive
+                                  ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
+                                  : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                              )}
+                              href={routeHref}
+                            >
+                              <i
+                                className={cn(
+                                  "h-4 w-4 flex-shrink-0",
+                                  `fa fa-${routeIcon}`,
+                                  isActive && "text-primary-foreground",
+                                )}
+                              />
+                              <span className="flex-1 truncate">
+                                {routeTitle}
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
-          <>
-            {filteredPlugins.map((plugin) => {
-              const isExpanded = expandedPlugins.has(plugin.name);
-              const hasActiveRoute = isPluginActive(plugin.name);
-              const pluginIcon = plugin.manifest.icon
-                ? `fa fa-${plugin.manifest.icon}`
-                : "fa fa-cube";
-
-              return (
-                <div key={plugin.name} className="mb-0.5">
-                  {/* Plugin Dropdown Header */}
-                  <button
-                    onClick={() => togglePlugin(plugin.name)}
-                    className={cn(
-                      "flex items-center w-full rounded-xl text-sm font-medium transition-all duration-300",
-                      "group relative",
-                      isMobile || !collapsed
-                        ? "gap-3 px-3 py-2.5 justify-between"
-                        : "justify-center px-2 py-2.5",
-                      hasActiveRoute
-                        ? "bg-transparent font-semibold text-[#1F2933]"
-                        : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
-                    )}
-                    title={
-                      collapsed && !isMobile ? plugin.manifest.title : undefined
-                    }
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 min-w-0",
-                        (isMobile || !collapsed) && "flex-1",
-                      )}
-                    >
-                      <i
-                        className={cn(
-                          "h-5 w-5 flex-shrink-0",
-                          pluginIcon,
-                          hasActiveRoute && "text-[var(--vms-action)]",
-                        )}
-                      />
-                      {(isMobile || !collapsed) && (
-                        <span
-                          className={cn(
-                            "flex-1 truncate text-left",
-                            hasActiveRoute && "font-bold",
-                          )}
-                        >
-                          {plugin.manifest.title}
-                        </span>
-                      )}
-                    </div>
-                    {(isMobile || !collapsed) && (
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 180 : 0 }}
-                        className="flex-shrink-0"
-                      >
-                        <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-                      </motion.div>
-                    )}
-                  </button>
-
-                  {/* Plugin Routes Submenu */}
-                  <AnimatePresence>
-                    {isExpanded && (isMobile || !collapsed) && (
-                      <motion.ul
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 35,
-                          mass: 0.5,
-                        }}
-                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 "
-                      >
-                        {getPluginRoutesMemoized(plugin)?.map((route) => {
-                          const isActive = isPluginRouteActive(
-                            plugin.name,
-                            route.path,
-                          );
-                          const routeHref = buildPluginPath(
-                            plugin.basePath,
-                            route.path,
-                          );
-                          const routeTitle =
-                            route.title || route.path || "Route";
-                          const routeIcon = route.icon || "circle";
-                          return (
-                            <li key={route.path} className="pl-3 py-0.5">
-                              <Link
-                                onClick={handleLinkClick}
-                                className={cn(
-                                  "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
-                                  "group relative",
-                                  "gap-3 px-3 py-2",
-                                  isActive
-                                    ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
-                                    : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
-                                )}
-                                href={routeHref}
-                              >
-                                <i
-                                  className={cn(
-                                    "h-4 w-4 flex-shrink-0",
-                                    `fa fa-${routeIcon}`,
-                                    isActive && "text-primary-foreground",
-                                  )}
-                                />
-                                <span className="flex-1 truncate">
-                                  {routeTitle}
-                                </span>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </>
-        </nav>
-      </LayoutGroup>
+        </>
+      </nav>
 
       {actualType === "admin" && (isMobile || !collapsed) ? (
-        <div className="border-t border-[#E5E7EB] p-3">
+        <div className="border-t border-[var(--vms-line)] p-3">
           <Link
             href="/organization"
-            className="flex min-h-11 items-center rounded-md px-2 text-xs font-medium text-[#596675] transition hover:bg-[#F5F7F8] hover:text-[#1F2933] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
+            className="flex min-h-11 items-center rounded-[var(--vms-radius-control)] px-2 text-xs font-medium text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
           >
             Organization home
           </Link>

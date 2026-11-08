@@ -4,25 +4,26 @@ import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Download,
   Mail,
   MoreHorizontal,
   Plus,
-  Search,
   ShieldAlert,
   Trash2,
   UserCog,
-  Users,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  DataTable,
+  type Column,
+  type BulkAction,
+} from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
-import { PaginationBar } from "@/components/ui/PaginationBar";
 import { SlideOver } from "@/components/ui/SlideOver";
-import { TableSkeleton } from "@/components/ui/Skeleton";
 import {
   useAdminRoles,
   useAdmins,
@@ -85,8 +86,8 @@ export default function OrganizationAdministratorsPage() {
   const embedded =
     pathname?.startsWith("/organization/settings/administrators") === true;
   const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("created_at|desc");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<Admin | null>(null);
@@ -102,7 +103,7 @@ export default function OrganizationAdministratorsPage() {
     page,
     pageSize: PAGE_SIZE,
     search: search || undefined,
-    sort: "created_at|desc",
+    sort,
   });
   const roles = useAdminRoles({ page: 1, pageSize: 100 });
   const createAdmin = useCreateAdmin();
@@ -169,6 +170,157 @@ export default function OrganizationAdministratorsPage() {
     );
   }
 
+  function exportSelected(ids: string[]) {
+    const selectedItems = items.filter((item) => ids.includes(item.id));
+    const rows = [
+      ["Name", "Email", "Role"],
+      ...selectedItems.map((item) => [
+        displayName(item),
+        item.user?.email || "",
+        roleLabel(item),
+      ]),
+    ];
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(","),
+      )
+      .join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "organization-administrators.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function removeSelected(ids: string[]) {
+    const removable = items.filter(
+      (item) => ids.includes(item.id) && !isProtected(item),
+    );
+    if (!removable.length) {
+      setNotice("Protected owners must be changed by another owner.");
+      return;
+    }
+    const results = await Promise.allSettled(
+      removable.map((item) => deleteAdmin.mutateAsync(item.id)),
+    );
+    const removed = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
+    await admins.refetch();
+    setNotice(
+      `${removed} administrator${removed === 1 ? "" : "s"} removed${
+        removable.length > removed
+          ? "; protected or failed records remain"
+          : "."
+      }`,
+    );
+  }
+
+  const columns = useMemo<Column<Admin>[]>(
+    () => [
+      {
+        key: "name",
+        header: "Administrator",
+        sortable: true,
+        accessor: (admin) => (
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar admin={admin} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">
+                {displayName(admin)}
+              </p>
+              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[var(--vms-ink-muted)]">
+                <Mail className="h-3 w-3" aria-hidden="true" />
+                {admin.user?.email || "No email"}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "role",
+        header: "Role",
+        accessor: (admin) => (
+          <Badge variant="neutral">{roleLabel(admin)}</Badge>
+        ),
+      },
+      {
+        key: "access",
+        header: "Access",
+        accessor: (admin) => (
+          <span className="text-sm text-[var(--vms-ink-muted)]">
+            {isProtected(admin)
+              ? "Protected owner"
+              : `${admin.effective_permissions?.length || admin.role?.permissions_parsed.length || 0} effective grants`}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        mobileHide: true,
+        accessor: (admin) => (
+          <div className="flex justify-end gap-1">
+            {canUpdate && !isProtected(admin) ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingAdmin(admin)}
+              >
+                Change role
+              </Button>
+            ) : null}
+            {canDelete && !isProtected(admin) ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove ${displayName(admin)}`}
+                onClick={() => setDeletingAdmin(admin)}
+              >
+                <Trash2
+                  className="h-4 w-4 text-[var(--vms-danger)]"
+                  aria-hidden="true"
+                />
+              </Button>
+            ) : isProtected(admin) ? (
+              <MoreHorizontal
+                className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                aria-label="Protected owner"
+              />
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [canDelete, canUpdate],
+  );
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Export selected",
+      icon: Download,
+      onClick: exportSelected,
+    },
+    ...(canDelete
+      ? [
+          {
+            label: "Remove selected",
+            icon: Trash2,
+            variant: "destructive" as const,
+            requiresConfirmation: true,
+            confirmationMessage:
+              "Remove the selected organization administrators? Protected owners will be skipped.",
+            onClick: removeSelected,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-5">
       {!embedded ? (
@@ -198,251 +350,101 @@ export default function OrganizationAdministratorsPage() {
 
       {readOnly && profile.isSuccess ? (
         <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]">
-          <ShieldAlert
-            className="mt-0.5 h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <p>
-            You can review administrators, but your role does not allow
-            changes.
+            You can review administrators, but your role does not allow changes.
           </p>
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-        <div className="flex flex-col gap-3 border-b border-[var(--vms-line)] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">Organization directory</h2>
-            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              One identity may hold multiple organization roles.
-            </p>
-          </div>
-          <form
-            className="flex w-full gap-2 sm:max-w-md"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setPage(1);
-              setSearch(searchInput.trim());
-            }}
-          >
-            <label className="sr-only" htmlFor="administrator-search">
-              Search administrators
-            </label>
-            <div className="relative min-w-0 flex-1">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
-                aria-hidden="true"
-              />
-              <input
-                id="administrator-search"
-                type="search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search name or email"
-                className={`${fieldControlClassName} pl-9`}
-              />
-            </div>
-            <Button type="submit" variant="secondary">
-              Search
-            </Button>
-          </form>
-        </div>
-
-        {profile.isPending || admins.isPending ? (
-          <div className="p-4">
-            <TableSkeleton />
-          </div>
-        ) : profile.isError ? (
-          <StateMessage
-            title="Administrator access is unavailable"
-            detail={parseApiError(profile.error).message}
-            action={
-              <Button variant="secondary" onClick={() => profile.refetch()}>
-                Retry
-              </Button>
-            }
-          />
-        ) : admins.isError && !admins.data ? (
-          <StateMessage
-            title="Administrators could not be loaded"
-            detail={parseApiError(admins.error).message}
-            action={
-              <Button variant="secondary" onClick={() => admins.refetch()}>
-                Retry
-              </Button>
-            }
-          />
-        ) : !items.length ? (
-          <EmptyState
-            icon={Users}
-            title={search ? "No administrators match" : "No administrators yet"}
-            description={
-              search
-                ? "Clear the search and try again."
-                : "Add an organization administrator to delegate tenant administration."
-            }
-            action={
-              search ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSearch("");
-                    setSearchInput("");
-                  }}
-                >
-                  Clear search
-                </Button>
-              ) : canCreate ? (
-                <Button onClick={openCreate}>Add administrator</Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full border-collapse text-left">
-                <caption className="sr-only">
-                  Organization administrators
-                </caption>
-                <thead className="bg-[var(--vms-surface-subtle)]">
-                  <tr className="border-b border-[var(--vms-line)] text-[11px] uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-                    <th className="px-4 py-3 font-semibold">Administrator</th>
-                    <th className="px-4 py-3 font-semibold">Role</th>
-                    <th className="px-4 py-3 font-semibold">Access</th>
-                    <th className="px-4 py-3 text-right font-semibold">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((admin) => (
-                    <tr
-                      key={admin.id}
-                      className="border-b border-[var(--vms-line)] last:border-0"
+      <DataTable
+        data={items}
+        columns={columns}
+        tableLabel="Organization administrators"
+        searchPlaceholder="Search name or email"
+        initialSearch={search}
+        initialSort="created_at:desc"
+        onSearchChange={(value) => {
+          setSearch(value.trim());
+          setPage(1);
+        }}
+        onSortChange={(value) =>
+          setSort(value ? value.replace(":", "|") : "created_at|desc")
+        }
+        serverSide
+        total={admins.data?.total ?? 0}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        isLoading={profile.isPending || admins.isPending}
+        errorMessage={
+          profile.isError
+            ? parseApiError(profile.error).message
+            : admins.isError && !admins.data
+              ? parseApiError(admins.error).message
+              : undefined
+        }
+        isStale={admins.isError && !!admins.data}
+        onRetry={() => {
+          if (profile.isError) void profile.refetch();
+          if (admins.isError) void admins.refetch();
+        }}
+        emptyMessage={
+          search
+            ? "No administrators match this search"
+            : "No administrators yet"
+        }
+        selectable
+        getRowId={(admin) => admin.id}
+        bulkActions={bulkActions}
+        mobileSummary={(admin) => (
+          <div className="flex items-start gap-3">
+            <Avatar admin={admin} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {displayName(admin)}
+              </p>
+              <p className="mt-0.5 truncate text-xs text-[var(--vms-ink-muted)]">
+                {admin.user?.email}
+              </p>
+              <div className="mt-3 grid gap-2">
+                <Detail label="Role" value={roleLabel(admin)} />
+                <Detail
+                  label="Access"
+                  value={
+                    isProtected(admin)
+                      ? "Protected owner"
+                      : "Organization administration"
+                  }
+                />
+              </div>
+              {canUpdate || canDelete ? (
+                <div className="mt-3 flex gap-2">
+                  {canUpdate && !isProtected(admin) ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setEditingAdmin(admin)}
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar admin={admin} />
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold">
-                              {displayName(admin)}
-                            </p>
-                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[var(--vms-ink-muted)]">
-                              <Mail className="h-3 w-3" aria-hidden="true" />
-                              {admin.user?.email || "No email"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="neutral">{roleLabel(admin)}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[var(--vms-ink-muted)]">
-                        {isProtected(admin)
-                          ? "Protected owner"
-                          : `${admin.effective_permissions?.length || admin.role?.permissions_parsed.length || 0} effective grants`}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          {canUpdate && !isProtected(admin) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingAdmin(admin)}
-                            >
-                              Change role
-                            </Button>
-                          ) : null}
-                          {canDelete && !isProtected(admin) ? (
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Remove ${displayName(admin)}`}
-                              onClick={() => setDeletingAdmin(admin)}
-                            >
-                              <Trash2
-                                className="h-4 w-4 text-[var(--vms-danger)]"
-                                aria-hidden="true"
-                              />
-                            </Button>
-                          ) : (
-                            <MoreHorizontal
-                              className="h-4 w-4 text-[var(--vms-ink-muted)]"
-                              aria-hidden="true"
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      Change role
+                    </Button>
+                  ) : null}
+                  {canDelete && !isProtected(admin) ? (
+                    <Button
+                      size="sm"
+                      variant="destructive-outlined"
+                      onClick={() => setDeletingAdmin(admin)}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
-
-            <ul className="divide-y divide-[var(--vms-line)] md:hidden">
-              {items.map((admin) => (
-                <li key={admin.id} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar admin={admin} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">
-                        {displayName(admin)}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-[var(--vms-ink-muted)]">
-                        {admin.user?.email}
-                      </p>
-                      <div className="mt-3 grid gap-2">
-                        <Detail label="Role" value={roleLabel(admin)} />
-                        <Detail
-                          label="Access"
-                          value={
-                            isProtected(admin)
-                              ? "Protected owner"
-                              : "Organization administration"
-                          }
-                        />
-                      </div>
-                      {canUpdate || canDelete ? (
-                        <div className="mt-3 flex gap-2">
-                          {canUpdate && !isProtected(admin) ? (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setEditingAdmin(admin)}
-                            >
-                              Change role
-                            </Button>
-                          ) : null}
-                          {canDelete && !isProtected(admin) ? (
-                            <Button
-                              size="sm"
-                              variant="destructive-outlined"
-                              onClick={() => setDeletingAdmin(admin)}
-                            >
-                              Remove
-                            </Button>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <PaginationBar
-              page={page}
-              pageSize={PAGE_SIZE}
-              total={admins.data?.total}
-              totalPages={admins.data?.total_pages || 1}
-              resourceLabel="administrators"
-              onChange={setPage}
-              isFetching={admins.isFetching}
-              className="rounded-none border-0 border-t border-[var(--vms-line)]"
-            />
-          </>
+          </div>
         )}
-      </section>
+      />
 
       <Modal
         isOpen={createOpen}
@@ -646,18 +648,12 @@ export default function OrganizationAdministratorsPage() {
         size="sm"
       >
         {deleteAdmin.isError ? (
-          <p
-            role="alert"
-            className="mb-4 text-sm text-[var(--vms-danger)]"
-          >
+          <p role="alert" className="mb-4 text-sm text-[var(--vms-danger)]">
             {parseApiError(deleteAdmin.error).message}
           </p>
         ) : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="secondary"
-            onClick={() => setDeletingAdmin(null)}
-          >
+          <Button variant="secondary" onClick={() => setDeletingAdmin(null)}>
             Cancel
           </Button>
           <Button
@@ -697,27 +693,6 @@ function Detail({ label, value }: { label: string; value: string }) {
     <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-2 text-sm">
       <span className="text-[var(--vms-ink-muted)]">{label}</span>
       <span className="truncate font-medium">{value}</span>
-    </div>
-  );
-}
-
-function StateMessage({
-  title,
-  detail,
-  action,
-}: {
-  title: string;
-  detail: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div
-      role="alert"
-      className="m-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]"
-    >
-      <p className="font-semibold">{title}</p>
-      <p className="mt-1">{detail}</p>
-      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }

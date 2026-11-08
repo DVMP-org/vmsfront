@@ -9,7 +9,10 @@ const tokensCss = readFileSync(
 
 function token(name: string): string {
   const value = tokensCss.match(
-    new RegExp(`${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*:\\s*(#[0-9a-f]{6})`, "i"),
+    new RegExp(
+      `${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*:\\s*(#[0-9a-f]{6})`,
+      "i",
+    ),
   )?.[1];
   if (!value) throw new Error(`Missing token ${name}`);
   return value;
@@ -22,9 +25,7 @@ function luminance(hex: string): number {
       ? value / 12.92
       : Math.pow((value + 0.055) / 1.055, 2.4);
   });
-  return (
-    channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
-  );
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
 }
 
 function contrast(first: string, second: string): number {
@@ -37,6 +38,10 @@ describe("Operations Hub tokens", () => {
     expect(tokensCss).toContain('[data-vms-theme="light"]');
     expect(tokensCss).not.toContain('[data-vms-theme="dark"]');
     expect(tokensCss).toContain("prefers-reduced-motion: reduce");
+    expect(tokensCss).toContain("--vms-coral-accent: #ff6b4a");
+    expect(tokensCss).toContain("--vms-space-3: 16px");
+    expect(tokensCss).toContain("--vms-radius-lg: 12px");
+    expect(tokensCss).toContain("--vms-type-heading-size: 24px");
   });
 
   it("keeps primary text and actions WCAG AA readable", () => {

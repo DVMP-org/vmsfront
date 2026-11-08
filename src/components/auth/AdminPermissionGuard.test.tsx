@@ -5,13 +5,14 @@ import { AdminPermissionGuard } from "./AdminPermissionGuard";
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   refetch: vi.fn(),
+  pathname: "/admin",
   isAdministrator: true,
   pending: false,
   error: false,
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/admin",
+  usePathname: () => mocks.pathname,
   useRouter: () => ({ replace: mocks.replace }),
 }));
 
@@ -43,6 +44,7 @@ describe("AdminPermissionGuard management boundary", () => {
   beforeEach(() => {
     mocks.replace.mockReset();
     mocks.refetch.mockReset();
+    mocks.pathname = "/admin";
     mocks.isAdministrator = true;
     mocks.pending = false;
     mocks.error = false;
@@ -59,7 +61,7 @@ describe("AdminPermissionGuard management boundary", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("redirects an organization-only entry to Workspaces with an explanation", async () => {
+  it("redirects an organization-only entry to the organization dashboard", async () => {
     mocks.isAdministrator = false;
     render(
       <AdminPermissionGuard>
@@ -69,7 +71,7 @@ describe("AdminPermissionGuard management boundary", () => {
 
     await waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith(
-        "/organization/workspaces?reason=management-required",
+        "/organization?reason=management-required",
       ),
     );
     expect(screen.queryByText("Property operations")).toBeNull();
@@ -85,5 +87,23 @@ describe("AdminPermissionGuard management boundary", () => {
 
     expect(screen.queryByText("Property operations")).toBeNull();
     expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("keeps first-place setup outside the admin management guard", () => {
+    mocks.pathname = "/admin/properties/new/";
+    mocks.isAdministrator = false;
+
+    render(
+      <AdminPermissionGuard>
+        <div>Create the first place</div>
+      </AdminPermissionGuard>,
+    );
+
+    expect(screen.queryByText("Create the first place")).toBeNull();
+    return waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith(
+        "/organization?reason=management-required",
+      ),
+    );
   });
 });

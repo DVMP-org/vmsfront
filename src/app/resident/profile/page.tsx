@@ -21,6 +21,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { getFullName, getInitials, cn } from "@/lib/utils";
@@ -58,7 +59,7 @@ export default function ResidentProfilePage() {
 
   const residencies = useMemo(
     () => dashboardProfile?.residencies ?? residentProfile?.residencies ?? [],
-    [dashboardProfile?.residencies, residentProfile?.residencies]
+    [dashboardProfile?.residencies, residentProfile?.residencies],
   );
 
   const residentUser = residentProfile?.user ?? user ?? null;
@@ -93,17 +94,69 @@ export default function ResidentProfilePage() {
     }
   }, [residentUser]);
 
-  const fullName = residentUser ? getFullName(residentUser.first_name, residentUser.last_name) : "Resident";
+  const fullName = residentUser
+    ? getFullName(residentUser.first_name, residentUser.last_name)
+    : "Resident";
   const membershipStatus = residentProfile?.onboarded ? "Active" : "Pending";
   const passCode = residentProfile?.pass_code ?? "—";
   const memberSince = residentProfile?.created_at
-    ? formatDistanceToNow(new Date(residentProfile.created_at), { addSuffix: true })
+    ? formatDistanceToNow(new Date(residentProfile.created_at), {
+        addSuffix: true,
+      })
     : "N/A";
 
   const handleContactSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     updateProfileMutation.mutate(contactForm);
   };
+
+  const residenceColumns: Column<(typeof residencies)[number]>[] = [
+    {
+      key: "name",
+      header: "Residence",
+      sortable: true,
+      accessor: (residency) => (
+        <div className="flex items-center gap-2 font-medium text-foreground">
+          <Home className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          {residency.name}
+        </div>
+      ),
+    },
+    {
+      key: "address",
+      header: "Address",
+      sortable: true,
+      accessor: (residency) => (
+        <span className="text-muted-foreground">{residency.address}</span>
+      ),
+    },
+    {
+      key: "role",
+      header: "Role",
+      accessor: () => (
+        <span className="inline-flex rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
+          Resident
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Action",
+      mobileHide: true,
+      accessor: () => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => router.push("/organization/workspaces")}
+          title="Choose a workspace"
+        >
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Choose workspace</span>
+        </Button>
+      ),
+    },
+  ];
 
   if (isAdminUser) {
     return (
@@ -151,10 +204,14 @@ export default function ResidentProfilePage() {
               <Mail className="h-3.5 w-3.5" />
               <span>{residentUser.email}</span>
               <span className="text-[var(--vms-line-strong)]">|</span>
-              <span className={cn(
-                "flex items-center gap-1.5",
-                residentProfile?.onboarded ? "text-[var(--vms-success)]" : "text-[var(--vms-warning)]"
-              )}>
+              <span
+                className={cn(
+                  "flex items-center gap-1.5",
+                  residentProfile?.onboarded
+                    ? "text-[var(--vms-success)]"
+                    : "text-[var(--vms-warning)]",
+                )}
+              >
                 <UserCheck className="h-3.5 w-3.5" />
                 {membershipStatus}
               </span>
@@ -167,32 +224,32 @@ export default function ResidentProfilePage() {
           }
           secondaryActions={
             <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (residentUser) {
-                  setContactForm({
-                    first_name: residentUser.first_name ?? "",
-                    last_name: residentUser.last_name ?? "",
-                    phone: residentUser.phone ?? "",
-                    address: residentUser.address ?? "",
-                  });
-                }
-              }}
-              disabled={updateProfileMutation.isPending}
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset Changes
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleContactSubmit}
-              isLoading={updateProfileMutation.isPending}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Profile
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (residentUser) {
+                    setContactForm({
+                      first_name: residentUser.first_name ?? "",
+                      last_name: residentUser.last_name ?? "",
+                      phone: residentUser.phone ?? "",
+                      address: residentUser.address ?? "",
+                    });
+                  }
+                }}
+                disabled={updateProfileMutation.isPending}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset Changes
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleContactSubmit}
+                isLoading={updateProfileMutation.isPending}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Profile
+              </Button>
             </>
           }
         />
@@ -200,11 +257,12 @@ export default function ResidentProfilePage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content Column */}
           <div className="space-y-8 lg:col-span-2">
-
             {/* Contact Information */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-foreground">Contact Information</h2>
+                <h2 className="text-lg font-medium text-foreground">
+                  Contact Information
+                </h2>
               </div>
               <div className="rounded-lg border border-border bg-card p-5">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -212,7 +270,10 @@ export default function ResidentProfilePage() {
                     label="First name"
                     value={contactForm.first_name}
                     onChange={(event) =>
-                      setContactForm((prev) => ({ ...prev, first_name: event.target.value }))
+                      setContactForm((prev) => ({
+                        ...prev,
+                        first_name: event.target.value,
+                      }))
                     }
                     className="h-9 text-sm"
                   />
@@ -220,7 +281,10 @@ export default function ResidentProfilePage() {
                     label="Last name"
                     value={contactForm.last_name}
                     onChange={(event) =>
-                      setContactForm((prev) => ({ ...prev, last_name: event.target.value }))
+                      setContactForm((prev) => ({
+                        ...prev,
+                        last_name: event.target.value,
+                      }))
                     }
                     className="h-9 text-sm"
                   />
@@ -236,18 +300,26 @@ export default function ResidentProfilePage() {
                     placeholder="+1 (555) 000-0000"
                     value={contactForm.phone}
                     onChange={(event) =>
-                      setContactForm((prev) => ({ ...prev, phone: event.target.value }))
+                      setContactForm((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
                     }
                     className="h-9 text-sm"
                   />
                   <div className="md:col-span-2">
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Address</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                      Address
+                    </label>
                     <textarea
                       className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="Enter your residential address"
                       value={contactForm.address}
                       onChange={(event) =>
-                        setContactForm((prev) => ({ ...prev, address: event.target.value }))
+                        setContactForm((prev) => ({
+                          ...prev,
+                          address: event.target.value,
+                        }))
                       }
                     />
                   </div>
@@ -257,66 +329,44 @@ export default function ResidentProfilePage() {
 
             {/* Linked Homes */}
             <section className="space-y-4">
-              <h2 className="text-lg font-medium text-foreground">Linked Residences</h2>
-              <div className="rounded-lg border border-border bg-card overflow-hidden">
-                {residencies.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
-                    No residences linked to this account.
-                  </div>
-                ) : (
-                  <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm text-left">
-                      <thead className="[&_tr]:border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Residence</th>
-                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Address</th>
-                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground">Role</th>
-                          <th className="h-10 px-4 align-middle font-medium text-muted-foreground text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="[&_tr:last-child]:border-0">
-                        {residencies.map((residency) => (
-                          <tr key={residency.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                            <td className="p-4 align-middle font-medium text-foreground">
-                              <div className="flex items-center gap-2">
-                                <Home className="h-4 w-4 text-muted-foreground" />
-                                {residency.name}
-                              </div>
-                            </td>
-                            <td className="p-4 align-middle text-muted-foreground">{residency.address}</td>
-                            <td className="p-4 align-middle">
-                              <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                                Resident
-                              </div>
-                            </td>
-                            <td className="p-4 align-middle text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => router.push("/organization/workspaces")}
-                                title="Choose a workspace"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                <span className="sr-only">Choose workspace</span>
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <h2 className="text-lg font-medium text-foreground">
+                Linked Residences
+              </h2>
+              <DataTable
+                data={residencies}
+                columns={residenceColumns}
+                tableLabel="Linked residences"
+                searchPlaceholder="Search residences"
+                emptyMessage="No residences linked to this account."
+                showPagination={residencies.length > 10}
+                pageSize={10}
+                mobileSummary={(residency) => (
+                  <div>
+                    <strong className="block text-sm">{residency.name}</strong>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {residency.address}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => router.push("/organization/workspaces")}
+                    >
+                      Choose workspace
+                    </Button>
                   </div>
                 )}
-              </div>
+              />
             </section>
           </div>
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-
             {/* Account Metadata */}
             <section className="space-y-4">
-              <h2 className="text-lg font-medium text-foreground">Account Details</h2>
+              <h2 className="text-lg font-medium text-foreground">
+                Account Details
+              </h2>
               <div className="rounded-lg border border-border bg-card">
                 {residentProfile?.badge_url && (
                   <div className="border-b border-border p-6 text-center">
@@ -333,14 +383,18 @@ export default function ResidentProfilePage() {
                   </div>
                 )}
                 <div className="border-b border-border p-4">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">Pass Code</div>
+                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                    Pass Code
+                  </div>
                   <button
                     onClick={handleCopyPassCode}
                     className="group flex w-full items-center gap-2 rounded-md py-1 text-left transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
                     title="Click to copy pass code"
                   >
                     <Hash className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-mono text-lg font-medium tracking-wide">{passCode}</span>
+                    <span className="font-mono text-lg font-medium tracking-wide">
+                      {passCode}
+                    </span>
                     <div className="ml-auto flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                       {isCopied ? (
                         <>
@@ -358,14 +412,18 @@ export default function ResidentProfilePage() {
                 </div>
                 <div className="p-4 space-y-4">
                   <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-1">Member Since</div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
+                      Member Since
+                    </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                       {memberSince}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-1">Account ID</div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
+                      Account ID
+                    </div>
                     <div className="text-xs font-mono text-muted-foreground truncate">
                       {residentUser?.id}
                     </div>
@@ -376,31 +434,48 @@ export default function ResidentProfilePage() {
 
             {/* Preferences */}
             <section className="space-y-4">
-              <h2 className="text-lg font-medium text-foreground">Preferences</h2>
+              <h2 className="text-lg font-medium text-foreground">
+                Preferences
+              </h2>
               <div className="rounded-lg border border-border bg-card divide-y divide-border">
                 <div className="flex items-center justify-between p-4">
                   <div className="space-y-0.5">
-                    <div className="text-sm font-medium">Email Notifications</div>
-                    <div className="text-xs text-muted-foreground">Receive updates via email</div>
+                    <div className="text-sm font-medium">
+                      Email Notifications
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Receive updates via email
+                    </div>
                   </div>
                   <PreferenceToggle
                     active={preferences.emailUpdates}
-                    onChange={() => setPreferences(p => ({ ...p, emailUpdates: !p.emailUpdates }))}
+                    onChange={() =>
+                      setPreferences((p) => ({
+                        ...p,
+                        emailUpdates: !p.emailUpdates,
+                      }))
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between p-4">
                   <div className="space-y-0.5">
                     <div className="text-sm font-medium">SMS Alerts</div>
-                    <div className="text-xs text-muted-foreground">Urgent alerts to phone</div>
+                    <div className="text-xs text-muted-foreground">
+                      Urgent alerts to phone
+                    </div>
                   </div>
                   <PreferenceToggle
                     active={preferences.smsUpdates}
-                    onChange={() => setPreferences(p => ({ ...p, smsUpdates: !p.smsUpdates }))}
+                    onChange={() =>
+                      setPreferences((p) => ({
+                        ...p,
+                        smsUpdates: !p.smsUpdates,
+                      }))
+                    }
                   />
                 </div>
               </div>
             </section>
-
           </div>
         </div>
       </div>
@@ -423,16 +498,15 @@ function PreferenceToggle({
       onClick={onChange}
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        active ? "bg-[var(--vms-action)]" : "bg-[var(--vms-line-strong)]"
+        active ? "bg-[var(--vms-action)]" : "bg-[var(--vms-line-strong)]",
       )}
     >
       <span
         className={cn(
           "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
-          active ? "translate-x-4" : "translate-x-0"
+          active ? "translate-x-4" : "translate-x-0",
         )}
       />
     </button>
   );
 }
-

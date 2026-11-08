@@ -24,10 +24,10 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 1024;
-  });
+  // Keep the first render deterministic. The effect below applies the
+  // viewport-specific shell after hydration without changing the tree shape
+  // between server and client.
+  const [isMobile, setIsMobile] = useState(false);
   useRequireEmailVerification(true);
 
   useEffect(() => {

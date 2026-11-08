@@ -1,11 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertCircle,
@@ -26,19 +22,18 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import { TableSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { useAdminResidencies, useAdminResidencyGroups } from "@/hooks/use-admin";
+  useAdminResidencies,
+  useAdminResidencyGroups,
+} from "@/hooks/use-admin";
 import {
   useAdminForumCategories,
   useAdminForumTopics,
@@ -49,7 +44,12 @@ import {
   useUpdateAdminForumTopic,
   useDeleteAdminForumTopic,
 } from "@/hooks/use-admin-forum";
-import type { ForumCategory, ForumTopic, Residency, ResidencyGroup } from "@/types";
+import type {
+  ForumCategory,
+  ForumTopic,
+  Residency,
+  ResidencyGroup,
+} from "@/types";
 import { cn } from "@/lib/utils";
 import { ActionMenu } from "./components/ActionMenu";
 import {
@@ -73,7 +73,7 @@ export default function AdminForumsPage() {
   });
   const residencies = useMemo(
     () => residenciesData?.items ?? [],
-    [residenciesData?.items]
+    [residenciesData?.items],
   );
   const { data: residencyGroupsData } = useAdminResidencyGroups({
     page: 1,
@@ -81,10 +81,8 @@ export default function AdminForumsPage() {
   });
   const residencyGroups = useMemo(
     () => residencyGroupsData?.items ?? [],
-    [residencyGroupsData?.items]
+    [residencyGroupsData?.items],
   );
-
-
 
   // URL query sync
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
@@ -103,23 +101,53 @@ export default function AdminForumsPage() {
     skipInitialSync: true,
   });
 
-
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [residencyId, setResidencyId] = useState(() => initializeFromUrl("residencyId"));
-  const [categoryId, setCategoryId] = useState(() => initializeFromUrl("categoryId"));
+  const [residencyId, setResidencyId] = useState(() =>
+    initializeFromUrl("residencyId"),
+  );
+  const [categoryId, setCategoryId] = useState(() =>
+    initializeFromUrl("categoryId"),
+  );
   const [isPinned, setIsPinned] = useState(() => initializeFromUrl("isPinned"));
-  const [isDeleted, setIsDeleted] = useState(() => initializeFromUrl("isDeleted"));
+  const [isDeleted, setIsDeleted] = useState(() =>
+    initializeFromUrl("isDeleted"),
+  );
   const [isLocked, setIsLocked] = useState(() => initializeFromUrl("isLocked"));
-  const [startDate, setStartDate] = useState(() => initializeFromUrl("startDate"));
+  const [startDate, setStartDate] = useState(() =>
+    initializeFromUrl("startDate"),
+  );
   const [endDate, setEndDate] = useState(() => initializeFromUrl("endDate"));
 
   const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
-    syncToUrl({ page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate });
-  }, [page, pageSize, search, isPinned, isLocked, isDeleted, residencyId, categoryId, startDate, endDate, syncToUrl]);
+    syncToUrl({
+      page,
+      pageSize,
+      search,
+      isPinned,
+      isLocked,
+      isDeleted,
+      residencyId,
+      categoryId,
+      startDate,
+      endDate,
+    });
+  }, [
+    page,
+    pageSize,
+    search,
+    isPinned,
+    isLocked,
+    isDeleted,
+    residencyId,
+    categoryId,
+    startDate,
+    endDate,
+    syncToUrl,
+  ]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -132,20 +160,65 @@ export default function AdminForumsPage() {
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
     if (residencyId && residencyId !== "all") {
-      filters.push({ field: "residency_id", operator: "eq" as const, value: residencyId });
+      filters.push({
+        field: "residency_id",
+        operator: "eq" as const,
+        value: residencyId,
+      });
     }
-    if (categoryId !== "all") filters.push({ field: "category_id", operator: "eq" as const, value: categoryId });
-    if (isPinned) filters.push({ field: "is_pinned", operator: "eq" as const, value: isPinned });
-    if (isLocked) filters.push({ field: "is_locked", operator: "eq" as const, value: isLocked });
-    if (isDeleted) filters.push({ field: "is_deleted", operator: "eq" as const, value: isDeleted });
+    if (categoryId !== "all")
+      filters.push({
+        field: "category_id",
+        operator: "eq" as const,
+        value: categoryId,
+      });
+    if (isPinned)
+      filters.push({
+        field: "is_pinned",
+        operator: "eq" as const,
+        value: isPinned,
+      });
+    if (isLocked)
+      filters.push({
+        field: "is_locked",
+        operator: "eq" as const,
+        value: isLocked,
+      });
+    if (isDeleted)
+      filters.push({
+        field: "is_deleted",
+        operator: "eq" as const,
+        value: isDeleted,
+      });
 
-    if (startDate) filters.push({ field: "created_at", operator: "gte" as const, value: startDate });
-    if (endDate) filters.push({ field: "created_at", operator: "lte" as const, value: endDate });
+    if (startDate)
+      filters.push({
+        field: "created_at",
+        operator: "gte" as const,
+        value: startDate,
+      });
+    if (endDate)
+      filters.push({
+        field: "created_at",
+        operator: "lte" as const,
+        value: endDate,
+      });
 
     return filters;
-  }, [residencyId, categoryId, isPinned, isLocked, isDeleted, startDate, endDate]);
+  }, [
+    residencyId,
+    categoryId,
+    isPinned,
+    isLocked,
+    isDeleted,
+    startDate,
+    endDate,
+  ]);
 
-  const apiFilters = useMemo(() => formatFiltersForAPI(activeFilters), [activeFilters]);
+  const apiFilters = useMemo(
+    () => formatFiltersForAPI(activeFilters),
+    [activeFilters],
+  );
 
   const selectedResidency: Residency | undefined = useMemo(() => {
     if (!residencies || residencies.length === 0) return undefined;
@@ -167,39 +240,33 @@ export default function AdminForumsPage() {
 
   const categories = useMemo(
     () => categoriesResponse.data?.items ?? [],
-    [categoriesResponse]
+    [categoriesResponse],
   );
   const topics = useMemo(
     () => topicsResponse.data?.items ?? [],
-    [topicsResponse.data?.items]
+    [topicsResponse.data?.items],
   );
   const topicsTotal = topicsResponse.data?.total ?? topics.length;
-  const topicsTotalPages = topicsResponse.data?.total_pages ?? 1;
 
   const categoriesByResidency = useMemo(() => {
     if (!residencyId || residencyId === "all") return categories;
     return categories.filter(
-      (category) => !category.residency_id || category.residency_id === residencyId
+      (category) =>
+        !category.residency_id || category.residency_id === residencyId,
     );
   }, [categories, residencyId]);
 
-  const categoriesWithCounts = useMemo(
-    () => {
-      const counts = new Map<string, number>();
-      topics.forEach((topic) => {
-        counts.set(
-          topic.category_id,
-          (counts.get(topic.category_id) ?? 0) + 1
-        );
-      });
+  const categoriesWithCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    topics.forEach((topic) => {
+      counts.set(topic.category_id, (counts.get(topic.category_id) ?? 0) + 1);
+    });
 
-      return categoriesByResidency.map((category) => ({
-        category,
-        topicCount: category.topics_count ?? counts.get(category.id) ?? 0,
-      }));
-    },
-    [categoriesByResidency, topics]
-  );
+    return categoriesByResidency.map((category) => ({
+      category,
+      topicCount: category.topics_count ?? counts.get(category.id) ?? 0,
+    }));
+  }, [categoriesByResidency, topics]);
 
   const stats = useMemo(() => {
     const pinned = topics.filter((topic) => topic.is_pinned).length;
@@ -249,20 +316,181 @@ export default function AdminForumsPage() {
   const updateTopic = useUpdateAdminForumTopic();
   const deleteTopic = useDeleteAdminForumTopic();
 
-  const [categoryModalMode, setCategoryModalMode] =
-    useState<"create" | "edit">("create");
+  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">(
+    "create",
+  );
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ForumCategory | null>(
-    null
+    null,
   );
   const [categoryToDelete, setCategoryToDelete] =
     useState<ForumCategory | null>(null);
 
-  const [topicModalMode, setTopicModalMode] =
-    useState<"create" | "edit">("create");
+  const [topicModalMode, setTopicModalMode] = useState<"create" | "edit">(
+    "create",
+  );
   const [topicModalOpen, setTopicModalOpen] = useState(false);
   const [activeTopic, setActiveTopic] = useState<ForumTopic | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null);
+
+  const topicActions = (topic: ForumTopic) => [
+    {
+      label: "Open topic",
+      onClick: () => router.push(`/admin/forums/topic/${topic.id}`),
+    },
+    {
+      label: "Edit",
+      onClick: () => {
+        setTopicModalMode("edit");
+        setActiveTopic(topic);
+        setTopicModalOpen(true);
+      },
+    },
+    {
+      label: topic.is_pinned ? "Unpin" : "Pin",
+      icon: Pin,
+      onClick: () =>
+        updateTopic.mutate({
+          topicId: topic.id,
+          data: { is_pinned: !topic.is_pinned },
+        }),
+    },
+    {
+      label: topic.is_locked ? "Unlock" : "Lock",
+      icon: topic.is_locked ? Unlock : Lock,
+      onClick: () =>
+        updateTopic.mutate({
+          topicId: topic.id,
+          data: { is_locked: !topic.is_locked },
+        }),
+    },
+    {
+      label: topic.is_deleted ? "Restore" : "Soft delete",
+      icon: Shield,
+      onClick: () =>
+        updateTopic.mutate({
+          topicId: topic.id,
+          data: { is_deleted: !topic.is_deleted },
+        }),
+    },
+    {
+      label: "Hard delete",
+      tone: "destructive" as const,
+      onClick: () => setTopicToDelete(topic),
+    },
+  ];
+
+  const topicColumns: Column<ForumTopic>[] = [
+    {
+      key: "title",
+      header: "Topic",
+      sortable: true,
+      accessor: (topic) => (
+        <div className="flex min-w-0 flex-col">
+          <button
+            type="button"
+            onClick={() => router.push(`/admin/forums/topic/${topic.id}`)}
+            className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+          >
+            {topic.title}
+          </button>
+          <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
+            {topic.author_name || "System"} ·{" "}
+            <span className="font-medium">{topic.posts_count}</span> posts
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "category",
+      header: "Category",
+      sortable: true,
+      accessor: (topic) => (
+        <div>
+          {topic.category ? (
+            <Badge variant="neutral">{topic.category.name}</Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+          {topic.residency?.name ? (
+            <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--vms-ink-muted)]">
+              <Building2 className="h-3 w-3" aria-hidden="true" />
+              {topic.residency.name}
+            </p>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      key: "last_post_at",
+      header: "Last activity",
+      sortable: true,
+      accessor: (topic) =>
+        topic.last_post_at ? (
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            {formatDistanceToNow(new Date(topic.last_post_at), {
+              addSuffix: true,
+            })}
+          </span>
+        ) : (
+          <span className="text-xs text-[var(--vms-ink-muted)]">—</span>
+        ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      accessor: (topic) => <TopicStatusChips topic={topic} />,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      mobileHide: true,
+      accessor: (topic) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs"
+            onClick={() => router.push(`/admin/forums/topic/${topic.id}`)}
+          >
+            Open
+          </Button>
+          <ActionMenu size="sm" options={topicActions(topic)} />
+        </div>
+      ),
+    },
+  ];
+
+  const topicBulkActions: BulkAction[] = [
+    {
+      label: "Pin selected",
+      icon: Pin,
+      onClick: async (ids) => {
+        await Promise.allSettled(
+          ids.map((id) =>
+            updateTopic.mutateAsync({
+              topicId: id,
+              data: { is_pinned: true },
+            }),
+          ),
+        );
+      },
+    },
+    {
+      label: "Lock selected",
+      icon: Lock,
+      onClick: async (ids) => {
+        await Promise.allSettled(
+          ids.map((id) =>
+            updateTopic.mutateAsync({
+              topicId: id,
+              data: { is_locked: true },
+            }),
+          ),
+        );
+      },
+    },
+  ];
 
   const handleResetFilters = () => {
     setSearchInput("");
@@ -299,7 +527,7 @@ export default function AdminForumsPage() {
           onSuccess: () => {
             setCategoryModalOpen(false);
           },
-        }
+        },
       );
     } else if (activeCategory) {
       updateCategory.mutate(
@@ -311,14 +539,16 @@ export default function AdminForumsPage() {
             is_default: values.isDefault,
             is_locked: values.isLocked,
             residency_id:
-              values.scopeType === "organization" ? undefined : values.residencyId,
+              values.scopeType === "organization"
+                ? undefined
+                : values.residencyId,
           },
         },
         {
           onSuccess: () => {
             setCategoryModalOpen(false);
           },
-        }
+        },
       );
     }
   };
@@ -353,7 +583,7 @@ export default function AdminForumsPage() {
               router.push(`/admin/forums/topic/${response.data.id}`);
             }
           },
-        }
+        },
       );
     } else if (activeTopic) {
       updateTopic.mutate(
@@ -363,7 +593,9 @@ export default function AdminForumsPage() {
             title: values.title,
             category_id: values.categoryId,
             residency_id:
-              values.targetType === "residency" ? values.residencyId : undefined,
+              values.targetType === "residency"
+                ? values.residencyId
+                : undefined,
             is_pinned: values.isPinned,
             is_locked: values.isLocked,
           },
@@ -372,7 +604,7 @@ export default function AdminForumsPage() {
           onSuccess: () => {
             setTopicModalOpen(false);
           },
-        }
+        },
       );
     }
   };
@@ -525,7 +757,7 @@ export default function AdminForumsPage() {
                 }}
                 className={cn(
                   "min-h-9 whitespace-nowrap rounded-[calc(var(--vms-radius-control)-2px)] px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
-                  (!isPinned && !isLocked && !isDeleted)
+                  !isPinned && !isLocked && !isDeleted
                     ? "bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-sm"
                     : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
                 )}
@@ -670,7 +902,9 @@ export default function AdminForumsPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              router.push(`/admin/forums/category/${category.id}`)
+                              router.push(
+                                `/admin/forums/category/${category.id}`,
+                              )
                             }
                             className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                           >
@@ -689,10 +923,15 @@ export default function AdminForumsPage() {
                           </p>
                         )}
                         <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--vms-ink-muted)]">
-                          <span className="font-medium">{topicCount} topics</span>
+                          <span className="font-medium">
+                            {topicCount} topics
+                          </span>
                           {category.residency?.name && (
                             <span className="flex items-center gap-1">
-                              <Building2 className="h-3 w-3" aria-hidden="true" />
+                              <Building2
+                                className="h-3 w-3"
+                                aria-hidden="true"
+                              />
                               {category.residency.name}
                             </span>
                           )}
@@ -704,7 +943,9 @@ export default function AdminForumsPage() {
                           {
                             label: "View topics",
                             onClick: () =>
-                              router.push(`/admin/forums/category/${category.id}`),
+                              router.push(
+                                `/admin/forums/category/${category.id}`,
+                              ),
                           },
                           {
                             label: "Edit",
@@ -781,279 +1022,84 @@ export default function AdminForumsPage() {
                 </Button>
               </div>
             </div>
-            <div className="p-0 overflow-x-auto">
-              {topicFetcher.isLoading ? (
-                <div className="p-4">
-                  <TableSkeleton />
-                </div>
-              ) : topicFetcher.isError && topics.length === 0 ? (
-                <div className="p-4" role="alert">
-                  <EmptyState
-                    icon={AlertCircle}
-                    title="Topics could not be loaded"
-                    description="The latest conversations are unavailable."
-                    action={{
-                      label: "Retry",
-                      onClick: () => topicFetcher.refetch(),
-                    }}
-                  />
-                </div>
-              ) : topics.length === 0 ? (
-                <div className="p-8">
-                  <EmptyState
-                    icon={MessageSquare}
-                    title="No topics match these filters"
-                    description="Try adjusting filters or create a new topic."
-                    action={{
-                      label: "Create topic",
-                      onClick: () => {
-                        setTopicModalMode("create");
-                        setActiveTopic(null);
-                        setTopicModalOpen(true);
-                      },
-                    }}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="hidden md:block">
-                    <Table>
-                    <TableHeader className="rounded-none transition-colors">
-                      <TableRow>
-                        <TableHead>Topic</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Last activity</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topics.map((topic) => (
-                        <TableRow key={topic.id}>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  router.push(`/admin/forums/topic/${topic.id}`)
-                                }
-                                className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                              >
-                                {topic.title}
-                              </button>
-                              <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                                {topic.author_name || "System"} ·{" "}
-                                <span className="font-medium">{topic.posts_count}</span> posts
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {topic.category ? (
-                              <Badge variant="neutral">
-                                {topic.category.name}
-                              </Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                            {topic.residency?.name && (
-                              <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--vms-ink-muted)]">
-                                <Building2 className="h-3 w-3" aria-hidden="true" />
-                                {topic.residency.name}
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {topic.last_post_at ? (
-                              <span className="text-xs text-[var(--vms-ink-muted)]">
-                                {formatDistanceToNow(
-                                  new Date(topic.last_post_at),
-                                  { addSuffix: true }
-                                )}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-[var(--vms-ink-muted)]">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <TopicStatusChips topic={topic} />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 text-xs"
-                                onClick={() =>
-                                  router.push(`/admin/forums/topic/${topic.id}`)
-                                }
-                              >
-                                Open
-                              </Button>
-                              <ActionMenu
-                                size="sm"
-                                options={[
-                                  {
-                                    label: "Edit",
-                                    onClick: () => {
-                                      setTopicModalMode("edit");
-                                      setActiveTopic(topic);
-                                      setTopicModalOpen(true);
-                                    },
-                                  },
-                                  {
-                                    label: topic.is_pinned ? "Unpin" : "Pin",
-                                    icon: Pin,
-                                    onClick: () =>
-                                      updateTopic.mutate({
-                                        topicId: topic.id,
-                                        data: { is_pinned: !topic.is_pinned },
-                                      }),
-                                  },
-                                  {
-                                    label: topic.is_locked ? "Unlock" : "Lock",
-                                    icon: topic.is_locked ? Unlock : Lock,
-                                    onClick: () =>
-                                      updateTopic.mutate({
-                                        topicId: topic.id,
-                                        data: { is_locked: !topic.is_locked },
-                                      }),
-                                  },
-                                  {
-                                    label: topic.is_deleted ? "Restore" : "Soft delete",
-                                    icon: Shield,
-                                    onClick: () =>
-                                      updateTopic.mutate({
-                                        topicId: topic.id,
-                                        data: { is_deleted: !topic.is_deleted },
-                                      }),
-                                  },
-                                  {
-                                    label: "Hard delete",
-                                    tone: "destructive",
-                                    onClick: () => setTopicToDelete(topic),
-                                  },
-                                ]}
-                              />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    </Table>
-                  </div>
-                  <div className="divide-y divide-[var(--vms-line)] md:hidden">
-                    {topics.map((topic) => (
-                      <article key={topic.id} className="space-y-3 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              router.push(`/admin/forums/topic/${topic.id}`)
-                            }
-                            className="min-w-0 text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                          >
-                            {topic.title}
-                          </button>
-                          <ActionMenu
-                            size="sm"
-                            options={[
-                              {
-                                label: "Open topic",
-                                onClick: () =>
-                                  router.push(`/admin/forums/topic/${topic.id}`),
-                              },
-                              {
-                                label: "Edit",
-                                onClick: () => {
-                                  setTopicModalMode("edit");
-                                  setActiveTopic(topic);
-                                  setTopicModalOpen(true);
-                                },
-                              },
-                              {
-                                label: topic.is_pinned ? "Unpin" : "Pin",
-                                icon: Pin,
-                                onClick: () =>
-                                  updateTopic.mutate({
-                                    topicId: topic.id,
-                                    data: { is_pinned: !topic.is_pinned },
-                                  }),
-                              },
-                              {
-                                label: topic.is_locked ? "Unlock" : "Lock",
-                                icon: topic.is_locked ? Unlock : Lock,
-                                onClick: () =>
-                                  updateTopic.mutate({
-                                    topicId: topic.id,
-                                    data: { is_locked: !topic.is_locked },
-                                  }),
-                              },
-                              {
-                                label: "Hard delete",
-                                tone: "destructive",
-                                onClick: () => setTopicToDelete(topic),
-                              },
-                            ]}
-                          />
-                        </div>
-                        <TopicStatusChips topic={topic} />
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                          <div>
-                            <dt className="text-[var(--vms-ink-muted)]">
-                              Category
-                            </dt>
-                            <dd className="mt-0.5 font-medium">
-                              {topic.category?.name || "Uncategorized"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-[var(--vms-ink-muted)]">
-                              Posts
-                            </dt>
-                            <dd className="mt-0.5 font-medium tabular-nums">
-                              {topic.posts_count}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-[var(--vms-ink-muted)]">
-                              Author
-                            </dt>
-                            <dd className="mt-0.5 font-medium">
-                              {topic.author_name || "System"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-[var(--vms-ink-muted)]">
-                              Last activity
-                            </dt>
-                            <dd className="mt-0.5 font-medium">
-                              {topic.last_post_at
-                                ? formatDistanceToNow(
-                                    new Date(topic.last_post_at),
-                                    { addSuffix: true },
-                                  )
-                                : "No activity"}
-                            </dd>
-                          </div>
-                        </dl>
-                      </article>
-                    ))}
-                  </div>
-                  <div className="border-t border-[var(--vms-line)] px-4 py-3">
-                    <PaginationBar
-                      page={page}
-                      totalPages={topicsTotalPages}
-                      total={topicsTotal}
-                      pageSize={10}
-                      resourceLabel="topics"
-                      onChange={setPage}
-                      isFetching={topicFetcher.isFetching}
-                    />
-                  </div>
-                </>
-              )}
+            <div className="p-3">
+              <DataTable
+                data={topics}
+                columns={topicColumns}
+                tableLabel="Community topics"
+                searchable={false}
+                serverSide
+                total={topicsTotal}
+                currentPage={page}
+                onPageChange={setPage}
+                pageSize={10}
+                pageSizeOptions={[10]}
+                isLoading={topicFetcher.isLoading}
+                errorMessage={
+                  topicFetcher.isError && topics.length === 0
+                    ? "Topics could not be loaded. The latest conversations are unavailable."
+                    : undefined
+                }
+                isStale={topicFetcher.isError && topics.length > 0}
+                staleMessage="Showing the last successful topics."
+                onRetry={() => topicFetcher.refetch()}
+                emptyMessage="No topics match these filters"
+                selectable
+                getRowId={(topic) => topic.id}
+                bulkActions={topicBulkActions}
+                mobileSummary={(topic) => (
+                  <article className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(`/admin/forums/topic/${topic.id}`)
+                        }
+                        className="min-w-0 text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+                      >
+                        {topic.title}
+                      </button>
+                      <ActionMenu size="sm" options={topicActions(topic)} />
+                    </div>
+                    <TopicStatusChips topic={topic} />
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <div>
+                        <dt className="text-[var(--vms-ink-muted)]">
+                          Category
+                        </dt>
+                        <dd className="mt-0.5 font-medium">
+                          {topic.category?.name || "Uncategorized"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[var(--vms-ink-muted)]">Posts</dt>
+                        <dd className="mt-0.5 font-medium tabular-nums">
+                          {topic.posts_count}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[var(--vms-ink-muted)]">Author</dt>
+                        <dd className="mt-0.5 font-medium">
+                          {topic.author_name || "System"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[var(--vms-ink-muted)]">
+                          Last activity
+                        </dt>
+                        <dd className="mt-0.5 font-medium">
+                          {topic.last_post_at
+                            ? formatDistanceToNow(
+                                new Date(topic.last_post_at),
+                                { addSuffix: true },
+                              )
+                            : "No activity"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                )}
+              />
             </div>
           </section>
         </div>
@@ -1085,20 +1131,20 @@ export default function AdminForumsPage() {
         initialValues={
           activeCategory
             ? {
-              scopeType: activeCategory.residency_id ? "residency" : "organization",
-              residencyId: activeCategory.residency_id || "",
-              name: activeCategory.name,
-              description: activeCategory.description ?? "",
-              isDefault: activeCategory.is_default,
-              isLocked: Boolean(activeCategory.is_locked),
-            }
+                scopeType: activeCategory.residency_id
+                  ? "residency"
+                  : "organization",
+                residencyId: activeCategory.residency_id || "",
+                name: activeCategory.name,
+                description: activeCategory.description ?? "",
+                isDefault: activeCategory.is_default,
+                isLocked: Boolean(activeCategory.is_locked),
+              }
             : undefined
         }
         onClose={() => setCategoryModalOpen(false)}
         onSubmit={handleCategorySubmit}
-        isSubmitting={
-          createCategory.isPending || updateCategory.isPending
-        }
+        isSubmitting={createCategory.isPending || updateCategory.isPending}
       />
 
       <TopicFormModal
@@ -1113,22 +1159,20 @@ export default function AdminForumsPage() {
         initialValues={
           activeTopic
             ? {
-              targetType: "residency",
-              residencyId: activeTopic.residency_id || "",
-              residencyGroupId: "",
-              categoryId: activeTopic.category_id,
-              title: activeTopic.title,
-              content: activeTopic.initial_post?.content ?? "",
-              isPinned: activeTopic.is_pinned,
-              isLocked: activeTopic.is_locked,
-            }
+                targetType: "residency",
+                residencyId: activeTopic.residency_id || "",
+                residencyGroupId: "",
+                categoryId: activeTopic.category_id,
+                title: activeTopic.title,
+                content: activeTopic.initial_post?.content ?? "",
+                isPinned: activeTopic.is_pinned,
+                isLocked: activeTopic.is_locked,
+              }
             : undefined
         }
         onClose={() => setTopicModalOpen(false)}
         onSubmit={handleTopicSubmit}
-        isSubmitting={
-          createTopic.isPending || updateTopic.isPending
-        }
+        isSubmitting={createTopic.isPending || updateTopic.isPending}
       />
 
       <ConfirmActionModal
@@ -1213,20 +1257,12 @@ function DateInput({
   );
 }
 
-
-
 function TopicStatusChips({ topic }: { topic: ForumTopic }) {
   return (
     <div className="flex flex-wrap gap-1">
-      {topic.is_pinned && (
-        <Badge variant="warning">Pinned</Badge>
-      )}
-      {topic.is_locked && (
-        <Badge variant="neutral">Locked</Badge>
-      )}
-      {topic.is_deleted && (
-        <Badge variant="danger">Deleted</Badge>
-      )}
+      {topic.is_pinned && <Badge variant="warning">Pinned</Badge>}
+      {topic.is_locked && <Badge variant="neutral">Locked</Badge>}
+      {topic.is_deleted && <Badge variant="danger">Deleted</Badge>}
     </div>
   );
 }

@@ -42,15 +42,13 @@ describe("OrganizationSetupGuard", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith(
-        "/admin/properties/new?setup=first-place",
-      ),
+      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place"),
     );
     expect(screen.queryByText("Admin dashboard")).toBeNull();
   });
 
   it("allows the first-place creation route", () => {
-    mocks.pathname = "/admin/properties/new";
+    mocks.pathname = "/setup/first-place/";
     render(
       <OrganizationSetupGuard>
         <p>Create first place</p>

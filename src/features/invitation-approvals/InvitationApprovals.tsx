@@ -1,24 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
-  CalendarClock,
-  ChevronRight,
-  Clock3,
-  RefreshCw,
-  Search,
-  ShieldCheck,
-  UserRound,
-} from "lucide-react";
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { Clock3, RefreshCw, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type {
   VisitAuthorization,
@@ -27,10 +28,7 @@ import type {
 import { parseApiError } from "@/lib/error-utils";
 import { hasAdminPermission } from "@/lib/permissions";
 import { adminService } from "@/services/admin-service";
-import {
-  invitationApprovalsApi,
-  type ApprovalFilter,
-} from "./api";
+import { invitationApprovalsApi, type ApprovalFilter } from "./api";
 
 const PAGE_SIZE = 25;
 const statusFilters: Array<{ value: ApprovalFilter; label: string }> = [
@@ -55,6 +53,7 @@ export function InvitationApprovals() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const queryString = searchParams?.toString() || "";
   const initial = useMemo(
     () => new URLSearchParams(queryString),
@@ -63,9 +62,6 @@ export function InvitationApprovals() {
   const status = validStatus(initial.get("status"));
   const page = validPage(initial.get("page"));
   const search = (initial.get("search") || "").slice(0, 100);
-  const [searchInput, setSearchInput] = useState(search);
-
-  useEffect(() => setSearchInput(search), [search]);
 
   const profile = useQuery({
     queryKey: ["invitation-approvals-profile"],
@@ -78,11 +74,17 @@ export function InvitationApprovals() {
     !profile.isError &&
     hasAdminPermission(profile.data, `visit_authorizations.${permission}`);
   const canList = allowed("list");
+  const canApprove = allowed("approve");
 
   const invitations = useQuery({
     queryKey: ["admin-invitation-approvals", status, page, search],
     queryFn: () =>
-      invitationApprovalsApi.list({ status, page, pageSize: PAGE_SIZE, search }),
+      invitationApprovalsApi.list({
+        status,
+        page,
+        pageSize: PAGE_SIZE,
+        search,
+      }),
     enabled: canList,
     placeholderData: keepPreviousData,
     retry: false,
@@ -102,19 +104,18 @@ export function InvitationApprovals() {
   function updateQuery(updates: Record<string, string | number | undefined>) {
     const params = new URLSearchParams(queryString);
     Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === "" || value === 1) params.delete(key);
+      if (value === undefined || value === "" || value === 1)
+        params.delete(key);
       else params.set(key, String(value));
     });
     const next = params.toString();
     router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
   }
 
-  function submitSearch(event: FormEvent) {
-    event.preventDefault();
-    updateQuery({ search: searchInput.trim() || undefined, page: 1 });
-  }
-
-  if (profile.isPending || (profile.isFetched && !profile.isFetchedAfterMount)) {
+  if (
+    profile.isPending ||
+    (profile.isFetched && !profile.isFetchedAfterMount)
+  ) {
     return <InvitationQueueSkeleton title="Checking invitation permissions" />;
   }
   if (profile.isError) {
@@ -139,6 +140,122 @@ export function InvitationApprovals() {
   const items = invitations.data?.items || [];
   const activeLabel =
     statusFilters.find((item) => item.value === status)?.label || "Invitations";
+  const columns: Column<VisitAuthorization>[] = [
+    {
+      key: "guest",
+      header: "Guest",
+      sortable: true,
+      accessor: (invitation) => (
+        <div className="min-w-0">
+          <Link
+            href={`/admin/invitations/${invitation.id}`}
+            className="block truncate font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+          >
+            {guestNames(invitation)}
+          </Link>
+          <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
+            {invitation.code}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "host_party",
+      header: "Host / place",
+      sortable: true,
+      accessor: (invitation) => (
+        <div className="text-[var(--vms-ink-muted)]">
+          <span className="block text-[var(--vms-ink)]">
+            {invitation.host_party.display_name}
+          </span>
+          <span className="block text-xs">
+            {invitation.destination_place.name}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "valid_from",
+      header: "Validity",
+      sortable: true,
+      accessor: (invitation) => <Validity invitation={invitation} />,
+    },
+    {
+      key: "uses_count",
+      header: "Uses",
+      sortable: true,
+      accessor: (invitation) => (
+        <span className="whitespace-nowrap tabular-nums text-[var(--vms-ink-muted)]">
+          {invitation.uses_count}
+          {invitation.max_uses ? ` / ${invitation.max_uses}` : " / unlimited"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      accessor: (invitation) => <StatusBadge status={invitation.status} />,
+    },
+    {
+      key: "actions",
+      header: "",
+      mobileHide: true,
+      accessor: (invitation) => (
+        <Button asChild variant="ghost" size="sm">
+          <Link
+            href={`/admin/invitations/${invitation.id}`}
+            aria-label={`Open invitation for ${guestNames(invitation)}`}
+          >
+            Open
+          </Link>
+        </Button>
+      ),
+    },
+  ];
+
+  const approveSelected = async (ids: string[]) => {
+    const eligible = items.filter(
+      (invitation) =>
+        ids.includes(invitation.id) && invitation.status === "requested",
+    );
+    if (!eligible.length) {
+      toast.info("Only invitations awaiting approval can be approved.");
+      return;
+    }
+    const results = await Promise.allSettled(
+      eligible.map((invitation) =>
+        invitationApprovalsApi.approve(invitation.id),
+      ),
+    );
+    const approved = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
+    await queryClient.invalidateQueries({
+      queryKey: ["admin-invitation-approvals"],
+    });
+    if (approved === eligible.length) {
+      toast.success(
+        `${approved} invitation${approved === 1 ? "" : "s"} approved.`,
+      );
+    } else {
+      toast.error(
+        `${approved} of ${eligible.length} invitations were approved. Retry the remaining records.`,
+      );
+    }
+  };
+
+  const bulkActions: BulkAction[] = canApprove
+    ? [
+        {
+          label: "Approve selected",
+          onClick: approveSelected,
+          requiresConfirmation: true,
+          confirmationMessage:
+            "Approve the selected invitations that are awaiting approval?",
+        },
+      ]
+    : [];
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
@@ -193,7 +310,11 @@ export function InvitationApprovals() {
               ].join(" ")}
               aria-current={active ? "page" : undefined}
               onClick={() =>
-                updateQuery({ status: filter.value, page: 1, search: undefined })
+                updateQuery({
+                  status: filter.value,
+                  page: 1,
+                  search: undefined,
+                })
               }
             >
               {filter.label}
@@ -205,220 +326,72 @@ export function InvitationApprovals() {
         })}
       </nav>
 
-      <section
-        className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
-        aria-labelledby="invitation-register-heading"
-      >
-        <div className="flex flex-col gap-3 border-b border-[var(--vms-line)] p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2
-              id="invitation-register-heading"
-              className="text-sm font-semibold"
-            >
-              {activeLabel}
-            </h2>
-            <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-              {invitations.data?.total ?? 0} invitation
-              {(invitations.data?.total ?? 0) === 1 ? "" : "s"} in this view
-            </p>
-          </div>
-          <form
-            className="flex w-full max-w-md gap-2"
-            role="search"
-            onSubmit={submitSearch}
-          >
-            <label className="relative min-w-0 flex-1">
-              <span className="sr-only">Search invitations</span>
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                maxLength={100}
-                placeholder="Code, guest or purpose"
-                className="h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] pl-9 pr-3 text-base text-[var(--vms-ink)] outline-none placeholder:text-[var(--vms-ink-muted)] focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[var(--vms-focus)] sm:h-10 sm:text-sm"
-              />
-            </label>
-            <Button type="submit" size="sm">
-              Search
-            </Button>
-          </form>
-        </div>
-
-        {invitations.isPending ? (
-          <InvitationRowsSkeleton />
-        ) : invitations.isError && !invitations.data ? (
-          <QueueError
-            title="Invitation queue unavailable"
-            error={invitations.error}
-            retry={() => invitations.refetch()}
-            embedded
-          />
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={ShieldCheck}
-            title={search ? "No invitations match this search" : `No ${activeLabel.toLowerCase()}`}
-            description={
-              search
-                ? "Clear the search or choose another status."
-                : "Invitation activity for this property will appear here."
-            }
-            action={
-              search ? (
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    updateQuery({ search: undefined, page: 1 })
-                  }
-                >
-                  Clear search
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <>
-            {invitations.isError ? (
-              <div
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-[color-mix(in_srgb,var(--vms-warning)_30%,transparent)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-xs text-[var(--vms-warning)]"
-                role="status"
-              >
-                Showing the last successful invitation snapshot.
-                <button
-                  type="button"
-                  className="min-h-11 font-semibold underline"
-                  onClick={() => invitations.refetch()}
-                >
-                  Retry
-                </button>
+      <DataTable
+        data={items}
+        columns={columns}
+        tableLabel="Visitor invitation register"
+        searchPlaceholder="Search code, guest or purpose"
+        initialSearch={search}
+        onSearchChange={(value) =>
+          updateQuery({
+            search: value.trim().slice(0, 100) || undefined,
+            page: 1,
+          })
+        }
+        serverSide
+        total={invitations.data?.total ?? 0}
+        currentPage={invitations.data?.page ?? page}
+        onPageChange={(nextPage) => updateQuery({ page: nextPage })}
+        pageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        isLoading={invitations.isPending}
+        errorMessage={
+          invitations.isError && !invitations.data
+            ? parseApiError(invitations.error).message
+            : undefined
+        }
+        isStale={invitations.isError && !!invitations.data}
+        staleMessage="Showing the last successful invitation snapshot."
+        onRetry={() => invitations.refetch()}
+        emptyMessage={
+          search
+            ? "No invitations match this search"
+            : `No ${activeLabel.toLowerCase()}`
+        }
+        selectable
+        getRowId={(invitation) => invitation.id}
+        bulkActions={bulkActions}
+        mobileSummary={(invitation) => (
+          <Link href={`/admin/invitations/${invitation.id}`} className="block">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <strong className="block truncate text-sm font-semibold">
+                  {guestNames(invitation)}
+                </strong>
+                <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
+                  {invitation.code}
+                </span>
               </div>
-            ) : null}
-            <InvitationTable invitations={items} />
-            <div className="border-t border-[var(--vms-line)] p-3">
-              <PaginationBar
-                page={invitations.data?.page || page}
-                pageSize={PAGE_SIZE}
-                total={invitations.data?.total || 0}
-                totalPages={invitations.data?.total_pages || 0}
-                resourceLabel="invitations"
-                onChange={(nextPage) => updateQuery({ page: nextPage })}
-                isFetching={invitations.isFetching}
-                className="border-0 bg-transparent p-0 shadow-none"
-              />
+              <StatusBadge status={invitation.status} />
             </div>
-          </>
+            <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
+              <dt className="text-[var(--vms-ink-muted)]">Host</dt>
+              <dd className="truncate text-right">
+                {invitation.host_party.display_name}
+              </dd>
+              <dt className="text-[var(--vms-ink-muted)]">Place</dt>
+              <dd className="truncate text-right">
+                {invitation.destination_place.name}
+              </dd>
+              <dt className="text-[var(--vms-ink-muted)]">Valid</dt>
+              <dd className="text-right">
+                <Validity invitation={invitation} compact />
+              </dd>
+            </dl>
+          </Link>
         )}
-      </section>
+      />
     </main>
-  );
-}
-
-function InvitationTable({ invitations }: { invitations: VisitAuthorization[] }) {
-  return (
-    <>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full border-collapse text-left text-sm">
-          <caption className="sr-only">Visitor invitation register</caption>
-          <thead className="bg-[var(--vms-surface-subtle)] text-[11px] uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Guest</th>
-              <th className="px-4 py-3 font-semibold">Host / place</th>
-              <th className="px-4 py-3 font-semibold">Validity</th>
-              <th className="px-4 py-3 font-semibold">Uses</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="w-12 px-4 py-3">
-                <span className="sr-only">Open</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--vms-line)]">
-            {invitations.map((invitation) => (
-              <tr
-                key={invitation.id}
-                className="group transition-colors hover:bg-[var(--vms-surface-subtle)]"
-              >
-                <td className="px-4 py-3.5">
-                  <Link
-                    href={`/admin/invitations/${invitation.id}`}
-                    className="font-semibold text-[var(--vms-ink)] outline-none group-hover:underline focus-visible:underline"
-                  >
-                    {guestNames(invitation)}
-                  </Link>
-                  <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
-                    {invitation.code}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5 text-[var(--vms-ink-muted)]">
-                  <span className="block text-[var(--vms-ink)]">
-                    {invitation.host_party.display_name}
-                  </span>
-                  <span className="block text-xs">
-                    {invitation.destination_place.name}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5">
-                  <Validity invitation={invitation} />
-                </td>
-                <td className="px-4 py-3.5 tabular-nums text-[var(--vms-ink-muted)]">
-                  {invitation.uses_count}
-                  {invitation.max_uses
-                    ? ` / ${invitation.max_uses}`
-                    : " / unlimited"}
-                </td>
-                <td className="px-4 py-3.5">
-                  <StatusBadge status={invitation.status} />
-                </td>
-                <td className="px-4 py-3.5 text-right">
-                  <Link
-                    href={`/admin/invitations/${invitation.id}`}
-                    aria-label={`Open invitation for ${guestNames(invitation)}`}
-                    className="inline-grid min-h-10 min-w-10 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                  >
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <ul className="divide-y divide-[var(--vms-line)] md:hidden">
-        {invitations.map((invitation) => (
-          <li key={invitation.id}>
-            <Link
-              href={`/admin/invitations/${invitation.id}`}
-              className="block min-h-11 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <strong className="block truncate text-sm font-semibold">
-                    {guestNames(invitation)}
-                  </strong>
-                  <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
-                    {invitation.code}
-                  </span>
-                </div>
-                <StatusBadge status={invitation.status} />
-              </div>
-              <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
-                <dt className="text-[var(--vms-ink-muted)]">Host</dt>
-                <dd className="truncate text-right">{invitation.host_party.display_name}</dd>
-                <dt className="text-[var(--vms-ink-muted)]">Place</dt>
-                <dd className="truncate text-right">{invitation.destination_place.name}</dd>
-                <dt className="text-[var(--vms-ink-muted)]">Valid</dt>
-                <dd className="text-right">
-                  <Validity invitation={invitation} compact />
-                </dd>
-              </dl>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </>
   );
 }
 
@@ -466,25 +439,11 @@ function Validity({
       </time>
       <span className="text-[var(--vms-ink-muted)]">
         {compact ? " – " : ""}
-        <time dateTime={invitation.valid_to}>{formatDate(invitation.valid_to)}</time>
+        <time dateTime={invitation.valid_to}>
+          {formatDate(invitation.valid_to)}
+        </time>
       </span>
     </span>
-  );
-}
-
-function InvitationRowsSkeleton() {
-  return (
-    <div className="divide-y divide-[var(--vms-line)]" role="status" aria-label="Loading invitations">
-      {[0, 1, 2, 3].map((item) => (
-        <div key={item} className="grid gap-3 p-4 md:grid-cols-5">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-44" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-6 w-24 rounded-full" />
-        </div>
-      ))}
-    </div>
   );
 }
 

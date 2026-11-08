@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
@@ -8,6 +9,11 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { Button } from "@/components/ui/Button";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
@@ -116,6 +122,107 @@ function HospitalityWorkspace({
     return (
       <p role="alert">You do not have permission to view hospitality stays.</p>
     );
+  const stayColumns: Column<Stay>[] = [
+    {
+      key: "guest",
+      header: "Guest",
+      sortable: true,
+      accessor: (stay) => (
+        <div className="min-w-0">
+          <strong className="block truncate text-sm">{guestName(stay)}</strong>
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            {stay.guests.length} guest{stay.guests.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "planned_check_in",
+      header: "Stay",
+      sortable: true,
+      accessor: (stay) => (
+        <span className="text-sm">
+          {new Date(stay.planned_check_in).toLocaleDateString()} →{" "}
+          {new Date(stay.planned_check_out).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: "room",
+      header: "Room",
+      sortable: true,
+      accessor: (stay) => (
+        <span className="text-sm text-[var(--vms-ink-muted)]">
+          {stay.room_assignments.at(-1)?.room.name || "Unassigned"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      accessor: (stay) => (
+        <span className={`stay-status ${stay.status}`}>
+          {statusLabel(stay.status)}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      mobileHide: true,
+      accessor: (stay) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!allowed("show")}
+          aria-label={`Review stay for ${guestName(stay)}`}
+          onClick={() => {
+            setSelected(stay.id);
+            setCreating(false);
+            setNotice("");
+          }}
+        >
+          Review stay
+        </Button>
+      ),
+    },
+  ];
+  const stayBulkActions: BulkAction[] = [
+    {
+      label: "Export selected",
+      icon: Download,
+      onClick: (ids) => {
+        const selectedStays =
+          list.data?.items.filter((stay) => ids.includes(stay.id)) ?? [];
+        const rows = [
+          ["Guest", "Check in", "Check out", "Room", "Status"],
+          ...selectedStays.map((stay) => [
+            guestName(stay),
+            new Date(stay.planned_check_in).toISOString(),
+            new Date(stay.planned_check_out).toISOString(),
+            stay.room_assignments.at(-1)?.room.name || "",
+            statusLabel(stay.status),
+          ]),
+        ];
+        const csv = rows
+          .map((row) =>
+            row
+              .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+              .join(","),
+          )
+          .join("\n");
+        const url = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8" }),
+        );
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "hospitality-stays.csv";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+    },
+  ];
   return (
     <main className="stay-workspace">
       <PageHeader
@@ -157,8 +264,7 @@ function HospitalityWorkspace({
           relationships={people.data?.items || []}
           stays={list.data?.items || []}
           loading={
-            people.isPending ||
-            (!!propertyId && workspaceContext.isPending)
+            people.isPending || (!!propertyId && workspaceContext.isPending)
           }
           error={
             people.isError
@@ -203,85 +309,67 @@ function HospitalityWorkspace({
               </select>
             </label>
           </div>
-          {list.isPending ? (
-            <p role="status">Loading stays…</p>
-          ) : list.isError ? (
-            <div role="alert" className="stay-error">
-              <p>{parseApiError(list.error).message}</p>
-              <Button variant="outline" size="sm" onClick={() => list.refetch()}>
-                Retry stays
-              </Button>
-            </div>
-          ) : (
-            <>
-              {list.data?.items.length ? (
-                <ul className="stay-list">
-                  {list.data.items.map((stay) => (
-                    <li key={stay.id}>
-                      <button
-                        disabled={!allowed("show")}
-                        aria-current={selected === stay.id ? "true" : undefined}
-                        onClick={() => {
-                          setSelected(stay.id);
-                          setCreating(false);
-                          setNotice("");
-                        }}
-                      >
-                        <span className="stay-list-title">
-                          {guestName(stay)}
-                          <span className={`stay-status ${stay.status}`}>
-                            {statusLabel(stay.status)}
-                          </span>
-                        </span>
-                        <span>
-                          {new Date(stay.planned_check_in).toLocaleDateString()}{" "}
-                          →{" "}
-                          {new Date(
-                            stay.planned_check_out,
-                          ).toLocaleDateString()}
-                        </span>
-                        <small>
-                          {stay.room_assignments.at(-1)?.room.name
-                            ? `Latest scheduled room: ${stay.room_assignments.at(-1)?.room.name}`
-                            : "Room unassigned"}
-                        </small>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="stay-empty">
-                  <h3>No stays found</h3>
-                  <p>
-                    {status
-                      ? "Try a different status filter."
-                      : "Create a reservation to begin planning arrivals."}
-                  </p>
+          <DataTable
+            data={list.data?.items ?? []}
+            columns={stayColumns}
+            tableLabel="Hospitality stays"
+            searchable={false}
+            serverSide
+            total={list.data?.total ?? 0}
+            currentPage={page}
+            onPageChange={setPage}
+            pageSize={10}
+            pageSizeOptions={[10]}
+            isLoading={list.isPending}
+            errorMessage={
+              list.isError && !list.data
+                ? parseApiError(list.error).message
+                : undefined
+            }
+            isStale={list.isError && !!list.data}
+            onRetry={() => list.refetch()}
+            emptyMessage={
+              status ? "No stays match this status" : "No reservations yet"
+            }
+            selectable
+            getRowId={(stay) => stay.id}
+            bulkActions={stayBulkActions}
+            mobileSummary={(stay) => (
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <strong className="block text-sm">{guestName(stay)}</strong>
+                    <span className="text-xs text-[var(--vms-ink-muted)]">
+                      {new Date(stay.planned_check_in).toLocaleDateString()} →{" "}
+                      {new Date(stay.planned_check_out).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <span className={`stay-status ${stay.status}`}>
+                    {statusLabel(stay.status)}
+                  </span>
                 </div>
-              )}
-              <nav className="stay-pagination" aria-label="Stay pagination">
-                <button
-                  disabled={page === 1 || list.isFetching}
-                  onClick={() => setPage(page - 1)}
+                <p className="mt-2 text-xs text-[var(--vms-ink-muted)]">
+                  {stay.room_assignments.at(-1)?.room.name
+                    ? `Room ${stay.room_assignments.at(-1)?.room.name}`
+                    : "Room unassigned"}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  disabled={!allowed("show")}
+                  aria-label={`Review stay for ${guestName(stay)}`}
+                  onClick={() => {
+                    setSelected(stay.id);
+                    setCreating(false);
+                    setNotice("");
+                  }}
                 >
-                  Previous
-                </button>
-                <span>
-                  Page {page} · {list.data?.total || 0} stays
-                </span>
-                <button
-                  disabled={
-                    !list.data ||
-                    page >= list.data.total_pages ||
-                    list.isFetching
-                  }
-                  onClick={() => setPage(page + 1)}
-                >
-                  Next
-                </button>
-              </nav>
-            </>
-          )}
+                  Review stay
+                </Button>
+              </div>
+            )}
+          />
         </section>
         <section
           className="stay-panel stay-detail"

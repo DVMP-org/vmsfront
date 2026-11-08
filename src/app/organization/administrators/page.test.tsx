@@ -119,10 +119,16 @@ beforeEach(() => {
 describe("organization administrators", () => {
   it("shows administrators without presenting them as place relationships", async () => {
     mount();
-    expect((await screen.findAllByText("Ada Okafor")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Organization administrator").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Ada Okafor")).length).toBeGreaterThan(
+      0,
+    );
     expect(
-      screen.getByText(/Site administration and occupancy relationships remain separate/i),
+      screen.getAllByText("Organization administrator").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(
+        /Site administration and occupancy relationships remain separate/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -134,7 +140,9 @@ describe("organization administrators", () => {
     const dialog = screen.getByRole("dialog", {
       name: "Add organization administrator",
     });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Add administrator" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Add administrator" }),
+    );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Enter the administrator's first name.",
@@ -165,10 +173,15 @@ describe("organization administrators", () => {
     fireEvent.change(screen.getByLabelText(/Confirm email/), {
       target: { value: "tunde@example.com" },
     });
-    fireEvent.change(screen.getByLabelText(/Role/), {
-      target: { value: role.id },
-    });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Add administrator" }));
+    fireEvent.change(
+      within(screen.getByRole("dialog")).getByLabelText(/Role/),
+      {
+        target: { value: role.id },
+      },
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Add administrator" }),
+    );
 
     await waitFor(() =>
       expect(mocks.create).toHaveBeenCalledWith(

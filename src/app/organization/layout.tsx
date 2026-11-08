@@ -10,11 +10,11 @@ export default function OrganizationLayout({
 }) {
   return (
     <RouteGuard>
-      <OrganizationMemberGuard>
-        <OrganizationSetupGuard>
-          <OrganizationShell>{children}</OrganizationShell>
-        </OrganizationSetupGuard>
-      </OrganizationMemberGuard>
+      <OrganizationShell>
+        <OrganizationMemberGuard>
+          <OrganizationSetupGuard>{children}</OrganizationSetupGuard>
+        </OrganizationMemberGuard>
+      </OrganizationShell>
     </RouteGuard>
   );
 }

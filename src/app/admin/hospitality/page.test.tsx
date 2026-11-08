@@ -176,15 +176,17 @@ it("shows inherited site administration provenance", async () => {
 it("renders empty and failed lists explicitly with retry", async () => {
   mocks.list.mockRejectedValueOnce(new Error("unavailable"));
   mount();
-  await screen.findByRole("button", { name: "Retry stays" });
+  await screen.findByRole("button", { name: "Retry" });
   mocks.list.mockResolvedValue({
     items: [],
     page: 1,
     total: 0,
     total_pages: 0,
   });
-  fireEvent.click(screen.getByRole("button", { name: "Retry stays" }));
-  await screen.findByText("No stays found");
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(
+    (await screen.findAllByText("No reservations yet")).length,
+  ).toBeGreaterThan(0);
 });
 it("hides lifecycle actions from read-only operators", async () => {
   mocks.profile.mockResolvedValue({
@@ -196,7 +198,9 @@ it("hides lifecycle actions from read-only operators", async () => {
     },
   });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: /Ada Guest/ }));
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /Ada Guest/ }))[0],
+  );
   await screen.findByRole("heading", { name: "Ada Guest" });
   expect(screen.queryByRole("button", { name: "Check in" })).toBeNull();
   expect(screen.queryByRole("button", { name: "New reservation" })).toBeNull();
@@ -207,7 +211,9 @@ it("requires confirmation and refreshes state after check-in", async () => {
     .mockResolvedValueOnce(stay)
     .mockResolvedValue({ ...stay, status: "checked_in" });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: /Ada Guest/ }));
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /Ada Guest/ }))[0],
+  );
   fireEvent.click(await screen.findByRole("button", { name: "Check in" }));
   expect(mocks.action).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Confirm action" }));
@@ -222,7 +228,9 @@ it("preserves the editor and surfaces a conflict for retry", async () => {
     response: { data: { message: "Room overlaps another stay" } },
   });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: /Ada Guest/ }));
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /Ada Guest/ }))[0],
+  );
   fireEvent.click(
     await screen.findByRole("button", { name: "Reschedule / edit" }),
   );
@@ -242,7 +250,9 @@ it("uses canonical checkin grants for a scoped operator", async () => {
     },
   });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: /Ada Guest/ }));
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /Ada Guest/ }))[0],
+  );
   expect(await screen.findByRole("button", { name: "Check in" })).toBeEnabled();
   expect(
     screen.queryByRole("button", { name: "Reschedule / edit" }),

@@ -15,34 +15,42 @@ export interface MetricDefinition {
   href?: string;
   attention?: boolean;
   icon?: LucideIcon;
+  tone?: "coral" | "ink" | "info" | "success" | "warning";
 }
 
 export function MetricStrip({ metrics }: { metrics: MetricDefinition[] }) {
+  const toneClasses = {
+    coral: "bg-[var(--vms-coral-soft)] text-[var(--vms-coral)]",
+    ink: "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
+    info: "bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+    success: "bg-[var(--vms-success-subtle)] text-[var(--vms-success)]",
+    warning: "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
+  } as const;
+
   return (
     <section
       aria-label="Property operating metrics"
-      className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+      className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
     >
-      {metrics.map((metric, index) => {
+      {metrics.map((metric) => {
         const Icon = metric.icon;
+        const tone = metric.tone || (metric.attention ? "warning" : "ink");
         const content = (
           <>
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
                 <p className="text-xs font-semibold leading-4 text-[var(--vms-ink-muted)]">
                   {metric.label}
                 </p>
-                <p className="mt-2 text-[28px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-[var(--vms-ink)]">
+                <p className="mt-2 text-[26px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-[var(--vms-ink)]">
                   {metric.value}
                 </p>
               </div>
               {Icon ? (
                 <span
                   className={cn(
-                    "grid h-8 w-8 shrink-0 place-items-center rounded-[var(--vms-radius-control)]",
-                    metric.attention
-                      ? "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]"
-                      : "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]",
+                    "grid h-8 w-8 shrink-0 place-items-center rounded-[8px]",
+                    toneClasses[tone],
                   )}
                 >
                   <Icon className="h-4 w-4" aria-hidden />
@@ -56,13 +64,8 @@ export function MetricStrip({ metrics }: { metrics: MetricDefinition[] }) {
         );
 
         const classes = cn(
-          "min-w-0 p-4",
-          index < metrics.length - 1 &&
-            "border-b border-[var(--vms-line)] sm:border-b",
-          "sm:[&:nth-child(2n)]:border-l lg:[&:nth-child(2n)]:border-l-0",
-          "lg:[&:not(:nth-child(3n))]:border-l lg:[&:nth-child(3n+1)]:border-l-0",
-          "xl:border-b-0 xl:border-l xl:first:border-l-0",
-          "transition-colors",
+          "group relative min-w-0 overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3.5",
+          "transition-[border-color,background-color]",
         );
 
         return metric.href ? (
@@ -71,7 +74,7 @@ export function MetricStrip({ metrics }: { metrics: MetricDefinition[] }) {
             href={metric.href}
             className={cn(
               classes,
-              "group hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]",
+              "hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]",
             )}
           >
             {content}
