@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CreateOrganizationPage from "./page";
 
@@ -92,5 +92,42 @@ describe("CreateOrganizationPage", () => {
     });
     expect(screen.getAllByText("Plan").length).toBeGreaterThan(0);
     expect(screen.getByText("First workspace")).toBeInTheDocument();
+  });
+
+  it("explains an unavailable workspace URL immediately", async () => {
+    mocks.checkSlug.mockResolvedValue(false);
+    render(<CreateOrganizationPage />);
+
+    fireEvent.change(screen.getByLabelText("Operating use case"), {
+      target: { value: "residential" },
+    });
+    fireEvent.change(screen.getByLabelText("Organization name"), {
+      target: { value: "Existing Estate" },
+    });
+
+    expect(
+      await screen.findByText(
+        "This workspace URL is already in use. Choose a different URL.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to plan" }),
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Workspace URL"), {
+      target: { value: "new-estate" },
+    });
+    mocks.checkSlug.mockResolvedValue(true);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Continue to plan" }),
+      ).toBeEnabled(),
+    );
+    expect(
+      screen.queryByText(
+        "This workspace URL is already in use. Choose a different URL.",
+      ),
+    ).toBeNull();
   });
 });

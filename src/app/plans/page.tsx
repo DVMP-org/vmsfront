@@ -39,7 +39,6 @@ import {
   isDirectSubscriptionResponse,
 } from "@/services/subscription-service";
 import { formatPrice } from "@/lib/utils";
-import { useTransaction } from "@/hooks/use-resident";
 type BillingCycle = "monthly" | "yearly";
 
 // Popular countries for the dropdown
@@ -498,10 +497,12 @@ export default function PlansPage() {
   >({});
 
   const { data: plans, isLoading: plansLoading } = usePlans();
-  const { organization } = useCurrentOrganization();
+  const { organization, isPending: organizationPending } =
+    useCurrentOrganization();
   const { mutateAsync: subscribe, isPending: isSubscribing } =
     useSubscribeToPlan();
-  const { data: paymentStatus } = useTransaction(paymentReference);
+  const { data: paymentStatus } =
+    useSubscriptionPaymentStatus(paymentReference);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -520,10 +521,16 @@ export default function PlansPage() {
 
   const finishSetup = useCallback(() => {
     window.sessionStorage.removeItem("organization-setup-step");
+    if (!firstWorkspaceSetup) {
+      router.push("/admin");
+      return;
+    }
     router.push(
-      firstWorkspaceSetup ? "/admin?setup=first-workspace" : "/admin",
+      organization?.needs_first_site
+        ? "/admin/properties/new?setup=first-place"
+        : "/admin/properties",
     );
-  }, [firstWorkspaceSetup, router]);
+  }, [firstWorkspaceSetup, organization?.needs_first_site, router]);
 
   const activePlans =
     plans
@@ -883,7 +890,7 @@ export default function PlansPage() {
                       <Button
                         onClick={handleSubscribe}
                         size="lg"
-                        isLoading={isSubscribing}
+                        isLoading={isSubscribing || organizationPending}
                         className="px-8"
                       >
                         {requiresPayment ? (

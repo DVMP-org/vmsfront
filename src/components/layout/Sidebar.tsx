@@ -45,6 +45,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { useResidentResidency } from "@/hooks/use-resident-data";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
 import { hasAdminPermission } from "@/lib/permissions";
 import { contextualAdminLinks } from "@/config/admin-routes";
 import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
@@ -202,10 +203,10 @@ function WorkspaceContextPanel({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#98a2b3]">
-            Management
+            Workspace
           </span>
           <span className="block truncate text-sm font-semibold text-[#0f1b31]">
-            {propertyName || "Organization overview"}
+            {propertyName || "Organization"}
           </span>
         </span>
       </div>
@@ -435,8 +436,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User
     const activeRole = actualType === "admin" ? adminProfile : null;
+    const managementDashboardAvailable = canOpenManagementDashboard(
+      selectedProperty?.id,
+      workspaceContext.data?.management?.is_administrator,
+    );
 
     if (actualType === "admin") {
+      baseLinks = baseLinks.filter(
+        (link: any) =>
+          link.href !== "/admin" || managementDashboardAvailable,
+      );
       // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
       // only show non-permission links to avoid flickering.
       if (!mounted || (!activeRole && isAdminProfilePending)) {
@@ -495,6 +504,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     user,
     isAdminProfilePending,
     mounted,
+    selectedProperty,
     workspaceContext.data,
     workspaceContext.isError,
   ]);

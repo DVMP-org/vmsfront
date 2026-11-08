@@ -6,15 +6,31 @@ const mocks = vi.hoisted(() => ({
   query: vi.fn(),
   refetch: vi.fn(),
   push: vi.fn(),
+  replace: vi.fn(),
+  selectedProperty: { id: "place", name: "Harbour Hotel" } as {
+    id: string;
+    name: string;
+  } | null,
+  managementIsAdministrator: true,
 }));
 
 vi.mock("@/hooks/use-admin", () => ({ useAdminDashboard: mocks.query }));
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => ({
-    data: { effective_use_case: "mixed_use" },
+    data: {
+      effective_use_case: "mixed_use",
+      management: { is_administrator: mocks.managementIsAdministrator },
+    },
+    isPending: false,
   }),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock("@/store/app-store", () => ({
+  useAppStore: (selector: (state: unknown) => unknown) =>
+    selector({ selectedProperty: mocks.selectedProperty }),
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
+}));
 
 const dashboard = {
   metrics: {
@@ -67,8 +83,37 @@ const dashboard = {
 describe("operating dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.selectedProperty = { id: "place", name: "Harbour Hotel" };
+    mocks.managementIsAdministrator = true;
     window.history.replaceState({}, "", "/admin");
     window.sessionStorage.clear();
+  });
+
+  it("opens first-place setup when the organization has no property", () => {
+    mocks.query.mockReturnValue({
+      data: { ...dashboard, root_places: [] },
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    expect(mocks.replace).toHaveBeenCalledWith(
+      "/admin/properties/new?setup=first-place",
+    );
+  });
+
+  it("does not render the management dashboard without a place admin", () => {
+    mocks.managementIsAdministrator = false;
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Property management access required",
+    );
   });
 
   it("offers retry after an initial failure", () => {

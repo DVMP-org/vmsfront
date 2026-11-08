@@ -10,7 +10,11 @@ export interface WorkspaceCard {
   roleLabel: string;
   href: string;
   relationship?: WorkspaceRelationship;
+  place?: WorkspaceCardPlace;
 }
+
+export type WorkspaceCardPlace = Partial<PropertyWorkspacePlace> &
+  Pick<PropertyWorkspacePlace, "id" | "name">;
 
 export interface PropertyAccess {
   area: WorkspaceArea;
@@ -94,24 +98,33 @@ export function roleLabel(role: string): string {
   );
 }
 
+export function canOpenManagementDashboard(
+  placeId: string | null | undefined,
+  isPlaceAdministrator: boolean | undefined,
+): boolean {
+  return !!placeId && !!isPlaceAdministrator;
+}
+
 export function buildWorkspaceCards(
   admin: Admin | null | undefined,
   relationships: WorkspaceRelationship[],
+  managementPlace?: WorkspaceCardPlace | null,
 ): WorkspaceCard[] {
   const cards: WorkspaceCard[] = [];
-  if (admin) {
+  if (admin && managementPlace) {
     const managementRole = admin.role?.name || "Administrator";
     cards.push({
-      key: "management",
+      key: `management:${managementPlace.id}`,
       area: "management",
-      title: "Management workspace",
+      title: `${managementPlace.name} management`,
       subtitle:
-        "Properties, people, finance, access and organization operations.",
+        "Property people, finance, access and operating workflows.",
       roleLabel:
         managementRole === "Super Admin"
           ? "Super administrator"
           : managementRole,
       href: "/admin",
+      place: managementPlace,
     });
   }
 
