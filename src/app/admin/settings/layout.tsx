@@ -1,21 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import {
-  Blocks,
-  CreditCard,
-  Crown,
-  Mail,
-  Palette,
-  Settings,
-} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { CreditCard, Crown, Mail, Palette, Settings } from "lucide-react";
 import { Suspense } from "react";
 
 const settingsTabs = [
   { id: "payment", label: "Payment gateways", icon: CreditCard },
   { id: "branding", label: "Branding", icon: Palette },
-  { id: "integrations", label: "Integrations", icon: Blocks },
   { id: "mailer", label: "Mail delivery", icon: Mail },
   { id: "subscription", label: "Subscription", icon: Crown },
 ] as const;
@@ -23,16 +15,13 @@ const settingsTabs = [
 type SettingsTab = (typeof settingsTabs)[number]["id"];
 
 function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const requested = searchParams?.get("tab");
   const activeTab: SettingsTab = settingsTabs.some(
     (tab) => tab.id === requested,
   )
     ? (requested as SettingsTab)
-    : pathname?.includes("/admin/settings/integrations")
-      ? "integrations"
-      : "payment";
+    : "payment";
 
   return (
     <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
@@ -48,8 +37,8 @@ function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
           Organization configuration
         </h1>
         <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
-          Configure branding, integrations, mail delivery, payments and the
-          organization subscription.
+          Configure branding, mail delivery, payments and the organization
+          subscription.
         </p>
       </header>
 

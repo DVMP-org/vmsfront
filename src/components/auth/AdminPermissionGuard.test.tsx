@@ -5,13 +5,14 @@ import { AdminPermissionGuard } from "./AdminPermissionGuard";
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   refetch: vi.fn(),
+  pathname: "/admin",
   isAdministrator: true,
   pending: false,
   error: false,
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/admin",
+  usePathname: () => mocks.pathname,
   useRouter: () => ({ replace: mocks.replace }),
 }));
 
@@ -43,6 +44,7 @@ describe("AdminPermissionGuard management boundary", () => {
   beforeEach(() => {
     mocks.replace.mockReset();
     mocks.refetch.mockReset();
+    mocks.pathname = "/admin";
     mocks.isAdministrator = true;
     mocks.pending = false;
     mocks.error = false;
@@ -84,6 +86,20 @@ describe("AdminPermissionGuard management boundary", () => {
     );
 
     expect(screen.queryByText("Property operations")).toBeNull();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("allows the exact first-place setup URL without property management authority", () => {
+    mocks.pathname = "/admin/properties/new/";
+    mocks.isAdministrator = false;
+
+    render(
+      <AdminPermissionGuard>
+        <div>Create the first place</div>
+      </AdminPermissionGuard>,
+    );
+
+    expect(screen.getByText("Create the first place")).toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 });

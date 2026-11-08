@@ -26,11 +26,6 @@ const headings: Record<
     description:
       "Review organization roles and explore permission composition in this release.",
   },
-  plugins: {
-    title: "Plugins",
-    description:
-      "Install, configure and enable organization capabilities within their entitlement and connection state.",
-  },
   branding: {
     title: "Brand and theme",
     description:
@@ -41,15 +36,9 @@ const headings: Record<
     description:
       "Configure providers used to collect organization and property payments.",
   },
-  integrations: {
-    title: "Integrations",
-    description:
-      "Connect external services and review credentials and connection state.",
-  },
   mailer: {
     title: "Mail delivery",
-    description:
-      "Configure transactional email delivery for the organization.",
+    description: "Configure transactional email delivery for the organization.",
   },
   subscription: {
     title: "Subscription and billing",

@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 import { loadPlugins } from "@/lib/plugin_loader";
-import { titleCase, keysToCamelCase, keysToSnakeCase, toCamelCase } from "@/lib/utils";
+import {
+  titleCase,
+  keysToCamelCase,
+  keysToSnakeCase,
+  toCamelCase,
+} from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import {
   Card,
@@ -39,14 +44,14 @@ import { pluginEntitlementLabel } from "@/lib/plugin-utils";
 
 export default function PluginsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const embedded =
-    pathname?.startsWith("/organization/settings/plugins") === true;
   const queryClient = useQueryClient();
-  
-  const config = useMemo(() => ({
-    pluginId: { defaultValue: undefined },
-  }), []);
+
+  const config = useMemo(
+    () => ({
+      pluginId: { defaultValue: undefined },
+    }),
+    [],
+  );
 
   const { initializeFromUrl, syncToUrl } = useUrlQuerySync({
     config,
@@ -54,7 +59,9 @@ export default function PluginsPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPluginId, setSelectedPluginId] = useState<string | undefined>(() => initializeFromUrl("pluginId"));
+  const [selectedPluginId, setSelectedPluginId] = useState<string | undefined>(
+    () => initializeFromUrl("pluginId"),
+  );
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
   const [editedConfig, setEditedConfig] = useState<PluginConfig>({});
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
@@ -65,18 +72,21 @@ export default function PluginsPage() {
   }, [selectedPluginId, syncToUrl]);
 
   // Fetch plugins from API
-  const { data: backendPluginsResponse, isLoading: isLoadingPlugins } = useQuery({
-    queryKey: ["admin", "plugins"],
-    queryFn: async () => {
-      const response = await adminService.getPlugins();
-      return response.data as BackendPlugin[];
-    },
-  });
+  const { data: backendPluginsResponse, isLoading: isLoadingPlugins } =
+    useQuery({
+      queryKey: ["admin", "plugins"],
+      queryFn: async () => {
+        const response = await adminService.getPlugins();
+        return response.data as BackendPlugin[];
+      },
+    });
 
   // Load frontend plugins
   const [frontendPlugins, setFrontendPlugins] = useState<any[]>([]);
   useEffect(() => {
-    loadPlugins().then(setFrontendPlugins).catch(() => setFrontendPlugins([]));
+    loadPlugins()
+      .then(setFrontendPlugins)
+      .catch(() => setFrontendPlugins([]));
   }, []);
 
   // Toggle plugin enable/disable mutation
@@ -97,7 +107,7 @@ export default function PluginsPage() {
   const updateSettingsMutation = useMutation({
     mutationFn: async ({ settings }: { settings: any }) => {
       if (selectedPlugin) {
-        settings.plugin_id = selectedPlugin.id
+        settings.plugin_id = selectedPlugin.id;
         return adminService.updatePluginSettings(selectedPlugin.id, settings);
       } else {
         throw new Error("No plugin selected");
@@ -114,56 +124,57 @@ export default function PluginsPage() {
   });
 
   // Match backend plugins with frontend plugins and mock data
-  const plugins: Plugin[] = (backendPluginsResponse || []).map((backendPlugin) => {
-    // Find matching frontend plugin
-    const frontendPlugin = frontendPlugins.find(
-      (fp) => fp.manifest.name === backendPlugin.name
-    );
+  const plugins: Plugin[] = (backendPluginsResponse || []).map(
+    (backendPlugin) => {
+      // Find matching frontend plugin
+      const frontendPlugin = frontendPlugins.find(
+        (fp) => fp.manifest.name === backendPlugin.name,
+      );
 
-    // Find matching mock plugin for UI details
+      // Find matching mock plugin for UI details
 
-
-    return {
-      id: backendPlugin.id,
-      name: backendPlugin.name,
-      title: frontendPlugin?.manifest.title || "No title available",
-      description: backendPlugin.description || "No description available",
-      icon: Puzzle,
-      enabled: backendPlugin.enabled,
-      category: backendPlugin.category || "Other",
-      image: backendPlugin.image,
-      color: "from-gray-500/20 to-gray-600/20",
-      details: backendPlugin.details || {
-        documentationUrl: null,
-        configEndpoint: null,
-        useCases: [],
-        setupSteps: [],
-        requirements: [],
-        configOptions: []
-      },
-      config: {},
-      backendVersion: backendPlugin.version,
-      frontendVersion: frontendPlugin?.manifest.version,
-      hasFrontend: !!frontendPlugin,
-      installed: backendPlugin.installed ?? true,
-      configured: backendPlugin.configured ?? false,
-      licensed: backendPlugin.licensed ?? false,
-      access_ready: backendPlugin.access_ready ?? false,
-      entitlementStatus: backendPlugin.entitlement_status,
-      entitlementSource: backendPlugin.entitlement_source,
-      entitlementReason: backendPlugin.entitlement_reason,
-      planId: backendPlugin.plan_id,
-      planName: backendPlugin.plan_name,
-      graceEndsAt: backendPlugin.grace_ends_at,
-      canEnable: backendPlugin.can_enable ?? false,
-      canConfigure: backendPlugin.can_configure ?? false,
-    };
-  });
+      return {
+        id: backendPlugin.id,
+        name: backendPlugin.name,
+        title: frontendPlugin?.manifest.title || "No title available",
+        description: backendPlugin.description || "No description available",
+        icon: Puzzle,
+        enabled: backendPlugin.enabled,
+        category: backendPlugin.category || "Other",
+        image: backendPlugin.image,
+        color: "from-gray-500/20 to-gray-600/20",
+        details: backendPlugin.details || {
+          documentationUrl: null,
+          configEndpoint: null,
+          useCases: [],
+          setupSteps: [],
+          requirements: [],
+          configOptions: [],
+        },
+        config: {},
+        backendVersion: backendPlugin.version,
+        frontendVersion: frontendPlugin?.manifest.version,
+        hasFrontend: !!frontendPlugin,
+        installed: backendPlugin.installed ?? true,
+        configured: backendPlugin.configured ?? false,
+        licensed: backendPlugin.licensed ?? false,
+        access_ready: backendPlugin.access_ready ?? false,
+        entitlementStatus: backendPlugin.entitlement_status,
+        entitlementSource: backendPlugin.entitlement_source,
+        entitlementReason: backendPlugin.entitlement_reason,
+        planId: backendPlugin.plan_id,
+        planName: backendPlugin.plan_name,
+        graceEndsAt: backendPlugin.grace_ends_at,
+        canEnable: backendPlugin.can_enable ?? false,
+        canConfigure: backendPlugin.can_configure ?? false,
+      };
+    },
+  );
 
   // Open modal when pluginId is in URL
   useEffect(() => {
     if (selectedPluginId && plugins.length > 0 && !selectedPlugin) {
-      const plugin = plugins.find(p => p.id === selectedPluginId);
+      const plugin = plugins.find((p) => p.id === selectedPluginId);
       if (plugin) {
         handleOpenDetails(plugin);
       }
@@ -188,9 +199,10 @@ export default function PluginsPage() {
       let currentSettings: PluginConfig = {};
       if (pluginData.configuration) {
         try {
-          const rawSettings = typeof pluginData.configuration === 'string'
-            ? JSON.parse(pluginData.configuration)
-            : pluginData.configuration;
+          const rawSettings =
+            typeof pluginData.configuration === "string"
+              ? JSON.parse(pluginData.configuration)
+              : pluginData.configuration;
 
           // Convert from snake_case to camelCase, then normalize to lowercase for consistent matching
           const camelCaseSettings = keysToCamelCase(rawSettings);
@@ -270,7 +282,7 @@ export default function PluginsPage() {
     (plugin) =>
       plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plugin.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      plugin.category.toLowerCase().includes(searchQuery.toLowerCase())
+      plugin.category.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const enabledCount = plugins.filter((p) => p.enabled).length;
@@ -281,8 +293,7 @@ export default function PluginsPage() {
       <div className="space-y-6">
         {/* Header Section */}
         <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
-          {!embedded ? (
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-dashed  border-[var(--vms-line-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -292,7 +303,7 @@ export default function PluginsPage() {
                 Plugins
               </h1>
               <p className="text-sm sm:text-base text-[var(--vms-ink-muted)]">
-                Enhance your VMS with powerful integrations and features
+                Enable organization-wide capabilities for every active place.
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -318,21 +329,14 @@ export default function PluginsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  router.push(
-                    embedded
-                      ? "/organization/settings/plugins/marketplace"
-                      : "/admin/plugins/marketplace",
-                  )
-                }
+                onClick={() => router.push("/admin/plugins/marketplace")}
                 className="gap-2"
               >
                 <Store className="h-4 w-4" />
                 Browse Marketplace
               </Button>
             </div>
-            </div>
-          ) : null}
+          </div>
 
           {/* Search Bar */}
           <div className="relative">
@@ -350,7 +354,7 @@ export default function PluginsPage() {
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => {
               const count = plugins.filter(
-                (p) => p.category === category
+                (p) => p.category === category,
               ).length;
               return (
                 <Badge key={category} variant="secondary" className="px-3 py-1">
@@ -395,7 +399,11 @@ export default function PluginsPage() {
                     className={`relative h-40 bg-[var(--vms-surface-subtle)] overflow-hidden`}
                   >
                     {plugin.image && (
-                      <img src={plugin.image} alt={plugin.name} className="w-full h-full object-cover" />
+                      <img
+                        src={plugin.image}
+                        alt={plugin.name}
+                        className="w-full h-full object-cover"
+                      />
                     )}
                     {!plugin.image && (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -445,8 +453,11 @@ export default function PluginsPage() {
                             </Badge>
                           )}
 
-                          {plugin.hasFrontend && plugin.backendVersion && plugin.frontendVersion &&
-                            plugin.backendVersion !== plugin.frontendVersion && (
+                          {plugin.hasFrontend &&
+                            plugin.backendVersion &&
+                            plugin.frontendVersion &&
+                            plugin.backendVersion !==
+                              plugin.frontendVersion && (
                               <Badge variant="warning" className="text-xs">
                                 Version Mismatch
                               </Badge>
@@ -488,7 +499,9 @@ export default function PluginsPage() {
                             ? "Included in the current plan"
                             : plugin.planName
                               ? `Not licensed under ${plugin.planName}`
-                              : pluginEntitlementLabel(plugin.entitlementStatus)}
+                              : pluginEntitlementLabel(
+                                  plugin.entitlementStatus,
+                                )}
                         </p>
                       </div>
                       <button
@@ -497,17 +510,19 @@ export default function PluginsPage() {
                           togglePluginMutation.isPending ||
                           (!plugin.enabled && !plugin.canEnable)
                         }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus-visible:ring-[var(--vms-focus)] focus:ring-offset-2 disabled:opacity-50 ${plugin.enabled
-                          ? "bg-[var(--vms-action)]"
-                          : "bg-gray-200"
-                          }`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus-visible:ring-[var(--vms-focus)] focus:ring-offset-2 disabled:opacity-50 ${
+                          plugin.enabled
+                            ? "bg-[var(--vms-action)]"
+                            : "bg-gray-200"
+                        }`}
                         role="switch"
                         aria-checked={plugin.enabled}
                         aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.name}`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${plugin.enabled ? "translate-x-6" : "translate-x-1"
-                            }`}
+                          className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${
+                            plugin.enabled ? "translate-x-6" : "translate-x-1"
+                          }`}
                         />
                       </button>
                     </div>
@@ -557,9 +572,7 @@ export default function PluginsPage() {
         {selectedPlugin && (
           <div>
             {/* Modal Header */}
-            <div
-              className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-6"
-            >
+            <div className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-6">
               <div className="flex items-start gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)]">
                   <selectedPlugin.icon className="h-8 w-8 text-[var(--vms-ink-muted)]" />
@@ -572,22 +585,18 @@ export default function PluginsPage() {
                     {selectedPlugin.description}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="secondary">
-                      {selectedPlugin.category}
-                    </Badge>
+                    <Badge variant="secondary">{selectedPlugin.category}</Badge>
                     <Badge
                       variant={selectedPlugin.enabled ? "default" : "secondary"}
-                      className={
-                        selectedPlugin.enabled
-                          ? ""
-                          : ""
-                      }
+                      className={selectedPlugin.enabled ? "" : ""}
                     >
                       {selectedPlugin.enabled
                         ? "Enabled"
                         : selectedPlugin.licensed
                           ? "Inactive"
-                          : pluginEntitlementLabel(selectedPlugin.entitlementStatus)}
+                          : pluginEntitlementLabel(
+                              selectedPlugin.entitlementStatus,
+                            )}
                     </Badge>
                   </div>
                 </div>
@@ -608,9 +617,15 @@ export default function PluginsPage() {
                         : "No eligible commercial plan is currently attached."}
                     </p>
                   </div>
-                  <Badge variant={selectedPlugin.licensed ? "default" : "secondary"}>
-                    {selectedPlugin.licensed && <CheckCircle2 className="mr-1 h-3 w-3" />}
-                    {!selectedPlugin.licensed && <Lock className="mr-1 h-3 w-3" />}
+                  <Badge
+                    variant={selectedPlugin.licensed ? "default" : "secondary"}
+                  >
+                    {selectedPlugin.licensed && (
+                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                    )}
+                    {!selectedPlugin.licensed && (
+                      <Lock className="mr-1 h-3 w-3" />
+                    )}
                     {pluginEntitlementLabel(selectedPlugin.entitlementStatus)}
                   </Badge>
                 </div>
@@ -634,12 +649,14 @@ export default function PluginsPage() {
                 </div>
                 {selectedPlugin.entitlementStatus === "grace" && (
                   <p className="mt-3 text-xs font-medium text-amber-600">
-                    Access is temporarily available during the billing grace period.
+                    Access is temporarily available during the billing grace
+                    period.
                   </p>
                 )}
                 {!selectedPlugin.licensed && (
                   <p className="mt-3 text-xs font-medium text-amber-600">
-                    Installation is preserved, but enable and configure actions are locked until the plan is upgraded.
+                    Installation is preserved, but enable and configure actions
+                    are locked until the plan is upgraded.
                   </p>
                 )}
               </div>
@@ -713,7 +730,9 @@ export default function PluginsPage() {
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                       <div className="h-8 w-8 mx-auto mb-2 border-4 border-[var(--vms-action)] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[var(--vms-ink-muted)]">Loading settings...</p>
+                      <p className="text-sm text-[var(--vms-ink-muted)]">
+                        Loading settings...
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -737,20 +756,22 @@ export default function PluginsPage() {
                               onClick={() =>
                                 handleConfigChange(
                                   option.key,
-                                  !editedConfig[normalizedKey]
+                                  !editedConfig[normalizedKey],
                                 )
                               }
                               disabled={!selectedPlugin.canConfigure}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
-                                ? "bg-[var(--vms-action)]"
-                                : "bg-gray-300"
-                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                editedConfig[normalizedKey]
+                                  ? "bg-[var(--vms-action)]"
+                                  : "bg-gray-300"
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${editedConfig[normalizedKey]
-                                  ? "translate-x-6"
-                                  : "translate-x-1"
-                                  }`}
+                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${
+                                  editedConfig[normalizedKey]
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                }`}
                               />
                             </button>
                           )}
@@ -766,7 +787,6 @@ export default function PluginsPage() {
                               className=" bg-[var(--vms-surface)]"
                             />
                           )}
-
 
                           {option.type === "number" && (
                             <Input
@@ -791,9 +811,17 @@ export default function PluginsPage() {
                                 const value = e.target.value.trim();
                                 if (value === "" || isNaN(Number(value))) {
                                   // Restore previous value or default if invalid
-                                  const currentValue = editedConfig[normalizedKey];
-                                  if (currentValue === undefined || currentValue === null || isNaN(currentValue)) {
-                                    handleConfigChange(option.key, option.defaultValue ?? 0);
+                                  const currentValue =
+                                    editedConfig[normalizedKey];
+                                  if (
+                                    currentValue === undefined ||
+                                    currentValue === null ||
+                                    isNaN(currentValue)
+                                  ) {
+                                    handleConfigChange(
+                                      option.key,
+                                      option.defaultValue ?? 0,
+                                    );
                                   }
                                 }
                               }}
@@ -807,20 +835,22 @@ export default function PluginsPage() {
                               onClick={() =>
                                 handleConfigChange(
                                   option.key,
-                                  !editedConfig[normalizedKey]
+                                  !editedConfig[normalizedKey],
                                 )
                               }
                               disabled={!selectedPlugin.canConfigure}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editedConfig[normalizedKey]
-                                ? "bg-[var(--vms-action)]"
-                                : "bg-gray-300"
-                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                editedConfig[normalizedKey]
+                                  ? "bg-[var(--vms-action)]"
+                                  : "bg-gray-300"
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${editedConfig[normalizedKey]
-                                  ? "translate-x-6"
-                                  : "translate-x-1"
-                                  }`}
+                                className={`inline-block h-4 w-4 transform rounded-full  bg-[var(--vms-surface)] transition-transform ${
+                                  editedConfig[normalizedKey]
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                }`}
                               />
                             </button>
                           )}
@@ -828,7 +858,8 @@ export default function PluginsPage() {
                           {option.type === "select" && option.options && (
                             <select
                               value={
-                                editedConfig[normalizedKey] || option.defaultValue
+                                editedConfig[normalizedKey] ||
+                                option.defaultValue
                               }
                               onChange={(e) =>
                                 handleConfigChange(option.key, e.target.value)
@@ -861,7 +892,12 @@ export default function PluginsPage() {
                   <Button
                     variant="outline"
                     className="gap-2"
-                    onClick={() => window.open(selectedPlugin.details.documentationUrl ?? "", "_blank")}
+                    onClick={() =>
+                      window.open(
+                        selectedPlugin.details.documentationUrl ?? "",
+                        "_blank",
+                      )
+                    }
                     disabled={!selectedPlugin.details.documentationUrl}
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -877,7 +913,9 @@ export default function PluginsPage() {
                     }
                   >
                     <Save className="h-4 w-4" />
-                    {updateSettingsMutation.isPending ? "Saving..." : "Save Configuration"}
+                    {updateSettingsMutation.isPending
+                      ? "Saving..."
+                      : "Save Configuration"}
                   </Button>
                 </div>
               </div>
@@ -885,6 +923,6 @@ export default function PluginsPage() {
           </div>
         )}
       </Modal>
-    </ >
+    </>
   );
 }

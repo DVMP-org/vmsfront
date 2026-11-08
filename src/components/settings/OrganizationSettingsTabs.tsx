@@ -13,11 +13,6 @@ const sections = [
     href: "/organization/settings/roles",
   },
   {
-    id: "plugins",
-    label: "Plugins",
-    href: "/organization/settings/plugins",
-  },
-  {
     id: "branding",
     label: "Branding",
     href: "/organization/settings/branding",
@@ -26,11 +21,6 @@ const sections = [
     id: "payment",
     label: "Payments",
     href: "/organization/settings/payment",
-  },
-  {
-    id: "integrations",
-    label: "Integrations",
-    href: "/organization/settings/integrations",
   },
   {
     id: "mailer",
@@ -84,16 +74,13 @@ export function OrganizationSettingsTabs({
 export function organizationSettingsSectionFromPath(
   pathname: string | null,
 ): OrganizationSettingsSection {
-  if (pathname?.startsWith("/organization/settings/plugins")) return "plugins";
   if (pathname?.startsWith("/organization/settings/administrators")) {
     return "administrators";
   }
   if (pathname?.startsWith("/organization/settings/roles")) return "roles";
-  if (pathname?.startsWith("/organization/settings/branding")) return "branding";
+  if (pathname?.startsWith("/organization/settings/branding"))
+    return "branding";
   if (pathname?.startsWith("/organization/settings/payment")) return "payment";
-  if (pathname?.startsWith("/organization/settings/integrations")) {
-    return "integrations";
-  }
   if (pathname?.startsWith("/organization/settings/mailer")) return "mailer";
   if (pathname?.startsWith("/organization/settings/subscription")) {
     return "subscription";
