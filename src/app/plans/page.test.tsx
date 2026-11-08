@@ -4,13 +4,14 @@ import PlansPage from "./page";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
   subscribe: vi.fn(),
   needsFirstSite: true,
 }));
 
 vi.mock("@/components/layout/Header", () => ({ Header: () => null }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mocks.push }),
+  useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
 }));
 vi.mock("@/hooks/use-organization", () => ({
   usePlans: () => ({
@@ -78,7 +79,7 @@ describe("plan activation setup", () => {
         billing_cycle: "monthly",
       }),
     );
-    expect(mocks.push).toHaveBeenCalledWith(
+    expect(mocks.replace).toHaveBeenCalledWith(
       "/admin/properties/new?setup=first-place",
     );
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
@@ -93,8 +94,24 @@ describe("plan activation setup", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.push).toHaveBeenCalledWith("/admin/properties"),
+      expect(mocks.replace).toHaveBeenCalledWith("/admin/properties"),
     );
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
+  });
+
+  it("keeps the first-place gate even when the setup query was lost", async () => {
+    window.history.replaceState({}, "", "/plans");
+    render(<PlansPage />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Activate Free Plan/ }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith(
+        "/admin/properties/new?setup=first-place",
+      ),
+    );
+    expect(mocks.replace).not.toHaveBeenCalledWith("/admin");
   });
 });
