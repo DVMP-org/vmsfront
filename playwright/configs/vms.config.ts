@@ -1,17 +1,18 @@
+const baseDomain = process.env.VMS_BASE_DOMAIN || "lvh.me";
+const webBaseURL = process.env.VMS_BASE_URL || `http://${baseDomain}:3106`;
+
 export const vmsConfig = {
-  apiBaseURL: process.env.API_BASE_URL || "http://localhost:8000",
-  webBaseURL: process.env.VMS_BASE_URL || "http://localhost:3000",
-
-  // Admin credentials
-  adminEmail: process.env.ADMIN_E2E_EMAIL || "admin@test.com",
-  adminPassword: process.env.ADMIN_E2E_PASSWORD || "TestPassword123!",
-
-  // Resident credentials
-  residentEmail: process.env.RESIDENT_E2E_EMAIL || "resident@test.com",
-  residentPassword: process.env.RESIDENT_E2E_PASSWORD || "TestPassword123!",
-
-  // House Owner credentials
-  houseOwnerEmail: process.env.HOUSE_OWNER_E2E_EMAIL || "houseowner@test.com",
-  houseOwnerPassword:
-    process.env.HOUSE_OWNER_E2E_PASSWORD || "TestPassword123!",
+  apiOrigin: process.env.API_BASE_URL || "https://vmscore.to",
+  webBaseURL,
+  baseDomain,
+  mode: process.env.E2E_MODE === "live" ? "live" : "fixture",
+  adminEmail: process.env.ADMIN_E2E_EMAIL || "admin@admin.com",
+  adminPassword: process.env.ADMIN_E2E_PASSWORD || "password",
+  memberEmail: process.env.MEMBER_E2E_EMAIL || "member@example.com",
+  memberPassword: process.env.MEMBER_E2E_PASSWORD || "password",
+  occupantEmail: process.env.OCCUPANT_E2E_EMAIL || "occupant@example.com",
+  occupantPassword: process.env.OCCUPANT_E2E_PASSWORD || "password",
+  tenantURL(slug: string) {
+    return `http://${slug}.${baseDomain}:3106`;
+  },
 };
