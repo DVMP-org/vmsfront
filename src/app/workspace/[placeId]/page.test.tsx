@@ -20,6 +20,10 @@ vi.mock("@/features/charges/my-charges/MyCharges", () => ({
   MyCharges: () => <section>Personal charges</section>,
 }));
 
+vi.mock("@/features/workspace-notifications/WorkspaceNotifications", () => ({
+  WorkspaceNotifications: () => <section>Account activity</section>,
+}));
+
 vi.mock("@/hooks/use-auth", () => ({
   useVerifyToken: vi.fn(),
 }));
@@ -188,5 +192,6 @@ describe("hotel guest workspace", () => {
       screen.queryByRole("button", { name: /check in guest/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Personal charges")).toBeInTheDocument();
+    expect(screen.getByText("Account activity")).toBeInTheDocument();
   });
 });
