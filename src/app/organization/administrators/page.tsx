@@ -15,7 +15,11 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DataTable, type Column, type BulkAction } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  type Column,
+  type BulkAction,
+} from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
@@ -178,7 +182,9 @@ export default function OrganizationAdministratorsPage() {
     ];
     const csv = rows
       .map((row) =>
-        row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","),
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(","),
       )
       .join("\n");
     const url = URL.createObjectURL(
@@ -202,12 +208,15 @@ export default function OrganizationAdministratorsPage() {
     const results = await Promise.allSettled(
       removable.map((item) => deleteAdmin.mutateAsync(item.id)),
     );
-    const removed = results.filter((result) => result.status === "fulfilled")
-      .length;
+    const removed = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
     await admins.refetch();
     setNotice(
       `${removed} administrator${removed === 1 ? "" : "s"} removed${
-        removable.length > removed ? "; protected or failed records remain" : "."
+        removable.length > removed
+          ? "; protected or failed records remain"
+          : "."
       }`,
     );
   }
@@ -236,7 +245,9 @@ export default function OrganizationAdministratorsPage() {
       {
         key: "role",
         header: "Role",
-        accessor: (admin) => <Badge variant="neutral">{roleLabel(admin)}</Badge>,
+        accessor: (admin) => (
+          <Badge variant="neutral">{roleLabel(admin)}</Badge>
+        ),
       },
       {
         key: "access",
@@ -339,13 +350,9 @@ export default function OrganizationAdministratorsPage() {
 
       {readOnly && profile.isSuccess ? (
         <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]">
-          <ShieldAlert
-            className="mt-0.5 h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <p>
-            You can review administrators, but your role does not allow
-            changes.
+            You can review administrators, but your role does not allow changes.
           </p>
         </div>
       ) : null}
@@ -641,18 +648,12 @@ export default function OrganizationAdministratorsPage() {
         size="sm"
       >
         {deleteAdmin.isError ? (
-          <p
-            role="alert"
-            className="mb-4 text-sm text-[var(--vms-danger)]"
-          >
+          <p role="alert" className="mb-4 text-sm text-[var(--vms-danger)]">
             {parseApiError(deleteAdmin.error).message}
           </p>
         ) : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="secondary"
-            onClick={() => setDeletingAdmin(null)}
-          >
+          <Button variant="secondary" onClick={() => setDeletingAdmin(null)}>
             Cancel
           </Button>
           <Button

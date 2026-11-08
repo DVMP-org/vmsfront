@@ -4,11 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { PaginationBar } from "@/components/ui/PaginationBar";
@@ -18,7 +25,7 @@ import {
   AccessSimulationResponse,
   accessControlService,
 } from "@/services/access-control-service";
-import { checkpointsApi, Passage, PassageInput } from "./api";
+import { checkpointsApi, Gate, Passage, PassageInput } from "./api";
 import "./styles.css";
 function useAccess() {
   const org = useAppStore((s) => s.organization);
@@ -165,7 +172,9 @@ function HardwareState({
         <div>
           <span>1. Policy decision</span>
           <strong>{simulation?.decision.outcome || "Not created"}</strong>
-          <small>{simulation?.decision.reason_code || "No access decision"}</small>
+          <small>
+            {simulation?.decision.reason_code || "No access decision"}
+          </small>
         </div>
         <div>
           <span>2. Device command</span>
@@ -177,7 +186,9 @@ function HardwareState({
         </div>
         <div>
           <span>3. Acknowledgement</span>
-          <strong>{command?.acknowledged_at ? "Received" : "Not received"}</strong>
+          <strong>
+            {command?.acknowledged_at ? "Received" : "Not received"}
+          </strong>
           <small>
             {command?.acknowledged_at
               ? new Date(command.acknowledged_at).toLocaleTimeString()
@@ -211,7 +222,6 @@ export function CheckpointDirectory() {
   const { context, profile, allowed } = useAccess();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [input, setInput] = useState("");
   const list = useQuery({
     queryKey: ["checkpoint-gates", context, page, search],
     queryFn: () => checkpointsApi.gates(page, search),
@@ -223,6 +233,52 @@ export function CheckpointDirectory() {
     return <p role="status">Loading permissions…</p>;
   if (!allowed("gates.list"))
     return <p role="alert">You do not have permission to select a gate.</p>;
+  const columns: Column<Gate>[] = [
+    {
+      key: "name",
+      header: "Checkpoint",
+      sortable: true,
+      accessor: (gate) => (
+        <div className="min-w-0">
+          <Link
+            href={`/admin/checkpoints/${gate.id}`}
+            className="block truncate font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+          >
+            {gate.name}
+          </Link>
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            Physical access checkpoint
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      mobileHide: true,
+      accessor: (gate) => (
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/admin/checkpoints/${gate.id}`}>Open checkpoint</Link>
+        </Button>
+      ),
+    },
+  ];
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Copy checkpoint IDs",
+      icon: Copy,
+      onClick: async (ids) => {
+        try {
+          await navigator.clipboard.writeText(ids.join("\n"));
+          toast.success(
+            `${ids.length} checkpoint ID${ids.length === 1 ? "" : "s"} copied.`,
+          );
+        } catch {
+          toast.error("Checkpoint IDs could not be copied.");
+        }
+      },
+    },
+  ];
   return (
     <main className="checkpoint-page">
       <header className="border-b border-[var(--vms-line)] pb-5">
@@ -237,73 +293,55 @@ export function CheckpointDirectory() {
           across every use case.
         </p>
       </header>
-      <form
-        className="flex flex-col gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:flex-row sm:items-end"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setSearch(input.trim());
+      <DataTable
+        data={list.data?.items ?? []}
+        columns={columns}
+        tableLabel="Checkpoint directory"
+        searchPlaceholder="Search gate or checkpoint name"
+        initialSearch={search}
+        onSearchChange={(value) => {
+          setSearch(value.trim().slice(0, 100));
           setPage(1);
         }}
-      >
-        <Field id="checkpoint-gate-search" label="Search gates" className="flex-1">
-          {(control) => (
-            <input
-              {...control}
-              type="search"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              maxLength={100}
-              placeholder="Gate or checkpoint name"
-              className={fieldControlClassName}
-            />
-          )}
-        </Field>
-        <Button type="submit">Search</Button>
-      </form>
-      {list.isPending ? (
-        <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
-          Loading gates…
-        </p>
-      ) : list.isError ? (
-        <Failure error={list.error} retry={() => list.refetch()} />
-      ) : (
-        <>
-          <ul className="checkpoint-directory overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-            {list.data?.items.map((g) => (
-              <li
-                key={g.id}
-                className="border-b border-[var(--vms-line)] last:border-b-0"
-              >
-                <Link
-                  href={`/admin/checkpoints/${g.id}`}
-                  className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]"
-                >
-                  <strong className="text-sm">{g.name}</strong>
-                  <span className="text-sm font-semibold text-[var(--vms-action)]">
-                    Open checkpoint
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {!list.data?.items.length && (
-            <EmptyState
-              title="No gates found"
-              description="No checkpoint matches this search. Configure a gate before recording passages."
-            />
-          )}
-          <PaginationBar
-            page={page}
-            totalPages={list.data?.total_pages || 0}
-            hasPrevious={page > 1}
-            hasNext={page < (list.data?.total_pages || 0)}
-            isFetching={list.isFetching}
-            resourceLabel="checkpoints"
-            onChange={setPage}
-            className="border-[var(--vms-line)] bg-[var(--vms-surface)]"
-          />
-        </>
-      )}
+        serverSide
+        total={list.data?.total ?? 0}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={20}
+        pageSizeOptions={[20]}
+        isLoading={list.isPending}
+        errorMessage={
+          list.isError && !list.data
+            ? parseApiError(list.error).message
+            : undefined
+        }
+        isStale={list.isError && !!list.data}
+        onRetry={() => list.refetch()}
+        emptyMessage={
+          search
+            ? "No gates match this search"
+            : "No checkpoint gates configured"
+        }
+        selectable
+        getRowId={(gate) => gate.id}
+        bulkActions={bulkActions}
+        mobileSummary={(gate) => (
+          <Link
+            href={`/admin/checkpoints/${gate.id}`}
+            className="flex min-h-11 items-center justify-between gap-4"
+          >
+            <span>
+              <strong className="block text-sm">{gate.name}</strong>
+              <span className="text-xs text-[var(--vms-ink-muted)]">
+                Physical access checkpoint
+              </span>
+            </span>
+            <span className="text-sm font-semibold text-[var(--vms-action)]">
+              Open
+            </span>
+          </Link>
+        )}
+      />
     </main>
   );
 }
@@ -379,8 +417,9 @@ function Console({
   const [page, setPage] = useState(1);
   const [intent, setIntent] = useState<PassageInput | null>(null);
   const [result, setResult] = useState<Passage | null>(null);
-  const [simulation, setSimulation] =
-    useState<AccessSimulationResponse | null>(null);
+  const [simulation, setSimulation] = useState<AccessSimulationResponse | null>(
+    null,
+  );
   const [selectedLaneId, setSelectedLaneId] = useState("");
   const [online, setOnline] = useState(true);
   const storageKey = queueStorageKey(context, gateId);
@@ -466,8 +505,7 @@ function Console({
   useEffect(() => {
     if (!selectedLaneId && lanes.length) {
       setSelectedLaneId(
-        lanes.find((lane) => lane.availability === "online")?.id ||
-          lanes[0].id,
+        lanes.find((lane) => lane.availability === "online")?.id || lanes[0].id,
       );
     }
   }, [lanes, selectedLaneId]);

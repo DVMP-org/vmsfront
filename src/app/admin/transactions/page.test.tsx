@@ -63,9 +63,11 @@ describe("transaction register", () => {
     expect(
       screen.getByRole("heading", { name: "Transactions" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("TRX-2026-001")).toBeInTheDocument();
+    expect(screen.getAllByText("TRX-2026-001").length).toBeGreaterThan(0);
     expect(screen.getByText("1 records")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /View/ })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /View/ }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("shows a retryable ledger failure", () => {
@@ -80,7 +82,9 @@ describe("transaction register", () => {
     });
     render(<TransactionsPage />);
 
-    expect(screen.getByText("Transactions are unavailable")).toBeInTheDocument();
+    expect(
+      screen.getByText("Transactions are unavailable"),
+    ).toBeInTheDocument();
     expect(screen.getByText("ledger unavailable")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });

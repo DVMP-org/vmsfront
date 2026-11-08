@@ -121,9 +121,11 @@ describe("AccessWorkspace", () => {
   it("shows the host's invitations and active pass", async () => {
     renderWorkspace();
 
-    expect(await screen.findByText("Ada Visitor")).toBeInTheDocument();
-    expect(screen.getByText("VISIT-ABC123")).toBeInTheDocument();
-    expect(screen.getByText("Approved")).toBeInTheDocument();
+    expect((await screen.findAllByText("Ada Visitor")).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("VISIT-ABC123").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Approved").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /create invitation/i }),
     ).toBeInTheDocument();

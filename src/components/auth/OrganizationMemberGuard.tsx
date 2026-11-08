@@ -5,7 +5,6 @@ import { useMyOrganizations } from "@/hooks/use-organization";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { Building2, Home, ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "../ui/Button";
-import { Header } from "../layout/Header";
 import Link from "next/link";
 import { getApiErrorStatus } from "@/lib/error-utils";
 interface OrganizationMemberGuardProps {
@@ -60,24 +59,32 @@ export function OrganizationMemberGuard({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
-        <Header type="select" />
-        <div className="flex flex-1 items-center justify-center px-4 py-8">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin text-[var(--vms-action)] motion-reduce:animate-none" />
-            <p className="text-sm font-medium text-[var(--vms-ink-muted)]">
-              Verifying organization access...
-            </p>
-          </div>
+      <div
+        className="space-y-4 py-2"
+        role="status"
+        aria-label="Loading organization"
+      >
+        <div className="space-y-2">
+          <span className="block h-8 w-56 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
+          <span className="block h-4 w-full max-w-xl animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
         </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={index}
+              className="h-28 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]"
+            />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />
+        <span className="sr-only">Loading organization</span>
       </div>
     );
   }
 
   if (verificationFailed) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
-        <Header type="select" />
+      <div className="flex min-h-[60vh] flex-col bg-[var(--vms-canvas)]">
         <div className="flex flex-1 items-center justify-center px-4 py-8">
           <div className="flex max-w-md flex-col items-center justify-center text-center">
             <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]">
@@ -108,9 +115,7 @@ export function OrganizationMemberGuard({
 
   if (!hasAccess) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
-        <Header type="select" />
-
+      <div className="flex min-h-[60vh] flex-col bg-[var(--vms-canvas)]">
         <div className="flex-1 flex items-center justify-center px-4 py-8">
           <div className="flex flex-col items-center justify-center text-center max-w-md">
             <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]">

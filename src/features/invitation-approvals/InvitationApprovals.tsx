@@ -8,11 +8,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import {
-  Clock3,
-  RefreshCw,
-  ShieldCheck,
-} from "lucide-react";
+import { Clock3, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -32,10 +28,7 @@ import type {
 import { parseApiError } from "@/lib/error-utils";
 import { hasAdminPermission } from "@/lib/permissions";
 import { adminService } from "@/services/admin-service";
-import {
-  invitationApprovalsApi,
-  type ApprovalFilter,
-} from "./api";
+import { invitationApprovalsApi, type ApprovalFilter } from "./api";
 
 const PAGE_SIZE = 25;
 const statusFilters: Array<{ value: ApprovalFilter; label: string }> = [
@@ -86,7 +79,12 @@ export function InvitationApprovals() {
   const invitations = useQuery({
     queryKey: ["admin-invitation-approvals", status, page, search],
     queryFn: () =>
-      invitationApprovalsApi.list({ status, page, pageSize: PAGE_SIZE, search }),
+      invitationApprovalsApi.list({
+        status,
+        page,
+        pageSize: PAGE_SIZE,
+        search,
+      }),
     enabled: canList,
     placeholderData: keepPreviousData,
     retry: false,
@@ -106,14 +104,18 @@ export function InvitationApprovals() {
   function updateQuery(updates: Record<string, string | number | undefined>) {
     const params = new URLSearchParams(queryString);
     Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === "" || value === 1) params.delete(key);
+      if (value === undefined || value === "" || value === 1)
+        params.delete(key);
       else params.set(key, String(value));
     });
     const next = params.toString();
     router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
   }
 
-  if (profile.isPending || (profile.isFetched && !profile.isFetchedAfterMount)) {
+  if (
+    profile.isPending ||
+    (profile.isFetched && !profile.isFetchedAfterMount)
+  ) {
     return <InvitationQueueSkeleton title="Checking invitation permissions" />;
   }
   if (profile.isError) {
@@ -308,7 +310,11 @@ export function InvitationApprovals() {
               ].join(" ")}
               aria-current={active ? "page" : undefined}
               onClick={() =>
-                updateQuery({ status: filter.value, page: 1, search: undefined })
+                updateQuery({
+                  status: filter.value,
+                  page: 1,
+                  search: undefined,
+                })
               }
             >
               {filter.label}
@@ -356,10 +362,7 @@ export function InvitationApprovals() {
         getRowId={(invitation) => invitation.id}
         bulkActions={bulkActions}
         mobileSummary={(invitation) => (
-          <Link
-            href={`/admin/invitations/${invitation.id}`}
-            className="block"
-          >
+          <Link href={`/admin/invitations/${invitation.id}`} className="block">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <strong className="block truncate text-sm font-semibold">
@@ -436,7 +439,9 @@ function Validity({
       </time>
       <span className="text-[var(--vms-ink-muted)]">
         {compact ? " – " : ""}
-        <time dateTime={invitation.valid_to}>{formatDate(invitation.valid_to)}</time>
+        <time dateTime={invitation.valid_to}>
+          {formatDate(invitation.valid_to)}
+        </time>
       </span>
     </span>
   );

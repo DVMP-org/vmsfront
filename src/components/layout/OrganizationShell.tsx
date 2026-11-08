@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Building2,
-  Home,
-  LayoutGrid,
-  Settings,
-} from "lucide-react";
+import { Building2, Home, LayoutGrid, Settings } from "lucide-react";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
@@ -27,12 +22,12 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
   const organization = useAppStore((state) => state.organization);
 
   return (
-    <div className="min-h-screen bg-[#F5F7F8] text-[#1F2933]">
+    <div className="min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <Header type="select" />
       <div className="flex min-h-[calc(100vh-3.5rem)]">
-        <aside className="hidden w-64 shrink-0 border-r border-[#E5E7EB] bg-white lg:block">
-          <div className="border-b border-[#E5E7EB] px-4 py-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667280]">
+        <aside className="hidden w-64 shrink-0 border-r border-[var(--vms-line)] bg-[var(--vms-surface)] lg:block">
+          <div className="border-b border-[var(--vms-line)] px-4 py-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
               Organization
             </p>
             <p className="mt-1 truncate text-sm font-semibold">
@@ -52,10 +47,10 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
                   href={link.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]",
+                    "relative flex min-h-11 items-center gap-3 rounded-[var(--vms-radius-control)] px-3 text-sm font-medium transition-colors duration-[var(--vms-motion)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
                     active
-                      ? "text-[#1F2933] before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-[#E85D3F]"
-                      : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
+                      ? "text-[var(--vms-ink)] before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-[var(--vms-active-accent)]"
+                      : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -64,10 +59,10 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="mx-3 mt-4 border-t border-[#E5E7EB] pt-3">
+          <div className="mx-3 mt-4 border-t border-[var(--vms-line)] pt-3">
             <Link
               href="/organizations"
-              className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-[#596675] transition hover:bg-[#F5F7F8] hover:text-[#1F2933] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
+              className="flex min-h-11 items-center gap-3 rounded-[var(--vms-radius-control)] px-3 text-sm font-medium text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
             >
               <Building2 className="h-4 w-4" />
               All organizations
@@ -92,10 +87,10 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
                     href={link.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex min-h-11 shrink-0 items-center rounded-md px-3 text-xs font-semibold",
+                      "inline-flex min-h-11 shrink-0 items-center rounded-[var(--vms-radius-control)] px-3 text-xs font-semibold",
                       active
-                        ? "bg-[#1F2933] text-white"
-                        : "bg-white text-[#596675] ring-1 ring-[#E5E7EB]",
+                        ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                        : "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] ring-1 ring-[var(--vms-line)]",
                     )}
                   >
                     {link.label}

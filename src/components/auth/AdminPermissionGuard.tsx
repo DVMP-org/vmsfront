@@ -75,7 +75,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
       return;
     }
     setRedirecting(true);
-    router.replace("/organization/workspaces?reason=management-required");
+    router.replace("/organization?reason=management-required");
   }, [
     isLoading,
     managementAccess,
@@ -119,8 +119,8 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   if (requiresManagementContext && (!managementAccess || redirecting)) {
     return (
       <p role="status" className="sr-only">
-        Opening Workspaces. Management requires authority for the selected
-        property.
+        Opening the organization dashboard. Management requires authority for
+        the selected property.
       </p>
     );
   }

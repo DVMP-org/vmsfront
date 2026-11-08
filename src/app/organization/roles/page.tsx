@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ArrowRight,
-  FlaskConical,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, FlaskConical, Plus, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +15,8 @@ import type { AdminRole } from "@/types";
 
 export default function OrganizationRolesPage() {
   const pathname = usePathname();
-  const embedded = pathname?.startsWith("/organization/settings/roles") === true;
+  const embedded =
+    pathname?.startsWith("/organization/settings/roles") === true;
   const [search, setSearch] = useState("");
   const roles = useAdminRoles({
     page: 1,
@@ -117,10 +113,7 @@ export default function OrganizationRolesPage() {
       ) : null}
 
       <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] p-4 text-sm text-[var(--vms-info)]">
-        <FlaskConical
-          className="mt-0.5 h-4 w-4 shrink-0"
-          aria-hidden="true"
-        />
+        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         <div>
           <p className="font-semibold">Authoring prototype</p>
           <p className="mt-1 leading-5">

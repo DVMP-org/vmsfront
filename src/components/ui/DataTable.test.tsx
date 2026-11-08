@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Column, DataTable } from "./DataTable";
 import { PaginationBar } from "./PaginationBar";
@@ -80,7 +86,9 @@ describe("DataTable register foundation", () => {
     expect(screen.queryByRole("columnheader", { name: "Role" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Reset columns" }));
-    expect(screen.getByRole("columnheader", { name: "Role" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Role" }),
+    ).toBeInTheDocument();
   });
 
   it("debounces remote search while keeping the input responsive", () => {
@@ -121,6 +129,40 @@ describe("DataTable register foundation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Select row" }));
     fireEvent.click(screen.getByRole("button", { name: "Archive" }));
     expect(archive).toHaveBeenCalledWith(["one"]);
+  });
+
+  it("applies searchable select filters to client-side collections", async () => {
+    render(
+      <DataTable
+        data={[
+          { id: "one", name: "Ada", role: "Administrator" },
+          { id: "two", name: "Tunde", role: "Resident" },
+        ]}
+        columns={columns}
+        availableFilters={[
+          {
+            field: "role",
+            label: "Scope",
+            type: "select",
+            options: [
+              { value: "Administrator", label: "Administrator" },
+              { value: "Resident", label: "Resident" },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getAllByRole("combobox", { name: "Filter by Scope" })[0],
+      {
+        target: { value: "Resident" },
+      },
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("Ada")).not.toBeInTheDocument(),
+    );
+    expect(screen.getAllByText("Tunde").length).toBeGreaterThan(0);
   });
 });
 

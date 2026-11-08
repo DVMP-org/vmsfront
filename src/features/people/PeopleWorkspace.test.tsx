@@ -113,7 +113,9 @@ const people = {
 function mount() {
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <PeopleWorkspace />
     </QueryClientProvider>,
@@ -125,10 +127,7 @@ describe("property people", () => {
     vi.clearAllMocks();
     mocks.state.selectedProperty = { id: "unit", name: "Apartment 4B" };
     mocks.profile = {
-      effective_permissions: [
-        "parties.create",
-        "place_relationships.create",
-      ],
+      effective_permissions: ["parties.create", "place_relationships.create"],
     };
     mocks.get.mockResolvedValue(people);
   });
@@ -136,25 +135,26 @@ describe("property people", () => {
   it("separates property administrators from occupants", async () => {
     mount();
 
-    expect(await screen.findByText("Site Manager")).toBeInTheDocument();
-    expect(screen.getByText("Ada Resident")).toBeInTheDocument();
-    expect(screen.getByText("Place Admin")).toBeInTheDocument();
-    expect(screen.getByText("Primary")).toBeInTheDocument();
+    expect((await screen.findAllByText("Site Manager")).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("Ada Resident").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Place Admin").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Primary").length).toBeGreaterThan(0);
     expect(screen.getByText("Property people")).toBeInTheDocument();
   });
 
   it("filters the register by administration or occupancy scope", async () => {
     mount();
 
-    await screen.findByText("Site Manager");
+    await screen.findAllByText("Site Manager");
     fireEvent.click(screen.getByRole("button", { name: "Administrators" }));
-    expect(screen.getByText("Site Manager")).toBeInTheDocument();
-    expect(screen.queryByText("Ada Resident")).not.toBeInTheDocument();
-    expect(screen.getByText("1 person shown")).toBeInTheDocument();
+    expect(screen.getAllByText("Site Manager").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Ada Resident")).toHaveLength(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Occupants" }));
-    expect(screen.queryByText("Site Manager")).not.toBeInTheDocument();
-    expect(screen.getByText("Ada Resident")).toBeInTheDocument();
+    expect(screen.queryAllByText("Site Manager")).toHaveLength(0);
+    expect(screen.getAllByText("Ada Resident").length).toBeGreaterThan(0);
   });
 
   it("adds an occupant from the contextual drawer and reports onboarding", async () => {
@@ -189,9 +189,7 @@ describe("property people", () => {
     fireEvent.change(within(dialog).getByLabelText("Property relationship"), {
       target: { value: "tenant" },
     });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Add person" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add person" }));
 
     await waitFor(() =>
       expect(mocks.add).toHaveBeenCalledWith("unit", {
@@ -214,9 +212,7 @@ describe("property people", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Add a person",
     });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Add person" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add person" }));
 
     expect(within(dialog).getByRole("alert")).toHaveTextContent(
       "Enter the person’s full name",
@@ -254,9 +250,11 @@ describe("property people", () => {
     mount();
 
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: "Review access change for Ada Resident",
-      }),
+      (
+        await screen.findAllByRole("button", {
+          name: "Review access change for Ada Resident",
+        })
+      )[0],
     );
     const dialog = await screen.findByRole("dialog", {
       name: "End property access?",
@@ -279,7 +277,9 @@ describe("property people", () => {
     mocks.profile = { effective_permissions: ["places.show"] };
     mount();
 
-    expect(await screen.findByText("Site Manager")).toBeInTheDocument();
+    expect((await screen.findAllByText("Site Manager")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("Read-only").length).toBeGreaterThan(0);
     expect(
       screen.queryByRole("button", { name: "Add person" }),

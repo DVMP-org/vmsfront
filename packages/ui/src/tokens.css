@@ -25,6 +25,13 @@
   --vms-coral-soft: #fff0ec;
   --vms-focus: #b8402a;
 
+  /* Proposal accents are for fills and indicators. Text uses the darker
+   * semantic tokens below so every status label remains WCAG AA readable. */
+  --vms-coral-accent: #ff6b4a;
+  --vms-success-accent: #16a34a;
+  --vms-warning-accent: #f59e0b;
+  --vms-danger-accent: #ef4444;
+
   --vms-data-primary: #1f2933;
   --vms-data-secondary: #596675;
   --vms-data-tertiary: #9aa4ae;
@@ -60,10 +67,31 @@
   --vms-radius-control: 6px;
   --vms-radius-surface: 8px;
   --vms-radius-overlay: 10px;
+  --vms-radius-sm: 6px;
+  --vms-radius-md: 8px;
+  --vms-radius-lg: 12px;
+  --vms-radius-xl: 16px;
   --vms-space-control: 0.625rem;
+  --vms-space-1: 4px;
+  --vms-space-2: 8px;
+  --vms-space-3: 16px;
+  --vms-space-4: 24px;
+  --vms-space-5: 32px;
+  --vms-space-6: 40px;
   --vms-control-height: 2.5rem;
   --vms-control-height-compact: 2rem;
   --vms-control-height-touch: 2.75rem;
+
+  --vms-type-display-size: 32px;
+  --vms-type-display-line: 40px;
+  --vms-type-heading-size: 24px;
+  --vms-type-heading-line: 32px;
+  --vms-type-body-size: 16px;
+  --vms-type-body-line: 24px;
+  --vms-type-label-size: 14px;
+  --vms-type-label-line: 20px;
+  --vms-type-tabular-size: 16px;
+  --vms-type-tabular-line: 24px;
 
   --vms-motion: 160ms;
   --vms-motion-slow: 220ms;

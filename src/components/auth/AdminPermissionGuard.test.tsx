@@ -61,7 +61,7 @@ describe("AdminPermissionGuard management boundary", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("redirects an organization-only entry to Workspaces with an explanation", async () => {
+  it("redirects an organization-only entry to the organization dashboard", async () => {
     mocks.isAdministrator = false;
     render(
       <AdminPermissionGuard>
@@ -71,7 +71,7 @@ describe("AdminPermissionGuard management boundary", () => {
 
     await waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith(
-        "/organization/workspaces?reason=management-required",
+        "/organization?reason=management-required",
       ),
     );
     expect(screen.queryByText("Property operations")).toBeNull();

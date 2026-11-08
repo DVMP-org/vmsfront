@@ -1,17 +1,12 @@
 "use client";
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { contextApi, UseCase } from "@/features/context/api";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
   ChevronRight,
   CornerDownRight,
+  Download,
   FolderTree,
   MapPin,
   Plus,
@@ -37,22 +32,14 @@ import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { SetupProgress } from "@/components/onboarding/SetupProgress";
 import { Button } from "@/components/ui/Button";
 import {
-  Field,
-  fieldControlClassName,
-} from "@/components/ui/form/Field";
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { Modal } from "@/components/ui/Modal";
-import { PaginationBar } from "@/components/ui/PaginationBar";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   Property,
@@ -102,8 +89,7 @@ function readDirectoryState(
     page: Number.isFinite(pageValue) && pageValue > 0 ? pageValue : 1,
     search: (params.get("search") || "").slice(0, 100),
     kind: params.get("kind") || "",
-    status:
-      status === "archived" || status === "all" ? status : "active",
+    status: status === "archived" || status === "all" ? status : "active",
     rootOnly: params.get("all_levels") !== "true",
   };
 }
@@ -126,7 +112,11 @@ function writeDirectoryState(
   });
   return params;
 }
-export default function PropertiesPage({ route = {} }: { route?: PropertyRoute }) {
+export default function PropertiesPage({
+  route = {},
+}: {
+  route?: PropertyRoute;
+}) {
   const organization = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
   const context = `${organization?.id}:${user?.id}`;
@@ -163,9 +153,7 @@ function Workspace({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryString = searchParams?.toString() || "";
-  const initialDirectory = readDirectoryState(
-    new URLSearchParams(queryString),
-  );
+  const initialDirectory = readDirectoryState(new URLSearchParams(queryString));
   const client = useQueryClient();
   const [page, setPage] = useState(initialDirectory.page),
     [search, setSearch] = useState(initialDirectory.search),
@@ -200,10 +188,9 @@ function Workspace({
         next,
       );
       const nextQuery = params.toString();
-      router.replace(
-        nextQuery ? `${pathname}?${nextQuery}` : pathname,
-        { scroll: false },
-      );
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+        scroll: false,
+      });
     },
     [pathname, queryString, router],
   );
@@ -214,7 +201,11 @@ function Workspace({
     return { page, search, kind, status, rootOnly, ...updates };
   }
 
-  const parent = useQuery({queryKey:["properties",context,"detail",route.parentId],queryFn:()=>propertiesApi.get(route.parentId!),enabled:!!route.parentId && creating});
+  const parent = useQuery({
+    queryKey: ["properties", context, "detail", route.parentId],
+    queryFn: () => propertiesApi.get(route.parentId!),
+    enabled: !!route.parentId && creating,
+  });
   const createParent = parent.data;
   const profile = useQuery({
     queryKey: ["properties-profile", context],
@@ -261,9 +252,11 @@ function Workspace({
     queryFn: () => propertiesApi.get(selected!),
     enabled: !!selected && allowed("show"),
   });
-  function select(id: string) { router.push(`/admin/properties/${id}`); }
+  function select(id: string) {
+    router.push(`/admin/properties/${id}`);
+  }
   async function changed(property: Property, _message?: string) {
-    await client.invalidateQueries({queryKey:["properties",context]});
+    await client.invalidateQueries({ queryKey: ["properties", context] });
     router.push(`/admin/properties/${property.id}`);
   }
   if (!enabled || profile.isPending || !profile.isFetchedAfterMount)
@@ -272,10 +265,17 @@ function Workspace({
     return <ErrorState error={profile.error} retry={() => profile.refetch()} />;
   if (!allowed("list"))
     return <p role="alert">You do not have permission to view properties.</p>;
-  if (route.action === "new" && !allowed("create")) return <p role="alert">You do not have permission to create properties.</p>;
-  if ((route.action === "edit" && !allowed("update")) || (route.action === "move" && !allowed("move"))) return <p role="alert">You do not have permission for this action.</p>;
-  if (creating && route.parentId && parent.isPending) return <p role="status">Loading parent property…</p>;
-  if (creating && parent.isError) return <ErrorState error={parent.error} retry={() => parent.refetch()} />;
+  if (route.action === "new" && !allowed("create"))
+    return <p role="alert">You do not have permission to create properties.</p>;
+  if (
+    (route.action === "edit" && !allowed("update")) ||
+    (route.action === "move" && !allowed("move"))
+  )
+    return <p role="alert">You do not have permission for this action.</p>;
+  if (creating && route.parentId && parent.isPending)
+    return <p role="status">Loading parent property…</p>;
+  if (creating && parent.isError)
+    return <ErrorState error={parent.error} retry={() => parent.refetch()} />;
   const inRecord = !!selected || creating;
   const hasActiveFilters =
     !!search ||
@@ -283,6 +283,105 @@ function Workspace({
     status !== DEFAULT_DIRECTORY_STATE.status ||
     !rootOnly;
   const retainStaleRows = !!visibleList && list.isError;
+  const columns: Column<Property>[] = [
+    {
+      key: "name",
+      header: "Property",
+      sortable: true,
+      accessor: (property) => (
+        <span className="property-registry-place">
+          <StructureMark kind={property.kind} />
+          <span>
+            <strong>{property.name}</strong>
+            <span
+              className={`property-status ${
+                property.is_active ? "active" : "archived"
+              }`}
+            >
+              {property.is_active ? "Active" : "Archived"}
+            </span>
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: "kind",
+      header: "Structure",
+      sortable: true,
+      accessor: (property) => (
+        <span className="property-registry-kind">
+          {propertyKinds[property.kind] || "Space"}
+        </span>
+      ),
+    },
+    {
+      key: "address",
+      header: "Location",
+      sortable: true,
+      accessor: (property) => (
+        <span className="property-registry-location">
+          <MapPin size={14} aria-hidden="true" />
+          <span>
+            {property.address ||
+              (property.parent_id
+                ? "Inside another property"
+                : "Top level in organization")}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Action",
+      mobileHide: true,
+      accessor: (property) => (
+        <button
+          className="property-row-action"
+          aria-label={`Open ${property.name}`}
+          disabled={!allowed("show")}
+          onClick={() => select(property.id)}
+        >
+          Open
+          <ArrowUpRight size={16} aria-hidden="true" />
+        </button>
+      ),
+    },
+  ];
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Export selected",
+      icon: Download,
+      onClick: (ids) => {
+        const selectedItems =
+          visibleList?.items.filter((property) => ids.includes(property.id)) ??
+          [];
+        const values = [
+          ["Name", "Kind", "Address", "Status"],
+          ...selectedItems.map((property) => [
+            property.name,
+            propertyKinds[property.kind] || property.kind,
+            property.address || "",
+            property.is_active ? "Active" : "Archived",
+          ]),
+        ];
+        const csv = values
+          .map((row) =>
+            row
+              .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+              .join(","),
+          )
+          .join("\n");
+        const url = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8" }),
+        );
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "properties.csv";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+    },
+  ];
   return (
     <main className="property-workspace">
       <header className="property-heading">
@@ -292,9 +391,7 @@ function Workspace({
             {organizationName}
             <span>/</span>Property directory
           </p>
-          <h1>
-            Properties
-          </h1>
+          <h1>Properties</h1>
           <p className="property-heading-copy">
             The properties your organization operates. Every building, room and
             space in context.
@@ -338,7 +435,10 @@ function Workspace({
         </p>
       )}
       {!inRecord ? (
-        <section className="property-registry" aria-labelledby="property-register-heading">
+        <section
+          className="property-registry"
+          aria-labelledby="property-register-heading"
+        >
           <h2 id="property-register-heading" className="sr-only">
             Property register
           </h2>
@@ -393,7 +493,8 @@ function Workspace({
                   onChange={(e) => {
                     updateDirectory(
                       currentDirectory({
-                        status: e.target.value as PropertyDirectoryState["status"],
+                        status: e.target
+                          .value as PropertyDirectoryState["status"],
                         page: 1,
                       }),
                     );
@@ -408,9 +509,7 @@ function Workspace({
                 <button
                   type="button"
                   className="property-clear-filters"
-                  onClick={() =>
-                    updateDirectory(DEFAULT_DIRECTORY_STATE)
-                  }
+                  onClick={() => updateDirectory(DEFAULT_DIRECTORY_STATE)}
                 >
                   <X size={14} aria-hidden="true" />
                   Clear all
@@ -473,99 +572,57 @@ function Workspace({
                   </button>
                 </div>
               ) : null}
-              {visibleList?.items.length ? (
-                <Table
-                  className="property-table"
-                  containerClassName="property-table-region"
-                  scrollLabel="Properties comparison table"
-                >
-                  <TableCaption className="sr-only">
-                    Properties register
-                  </TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead scope="col">Property</TableHead>
-                      <TableHead scope="col">Structure</TableHead>
-                      <TableHead scope="col">Location</TableHead>
-                      <TableHead scope="col" className="text-right">
-                        Action
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {visibleList.items.map((property) => (
-                      <TableRow key={property.id}>
-                        <TableCell data-label="Property">
-                          <span className="property-registry-place">
-                            <StructureMark kind={property.kind} />
-                            <span>
-                              <strong>{property.name}</strong>
-                              <span
-                                className={`property-status ${property.is_active ? "active" : "archived"}`}
-                              >
-                                {property.is_active ? "Active" : "Archived"}
-                              </span>
-                            </span>
-                          </span>
-                        </TableCell>
-                        <TableCell data-label="Structure">
-                          <span className="property-registry-kind">
-                            {propertyKinds[property.kind] || "Space"}
-                          </span>
-                        </TableCell>
-                        <TableCell data-label="Location">
-                          <span className="property-registry-location">
-                            <MapPin size={14} aria-hidden="true" />
-                            <span>
-                              {property.address ||
-                                (property.parent_id
-                                  ? "Inside another property"
-                                  : "Top level in organization")}
-                            </span>
-                          </span>
-                        </TableCell>
-                        <TableCell
-                          data-label="Action"
-                          className="property-row-action-cell"
-                        >
-                          <button
-                            className="property-row-action"
-                            aria-label={`Open ${property.name}`}
-                            disabled={!allowed("show")}
-                            onClick={() => select(property.id)}
-                          >
-                            Open
-                            <ArrowUpRight size={16} aria-hidden="true" />
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="property-empty">
-                  <StructureMark kind="building" />
-                  <h2>No properties found</h2>
-                  <p>
-                    {search || kind || status !== "active"
-                      ? "Try a different search or filter to find your property."
-                      : "Add a building or space to begin mapping your organization’s structure."}
-                  </p>
-                </div>
-              )}
-              <PaginationBar
-                page={page}
-                pageSize={10}
+              <DataTable
+                data={visibleList?.items ?? []}
+                columns={columns}
+                tableLabel="Properties register"
+                searchable={false}
+                serverSide
                 total={visibleList?.total ?? 0}
-                totalPages={visibleList?.total_pages ?? 0}
-                resourceLabel="properties"
-                isFetching={list.isFetching}
-                onChange={(nextPage) =>
+                currentPage={page}
+                onPageChange={(nextPage) =>
                   updateDirectory(
                     currentDirectory({ page: Math.max(1, nextPage) }),
                   )
                 }
-                className="property-pagination"
+                pageSize={10}
+                pageSizeOptions={[10]}
+                selectable
+                getRowId={(property) => property.id}
+                bulkActions={bulkActions}
+                emptyMessage={
+                  search || kind || status !== "active"
+                    ? "No properties match these filters"
+                    : "No properties found"
+                }
+                mobileSummary={(property) => (
+                  <div className="flex items-start gap-3">
+                    <StructureMark kind={property.kind} />
+                    <div className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm">
+                        {property.name}
+                      </strong>
+                      <span className="block text-xs text-[var(--vms-ink-muted)]">
+                        {propertyKinds[property.kind] || "Space"} ·{" "}
+                        {property.is_active ? "Active" : "Archived"}
+                      </span>
+                      <span className="mt-2 flex items-center gap-1.5 text-xs text-[var(--vms-ink-muted)]">
+                        <MapPin size={13} aria-hidden="true" />
+                        {property.address || "Location not set"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        disabled={!allowed("show")}
+                        onClick={() => select(property.id)}
+                      >
+                        Open property
+                      </Button>
+                    </div>
+                  </div>
+                )}
               />
             </>
           )}
@@ -603,7 +660,9 @@ function Workspace({
                 context={context}
                 property={detail.data}
                 allowed={allowed}
-                onCreateChild={(parent) => router.push(`/admin/properties/new?parent=${parent.id}`)}
+                onCreateChild={(parent) =>
+                  router.push(`/admin/properties/new?parent=${parent.id}`)
+                }
                 routeAction={route.action}
                 onSelect={select}
                 onSaved={changed}
@@ -964,9 +1023,7 @@ function PropertyForm({
                       {...control}
                       className={fieldControlClassName}
                       value={buildingType}
-                      onChange={(event) =>
-                        setBuildingType(event.target.value)
-                      }
+                      onChange={(event) => setBuildingType(event.target.value)}
                     >
                       <option value="">Unspecified</option>
                       {availableBuildingTypes.map((type) => (
@@ -1115,9 +1172,11 @@ function PropertyDetails({
   onSaved: (p: Property, message: string) => void;
 }) {
   const router = useRouter();
-  const setSelectedProperty=useAppStore(s=>s.setSelectedProperty);
-  const mode = routeAction === "edit" || routeAction === "move" ? routeAction : null;
-  const setMode = (value: "edit" | "move" | null) => router.push(`/admin/properties/${property.id}${value ? "/"+value : ""}`);
+  const setSelectedProperty = useAppStore((s) => s.setSelectedProperty);
+  const mode =
+    routeAction === "edit" || routeAction === "move" ? routeAction : null;
+  const setMode = (value: "edit" | "move" | null) =>
+    router.push(`/admin/properties/${property.id}${value ? "/" + value : ""}`);
   const [confirm, setConfirm] = useState(false),
     [parent, setParent] = useState<FacetItem | null>(null),
     [toRoot, setToRoot] = useState(false),
@@ -1216,9 +1275,7 @@ function PropertyDetails({
         )}
         {property.kind !== "site" && allowed("toggle_active") && (
           <Button
-            variant={
-              property.is_active ? "destructive-outlined" : "secondary"
-            }
+            variant={property.is_active ? "destructive-outlined" : "secondary"}
             disabled={mutation.isPending}
             onClick={() => setConfirm(true)}
           >
@@ -1356,7 +1413,9 @@ function PropertyDetails({
           if (!mutation.isPending) setConfirm(false);
         }}
         title={
-          property.is_active ? "Archive this property?" : "Activate this property?"
+          property.is_active
+            ? "Archive this property?"
+            : "Activate this property?"
         }
         description={
           property.is_active

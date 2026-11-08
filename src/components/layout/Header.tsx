@@ -14,8 +14,9 @@ import {
 import { useAuth, useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "../ui/Button";
-import { cn, getFullName, getInitials } from "@/lib/utils";
+import { cn, getFullName } from "@/lib/utils";
 import { VmsWordmark } from "../brand/VmsBrand";
+import { Avatar } from "../ui/Avatar";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
@@ -46,6 +47,15 @@ export const Header = memo(function Header({
   const router = useRouter();
 
   const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
+  const isOrganizationsIndex =
+    pathname === "/organizations" ||
+    pathname === "/organizations/" ||
+    pathname?.startsWith("/organizations/") === true;
+  const displayName = getFullName(
+    currentUser?.first_name,
+    currentUser?.last_name,
+    currentUser?.email,
+  );
   const commandProfile = useQuery({
     queryKey: ["command-profile", organization?.id, currentUser?.id],
     queryFn: async () => (await adminService.getAdminProfile()).data,
@@ -69,14 +79,14 @@ export const Header = memo(function Header({
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#1F2933] text-white shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[var(--vms-ink)] text-white shadow-[var(--vms-shadow-raised)]">
       <div className="flex h-14 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onMenuClick}
-            className="h-11 w-11 flex-shrink-0 p-0 text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#E85D3F] lg:hidden"
+            className="h-11 w-11 flex-shrink-0 p-0 text-white hover:bg-white/10 hover:text-white focus-visible:ring-[var(--vms-coral-accent)] lg:hidden"
             aria-label="Toggle navigation"
           >
             <Menu className="h-5 w-5" />
@@ -90,7 +100,7 @@ export const Header = memo(function Header({
             <VmsWordmark compact size="md" className="sm:hidden" />
             <VmsWordmark size="md" className="hidden sm:inline-flex" />
           </Link>
-          {currentUser ? (
+          {currentUser && !isOrganizationsIndex ? (
             <div className="hidden min-w-0 md:block">
               <OrganizationSwitcher />
             </div>
@@ -134,7 +144,7 @@ export const Header = memo(function Header({
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="flex min-h-10 items-center gap-1 rounded-md px-1 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]"
+                className="flex min-h-10 items-center gap-1 rounded-[var(--vms-radius-control)] px-1 text-sm font-medium text-white transition-colors duration-[var(--vms-motion)] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-coral-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--vms-ink)]"
                 id="profile_dropdown_button"
                 aria-expanded={menuOpen}
                 aria-label={`Open account menu for ${getFullName(
@@ -143,9 +153,13 @@ export const Header = memo(function Header({
                   currentUser.email,
                 )}`}
               >
-                <span className="grid h-8 w-8 items-center justify-center rounded-full bg-[var(--vms-coral)] text-[10px] font-bold text-white ring-2 ring-white/20">
-                  {getInitials(currentUser.first_name, currentUser.last_name)}
-                </span>
+                <Avatar
+                  name={displayName}
+                  size="sm"
+                  tone="coral"
+                  decorative
+                  className="ring-2 ring-white/20"
+                />
                 <ChevronDown
                   className={cn(
                     "h-3.5 w-3.5 text-white/60 transition",
@@ -155,14 +169,9 @@ export const Header = memo(function Header({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-[calc(100vw-1.5rem)] rounded-lg border border-[#DDE2E6] bg-white p-2 text-sm text-[#1F2933] shadow-xl sm:w-64">
-                  <div className="mb-2 flex items-center gap-3 border-b border-[#E5E7EB] px-2 py-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E85D3F] font-bold text-white">
-                      {getInitials(
-                        currentUser.first_name,
-                        currentUser.last_name,
-                      )}
-                    </div>
+                <div className="absolute right-0 z-50 mt-2 w-[calc(100vw-1.5rem)] rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2 text-sm text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)] sm:w-64">
+                  <div className="mb-2 flex items-center gap-3 border-b border-[var(--vms-line)] px-2 py-3">
+                    <Avatar name={displayName} size="md" tone="coral" />
                     <div className="flex flex-col">
                       <span className="font-bold">
                         {getFullName(
@@ -171,10 +180,10 @@ export const Header = memo(function Header({
                           currentUser.email,
                         )}
                       </span>
-                      <span className="text-xs text-[#667280]">
+                      <span className="text-xs text-[var(--vms-ink-muted)]">
                         {currentUser.email}
                       </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9AA4AE]">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
                         {roleLabel}
                       </span>
                     </div>
@@ -197,23 +206,25 @@ export const Header = memo(function Header({
                     }}
                     description="Get help with your workspace"
                   />
-                  <MenuAction
-                    icon={Building2}
-                    label="Switch organization"
-                    onClick={() => {
-                      router.push("/organizations");
-                      setMenuOpen(false);
-                    }}
-                    description="Open another organization"
-                  />
-                  <div className="my-2 border-t border-[#E5E7EB]" />
+                  {!isOrganizationsIndex ? (
+                    <MenuAction
+                      icon={Building2}
+                      label="Switch organization"
+                      onClick={() => {
+                        router.push("/organizations");
+                        setMenuOpen(false);
+                      }}
+                      description="Open another organization"
+                    />
+                  ) : null}
+                  <div className="my-2 border-t border-[var(--vms-line)]" />
                   <button
                     type="button"
                     onClick={() => {
                       logout();
                       setMenuOpen(false);
                     }}
-                    className="flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-[#B42318] transition hover:bg-[#FEF0EE]"
+                    className="flex min-h-11 w-full items-center gap-2 rounded-[var(--vms-radius-control)] px-2 text-[var(--vms-danger)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-danger-subtle)]"
                   >
                     <LogOut className="h-4 w-4" />
                     Sign out
@@ -243,14 +254,14 @@ const MenuAction = memo(function MenuAction({
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-11 w-full items-start gap-3 rounded-md px-2 py-2 text-left transition hover:bg-[#F5F7F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
+      className="flex min-h-11 w-full items-start gap-3 rounded-[var(--vms-radius-control)] px-2 py-2 text-left transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
     >
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF1F3] text-[#1F2933]">
+      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]">
         <Icon className="h-4 w-4" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-[#1F2933]">{label}</p>
-        <p className="text-xs text-[#667280]">{description}</p>
+        <p className="text-sm font-semibold text-[var(--vms-ink)]">{label}</p>
+        <p className="text-xs text-[var(--vms-ink-muted)]">{description}</p>
       </div>
     </button>
   );

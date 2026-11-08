@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useMemo, useCallback, ReactNode, useEffect, useRef } from "react";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  ReactNode,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "./Table";
 import { Input } from "./Input";
 import { Button } from "./Button";
-import { Badge } from "./Badge";
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,7 +38,7 @@ import {
   Rows3,
   SearchX,
   SlidersHorizontal,
-  TriangleAlert
+  TriangleAlert,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { format, parseISO, isValid } from "date-fns";
@@ -57,10 +63,19 @@ export interface Column<T> {
 
 export interface FilterConfig {
   field: string;
-  operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "like" | "ilike" | "in" | "not_in";
+  operator:
+    | "eq"
+    | "ne"
+    | "gt"
+    | "gte"
+    | "lt"
+    | "lte"
+    | "like"
+    | "ilike"
+    | "in"
+    | "not_in";
   value: string | number | boolean | string[];
 }
-
 
 export interface FilterDefinition {
   field: string;
@@ -185,7 +200,7 @@ export function DataTable<T extends Record<string, any>>({
   const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const safeColumns = useMemo(
     () => (Array.isArray(columns) ? columns : []),
-    [columns]
+    [columns],
   );
 
   // Use new props if provided, fall back to legacy props for backward compatibility
@@ -200,7 +215,9 @@ export function DataTable<T extends Record<string, any>>({
   );
 
   // Internal state for search
-  const [localSearchTerm, setLocalSearchTerm] = useState(effectiveInitialSearch);
+  const [localSearchTerm, setLocalSearchTerm] = useState(
+    effectiveInitialSearch,
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isUserTypingRef = useRef(false);
   const lastLocalValueRef = useRef(effectiveInitialSearch);
@@ -213,24 +230,32 @@ export function DataTable<T extends Record<string, any>>({
   );
 
   // Internal state for filters - map field to value
-  const [filterValues, setFilterValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    effectiveInitialFilters.forEach((filter) => {
-      if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
-        const filterDef = availableFilters.find((f) => f.field === filter.field);
-        if (filterDef?.type === "date-range") {
-          if (filter.operator === "gte") {
-            initial[`${filter.field}_from`] = String(filter.value);
-          } else if (filter.operator === "lte") {
-            initial[`${filter.field}_to`] = String(filter.value);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(
+    () => {
+      const initial: Record<string, string> = {};
+      effectiveInitialFilters.forEach((filter) => {
+        if (
+          filter.value !== undefined &&
+          filter.value !== null &&
+          filter.value !== ""
+        ) {
+          const filterDef = availableFilters.find(
+            (f) => f.field === filter.field,
+          );
+          if (filterDef?.type === "date-range") {
+            if (filter.operator === "gte") {
+              initial[`${filter.field}_from`] = String(filter.value);
+            } else if (filter.operator === "lte") {
+              initial[`${filter.field}_to`] = String(filter.value);
+            }
+          } else {
+            initial[filter.field] = String(filter.value);
           }
-        } else {
-          initial[filter.field] = String(filter.value);
         }
-      }
-    });
-    return initial;
-  });
+      });
+      return initial;
+    },
+  );
 
   // Internal state for sort
   const [sortState, setSortState] = useState<SortState>(() => {
@@ -238,7 +263,9 @@ export function DataTable<T extends Record<string, any>>({
       const [column, direction] = propInitialSort.split(":");
       return {
         column: column || "",
-        direction: (direction === "asc" || direction === "desc" ? direction : null) as SortDirection,
+        direction: (direction === "asc" || direction === "desc"
+          ? direction
+          : null) as SortDirection,
       };
     }
     return { column: "", direction: null };
@@ -248,9 +275,11 @@ export function DataTable<T extends Record<string, any>>({
 
   // Sync local search with external initialSearch
   useEffect(() => {
-    if (effectiveInitialSearch !== undefined &&
+    if (
+      effectiveInitialSearch !== undefined &&
       effectiveInitialSearch !== lastLocalValueRef.current &&
-      !isUserTypingRef.current) {
+      !isUserTypingRef.current
+    ) {
       setLocalSearchTerm(effectiveInitialSearch);
       lastLocalValueRef.current = effectiveInitialSearch;
     }
@@ -301,8 +330,14 @@ export function DataTable<T extends Record<string, any>>({
 
     const newFilterValues: Record<string, string> = {};
     effectiveInitialFilters.forEach((filter) => {
-      if (filter.value !== undefined && filter.value !== null && filter.value !== "") {
-        const filterDef = availableFilters.find((f) => f.field === filter.field);
+      if (
+        filter.value !== undefined &&
+        filter.value !== null &&
+        filter.value !== ""
+      ) {
+        const filterDef = availableFilters.find(
+          (f) => f.field === filter.field,
+        );
         if (filterDef?.type === "date-range") {
           if (filter.operator === "gte") {
             newFilterValues[`${filter.field}_from`] = String(filter.value);
@@ -324,7 +359,9 @@ export function DataTable<T extends Record<string, any>>({
       const [column, direction] = propInitialSort.split(":");
       setSortState({
         column: column || "",
-        direction: (direction === "asc" || direction === "desc" ? direction : null) as SortDirection,
+        direction: (direction === "asc" || direction === "desc"
+          ? direction
+          : null) as SortDirection,
       });
     } else {
       setSortState({ column: "", direction: null });
@@ -386,10 +423,12 @@ export function DataTable<T extends Record<string, any>>({
       currentFilters.length !== prevFiltersRef.current.length ||
       currentFilters.some((filter, idx) => {
         const prevFilter = prevFiltersRef.current[idx];
-        return !prevFilter ||
+        return (
+          !prevFilter ||
           filter.field !== prevFilter.field ||
           filter.operator !== prevFilter.operator ||
-          filter.value !== prevFilter.value;
+          filter.value !== prevFilter.value
+        );
       });
 
     if (filtersChanged && onFiltersChangeRef.current) {
@@ -403,33 +442,38 @@ export function DataTable<T extends Record<string, any>>({
   const setCurrentPage = onPageChange || setInternalPage;
 
   // Internal selection state if not controlled
-  const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(
+    new Set(),
+  );
   const selected = selectedRows !== undefined ? selectedRows : internalSelected;
   const setSelected = onSelectionChange || setInternalSelected;
 
-  const getComparableValue = useCallback((row: T, column: Column<T>): string => {
-    const rawValue = row[column.key];
+  const getComparableValue = useCallback(
+    (row: T, column: Column<T>): string => {
+      const rawValue = row[column.key];
 
-    if (rawValue !== undefined && rawValue !== null) {
-      return String(rawValue);
-    }
+      if (rawValue !== undefined && rawValue !== null) {
+        return String(rawValue);
+      }
 
-    if (column.accessor) {
-      const accessorValue = column.accessor(row);
+      if (column.accessor) {
+        const accessorValue = column.accessor(row);
 
-      if (
-        typeof accessorValue === "string" ||
-        typeof accessorValue === "number" ||
-        typeof accessorValue === "boolean"
-      ) {
-        return String(accessorValue);
+        if (
+          typeof accessorValue === "string" ||
+          typeof accessorValue === "number" ||
+          typeof accessorValue === "boolean"
+        ) {
+          return String(accessorValue);
+        }
+
+        return "";
       }
 
       return "";
-    }
-
-    return "";
-  }, []);
+    },
+    [],
+  );
 
   // Filter data (only for client-side filtering)
   const filteredData = useMemo(() => {
@@ -443,8 +487,10 @@ export function DataTable<T extends Record<string, any>>({
     for (const filter of currentFilters) {
       result = result.filter((row) => {
         const value = row[filter.field];
-        if (filter.operator === "eq") return String(value) === String(filter.value);
-        if (filter.operator === "ne") return String(value) !== String(filter.value);
+        if (filter.operator === "eq")
+          return String(value) === String(filter.value);
+        if (filter.operator === "ne")
+          return String(value) !== String(filter.value);
         if (filter.operator === "in") {
           return Array.isArray(filter.value)
             ? filter.value.map(String).includes(String(value))
@@ -460,10 +506,22 @@ export function DataTable<T extends Record<string, any>>({
             .toLowerCase()
             .includes(String(filter.value).toLowerCase());
         }
-        if (filter.operator === "gt") return Number(value) > Number(filter.value);
-        if (filter.operator === "gte") return Number(value) >= Number(filter.value);
-        if (filter.operator === "lt") return Number(value) < Number(filter.value);
-        if (filter.operator === "lte") return Number(value) <= Number(filter.value);
+        const numericValue = Number(value);
+        const numericFilter = Number(filter.value);
+        const comparableValue =
+          Number.isFinite(numericValue) && Number.isFinite(numericFilter)
+            ? numericValue
+            : String(value ?? "");
+        const comparableFilter =
+          Number.isFinite(numericValue) && Number.isFinite(numericFilter)
+            ? numericFilter
+            : String(filter.value);
+        if (filter.operator === "gt") return comparableValue > comparableFilter;
+        if (filter.operator === "gte")
+          return comparableValue >= comparableFilter;
+        if (filter.operator === "lt") return comparableValue < comparableFilter;
+        if (filter.operator === "lte")
+          return comparableValue <= comparableFilter;
         return true;
       });
     }
@@ -475,7 +533,7 @@ export function DataTable<T extends Record<string, any>>({
         safeColumns.some((col) => {
           const value = getComparableValue(row, col);
           return value.toLowerCase().includes(searchLower);
-        })
+        }),
       );
     }
 
@@ -515,7 +573,13 @@ export function DataTable<T extends Record<string, any>>({
 
       return sortState.direction === "asc" ? comparison : -comparison;
     });
-  }, [filteredData, sortState, safeColumns, getComparableValue, disableClientSideSorting]);
+  }, [
+    filteredData,
+    sortState,
+    safeColumns,
+    getComparableValue,
+    disableClientSideSorting,
+  ]);
 
   // Paginate data (only for client-side pagination)
   const paginatedData = useMemo(() => {
@@ -525,10 +589,12 @@ export function DataTable<T extends Record<string, any>>({
     return sortedData.slice(startIndex, endIndex);
   }, [sortedData, currentPage, pageSize, showPagination, serverSide]);
 
-  const totalPages = serverSide && total !== undefined
-    ? Math.ceil(total / pageSize)
-    : Math.ceil(sortedData.length / pageSize);
-  const displayTotal = serverSide && total !== undefined ? total : sortedData.length;
+  const totalPages =
+    serverSide && total !== undefined
+      ? Math.ceil(total / pageSize)
+      : Math.ceil(sortedData.length / pageSize);
+  const displayTotal =
+    serverSide && total !== undefined ? total : sortedData.length;
 
   // Handle sorting
   const handleSort = (columnKey: string) => {
@@ -562,37 +628,43 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   // Handle search change - update local state immediately, then update parent
-  const handleSearchChange = useCallback((value: string) => {
-    isUserTypingRef.current = true;
-    setLocalSearchTerm(value);
-    lastLocalValueRef.current = value;
-    if (onSearchChange) {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      isUserTypingRef.current = true;
+      setLocalSearchTerm(value);
+      lastLocalValueRef.current = value;
+      if (onSearchChange) {
+        if (searchDebounceRef.current) {
+          clearTimeout(searchDebounceRef.current);
+        }
+        searchDebounceRef.current = setTimeout(() => {
+          onSearchChange(value);
+        }, 300);
       }
-      searchDebounceRef.current = setTimeout(() => {
-        onSearchChange(value);
-      }, 300);
-    }
-    setCurrentPage(1);
-    setTimeout(() => {
-      isUserTypingRef.current = false;
-    }, 350);
-  }, [onSearchChange, setCurrentPage]);
+      setCurrentPage(1);
+      setTimeout(() => {
+        isUserTypingRef.current = false;
+      }, 350);
+    },
+    [onSearchChange, setCurrentPage],
+  );
 
   // Handle filter change - memoized to prevent re-renders
-  const handleFilterChange = useCallback((field: string, value: string) => {
-    setFilterValues((prev) => {
-      const newValues = { ...prev };
-      if (value === "" || value === undefined) {
-        delete newValues[field];
-      } else {
-        newValues[field] = value;
-      }
-      return newValues;
-    });
-    setCurrentPage(1);
-  }, [setCurrentPage]);
+  const handleFilterChange = useCallback(
+    (field: string, value: string) => {
+      setFilterValues((prev) => {
+        const newValues = { ...prev };
+        if (value === "" || value === undefined) {
+          delete newValues[field];
+        } else {
+          newValues[field] = value;
+        }
+        return newValues;
+      });
+      setCurrentPage(1);
+    },
+    [setCurrentPage],
+  );
 
   // Selection handlers
   const toggleRowSelection = (rowId: string) => {
@@ -614,8 +686,10 @@ export function DataTable<T extends Record<string, any>>({
     }
   };
 
-  const allSelected = paginatedData.length > 0 && selected.size === paginatedData.length;
-  const someSelected = selected.size > 0 && selected.size < paginatedData.length;
+  const allSelected =
+    paginatedData.length > 0 && selected.size === paginatedData.length;
+  const someSelected =
+    selected.size > 0 && selected.size < paginatedData.length;
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -639,7 +713,8 @@ export function DataTable<T extends Record<string, any>>({
     const selectedIds = Array.from(selected);
 
     if (action.requiresConfirmation) {
-      const message = action.confirmationMessage ||
+      const message =
+        action.confirmationMessage ||
         `Are you sure you want to ${action.label.toLowerCase()} ${selectedIds.length} item(s)?`;
       if (!window.confirm(message)) return;
     }
@@ -947,9 +1022,11 @@ export function DataTable<T extends Record<string, any>>({
                     : "border-white/20 bg-white/5 text-white hover:bg-white/15 hover:text-white",
                 )}
               >
-                {action.icon && <action.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                {action.icon && (
+                  <action.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                )}
                 <span className="hidden xs:inline">{action.label}</span>
-                <span className="xs:hidden">{action.label.split(' ')[0]}</span>
+                <span className="xs:hidden">{action.label.split(" ")[0]}</span>
               </Button>
             ))}
             <Button
@@ -986,324 +1063,362 @@ export function DataTable<T extends Record<string, any>>({
             ))}
           </div>
         ) : (
-            <div className="relative">
-              {errorMessage ? (
-                <div
-                  className="mb-3 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900 sm:flex-row sm:items-center sm:justify-between"
-                  role="alert"
-                >
-                  <span className="flex items-center gap-2">
-                    <TriangleAlert
-                      className="h-4 w-4 flex-none"
-                      aria-hidden="true"
-                    />
-                    {errorMessage}
-                  </span>
-                  {onRetry ? (
-                    <Button variant="outline" size="sm" onClick={onRetry}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      Retry
-                    </Button>
-                  ) : null}
-                </div>
-              ) : null}
-              {isStale ? (
-                <div
-                  className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
-                  role="status"
-                >
-                  <span className="flex items-center gap-2">
-                    <TriangleAlert className="h-4 w-4 flex-none" aria-hidden="true" />
-                    {staleMessage}
-                  </span>
-                  {onRetry ? (
-                    <Button variant="outline" size="sm" onClick={onRetry}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      Retry
-                    </Button>
-                  ) : null}
-                </div>
-              ) : null}
-              {/* Horizontal scroll container with shadow indicators */}
-              <div className="hidden md:block">
-                <Table
-                  className="min-w-full text-xs sm:text-sm"
-                  scrollLabel={tableLabel}
-                  scrollHint={scrollHint}
-                >
-            <TableHeader>
-              <TableRow>
-                {selectable && (
-                  <TableHead className="w-12">
-                    <button
-                      onClick={toggleSelectAll}
-                      className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                      aria-label={allSelected ? "Deselect all" : "Select all"}
-                    >
-                      {allSelected ? (
-                        <CheckSquare className="h-4 w-4 text-primary" />
-                      ) : someSelected ? (
-                        <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
-                      ) : (
-                        <Square className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  </TableHead>
-                )}
-                {visibleColumns.map((column) => (
-                  <TableHead
-                    key={column.key}
-                    className={cn(
-                      column.className,
-                      column.responsiveHide === "sm" && "hidden sm:table-cell",
-                      column.responsiveHide === "md" && "hidden md:table-cell",
-                      column.responsiveHide === "lg" && "hidden lg:table-cell"
-                    )}
-                    style={column.minWidth ? { minWidth: column.minWidth } : undefined}
-                    aria-sort={
-                      sortState.column === column.key && sortState.direction
-                        ? sortState.direction === "asc"
-                          ? "ascending"
-                          : "descending"
-                        : column.sortable
-                          ? "none"
-                          : undefined
-                    }
-                  >
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <span className="whitespace-nowrap">{column.header}</span>
-                      {column.sortable && (
+          <div className="relative">
+            {errorMessage ? (
+              <div
+                className="mb-3 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900 sm:flex-row sm:items-center sm:justify-between"
+                role="alert"
+              >
+                <span className="flex items-center gap-2">
+                  <TriangleAlert
+                    className="h-4 w-4 flex-none"
+                    aria-hidden="true"
+                  />
+                  {errorMessage}
+                </span>
+                {onRetry ? (
+                  <Button variant="outline" size="sm" onClick={onRetry}>
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                    Retry
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+            {isStale ? (
+              <div
+                className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+                role="status"
+              >
+                <span className="flex items-center gap-2">
+                  <TriangleAlert
+                    className="h-4 w-4 flex-none"
+                    aria-hidden="true"
+                  />
+                  {staleMessage}
+                </span>
+                {onRetry ? (
+                  <Button variant="outline" size="sm" onClick={onRetry}>
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                    Retry
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+            {/* Horizontal scroll container with shadow indicators */}
+            <div className="hidden md:block">
+              <Table
+                aria-label={tableLabel}
+                className="min-w-full text-xs sm:text-sm"
+                scrollLabel={tableLabel}
+                scrollHint={scrollHint}
+              >
+                <TableHeader>
+                  <TableRow>
+                    {selectable && (
+                      <TableHead className="w-12">
                         <button
-                          onClick={() => handleSort(column.key)}
-                          className="hover:text-foreground transition-colors"
-                          aria-label={`Sort by ${column.header}`}
+                          onClick={toggleSelectAll}
+                          className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                          aria-label={
+                            allSelected ? "Deselect all" : "Select all"
+                          }
                         >
-                          {sortState.column === column.key ? (
-                            sortState.direction === "asc" ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )
+                          {allSelected ? (
+                            <CheckSquare className="h-4 w-4 text-primary" />
+                          ) : someSelected ? (
+                            <div className="h-4 w-4 border-2 border-primary rounded bg-primary/20" />
                           ) : (
-                            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                            <Square className="h-4 w-4 text-muted-foreground" />
                           )}
                         </button>
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={visibleColumns.length + (selectable ? 1 : 0)}
-                    className="h-24 text-center"
-                  >
-                    <div className="flex flex-col items-center justify-center gap-3 py-8">
-                      {hasActiveFilters ? (
-                        <SearchX
-                          className="h-6 w-6 text-muted-foreground"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <Inbox
-                          className="h-6 w-6 text-muted-foreground"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <p className="font-medium text-foreground">
-                        {emptyMessage}
-                      </p>
-                      {hasActiveFilters && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearAllFilters}
-                        >
-                          Clear filters to see all results
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedData.map((row, index) => {
-                  const rowId = getRowId(row);
-                  const isSelected = selected.has(rowId);
-                  const isEven = index % 2 === 0;
-                  const customClassName = rowClassName ? rowClassName(row) : "";
-                  const stripingClassName = enableRowStriping && isEven ? "bg-muted/30" : "";
-
-                  return (
-                    <TableRow
-                      key={rowId || index}
-                      className={cn(
-                        "hover:bg-muted/50 transition-colors",
-                        stripingClassName,
-                        customClassName,
-                        isSelected && "bg-primary/10"
-                      )}
-                    >
-                      {selectable && (
-                        <TableCell>
-                          <button
-                            onClick={() => toggleRowSelection(rowId)}
-                            className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
-                            aria-label={isSelected ? "Deselect row" : "Select row"}
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="h-4 w-4 text-primary" />
-                            ) : (
-                              <Square className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        </TableCell>
-                      )}
-                      {visibleColumns.map((column) => (
-                        <TableCell
-                          key={column.key}
-                          className={cn(
-                            column.className,
-                            density === "compact" && "py-1.5",
-                            column.responsiveHide === "sm" && "hidden sm:table-cell",
-                            column.responsiveHide === "md" && "hidden md:table-cell",
-                            column.responsiveHide === "lg" && "hidden lg:table-cell"
+                      </TableHead>
+                    )}
+                    {visibleColumns.map((column) => (
+                      <TableHead
+                        key={column.key}
+                        className={cn(
+                          column.className,
+                          column.responsiveHide === "sm" &&
+                            "hidden sm:table-cell",
+                          column.responsiveHide === "md" &&
+                            "hidden md:table-cell",
+                          column.responsiveHide === "lg" &&
+                            "hidden lg:table-cell",
+                        )}
+                        style={
+                          column.minWidth
+                            ? { minWidth: column.minWidth }
+                            : undefined
+                        }
+                        aria-sort={
+                          sortState.column === column.key && sortState.direction
+                            ? sortState.direction === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : column.sortable
+                              ? "none"
+                              : undefined
+                        }
+                      >
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <span className="whitespace-nowrap">
+                            {column.header}
+                          </span>
+                          {column.sortable && (
+                            <button
+                              onClick={() => handleSort(column.key)}
+                              className="hover:text-foreground transition-colors"
+                              aria-label={`Sort by ${column.header}`}
+                            >
+                              {sortState.column === column.key ? (
+                                sortState.direction === "asc" ? (
+                                  <ArrowUp className="h-4 w-4" />
+                                ) : (
+                                  <ArrowDown className="h-4 w-4" />
+                                )
+                              ) : (
+                                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
                           )}
-                          style={column.minWidth ? { minWidth: column.minWidth } : undefined}
-                        >
-                          {column.accessor
-                            ? column.accessor(row)
-                            : String(row[column.key] ?? "-")}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-              </div>
-              <ul
-                className="divide-y divide-border rounded-lg border border-border md:hidden"
-                aria-label={`${tableLabel} row summaries`}
-              >
+                        </div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {paginatedData.length === 0 ? (
-                    <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-                      <p>{emptyMessage}</p>
-                      {hasActiveFilters ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearAllFilters}
-                          className="mt-3"
-                        >
-                          Clear filters to see all results
-                        </Button>
-                      ) : null}
-                    </li>
+                    <TableRow>
+                      <TableCell
+                        colSpan={visibleColumns.length + (selectable ? 1 : 0)}
+                        className="h-24 text-center"
+                      >
+                        <div className="flex flex-col items-center justify-center gap-3 py-8">
+                          {hasActiveFilters ? (
+                            <SearchX
+                              className="h-6 w-6 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Inbox
+                              className="h-6 w-6 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <p className="font-medium text-foreground">
+                            {emptyMessage}
+                          </p>
+                          {hasActiveFilters && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={clearAllFilters}
+                            >
+                              Clear filters to see all results
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     paginatedData.map((row, index) => {
                       const rowId = getRowId(row);
+                      const isSelected = selected.has(rowId);
+                      const isEven = index % 2 === 0;
+                      const customClassName = rowClassName
+                        ? rowClassName(row)
+                        : "";
+                      const stripingClassName =
+                        enableRowStriping && isEven ? "bg-muted/30" : "";
+
                       return (
-                        <li
+                        <TableRow
                           key={rowId || index}
                           className={cn(
-                            "px-4 py-4",
-                            selected.has(rowId) && "bg-accent/20"
+                            "hover:bg-muted/50 transition-colors",
+                            stripingClassName,
+                            customClassName,
+                            isSelected && "bg-primary/10",
                           )}
                         >
-                          {selectable ? (
-                            <label className="mb-3 flex min-h-11 items-center gap-2 text-xs font-medium">
-                              <input
-                                type="checkbox"
-                                checked={selected.has(rowId)}
-                                onChange={() => toggleRowSelection(rowId)}
-                                className="h-5 w-5 rounded border-input"
-                              />
-                              Select row
-                            </label>
-                          ) : null}
-                          {(mobileSummary || generatedMobileSummary)(row)}
-                        </li>
+                          {selectable && (
+                            <TableCell>
+                              <button
+                                onClick={() => toggleRowSelection(rowId)}
+                                className="flex items-center justify-center p-1 hover:bg-muted rounded transition-colors"
+                                aria-label={
+                                  isSelected ? "Deselect row" : "Select row"
+                                }
+                              >
+                                {isSelected ? (
+                                  <CheckSquare className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Square className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                            </TableCell>
+                          )}
+                          {visibleColumns.map((column) => (
+                            <TableCell
+                              key={column.key}
+                              className={cn(
+                                column.className,
+                                density === "compact" && "py-1.5",
+                                column.responsiveHide === "sm" &&
+                                  "hidden sm:table-cell",
+                                column.responsiveHide === "md" &&
+                                  "hidden md:table-cell",
+                                column.responsiveHide === "lg" &&
+                                  "hidden lg:table-cell",
+                              )}
+                              style={
+                                column.minWidth
+                                  ? { minWidth: column.minWidth }
+                                  : undefined
+                              }
+                            >
+                              {column.accessor
+                                ? column.accessor(row)
+                                : String(row[column.key] ?? "-")}
+                            </TableCell>
+                          ))}
+                        </TableRow>
                       );
                     })
                   )}
-              </ul>
+                </TableBody>
+              </Table>
             </div>
+            <ul
+              className="divide-y divide-border rounded-lg border border-border md:hidden"
+              aria-label={`${tableLabel} row summaries`}
+            >
+              {paginatedData.length === 0 ? (
+                <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  <p>{emptyMessage}</p>
+                  {hasActiveFilters ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="mt-3"
+                    >
+                      Clear filters to see all results
+                    </Button>
+                  ) : null}
+                </li>
+              ) : (
+                paginatedData.map((row, index) => {
+                  const rowId = getRowId(row);
+                  return (
+                    <li
+                      key={rowId || index}
+                      className={cn(
+                        "px-4 py-4",
+                        selected.has(rowId) && "bg-accent/20",
+                      )}
+                    >
+                      {selectable ? (
+                        <label className="mb-3 flex min-h-11 items-center gap-2 text-xs font-medium">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(rowId)}
+                            onChange={() => toggleRowSelection(rowId)}
+                            className="h-5 w-5 rounded border-input"
+                          />
+                          Select row
+                        </label>
+                      ) : null}
+                      {(mobileSummary || generatedMobileSummary)(row)}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
         )}
       </div>
 
       {/* Pagination */}
-      {
-        showPagination && (
-          <div className="flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
-            <div className="flex items-center gap-4 text-xs xs:text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className="whitespace-nowrap">Rows per page</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-                  className="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  disabled={!onPageSizeChange}
-                >
-                  {pageSizeOptions.map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <span className="hidden sm:inline">
-                  Showing{" "}
-                  {displayTotal === 0
-                    ? 0
-                    : (currentPage - 1) * pageSize + 1}{" "}
-                  to{" "}
-                  {Math.min(currentPage * pageSize, displayTotal)} of{" "}
-                  {displayTotal} results
-                </span>
-                <span className="sm:hidden">
-                  Page {displayTotal === 0 ? 0 : currentPage} of {totalPages}
-                </span>
-              </div>
+      {showPagination && (
+        <div className="flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
+          <div className="flex items-center gap-4 text-xs xs:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="whitespace-nowrap">Rows per page</span>
+              <select
+                value={pageSize}
+                onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+                className="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                disabled={!onPageSizeChange}
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div>
+              <span className="hidden sm:inline">
+                Showing{" "}
+                {displayTotal === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
+                {Math.min(currentPage * pageSize, displayTotal)} of{" "}
+                {displayTotal} results
+              </span>
+              <span className="sm:hidden">
+                Page {displayTotal === 0 ? 0 : currentPage} of {totalPages}
+              </span>
+            </div>
+          </div>
 
-            <div className="flex items-center justify-center gap-1">
-              {/* First/Prev - hidden on very small screens */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
-                aria-label="First page"
-              >
-                <ChevronsLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="h-8 sm:h-9 w-8 sm:w-9 p-0"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              </Button>
+          <div className="flex items-center justify-center gap-1">
+            {/* First/Prev - hidden on very small screens */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
+              aria-label="First page"
+            >
+              <ChevronsLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="h-8 sm:h-9 w-8 sm:w-9 p-0"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            </Button>
 
-              {/* Page numbers - show fewer on mobile */}
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                {Array.from({ length: Math.min(typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : 5, totalPages) }, (_, i) => {
-                  const maxPages = typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : 5;
+            {/* Page numbers - show fewer on mobile */}
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              {Array.from(
+                {
+                  length: Math.min(
+                    typeof window !== "undefined" && window.innerWidth < 480
+                      ? 3
+                      : 5,
+                    totalPages,
+                  ),
+                },
+                (_, i) => {
+                  const maxPages =
+                    typeof window !== "undefined" && window.innerWidth < 480
+                      ? 3
+                      : 5;
                   let pageNum: number;
                   if (totalPages <= maxPages) {
                     pageNum = i + 1;
                   } else if (currentPage <= Math.ceil(maxPages / 2)) {
                     pageNum = i + 1;
-                  } else if (currentPage >= totalPages - Math.floor(maxPages / 2)) {
+                  } else if (
+                    currentPage >=
+                    totalPages - Math.floor(maxPages / 2)
+                  ) {
                     pageNum = totalPages - maxPages + 1 + i;
                   } else {
                     pageNum = currentPage - Math.floor(maxPages / 2) + i;
@@ -1320,52 +1435,50 @@ export function DataTable<T extends Record<string, any>>({
                       {pageNum}
                     </Button>
                   );
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="h-8 sm:h-9 w-8 sm:w-9 p-0"
-                aria-label="Next page"
-              >
-                <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              </Button>
-              {/* Last - hidden on very small screens */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
-                aria-label="Last page"
-              >
-                <ChevronsRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              </Button>
+                },
+              )}
             </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="h-8 sm:h-9 w-8 sm:w-9 p-0"
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            </Button>
+            {/* Last - hidden on very small screens */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="hidden xs:flex h-8 sm:h-9 w-8 sm:w-9 p-0"
+              aria-label="Last page"
+            >
+              <ChevronsRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            </Button>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Results Info */}
-      {
-        !showPagination && (
-          <div className="text-xs xs:text-sm text-muted-foreground text-center">
-            Showing {displayTotal} result{displayTotal !== 1 ? "s" : ""}
-          </div>
-        )
-      }
+      {!showPagination && (
+        <div className="text-xs xs:text-sm text-muted-foreground text-center">
+          Showing {displayTotal} result{displayTotal !== 1 ? "s" : ""}
+        </div>
+      )}
 
       {/* Selection Info */}
-      {
-        selectable && selected.size > 0 && (
-          <div className="text-xs text-muted-foreground border-t border-zinc-200 pt-3">
-            {selected.size} row{selected.size !== 1 ? "s" : ""} selected
-          </div>
-        )
-      }
-    </div >
+      {selectable && selected.size > 0 && (
+        <div className="text-xs text-muted-foreground border-t border-zinc-200 pt-3">
+          {selected.size} row{selected.size !== 1 ? "s" : ""} selected
+        </div>
+      )}
+    </div>
   );
 }

@@ -8,9 +8,9 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
+  Download,
   Mail,
   Plus,
-  Search,
   ShieldCheck,
   UserRound,
   Users,
@@ -19,16 +19,13 @@ import {
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { Modal } from "@/components/ui/Modal";
 import { SlideOver } from "@/components/ui/SlideOver";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
@@ -50,6 +47,11 @@ const OCCUPANCY_ROLES = {
 } as const;
 
 type PeopleScope = "all" | "administrators" | "relationships";
+type PeopleRow = {
+  person: PlacePerson;
+  scope: "administrators" | "relationships";
+  scopeLabel: string;
+};
 
 export default function PeopleWorkspace() {
   const organization = useAppStore((state) => state.organization);
@@ -120,7 +122,10 @@ export default function PeopleWorkspace() {
           role="status"
           className="flex items-start gap-3 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-success)_30%,white)] bg-[var(--vms-success-subtle)] px-4 py-3 text-sm text-[var(--vms-success)]"
         >
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <CheckCircle2
+            className="mt-0.5 h-4 w-4 shrink-0"
+            aria-hidden="true"
+          />
           {notice}
         </p>
       ) : null}
@@ -260,7 +265,9 @@ function ContextControl({
                 <small className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
                   Selected property
                 </small>
-                <strong className="block truncate text-sm">{property.name}</strong>
+                <strong className="block truncate text-sm">
+                  {property.name}
+                </strong>
               </span>
             </span>
             <Button
@@ -304,7 +311,6 @@ function PeopleContent({
   onNotice: (message: string) => void;
 }) {
   const [scope, setScope] = useState<PeopleScope>("all");
-  const [search, setSearch] = useState("");
   const [removeTarget, setRemoveTarget] = useState<PlacePerson | null>(null);
   const [removeError, setRemoveError] = useState("");
   const remove = useMutation({
@@ -323,8 +329,7 @@ function PeopleContent({
     onError: (error) => setRemoveError(parseApiError(error).message),
   });
 
-  const normalizedSearch = search.trim().toLowerCase();
-  const rows = useMemo(() => {
+  const rows = useMemo<PeopleRow[]>(() => {
     const all = [
       ...people.administrators.map((person) => ({
         person,
@@ -337,20 +342,11 @@ function PeopleContent({
         scopeLabel: occupantLabel(people.effective_use_case),
       })),
     ];
-    return all.filter(({ person, scope: rowScope, scopeLabel }) => {
+    return all.filter(({ scope: rowScope }) => {
       if (scope !== "all" && scope !== rowScope) return false;
-      if (!normalizedSearch) return true;
-      return [
-        person.party.display_name,
-        person.party.email || "",
-        person.role,
-        scopeLabel,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedSearch);
+      return true;
     });
-  }, [normalizedSearch, people, scope]);
+  }, [people, scope]);
 
   const total = people.administrators.length + people.occupants.length;
 
@@ -409,12 +405,15 @@ function PeopleContent({
         <div className="border-b border-[var(--vms-line)] p-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <h2 id="people-register-heading" className="text-lg font-semibold">
+              <h2
+                id="people-register-heading"
+                className="text-lg font-semibold"
+              >
                 Property people
               </h2>
               <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                Administration stays separate from occupancy, tenancy, staff
-                and guest relationships.
+                Administration stays separate from occupancy, tenancy, staff and
+                guest relationships.
               </p>
             </div>
             <div
@@ -438,25 +437,6 @@ function PeopleContent({
                 </button>
               ))}
             </div>
-          </div>
-          <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <label className="relative block w-full md:max-w-md">
-              <span className="sr-only">Search people</span>
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Find a person, role or email…"
-                className="h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] pl-10 pr-3 text-base text-[var(--vms-ink)] outline-none focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[var(--vms-focus)] sm:text-sm"
-              />
-            </label>
-            <p className="text-xs text-[var(--vms-ink-muted)]" aria-live="polite">
-              {rows.length} {rows.length === 1 ? "person" : "people"} shown
-            </p>
           </div>
         </div>
 
@@ -504,114 +484,185 @@ function PeopleRegister({
   onRemove: (person: PlacePerson) => void;
   effectiveUseCase: PlacePeople["effective_use_case"];
 }) {
-  if (!rows.length) {
-    return (
-      <div className="px-5 py-10 text-center">
-        <Users className="mx-auto h-8 w-8 text-[var(--vms-ink-muted)]" />
-        <h3 className="mt-3 text-base font-semibold">No people match</h3>
-        <p className="mx-auto mt-1 max-w-md text-sm text-[var(--vms-ink-muted)]">
-          Change the scope or search text. New administration and{" "}
-          {occupantLabel(effectiveUseCase).toLowerCase()} relationships will
-          appear here.
-        </p>
-      </div>
-    );
-  }
+  const rowId = (row: PeopleRow) =>
+    `${row.person.source}:${row.person.party.id}:${row.person.assignment_id}`;
+  const columns: Column<PeopleRow>[] = [
+    {
+      key: "person",
+      header: "Person",
+      sortable: true,
+      accessor: ({ person }) => (
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-xs font-semibold"
+            aria-hidden="true"
+          >
+            {initials(person.party.display_name)}
+          </span>
+          <span className="min-w-0">
+            <strong className="block truncate text-sm font-semibold">
+              {person.party.display_name}
+            </strong>
+            <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
+              {person.party.is_active ? "Active account" : "Inactive account"}
+            </span>
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: "contact",
+      header: "Contact",
+      sortable: true,
+      accessor: ({ person }) => (
+        <span className="break-all">{person.party.email || "No email"}</span>
+      ),
+    },
+    {
+      key: "relationship",
+      header: "Relationship",
+      sortable: true,
+      accessor: ({ person }) => (
+        <span className="flex flex-wrap items-center gap-2">
+          {roleLabel(person.role)}
+          {person.is_super_admin ? <Badge variant="info">Primary</Badge> : null}
+        </span>
+      ),
+    },
+    {
+      key: "scope",
+      header: "Scope",
+      sortable: true,
+      accessor: ({ scope, scopeLabel }) => (
+        <Badge variant={scope === "administrators" ? "neutral" : "default"}>
+          {scope === "administrators" ? (
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {scopeLabel}
+        </Badge>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      accessor: ({ person }) => (
+        <Badge variant={person.status === "active" ? "success" : "neutral"}>
+          {roleLabel(person.status)}
+        </Badge>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Action",
+      mobileHide: true,
+      accessor: ({ person }) =>
+        canManage ? (
+          <Button
+            type="button"
+            variant="destructive-outlined"
+            size="sm"
+            aria-label={`Review access change for ${person.party.display_name}`}
+            onClick={() => onRemove(person)}
+          >
+            Review access
+          </Button>
+        ) : (
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            {permissionPending ? "Checking access…" : "Read-only"}
+          </span>
+        ),
+    },
+  ];
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Export selected",
+      icon: Download,
+      onClick: (ids) => {
+        const selected = rows.filter((row) => ids.includes(rowId(row)));
+        const values = [
+          ["Name", "Email", "Relationship", "Scope", "Status"],
+          ...selected.map(({ person, scopeLabel }) => [
+            person.party.display_name,
+            person.party.email || "",
+            roleLabel(person.role),
+            scopeLabel,
+            roleLabel(person.status),
+          ]),
+        ];
+        const csv = values
+          .map((row) =>
+            row
+              .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+              .join(","),
+          )
+          .join("\n");
+        const url = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8" }),
+        );
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "property-people.csv";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+    },
+  ];
 
   return (
-    <Table
-      className="people-directory-table"
-      containerClassName="people-directory-region rounded-none border-0"
-      scrollLabel="Property people"
-    >
-      <caption className="sr-only">
-        Administrators and {occupantLabel(effectiveUseCase).toLowerCase()} for
-        the selected property
-      </caption>
-      <TableHeader className="people-directory-header">
-        <TableRow>
-          <TableHead>Person</TableHead>
-          <TableHead>Contact</TableHead>
-          <TableHead>Relationship</TableHead>
-          <TableHead>Scope</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map(({ person, scope, scopeLabel }) => (
-          <TableRow
-            key={`${person.source}:${person.party.id}:${person.assignment_id}`}
-            className="people-directory-row"
+    <DataTable
+      data={rows}
+      columns={columns}
+      tableLabel="Property people"
+      searchPlaceholder="Find a person, role or email"
+      selectable
+      getRowId={rowId}
+      bulkActions={bulkActions}
+      showPagination={rows.length > 10}
+      pageSize={10}
+      emptyMessage={`No people match. New administration and ${occupantLabel(
+        effectiveUseCase,
+      ).toLowerCase()} relationships will appear here.`}
+      mobileSummary={({ person, scopeLabel }) => (
+        <div className="flex items-start gap-3">
+          <span
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-xs font-semibold"
+            aria-hidden="true"
           >
-            <TableCell data-label="Person" className="people-directory-identity">
-              <span className="flex min-w-0 items-center gap-3">
-                <span
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-xs font-semibold"
-                  aria-hidden="true"
-                >
-                  {initials(person.party.display_name)}
-                </span>
-                <span className="min-w-0">
-                  <strong className="block truncate text-sm font-semibold">
-                    {person.party.display_name}
-                  </strong>
-                  <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
-                    {person.party.is_active ? "Active account" : "Inactive account"}
-                  </span>
-                </span>
-              </span>
-            </TableCell>
-            <TableCell data-label="Contact">
-              <span className="break-all">{person.party.email || "No email"}</span>
-            </TableCell>
-            <TableCell data-label="Relationship">
-              <span className="flex flex-wrap items-center gap-2">
-                {roleLabel(person.role)}
-                {person.is_super_admin ? (
-                  <Badge variant="info">Primary</Badge>
-                ) : null}
-              </span>
-            </TableCell>
-            <TableCell data-label="Scope">
-              <Badge variant={scope === "administrators" ? "neutral" : "default"}>
-                {scope === "administrators" ? (
-                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : (
-                  <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
-                )}
-                {scopeLabel}
-              </Badge>
-            </TableCell>
-            <TableCell data-label="Status">
-              <Badge variant={person.status === "active" ? "success" : "neutral"}>
+            {initials(person.party.display_name)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <strong className="block truncate text-sm">
+              {person.party.display_name}
+            </strong>
+            <span className="block truncate text-xs text-[var(--vms-ink-muted)]">
+              {person.party.email || "No email"}
+            </span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge variant="neutral">{scopeLabel}</Badge>
+              <Badge
+                variant={person.status === "active" ? "success" : "neutral"}
+              >
                 {roleLabel(person.status)}
               </Badge>
-            </TableCell>
-            <TableCell
-              data-label="Action"
-              className="people-directory-action text-right"
-            >
-              {canManage ? (
-                <Button
-                  type="button"
-                  variant="destructive-outlined"
-                  size="sm"
-                  aria-label={`Review access change for ${person.party.display_name}`}
-                  onClick={() => onRemove(person)}
-                >
-                  Review access
-                </Button>
-              ) : (
-                <span className="text-xs text-[var(--vms-ink-muted)]">
-                  {permissionPending ? "Checking access…" : "Read-only"}
-                </span>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            </div>
+            {canManage ? (
+              <Button
+                type="button"
+                variant="destructive-outlined"
+                size="sm"
+                className="mt-3"
+                onClick={() => onRemove(person)}
+              >
+                Review access
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      )}
+    />
   );
 }
 
@@ -789,7 +840,9 @@ function AddPersonDrawer({
 
           {isSite ? (
             <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3 py-3 text-sm">
-              <strong className="block">Relationship: Property administrator</strong>
+              <strong className="block">
+                Relationship: Property administrator
+              </strong>
               <span className="mt-1 block text-[var(--vms-ink-muted)]">
                 Site administration is applied by the server and never becomes
                 an occupancy role.
@@ -881,11 +934,7 @@ function RemovePersonDialog({
           <Button variant="secondary" onClick={onClose} disabled={pending}>
             Keep access
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            isLoading={pending}
-          >
+          <Button variant="destructive" onClick={onConfirm} isLoading={pending}>
             {administrator ? "Remove administrator" : "End access"}
           </Button>
         </div>
