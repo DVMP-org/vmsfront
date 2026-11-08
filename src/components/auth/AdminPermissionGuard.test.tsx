@@ -89,7 +89,7 @@ describe("AdminPermissionGuard management boundary", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("allows the exact first-place setup URL without property management authority", () => {
+  it("keeps first-place setup outside the admin management guard", () => {
     mocks.pathname = "/admin/properties/new/";
     mocks.isAdministrator = false;
 
@@ -99,7 +99,11 @@ describe("AdminPermissionGuard management boundary", () => {
       </AdminPermissionGuard>,
     );
 
-    expect(screen.getByText("Create the first place")).toBeInTheDocument();
-    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(screen.queryByText("Create the first place")).toBeNull();
+    return waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith(
+        "/organization?reason=management-required",
+      ),
+    );
   });
 });

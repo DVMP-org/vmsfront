@@ -29,7 +29,6 @@ import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
-import { SetupProgress } from "@/components/onboarding/SetupProgress";
 import { Button } from "@/components/ui/Button";
 import {
   DataTable,
@@ -54,7 +53,6 @@ export interface PropertyRoute {
   id?: string;
   action?: "new" | "edit" | "move";
   parentId?: string;
-  setup?: "first-place";
 }
 
 type PropertyDirectoryState = {
@@ -634,11 +632,6 @@ function Workspace({
         >
           {creating && allowed("create") ? (
             <>
-              {route.setup === "first-place" ? (
-                <div className="mb-5">
-                  <SetupProgress currentStep="workspace" />
-                </div>
-              ) : null}
               <PropertyForm
                 key={createParent ? `child:${createParent.id}` : "new-root"}
                 context={context}

@@ -101,17 +101,17 @@ export default function OrganizationHomePage() {
             <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-[#946200]" />
             <div>
               <h2 className="text-sm font-semibold text-[#684500]">
-                Add the first property
+                Create the first place
               </h2>
               <p className="mt-1 text-sm leading-6 text-[#7C5A16]">
                 Workspaces become available after a property is created and
                 access is assigned.
               </p>
               <Link
-                href="/admin/properties/new?setup=first-place"
+                href="/setup/first-place"
                 className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-[#1F2933] px-3 text-xs font-semibold text-white"
               >
-                Set up the first property
+                Create the first place
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>

@@ -6,7 +6,7 @@ export type OrganizationSetupStep = "organization" | "plan" | "workspace";
 const steps: Array<{ id: OrganizationSetupStep; label: string }> = [
   { id: "organization", label: "Organization" },
   { id: "plan", label: "Plan" },
-  { id: "workspace", label: "Workspace" },
+  { id: "workspace", label: "First place" },
 ];
 
 export function SetupProgress({

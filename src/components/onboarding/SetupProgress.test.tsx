@@ -8,7 +8,7 @@ describe("SetupProgress", () => {
 
     const current = screen.getByText("Plan").closest("li");
     const organization = screen.getByText("Organization").closest("li");
-    const workspace = screen.getByText("Workspace").closest("li");
+    const workspace = screen.getByText("First place").closest("li");
 
     expect(current).toHaveAttribute("aria-current", "step");
     expect(organization).not.toHaveAttribute("aria-current");

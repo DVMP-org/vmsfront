@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 
-const FIRST_PLACE_PATH = "/admin/properties/new";
+const FIRST_PLACE_PATH = "/setup/first-place";
 
 export function OrganizationSetupGuard({
   children,
@@ -25,7 +25,7 @@ export function OrganizationSetupGuard({
 
   useEffect(() => {
     if (!requiresFirstPlace) return;
-    router.replace(`${FIRST_PLACE_PATH}?setup=first-place`);
+    router.replace(FIRST_PLACE_PATH);
   }, [requiresFirstPlace, router]);
 
   if (requiresFirstPlace) {

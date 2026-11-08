@@ -13,10 +13,7 @@ import {
 } from "@/features/dashboard/DashboardPrimitives";
 import { OperationsDashboard } from "@/features/dashboard/OperationsDashboard";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import {
-  useAdminAnalyticsSummary,
-  useAdminDashboard,
-} from "@/hooks/use-admin";
+import { useAdminAnalyticsSummary, useAdminDashboard } from "@/hooks/use-admin";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import type { AdminDashboard } from "@/types";
@@ -25,7 +22,9 @@ const validRanges: DashboardRange[] = [7, 14, 30];
 
 function initialRange(): DashboardRange {
   if (typeof window === "undefined") return 14;
-  const value = Number(new URLSearchParams(window.location.search).get("period"));
+  const value = Number(
+    new URLSearchParams(window.location.search).get("period"),
+  );
   return validRanges.includes(value as DashboardRange)
     ? (value as DashboardRange)
     : 14;
@@ -54,9 +53,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!data) return;
-    if (!data.root_places.length) {
-      router.replace("/admin/properties/new?setup=first-place");
-    } else if (!selectedProperty) {
+    if (!data.root_places.length) return;
+    if (!selectedProperty) {
       router.replace("/admin/properties");
     }
   }, [data, router, selectedProperty]);
@@ -85,7 +83,7 @@ export default function AdminDashboardPage() {
   if (!data?.root_places.length || !selectedProperty) {
     return (
       <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
-        Opening property setup…
+        Preparing workspace context…
       </p>
     );
   }

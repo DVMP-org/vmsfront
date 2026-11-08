@@ -126,7 +126,7 @@ describe("operating dashboard", () => {
     });
   });
 
-  it("opens first-place setup when the organization has no property", () => {
+  it("does not route first-place setup through the management dashboard", () => {
     mocks.query.mockReturnValue({
       data: { ...dashboard, root_places: [] },
       isPending: false,
@@ -134,8 +134,9 @@ describe("operating dashboard", () => {
       refetch: mocks.refetch,
     });
     render(<AdminDashboardPage />);
-    expect(mocks.replace).toHaveBeenCalledWith(
-      "/admin/properties/new?setup=first-place",
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Preparing workspace context",
     );
   });
 
@@ -223,9 +224,7 @@ describe("operating dashboard", () => {
         name: "Your management workspace is ready",
       }),
     ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Review first site/ }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Review first site/ }));
     expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
   });
 

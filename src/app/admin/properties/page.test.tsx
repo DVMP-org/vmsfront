@@ -228,15 +228,6 @@ it("opens the property people roster in the selected context", async () => {
   });
   expect(mocks.push).toHaveBeenCalledWith("/admin/people");
 });
-it("shows the third setup step while creating the first place", async () => {
-  mount({ action: "new", setup: "first-place" });
-  await screen.findByLabelText(/Property name/);
-  expect(
-    screen.getByRole("list", { name: "Organization setup progress" }),
-  ).toHaveTextContent("Workspace");
-  expect(screen.getByText("Workspace")).toHaveAttribute("aria-current", "step");
-});
-
 it("restores shareable directory filters from the URL", async () => {
   mocks.searchParams = new URLSearchParams(
     "page=2&search=Harbour&kind=building&status=all&all_levels=true",

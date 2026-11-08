@@ -53,14 +53,9 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     return hasAdminPermission(activeRole, requiredPermission);
   }, [activeRole, requiredPermission]);
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
-  // First-place setup runs before the organization has a place-scoped
-  // management context. The route itself is the stable boundary here; the
-  // setup query is intentionally non-authoritative and may be rewritten.
-  const isFirstPlaceSetup = normalizedPathname === "/admin/properties/new";
   const requiresManagementContext =
     normalizedPathname.startsWith("/admin") &&
-    normalizedPathname !== "/admin/profile" &&
-    !isFirstPlaceSetup;
+    normalizedPathname !== "/admin/profile";
   const managementAccess =
     workspace.data?.management?.is_administrator === true;
 
@@ -126,8 +121,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   }
   if (
     !hasAccess ||
-    (!isFirstPlaceSetup &&
-      moduleRoute?.module &&
+    (moduleRoute?.module &&
       !workspace.data?.modules?.includes(moduleRoute.module))
   ) {
     return (

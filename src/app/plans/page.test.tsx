@@ -79,13 +79,11 @@ describe("plan activation setup", () => {
         billing_cycle: "monthly",
       }),
     );
-    expect(mocks.replace).toHaveBeenCalledWith(
-      "/admin/properties/new?setup=first-place",
-    );
+    expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place");
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });
 
-  it("returns to the property directory when the first place already exists", async () => {
+  it("returns to workspace selection when the first place already exists", async () => {
     mocks.needsFirstSite = false;
     render(<PlansPage />);
 
@@ -94,7 +92,7 @@ describe("plan activation setup", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith("/admin/properties"),
+      expect(mocks.replace).toHaveBeenCalledWith("/organization/workspaces"),
     );
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });
@@ -108,9 +106,7 @@ describe("plan activation setup", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith(
-        "/admin/properties/new?setup=first-place",
-      ),
+      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place"),
     );
     expect(mocks.replace).not.toHaveBeenCalledWith("/admin");
   });

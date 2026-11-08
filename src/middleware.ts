@@ -1,25 +1,26 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { RESERVED_SUBDOMAINS } from '@/lib/subdomain-utils';
+import { NextResponse, type NextRequest } from "next/server";
+import { RESERVED_SUBDOMAINS } from "@/lib/subdomain-utils";
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "vmsfront.to";
-const PROTOCOL = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
+const PROTOCOL = process.env.NODE_ENV === "production" ? "https" : "http";
+const DEFAULT_ORGANIZATION_SLUG =
+  process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 
 /**
  * Construct a URL on the base domain (without subdomain)
  */
 function getBaseDomainUrl(
-  pathname: string = '/',
-  search: string = '',
-  request?: NextRequest
+  pathname: string = "/",
+  search: string = "",
+  request?: NextRequest,
 ): URL {
   const forwardedProtocol = request?.headers
-    .get('x-forwarded-proto')
-    ?.split(',')[0]
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
     .trim();
   const protocol =
     forwardedProtocol ||
-    (request ? new URL(request.url).protocol.replace(':', '') : PROTOCOL);
+    (request ? new URL(request.url).protocol.replace(":", "") : PROTOCOL);
   const url = new URL(`${protocol}://${BASE_DOMAIN}${pathname}`);
   if (search) {
     url.search = search;
@@ -38,7 +39,11 @@ function extractOrgSubdomain(hostname: string): string | null {
   // Handle localhost
   if (cleanHostname === "localhost" || cleanHostname.endsWith(".localhost")) {
     const parts = cleanHostname.split(".");
-    if (parts.length > 1 && parts[0] !== "localhost" && !RESERVED_SUBDOMAINS.includes(parts[0])) {
+    if (
+      parts.length > 1 &&
+      parts[0] !== "localhost" &&
+      !RESERVED_SUBDOMAINS.includes(parts[0])
+    ) {
       return parts[0];
     }
     return null;
@@ -48,10 +53,10 @@ function extractOrgSubdomain(hostname: string): string | null {
   if (!cleanHostname.endsWith(BASE_DOMAIN)) {
     return null;
   }
-  
+
   // Extract subdomain by removing base domain
   const subdomain = cleanHostname.slice(0, -(BASE_DOMAIN.length + 1)); // +1 for the dot
-  
+
   // Validate subdomain exists and is not reserved
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain)) {
     return subdomain;
@@ -61,7 +66,7 @@ function extractOrgSubdomain(hostname: string): string | null {
 }
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
+  const token = request.cookies.get("auth-token")?.value;
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
@@ -74,13 +79,18 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = !!token;
 
   // Classify the path
-  const isAuthPath = pathname.startsWith('/auth');
-  const isVerifyEmailPath = pathname.startsWith('/auth/verify-email');
-  const isOrganizationsPath = pathname.startsWith('/organizations');
-  const isDashboardPath = pathname.startsWith('/admin');
-  const isSelectPath = pathname.startsWith('/select');
+  const isAuthPath = pathname.startsWith("/auth");
+  const isVerifyEmailPath = pathname.startsWith("/auth/verify-email");
+  const isOrganizationsPath = pathname.startsWith("/organizations");
+  const isDashboardPath = pathname.startsWith("/admin");
+  const isSelectPath = pathname.startsWith("/select");
+  const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
-    pathname === '/organization' || pathname.startsWith('/organization/');
+    pathname === "/organization" || pathname.startsWith("/organization/");
+  const normalizedPathname = pathname.replace(/\/+$/, "");
+  const isLegacyFirstPlacePath =
+    normalizedPathname === "/admin/properties/new" &&
+    request.nextUrl.searchParams.get("setup") === "first-place";
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
@@ -101,12 +111,17 @@ export function middleware(request: NextRequest) {
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard and organization routes require tenant context from a subdomain.
-  if (!isOnSubdomain && (isDashboardPath || isSelectPath || isOrganizationPath)) {
+  if (
+    !isOnSubdomain &&
+    (isDashboardPath || isSelectPath || isSetupPath || isOrganizationPath)
+  ) {
     if (isAuthenticated) {
-      return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
+      return NextResponse.redirect(
+        getBaseDomainUrl("/organizations", "", request),
+      );
     } else {
-      const loginUrl = getBaseDomainUrl('/auth/login', '', request);
-      loginUrl.searchParams.set('redirect_to', '/organizations');
+      const loginUrl = getBaseDomainUrl("/auth/login", "", request);
+      loginUrl.searchParams.set("redirect_to", "/organizations");
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -114,24 +129,35 @@ export function middleware(request: NextRequest) {
   // RULE 2: On SUBDOMAIN - redirect /organizations to base domain
   // Organizations list is only available on base domain
   if (isOnSubdomain && isOrganizationsPath) {
-    return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
+    return NextResponse.redirect(
+      getBaseDomainUrl("/organizations", "", request),
+    );
   }
 
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
     const destinationUrl = isOnSubdomain
-      ? new URL('/organization', request.url)
-      : getBaseDomainUrl('/organizations', '', request);
+      ? new URL("/organization", request.url)
+      : getBaseDomainUrl("/organizations", "", request);
     return NextResponse.redirect(destinationUrl);
   }
 
+  // RULE 3a: First-place setup is a standalone onboarding route. Redirect
+  // older admin URLs before the management guards evaluate them.
+  if (isLegacyFirstPlacePath) {
+    return NextResponse.redirect(new URL("/setup/first-place", request.url));
+  }
+
   // RULE 4: Protected paths on subdomain require authentication
-  if (!isAuthenticated && (isDashboardPath || isSelectPath || isOrganizationPath)) {
+  if (
+    !isAuthenticated &&
+    (isDashboardPath || isSelectPath || isSetupPath || isOrganizationPath)
+  ) {
     const loginUrl = isOnSubdomain
-      ? new URL('/auth/login', request.url)
-      : getBaseDomainUrl('/auth/login', '', request);
+      ? new URL("/auth/login", request.url)
+      : getBaseDomainUrl("/auth/login", "", request);
     loginUrl.searchParams.set(
-      'redirect_to',
+      "redirect_to",
       `${pathname}${request.nextUrl.search}`,
     );
     return NextResponse.redirect(loginUrl);
@@ -148,13 +174,15 @@ export function middleware(request: NextRequest) {
 // Run middleware for these routes
 export const config = {
   matcher: [
-    '/admin',
-    '/admin/:path*',
-    '/select',
-    '/organization',
-    '/organization/:path*',
-    '/auth/:path*',
-    '/organizations',
-    '/organizations/:path*'
+    "/admin",
+    "/admin/:path*",
+    "/select",
+    "/setup",
+    "/setup/:path*",
+    "/organization",
+    "/organization/:path*",
+    "/auth/:path*",
+    "/organizations",
+    "/organizations/:path*",
   ],
 };
