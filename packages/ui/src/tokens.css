@@ -21,6 +21,8 @@
   --vms-action-hover: #111820;
   --vms-on-action: #ffffff;
   --vms-active-accent: #e85d3f;
+  --vms-coral: var(--vms-active-accent);
+  --vms-coral-soft: #fff0ec;
   --vms-focus: #b8402a;
 
   --vms-data-primary: #1f2933;
@@ -50,8 +52,10 @@
   --vms-warning-hsl: 39 100% 29%;
   --vms-danger-hsl: 4 76% 40%;
 
-  --vms-font-interface: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
-  --vms-font-display: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --vms-font-interface:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --vms-font-display:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
 
   --vms-radius-control: 6px;
   --vms-radius-surface: 8px;

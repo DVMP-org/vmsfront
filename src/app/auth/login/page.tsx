@@ -1,47 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import Link from "next/link";
+import { AlertCircle, ArrowRight, Lock, Mail } from "lucide-react";
+import { motion } from "framer-motion";
+
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import Link from "next/link";
-import { Lock, Mail } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
-import { AuthLayout } from "@/components/auth/AuthLayout";
-import { motion } from "framer-motion";
-import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState(
-    process.env.NODE_ENV === "production" ? "" : "admin@admin.com"
+    process.env.NODE_ENV === "production" ? "" : "admin@admin.com",
   );
   const [password, setPassword] = useState(
-    process.env.NODE_ENV === "production" ? "" : "password"
+    process.env.NODE_ENV === "production" ? "" : "password",
   );
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
+    {},
   );
   const { login, isLoggingIn, loginError, loginFieldErrors, clearAuthErrors } =
     useAuth();
-  const router = useRouter();
 
-  // Prefetch dashboard routes to speed up transition after login
-  // useEffect(() => {
-  //   router.prefetch("/select");
-  //   router.prefetch("/admin");
-  // }, [router]);
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const nextErrors: { email?: string; password?: string } = {};
+    if (!email) nextErrors.email = "Email is required";
+    if (!password) nextErrors.password = "Password is required";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Basic validation
-    const newErrors: { email?: string; password?: string } = {};
-    if (!email) newErrors.email = "Email is required";
-    if (!password) newErrors.password = "Password is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -52,49 +43,55 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      description="Enter your credentials to access your account"
+      title="Welcome back."
+      description="Sign in to continue to the property workspace that belongs to you."
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {loginError && (
+        {loginError ? (
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+            role="alert"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-2.5 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_24%,white)] bg-[var(--vms-danger-subtle)] px-3.5 py-3 text-sm leading-5 text-[var(--vms-danger)]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            <AlertCircle
+              className="mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
             {loginError}
           </motion.div>
-        )}
+        ) : null}
 
         <div className="space-y-4">
           <Input
+            id="login_email_input"
             type="email"
-            label="Email Address"
-            placeholder="name@example.com"
+            label="Work email"
+            placeholder="you@organization.com"
+            autoComplete="email"
             icon={Mail}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             error={errors.email || loginFieldErrors.email}
-            className="h-12"
-            id="login_email_input"
+            className="h-12 bg-[var(--vms-surface)]"
           />
 
-          <div className="space-y-1">
+          <div>
             <PasswordInput
+              id="login_password_input"
               label="Password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
+              autoComplete="current-password"
               value={password}
               icon={Lock}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               error={errors.password || loginFieldErrors.password}
-              className="h-12"
-              id="login_password_input"
+              className="h-12 bg-[var(--vms-surface)]"
             />
-            <div className="flex justify-end">
+            <div className="mt-2 flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-xs font-medium text-[var(--vms-action)] hover:underline"
+                className="text-xs font-semibold text-[var(--vms-ink-muted)] underline-offset-4 hover:text-[var(--vms-ink)] hover:underline"
               >
                 Forgot password?
               </Link>
@@ -103,25 +100,26 @@ export default function LoginPage() {
         </div>
 
         <Button
-          type="submit"
-          className="w-full h-12 text-base font-semibold shadow-xs transition-all active:scale-[0.98]"
-          isLoading={isLoggingIn}
           id="login_submit_button"
+          type="submit"
+          className="h-12 w-full justify-between px-4 text-sm"
+          isLoading={isLoggingIn}
+          rightNode={
+            !isLoggingIn ? <ArrowRight className="h-4 w-4" /> : undefined
+          }
         >
-          Sign In
+          Continue to workspace
         </Button>
 
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">
-            Don&apos;t have an account?{" "}
-          </span>
+        <p className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3.5 py-3 text-center text-xs leading-5 text-[var(--vms-ink-muted)]">
+          New to VMS Core?{" "}
           <Link
             href="/auth/register"
-            className="font-semibold text-[var(--vms-action)] hover:underline"
+            className="font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
           >
-            Create account
+            Create your account
           </Link>
-        </div>
+        </p>
       </form>
 
       <SocialLoginButtons />

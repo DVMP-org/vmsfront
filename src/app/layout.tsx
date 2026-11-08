@@ -8,18 +8,18 @@ import { Providers } from "./providers";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "VMSCORE - Visitor Management System",
-  description: "White-label visitor and resident access management",
+  title: "VMS Core — Property Operations",
+  description: "Property operations, access and administration in context",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: ["/icon.svg", "/favicon.ico"],
+    shortcut: "/icon.svg",
     apple: "/favicon.ico",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "VMSCORE",
+    title: "VMS Core",
     startupImage: "/assets/vmscore_logo.png",
   },
   other: {
@@ -31,7 +31,7 @@ export const viewport: Viewport = {
   themeColor: "#f5f7f8",
   width: "device-width",
   initialScale: 1,
-}
+};
 
 export default function RootLayout({
   children,

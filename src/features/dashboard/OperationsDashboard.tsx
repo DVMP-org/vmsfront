@@ -59,7 +59,8 @@ function movementLabel(direction: string) {
 }
 
 function outcomeVariant(outcome: string) {
-  if (outcome === "allowed" || outcome === "completed") return "success" as const;
+  if (outcome === "allowed" || outcome === "completed")
+    return "success" as const;
   if (outcome === "denied" || outcome === "failed") return "danger" as const;
   return "warning" as const;
 }
@@ -214,6 +215,7 @@ export function OperationsDashboard({
             value: activeProperties.length,
             detail: `${data.root_places.length} portfolio roots`,
             icon: Building2,
+            tone: "coral",
             href: "/admin/properties",
           },
           {
@@ -221,6 +223,7 @@ export function OperationsDashboard({
             value: metrics.total_parties,
             detail: `${metrics.active_relationships} active relationships`,
             icon: Users,
+            tone: "ink",
             href: "/admin/people",
           },
           {
@@ -229,6 +232,7 @@ export function OperationsDashboard({
             detail: `${metrics.active_visit_authorizations} valid invitations`,
             icon: ShieldAlert,
             attention: metrics.pending_visit_authorizations > 0,
+            tone: "warning",
             href: "/admin/invitations",
           },
           {
@@ -236,6 +240,7 @@ export function OperationsDashboard({
             value: metrics.active_checkpoint_presences,
             detail: `${metrics.active_visit_sessions} active visit sessions`,
             icon: UsersRound,
+            tone: "success",
             href: "/admin/checkpoints",
           },
           {
@@ -243,6 +248,7 @@ export function OperationsDashboard({
             value: countDirection(data, "entry"),
             detail: `${countDirection(data, "exit")} exits in the recent feed`,
             icon: DoorOpen,
+            tone: "info",
             href: "/admin/checkpoints",
           },
           {
@@ -250,6 +256,7 @@ export function OperationsDashboard({
             value: metrics.checkpoint_events_today,
             detail: "Recorded today across the property",
             icon: Clock3,
+            tone: "ink",
             href: "/admin/checkpoints",
           },
         ]}
@@ -268,9 +275,7 @@ export function OperationsDashboard({
         <ReportPanel
           title="Attention required"
           description="Approvals that can block access if left unresolved."
-          action={
-            <SeeAllLink href="/admin/invitations">Review all</SeeAllLink>
-          }
+          action={<SeeAllLink href="/admin/invitations">Review all</SeeAllLink>}
           className="xl:row-span-2"
         >
           {pendingApprovals.length ? (
@@ -290,8 +295,8 @@ export function OperationsDashboard({
                           {item.purpose || "Visitor approval requested"}
                         </strong>
                         <span className="mt-1 block text-xs leading-5 text-[var(--vms-ink-muted)]">
-                          {item.host_party?.display_name || "Host not recorded"} ·{" "}
-                          {item.destination_place?.name || propertyName}
+                          {item.host_party?.display_name || "Host not recorded"}{" "}
+                          · {item.destination_place?.name || propertyName}
                         </span>
                         <span className="mt-1 block text-[11px] text-[var(--vms-ink-muted)]">
                           Requested {relativeTime(item.valid_from)}

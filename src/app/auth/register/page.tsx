@@ -5,7 +5,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Link from "next/link";
-import { Lock, Mail, Phone, User2Icon } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Lock,
+  Mail,
+  Phone,
+  User2Icon,
+} from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
@@ -21,7 +28,13 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { register, isRegistering, registerError, registerFieldErrors, clearAuthErrors } = useAuth();
+  const {
+    register,
+    isRegistering,
+    registerError,
+    registerFieldErrors,
+    clearAuthErrors,
+  } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -63,17 +76,18 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create account"
-      description="Enter your information to get started"
+      title="Create your account."
+      description="Start with your identity. Organization and property context comes next."
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {registerError && (
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+            role="alert"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-2.5 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_24%,white)] bg-[var(--vms-danger-subtle)] px-3.5 py-3 text-sm leading-5 text-[var(--vms-danger)]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             {registerError}
           </motion.div>
         )}
@@ -83,8 +97,8 @@ export default function RegisterPage() {
             <Input
               type="text"
               name="first_name"
-              label="First Name"
-              placeholder="John"
+              label="First name"
+              placeholder="Ada"
               icon={User2Icon}
               value={formData.first_name}
               onChange={handleChange}
@@ -94,8 +108,8 @@ export default function RegisterPage() {
             <Input
               type="text"
               name="last_name"
-              label="Last Name"
-              placeholder="Doe"
+              label="Last name"
+              placeholder="Okafor"
               icon={User2Icon}
               value={formData.last_name}
               onChange={handleChange}
@@ -107,8 +121,8 @@ export default function RegisterPage() {
           <Input
             type="email"
             name="email"
-            label="Email Address"
-            placeholder="name@example.com"
+            label="Work email"
+            placeholder="you@organization.com"
             value={formData.email}
             icon={Mail}
             onChange={handleChange}
@@ -119,7 +133,7 @@ export default function RegisterPage() {
           <Input
             type="tel"
             name="phone"
-            label="Phone (Optional)"
+            label="Phone (optional)"
             icon={Phone}
             placeholder="+1234567890"
             value={formData.phone}
@@ -141,7 +155,7 @@ export default function RegisterPage() {
             />
             <PasswordInput
               name="confirmPassword"
-              label="Confirm Password"
+              label="Confirm password"
               placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={handleChange}
@@ -158,18 +172,24 @@ export default function RegisterPage() {
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold shadow-xs transition-all active:scale-[0.98]"
+          className="h-12 w-full justify-between px-4 text-sm"
           isLoading={isRegistering}
+          rightNode={
+            !isRegistering ? <ArrowRight className="h-4 w-4" /> : undefined
+          }
         >
-          Create Account
+          Create account
         </Button>
 
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">Already have an account? </span>
-          <Link href="/auth/login" className="font-semibold text-[var(--vms-action)] hover:underline">
-            Sign in
+        <p className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3.5 py-3 text-center text-xs leading-5 text-[var(--vms-ink-muted)]">
+          Already have an account?{" "}
+          <Link
+            href="/auth/login"
+            className="font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+          >
+            Sign in instead
           </Link>
-        </div>
+        </p>
       </form>
       <SocialLoginButtons />
     </AuthLayout>

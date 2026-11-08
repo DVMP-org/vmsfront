@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight,
   BriefcaseBusiness,
   Building2,
   ConciergeBell,
@@ -30,6 +29,7 @@ import { useRequireEmailVerification } from "@/hooks/use-email-verification-guar
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
+import { ActionCard } from "@/components/ui/ActionCard";
 
 const accessIcon = {
   management: ShieldCheck,
@@ -128,138 +128,133 @@ export function WorkspaceDirectoryPage() {
 
   return (
     <div className="workspace-switcher space-y-5 text-[var(--vms-ink)]">
-        <header className="mb-5">
-          <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            <Building2 className="h-4 w-4" />
-            {organization?.name || "Organization"}
-          </p>
-          <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[var(--vms-ink)] sm:text-[32px]">
-            Choose your workspace
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[var(--vms-ink-muted)]">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[11px] font-semibold uppercase text-[var(--vms-ink)]">
-              {initials(userName)}
+      <header className="mb-5">
+        <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+          <Building2 className="h-4 w-4" />
+          {organization?.name || "Organization"}
+        </p>
+        <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[var(--vms-ink)] sm:text-[32px]">
+          Choose your workspace
+        </h1>
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[var(--vms-ink-muted)]">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[11px] font-semibold uppercase text-[var(--vms-ink)]">
+            {initials(userName)}
+          </span>
+          <span className="font-semibold text-[var(--vms-ink)]">
+            {userName}
+          </span>
+          <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
+          <span>
+            Role:{" "}
+            <span className="font-medium text-[var(--vms-ink)]">
+              {managementRole ||
+                adminProfile?.role?.name ||
+                "Organization member"}
             </span>
-            <span className="font-semibold text-[var(--vms-ink)]">
-              {userName}
+          </span>
+          <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
+          <span>
+            Organization:{" "}
+            <span className="font-medium text-[var(--vms-ink)]">
+              {organization?.name || "Current organization"}
             </span>
-            <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
-            <span>
-              Role:{" "}
-              <span className="font-medium text-[var(--vms-ink)]">
-                {managementRole ||
-                  adminProfile?.role?.name ||
-                  "Organization member"}
-              </span>
-            </span>
-            <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
-            <span>
-              Organization:{" "}
-              <span className="font-medium text-[var(--vms-ink)]">
-                {organization?.name || "Current organization"}
-              </span>
-            </span>
-          </div>
-        </header>
+          </span>
+        </div>
+      </header>
 
-        {notice ? (
-          <div
-            role="status"
-            className="mb-5 flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)]"
-          >
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{notice}</span>
-          </div>
-        ) : null}
-
-        <section
-          aria-label="Workspace summary"
-          className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      {notice ? (
+        <div
+          role="status"
+          className="mb-5 flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)]"
         >
-          <Metric
-            icon={Building2}
-            label="Properties"
-            value={workspaces.length}
-          />
-          <Metric
-            icon={ShieldCheck}
-            label="Management"
-            value={managedPropertyCount}
-          />
-          <Metric
-            icon={UserRound}
-            label="Personal access"
-            value={personalAccessCount}
-          />
-          <Metric icon={KeyRound} label="Active accesses" value={accessCount} />
-        </section>
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{notice}</span>
+        </div>
+      ) : null}
 
-        {context.isError ? (
-          <StatusPanel
-            title="Workspaces could not be verified."
-            detail={parseApiError(context.error).message}
-            onRetry={() => context.refetch()}
-          />
-        ) : loading ? (
-          <WorkspaceSkeleton />
-        ) : workspaces.length === 0 ? (
-          <section className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] p-10 text-center">
-            <Building2 className="mx-auto h-10 w-10 text-[var(--vms-ink-muted)]" />
-            <h2 className="mt-4 text-lg font-semibold">No workspace access</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--vms-ink-muted)]">
-              Your account has no active management, residency, tenancy, staff
-              or guest role in this organization.
-            </p>
-          </section>
-        ) : (
-          <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-            <aside className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-              <div className="border-b border-[var(--vms-line)] px-4 py-4">
-                <h2 className="text-base font-semibold tracking-[-0.02em]">
-                  Properties ({workspaces.length})
-                </h2>
-                <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                  Select a property to view available access.
-                </p>
-              </div>
-              <div
-                className="max-h-[560px] space-y-1 overflow-y-auto p-2"
-                aria-label="Properties"
-              >
-                {workspaces.map((workspace) => (
-                  <PropertyListItem
-                    key={workspace.key}
-                    workspace={workspace}
-                    organizationUseCase={organization?.use_case}
-                    selected={selectedWorkspace?.key === workspace.key}
-                    onSelect={() => setSelectedPropertyId(workspace.key)}
-                  />
-                ))}
-              </div>
-            </aside>
+      <section
+        aria-label="Workspace summary"
+        className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <Metric icon={Building2} label="Properties" value={workspaces.length} />
+        <Metric
+          icon={ShieldCheck}
+          label="Management"
+          value={managedPropertyCount}
+        />
+        <Metric
+          icon={UserRound}
+          label="Personal access"
+          value={personalAccessCount}
+        />
+        <Metric icon={KeyRound} label="Active accesses" value={accessCount} />
+      </section>
 
-            {selectedWorkspace ? (
-              <PropertyWorkspaceDetail
-                workspace={selectedWorkspace}
-                organizationUseCase={organization?.use_case}
-                onOpen={openAccess}
-              />
-            ) : null}
-          </div>
-        )}
-
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--vms-ink-muted)]">
-          <p>
-            Management rights do not create resident, tenant or guest
-            membership.
+      {context.isError ? (
+        <StatusPanel
+          title="Workspaces could not be verified."
+          detail={parseApiError(context.error).message}
+          onRetry={() => context.refetch()}
+        />
+      ) : loading ? (
+        <WorkspaceSkeleton />
+      ) : workspaces.length === 0 ? (
+        <section className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] p-10 text-center">
+          <Building2 className="mx-auto h-10 w-10 text-[var(--vms-ink-muted)]" />
+          <h2 className="mt-4 text-lg font-semibold">No workspace access</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--vms-ink-muted)]">
+            Your account has no active management, residency, tenancy, staff or
+            guest role in this organization.
           </p>
-          <Link
-            href="/organization"
-            className="font-semibold text-[var(--vms-action)] hover:underline"
-          >
-            Organization home
-          </Link>
-        </footer>
+        </section>
+      ) : (
+        <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
+          <aside className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+            <div className="border-b border-[var(--vms-line)] px-4 py-4">
+              <h2 className="text-base font-semibold tracking-[-0.02em]">
+                Properties ({workspaces.length})
+              </h2>
+              <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                Select a property to view available access.
+              </p>
+            </div>
+            <div
+              className="max-h-[560px] space-y-1 overflow-y-auto p-2"
+              aria-label="Properties"
+            >
+              {workspaces.map((workspace) => (
+                <PropertyListItem
+                  key={workspace.key}
+                  workspace={workspace}
+                  organizationUseCase={organization?.use_case}
+                  selected={selectedWorkspace?.key === workspace.key}
+                  onSelect={() => setSelectedPropertyId(workspace.key)}
+                />
+              ))}
+            </div>
+          </aside>
+
+          {selectedWorkspace ? (
+            <PropertyWorkspaceDetail
+              workspace={selectedWorkspace}
+              organizationUseCase={organization?.use_case}
+              onOpen={openAccess}
+            />
+          ) : null}
+        </div>
+      )}
+
+      <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--vms-ink-muted)]">
+        <p>
+          Management rights do not create resident, tenant or guest membership.
+        </p>
+        <Link
+          href="/organization"
+          className="font-semibold text-[var(--vms-action)] hover:underline"
+        >
+          Organization home
+        </Link>
+      </footer>
     </div>
   );
 }
@@ -281,9 +276,7 @@ function Metric({
       <p className="text-2xl font-semibold tabular-nums tracking-[-0.03em]">
         {String(value).padStart(2, "0")}
       </p>
-      <p className="text-sm font-medium text-[var(--vms-ink-muted)]">
-        {label}
-      </p>
+      <p className="text-sm font-medium text-[var(--vms-ink-muted)]">{label}</p>
     </div>
   );
 }
@@ -386,9 +379,7 @@ function PropertyWorkspaceDetail({
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
           <UserRound className="h-4 w-4 text-[var(--vms-ink-muted)]" />
-          <span className="font-semibold text-[var(--vms-ink)]">
-            Roles:
-          </span>
+          <span className="font-semibold text-[var(--vms-ink)]">Roles:</span>
           <span className="text-[var(--vms-ink-muted)]">
             {roles.join(", ")}
           </span>
@@ -425,35 +416,24 @@ function AccessCard({
 }) {
   const Icon = accessIcon[access.area];
   return (
-    <button
-      type="button"
+    <ActionCard
       onClick={() => onOpen(workspace, access)}
-      className="group flex w-full items-start gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 text-left transition hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-    >
-      <span
-        className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-lg",
-          access.area === "management" || access.area === "occupancy"
-            ? "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]"
-            : access.area === "staff"
-              ? "bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]"
-              : "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
-        )}
-      >
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-base font-semibold">{access.title}</span>
-        <span className="mt-1 block text-sm leading-5 text-[var(--vms-ink-muted)]">
-          {access.description}
-        </span>
-        <span className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--vms-ink)]">
-          <UserRound className="h-3.5 w-3.5" />
-          {access.roleLabel}
-        </span>
-      </span>
-      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[var(--vms-action)] transition-transform group-hover:translate-x-1" />
-    </button>
+      title={access.title}
+      description={access.description}
+      icon={Icon}
+      eyebrow={access.area}
+      meta={access.roleLabel}
+      tone={
+        access.area === "management"
+          ? "success"
+          : access.area === "staff"
+            ? "info"
+            : access.area === "guest"
+              ? "warning"
+              : "coral"
+      }
+      aria-label={`${access.title} — ${access.roleLabel}`}
+    />
   );
 }
 
