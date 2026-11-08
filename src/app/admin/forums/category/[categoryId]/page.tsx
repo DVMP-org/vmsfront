@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   Table,
   TableBody,
@@ -102,7 +103,7 @@ export default function AdminForumCategoryDetailPage() {
         }
       ]),
     }),
-    [page, normalizedCategoryId]
+    [page, normalizedCategoryId, categoryQuery.data?.residency_id]
   );
   const topicsQuery = useAdminForumTopics(categoryTopicsFilters, {
     enabled: Boolean(normalizedCategoryId),
@@ -186,11 +187,14 @@ export default function AdminForumCategoryDetailPage() {
   }, [categoriesQuery.data?.items, category]);
 
   const breadcrumb = (
-    <nav className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 text-xs font-semibold text-[var(--vms-ink-muted)]"
+    >
       <button
         type="button"
         onClick={() => router.push("/admin")}
-        className="transition hover:text-foreground"
+        className="rounded-sm underline-offset-4 hover:text-[var(--vms-ink)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
       >
         Admin
       </button>{" "}
@@ -202,76 +206,63 @@ export default function AdminForumCategoryDetailPage() {
       >
         Forums
       </button>{" "}
-      / <span className="text-foreground">{category?.name ?? "Category"}</span>
+      / <span className="text-[var(--vms-ink)]">{category?.name ?? "Category"}</span>
     </nav>
   );
 
   return (
     <>
-      <div className="space-y-6">
-        {breadcrumb}
-        <Card className="rounded-3xl border border-dashed">
-          <CardHeader className="flex flex-wrap items-start gap-4">
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => router.push("/admin/forums")}
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase  text-muted-foreground transition hover:text-foreground"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Overview
-              </button>
-              <div className="flex items-center gap-2">
-                <CardTitle>{category?.name ?? "Loading category"}</CardTitle>
-                {category?.is_default && (
-                  <Badge variant="success" className="uppercase">
-                    Default
-                  </Badge>
-                )}
-                {category?.is_locked && (
-                  <Badge variant="warning" className="uppercase">
-                    Locked
-                  </Badge>
-                )}
-              </div>
-              <CardDescription>
-                {category?.description || "No description provided."}
-              </CardDescription>
-              {category?.residency_id && (
-                <p className="text-xs text-muted-foreground">
-                  Residency scope ·{" "}
-                  {residencies?.find((residency) => residency.id === category.residency_id)?.name ||
-                    category.residency_id}
-                </p>
+      <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
+        <PageHeader
+          breadcrumbs={breadcrumb}
+          eyebrow="Community / Category"
+          title={category?.name ?? "Loading category"}
+          description={category?.description || "No description provided."}
+          metadata={
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+              {category?.is_default ? <Badge>Default</Badge> : null}
+              {category?.is_locked ? (
+                <Badge variant="warning">Locked</Badge>
+              ) : null}
+              {category?.residency_id ? (
+                <span>
+                  Scope:{" "}
+                  {residencies?.find(
+                    (residency) => residency.id === category.residency_id,
+                  )?.name || category.residency_id}
+                </span>
+              ) : (
+                <span>Organization-wide</span>
               )}
-              {category?.updated_at && (
-                <p className="text-xs text-muted-foreground">
+              {category?.updated_at ? (
+                <span>
                   Updated{" "}
                   {formatDistanceToNow(new Date(category.updated_at), {
                     addSuffix: true,
                   })}
-                </p>
-              )}
-            </div>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setTopicToEdit(null);
-                  setTopicModalOpen(true);
-                }}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => router.push("/admin/forums")}
+                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--vms-radius-control)] px-2 font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Create topic
-              </Button>
+                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                Back to Community
+              </button>
+            </div>
+          }
+          secondaryActions={
+            <>
               <Button
                 variant="outline"
                 onClick={() => setCategoryModalOpen(true)}
               >
-                <Pencil className="mr-2 h-4 w-4" />
+                <Pencil className="h-4 w-4" aria-hidden="true" />
                 Edit
               </Button>
               <Button
+                variant="outline"
                 onClick={() =>
                   updateCategory.mutate({
                     categoryId: normalizedCategoryId!,
@@ -279,31 +270,48 @@ export default function AdminForumCategoryDetailPage() {
                   })
                 }
               >
-                <Lock className="mr-2 h-4 w-4" />
+                <Lock className="h-4 w-4" aria-hidden="true" />
                 {category?.is_locked ? "Unlock" : "Lock"}
               </Button>
               <Button
+                variant="outline"
                 onClick={() =>
                   updateCategory.mutate({
                     categoryId: normalizedCategoryId!,
-                    data: { is_default: true, residency_id: category?.residency_id || "" },
+                    data: {
+                      is_default: true,
+                      residency_id: category?.residency_id || "",
+                    },
                   })
                 }
               >
-                <Shield className="mr-2 h-4 w-4" />
+                <Shield className="h-4 w-4" aria-hidden="true" />
                 Set default
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setCategoryToDelete(true)}
               >
-                <Trash className="mr-2 h-4 w-4" />
+                <Trash className="h-4 w-4" aria-hidden="true" />
                 Delete
               </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-border/60 bg-muted/40 px-4 py-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+            </>
+          }
+          primaryAction={
+            <Button
+              onClick={() => {
+                setTopicToEdit(null);
+                setTopicModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create topic
+            </Button>
+          }
+        />
+        <Card className="rounded-[var(--vms-radius-surface)] border-[var(--vms-line)] shadow-none">
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-4 py-3 text-sm text-[var(--vms-ink-muted)] md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
                 <CheckSquare className="h-4 w-4" />
                 <span>
@@ -312,7 +320,7 @@ export default function AdminForumCategoryDetailPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
-                  className="rounded-2xl border border-border bg-background px-3 py-1.5 text-xs font-semibold uppercase tracking-wide focus-visible:outline-none"
+                  className="min-h-10 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-xs font-semibold text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                   value={bulkAction}
                   onChange={(event) => setBulkAction(event.target.value)}
                 >
@@ -404,11 +412,11 @@ export default function AdminForumCategoryDetailPage() {
                               onClick={() =>
                                 router.push(`/admin/forums/topic/${topic.id}`)
                               }
-                              className="text-left text-sm font-semibold text-foreground transition hover:text-[var(--brand-primary,#213928)]"
+                              className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                             >
                               {topic.title}
                             </button>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-[var(--vms-ink-muted)]">
                               {topic.author_name || "System"}
                             </span>
                           </div>
@@ -427,7 +435,7 @@ export default function AdminForumCategoryDetailPage() {
                           </div>
                         </TableCell>
                         <TableCell>{topic.posts_count}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="text-xs text-[var(--vms-ink-muted)]">
                           {topic.last_post_at
                             ? formatDistanceToNow(new Date(topic.last_post_at), {
                               addSuffix: true,

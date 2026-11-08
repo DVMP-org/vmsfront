@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PaginationBar } from "@/components/ui/PaginationBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useAuth } from "@/hooks/use-auth";
@@ -97,11 +98,14 @@ export default function AdminForumTopicDetailPage() {
   }, [topicId]);
 
   const breadcrumbs = (
-    <nav className="text-xs font-medium text-zinc-500">
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 text-xs font-medium text-[var(--vms-ink-muted)]"
+    >
       <button
         type="button"
         onClick={() => router.push("/admin")}
-        className="hover:text-zinc-700 transition-colors"
+        className="rounded-sm underline-offset-4 hover:text-[var(--vms-ink)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
       >
         Admin
       </button>
@@ -109,7 +113,7 @@ export default function AdminForumTopicDetailPage() {
       <button
         type="button"
         onClick={() => router.push("/admin/forums")}
-        className="hover:text-zinc-700 transition-colors"
+        className="rounded-sm underline-offset-4 hover:text-[var(--vms-ink)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
       >
         Forums
       </button>
@@ -120,7 +124,7 @@ export default function AdminForumTopicDetailPage() {
           onClick={() =>
             router.push(`/admin/forums/category/${topic?.category?.id}`)
           }
-          className="hover:text-zinc-700 transition-colors"
+          className="rounded-sm underline-offset-4 hover:text-[var(--vms-ink)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
         >
           {topic?.category?.name}
         </button>
@@ -128,7 +132,7 @@ export default function AdminForumTopicDetailPage() {
         <span>Category</span>
       )}
       {" / "}
-      <span className="text-zinc-900">Topic</span>
+      <span className="text-[var(--vms-ink)]">Topic</span>
     </nav>
   );
 
@@ -154,19 +158,19 @@ export default function AdminForumTopicDetailPage() {
   const topicStatusChips = (
     <div className="flex flex-wrap items-center gap-1.5">
       {topic?.is_pinned && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+        <span className="inline-flex items-center rounded-full border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-warning)]">
           <Pin className="h-3 w-3 mr-0.5" />
           Pinned
         </span>
       )}
       {topic?.is_locked && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-600">
+        <span className="inline-flex items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-ink-muted)]">
           <Lock className="h-3 w-3 mr-0.5" />
           Locked
         </span>
       )}
       {topic?.is_deleted && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
+        <span className="inline-flex items-center rounded-full border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-danger)]">
           <Shield className="h-3 w-3 mr-0.5" />
           Deleted
         </span>
@@ -199,40 +203,31 @@ export default function AdminForumTopicDetailPage() {
 
   return (
     <>
-      <div className="space-y-4">
-        {breadcrumbs}
-
-        {/* Topic Header */}
-        <div className="border border-foreground/20 rounded-lg bg-gradient-to-br from-muted to-foreground/10 shadow-sm">
-          <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push("/admin/forums")}
-                  className="h-8 px-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                  <h1 className="text-lg font-semibold text-foreground">
-                    {topic?.title ?? "Loading topic..."}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    {topicStatusChips}
-                    <span className="text-xs text-muted-foreground">
-                      {topic?.posts_count ?? 0} posts
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+      <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
+        <PageHeader
+          breadcrumbs={breadcrumbs}
+          eyebrow="Community / Topic"
+          title={topic?.title ?? "Loading topic…"}
+          description={`${topic?.posts_count ?? 0} posts`}
+          metadata={
+            <div className="flex flex-wrap items-center gap-2">
+              {topicStatusChips}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/admin/forums")}
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Community
+              </Button>
+            </div>
+          }
+          secondaryActions={
+            <>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setTopicModalOpen(true)}
-                  className="h-8 text-xs"
                 >
                   Edit
                 </Button>
@@ -246,7 +241,6 @@ export default function AdminForumTopicDetailPage() {
                       data: { is_pinned: !topic?.is_pinned },
                     })
                   }
-                  className="h-8 text-xs"
                 >
                   {topic?.is_pinned ? "Unpin" : "Pin"}
                 </Button>
@@ -260,7 +254,6 @@ export default function AdminForumTopicDetailPage() {
                       data: { is_locked: !topic?.is_locked },
                     })
                   }
-                  className="h-8 text-xs"
                 >
                   {topic?.is_locked ? "Unlock" : "Lock"}
                 </Button>
@@ -274,7 +267,6 @@ export default function AdminForumTopicDetailPage() {
                       data: { is_deleted: !topic?.is_deleted },
                     })
                   }
-                  className="h-8 text-xs"
                 >
                   {topic?.is_deleted ? "Restore" : "Soft delete"}
                 </Button>
@@ -282,36 +274,36 @@ export default function AdminForumTopicDetailPage() {
                   variant="destructive"
                   size="sm"
                   onClick={() => setConfirmDeleteOpen(true)}
-                  className="h-8 text-xs"
                 >
                   Hard delete
                 </Button>
-              </div>
-            </div>
-          </div>
+            </>
+          }
+        />
 
+        <div className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
           {/* Topic Metadata */}
-          <div className="divide-y divide-foreground/20">
+          <div className="divide-y divide-[var(--vms-line)]">
             {metaRows.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-muted-foreground">
+              <div className="px-4 py-3 text-sm text-[var(--vms-ink-muted)]">
                 No metadata available
               </div>
             ) : (
               metaRows.map((meta) => (
                 <div key={meta.label} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <span className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
                     {meta.label}
                   </span>
                   {meta.action ? (
                     <button
                       type="button"
                       onClick={meta.action}
-                      className="text-sm font-medium text-foreground hover:text-muted-foreground hover:underline"
+                      className="text-sm font-medium text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                     >
                       {meta.value}
                     </button>
                   ) : (
-                    <span className="text-sm font-medium text-foreground">
+                    <span className="text-sm font-medium text-[var(--vms-ink)]">
                       {meta.value}
                     </span>
                   )}
@@ -322,9 +314,9 @@ export default function AdminForumTopicDetailPage() {
 
           {/* Deleted Warning */}
           {topic?.is_deleted && (
-            <div className="border-t border-foreground/20 bg-red-50 px-4 py-3">
+            <div className="border-t border-[var(--vms-line)] bg-[var(--vms-danger-subtle)] px-4 py-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-red-700">
+                <div className="flex items-center gap-2 text-sm text-[var(--vms-danger)]">
                   <AlertTriangle className="h-4 w-4" />
                   <span>This topic is hidden from residents</span>
                 </div>
@@ -348,14 +340,17 @@ export default function AdminForumTopicDetailPage() {
         </div>
 
         {/* Posts Section */}
-        <div className="border border-foreground/20 rounded-lg shadow-sm overflow-hidden">
-          <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
-            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <div className="border-b border-[var(--vms-line)] px-4 py-3.5">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <MessageSquare
+                className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                aria-hidden="true"
+              />
               Discussion
             </h2>
           </div>
-          <div className="p-0 bg-gradient-to-br from-muted to-foreground/10 min-h-[400px] max-h-[600px] overflow-y-auto">
+          <div className="max-h-[600px] min-h-[400px] overflow-y-auto bg-[var(--vms-surface-subtle)]">
             {postsQuery.isLoading ? (
               <div className="p-4">
                 <TableSkeleton />
@@ -398,7 +393,7 @@ export default function AdminForumTopicDetailPage() {
                   ))}
                 </div>
                 <div ref={postsEndRef} />
-                <div className="border-t border-foreground/20 bg-foreground/10 px-4 py-3 sticky bottom-0">
+                <div className="sticky bottom-0 border-t border-[var(--vms-line)] bg-[var(--vms-surface)] px-4 py-3">
                   <PaginationBar
                     page={postsPage}
                     totalPages={totalPostPages}
@@ -412,14 +407,17 @@ export default function AdminForumTopicDetailPage() {
               </>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Reply Composer */}
-        <div className="border border-foreground/20 rounded-lg shadow-sm">
-          <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
+        <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <div className="border-b border-[var(--vms-line)] bg-[var(--vms-surface)] px-4 py-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <MessageSquare
+                  className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                  aria-hidden="true"
+                />
                 Post Reply
               </h3>
               {topic?.is_locked && (
@@ -430,8 +428,11 @@ export default function AdminForumTopicDetailPage() {
               )}
             </div>
           </div>
-          <form onSubmit={handleComposerSubmit} className="p-4 space-y-3 bg-gradient-to-br from-muted to-foreground/10">
-            <div className="rounded-xl border border-dashed border-foreground/20 bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+          <form
+            onSubmit={handleComposerSubmit}
+            className="space-y-3 bg-[var(--vms-surface-subtle)] p-4"
+          >
+            <div className="rounded-[var(--vms-radius-control)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface-subtle)] px-4 py-2 text-xs text-[var(--vms-ink-muted)]">
               Formatting supported — use bold, italics, lists, quotes, code blocks, and links.
             </div>
             <RichTextEditor
@@ -461,7 +462,7 @@ export default function AdminForumTopicDetailPage() {
               </Button>
             </div>
           </form>
-        </div>
+        </section>
       </div>
 
       <TopicFormModal
@@ -654,27 +655,27 @@ export default function AdminForumTopicDetailPage() {
         .forum-content-other h4,
         .forum-content-other h5,
         .forum-content-other h6 {
-          color: #18181b;
+          color: var(--vms-ink);
         }
         
         .forum-content-other blockquote {
-          border-left-color: #d4d4d8;
-          background: #f4f4f5;
-          color: #3f3f46;
+          border-left-color: var(--vms-line-strong);
+          background: var(--vms-surface-subtle);
+          color: var(--vms-ink-muted);
         }
         
         .forum-content-other code {
-          background: #f4f4f5;
-          color: #18181b;
+          background: var(--vms-surface-subtle);
+          color: var(--vms-ink);
         }
         
         .forum-content-other pre {
-          background: #f4f4f5;
-          color: #18181b;
+          background: var(--vms-surface-subtle);
+          color: var(--vms-ink);
         }
         
         .forum-content-other a {
-          color: rgb(var(--brand-primary));
+          color: var(--vms-ink);
         }
       `}</style>
     </>
@@ -728,8 +729,6 @@ function PostItem({
 
   const timestamp = formatTimestamp(post.created_at);
   const editedTimestamp = post.edited_at ? formatTimestamp(post.edited_at) : null;
-  console.log(post);
-  console.log(post.edited_at);
   const displayName = post.posted_by_admin
     ? "Admin"
     : post.author_name || post.author?.email || "Resident";
@@ -741,8 +740,8 @@ function PostItem({
       <div className={cn("flex max-w-[70%] gap-2", isOwn ? "flex-row-reverse" : "flex-row")}>
         {/* Avatar/Icon */}
         {!isOwn && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-muted to-muted-foreground flex items-center justify-center border border-foreground/20">
-            <span className="text-xs font-semibold text-muted-foreground">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]">
+            <span className="text-xs font-semibold text-[var(--vms-ink-muted)]">
               {displayName.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -752,15 +751,15 @@ function PostItem({
         <div className={cn("flex-1 min-w-0")}>
           <div
             className={cn(
-              "rounded-xl px-3 py-2 shadow-sm",
+              "rounded-[var(--vms-radius-surface)] px-3 py-2 shadow-none",
               isOwn
-                ? "bg-[rgb(var(--brand-primary)/0.8)] text-white"
-                : "bg-white border border-zinc-200/80 text-zinc-900"
+                ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                : "border border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)]",
             )}
           >
             {/* Post Header - Compact Inline */}
             <div className={cn("flex items-center gap-2 mb-1", isOwn ? "justify-end" : "justify-start")}>
-              <span className={cn("text-xs font-semibold", isOwn ? "text-white" : "text-zinc-900")}>
+              <span className={cn("text-xs font-semibold", isOwn ? "text-[var(--vms-on-action)]" : "text-[var(--vms-ink)]")}>
                 {displayName} | {residencyLabel}
               </span>
               {post.posted_by_admin && (
@@ -768,15 +767,15 @@ function PostItem({
                   className={cn(
                     "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium",
                     isOwn
-                      ? "bg-white/20 text-white"
-                      : "bg-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))]"
+                      ? "bg-white/20 text-[var(--vms-on-action)]"
+                      : "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]"
                   )}
                 >
                   Admin
                 </span>
               )}
               <span
-                className={cn("text-[10px]", isOwn ? "text-white/70" : "text-zinc-500")}
+                className={cn("text-[10px]", isOwn ? "text-white/70" : "text-[var(--vms-ink-muted)]")}
                 title={timestamp.full}
               >
                 {timestamp.display}
@@ -810,7 +809,7 @@ function PostItem({
                   rows={3}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  className="w-full border border-zinc-200 rounded-lg bg-white px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                  className="w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] sm:text-sm"
                 />
                 <div className="flex gap-2">
                   <Button
@@ -844,7 +843,7 @@ function PostItem({
                 <div
                   className={cn(
                     "text-sm leading-relaxed break-words forum-content",
-                    isOwn ? "text-white forum-content-own" : "text-zinc-900 forum-content-other",
+                    isOwn ? "text-[var(--vms-on-action)] forum-content-own" : "text-[var(--vms-ink)] forum-content-other",
                     post.is_deleted && "line-through opacity-60"
                   )}
                 >
@@ -868,7 +867,7 @@ function PostItem({
                           "inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs transition-colors",
                           isOwn
                             ? "border-white/30 text-white hover:bg-white/20"
-                            : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                            : "border-[var(--vms-line-strong)] text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]"
                         )}
                       >
                         <Paperclip className="h-3 w-3" />
@@ -879,7 +878,7 @@ function PostItem({
                 )}
                 {editedTimestamp && (
                   <span
-                    className={cn("text-[10px] block mt-1", isOwn ? "text-white/70" : "text-zinc-500")}
+                    className={cn("mt-1 block text-[10px]", isOwn ? "text-white/70" : "text-[var(--vms-ink-muted)]")}
                     title={`Edited: ${editedTimestamp.full}`}
                   >
                     Edited {editedTimestamp.display}
@@ -904,7 +903,7 @@ function PostItem({
 
         {/* Right side avatar for own messages */}
         {isOwn && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgb(var(--brand-primary)/0.8)] flex items-center justify-center border border-[rgb(var(--brand-primary)/0.9)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--vms-action)] bg-[var(--vms-action)]">
             <span className="text-xs font-semibold text-white">
               {displayName.charAt(0).toUpperCase()}
             </span>

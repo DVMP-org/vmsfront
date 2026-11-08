@@ -8,6 +8,7 @@ import {
 } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
+  AlertCircle,
   Building2,
   Calendar,
   Filter,
@@ -15,6 +16,7 @@ import {
   Lock,
   MessageSquare,
   Pin,
+  Plus,
   RefreshCcw,
   Search,
   Shield,
@@ -25,6 +27,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   Table,
   TableBody,
@@ -386,88 +389,114 @@ export default function AdminForumsPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Compact Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 border-b border-foreground/20 pb-3">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Forum Management</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Moderate and organize estate conversations</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            <select
-              className="rounded border border-foreground/20  px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground h-8 bg-foreground/10"
-              value={residencyId}
-              onChange={(event) => {
-                setResidencyId(event.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="all">All residencies</option>
-              {residencies?.map((residency) => (
-                <option key={residency.id} value={residency.id}>
-                  {residency.name}
-                </option>
-              ))}
-            </select>
+      <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
+        <PageHeader
+          eyebrow={
+            <span className="flex items-center gap-2">
+              <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+              Community / Moderation
+            </span>
+          }
+          title="Community"
+          description="Organize, moderate and follow the conversations attached to your properties and resident groups."
+          metadata={
+            <label className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--vms-ink-muted)]">
+              <span>Property scope</span>
+              <select
+                aria-label="Property scope"
+                className="min-h-10 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-sm text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                value={residencyId}
+                onChange={(event) => {
+                  setResidencyId(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="all">All residencies</option>
+                {residencies?.map((residency) => (
+                  <option key={residency.id} value={residency.id}>
+                    {residency.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          }
+          secondaryActions={
             <Button
-              size="sm"
+              variant="outline"
               onClick={() => {
                 setCategoryModalMode("create");
                 setActiveCategory(null);
                 setCategoryModalOpen(true);
               }}
-              className="h-8 text-xs"
             >
-              New Category
+              <FolderOpen className="h-4 w-4" aria-hidden="true" />
+              New category
             </Button>
+          }
+          primaryAction={
             <Button
-              size="sm"
-              variant="outline"
               onClick={() => {
                 setTopicModalMode("create");
                 setActiveTopic(null);
                 setTopicModalOpen(true);
               }}
-              className="h-8 text-xs"
             >
-              New Topic
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New topic
             </Button>
-          </div>
-        </div>
+          }
+        />
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {stats.map((stat) => {
+        <section
+          aria-label="Community metrics"
+          className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 lg:grid-cols-5"
+        >
+          {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <div
                 key={stat.label}
-                className="border border-foreground/20 rounded-l p-4 hover:muted-foreground transition-colors"
+                className={cn(
+                  "min-w-0 border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-r",
+                  index === stats.length - 1 && "lg:border-r-0",
+                  index < stats.length - 1 && "lg:border-b-0",
+                )}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</div>
-                  <div className="p-1.5 rounded-md bg-muted">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+                    {stat.label}
                   </div>
+                  <Icon
+                    className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                    aria-hidden="true"
+                  />
                 </div>
-                <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.description}</div>
+                <div className="mt-2 text-2xl font-semibold tabular-nums">
+                  {stat.value}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
+                  {stat.description}
+                </div>
               </div>
             );
           })}
-        </div>
+        </section>
 
-        <div className="flex flex-wrap items-center gap-3 border border-foreground/20 rounded bg-foreground/10 px-4 py-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+        <section
+          aria-label="Community filters"
+          className="flex flex-col gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 lg:flex-row lg:flex-wrap lg:items-end"
+        >
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
             <Filter className="h-3.5 w-3.5" />
             Filters
           </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center w-full md:w-auto">
-            <div className="flex flex-1 items-center gap-2 border border-zinc-200 rounded px-3 py-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3">
               <SearchField value={searchInput} onChange={setSearchInput} />
             </div>
             <select
-              className="border border-foreground/20 rounded bg-foreground/10 px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground w-full md:w-48 h-8"
+              aria-label="Category filter"
+              className="min-h-11 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-sm text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] md:w-48"
               value={categoryId}
               onChange={(event) => {
                 setCategoryId(event.target.value);
@@ -481,7 +510,11 @@ export default function AdminForumsPage() {
                 </option>
               ))}
             </select>
-            <div className="flex gap-1 border border-foreground/20 rounded bg-muted p-0.5">
+            <div
+              className="flex overflow-x-auto rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-1"
+              role="group"
+              aria-label="Topic status"
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -491,10 +524,10 @@ export default function AdminForumsPage() {
                   setPage(1);
                 }}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  "min-h-9 whitespace-nowrap rounded-[calc(var(--vms-radius-control)-2px)] px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
                   (!isPinned && !isLocked && !isDeleted)
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-sm"
+                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
                 )}
               >
                 All
@@ -506,10 +539,10 @@ export default function AdminForumsPage() {
                   setPage(1);
                 }}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  "min-h-9 whitespace-nowrap rounded-[calc(var(--vms-radius-control)-2px)] px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
                   isPinned
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-sm"
+                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
                 )}
               >
                 Pinned
@@ -521,10 +554,10 @@ export default function AdminForumsPage() {
                   setPage(1);
                 }}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  "min-h-9 whitespace-nowrap rounded-[calc(var(--vms-radius-control)-2px)] px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
                   isLocked
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-sm"
+                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
                 )}
               >
                 Locked
@@ -536,10 +569,10 @@ export default function AdminForumsPage() {
                   setPage(1);
                 }}
                 className={cn(
-                  "rounded px-2 py-1 text-xs font-medium uppercase tracking-wide transition h-7",
+                  "min-h-9 whitespace-nowrap rounded-[calc(var(--vms-radius-control)-2px)] px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
                   isDeleted
-                    ? "bg-foreground/10 text-foreground shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-sm"
+                    : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
                 )}
               >
                 Deleted
@@ -567,29 +600,47 @@ export default function AdminForumsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-xs h-8"
+            className="gap-2"
             onClick={handleResetFilters}
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
-        </div>
+        </section>
 
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-[2fr,3fr]">
           {/* Categories List */}
-          <div className="border border-foreground/20 rounded-lg shadow-sm">
-            <div className="border-b border-foreground/20 bg-gradient-to-r from-muted to-foreground/10 px-4 py-3">
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+            <div className="border-b border-[var(--vms-line)] px-4 py-3.5">
+              <h2 className="flex items-center gap-2 text-base font-semibold">
+                <FolderOpen
+                  className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                  aria-hidden="true"
+                />
                 Categories
               </h2>
+              <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                Choose a forum category to inspect and moderate its topics.
+              </p>
             </div>
-            <div className="divide-y divide-foreground/20">
+            <div className="divide-y divide-[var(--vms-line)]">
               {categoryFetcher.isLoading ? (
-                <div className="p-4 space-y-2">
+                <div className="space-y-2 p-4">
                   {Array.from({ length: 3 }).map((_, index) => (
                     <Skeleton key={index} className="h-16 w-full" />
                   ))}
+                </div>
+              ) : categoryFetcher.isError ? (
+                <div className="p-4" role="alert">
+                  <EmptyState
+                    icon={AlertCircle}
+                    title="Categories could not be loaded"
+                    description="The latest forum categories are unavailable."
+                    action={{
+                      label: "Retry",
+                      onClick: () => categoryFetcher.refetch(),
+                    }}
+                  />
                 </div>
               ) : categoriesByResidency.length === 0 ? (
                 <div className="p-8">
@@ -611,7 +662,7 @@ export default function AdminForumsPage() {
                 categoriesWithCounts.map(({ category, topicCount }) => (
                   <div
                     key={category.id}
-                    className="px-4 py-3 hover:bg-muted transition-colors border-l-4 border border-muted dark:border-muted hover:border-foreground/20"
+                    className="border-l-2 border-transparent px-4 py-3.5 transition-colors hover:border-l-[var(--vms-active-accent)] hover:bg-[var(--vms-surface-subtle)]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -621,31 +672,27 @@ export default function AdminForumsPage() {
                             onClick={() =>
                               router.push(`/admin/forums/category/${category.id}`)
                             }
-                            className="text-sm font-medium text-foreground hover:text-muted-foreground"
+                            className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                           >
                             {category.name}
                           </button>
                           {category.is_default && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
-                              Default
-                            </span>
+                            <Badge variant="neutral">Default</Badge>
                           )}
                           {category.is_locked && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
-                              Locked
-                            </span>
+                            <Badge variant="warning">Locked</Badge>
                           )}
                         </div>
                         {category.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1 mb-1.5">
+                          <p className="mb-1.5 line-clamp-1 text-xs text-[var(--vms-ink-muted)]">
                             {category.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="font-medium text-muted-foreground">{topicCount} topics</span>
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--vms-ink-muted)]">
+                          <span className="font-medium">{topicCount} topics</span>
                           {category.residency?.name && (
                             <span className="flex items-center gap-1">
-                              <Building2 className="h-3 w-3" />
+                              <Building2 className="h-3 w-3" aria-hidden="true" />
                               {category.residency.name}
                             </span>
                           )}
@@ -703,18 +750,21 @@ export default function AdminForumsPage() {
                 ))
               )}
             </div>
-          </div>
+          </section>
 
           {/* Topics Table */}
-          <div className="border border-foreground/20 rounded-lg shadow-sm">
-            <div className="border-b border-foreground/20 bg-foreground/10 px-4 py-3">
+          <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+            <div className="border-b border-[var(--vms-line)] px-4 py-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="flex items-center gap-2 text-base font-semibold">
+                    <MessageSquare
+                      className="h-4 w-4 text-[var(--vms-ink-muted)]"
+                      aria-hidden="true"
+                    />
                     Topics
                   </h2>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
                     {selectedResidency
                       ? `Scoped to ${selectedResidency.name}`
                       : "All residencies"}
@@ -736,6 +786,18 @@ export default function AdminForumsPage() {
                 <div className="p-4">
                   <TableSkeleton />
                 </div>
+              ) : topicFetcher.isError && topics.length === 0 ? (
+                <div className="p-4" role="alert">
+                  <EmptyState
+                    icon={AlertCircle}
+                    title="Topics could not be loaded"
+                    description="The latest conversations are unavailable."
+                    action={{
+                      label: "Retry",
+                      onClick: () => topicFetcher.refetch(),
+                    }}
+                  />
+                </div>
               ) : topics.length === 0 ? (
                 <div className="p-8">
                   <EmptyState
@@ -754,7 +816,8 @@ export default function AdminForumsPage() {
                 </div>
               ) : (
                 <>
-                  <Table>
+                  <div className="hidden md:block">
+                    <Table>
                     <TableHeader className="rounded-none transition-colors">
                       <TableRow>
                         <TableHead>Topic</TableHead>
@@ -766,7 +829,7 @@ export default function AdminForumsPage() {
                     </TableHeader>
                     <TableBody>
                       {topics.map((topic) => (
-                        <TableRow key={topic.id} className="hover:bg-muted transition-colors border-b border-foreground/20">
+                        <TableRow key={topic.id}>
                           <TableCell>
                             <div className="flex flex-col">
                               <button
@@ -774,11 +837,11 @@ export default function AdminForumsPage() {
                                 onClick={() =>
                                   router.push(`/admin/forums/topic/${topic.id}`)
                                 }
-                                className="text-left text-sm font-medium text-foreground transition hover:text-muted-foreground"
+                                className="rounded-sm text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                               >
                                 {topic.title}
                               </button>
-                              <p className="text-xs text-zinc-500 mt-0.5">
+                              <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
                                 {topic.author_name || "System"} ·{" "}
                                 <span className="font-medium">{topic.posts_count}</span> posts
                               </p>
@@ -786,29 +849,29 @@ export default function AdminForumsPage() {
                           </TableCell>
                           <TableCell>
                             {topic.category ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                              <Badge variant="neutral">
                                 {topic.category.name}
-                              </span>
+                              </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">—</span>
                             )}
                             {topic.residency?.name && (
-                              <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                                <Building2 className="h-3 w-3" />
+                              <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--vms-ink-muted)]">
+                                <Building2 className="h-3 w-3" aria-hidden="true" />
                                 {topic.residency.name}
                               </p>
                             )}
                           </TableCell>
                           <TableCell>
                             {topic.last_post_at ? (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-[var(--vms-ink-muted)]">
                                 {formatDistanceToNow(
                                   new Date(topic.last_post_at),
                                   { addSuffix: true }
                                 )}
                               </span>
                             ) : (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-[var(--vms-ink-muted)]">
                                 —
                               </span>
                             )}
@@ -821,7 +884,7 @@ export default function AdminForumsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 text-xs"
+                                className="h-9 text-xs"
                                 onClick={() =>
                                   router.push(`/admin/forums/topic/${topic.id}`)
                                 }
@@ -878,8 +941,107 @@ export default function AdminForumsPage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
-                  <div className="border-t border-foreground/20 px-4 py-3">
+                    </Table>
+                  </div>
+                  <div className="divide-y divide-[var(--vms-line)] md:hidden">
+                    {topics.map((topic) => (
+                      <article key={topic.id} className="space-y-3 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(`/admin/forums/topic/${topic.id}`)
+                            }
+                            className="min-w-0 text-left text-sm font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                          >
+                            {topic.title}
+                          </button>
+                          <ActionMenu
+                            size="sm"
+                            options={[
+                              {
+                                label: "Open topic",
+                                onClick: () =>
+                                  router.push(`/admin/forums/topic/${topic.id}`),
+                              },
+                              {
+                                label: "Edit",
+                                onClick: () => {
+                                  setTopicModalMode("edit");
+                                  setActiveTopic(topic);
+                                  setTopicModalOpen(true);
+                                },
+                              },
+                              {
+                                label: topic.is_pinned ? "Unpin" : "Pin",
+                                icon: Pin,
+                                onClick: () =>
+                                  updateTopic.mutate({
+                                    topicId: topic.id,
+                                    data: { is_pinned: !topic.is_pinned },
+                                  }),
+                              },
+                              {
+                                label: topic.is_locked ? "Unlock" : "Lock",
+                                icon: topic.is_locked ? Unlock : Lock,
+                                onClick: () =>
+                                  updateTopic.mutate({
+                                    topicId: topic.id,
+                                    data: { is_locked: !topic.is_locked },
+                                  }),
+                              },
+                              {
+                                label: "Hard delete",
+                                tone: "destructive",
+                                onClick: () => setTopicToDelete(topic),
+                              },
+                            ]}
+                          />
+                        </div>
+                        <TopicStatusChips topic={topic} />
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                          <div>
+                            <dt className="text-[var(--vms-ink-muted)]">
+                              Category
+                            </dt>
+                            <dd className="mt-0.5 font-medium">
+                              {topic.category?.name || "Uncategorized"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[var(--vms-ink-muted)]">
+                              Posts
+                            </dt>
+                            <dd className="mt-0.5 font-medium tabular-nums">
+                              {topic.posts_count}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[var(--vms-ink-muted)]">
+                              Author
+                            </dt>
+                            <dd className="mt-0.5 font-medium">
+                              {topic.author_name || "System"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[var(--vms-ink-muted)]">
+                              Last activity
+                            </dt>
+                            <dd className="mt-0.5 font-medium">
+                              {topic.last_post_at
+                                ? formatDistanceToNow(
+                                    new Date(topic.last_post_at),
+                                    { addSuffix: true },
+                                  )
+                                : "No activity"}
+                            </dd>
+                          </div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="border-t border-[var(--vms-line)] px-4 py-3">
                     <PaginationBar
                       page={page}
                       totalPages={topicsTotalPages}
@@ -893,8 +1055,24 @@ export default function AdminForumsPage() {
                 </>
               )}
             </div>
-          </div>
+          </section>
         </div>
+
+        {topicFetcher.isError && topics.length > 0 ? (
+          <p
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)]"
+          >
+            Showing the last successful topics. Refresh failed.
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => topicFetcher.refetch()}
+            >
+              Retry
+            </Button>
+          </p>
+        ) : null}
       </div>
 
       <CategoryFormModal
@@ -997,12 +1175,16 @@ function SearchField({
 }) {
   return (
     <>
-      <Search className="h-4 w-4 text-muted-foreground" />
+      <Search
+        className="h-4 w-4 text-[var(--vms-ink-muted)]"
+        aria-hidden="true"
+      />
       <Input
+        aria-label="Search topic titles"
         placeholder="Search topic titles"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="border-none bg-transparent pl-0 outline-none ring-0 focus-visible:ring-0"
+        className="min-h-11 border-0 bg-transparent px-0 focus-visible:ring-0"
       />
     </>
   );
@@ -1018,14 +1200,14 @@ function DateInput({
   onChange: (next: string) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 border border-foreground/20 rounded px-3 py-1.5 text-xs font-medium text-muted-foreground h-8">
-      <Calendar className="h-3.5 w-3.5" />
+    <label className="flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-xs font-medium text-[var(--vms-ink-muted)]">
+      <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
       {label}
       <input
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="border border-transparent bg-transparent text-foreground text-xs focus-visible:outline-none"
+        className="min-w-0 border-0 bg-transparent text-xs text-[var(--vms-ink)] focus-visible:outline-none"
       />
     </label>
   );
@@ -1037,19 +1219,13 @@ function TopicStatusChips({ topic }: { topic: ForumTopic }) {
   return (
     <div className="flex flex-wrap gap-1">
       {topic.is_pinned && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
-          Pinned
-        </span>
+        <Badge variant="warning">Pinned</Badge>
       )}
       {topic.is_locked && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-600">
-          Locked
-        </span>
+        <Badge variant="neutral">Locked</Badge>
       )}
       {topic.is_deleted && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
-          Deleted
-        </span>
+        <Badge variant="danger">Deleted</Badge>
       )}
     </div>
   );
