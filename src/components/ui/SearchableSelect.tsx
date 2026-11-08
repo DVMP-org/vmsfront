@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useMemo } from "react";
-import Select, { Props as SelectProps, GroupBase, StylesConfig, SingleValue } from "react-select";
+import Select, {
+  Props as SelectProps,
+  GroupBase,
+  StylesConfig,
+} from "react-select";
 import { cn } from "@/lib/utils";
 
 export interface SearchableSelectOption {
@@ -31,6 +35,7 @@ export function SearchableSelect<IsMulti extends boolean = false>({
     isMulti,
     ...props
 }: SearchableSelectProps<IsMulti>) {
+    const generatedId = React.useId();
     const selectedOption = useMemo(() => {
         if (isMulti && Array.isArray(value)) {
             return options.filter(opt => value.includes(opt.value));
@@ -38,21 +43,33 @@ export function SearchableSelect<IsMulti extends boolean = false>({
         return options.find(opt => opt.value === value) || null;
     }, [options, value, isMulti]);
 
-    const customStyles: StylesConfig<SearchableSelectOption, IsMulti, GroupBase<SearchableSelectOption>> = {
+    const customStyles: StylesConfig<
+      SearchableSelectOption,
+      IsMulti,
+      GroupBase<SearchableSelectOption>
+    > = {
         control: (base, state) => ({
             ...base,
-            backgroundColor: 'transparent',
-            borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : 'bg-white/60',
-            boxShadow: 'none',
+            backgroundColor: "var(--vms-surface)",
+            borderColor: state.isFocused
+                ? "var(--vms-focus)"
+                : "var(--vms-line-strong)",
+            boxShadow: state.isFocused
+                ? "0 0 0 2px color-mix(in srgb, var(--vms-focus) 20%, transparent)"
+                : "none",
             '&:hover': {
-                borderColor: state.isFocused ? 'rgb(var(--brand-primary,#1e40af))' : 'bg-white/60',
+                borderColor: state.isFocused
+                    ? "var(--vms-focus)"
+                    : "var(--vms-ink-muted)",
             },
-            minHeight: '36px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            '@media (min-width: 640px)': {
-                fontSize: '14px',
+            minHeight: "var(--vms-control-height)",
+            borderRadius: "var(--vms-radius-control)",
+            cursor: state.isDisabled ? "not-allowed" : "pointer",
+            opacity: state.isDisabled ? 0.55 : 1,
+            fontSize: "16px",
+            transition: "border-color var(--vms-motion), box-shadow var(--vms-motion)",
+            '@media (min-width: 768px)': {
+                fontSize: "14px",
             },
         }),
         valueContainer: (base) => ({
@@ -71,61 +88,46 @@ export function SearchableSelect<IsMulti extends boolean = false>({
         dropdownIndicator: (base) => ({
             ...base,
             padding: '8px',
-            color: '#79818C',
+            color: 'var(--vms-ink-muted)',
             '&:hover': {
-                color: '#475569',
+                color: 'var(--vms-ink)',
             },
         }),
         clearIndicator: (base) => ({
             ...base,
             padding: '8px',
-            color: '#79818C',
+            color: 'var(--vms-ink-muted)',
             '&:hover': {
-                color: '#475569',
+                color: 'var(--vms-ink)',
             },
         }),
         menu: (base) => ({
             ...base,
-            backgroundColor: 'white',
-            border: '1px solid rgb(229 231 235)',
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-            borderRadius: '4px',
+            backgroundColor: 'var(--vms-surface)',
+            border: '1px solid var(--vms-line)',
+            boxShadow: 'var(--vms-shadow-overlay)',
+            borderRadius: 'var(--vms-radius-surface)',
             zIndex: 50,
-            '@media (prefers-color-scheme: dark)': {
-                backgroundColor: 'rgb(31 41 55)',
-                border: '1px solid rgb(55 65 81)',
-            },
         }),
         option: (base, state) => ({
             ...base,
             backgroundColor: state.isSelected
-                ? 'rgb(var(--brand-primary,#1e40af))'
+                ? 'var(--vms-action)'
                 : state.isFocused
-                    ? 'rgb(219 234 254)'
+                    ? 'var(--vms-surface-subtle)'
                     : 'transparent',
-            color: state.isSelected ? '#ffffff' : 'rgb(17 24 39)',
+            color: state.isSelected ? 'var(--vms-on-action)' : 'var(--vms-ink)',
             cursor: 'pointer',
-            // border: "1px solid #e1e1e1",
-            fontSize: '12px',
-            '@media (min-width: 640px)': {
-                fontSize: '14px',
-            },
-            '@media (prefers-color-scheme: dark)': {
-                backgroundColor: state.isSelected
-                    ? 'rgb(var(--brand-primary,30 64 175))'
-                    : state.isFocused
-                        ? 'rgb(55 65 81)'
-                        : 'transparent',
-                color: state.isSelected ? '#ffffff' : 'rgb(243 244 246)',
-            },
+            fontSize: '14px',
+            padding: '10px 12px',
             '&:active': {
-                backgroundColor: 'rgb(var(--brand-primary,#1e40af))',
-                color: '#fff',
+                backgroundColor: 'var(--vms-action)',
+                color: 'var(--vms-on-action)',
             },
         }),
         placeholder: (base) => ({
             ...base,
-            color: '#C4C4C4',
+            color: 'var(--vms-ink-muted)',
         }),
         singleValue: (base) => ({
             ...base,
@@ -133,21 +135,21 @@ export function SearchableSelect<IsMulti extends boolean = false>({
         }),
         multiValue: (base) => ({
             ...base,
-            backgroundColor: 'rgba(var(--brand-primary,#1e40af), 0.1)',
-            borderRadius: '2px',
+            backgroundColor: 'var(--vms-surface-subtle)',
+            borderRadius: 'var(--vms-radius-control)',
         }),
         multiValueLabel: (base) => ({
             ...base,
-            color: 'rgb(var(--brand-primary,#1e40af))',
+            color: 'var(--vms-ink)',
             fontSize: '12px',
             padding: '2px 6px',
         }),
         multiValueRemove: (base) => ({
             ...base,
-            color: 'rgb(var(--brand-primary,#1e40af))',
+            color: 'var(--vms-ink-muted)',
             '&:hover': {
-                backgroundColor: 'rgba(var(--brand-primary,#1e40af), 0.2)',
-                color: 'rgb(var(--brand-primary,#1e40af))',
+                backgroundColor: 'var(--vms-danger-subtle)',
+                color: 'var(--vms-danger)',
             },
         }),
     };
@@ -155,7 +157,7 @@ export function SearchableSelect<IsMulti extends boolean = false>({
     return (
         <div className={cn("w-full h-full", className)}>
             <Select
-                instanceId={useMemo(() => Math.random().toString(36).substr(2, 9), [])}
+                instanceId={`searchable-select-${generatedId.replace(/:/g, "")}`}
                 value={selectedOption as any}
                 onChange={(newValue: any) => {
                     if (isMulti) {
