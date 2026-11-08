@@ -1,9 +1,36 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
+interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
+  containerClassName?: string;
+  /** Accessible name for the keyboard-operable horizontal comparison region. */
+  scrollLabel?: string;
+  /** Show a persistent scroll cue when a wide table cannot become a summary. */
+  scrollHint?: string;
+}
+
+export function Table({
+  className,
+  containerClassName,
+  scrollLabel = "Data table",
+  scrollHint,
+  ...props
+}: TableProps) {
   return (
-    <div className="relative w-full overflow-x-auto overflow-y-visible rounded-lg border border-border -mx-1 xs:mx-0">
+    <div
+      className={cn(
+        "relative w-full overflow-x-auto overflow-y-visible rounded-lg border border-border -mx-1 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 xs:mx-0",
+        containerClassName,
+      )}
+      role="region"
+      aria-label={scrollLabel}
+      tabIndex={0}
+    >
+      {scrollHint ? (
+        <p className="border-b border-border bg-muted/40 px-3 py-2 text-left text-xs text-muted-foreground md:hidden">
+          {scrollHint}
+        </p>
+      ) : null}
       <div className="inline-block min-w-full align-middle">
         <table
           className={cn(
