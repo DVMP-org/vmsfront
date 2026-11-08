@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Settings,
   ShieldCheck,
-  Video,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -34,7 +33,12 @@ import {
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  PluginMetricStrip,
+  PluginNotice,
+} from "@/components/plugins/PluginUi";
 import { parseApiError } from "@/lib/error-utils";
 import {
   Camera,
@@ -126,24 +130,16 @@ function CameraSetupForm({
       title={isEditing ? `Edit ${camera?.name}` : "Register a camera"}
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
-          <div className="flex gap-3">
-            <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold">
-                Credentials stay outside the camera record
-              </p>
-              <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
-                Enter environment variable references such as{" "}
-                <code className="rounded bg-white/70 px-1.5 py-0.5 text-xs dark:bg-black/20">
-                  env://GATE_CAMERA_PASSWORD
-                </code>
-                . Raw passwords and credentials embedded in the URL are
-                rejected.
-              </p>
-            </div>
-          </div>
-        </div>
+        <PluginNotice
+          tone="warning"
+          title="Credentials stay outside the camera record"
+        >
+          Enter environment variable references such as{" "}
+          <code className="rounded bg-[var(--vms-surface)] px-1.5 py-0.5 text-xs font-semibold">
+            env://GATE_CAMERA_PASSWORD
+          </code>
+          . Raw passwords and credentials embedded in the URL are rejected.
+        </PluginNotice>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Input
@@ -212,7 +208,7 @@ function CameraSetupForm({
           />
         </div>
 
-        <div className="space-y-4 rounded-xl border p-4">
+        <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
           <div>
             <h3 className="font-semibold">Authentication references</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -285,12 +281,12 @@ function CameraCard({
   const testedAt = testResult?.tested_at || camera.last_connection_tested_at;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="border-b bg-gradient-to-br from-slate-50 to-white dark:from-slate-900/50 dark:to-card">
+    <Card>
+      <CardHeader className="border-b border-[var(--vms-line)]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 gap-3">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              <CameraIcon className="h-5 w-5" />
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
+              <CameraIcon className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
               <CardTitle className="truncate text-base">
@@ -314,11 +310,11 @@ function CameraCard({
       </CardHeader>
 
       <CardContent className="space-y-4 pt-5">
-        <div className="rounded-lg bg-muted/50 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
             Endpoint
           </p>
-          <p className="mt-1 break-all font-mono text-xs text-foreground">
+          <p className="mt-1 break-all font-mono text-xs text-[var(--vms-ink)]">
             {camera.rtsp_url}
           </p>
         </div>
@@ -342,7 +338,7 @@ function CameraCard({
             {capabilities.map((capability) => (
               <span
                 key={capability}
-                className="truncate rounded bg-muted/40 px-2 py-1"
+                className="truncate rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] px-2 py-1"
               >
                 {capability}
               </span>
@@ -351,15 +347,15 @@ function CameraCard({
         )}
 
         {error && (
-          <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-            <WifiOff className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <div className="flex gap-2 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_32%,white)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]">
+            <WifiOff className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <span>{testResult?.message || error}</span>
           </div>
         )}
 
         {testResult?.success && (
-          <div className="flex gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <div className="flex gap-2 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-success)_32%,white)] bg-[var(--vms-success-subtle)] p-3 text-sm text-[var(--vms-success)]">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <span>
               {testResult.message}
               {testResult.resolution ? ` · ${testResult.resolution}` : ""}
@@ -368,7 +364,7 @@ function CameraCard({
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
           <Clock3 className="h-3.5 w-3.5" />
           {testedAt
             ? `Last tested ${new Date(testedAt).toLocaleString()}`
@@ -472,14 +468,11 @@ export default function CameraHome() {
   });
 
   const cameras = camerasQuery.data?.items || [];
-  const dashboard = useMemo(() => {
-    const ready = cameras.filter((camera) => camera.status === "online").length;
-    const needsSetup = cameras.filter(
-      (camera) => camera.status === "setup_required",
-    ).length;
-    const untested = Math.max(cameras.length - ready - needsSetup, 0);
-    return { ready, needsSetup, untested };
-  }, [cameras]);
+  const ready = cameras.filter((camera) => camera.status === "online").length;
+  const needsSetup = cameras.filter(
+    (camera) => camera.status === "setup_required",
+  ).length;
+  const untested = Math.max(cameras.length - ready - needsSetup, 0);
 
   const openCreateForm = () => {
     setEditingCamera(null);
@@ -498,112 +491,100 @@ export default function CameraHome() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-5 py-6 text-white shadow-sm sm:px-7">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="mb-3 flex flex-wrap gap-2">
-              <Badge className="border-white/15 bg-white/10 text-white">
-                Organization-scoped
-              </Badge>
-              <Badge className="border-white/15 bg-white/10 text-white">
-                Secret references only
-              </Badge>
-            </div>
-            <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-              <Video className="h-7 w-7 text-indigo-300" />
-              Camera setup
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-slate-300 sm:text-base">
-              Register camera endpoints, verify connectivity, and review the
-              capabilities available to this organization.
-            </p>
+    <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
+      <PageHeader
+        eyebrow="Extensions / Camera"
+        title="Camera setup"
+        description="Register camera endpoints, verify connectivity, and review the capabilities available to this organization."
+        metadata={
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">Organization-scoped</Badge>
+            <Badge variant="outline">Secret references only</Badge>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="light-outlined"
-              leftNode={<Settings className="h-4 w-4" />}
-              onClick={() => router.push("/plugins/camera/admin/settings")}
-            >
-              Camera settings
-            </Button>
-            <Button
-              variant="light"
-              leftNode={<Plus className="h-4 w-4" />}
-              onClick={openCreateForm}
-            >
-              Add camera
-            </Button>
-          </div>
-        </div>
-      </div>
+        }
+        secondaryActions={
+          <Button
+            variant="outline"
+            leftNode={<Settings className="h-4 w-4" aria-hidden="true" />}
+            onClick={() => router.push("/plugins/camera/admin/settings")}
+          >
+            Camera settings
+          </Button>
+        }
+        primaryAction={
+          <Button
+            leftNode={<Plus className="h-4 w-4" aria-hidden="true" />}
+            onClick={openCreateForm}
+          >
+            Add camera
+          </Button>
+        }
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
+      {camerasQuery.isError && camerasQuery.data ? (
+        <PluginNotice
+          tone="warning"
+          title="Showing the last successful camera snapshot"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => camerasQuery.refetch()}
+            >
+              Retry
+            </Button>
+          }
+        >
+          The latest camera refresh failed.
+        </PluginNotice>
+      ) : null}
+
+      <PluginMetricStrip
+        label="Camera status"
+        metrics={[
           {
             label: "Cameras",
             value: cameras.length,
+            detail: "Registered in this organization",
             icon: CameraIcon,
-            color:
-              "text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200",
           },
           {
             label: "Ready",
-            value: dashboard.ready,
+            value: ready,
+            detail: "Online and usable",
             icon: Wifi,
-            color:
-              "text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300",
           },
           {
             label: "Needs setup",
-            value: dashboard.needsSetup,
+            value: needsSetup,
+            detail: "Action required",
             icon: WifiOff,
-            color:
-              "text-amber-700 bg-amber-100 dark:bg-amber-950 dark:text-amber-300",
           },
           {
             label: "Not tested",
-            value: dashboard.untested,
+            value: untested,
+            detail: "Connection unverified",
             icon: RefreshCw,
-            color:
-              "text-indigo-700 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300",
           },
-        ].map((stat) => {
-          const StatIcon = stat.icon;
-          return (
-            <Card key={stat.label}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  <p className="mt-1 text-2xl font-bold">{stat.value}</p>
-                </div>
-                <div className={`rounded-xl p-3 ${stat.color}`}>
-                  <StatIcon className="h-5 w-5" />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+        ]}
+      />
 
       <Card>
         <CardContent className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-indigo-100 p-2.5 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              <Network className="h-5 w-5" />
+            <div className="rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-2.5 text-[var(--vms-action)]">
+              <Network className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
               <p className="font-semibold">Network policy</p>
               {settingsQuery.isLoading ? (
                 <Skeleton className="mt-2 h-4 w-56" />
               ) : settingsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[var(--vms-ink-muted)]">
                   Settings are unavailable. Open camera settings to retry.
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[var(--vms-ink-muted)]">
                   {settingsQuery.data?.allow_private_camera_networks
                     ? "Private LAN camera addresses are allowed. Loopback, link-local, multicast, and metadata destinations remain blocked."
                     : "Private LAN camera addresses are blocked. Use a public or routed camera endpoint."}

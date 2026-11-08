@@ -4,9 +4,6 @@ import dynamic from "next/dynamic";
 const CameraDashboard = dynamic(() => import("./pages/admin/CameraHome"));
 const CameraSettings = dynamic(() => import("./pages/admin/CameraSettings"));
 
-// Legacy routes (for backward compatibility - applies to both admin and resident)
-const routes = [];
-
 // Admin-specific routes
 const adminRoutes = [
   {
@@ -26,8 +23,9 @@ const adminRoutes = [
 // Resident-specific routes
 const residentRoutes = [];
 
-export default {
-  routes, // Legacy: for backward compatibility
+const pluginRoutes = {
   adminRoutes,
   residentRoutes,
 };
+
+export default pluginRoutes;

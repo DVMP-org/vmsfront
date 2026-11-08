@@ -176,7 +176,6 @@ export function findPluginRouteAndType(
         basePath: string;
         adminRoutes?: Array<{ path: string;[key: string]: any }>;
         residentRoutes?: Array<{ path: string;[key: string]: any }>;
-        routes?: Array<{ path: string;[key: string]: any }>;
     }
 ): { route: { path: string;[key: string]: any }; layoutType: "admin" | "resident" } | null {
     if (!isPluginPath(pathname, plugin.basePath)) {
@@ -196,14 +195,6 @@ export function findPluginRouteAndType(
     // Check resident routes
     if (plugin.residentRoutes && plugin.residentRoutes.length > 0) {
         const route = findMatchingRoute(routePath, plugin.residentRoutes);
-        if (route) {
-            return { route, layoutType: "resident" };
-        }
-    }
-
-    // Check legacy routes (default to resident)
-    if (plugin.routes && plugin.routes.length > 0) {
-        const route = findMatchingRoute(routePath, plugin.routes);
         if (route) {
             return { route, layoutType: "resident" };
         }

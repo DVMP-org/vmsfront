@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +13,10 @@ import { Meter, PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PluginMetricStrip, PluginNotice } from "@/components/plugins/PluginUi";
+import { parseApiError } from "@/lib/error-utils";
 import { cleanToken } from "../../utils";
 
 export default function ResidentElectricityDashboard() {
@@ -26,7 +28,7 @@ export default function ResidentElectricityDashboard() {
     const currentResidencyId = selectedResidency?.id || profile?.residencies?.[0]?.id || null;
 
     // Fetch meters for the current residency
-    const { data: metersData, isLoading: isLoadingMeters } = useQuery({
+    const { data: metersData, isLoading: isLoadingMeters, isError: metersError, error: metersQueryError, refetch: refetchMeters } = useQuery({
         queryKey: ["electricity", "meters", currentResidencyId],
         queryFn: async () => {
             if (!currentResidencyId) throw new Error("Residency ID is required");
@@ -41,7 +43,7 @@ export default function ResidentElectricityDashboard() {
     });
 
     // Fetch recent purchases for the current residency
-    const { data: purchasesData, isLoading: isLoadingPurchases } = useQuery({
+    const { data: purchasesData, isLoading: isLoadingPurchases, isError: purchasesError, error: purchasesQueryError, refetch: refetchPurchases } = useQuery({
         queryKey: ["electricity", "purchases", currentResidencyId],
         queryFn: async () => {
             if (!currentResidencyId) throw new Error("Residency ID is required");
@@ -59,12 +61,52 @@ export default function ResidentElectricityDashboard() {
     const recentPurchases = purchasesData?.items || [];
     const totalPurchases = purchasesData?.total || 0;
 
-    const totalSpent = useMemo(() => {
-        return recentPurchases
-            .reduce((sum, p) => sum + p.amount || 0, 0);
-    }, [recentPurchases]);
+    const totalSpent = recentPurchases.reduce(
+        (sum, purchase) => sum + purchase.amount || 0,
+        0,
+    );
 
     const isLoading = isLoadingMeters || isLoadingPurchases;
+    const isError = metersError || purchasesError;
+    const queryError = metersQueryError || purchasesQueryError;
+    const recentColumns: Column<PurchaseToken>[] = [
+        {
+            key: "meter",
+            header: "Meter",
+            accessor: (purchase) => purchase.meter?.meter_number || "—",
+        },
+        {
+            key: "units",
+            header: "Units",
+            accessor: (purchase) =>
+                purchase.units !== undefined ? `${purchase.units} units` : "—",
+        },
+        {
+            key: "token",
+            header: "Token",
+            accessor: (purchase) =>
+                purchase.token ? (
+                    <span className="font-mono text-xs">{cleanToken(purchase.token)}</span>
+                ) : (
+                    "—"
+                ),
+        },
+        {
+            key: "amount",
+            header: "Amount",
+            accessor: (purchase) => (
+                <span className="font-semibold tabular-nums">
+                    ₦{purchase.amount.toLocaleString()}
+                </span>
+            ),
+        },
+        {
+            key: "created_at",
+            header: "Date",
+            accessor: (purchase) =>
+                purchase.created_at ? formatDate(purchase.created_at) : "—",
+        },
+    ];
 
     // Show error if no residency selected
     if (!currentResidencyId) {
@@ -98,81 +140,67 @@ export default function ResidentElectricityDashboard() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Electricity Management</h1>
-                    <p className="text-muted-foreground">
-                        Manage your electricity meters and purchases
-                    </p>
-                </div>
-                <Button
-                    onClick={() => {
-                        router.push("/plugins/electricity/purchase");
-                    }}
-                    className="gap-2"
+        <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
+            <PageHeader
+                eyebrow="My workspace / Electricity"
+                title="Electricity"
+                description="Review your meters, recent purchases, and available electricity actions."
+                primaryAction={
+                    <Button
+                        onClick={() => {
+                            router.push("/plugins/electricity/purchase");
+                        }}
+                    >
+                        <CreditCard className="h-4 w-4" aria-hidden="true" />
+                        Purchase electricity
+                    </Button>
+                }
+            />
+
+            {isError ? (
+                <PluginNotice
+                    tone="danger"
+                    title="Electricity details could not be refreshed"
+                    action={
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                                refetchMeters();
+                                refetchPurchases();
+                            }}
+                        >
+                            Retry
+                        </Button>
+                    }
                 >
-                    <CreditCard className="h-4 w-4" />
-                    Purchase Electricity
-                </Button>
-            </div>
+                    {parseApiError(queryError).message}
+                </PluginNotice>
+            ) : null}
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card className="border-none ">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted/90">
-                            My Meters
-                        </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
-                            <Zap className="h-5 w-5" />
-                        </span>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-muted-foreground">
-                            {meters.length}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {meters.length} registered
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted/90">
-                            Total Purchases
-                        </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
-                            <CreditCard className="h-5 w-5" />
-                        </span>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-muted-foreground">
-                            {totalPurchases}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">All time</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted/90">
-                            Total Spent
-                        </CardTitle>
-                        <span className="rounded-full bg-white/20 p-2 text-muted-foreground shadow-sm">
-                            <TrendingUp className="h-5 w-5" />
-                        </span>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-muted-foreground">
-                            ₦{totalSpent.toLocaleString()}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">All time</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <PluginMetricStrip
+                label="Electricity summary"
+                metrics={[
+                    {
+                        label: "My meters",
+                        value: meters.length,
+                        detail: "Registered to this relationship",
+                        icon: Zap,
+                    },
+                    {
+                        label: "Purchases",
+                        value: totalPurchases,
+                        detail: "All time",
+                        icon: CreditCard,
+                    },
+                    {
+                        label: "Recent spend",
+                        value: `₦${totalSpent.toLocaleString()}`,
+                        detail: "Latest purchases shown below",
+                        icon: TrendingUp,
+                    },
+                ]}
+            />
 
             {/* My Meters */}
             <Card>
@@ -246,50 +274,24 @@ export default function ResidentElectricityDashboard() {
                 </CardHeader>
                 <CardContent>
                     {recentPurchases.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>No purchases yet</p>
-                            <p className="text-sm mt-2">
-                                Start by purchasing electricity for your meter
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon={Activity}
+                            title="No purchases yet"
+                            description="Your electricity purchases and tokens will appear here."
+                            action={{
+                                label: "Purchase electricity",
+                                onClick: () =>
+                                    router.push("/plugins/electricity/purchase"),
+                            }}
+                        />
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Meter Number</TableHead>
-                                    <TableHead>Units</TableHead>
-                                    <TableHead>Token</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead className="text-right">Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentPurchases.map((purchase) => (
-                                    <TableRow key={purchase.id}>
-                                        <TableCell className="font-medium">
-                                            {purchase.meter?.meter_number || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                            {purchase.units !== undefined ? `${purchase.units} units` : "—"}
-                                        </TableCell>
-                                        <TableCell>
-                                            {purchase.token ? (
-                                                <span className="font-mono text-xs">{cleanToken(purchase.token)}</span>
-                                            ) : (
-                                                "—"
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-semibold">
-                                            ₦{purchase.amount.toLocaleString()}
-                                        </TableCell>
-                                        <TableCell className="text-right text-muted-foreground">
-                                            {purchase.created_at ? formatDate(purchase.created_at) : "—"}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataTable
+                            data={recentPurchases}
+                            columns={recentColumns}
+                            searchable={false}
+                            showPagination={false}
+                            emptyMessage="No purchases found"
+                        />
                     )}
                 </CardContent>
             </Card>
