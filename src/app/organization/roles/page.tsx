@@ -7,23 +7,20 @@ import {
   ArrowRight,
   FlaskConical,
   Plus,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { fieldControlClassName } from "@/components/ui/form/Field";
-import { TableSkeleton } from "@/components/ui/Skeleton";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { useAdminRoles } from "@/hooks/use-admin";
 import { parseApiError } from "@/lib/error-utils";
 import { OrganizationAdminHeader } from "@/features/organization-admin/OrganizationAdminHeader";
+import type { AdminRole } from "@/types";
 
 export default function OrganizationRolesPage() {
   const pathname = usePathname();
   const embedded = pathname?.startsWith("/organization/settings/roles") === true;
-  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const roles = useAdminRoles({
     page: 1,
@@ -32,6 +29,74 @@ export default function OrganizationRolesPage() {
     sort: "name|asc",
   });
   const items = useMemo(() => roles.data?.items ?? [], [roles.data?.items]);
+  const basePath = embedded
+    ? "/organization/settings/roles"
+    : "/organization/roles";
+  const columns = useMemo<Column<AdminRole>[]>(
+    () => [
+      {
+        key: "name",
+        header: "Role",
+        sortable: true,
+        accessor: (role) => (
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{role.name}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs text-[var(--vms-ink-muted)]">
+                {role.description || "No description"}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "code",
+        header: "Code",
+        sortable: true,
+        accessor: (role) => <Badge variant="neutral">{role.code}</Badge>,
+      },
+      {
+        key: "permissions_parsed",
+        header: "Permissions",
+        sortable: true,
+        accessor: (role) => (
+          <span className="text-sm tabular-nums">
+            {role.permissions_parsed.length} grant
+            {role.permissions_parsed.length === 1 ? "" : "s"}
+          </span>
+        ),
+      },
+      {
+        key: "scope",
+        header: "Scope",
+        accessor: (role) => (
+          <span className="text-sm text-[var(--vms-ink-muted)]">
+            {role.permissions_parsed.includes("*")
+              ? "Full tenant access"
+              : "Defined grants"}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Action",
+        mobileHide: true,
+        accessor: (role) => (
+          <Link
+            href={`${basePath}/create?role=${encodeURIComponent(role.id)}`}
+            className="inline-flex min-h-9 items-center justify-end gap-1.5 whitespace-nowrap text-sm font-semibold text-[var(--vms-action)] hover:underline"
+          >
+            Inspect draft
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        ),
+      },
+    ],
+    [basePath],
+  );
 
   return (
     <div className="space-y-5">
@@ -42,7 +107,7 @@ export default function OrganizationRolesPage() {
           description="Review the roles that govern organization administration. Role authoring is a visual prototype in this release and does not persist changes."
           actions={
             <Button asChild>
-              <Link href="/organization/roles/create">
+              <Link href={`${basePath}/create`}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Create draft role
               </Link>
@@ -65,133 +130,23 @@ export default function OrganizationRolesPage() {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-        <div className="flex flex-col gap-3 border-b border-[var(--vms-line)] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">
-              Current organization roles
-            </h2>
-            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              These are read-only in the prototype.
-            </p>
-          </div>
-          <form
-            className="flex w-full gap-2 sm:max-w-md"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setSearch(searchInput.trim());
-            }}
-          >
-            <label htmlFor="role-search" className="sr-only">
-              Search roles
-            </label>
-            <div className="relative min-w-0 flex-1">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
-                aria-hidden="true"
-              />
-              <input
-                id="role-search"
-                type="search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search roles"
-                className={`${fieldControlClassName} pl-9`}
-              />
-            </div>
-            <Button type="submit" variant="secondary">
-              Search
-            </Button>
-          </form>
-        </div>
-
-        {roles.isPending ? (
-          <div className="p-4">
-            <TableSkeleton rows={4} />
-          </div>
-        ) : roles.isError ? (
-          <div
-            role="alert"
-            className="m-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]"
-          >
-            <p className="font-semibold">Roles could not be loaded</p>
-            <p className="mt-1">{parseApiError(roles.error).message}</p>
-            <Button
-              variant="secondary"
-              className="mt-3"
-              onClick={() => roles.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : !items.length ? (
-          <EmptyState
-            icon={ShieldCheck}
-            title={search ? "No roles match" : "No organization roles yet"}
-            description={
-              search
-                ? "Clear the search and try again."
-                : "Open the draft authoring surface to preview a role setup."
-            }
-            action={
-              <Button asChild>
-                <Link href="/organization/roles/create">
-                  Create draft role
-                </Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="divide-y divide-[var(--vms-line)]">
-            {items.map((role) => (
-              <article
-                key={role.id}
-                className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.5fr)_auto] lg:items-center"
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
-                    <ShieldCheck
-                      className="h-4 w-4"
-                      aria-hidden="true"
-                    />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm font-semibold">
-                      {role.name}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                      {role.description || "No description"}
-                    </p>
-                    <Badge variant="neutral" className="mt-2">
-                      {role.code}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-                    Permissions
-                  </p>
-                  <p className="mt-1 text-sm">
-                    {role.permissions_parsed.length} configured grants
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    {role.permissions_parsed.includes("*")
-                      ? "Full tenant access"
-                      : "Use draft authoring to preview changes"}
-                  </p>
-                </div>
-                <Link
-                  href={`/organization/roles/create?role=${encodeURIComponent(role.id)}`}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-sm font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                >
-                  Inspect draft
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+      <DataTable
+        data={items}
+        columns={columns}
+        tableLabel="Organization roles"
+        searchPlaceholder="Search roles"
+        initialSearch={search}
+        onSearchChange={setSearch}
+        isLoading={roles.isPending}
+        errorMessage={
+          roles.isError ? parseApiError(roles.error).message : undefined
+        }
+        onRetry={() => roles.refetch()}
+        emptyMessage={
+          search ? "No roles match these filters" : "No organization roles yet"
+        }
+        showPagination={false}
+      />
     </div>
   );
 }

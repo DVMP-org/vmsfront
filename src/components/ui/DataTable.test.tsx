@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Column, DataTable } from "./DataTable";
 import { PaginationBar } from "./PaginationBar";
 
@@ -52,6 +52,80 @@ describe("DataTable register foundation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it("generates an accessible mobile summary when no custom card is supplied", () => {
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+        tableLabel="People register"
+      />,
+    );
+
+    expect(
+      screen.getByRole("list", { name: "People register row summaries" }),
+    ).toHaveTextContent("NameAdaRoleResident");
+  });
+
+  it("lets operators hide and restore columns", () => {
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Columns"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Role" }));
+    expect(screen.queryByRole("columnheader", { name: "Role" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset columns" }));
+    expect(screen.getByRole("columnheader", { name: "Role" })).toBeInTheDocument();
+  });
+
+  it("debounces remote search while keeping the input responsive", () => {
+    vi.useFakeTimers();
+    const onSearchChange = vi.fn();
+    render(
+      <DataTable
+        data={[]}
+        columns={columns}
+        searchPlaceholder="Search people"
+        onSearchChange={onSearchChange}
+      />,
+    );
+
+    const search = screen.getByPlaceholderText("Search people");
+    fireEvent.change(search, { target: { value: "Ada" } });
+    expect(search).toHaveValue("Ada");
+    expect(onSearchChange).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(onSearchChange).toHaveBeenCalledWith("Ada");
+    vi.useRealTimers();
+  });
+
+  it("runs a bulk action for the selected rows", () => {
+    const archive = vi.fn();
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+        selectable
+        bulkActions={[{ label: "Archive", onClick: archive }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Select row" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    expect(archive).toHaveBeenCalledWith(["one"]);
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("PaginationBar", () => {

@@ -26,8 +26,12 @@ import {
   Square,
   FilterX,
   Calendar as CalendarIcon,
-  Loader2,
+  Columns3,
+  Inbox,
   RefreshCw,
+  Rows3,
+  SearchX,
+  SlidersHorizontal,
   TriangleAlert
 } from "lucide-react";
 import DatePicker from "react-datepicker";
@@ -45,6 +49,10 @@ export interface Column<T> {
   responsiveHide?: "sm" | "md" | "lg";
   /** Minimum width for this column (prevents squishing) */
   minWidth?: number;
+  /** Keep utility/action columns out of the generated mobile summary. */
+  mobileHide?: boolean;
+  /** Start hidden in the column chooser; users can opt back in. */
+  hiddenByDefault?: boolean;
 }
 
 export interface FilterConfig {
@@ -117,9 +125,13 @@ interface DataTableProps<T> {
   isStale?: boolean;
   staleMessage?: string;
   onRetry?: () => void;
+  /** Error copy for a failed collection load. Data may still be visible when stale. */
+  errorMessage?: string | null;
   // Row styling
   rowClassName?: (row: T) => string;
   enableRowStriping?: boolean;
+  /** Show the shared columns and density controls. */
+  enableViewControls?: boolean;
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -164,8 +176,10 @@ export function DataTable<T extends Record<string, any>>({
   isStale = false,
   staleMessage = "Showing the last available data.",
   onRetry,
+  errorMessage = null,
   rowClassName,
   enableRowStriping = true,
+  enableViewControls = true,
 }: DataTableProps<T>) {
   // Validate and normalize inputs to prevent runtime errors
   const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
@@ -177,12 +191,26 @@ export function DataTable<T extends Record<string, any>>({
   // Use new props if provided, fall back to legacy props for backward compatibility
   const effectiveInitialSearch = propInitialSearch || "";
   const effectiveInitialFilters = propInitialFilters;
+  const initialVisibleColumnKeys = useMemo(
+    () =>
+      safeColumns
+        .filter((column) => !column.hiddenByDefault)
+        .map((column) => column.key),
+    [safeColumns],
+  );
 
   // Internal state for search
   const [localSearchTerm, setLocalSearchTerm] = useState(effectiveInitialSearch);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isUserTypingRef = useRef(false);
   const lastLocalValueRef = useRef(effectiveInitialSearch);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<Set<string>>(
+    () => new Set(initialVisibleColumnKeys),
+  );
+  const [density, setDensity] = useState<"compact" | "comfortable">(
+    "comfortable",
+  );
 
   // Internal state for filters - map field to value
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => {
@@ -227,6 +255,36 @@ export function DataTable<T extends Record<string, any>>({
       lastLocalValueRef.current = effectiveInitialSearch;
     }
   }, [effectiveInitialSearch]);
+
+  useEffect(() => {
+    setVisibleColumnKeys((current) => {
+      const next = new Set(
+        Array.from(current).filter((key) =>
+          safeColumns.some((column) => column.key === key),
+        ),
+      );
+      initialVisibleColumnKeys.forEach((key) => {
+        if (!safeColumns.some((column) => column.key === key)) return;
+        const wasPresent = current.has(key);
+        if (wasPresent || current.size === 0) next.add(key);
+      });
+      return next;
+    });
+  }, [initialVisibleColumnKeys, safeColumns]);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    },
+    [],
+  );
+
+  const visibleColumns = useMemo(
+    () => safeColumns.filter((column) => visibleColumnKeys.has(column.key)),
+    [safeColumns, visibleColumnKeys],
+  );
 
   // Sync filter values with external initialFilters
   // Use ref to avoid circular dependency that causes infinite loops
@@ -382,6 +440,34 @@ export function DataTable<T extends Record<string, any>>({
 
     let result = [...safeData];
 
+    for (const filter of currentFilters) {
+      result = result.filter((row) => {
+        const value = row[filter.field];
+        if (filter.operator === "eq") return String(value) === String(filter.value);
+        if (filter.operator === "ne") return String(value) !== String(filter.value);
+        if (filter.operator === "in") {
+          return Array.isArray(filter.value)
+            ? filter.value.map(String).includes(String(value))
+            : false;
+        }
+        if (filter.operator === "not_in") {
+          return Array.isArray(filter.value)
+            ? !filter.value.map(String).includes(String(value))
+            : true;
+        }
+        if (filter.operator === "like" || filter.operator === "ilike") {
+          return String(value ?? "")
+            .toLowerCase()
+            .includes(String(filter.value).toLowerCase());
+        }
+        if (filter.operator === "gt") return Number(value) > Number(filter.value);
+        if (filter.operator === "gte") return Number(value) >= Number(filter.value);
+        if (filter.operator === "lt") return Number(value) < Number(filter.value);
+        if (filter.operator === "lte") return Number(value) <= Number(filter.value);
+        return true;
+      });
+    }
+
     // Apply search
     if (localSearchTerm) {
       const searchLower = localSearchTerm.toLowerCase();
@@ -394,7 +480,15 @@ export function DataTable<T extends Record<string, any>>({
     }
 
     return result;
-  }, [safeData, localSearchTerm, safeColumns, getComparableValue, serverSide, disableClientSideFiltering]);
+  }, [
+    safeData,
+    currentFilters,
+    localSearchTerm,
+    safeColumns,
+    getComparableValue,
+    serverSide,
+    disableClientSideFiltering,
+  ]);
 
   // Sort data
   const sortedData = useMemo(() => {
@@ -469,23 +563,21 @@ export function DataTable<T extends Record<string, any>>({
 
   // Handle search change - update local state immediately, then update parent
   const handleSearchChange = useCallback((value: string) => {
-    // Mark that we're updating from user input
     isUserTypingRef.current = true;
-
-    // Update local state immediately to keep input responsive and maintain focus
     setLocalSearchTerm(value);
     lastLocalValueRef.current = value;
-
-    // Update parent state (triggers API call)
     if (onSearchChange) {
-      onSearchChange(value);
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+      searchDebounceRef.current = setTimeout(() => {
+        onSearchChange(value);
+      }, 300);
     }
     setCurrentPage(1);
-
-    // Reset typing flag after a delay to allow external updates to sync
     setTimeout(() => {
       isUserTypingRef.current = false;
-    }, 300);
+    }, 350);
   }, [onSearchChange, setCurrentPage]);
 
   // Handle filter change - memoized to prevent re-renders
@@ -527,6 +619,10 @@ export function DataTable<T extends Record<string, any>>({
 
   // Clear all filters
   const clearAllFilters = () => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
     setLocalSearchTerm("");
     lastLocalValueRef.current = "";
     if (onSearchChange) {
@@ -551,148 +647,288 @@ export function DataTable<T extends Record<string, any>>({
     action.onClick(selectedIds);
   };
 
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumnKeys((current) => {
+      const next = new Set(current);
+      if (next.has(columnKey)) {
+        if (next.size === 1) return current;
+        next.delete(columnKey);
+      } else {
+        next.add(columnKey);
+      }
+      return next;
+    });
+  };
+
+  const resetVisibleColumns = () => {
+    setVisibleColumnKeys(new Set(initialVisibleColumnKeys));
+  };
+
+  const renderFilterControl = (filterDef: FilterDefinition) => {
+    if (filterDef.type === "select") {
+      return filterDef.isSearchable ? (
+        <SearchableSelect
+          key={filterDef.field}
+          options={filterDef.options || []}
+          value={filterValues[filterDef.field] || ""}
+          onChange={(value) => handleFilterChange(filterDef.field, value || "")}
+          placeholder={`All ${filterDef.label}`}
+          className="w-full md:w-[180px]"
+        />
+      ) : (
+        <select
+          key={filterDef.field}
+          aria-label={`Filter by ${filterDef.label}`}
+          value={filterValues[filterDef.field] || ""}
+          onChange={(event) =>
+            handleFilterChange(filterDef.field, event.target.value)
+          }
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-[150px]"
+        >
+          <option value="">All {filterDef.label.toLowerCase()}</option>
+          {filterDef.options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (filterDef.type === "date") {
+      return (
+        <div className="relative w-full md:w-[170px]" key={filterDef.field}>
+          <DatePicker
+            selected={
+              filterValues[filterDef.field]
+                ? parseISO(filterValues[filterDef.field])
+                : null
+            }
+            onChange={(date: Date | null) => {
+              handleFilterChange(
+                filterDef.field,
+                date && isValid(date) ? format(date, "yyyy-MM-dd") : "",
+              );
+            }}
+            dateFormat="yyyy-MM-dd"
+            isClearable
+            portalId="root"
+            aria-label={`Filter by ${filterDef.label}`}
+            placeholderText={filterDef.label}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <CalendarIcon
+            className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative w-full md:w-[260px]" key={filterDef.field}>
+        <DatePicker
+          selectsRange
+          startDate={
+            filterValues[`${filterDef.field}_from`]
+              ? parseISO(filterValues[`${filterDef.field}_from`])
+              : undefined
+          }
+          endDate={
+            filterValues[`${filterDef.field}_to`]
+              ? parseISO(filterValues[`${filterDef.field}_to`])
+              : undefined
+          }
+          onChange={(update: [Date | null, Date | null]) => {
+            const [start, end] = update;
+            handleFilterChange(
+              `${filterDef.field}_from`,
+              start && isValid(start) ? format(start, "yyyy-MM-dd") : "",
+            );
+            handleFilterChange(
+              `${filterDef.field}_to`,
+              end && isValid(end) ? format(end, "yyyy-MM-dd") : "",
+            );
+          }}
+          isClearable
+          portalId="root"
+          aria-label={`Filter by ${filterDef.label} range`}
+          dateFormat="MMM d, yyyy"
+          placeholderText={filterDef.label}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <CalendarIcon
+          className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
+      </div>
+    );
+  };
+
+  const generatedMobileSummary = (row: T) => {
+    const summaryColumns = visibleColumns
+      .filter((column) => !column.mobileHide)
+      .slice(0, 4);
+
+    return (
+      <dl className="grid gap-3">
+        {summaryColumns.map((column) => (
+          <div
+            key={column.key}
+            className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3"
+          >
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {column.header}
+            </dt>
+            <dd className="min-w-0 text-sm text-foreground">
+              {column.accessor
+                ? column.accessor(row)
+                : String(row[column.key] ?? "—")}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    );
+  };
+
   return (
     <div className={cn("space-y-3 xs:space-y-4", className)}>
-      {/* Search and Filters */}
-      {(searchable || availableFilters.length > 0) && (
-        <div className="space-y-3">
-          {/* Search */}
-          {searchable && (
-            <div className="flex flex-col gap-2 xs:gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  ref={searchInputRef}
-                  placeholder={searchPlaceholder}
-                  value={localSearchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      {(searchable || availableFilters.length > 0 || enableViewControls) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          {searchable ? (
+            <div className="relative min-w-[13rem] flex-1 sm:max-w-[22rem]">
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                ref={searchInputRef}
+                aria-label={searchPlaceholder}
+                placeholder={searchPlaceholder}
+                value={localSearchTerm}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                className="h-9 pl-9 text-sm"
+              />
+            </div>
+          ) : null}
 
-              {hasActiveFilters && (
+          {availableFilters.length > 0 ? (
+            <>
+              <div className="hidden flex-wrap items-center gap-2 md:flex">
+                {availableFilters.map(renderFilterControl)}
+              </div>
+              <details className="relative md:hidden">
+                <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  Filters
+                  {currentFilters.length ? (
+                    <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">
+                      {currentFilters.length}
+                    </span>
+                  ) : null}
+                </summary>
+                <div className="absolute left-0 z-30 mt-2 grid w-[min(20rem,calc(100vw-2rem))] gap-3 rounded-md border border-border bg-card p-3 shadow-xl">
+                  {availableFilters.map(renderFilterControl)}
+                </div>
+              </details>
+            </>
+          ) : null}
+
+          <div className="ml-auto flex items-center gap-1.5">
+            <span
+              className="hidden whitespace-nowrap px-1 text-xs text-muted-foreground sm:inline"
+              aria-live="polite"
+            >
+              {displayTotal} result{displayTotal === 1 ? "" : "s"}
+            </span>
+            {hasActiveFilters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="h-9 gap-1.5 px-2"
+              >
+                <FilterX className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden lg:inline">Clear</span>
+              </Button>
+            ) : null}
+            {enableViewControls ? (
+              <>
+                <details className="relative">
+                  <summary
+                    aria-label="Choose visible columns"
+                    className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs font-medium [&::-webkit-details-marker]:hidden"
+                  >
+                    <Columns3 className="h-4 w-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Columns</span>
+                  </summary>
+                  <fieldset className="absolute right-0 z-30 mt-2 w-60 rounded-md border border-border bg-card p-3 shadow-xl">
+                    <legend className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      Visible columns
+                    </legend>
+                    <div className="grid max-h-64 gap-1 overflow-y-auto">
+                      {safeColumns.map((column) => (
+                        <label
+                          key={column.key}
+                          className="flex min-h-9 cursor-pointer items-center gap-2 rounded px-1.5 text-sm hover:bg-muted"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visibleColumnKeys.has(column.key)}
+                            onChange={() => toggleColumn(column.key)}
+                            className="h-4 w-4 rounded border-input"
+                          />
+                          {column.header}
+                        </label>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetVisibleColumns}
+                      className="mt-2 h-8 w-full justify-start px-2 text-xs"
+                    >
+                      Reset columns
+                    </Button>
+                  </fieldset>
+                </details>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={clearAllFilters}
-                  className="gap-2 w-full sm:w-auto"
+                  onClick={() =>
+                    setDensity((current) =>
+                      current === "comfortable" ? "compact" : "comfortable",
+                    )
+                  }
+                  className="h-9 w-9 p-0"
+                  aria-label={
+                    density === "comfortable"
+                      ? "Use compact row density"
+                      : "Use comfortable row density"
+                  }
+                  title={
+                    density === "comfortable"
+                      ? "Compact density"
+                      : "Comfortable density"
+                  }
                 >
-                  <X className="h-4 w-4" />
-                  <span className="hidden xs:inline">Clear Filters</span>
-                  <span className="xs:hidden">Clear</span>
+                  <Rows3 className="h-4 w-4" aria-hidden="true" />
                 </Button>
-              )}
-            </div>
-          )}
-
-          {/* Filters Bar */}
-          {availableFilters.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-              <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Filters:</span>
-              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-x-6 sm:gap-y-3 w-full sm:w-auto">
-                {availableFilters.map((filterDef) => (
-                  <div key={filterDef.field} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
-                    <label className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      {filterDef.label}:
-                    </label>
-                    {filterDef.type === "select" ? (
-                      filterDef.isSearchable ? (
-                        <SearchableSelect
-                          options={filterDef.options || []}
-                          value={filterValues[filterDef.field] || ""}
-                          onChange={(value) => handleFilterChange(filterDef.field, value || "")}
-                          placeholder={`All ${filterDef.label}`}
-                          className="w-full sm:w-auto sm:min-w-[150px]"
-                        />
-                      ) : (
-                        <select
-                          value={filterValues[filterDef.field] || ""}
-                          onChange={(e) => handleFilterChange(filterDef.field, e.target.value)}
-                            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-full sm:w-auto sm:min-w-[120px]"
-                        >
-                          <option value="">All</option>
-                          {filterDef.options?.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      )
-                    ) : filterDef.type === "date" ? (
-                      <div className="relative">
-                        <DatePicker
-                          selected={filterValues[filterDef.field] ? parseISO(filterValues[filterDef.field]) : null}
-                          onChange={(date: Date | null) => {
-                            if (date && isValid(date)) {
-                              handleFilterChange(filterDef.field, format(date, "yyyy-MM-dd"));
-                            } else {
-                              handleFilterChange(filterDef.field, "");
-                            }
-                          }}
-                          dateFormat="yyyy-MM-dd"
-                          isClearable
-                          portalId="root"
-                          placeholderText={`Select ${filterDef.label}`}
-                            className="h-9 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        />
-                      </div>
-                    ) : (
-                      <div className="relative flex items-center">
-                        <DatePicker
-                          selectsRange={true}
-                          startDate={filterValues[`${filterDef.field}_from`] ? parseISO(filterValues[`${filterDef.field}_from`]) : undefined}
-                          endDate={filterValues[`${filterDef.field}_to`] ? parseISO(filterValues[`${filterDef.field}_to`]) : undefined}
-                          onChange={(update: [Date | null, Date | null]) => {
-                            const [start, end] = update;
-
-                            // Update start date
-                            if (start && isValid(start)) {
-                              handleFilterChange(`${filterDef.field}_from`, format(start, "yyyy-MM-dd"));
-                            } else {
-                              handleFilterChange(`${filterDef.field}_from`, "");
-                            }
-
-                            // Update end date
-                            if (end && isValid(end)) {
-                              handleFilterChange(`${filterDef.field}_to`, format(end, "yyyy-MM-dd"));
-                            } else {
-                              handleFilterChange(`${filterDef.field}_to`, "");
-                            }
-                          }}
-                          isClearable
-                          portalId="root"
-                          dateFormat="MMM d, yyyy"
-                          placeholderText={`Filter by ${filterDef.label.toLowerCase()} range`}
-                              className="h-9 w-full sm:w-[220px] rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        />
-                        <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {Object.keys(filterValues).length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="h-9 ml-auto text-xs text-muted-foreground hover:text-foreground hover:bg-transparent px-2"
-                >
-                  <FilterX className="h-3.5 w-3.5 mr-1.5" />
-                  Reset
-                </Button>
-              )}
-            </div>
-          )}
+              </>
+            ) : null}
+          </div>
         </div>
       )}
 
       {/* Bulk Actions Toolbar */}
       {selectable && hasSelectedRows && bulkActions.length > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-3">
+        <div className="flex flex-col gap-3 rounded-md bg-foreground px-3 py-2.5 text-background sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium">
+            <CheckSquare className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <span className="text-xs font-medium sm:text-sm" aria-live="polite">
               {selected.size} {selected.size === 1 ? "item" : "items"} selected
             </span>
           </div>
@@ -703,7 +939,13 @@ export function DataTable<T extends Record<string, any>>({
                 variant={action.variant || "outline"}
                 size="sm"
                 onClick={() => handleBulkAction(action)}
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+                aria-label={action.label}
+                className={cn(
+                  "h-8 gap-1.5 px-2.5 text-xs sm:text-sm",
+                  action.variant === "destructive"
+                    ? "border-red-300/40 bg-transparent text-red-100 hover:bg-red-400/15 hover:text-white"
+                    : "border-white/20 bg-white/5 text-white hover:bg-white/15 hover:text-white",
+                )}
               >
                 {action.icon && <action.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                 <span className="hidden xs:inline">{action.label}</span>
@@ -714,7 +956,7 @@ export function DataTable<T extends Record<string, any>>({
               variant="ghost"
               size="sm"
               onClick={() => setSelected(new Set())}
-              className="gap-1.5 h-8 sm:h-9 px-2 sm:px-3"
+              className="h-8 gap-1.5 px-2 text-background hover:bg-white/10 hover:text-white"
             >
               <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden xs:inline">Clear</span>
@@ -726,11 +968,45 @@ export function DataTable<T extends Record<string, any>>({
       {/* Table */}
       <div className="rounded-lg bg-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div
+            className="space-y-px bg-border"
+            role="status"
+            aria-label="Loading collection"
+          >
+            {Array.from({ length: 5 }, (_, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-[2rem_minmax(0,2fr)_minmax(0,1fr)_6rem] items-center gap-3 bg-card px-4 py-3"
+              >
+                <span className="h-4 w-4 animate-pulse rounded bg-muted" />
+                <span className="h-4 max-w-64 animate-pulse rounded bg-muted" />
+                <span className="h-4 max-w-36 animate-pulse rounded bg-muted" />
+                <span className="h-6 animate-pulse rounded-full bg-muted" />
+              </div>
+            ))}
           </div>
         ) : (
             <div className="relative">
+              {errorMessage ? (
+                <div
+                  className="mb-3 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900 sm:flex-row sm:items-center sm:justify-between"
+                  role="alert"
+                >
+                  <span className="flex items-center gap-2">
+                    <TriangleAlert
+                      className="h-4 w-4 flex-none"
+                      aria-hidden="true"
+                    />
+                    {errorMessage}
+                  </span>
+                  {onRetry ? (
+                    <Button variant="outline" size="sm" onClick={onRetry}>
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                      Retry
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
               {isStale ? (
                 <div
                   className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
@@ -749,7 +1025,7 @@ export function DataTable<T extends Record<string, any>>({
                 </div>
               ) : null}
               {/* Horizontal scroll container with shadow indicators */}
-              <div className={cn(mobileSummary && "hidden md:block")}>
+              <div className="hidden md:block">
                 <Table
                   className="min-w-full text-xs sm:text-sm"
                   scrollLabel={tableLabel}
@@ -774,7 +1050,7 @@ export function DataTable<T extends Record<string, any>>({
                     </button>
                   </TableHead>
                 )}
-                {safeColumns.map((column) => (
+                {visibleColumns.map((column) => (
                   <TableHead
                     key={column.key}
                     className={cn(
@@ -822,11 +1098,24 @@ export function DataTable<T extends Record<string, any>>({
               {paginatedData.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={safeColumns.length + (selectable ? 1 : 0)}
+                    colSpan={visibleColumns.length + (selectable ? 1 : 0)}
                     className="h-24 text-center"
                   >
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <p className="text-muted-foreground">{emptyMessage}</p>
+                    <div className="flex flex-col items-center justify-center gap-3 py-8">
+                      {hasActiveFilters ? (
+                        <SearchX
+                          className="h-6 w-6 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Inbox
+                          className="h-6 w-6 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <p className="font-medium text-foreground">
+                        {emptyMessage}
+                      </p>
                       {hasActiveFilters && (
                         <Button
                           variant="outline"
@@ -872,11 +1161,12 @@ export function DataTable<T extends Record<string, any>>({
                           </button>
                         </TableCell>
                       )}
-                      {safeColumns.map((column) => (
+                      {visibleColumns.map((column) => (
                         <TableCell
                           key={column.key}
                           className={cn(
                             column.className,
+                            density === "compact" && "py-1.5",
                             column.responsiveHide === "sm" && "hidden sm:table-cell",
                             column.responsiveHide === "md" && "hidden md:table-cell",
                             column.responsiveHide === "lg" && "hidden lg:table-cell"
@@ -895,11 +1185,10 @@ export function DataTable<T extends Record<string, any>>({
             </TableBody>
           </Table>
               </div>
-              {mobileSummary ? (
-                <ul
-                  className="divide-y divide-border rounded-lg border border-border md:hidden"
-                  aria-label={`${tableLabel} row summaries`}
-                >
+              <ul
+                className="divide-y divide-border rounded-lg border border-border md:hidden"
+                aria-label={`${tableLabel} row summaries`}
+              >
                   {paginatedData.length === 0 ? (
                     <li className="px-4 py-8 text-center text-sm text-muted-foreground">
                       <p>{emptyMessage}</p>
@@ -936,13 +1225,12 @@ export function DataTable<T extends Record<string, any>>({
                               Select row
                             </label>
                           ) : null}
-                          {mobileSummary(row)}
+                          {(mobileSummary || generatedMobileSummary)(row)}
                         </li>
                       );
                     })
                   )}
-                </ul>
-              ) : null}
+              </ul>
             </div>
         )}
       </div>
@@ -969,12 +1257,16 @@ export function DataTable<T extends Record<string, any>>({
               </div>
               <div>
                 <span className="hidden sm:inline">
-                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  Showing{" "}
+                  {displayTotal === 0
+                    ? 0
+                    : (currentPage - 1) * pageSize + 1}{" "}
+                  to{" "}
                   {Math.min(currentPage * pageSize, displayTotal)} of{" "}
                   {displayTotal} results
                 </span>
                 <span className="sm:hidden">
-                  Page {currentPage} of {totalPages}
+                  Page {displayTotal === 0 ? 0 : currentPage} of {totalPages}
                 </span>
               </div>
             </div>

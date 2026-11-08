@@ -165,9 +165,12 @@ describe("organization administrators", () => {
     fireEvent.change(screen.getByLabelText(/Confirm email/), {
       target: { value: "tunde@example.com" },
     });
-    fireEvent.change(screen.getByLabelText(/Role/), {
+    fireEvent.change(
+      within(screen.getByRole("dialog")).getByLabelText(/Role/),
+      {
       target: { value: role.id },
-    });
+      },
+    );
     fireEvent.click(within(dialog).getByRole("button", { name: "Add administrator" }));
 
     await waitFor(() =>
