@@ -30,6 +30,8 @@ import {
   type VisitAuthorizationStatus,
 } from "./api";
 
+const MAX_INVITATION_GUESTS = 20;
+
 const statusMeta: Record<
   VisitAuthorizationStatus,
   { label: string; className: string }
@@ -245,9 +247,7 @@ function InvitationComposer({
   partyEmail?: string | null;
   onCreated: () => Promise<void>;
 }) {
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
+  const [guests, setGuests] = useState<GuestDraft[]>([createGuestDraft()]);
   const [purpose, setPurpose] = useState("");
   const [maxUses, setMaxUses] = useState(1);
   const [validFrom, setValidFrom] = useState(() => toLocalInput(new Date()));
@@ -269,8 +269,11 @@ function InvitationComposer({
     setError(null);
     const start = new Date(validFrom);
     const end = new Date(validTo);
-    if (!guestName.trim()) {
-      setError("Enter the visitor’s name.");
+    const missingGuest = guests.findIndex(
+      (guest) => !guest.display_name.trim(),
+    );
+    if (missingGuest !== -1) {
+      setError(`Enter visitor ${missingGuest + 1}’s name.`);
       return;
     }
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
@@ -287,13 +290,11 @@ function InvitationComposer({
       valid_to: end.toISOString(),
       max_uses: Math.max(1, maxUses),
       purpose: purpose.trim() || null,
-      guests: [
-        {
-          display_name: guestName.trim(),
-          email: guestEmail.trim() || undefined,
-          phone: guestPhone.trim() || undefined,
-        },
-      ],
+      guests: guests.map((guest) => ({
+        display_name: guest.display_name.trim(),
+        email: guest.email.trim() || undefined,
+        phone: guest.phone.trim() || undefined,
+      })),
     };
     createInvitation.mutate(input);
   }
@@ -318,40 +319,11 @@ function InvitationComposer({
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Visitor name" required>
-          <input
-            value={guestName}
-            onChange={(event) => setGuestName(event.target.value)}
-            placeholder="Full name"
-            autoComplete="name"
-            className={inputClass}
-          />
-        </Field>
         <Field label="Purpose">
           <input
             value={purpose}
             onChange={(event) => setPurpose(event.target.value)}
             placeholder="Visit, delivery, meeting…"
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Email">
-          <input
-            type="email"
-            value={guestEmail}
-            onChange={(event) => setGuestEmail(event.target.value)}
-            placeholder="Optional"
-            autoComplete="email"
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Phone">
-          <input
-            type="tel"
-            value={guestPhone}
-            onChange={(event) => setGuestPhone(event.target.value)}
-            placeholder="Optional"
-            autoComplete="tel"
             className={inputClass}
           />
         </Field>
@@ -383,6 +355,126 @@ function InvitationComposer({
         </Field>
       </div>
 
+      <section
+        className="mt-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+        aria-label="Invited guests"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold">Guests</h4>
+            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              Add everyone covered by this invitation.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={guests.length >= MAX_INVITATION_GUESTS}
+            onClick={() =>
+              setGuests((current) => [...current, createGuestDraft()])
+            }
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add another guest
+          </button>
+        </div>
+        <div className="mt-3 space-y-3">
+          {guests.map((guest, index) => (
+            <div
+              key={guest.id}
+              className="rounded-md border border-zinc-200 p-3 dark:border-zinc-700"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <strong className="text-xs uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                  Guest {index + 1}
+                </strong>
+                {guests.length > 1 ? (
+                  <button
+                    type="button"
+                    aria-label={`Remove guest ${index + 1}`}
+                    onClick={() =>
+                      setGuests((current) =>
+                        current.filter((item) => item.id !== guest.id),
+                      )
+                    }
+                    className="text-xs font-semibold text-red-700 hover:underline"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <Field
+                  label={
+                    index === 0
+                      ? "Visitor name"
+                      : `Additional visitor ${index} name`
+                  }
+                  required
+                >
+                  <input
+                    value={guest.display_name}
+                    onChange={(event) =>
+                      updateGuest(
+                        setGuests,
+                        guest.id,
+                        "display_name",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Full name"
+                    autoComplete="name"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field
+                  label={
+                    index === 0 ? "Email" : `Additional visitor ${index} email`
+                  }
+                >
+                  <input
+                    type="email"
+                    value={guest.email}
+                    onChange={(event) =>
+                      updateGuest(
+                        setGuests,
+                        guest.id,
+                        "email",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Optional"
+                    autoComplete="email"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field
+                  label={
+                    index === 0 ? "Phone" : `Additional visitor ${index} phone`
+                  }
+                >
+                  <input
+                    type="tel"
+                    value={guest.phone}
+                    onChange={(event) =>
+                      updateGuest(
+                        setGuests,
+                        guest.id,
+                        "phone",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Optional"
+                    autoComplete="tel"
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {error ? (
         <p
           role="alert"
@@ -407,6 +499,38 @@ function InvitationComposer({
         </button>
       </div>
     </form>
+  );
+}
+
+interface GuestDraft {
+  id: string;
+  display_name: string;
+  email: string;
+  phone: string;
+}
+
+function createGuestDraft(): GuestDraft {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `guest-${Date.now()}-${Math.random()}`,
+    display_name: "",
+    email: "",
+    phone: "",
+  };
+}
+
+function updateGuest(
+  setGuests: React.Dispatch<React.SetStateAction<GuestDraft[]>>,
+  guestId: string,
+  field: "display_name" | "email" | "phone",
+  value: string,
+) {
+  setGuests((current) =>
+    current.map((guest) =>
+      guest.id === guestId ? { ...guest, [field]: value } : guest,
+    ),
   );
 }
 
