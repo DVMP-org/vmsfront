@@ -1,5 +1,5 @@
-const baseDomain = process.env.VMS_BASE_DOMAIN || "lvh.me";
-const webPort = process.env.E2E_WEB_PORT || "3116";
+const baseDomain = process.env.VMS_BASE_DOMAIN || "localhost";
+const webPort = process.env.E2E_WEB_PORT || "3106";
 const webBaseURL =
   process.env.VMS_BASE_URL || `http://${baseDomain}:${webPort}`;
 

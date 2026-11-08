@@ -183,15 +183,19 @@ export async function seedSession(
     {
       name: "auth-token",
       value: "e2e-token",
-      domain: `.${vmsConfig.baseDomain}`,
-      path: "/",
+      url: vmsConfig.webBaseURL,
+      sameSite: "Lax",
+    },
+    {
+      name: "auth-token",
+      value: "e2e-token",
+      url: vmsConfig.tenantURL(slug),
       sameSite: "Lax",
     },
     {
       name: "selected-organization",
       value: slug,
-      domain: `.${vmsConfig.baseDomain}`,
-      path: "/",
+      url: vmsConfig.tenantURL(slug),
       sameSite: "Lax",
     },
   ]);
@@ -479,12 +483,32 @@ export async function installCanonicalApi(
       });
     }
     if (path === "/admin/places" && method === "GET") {
+      const pageNumber = Number(url.searchParams.get("page") || 1);
+      const pageSize = Number(url.searchParams.get("page_size") || 10);
+      let matches = searchItems(
+        state.places,
+        url.searchParams.get("search"),
+      );
+      const kind = url.searchParams.get("kind");
+      if (kind) matches = matches.filter((place) => place.kind === kind);
+      const active = url.searchParams.get("is_active");
+      if (active !== null) {
+        matches = matches.filter(
+          (place) => String(place.is_active) === active,
+        );
+      }
+      if (url.searchParams.get("root_only") === "true") {
+        matches = matches.filter((place) => !place.parent_id);
+      }
       return fulfill(
         route,
-        paginated(
-          searchItems(state.places, url.searchParams.get("search")),
-          Number(url.searchParams.get("page") || 1),
-        ),
+        {
+          ...paginated(matches, pageNumber, pageSize),
+          items: matches.slice(
+            (pageNumber - 1) * pageSize,
+            pageNumber * pageSize,
+          ),
+        },
       );
     }
     if (path === "/admin/places" && method === "POST") {

@@ -51,7 +51,7 @@ export class PropertiesPage {
   }
 
   async selectColumns(...labels: string[]) {
-    await this.page.getByText("Columns", { exact: true }).click();
+    await this.page.getByLabel("Choose visible columns").click();
     for (const label of labels) {
       await this.page.getByRole("checkbox", { name: label }).uncheck();
     }

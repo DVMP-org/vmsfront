@@ -9,7 +9,7 @@ const sharedNext = resolve(
   "../../node_modules/next/dist/bin/next",
 );
 const nextBin = existsSync(localNext) ? localNext : sharedNext;
-const webPort = process.env.E2E_WEB_PORT || "3116";
+const webPort = process.env.E2E_WEB_PORT || "3106";
 
 export default defineConfig({
   testDir: "./specs",
@@ -38,7 +38,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.VMS_BASE_URL || `http://lvh.me:${webPort}`,
+    baseURL: process.env.VMS_BASE_URL || `http://localhost:${webPort}`,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "retain-on-failure",
     launchOptions: {
@@ -91,12 +91,12 @@ export default defineConfig({
   webServer: {
     command: `node "${nextBin}" build && node "${nextBin}" start --hostname 0.0.0.0 --port ${webPort}`,
     cwd: projectRoot,
-    url: `http://lvh.me:${webPort}/auth/login`,
+    url: `http://localhost:${webPort}/auth/login`,
     reuseExistingServer: process.env.E2E_REUSE_SERVER === "1",
     timeout: 240_000,
     env: {
       NEXT_PUBLIC_API_URL: process.env.API_BASE_URL || "https://vmscore.to",
-      NEXT_PUBLIC_BASE_DOMAIN: process.env.VMS_BASE_DOMAIN || "lvh.me",
+      NEXT_PUBLIC_BASE_DOMAIN: process.env.VMS_BASE_DOMAIN || "localhost",
       NEXT_PUBLIC_ENFORCE_SUBSCRIPTIONS: "false",
       NEXT_TELEMETRY_DISABLED: "1",
     },
