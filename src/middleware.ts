@@ -77,7 +77,7 @@ export function middleware(request: NextRequest) {
   const isAuthPath = pathname.startsWith('/auth');
   const isVerifyEmailPath = pathname.startsWith('/auth/verify-email');
   const isOrganizationsPath = pathname.startsWith('/organizations');
-  const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
+  const isDashboardPath = pathname.startsWith('/admin');
   const isSelectPath = pathname.startsWith('/select');
   const isOrganizationPath = pathname.startsWith('/organization');
 
