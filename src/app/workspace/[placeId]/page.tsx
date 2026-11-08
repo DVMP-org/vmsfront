@@ -15,6 +15,7 @@ import {
 import { Header } from "@/components/layout/Header";
 import {
   areaForRelationship,
+  qualifiedPlaceName,
   roleLabel,
   workspaceAreaMeta,
 } from "@/features/workspaces/catalog";
@@ -44,6 +45,9 @@ export default function WorkspacePage() {
   const area = relationship ? areaForRelationship(relationship) : "occupancy";
   const meta = workspaceAreaMeta[area];
   const Icon = areaIcon[area];
+  const placeTitle = relationship
+    ? qualifiedPlaceName(relationship.place)
+    : null;
 
   return (
     <div className="occupancy-surface min-h-screen bg-[#f7f9fc] text-[#0f1b31]">
@@ -91,7 +95,7 @@ export default function WorkspacePage() {
                 </div>
                 <div>
                   <h1 className="text-[28px] font-semibold tracking-[-0.04em]">
-                    {relationship.place.name}
+                    {placeTitle}
                   </h1>
                   <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">
                     {relationship.place.kind} workspace ·{" "}
@@ -105,7 +109,7 @@ export default function WorkspacePage() {
               <InfoCard
                 icon={MapPin}
                 label="Property"
-                value={relationship.place.name}
+                value={placeTitle || relationship.place.name}
                 detail={`${relationship.place.kind} · ${relationship.place.slug}`}
               />
               <InfoCard
@@ -132,7 +136,7 @@ export default function WorkspacePage() {
 
             <MyCharges
               placeId={relationship.place.id}
-              placeName={relationship.place.name}
+              placeName={placeTitle || relationship.place.name}
             />
 
             {area === "guest" ? (
