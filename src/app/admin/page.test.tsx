@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminDashboardPage from "./page";
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
+  analyticsQuery: vi.fn(),
   refetch: vi.fn(),
+  analyticsRefetch: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
   selectedProperty: { id: "place", name: "Harbour Hotel" } as {
@@ -14,7 +16,10 @@ const mocks = vi.hoisted(() => ({
   managementIsAdministrator: true,
 }));
 
-vi.mock("@/hooks/use-admin", () => ({ useAdminDashboard: mocks.query }));
+vi.mock("@/hooks/use-admin", () => ({
+  useAdminDashboard: mocks.query,
+  useAdminAnalyticsSummary: mocks.analyticsQuery,
+}));
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => ({
     data: {
@@ -80,6 +85,31 @@ const dashboard = {
   ],
 };
 
+const analytics = {
+  total_residents: 3,
+  total_residencies: 2,
+  total_gate_passes: 6,
+  total_gate_events: 12,
+  total_gate_events_approved: 10,
+  total_gate_events_denied: 2,
+  total_admins: 2,
+  total_roles: 3,
+  total_visitors: 5,
+  time_series: {
+    residencies: [],
+    gate_passes: [],
+    visitors: [],
+    checkins: [
+      { date: "2026-01-01", count: 2 },
+      { date: "2026-01-02", count: 4 },
+    ],
+    checkouts: [
+      { date: "2026-01-01", count: 1 },
+      { date: "2026-01-02", count: 3 },
+    ],
+  },
+};
+
 describe("operating dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,6 +117,13 @@ describe("operating dashboard", () => {
     mocks.managementIsAdministrator = true;
     window.history.replaceState({}, "", "/admin");
     window.sessionStorage.clear();
+    mocks.analyticsQuery.mockReturnValue({
+      data: analytics,
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: mocks.analyticsRefetch,
+    });
   });
 
   it("opens first-place setup when the organization has no property", () => {
@@ -139,14 +176,22 @@ describe("operating dashboard", () => {
     });
     render(<AdminDashboardPage />);
     expect(
-      screen.getByRole("heading", { name: "Management overview" }),
+      screen.getByRole("heading", { name: "Property operations" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Harbour Hotel" })).toHaveAttribute(
-      "href",
-      "/admin/properties/place",
-    );
+    const propertyScope = screen.getByRole("region", {
+      name: "Property scope",
+    });
+    expect(
+      within(propertyScope).getByRole("link", { name: /Harbour Hotel/ }),
+    ).toHaveAttribute("href", "/admin/properties/place");
     expect(screen.getByText("Guest arrival")).toBeInTheDocument();
-    expect(screen.getByText(/Check-in allowed/)).toBeInTheDocument();
+    const activityTable = screen.getByRole("table", {
+      name: "Recent checkpoint activity for Harbour Hotel",
+    });
+    expect(within(activityTable).getByText("Entry")).toBeInTheDocument();
+    expect(within(activityTable).getByText("allowed")).toBeInTheDocument();
+    expect(screen.getByText(/6 check-ins/)).toBeInTheDocument();
+    expect(screen.getByText(/4 check-outs/)).toBeInTheDocument();
   });
 
   it("warns when refresh fails but cached data remains", () => {
@@ -158,7 +203,7 @@ describe("operating dashboard", () => {
     });
     render(<AdminDashboardPage />);
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Showing the last successful snapshot",
+      "The latest dashboard snapshot could not be loaded",
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
@@ -195,5 +240,45 @@ describe("operating dashboard", () => {
     expect(
       screen.getByRole("link", { name: /active relationships/ }),
     ).toHaveAttribute("href", "/admin/people");
+  });
+
+  it("keeps access reports usable when analytics partially fails", () => {
+    mocks.analyticsQuery.mockReturnValue({
+      isPending: false,
+      isError: true,
+      isFetching: false,
+      refetch: mocks.analyticsRefetch,
+    });
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: mocks.refetch,
+    });
+
+    render(<AdminDashboardPage />);
+
+    expect(screen.getByText("Access trend unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Guest arrival")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mocks.analyticsRefetch).toHaveBeenCalledOnce();
+  });
+
+  it("stores the reporting period in the URL", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: mocks.refetch,
+    });
+
+    render(<AdminDashboardPage />);
+    fireEvent.change(screen.getByLabelText("Reporting period"), {
+      target: { value: "30" },
+    });
+
+    expect(mocks.replace).toHaveBeenCalledWith("/admin?period=30");
   });
 });
