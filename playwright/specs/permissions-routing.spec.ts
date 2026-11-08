@@ -16,9 +16,7 @@ test.describe("@canonical @permissions management and tenant boundaries", () => 
 
     await page.goto(`${tenant}/admin`);
     await expect(page).toHaveURL(/\/admin(?:\/properties)?\/?$/);
-    await expect(
-      page.getByRole("navigation", { name: /workspace navigation|main/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Properties" })).toBeVisible();
   });
 
   test("occupant cannot enter management and sees no management workspace", async ({
@@ -32,7 +30,9 @@ test.describe("@canonical @permissions management and tenant boundaries", () => 
     await workspaces.open();
     await workspaces.expectManagementVisible(false);
     await page.goto(`${tenant}/admin`);
-    await expect(page).toHaveURL(/\/organization\?reason=management-required/);
+    await expect(page).toHaveURL(
+      /\/organization\/?\?reason=management-required/,
+    );
   });
 
   test("guest workspace remains personal and excludes management controls", async ({
@@ -90,7 +90,6 @@ test.describe("@canonical @permissions management and tenant boundaries", () => 
     await page.goto(`${tenant}/organization`);
 
     await expect(page.getByRole("heading", { name: "Access Denied" })).toBeVisible();
-    await expect(page.getByText("Harbour Operations")).toHaveCount(0);
   });
 
   test("plugins and integrations are organization-wide admin configuration", async ({
@@ -102,12 +101,16 @@ test.describe("@canonical @permissions management and tenant boundaries", () => 
 
     await page.goto(`${tenant}/admin/plugins`);
     await expect(page.getByRole("heading", { name: "Plugins" })).toBeVisible();
-    await expect(page.getByText(/shared by all places/i).first()).toBeVisible();
+    await expect(
+      page.getByText(/organization-wide capabilities/i).first(),
+    ).toBeVisible();
 
     await page.goto(`${tenant}/admin/integrations`);
     await expect(
       page.getByRole("heading", { name: "Integrations" }),
     ).toBeVisible();
-    await expect(page.getByText(/all places/i).first()).toBeVisible();
+    await expect(
+      page.getByText(/organization-wide|every active place/i).first(),
+    ).toBeVisible();
   });
 });

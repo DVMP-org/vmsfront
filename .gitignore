@@ -55,6 +55,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Playwright generated artifacts and reports
+/playwright/evidence/
+/playwright-report/
+/playwright/test-results/
+
 SETUP.md
 *.sh
 certificates

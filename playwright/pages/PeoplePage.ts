@@ -27,7 +27,7 @@ export class PeoplePage {
     phone?: string;
   }) {
     await this.page.getByLabel("Full name").fill(name);
-    await this.page.getByLabel("Email").fill(email);
+    await this.page.getByLabel("Email", { exact: true }).fill(email);
     if (phone) await this.page.getByLabel("Phone").fill(phone);
     await this.page.getByRole("button", { name: "Add person" }).last().click();
     await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();

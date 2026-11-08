@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, Lock, Mail } from "lucide-react";
-import { motion } from "framer-motion";
 
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
@@ -48,10 +47,8 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {loginError ? (
-          <motion.div
+          <div
             role="alert"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
             className="flex items-start gap-2.5 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_24%,white)] bg-[var(--vms-danger-subtle)] px-3.5 py-3 text-sm leading-5 text-[var(--vms-danger)]"
           >
             <AlertCircle
@@ -59,7 +56,7 @@ export default function LoginPage() {
               aria-hidden="true"
             />
             {loginError}
-          </motion.div>
+          </div>
         ) : null}
 
         <div className="space-y-4">

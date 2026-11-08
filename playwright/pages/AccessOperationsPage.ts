@@ -14,6 +14,7 @@ export class AccessOperationsPage {
 
   async approveFirstInvitation() {
     await this.page.getByRole("button", { name: "Select row" }).first().click();
+    this.page.once("dialog", (dialog) => dialog.accept());
     await this.page
       .getByRole("button", { name: "Approve selected" })
       .click();

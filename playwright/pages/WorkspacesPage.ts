@@ -15,12 +15,16 @@ export class WorkspacesPage {
   }
 
   async openManagement() {
-    await this.page.getByRole("link", { name: /management console/i }).click();
+    await this.page
+      .getByRole("button", { name: /management console/i })
+      .click();
     await expect(this.page).toHaveURL(/\/admin(?:\/|$)/);
   }
 
   async expectManagementVisible(visible: boolean) {
-    const link = this.page.getByRole("link", { name: /management console/i });
+    const link = this.page.getByRole("button", {
+      name: /management console/i,
+    });
     if (visible) {
       await expect(link).toBeVisible();
     } else {

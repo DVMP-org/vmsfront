@@ -29,7 +29,9 @@ export class OrganizationSetupPage {
     slug: string;
     useCase?: string;
   }) {
-    await this.page.getByRole("link", { name: /new organization/i }).click();
+    await this.page
+      .getByRole("button", { name: /(new|create).*organization/i })
+      .click();
     await expect(this.page).toHaveURL(/\/organizations\/create\/?$/);
     await this.page.getByLabel("Operating use case").selectOption({
       label: useCase,
@@ -80,6 +82,7 @@ export class OrganizationSetupPage {
       .click();
     await expect(this.page).toHaveURL(
       new RegExp(`${vmsConfig.baseDomain}.*\\/organization\\/workspaces`),
+      { timeout: 30_000 },
     );
   }
 

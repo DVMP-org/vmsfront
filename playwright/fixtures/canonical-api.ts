@@ -9,6 +9,7 @@ export interface FixtureOptions {
   role?: Role;
   needsFirstSite?: boolean;
   slug?: string;
+  emptyOrganizationIndex?: boolean;
   places?: Json[];
   invitations?: Json[];
   charges?: Json[];
@@ -252,12 +253,16 @@ export async function installCanonicalApi(
 ) {
   const state = {
     authenticated: false,
+    hasOrganizations: !options.emptyOrganizationIndex,
     role: options.role || ("admin" as Role),
     organization: makeOrganization({
       needsFirstSite: options.needsFirstSite ?? false,
       slug: options.slug || "harbour",
     }),
-    places: [...(options.places || [defaultPlace])],
+    places: [
+      ...(options.places ||
+        (options.needsFirstSite ? [] : [defaultPlace])),
+    ],
     people: [] as Json[],
     invitations: [...(options.invitations || [defaultInvitation])],
     charges: [...(options.charges || [defaultCharge])],
@@ -340,13 +345,14 @@ export async function installCanonicalApi(
       });
     }
     if (method === "GET" && path === "/organizations/me") {
-      return fulfill(route, [state.organization]);
+      return fulfill(route, state.hasOrganizations ? [state.organization] : []);
     }
     if (method === "GET" && path.startsWith("/organizations/check-slug/")) {
       return fulfill(route, { exists: false });
     }
     if (method === "POST" && path === "/organizations/create") {
       state.mutations.push("organization.create");
+      state.hasOrganizations = true;
       state.organization = makeOrganization({
         needsFirstSite: true,
         slug: String(payload?.slug || "e2e-organization"),

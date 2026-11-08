@@ -61,4 +61,19 @@ describe("organization routing", () => {
 
     expect(location.pathname).toBe("/setup/first-place");
   });
+
+  it("preserves the local port when authenticated auth routes leave the base domain", () => {
+    const request = new NextRequest("http://lvh.me:3116/auth/login", {
+      headers: {
+        host: "lvh.me:3116",
+        cookie: "auth-token=valid-token",
+      },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.port).toBe("3116");
+    expect(location.pathname).toBe("/organizations");
+  });
 });

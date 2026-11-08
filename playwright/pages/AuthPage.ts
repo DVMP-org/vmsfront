@@ -10,12 +10,30 @@ export class AuthPage {
     await expect(
       this.page.getByRole("heading", { name: /welcome back/i }),
     ).toBeVisible();
+    await this.page.waitForLoadState("networkidle");
   }
 
-  async login(email = vmsConfig.adminEmail, password = vmsConfig.adminPassword) {
-    await this.page.getByLabel("Email Address").fill(email);
+  async login(
+    email = vmsConfig.adminEmail,
+    password = vmsConfig.adminPassword,
+    setSessionCookie = true,
+  ) {
+    await this.page.getByLabel("Work email").fill(email);
     await this.page.getByLabel("Password").fill(password);
-    await this.page.getByRole("button", { name: "Sign In" }).click();
+    if (setSessionCookie) {
+      await this.page.context().addCookies([
+        {
+          name: "auth-token",
+          value: "e2e-token",
+          domain: `.${vmsConfig.baseDomain}`,
+          path: "/",
+          sameSite: "Lax",
+        },
+      ]);
+    }
+    await this.page
+      .getByRole("button", { name: "Continue to workspace" })
+      .click();
   }
 
   async logout() {
@@ -23,6 +41,6 @@ export class AuthPage {
       .getByRole("button", { name: /open account menu/i })
       .click();
     await this.page.getByRole("button", { name: "Sign out" }).click();
-    await expect(this.page).toHaveURL(/\/auth\/login\/?$/);
+    await expect(this.page).toHaveURL(/\/auth\/login\/?(?:\?.*)?$/);
   }
 }

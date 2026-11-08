@@ -12,7 +12,7 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
   test("login → organizations → create organization → plan → first place → Workspaces", async ({
     page,
   }) => {
-    await installCanonicalApi(page);
+    await installCanonicalApi(page, { emptyOrganizationIndex: true });
     const auth = new AuthPage(page);
     const setup = new OrganizationSetupPage(page);
     const slug = "harbour";
@@ -29,14 +29,18 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
         slug,
       });
       await expect(page).toHaveURL(
-        new RegExp(`harbour\\.${vmsConfig.baseDomain}:3106/plans`),
+        new RegExp(
+          `harbour\\.${vmsConfig.baseDomain}:${vmsConfig.webPort}/plans`,
+        ),
       );
     });
 
     await test.step("Activate the plan", async () => {
       await setup.activateFreePlan();
       await expect(page).toHaveURL(
-        new RegExp(`harbour\\.${vmsConfig.baseDomain}:3106/setup/first-place`),
+        new RegExp(
+          `harbour\\.${vmsConfig.baseDomain}:${vmsConfig.webPort}/setup/first-place`,
+        ),
       );
       await setup.expectStandaloneSetupShell();
     });
@@ -51,7 +55,7 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
         page.getByRole("heading", { name: "Choose your workspace" }),
       ).toBeVisible();
       await expect(
-        page.getByRole("link", { name: /management console/i }),
+        page.getByRole("button", { name: /management console/i }),
       ).toBeVisible();
     });
   });
@@ -70,7 +74,7 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
     await setup.expectStandaloneSetupShell();
     await expect(
       page.getByRole("link", { name: "Back to plan" }),
-    ).toHaveAttribute("href", "/plans?setup=first-workspace");
+    ).toHaveAttribute("href", "/plans/?setup=first-workspace");
   });
 
   test("retired admin setup URL redirects before management guards", async ({
@@ -115,7 +119,9 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
 
     await page.goto(`${tenant}/admin`);
 
-    await expect(page).toHaveURL(/\/organization\?reason=management-required/);
+    await expect(page).toHaveURL(
+      /\/organization\/?\?reason=management-required/,
+    );
     await expect(
       page.getByRole("heading", { name: "Harbour Operations" }),
     ).toBeVisible();
@@ -124,7 +130,7 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
     ).toHaveCount(0);
   });
 
-  test("completed setup does not reopen the first-place route", async ({
+  test("completed setup directs the user back to Workspaces", async ({
     context,
     page,
   }) => {
@@ -133,6 +139,11 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
 
     await page.goto(`${tenant}/setup/first-place`);
 
-    await expect(page).toHaveURL(/\/organization\/workspaces\/?$/);
+    await expect(
+      page.getByText("Your organization already has a place"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open Workspaces" }),
+    ).toHaveAttribute("href", "/organization/workspaces/");
   });
 });

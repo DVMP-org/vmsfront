@@ -89,7 +89,8 @@ export function createSubdomainUtilities(
       return `${location.protocol}//${slug}.localhost${port}${path}`;
     }
 
-    return `${location.protocol}//${slug}.${baseDomain}${path}`;
+    const port = location.port ? `:${location.port}` : "";
+    return `${location.protocol}//${slug}.${baseDomain}${port}${path}`;
   };
 
   return { getSubdomain, isBaseDomain, buildSubdomainUrl };

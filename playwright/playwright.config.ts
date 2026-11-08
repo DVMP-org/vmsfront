@@ -1,4 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+const projectRoot = resolve(__dirname, "..");
+const localNext = resolve(projectRoot, "node_modules/next/dist/bin/next");
+const sharedNext = resolve(
+  projectRoot,
+  "../../node_modules/next/dist/bin/next",
+);
+const nextBin = existsSync(localNext) ? localNext : sharedNext;
+const webPort = process.env.E2E_WEB_PORT || "3116";
 
 export default defineConfig({
   testDir: "./specs",
@@ -20,14 +31,14 @@ export default defineConfig({
       ]
     : [["html", { open: "on-failure" }], ["list"]],
 
-  timeout: 45_000,
+  timeout: 90_000,
   expect: {
-    timeout: 7_500,
+    timeout: 10_000,
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.VMS_BASE_URL || "http://lvh.me:3106",
+    baseURL: process.env.VMS_BASE_URL || `http://lvh.me:${webPort}`,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "retain-on-failure",
     launchOptions: {
@@ -40,8 +51,8 @@ export default defineConfig({
       size: { width: 1920, height: 1080 },
     },
     screenshot: "only-on-failure",
-    navigationTimeout: 20_000,
-    actionTimeout: 10_000,
+    navigationTimeout: 30_000,
+    actionTimeout: 15_000,
     testIdAttribute: "data-testid",
   },
   outputDir: "./evidence/artifacts",
@@ -78,11 +89,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev --hostname 0.0.0.0 --port 3106",
-    cwd: "..",
-    url: "http://lvh.me:3106/auth/login",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    command: `node "${nextBin}" build && node "${nextBin}" start --hostname 0.0.0.0 --port ${webPort}`,
+    cwd: projectRoot,
+    url: `http://lvh.me:${webPort}/auth/login`,
+    reuseExistingServer: process.env.E2E_REUSE_SERVER === "1",
+    timeout: 240_000,
     env: {
       NEXT_PUBLIC_API_URL: process.env.API_BASE_URL || "https://vmscore.to",
       NEXT_PUBLIC_BASE_DOMAIN: process.env.VMS_BASE_DOMAIN || "lvh.me",
