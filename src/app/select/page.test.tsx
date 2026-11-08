@@ -139,10 +139,17 @@ describe("workspaces page", () => {
     expect(
       screen.getByRole("heading", { name: "Choose your workspace" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Organization settings" })).toHaveAttribute(
-      "href",
-      "/admin/organization",
-    );
+    expect(
+      screen.queryByRole("link", { name: "Organization settings" }),
+    ).toBeNull();
+    expect(
+      screen.getAllByRole("link", { name: "Organization home" }),
+    ).not.toHaveLength(0);
+    for (const link of screen.getAllByRole("link", {
+      name: "Organization home",
+    })) {
+      expect(link).toHaveAttribute("href", "/organization");
+    }
     expect(
       screen.getByRole("heading", { name: /Properties \(3\)/ }),
     ).toBeInTheDocument();

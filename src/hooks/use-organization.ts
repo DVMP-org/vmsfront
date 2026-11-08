@@ -172,7 +172,7 @@ export function useSelectOrganization() {
     setSelectedOrganization(organization);
 
     // Redirect to the organization's subdomain
-    const redirectUrl = buildSubdomainUrl(organization.slug, "/select");
+    const redirectUrl = buildSubdomainUrl(organization.slug, "/organization");
     window.location.href = redirectUrl;
   };
 

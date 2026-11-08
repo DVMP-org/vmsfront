@@ -1,4 +1,4 @@
-import { Home, Users, Building2, Settings, Shield, Scan, Receipt, Puzzle, UserCog, MessageSquare, DoorOpen, Blocks, RadioTower, type LucideIcon } from "lucide-react";
+import { Home, Users, Building2, Shield, Scan, Receipt, Puzzle, UserCog, MessageSquare, DoorOpen, Blocks, RadioTower, type LucideIcon } from "lucide-react";
 import type { ModuleGroup } from "@/features/context/api";
 export interface AdminRoute { href:string; label:string; icon:LucideIcon; permission?:string|string[]; module?:string; group?:string; managementOnly?:boolean; children?:AdminRoute[] }
 export const adminLinks: AdminRoute[] = [
@@ -12,12 +12,8 @@ export const adminLinks: AdminRoute[] = [
  {href:"/admin/gates",label:"Gates",icon:DoorOpen,permission:"gates.list",module:"gates",group:"Access"},
  {href:"/admin/gates/simulator",label:"Hardware lab",icon:RadioTower,permission:"gates.list",module:"gates",group:"Access"},
  {href:"/admin/hospitality",label:"Guest stays",icon:Building2,permission:"hospitality_stays.list",module:"hospitality",group:"Workflows"},
- {href:"/admin/admins",label:"Administrators",icon:UserCog,permission:"admins.list",module:"admins",group:"Settings"},
- {href:"/admin/admins/roles",label:"Roles & permissions",icon:Shield,permission:"roles.list",module:"roles",group:"Settings"},
- {href:"/admin/organization",label:"Organization settings",icon:Settings,permission:"organizations.show",module:"organization_settings",group:"Settings"},
  {href:"/admin/plugins",label:"Plugins",icon:Puzzle,permission:"plugins.list",module:"plugins",group:"Settings"},
  {href:"/admin/settings?tab=integrations",label:"Integrations",icon:Blocks,permission:"integrations.list",module:"integrations",group:"Settings"},
- {href:"/admin/settings",label:"Configuration",icon:Settings,permission:["branding.list","settings.show"],module:"organization_settings",group:"Settings"},
  {href:"/admin/profile",label:"Profile",icon:UserCog,group:"Account"},
 ];
 export function contextualAdminLinks(

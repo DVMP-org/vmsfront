@@ -27,8 +27,6 @@ import {
   Receipt,
   Palette,
   FolderTree,
-  RefreshCw,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
@@ -48,9 +46,7 @@ import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
 import { hasAdminPermission } from "@/lib/permissions";
 import { contextualAdminLinks } from "@/config/admin-routes";
-import { useActiveBrandingTheme } from "@/hooks/use-admin-branding";
-import { LogoFull } from "../LogoFull";
-import { SidebarOrganizationHeader } from "./SidebarOrganizationHeader";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 interface SidebarProps {
   type: "resident" | "admin";
@@ -130,8 +126,8 @@ const SidebarLink = memo(function SidebarLink({
           ? "gap-3 px-3 py-2.5"
           : "justify-center px-2 py-2.5",
         isActive
-          ? "bg-[rgb(var(--brand-primary,#2563eb)/0.08)] text-[rgb(var(--brand-primary,#2563eb))] shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.12)]"
-          : "text-[#667085] hover:bg-[#f4f7fb] hover:text-[#0f1b31]",
+          ? "bg-transparent font-semibold text-[#1F2933]"
+          : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
       )}
       title={collapsed && !isMobile ? link.label : undefined}
     >
@@ -139,8 +135,8 @@ const SidebarLink = memo(function SidebarLink({
         <motion.div
           layoutId="active-indicator"
           className={cn(
-            "absolute left-0 w-1 h-3/5 rounded-full",
-            "bg-[rgb(var(--brand-primary,#213928))]",
+            "absolute left-0 h-3/5 w-0.5 rounded-full",
+            "bg-[#E85D3F]",
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -150,13 +146,13 @@ const SidebarLink = memo(function SidebarLink({
 
       <Icon
         className={cn(
-          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
-          isActive ? "text-[rgb(var(--brand-primary,#213928))]" : "",
+          "h-5 w-5 flex-shrink-0",
+          isActive ? "text-[#1F2933]" : "",
         )}
       />
 
       {(isMobile || !collapsed) && (
-        <span className={cn("flex-1 truncate", isActive && "font-bold")}>
+          <span className={cn("flex-1 truncate", isActive && "font-semibold")}>
           {link.label}
         </span>
       )}
@@ -169,74 +165,6 @@ const SidebarLink = memo(function SidebarLink({
     </Link>
   );
 });
-
-function WorkspaceContextPanel({
-  collapsed,
-  isMobile,
-  propertyName,
-  useCase,
-  hasError,
-  onReset,
-  onRetry,
-}: {
-  collapsed: boolean;
-  isMobile: boolean;
-  propertyName?: string;
-  useCase?: string;
-  hasError: boolean;
-  onReset: () => void;
-  onRetry: () => void;
-}) {
-  if (collapsed && !isMobile) {
-    return (
-      <div className="mx-auto mb-4 grid h-10 w-10 place-items-center rounded-xl border border-[rgb(var(--brand-primary,#213928)/0.18)] bg-[rgb(var(--brand-primary,#213928)/0.06)] text-[rgb(var(--brand-primary,#213928))] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
-        <ShieldCheck className="h-5 w-5" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="mb-3 rounded-lg border border-[#dce3ee] bg-[#f8faff] p-3">
-      <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-md bg-white text-[rgb(var(--brand-primary,#2563eb))] shadow-sm">
-          <ShieldCheck className="h-4 w-4" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#98a2b3]">
-            Workspace
-          </span>
-          <span className="block truncate text-sm font-semibold text-[#0f1b31]">
-            {propertyName || "Organization"}
-          </span>
-        </span>
-      </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="rounded bg-white px-2 py-1 text-[10px] font-semibold capitalize text-[#475467] ring-1 ring-[#dce3ee]">
-          {useCase || "Loading context"}
-        </span>
-        {propertyName ? (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-[11px] font-semibold text-[rgb(var(--brand-primary,#2563eb))] hover:underline"
-          >
-            Organization view
-          </button>
-        ) : null}
-      </div>
-      {hasError ? (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700"
-        >
-          <RefreshCw className="h-3 w-3" />
-          Retry workspace
-        </button>
-      ) : null}
-    </div>
-  );
-}
 
 export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   type,
@@ -254,37 +182,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedResidency, selectedProperty, setSelectedProperty } =
-    useAppStore();
+  const { selectedResidency, selectedProperty } = useAppStore();
   const workspaceContext = useWorkspaceContext();
   const user = useAuthStore((state) => state.user);
   const { data: adminProfile, isPending: isAdminProfilePending } =
     useAdminProfile();
-  const { data: activeTheme } = useActiveBrandingTheme();
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return document.documentElement.classList.contains("dark");
-  });
-
-  useEffect(() => {
-    // Initialize dark mode from root element class
-    const root = document.documentElement;
-    setIsDarkMode(root.classList.contains("dark"));
-
-    // Watch for dark mode changes
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(root.classList.contains("dark"));
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  const logoUrl = useMemo(() => {
-    if (!activeTheme) return null;
-    return isDarkMode && activeTheme.dark_logo_url
-      ? activeTheme.dark_logo_url
-      : activeTheme.logo_url;
-  }, [activeTheme, isDarkMode]);
 
   useEffect(() => {
     setMounted(true);
@@ -681,13 +583,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
       style={{ willChange: "width" }}
       className={cn(
-        "sticky top-0 flex flex-col border-r border-[#dce3ee] bg-white overflow-hidden",
-        "h-screen flex-shrink-0 z-30",
+        "sticky top-0 flex flex-col overflow-hidden border-r border-[#E5E7EB] bg-white",
+        "h-full flex-shrink-0 z-30",
       )}
     >
-      {/* Organization Header (Admin only) or Logo Header */}
-      <div className="border-b border-[#dce3ee]">
-        <SidebarOrganizationHeader
+      <div className="border-b border-[#E5E7EB]">
+        <WorkspaceSwitcher
           collapsed={collapsed}
           onToggleCollapse={!isMobile ? toggleCollapse : undefined}
           onMobileClose={onMobileClose}
@@ -696,27 +597,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       </div>
 
       <LayoutGroup>
-        {/* Navigation Links */}
         <nav
           className={cn(
             "flex-1 min-h-0 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar",
             isMobile || !collapsed ? "p-3" : "py-4 px-0",
           )}
         >
-          {actualType === "admin" ? (
-            <WorkspaceContextPanel
-              collapsed={collapsed}
-              isMobile={isMobile}
-              propertyName={selectedProperty?.name}
-              useCase={workspaceContext.data?.effective_use_case?.replaceAll(
-                "_",
-                " ",
-              )}
-              hasError={workspaceContext.isError}
-              onReset={() => setSelectedProperty(null)}
-              onRetry={() => workspaceContext.refetch()}
-            />
-          ) : null}
           {links.map((link: any, index: number) => {
             const Icon = link.icon;
             const isParentActive =
@@ -747,8 +633,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         ? "gap-3 px-3 py-2.5 justify-between"
                         : "justify-center px-2 py-2.5",
                       activeChild
-                        ? "bg-[rgb(var(--brand-primary,#213928)/0.06)] text-[rgb(var(--brand-primary,#213928))]"
-                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
+                        ? "bg-transparent font-semibold text-[#1F2933]"
+                        : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
                     )}
                     title={collapsed && !isMobile ? link.label : undefined}
                   >
@@ -760,9 +646,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                     >
                       <Icon
                         className={cn(
-                          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+                          "h-5 w-5 flex-shrink-0",
                           activeChild &&
-                            "text-[rgb(var(--brand-primary,#213928))]",
+                            "text-[#1F2933]",
                         )}
                       />
                       {(isMobile || !collapsed) && (
@@ -813,8 +699,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-300",
                                   "gap-3 px-3 py-2",
                                   isChildActive
-                                    ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))]"
-                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
+                                    ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
+                                    : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
                                 )}
                               >
                                 <ChildIcon className="h-4 w-4 flex-shrink-0" />
@@ -871,8 +757,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         ? "gap-3 px-3 py-2.5 justify-between"
                         : "justify-center px-2 py-2.5",
                       hasActiveRoute
-                        ? "bg-[rgb(var(--brand-primary,#213928))]/5 text-[rgb(var(--brand-primary,#213928))]"
-                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
+                        ? "bg-transparent font-semibold text-[#1F2933]"
+                        : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
                     )}
                     title={
                       collapsed && !isMobile ? plugin.manifest.title : undefined
@@ -886,7 +772,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                     >
                       <i
                         className={cn(
-                          "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+                          "h-5 w-5 flex-shrink-0",
                           pluginIcon,
                           hasActiveRoute &&
                             "text-[rgb(var(--brand-primary,#213928))]",
@@ -949,8 +835,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   "group relative",
                                   "gap-3 px-3 py-2",
                                   isActive
-                                    ? "bg-[rgb(var(--brand-primary,#213928)/0.08)] text-[rgb(var(--brand-primary,#213928))]"
-                                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900",
+                                ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
+                                : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
                                 )}
                                 href={routeHref}
                               >
@@ -979,25 +865,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       </LayoutGroup>
 
       {actualType === "admin" && (isMobile || !collapsed) ? (
-        <div className="border-t border-[#dce3ee] p-3">
-          <p className="px-2 text-[10px] leading-4 text-[#98a2b3]">
-            Organization access only. Occupant and staff workspaces remain
-            separate.
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
-            <Link
-              href="/admin/organization"
-              className="rounded-md px-2 py-2 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
-            >
-              Settings
-            </Link>
-            <a
-              href="mailto:support@vmscore.to"
-              className="rounded-md px-2 py-2 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
-            >
-              Help & support
-            </a>
-          </div>
+        <div className="border-t border-[#E5E7EB] p-3">
+          <Link
+            href="/organization"
+            className="flex min-h-11 items-center rounded-md px-2 text-xs font-medium text-[#596675] transition hover:bg-[#F5F7F8] hover:text-[#1F2933] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
+          >
+            Organization home
+          </Link>
         </div>
       ) : null}
     </motion.aside>

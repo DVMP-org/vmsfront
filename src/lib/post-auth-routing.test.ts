@@ -34,7 +34,7 @@ describe("post-auth destination", () => {
       resolvePostAuthDestination([
         organization("acme", SubscriptionStatus.ACTIVE),
       ]),
-    ).toBe("https://acme.vmsfront.to/select");
+    ).toBe("https://acme.vmsfront.to/organization");
   });
 
   it("opens plan selection when the only organization has no access", () => {

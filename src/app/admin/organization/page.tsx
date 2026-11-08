@@ -7,10 +7,11 @@ import {
   ArrowUpRight,
   Building2,
   CheckCircle2,
+  LayoutGrid,
   Palette,
+  Shield,
   ShieldCheck,
   SlidersHorizontal,
-  Users,
   WalletCards,
 } from "lucide-react";
 import { contextApi } from "@/features/context/api";
@@ -123,10 +124,20 @@ export default function OrganizationPage() {
             Organization
           </p>
           <SettingsLink
-            href="/admin/organization"
+            href="/organization/settings"
             icon={SlidersHorizontal}
             label="General details"
             active
+          />
+          <SettingsLink
+            href="/organization/administrators"
+            icon={ShieldCheck}
+            label="Administrators"
+          />
+          <SettingsLink
+            href="/organization/roles"
+            icon={Shield}
+            label="Roles & permissions"
           />
           <SettingsLink
             href="/admin/settings?tab=branding"
@@ -134,19 +145,14 @@ export default function OrganizationPage() {
             label="Brand and theme"
           />
           <SettingsLink
-            href="/admin/admins"
-            icon={ShieldCheck}
-            label="Administrators"
+            href="/select"
+            icon={LayoutGrid}
+            label="Workspaces"
           />
           <SettingsLink
-            href="/admin/people"
-            icon={Users}
-            label="People directory"
-          />
-          <SettingsLink
-            href="/admin/settings?tab=payment"
+            href="/plans"
             icon={WalletCards}
-            label="Billing and payments"
+            label="Plan and billing"
           />
         </aside>
 

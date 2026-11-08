@@ -79,6 +79,7 @@ export function middleware(request: NextRequest) {
   const isOrganizationsPath = pathname.startsWith('/organizations');
   const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
   const isSelectPath = pathname.startsWith('/select');
+  const isOrganizationPath = pathname.startsWith('/organization');
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
@@ -99,7 +100,7 @@ export function middleware(request: NextRequest) {
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard routes (/admin, /residency, /select) require org context from subdomain
-  if (!isOnSubdomain && (isDashboardPath || isSelectPath)) {
+  if (!isOnSubdomain && (isDashboardPath || isSelectPath || isOrganizationPath)) {
     if (isAuthenticated) {
       return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));
     } else {
@@ -118,13 +119,13 @@ export function middleware(request: NextRequest) {
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
     const destinationUrl = isOnSubdomain
-      ? new URL('/select', request.url)
+      ? new URL('/organization', request.url)
       : getBaseDomainUrl('/organizations', '', request);
     return NextResponse.redirect(destinationUrl);
   }
 
   // RULE 4: Protected paths on subdomain require authentication
-  if (!isAuthenticated && (isDashboardPath || isSelectPath)) {
+  if (!isAuthenticated && (isDashboardPath || isSelectPath || isOrganizationPath)) {
     const loginUrl = isOnSubdomain
       ? new URL('/auth/login', request.url)
       : getBaseDomainUrl('/auth/login', '', request);
@@ -151,6 +152,8 @@ export const config = {
     '/residency',
     '/residency/:path*',
     '/select',
+    '/organization',
+    '/organization/:path*',
     '/auth/:path*',
     '/visit/:path*',
     '/organizations',
