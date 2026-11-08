@@ -2,11 +2,16 @@ import { cn } from "@/lib/utils";
 
 export function Skeleton({
   className,
+  "aria-hidden": ariaHidden = true,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      aria-hidden={ariaHidden}
+      className={cn(
+        "animate-pulse rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none",
+        className,
+      )}
       {...props}
     />
   );
@@ -14,7 +19,7 @@ export function Skeleton({
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 xs:p-6 space-y-3 xs:space-y-4">
+    <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
       <Skeleton className="h-5 xs:h-6 w-3/4" />
       <Skeleton className="h-3 xs:h-4 w-full" />
       <Skeleton className="h-3 xs:h-4 w-2/3" />
@@ -24,13 +29,14 @@ export function CardSkeleton() {
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="space-y-2 xs:space-y-3 ">
+    <div className="space-y-3" aria-busy="true" role="status">
+      <span className="sr-only">Loading table data</span>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-3 xs:space-x-4">
-          <Skeleton className="h-10 w-10 xs:h-12 xs:w-12 rounded-full flex-shrink-0" />
-          <div className="space-y-1.5 xs:space-y-2 flex-1 min-w-0">
+        <div key={i} className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-3 xs:h-4 w-3/4" />
-            <Skeleton className="h-2.5 xs:h-3 w-1/2" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
         </div>
       ))}

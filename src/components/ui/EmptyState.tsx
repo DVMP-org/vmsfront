@@ -1,15 +1,19 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
 import { Button } from "./Button";
+
+type EmptyStateAction =
+  | ReactNode
+  | {
+      label: string;
+      onClick: () => void;
+    };
 
 interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  description?: ReactNode;
+  action?: EmptyStateAction;
 }
 
 export function EmptyState({
@@ -19,26 +23,31 @@ export function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 xs:py-12 px-3 xs:px-4 text-center">
+    <section className="flex min-h-48 flex-col items-center justify-center px-4 py-10 text-center text-[var(--vms-ink)]">
       {Icon && (
-        <div className="mb-3 xs:mb-4 rounded-full bg-muted p-3 xs:p-4">
-          <Icon className="h-6 w-6 xs:h-8 xs:w-8 text-muted-foreground" />
+        <div className="mb-4 grid h-12 w-12 place-items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]">
+          <Icon
+            className="h-5 w-5 text-[var(--vms-ink-muted)]"
+            aria-hidden="true"
+          />
         </div>
       )}
-      <h3 className="text-base xs:text-lg font-semibold text-foreground mb-1.5 xs:mb-2 px-2">
+      <h3 className="mb-2 text-base font-semibold leading-6">
         {title}
       </h3>
       {description && (
-        <p className="text-xs xs:text-sm text-muted-foreground mb-4 xs:mb-6 max-w-md px-2">
+        <div className="mb-5 max-w-md text-sm leading-5 text-[var(--vms-ink-muted)]">
           {description}
-        </p>
+        </div>
       )}
-      {action && (
+      {action && typeof action === "object" && "label" in action ? (
         <Button onClick={action.onClick} size="md">
           {action.label}
         </Button>
+      ) : (
+        action
       )}
-    </div>
+    </section>
   );
 }
 
