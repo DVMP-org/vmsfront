@@ -170,26 +170,26 @@ export default function CreateOrganizationPage() {
   const combinedErrors = { ...errors, ...fieldErrors };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-background dark:text-zinc-50">
+    <div className="min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <Header type="select" />
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <Link
           href="/organizations"
-          className="mb-7 inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 transition hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+          className="mb-7 inline-flex items-center gap-2 text-sm font-semibold text-[var(--vms-ink-muted)] transition hover:text-[var(--vms-ink)]"
         >
           <ArrowLeft className="h-4 w-4" />
           Organizations
         </Link>
 
         <header className="mb-7">
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--brand-primary,#213928))] dark:text-emerald-300">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
             <Sparkles className="h-4 w-4" />
             Set up your operating workspace
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
             Create your organization
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
             Start with the operating model. Your plan and first property
             workspace follow, and your setup remains available if you need to
             return.
@@ -199,10 +199,10 @@ export default function CreateOrganizationPage() {
         <SetupProgress currentStep="organization" />
 
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-7">
+          <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-7">
             {draftRestored ? (
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[rgb(var(--brand-primary,#213928)/0.06)] px-4 py-3 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-200">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-4 py-3 text-sm">
+                <span className="font-medium text-[var(--vms-ink)]">
                   Draft restored from this browser.
                 </span>
                 <button
@@ -213,7 +213,7 @@ export default function CreateOrganizationPage() {
                     setSlugAvailable(null);
                     window.localStorage.removeItem(DRAFT_KEY);
                   }}
-                  className="text-xs font-semibold text-[rgb(var(--brand-primary,#213928))] hover:underline dark:text-emerald-300"
+                  className="text-xs font-semibold text-[var(--vms-action)] hover:underline"
                 >
                   Start over
                 </button>
@@ -224,7 +224,7 @@ export default function CreateOrganizationPage() {
               {error ? (
                 <div
                   role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+                  className="rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] px-4 py-3 text-sm text-[var(--vms-danger)]"
                 >
                   {error}
                 </div>
@@ -233,7 +233,7 @@ export default function CreateOrganizationPage() {
               <div>
                 <label
                   htmlFor="use_case"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-[var(--vms-ink)]"
                 >
                   Operating use case
                 </label>
@@ -244,7 +244,7 @@ export default function CreateOrganizationPage() {
                     update("use_case", event.target.value as UseCase | "")
                   }
                   disabled={isLoading}
-                  className="mt-2 h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  className="mt-2 h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base text-[var(--vms-ink)] outline-none focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--vms-focus)_20%,transparent)] sm:text-sm"
                 >
                   <option value="">Choose your organization’s use case</option>
                   {catalog.data?.use_cases.map((item) => (
@@ -253,7 +253,7 @@ export default function CreateOrganizationPage() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                <p className="mt-2 text-xs leading-5 text-[var(--vms-ink-muted)]">
                   This is fixed at creation and determines the available
                   modules. Mixed use allows properties with distinct contexts.
                 </p>
@@ -261,7 +261,7 @@ export default function CreateOrganizationPage() {
                   <button
                     type="button"
                     onClick={() => catalog.refetch()}
-                    className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300"
+                    className="mt-2 text-xs font-semibold text-[var(--vms-warning)]"
                   >
                     Could not load use cases. Retry
                   </button>
@@ -273,7 +273,7 @@ export default function CreateOrganizationPage() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                    className="block text-sm font-medium text-[var(--vms-ink)]"
                   >
                     Organization name
                   </label>
@@ -290,7 +290,7 @@ export default function CreateOrganizationPage() {
                 <div>
                   <label
                     htmlFor="slug"
-                    className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                    className="block text-sm font-medium text-[var(--vms-ink)]"
                   >
                     Workspace URL
                   </label>
@@ -314,12 +314,12 @@ export default function CreateOrganizationPage() {
                       aria-describedby="slug-help"
                     />
                     {isChecking ? (
-                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-zinc-400" />
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-[var(--vms-ink-muted)] motion-reduce:animate-none" />
                     ) : null}
                   </div>
                   <p
                     id="slug-help"
-                    className="mt-2 truncate text-xs text-zinc-500 dark:text-zinc-400"
+                    className="mt-2 truncate text-xs text-[var(--vms-ink-muted)]"
                   >
                     {draft.slug || "your-organization"}.
                     {process.env.NEXT_PUBLIC_BASE_DOMAIN || "yourdomain.com"}
@@ -330,10 +330,10 @@ export default function CreateOrganizationPage() {
               <div>
                 <label
                   htmlFor="description"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-[var(--vms-ink)]"
                 >
                   Description{" "}
-                  <span className="font-normal text-zinc-400">(optional)</span>
+                  <span className="font-normal text-[var(--vms-ink-muted)]">(optional)</span>
                 </label>
                 <textarea
                   id="description"
@@ -344,14 +344,14 @@ export default function CreateOrganizationPage() {
                   disabled={isLoading}
                   rows={4}
                   placeholder="What does this organization operate?"
-                  className="mt-2 w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  className="mt-2 w-full resize-none rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 py-2.5 text-base text-[var(--vms-ink)] outline-none focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--vms-focus)_20%,transparent)] sm:text-sm"
                 />
               </div>
 
-              <div className="flex flex-col-reverse gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-[var(--vms-line)] pt-5 sm:flex-row sm:justify-end">
                 <Link
                   href="/organizations"
-                  className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex h-10 items-center justify-center rounded-[var(--vms-radius-control)] px-4 text-sm font-semibold text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]"
                 >
                   Cancel
                 </Link>
@@ -374,7 +374,7 @@ export default function CreateOrganizationPage() {
             </form>
           </section>
 
-          <aside className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <aside className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
             <h2 className="text-sm font-semibold">What happens next</h2>
             <ol className="mt-4 space-y-4">
               <NextStep
@@ -394,7 +394,7 @@ export default function CreateOrganizationPage() {
                 detail="Open the management workspace and add the first property."
               />
             </ol>
-            <div className="mt-5 rounded-xl bg-zinc-50 p-3 text-xs leading-5 text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
+            <div className="mt-5 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-3 text-xs leading-5 text-[var(--vms-ink-muted)]">
               Your draft is kept in this browser until the organization is
               created.
             </div>
@@ -422,15 +422,15 @@ function NextStep({
         className={cn(
           "grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold",
           active
-            ? "bg-[rgb(var(--brand-primary,#213928))] text-white"
-            : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+            ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+            : "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]",
         )}
       >
         {number}
       </span>
       <span>
         <span className="block text-sm font-medium">{title}</span>
-        <span className="mt-0.5 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+        <span className="mt-0.5 block text-xs leading-5 text-[var(--vms-ink-muted)]">
           {detail}
         </span>
       </span>
@@ -440,7 +440,7 @@ function NextStep({
 
 function FieldError({ message }: { message?: string }) {
   return message ? (
-    <p role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+    <p role="alert" className="mt-1.5 text-xs text-[var(--vms-danger)]">
       {message}
     </p>
   ) : null;

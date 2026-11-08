@@ -60,12 +60,12 @@ export function OrganizationMemberGuard({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col">
+      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
         <Header type="select" />
         <div className="flex flex-1 items-center justify-center px-4 py-8">
           <div className="flex flex-col items-center gap-4 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin text-[rgb(var(--brand-primary,#213928))]" />
-            <p className="text-sm font-medium text-muted-foreground">
+            <RefreshCw className="h-8 w-8 animate-spin text-[var(--vms-action)] motion-reduce:animate-none" />
+            <p className="text-sm font-medium text-[var(--vms-ink-muted)]">
               Verifying organization access...
             </p>
           </div>
@@ -76,17 +76,17 @@ export function OrganizationMemberGuard({
 
   if (verificationFailed) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
+      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
         <Header type="select" />
         <div className="flex flex-1 items-center justify-center px-4 py-8">
           <div className="flex max-w-md flex-col items-center justify-center text-center">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]">
               <RefreshCw className="h-10 w-10" />
             </div>
-            <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="mb-2 text-2xl font-semibold tracking-tight text-[var(--vms-ink)] sm:text-3xl">
               Unable to verify access
             </h1>
-            <p className="mb-8 text-muted-foreground">
+            <p className="mb-8 text-[var(--vms-ink-muted)]">
               We could not confirm your organization access. Your session or the
               API connection may be unavailable.
             </p>
@@ -108,22 +108,18 @@ export function OrganizationMemberGuard({
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)]">
         <Header type="select" />
 
         <div className="flex-1 flex items-center justify-center px-4 py-8">
           <div className="flex flex-col items-center justify-center text-center max-w-md">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]">
               <Building2 className="h-10 w-10" />
             </div>
-            <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="mb-2 text-2xl font-semibold tracking-tight text-[var(--vms-ink)] sm:text-3xl">
               Access Denied
             </h1>
-            <p className="mb-8 text-muted-foreground">
+            <p className="mb-8 text-[var(--vms-ink-muted)]">
               {isMissingOrganization
                 ? "The organization you're trying to access does not exist."
                 : "You are not a member of this organization. Please contact an administrator to request access."}

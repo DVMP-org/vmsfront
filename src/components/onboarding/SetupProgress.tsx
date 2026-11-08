@@ -19,7 +19,7 @@ export function SetupProgress({
   return (
     <ol
       aria-label="Organization setup progress"
-      className="grid gap-2 rounded-xl border border-zinc-200/80 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-3"
+      className="grid gap-2 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2 sm:grid-cols-3"
     >
       {steps.map((step, index) => {
         const complete = index < currentIndex;
@@ -31,13 +31,13 @@ export function SetupProgress({
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
               current &&
-                "bg-[rgb(var(--brand-primary,#213928)/0.08)] font-semibold text-zinc-900 dark:bg-emerald-950/30 dark:text-white",
-              !current && "text-zinc-500 dark:text-zinc-400",
+                "bg-[var(--vms-surface-subtle)] font-semibold text-[var(--vms-ink)]",
+              !current && "text-[var(--vms-ink-muted)]",
             )}
           >
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[10px] shadow-sm dark:bg-zinc-800">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--vms-surface)] text-[10px] ring-1 ring-[var(--vms-line)]">
               {complete ? (
-                <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                <Check className="h-3.5 w-3.5 text-[var(--vms-success)]" />
               ) : (
                 <Circle className="h-3 w-3" />
               )}

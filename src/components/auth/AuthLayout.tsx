@@ -1,10 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { LogoFull } from "@/components/LogoFull";
-import { Home } from "lucide-react";
-import NextLink from "next/link";
+import { Building2, ShieldCheck, Waypoints } from "lucide-react";
 
 interface AuthLayoutProps {
     children: ReactNode;
@@ -14,105 +12,78 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title, description }: AuthLayoutProps) {
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-background overflow-hidden">
-            {/* Decorative Side Panel - Left */}
-            <div className="hidden md:flex md:w-1/2 lg:w-3/5 bg-[rgb(var(--brand-primary))] relative items-center justify-center overflow-hidden">
-                {/* Abstract Background Shapes */}
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white/10 blur-3xl animate-pulse" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-white/5 blur-[100px]" />
-                    <div
-                        className="absolute inset-0 opacity-20"
-                        style={{
-                            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-                            backgroundSize: '40px 40px'
-                        }}
-                    />
-                </div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 p-12 text-white max-w-xl text-center md:text-left"
-                >
-                    <div className="mb-8 inline-block">
-                        <div className="bg-white p-4 rounded-2xl shadow-2xl">
-                            <LogoFull width={240} height={60} color="#213928" />
-                        </div>
-                    </div>
-                    <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-tight">
-                        Streamlining Estate Management with Precision
-                    </h1>
-                    <p className="text-xl text-white/80 font-light leading-relaxed mb-8">
-                        Experience the next generation of visitor management systems. Secure, efficient, and built for modern communities.
+        <div className="min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
+            <header className="border-b border-[var(--vms-line)] bg-[var(--vms-action)] px-4 py-3 text-[var(--vms-on-action)] sm:px-6">
+                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                    <LogoFull width={112} height={38} color="#ffffff" />
+                    <p className="hidden text-xs font-medium text-white/70 sm:block">
+                        Property operations, kept in context
                     </p>
-
-                    <div className="grid grid-cols-2 gap-6 mt-12">
-                        <div className="border border-white/20 rounded-xl p-4 bg-white/5 backdrop-blur-sm">
-                            <div className="font-bold text-2xl mb-1">99.9%</div>
-                            <div className="text-white/60 text-sm italic">System Uptime</div>
-                        </div>
-                        <div className="border border-white/20 rounded-xl p-4 bg-white/5 backdrop-blur-sm">
-                            <div className="font-bold text-2xl mb-1">Secure</div>
-                            <div className="text-white/60 text-sm italic">Bank-level Encryption</div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Floating elements for visual interest */}
-                <motion.div
-                    animate={{
-                        y: [0, -20, 0],
-                        rotate: [0, 5, 0]
-                    }}
-                    transition={{
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                    className="absolute top-[20%] right-[10%] w-24 h-24 bg-white/10 rounded-3xl backdrop-blur-xl border border-white/10 z-0"
-                />
-                <motion.div
-                    animate={{
-                        y: [0, 30, 0],
-                        rotate: [0, -10, 0]
-                    }}
-                    transition={{
-                        duration: 8,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                    className="absolute bottom-[20%] left-[15%] w-16 h-16 bg-white/10 rounded-full backdrop-blur-xl border border-white/10 z-0"
-                />
-            </div>
-
-            {/* Main Panel - Right/Center */}
-            <div className="flex-1 flex flex-col justify-start items-center px-6 pb-6 pt-28 md:justify-center md:p-12 lg:p-16 bg-background relative">
-                <div className="absolute top-8 left-8 md:hidden">
-                    <LogoFull width={120} height={40} />
                 </div>
+            </header>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="w-full max-w-md"
-                >
-                    <div className="mb-8 text-center md:text-left">
-                        <h2 className="text-3xl font-extrabold tracking-tight mb-2">{title}</h2>
-                        <p className="text-muted-foreground">{description}</p>
+            <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-stretch lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.72fr)]">
+                <aside className="hidden border-r border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-10 py-14 lg:flex lg:flex-col lg:justify-between">
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+                            VMSCore / Operations Hub
+                        </p>
+                        <h1 className="mt-5 max-w-lg text-4xl font-semibold leading-[1.12] tracking-[-0.045em]">
+                            One operating context for every property, role and decision.
+                        </h1>
+                        <p className="mt-5 max-w-lg text-base leading-7 text-[var(--vms-ink-muted)]">
+                            Move between organization administration and the property
+                            workspace that belongs to your actual relationship.
+                        </p>
                     </div>
 
-                    <div className="transition-all duration-300">
+                    <div className="grid gap-3">
+                        {[
+                            [Building2, "Property context", "Places, buildings and spaces remain distinct from the organization."],
+                            [Waypoints, "Role-aware access", "Management, occupancy, staff and guest access stay separate."],
+                            [ShieldCheck, "Tenant boundaries", "Context is verified before protected records or actions load."],
+                        ].map(([Icon, itemTitle, detail]) => {
+                            const ItemIcon = Icon as typeof Building2;
+                            return (
+                                <div
+                                    key={String(itemTitle)}
+                                    className="flex gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4"
+                                >
+                                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
+                                        <ItemIcon className="h-4 w-4" aria-hidden="true" />
+                                    </span>
+                                    <div>
+                                        <h2 className="text-sm font-semibold">{String(itemTitle)}</h2>
+                                        <p className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]">
+                                            {String(detail)}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </aside>
+
+                <section className="flex items-center justify-center px-4 py-10 sm:px-8 lg:px-12">
+                    <div className="w-full max-w-md">
+                        <div className="mb-8">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+                                Secure account access
+                            </p>
+                            <h2 className="mt-2 text-[28px] font-semibold leading-9 tracking-[-0.035em]">
+                                {title}
+                            </h2>
+                            <p className="mt-2 text-sm leading-6 text-[var(--vms-ink-muted)]">
+                                {description}
+                            </p>
+                        </div>
                         {children}
+                        <p className="mt-10 text-center text-xs text-[var(--vms-ink-muted)]">
+                            &copy; {new Date().getFullYear()} VMSCore. All rights reserved.
+                        </p>
                     </div>
-
-                    <div className="mt-12 text-center text-sm text-muted-foreground">
-                        <p>&copy; {new Date().getFullYear()} VMS Core. All rights reserved.</p>
-                    </div>
-                </motion.div>
-            </div>
+                </section>
+            </main>
         </div>
     );
 }

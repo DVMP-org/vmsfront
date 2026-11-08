@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
             className="text-center py-8 space-y-6"
           >
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-[var(--brand-primary)]" />
+              <CheckCircle2 className="h-10 w-10 text-[var(--vms-success)]" />
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Check your email</h3>
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
             </div>
             <Link
               href="/auth/login"
-              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-primary)] hover:underline group"
+              className="group mt-8 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--vms-action)] hover:underline"
             >
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               Back to login
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center pt-2">
               <Link
                 href="/auth/login"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-[var(--brand-primary)] transition-colors group"
+                className="group inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--vms-ink-muted)] transition-colors hover:text-[var(--vms-ink)]"
               >
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                 Back to login

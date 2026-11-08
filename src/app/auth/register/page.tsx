@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Already have an account? </span>
-          <Link href="/auth/login" className="text-[var(--brand-primary)] hover:underline font-bold transition-all">
+          <Link href="/auth/login" className="font-semibold text-[var(--vms-action)] hover:underline">
             Sign in
           </Link>
         </div>

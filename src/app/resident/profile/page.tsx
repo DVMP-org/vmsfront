@@ -18,6 +18,7 @@ import {
   Copy,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -142,28 +143,30 @@ export default function ResidentProfilePage() {
     <DashboardLayout type="resident">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-[rgb(var(--brand-primary)/0.2)] text-lg font-medium text-[rgb(var(--brand-primary))]">
+        <PageHeader
+          eyebrow="Account / Profile"
+          title={fullName}
+          description={
+            <span className="flex flex-wrap items-center gap-2">
+              <Mail className="h-3.5 w-3.5" />
+              <span>{residentUser.email}</span>
+              <span className="text-[var(--vms-line-strong)]">|</span>
+              <span className={cn(
+                "flex items-center gap-1.5",
+                residentProfile?.onboarded ? "text-[var(--vms-success)]" : "text-[var(--vms-warning)]"
+              )}>
+                <UserCheck className="h-3.5 w-3.5" />
+                {membershipStatus}
+              </span>
+            </span>
+          }
+          metadata={
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--vms-surface-subtle)] text-lg font-semibold text-[var(--vms-ink)]">
               {getInitials(residentUser.first_name, residentUser.last_name)}
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{fullName}</h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-3.5 w-3.5" />
-                <span>{residentUser.email}</span>
-                <span className="text-border">|</span>
-                <span className={cn(
-                  "flex items-center gap-1.5",
-                  residentProfile?.onboarded ? "text-emerald-600" : "text-amber-600"
-                )}>
-                  <UserCheck className="h-3.5 w-3.5" />
-                  {membershipStatus}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+          }
+          secondaryActions={
+            <>
             <Button
               variant="outline"
               size="sm"
@@ -190,8 +193,9 @@ export default function ResidentProfilePage() {
               <Save className="mr-2 h-4 w-4" />
               Save Profile
             </Button>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content Column */}
@@ -419,7 +423,7 @@ function PreferenceToggle({
       onClick={onChange}
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        active ? "bg-[rgb(var(--brand-primary))]" : "bg-input"
+        active ? "bg-[var(--vms-action)]" : "bg-[var(--vms-line-strong)]"
       )}
     >
       <span

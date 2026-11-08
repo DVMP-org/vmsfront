@@ -55,13 +55,7 @@ export default function VerifyEmailRedirectPage() {
   }, [token, router]);
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden bg-slate-50 dark:bg-[#020617]">
-      {/* Ambient Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgb(var(--brand-primary,#213928))]/5 blur-[120px] rounded-full animate-pulse-slow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow delay-700" />
-      </div>
-
+    <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <Header type="auth" />
 
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
@@ -77,9 +71,9 @@ export default function VerifyEmailRedirectPage() {
                 initial={{ scale: 0.8, rotate: -10 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none"
+                className="relative rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-6"
               >
-                <Mail className="w-10 h-10 text-[rgb(var(--brand-primary,#213928))]" />
+                <Mail className="h-10 w-10 text-[var(--vms-action)]" />
                 {state === "success" && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -94,14 +88,14 @@ export default function VerifyEmailRedirectPage() {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-semibold tracking-tight text-[var(--vms-ink)]">
                 {state === "loading"
                   ? "Verifying your email"
                   : state === "success"
                     ? "Email verified!"
                     : "Verification failed"}
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[360px] mx-auto">
+              <p className="mx-auto max-w-[360px] text-sm leading-relaxed text-[var(--vms-ink-muted)]">
                 {state === "loading"
                   ? "Please wait while we verify your email address..."
                   : state === "success"
@@ -119,8 +113,7 @@ export default function VerifyEmailRedirectPage() {
               className="flex justify-center py-12"
             >
               <div className="relative">
-                <div className="absolute inset-[-20px] bg-[rgb(var(--brand-primary,#213928))]/10 blur-2xl rounded-full animate-pulse" />
-                <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl">
+                <div className="relative rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-8 shadow-[var(--vms-shadow-overlay)]">
                   <Loader
                     size={48}
                     colour="brand-primary"
@@ -136,14 +129,14 @@ export default function VerifyEmailRedirectPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-start gap-4 p-5 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-3xl"
+              className="flex items-start gap-4 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] p-5"
             >
-              <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-[var(--vms-success)]" />
               <div className="space-y-1">
-                <p className="text-sm text-green-900 dark:text-green-200 font-medium">
+                <p className="text-sm font-medium text-[var(--vms-success)]">
                   Email verified successfully!
                 </p>
-                <p className="text-xs text-green-700 dark:text-green-300">
+                <p className="text-xs text-[var(--vms-success)]">
                   You're all set. Redirecting to your dashboard...
                 </p>
               </div>
@@ -155,14 +148,14 @@ export default function VerifyEmailRedirectPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-4 p-5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-3xl"
+              className="flex items-start gap-4 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5"
             >
-              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="mt-0.5 h-6 w-6 shrink-0 text-[var(--vms-danger)]" />
               <div className="space-y-2">
-                <p className="text-sm text-red-900 dark:text-red-200 font-medium">
+                <p className="text-sm font-medium text-[var(--vms-danger)]">
                   {errorMessage}
                 </p>
-                <p className="text-xs text-red-700 dark:text-red-300">
+                <p className="text-xs text-[var(--vms-danger)]">
                   The verification link may be invalid or expired.
                 </p>
               </div>
@@ -175,13 +168,13 @@ export default function VerifyEmailRedirectPage() {
               <Button
                 variant="outline"
                 asChild
-                className="w-full h-14 text-base font-bold rounded-2xl border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-[0.98]"
+                className="h-12 w-full rounded-[var(--vms-radius-control)] text-base font-semibold"
               >
                 <Link href="/auth/login">Back to Login</Link>
               </Button>
               <Button
                 asChild
-                className="w-full h-14 text-base font-bold rounded-2xl bg-[rgb(var(--brand-primary,#213928))] text-white hover:bg-[rgb(var(--brand-primary,#213928))]/90 transition-all active:scale-[0.98]"
+                className="h-12 w-full rounded-[var(--vms-radius-control)] bg-[var(--vms-action)] text-base font-semibold text-[var(--vms-on-action)] hover:bg-[var(--vms-action-hover)]"
               >
                 <Link href="/auth/verify-email">Request New Link</Link>
               </Button>

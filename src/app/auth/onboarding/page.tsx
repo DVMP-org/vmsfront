@@ -106,7 +106,7 @@ export default function OnboardingPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-[var(--brand-primary)]" />
+                    <Loader2 className="h-10 w-10 animate-spin text-[var(--vms-action)] motion-reduce:animate-none" />
                     <p className="text-muted-foreground animate-pulse">Verifying your invitation...</p>
                 </div>
             </div>
@@ -137,26 +137,20 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[var(--brand-primary)]/10 via-background to-[var(--brand-secondary)]/10 flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--brand-primary)]/5 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[var(--brand-secondary)]/5 rounded-full blur-[120px]" />
-
-            <div className="mb-12 relative z-10 transition-all duration-700 transform hover:scale-105">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--vms-canvas)] px-4 py-12 text-[var(--vms-ink)]">
+            <div className="relative z-10 mb-10">
                 <LogoFull width={220} height={66} />
             </div>
 
-            <Card className="w-full max-w-xl shadow-2xl border-none bg-white/70 dark:bg-black/40 backdrop-blur-xl group relative z-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-primary)]/5 to-transparent opacity-50 rounded-[var(--radius)] pointer-events-none" />
-
-                <CardHeader className="space-y-4 text-center pb-8 border-b border-border/50 relative px-8 pt-10">
+            <Card className="relative z-10 w-full max-w-xl">
+                <CardHeader className="space-y-4 border-b border-[var(--vms-line)] px-6 pb-8 pt-8 text-center sm:px-8 sm:pt-10">
                     <div className="flex justify-center">
-                        <div className="p-4 rounded-2xl bg-[var(--brand-primary)] text-white shadow-lg shadow-[var(--brand-primary)]/20 animate-in fade-in zoom-in duration-500">
+                        <div className="rounded-[var(--vms-radius-surface)] bg-[var(--vms-action)] p-4 text-[var(--vms-on-action)]">
                             <ShieldCheck className="h-8 w-8" />
                         </div>
                     </div>
                     <div>
-                        <CardTitle className="text-3xl font-extrabold tracking-tight text-foreground">
+                        <CardTitle className="text-[28px] font-semibold tracking-[-0.035em]">
                             {step === 1 ? "Personal Profile" : "Security Setup"}
                         </CardTitle>
                         <CardDescription className="text-base mt-2 max-w-xs mx-auto">
@@ -170,11 +164,11 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-center gap-3 pt-2">
                         <div className={cn(
                             "h-2 w-12 rounded-full transition-all duration-500",
-                            step === 1 ? "bg-[var(--brand-primary)] w-16" : "bg-muted shadow-inner"
+                            step === 1 ? "w-16 bg-[var(--vms-action)]" : "bg-[var(--vms-surface-subtle)]"
                         )} />
                         <div className={cn(
                             "h-2 w-12 rounded-full transition-all duration-500",
-                            step === 2 ? "bg-[var(--brand-primary)] w-16" : "bg-muted shadow-inner"
+                            step === 2 ? "w-16 bg-[var(--vms-action)]" : "bg-[var(--vms-surface-subtle)]"
                         )} />
                     </div>
                 </CardHeader>
@@ -277,19 +271,19 @@ export default function OnboardingPage() {
                         )}
 
                         <p className="text-center text-xs text-muted-foreground/80 leading-relaxed px-4">
-                            By activating your account, you agree to our <span className="text-[var(--brand-primary)] font-medium cursor-pointer hover:underline">Terms of Service</span> and <span className="text-[var(--brand-primary)] font-medium cursor-pointer hover:underline">Privacy Policy</span>.
+                            By activating your account, you agree to our <span className="font-medium text-[var(--vms-action)]">Terms of Service</span> and <span className="font-medium text-[var(--vms-action)]">Privacy Policy</span>.
                         </p>
                     </form>
                 </CardContent>
             </Card>
 
-            <div className="mt-12 text-sm text-center text-muted-foreground relative z-10 bg-white/20 dark:bg-black/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30">
-                Need help? <span className="text-[var(--brand-primary)] font-semibold cursor-pointer hover:underline">Contact Support</span>
+            <div className="relative z-10 mt-10 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-6 py-3 text-center text-sm text-[var(--vms-ink-muted)]">
+                Need help? <span className="font-semibold text-[var(--vms-action)]">Contact Support</span>
                 <span className="mx-3 opacity-30">|</span>
                 Already active?{" "}
                 <button
                     onClick={() => { clearAuth(); router.push("/auth/login"); }}
-                    className="text-[var(--brand-primary)] font-bold hover:underline"
+                    className="font-semibold text-[var(--vms-action)] hover:underline"
                 >
                     Sign In
                 </button>
