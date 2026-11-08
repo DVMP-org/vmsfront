@@ -69,7 +69,7 @@ describe("AdminPermissionGuard management boundary", () => {
 
     await waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith(
-        "/select?reason=management-required",
+        "/organization/workspaces?reason=management-required",
       ),
     );
     expect(screen.queryByText("Property operations")).toBeNull();

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
+import { getSubdomain } from "@/lib/subdomain-utils";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function HomePage() {
     if (!_hasHydrated) return;
 
     if (isAuthenticated || !!token) {
-      router.replace("/select");
+      router.replace(getSubdomain() ? "/organization" : "/organizations");
     } else {
       router.replace("/auth/login");
     }

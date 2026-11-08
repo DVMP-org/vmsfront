@@ -294,7 +294,7 @@ export default function ResidentProfilePage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => router.push("/select")}
+                                onClick={() => router.push("/organization/workspaces")}
                                 title="Choose a workspace"
                               >
                                 <ExternalLink className="h-4 w-4" />

@@ -210,10 +210,10 @@ export default function VerifyEmailPage() {
                 setIsRefreshing(true);
                 try {
                   await refreshProfile();
-                  window.location.href = "/select";
+                  window.location.href = "/organization/workspaces";
                 } catch (error) {
                   console.error("Failed to refresh profile:", error);
-                  window.location.href = "/select";
+                  window.location.href = "/organization/workspaces";
                 } finally {
                   setIsRefreshing(false);
                 }

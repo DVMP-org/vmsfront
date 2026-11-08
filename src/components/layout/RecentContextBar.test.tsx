@@ -78,7 +78,7 @@ describe("RecentContextBar", () => {
     expect(screen.getByText(/Recent entry allowed/)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Switch workspace/ }),
-    ).toHaveAttribute("href", "/select");
+    ).toHaveAttribute("href", "/organization/workspaces");
   });
 
   it("offers a retry instead of presenting stale work counts after failure", () => {

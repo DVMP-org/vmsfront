@@ -50,7 +50,10 @@ export const Header = memo(function Header({
   const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
   const isResidencyRoute =
     type == "resident" || pathname?.startsWith("/residency");
-  const isSelectRoute = type == "select" || pathname?.startsWith("/select");
+  const isSelectRoute =
+    type == "select" ||
+    pathname?.startsWith("/select") ||
+    pathname?.startsWith("/organization/workspaces");
   const isAdminUser = useAdminProfile();
   const commandProfile = useQuery({
     queryKey: ["command-profile", organization?.id, currentUser?.id],
@@ -59,7 +62,7 @@ export const Header = memo(function Header({
     staleTime: 0,
   });
   const profileHref = isAdminUser ? "/admin/profile" : "/resident/profile";
-  const dashboardHref = "/select";
+  const dashboardHref = "/organization/workspaces";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
