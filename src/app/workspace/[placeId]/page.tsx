@@ -22,6 +22,7 @@ import {
 import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
 import { MyCharges } from "@/features/charges/my-charges/MyCharges";
 import { GuestStayDashboard } from "@/features/guest-stay/GuestStayDashboard";
+import { WorkspaceNotifications } from "@/features/workspace-notifications/WorkspaceNotifications";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -133,6 +134,8 @@ export default function WorkspacePage() {
                 }
               />
             </div>
+
+            <WorkspaceNotifications userId={context.data.user.id} />
 
             <MyCharges
               placeId={relationship.place.id}
