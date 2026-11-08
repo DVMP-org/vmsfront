@@ -397,6 +397,7 @@ export interface WorkspacePlace {
     slug: string;
     kind: string;
     is_active: boolean;
+    site_name?: string | null;
     address?: string;
     parent_id?: string | null;
     building_type?: string | null;

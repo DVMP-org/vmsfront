@@ -4,7 +4,9 @@ import {
   areaForRelationship,
   buildPropertyWorkspaces,
   buildWorkspaceCards,
+  qualifiedPlaceName,
   roleLabel,
+  workspaceDisplayName,
 } from "./catalog";
 
 function relationship(role: string, placeId: string): WorkspaceRelationship {
@@ -125,5 +127,35 @@ describe("workspace catalog", () => {
     ]);
     expect(workspace.accesses[0].roleLabel).toBe("Estate Manager");
     expect(workspace.accesses[1].roleLabel).toBe("Tenant");
+  });
+
+  it("qualifies non-site workspace titles with the API-provided site", () => {
+    const occupant = relationship("resident", "apartment");
+    occupant.place.name = "Apartment 4B";
+    occupant.place.site_name = "Harbour Court";
+
+    const [workspace] = buildPropertyWorkspaces({
+      admin: null,
+      relationships: [occupant],
+    });
+
+    expect(qualifiedPlaceName(occupant.place)).toBe(
+      "Harbour Court - Apartment 4B",
+    );
+    expect(workspaceDisplayName(workspace)).toBe(
+      "Harbour Court - Apartment 4B",
+    );
+  });
+
+  it("uses the managed path when site metadata is absent", () => {
+    const unit = relationship("resident", "apartment").place;
+    unit.name = "Apartment 4B";
+    const site = relationship("admin", "site").place;
+    site.name = "Harbour Court";
+    site.kind = "site";
+
+    expect(qualifiedPlaceName(unit, [site, unit])).toBe(
+      "Harbour Court - Apartment 4B",
+    );
   });
 });

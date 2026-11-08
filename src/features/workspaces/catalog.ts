@@ -34,6 +34,21 @@ export type PropertyWorkspacePlace = Omit<
   slug?: string;
 };
 
+export function workspaceDisplayName(workspace: PropertyWorkspace): string {
+  return qualifiedPlaceName(workspace.place, workspace.placePath);
+}
+
+export function qualifiedPlaceName(
+  place: PropertyWorkspacePlace,
+  placePath: PropertyWorkspacePlace[] = [place],
+): string {
+  if (place.kind === "site") return place.name;
+  const siteName =
+    place.site_name?.trim() ||
+    placePath.find((ancestor) => ancestor.kind === "site")?.name;
+  return siteName ? `${siteName} - ${place.name}` : place.name;
+}
+
 const OCCUPANCY_ROLES = new Set([
   "resident",
   "resident_of",

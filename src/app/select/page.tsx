@@ -23,6 +23,7 @@ import { Header } from "@/components/layout/Header";
 import { LogoFull } from "@/components/LogoFull";
 import {
   buildPropertyWorkspaces,
+  workspaceDisplayName,
   type PropertyAccess,
   type PropertyWorkspace,
   type WorkspaceArea,
@@ -595,12 +596,6 @@ function propertyDetails(
     useCase,
     kind: workspace.place.kind.replaceAll("_", " "),
   };
-}
-
-function workspaceDisplayName(workspace: PropertyWorkspace) {
-  if (workspace.place.kind === "site") return workspace.place.name;
-  const site = workspace.placePath.find((place) => place.kind === "site");
-  return site ? `${site.name} - ${workspace.place.name}` : workspace.place.name;
 }
 
 function initials(value: string) {

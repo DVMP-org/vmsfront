@@ -79,6 +79,7 @@ const relationship = {
     name: "Suite 402",
     slug: "suite-402",
     kind: "room",
+    site_name: "Harbour Hotel",
     is_active: true,
   },
 };
@@ -174,7 +175,9 @@ describe("hotel guest workspace", () => {
     renderPage();
 
     expect(await screen.findByText("Arrival scheduled")).toBeInTheDocument();
-    expect(screen.getAllByText("Suite 402").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", { name: "Harbour Hotel - Suite 402" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /create invitation/i }),
     ).toBeInTheDocument();
