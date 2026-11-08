@@ -131,10 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   onMobileClose,
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 1024;
-  });
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(
     new Set(),
