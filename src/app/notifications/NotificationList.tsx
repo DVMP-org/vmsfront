@@ -7,21 +7,18 @@ import {
     CheckCircle2,
     Info,
     AlertTriangle,
-    Calendar,
-    MoreVertical,
     Check,
-    Trash2,
     Search,
-    Filter
 } from "lucide-react";
 import { formatDateTime, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PaginationBar } from "@/components/ui/PaginationBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuthStore } from "@/store/auth-store";
 
 export function NotificationList() {
@@ -68,7 +65,7 @@ export function NotificationList() {
         return (
             <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-16 w-full bg-muted/20 animate-pulse rounded-lg border border-border/40" />
+                    <div key={i} className="h-16 w-full animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none" />
                 ))}
             </div>
         );
@@ -76,43 +73,43 @@ export function NotificationList() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Manage your system alerts and activity updates
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    {unreadCount > 0 && (
-                        <Button variant="outline" size="sm" onClick={handleMarkAllRead} className="h-9 px-3 gap-2 text-xs font-semibold">
+            <PageHeader
+                eyebrow="Account activity"
+                title="Notifications"
+                description="Review approvals, access changes and operating events that need your attention."
+                primaryAction={
+                    unreadCount > 0 ? (
+                        <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
                             <Check className="h-3.5 w-3.5" />
                             Mark all read
                         </Button>
-                    )}
-                    <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9 px-3 text-xs font-semibold text-muted-foreground">
+                    ) : undefined
+                }
+                secondaryActions={
+                    <Button variant="outline" size="sm" onClick={() => refetch()}>
                         Refresh
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
-            <Card className="border-border/40 shadow-sm overflow-hidden rounded-xl">
-                <div className="p-4 border-b border-border/40 bg-muted/5 flex flex-wrap items-center gap-4">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Card className="overflow-hidden border-[var(--vms-line)]">
+                <div className="flex flex-wrap items-center gap-4 border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
+                    <div className="relative min-w-[200px] flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]" />
                         <Input
+                            aria-label="Filter notifications"
                             placeholder="Filter notifications..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 h-9 text-sm bg-background border-border/60"
+                            className="pl-9"
                         />
                     </div>
-                    <div className="flex items-center bg-muted/20 p-1 rounded-lg border border-border/40">
+                    <div className="flex items-center rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-1">
                         <button
                             onClick={() => setFilter("all")}
                             className={cn(
-                                "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
-                                filter === "all" ? "bg-background text-foreground shadow-xs border border-border/40" : "text-muted-foreground hover:text-foreground"
+                                "min-h-8 rounded px-3 py-1.5 text-xs font-semibold transition-colors",
+                                filter === "all" ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]" : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]"
                             )}
                         >
                             All
@@ -120,13 +117,13 @@ export function NotificationList() {
                         <button
                             onClick={() => setFilter("unread")}
                             className={cn(
-                                "px-3 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5",
-                                filter === "unread" ? "bg-background text-foreground shadow-xs border border-border/40" : "text-muted-foreground hover:text-foreground"
+                                "flex min-h-8 items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold transition-colors",
+                                filter === "unread" ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]" : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]"
                             )}
                         >
                             Unread
                             {unreadCount > 0 && (
-                                <Badge variant="secondary" className="px-1 py-0 h-4 text-[9px] min-w-[14px] bg-[rgb(var(--brand-primary,#213928))]/10 text-[rgb(var(--brand-primary,#213928))]">
+                                <Badge variant="secondary" className="min-w-[14px] px-1 py-0 text-[9px]">
                                     {unreadCount}
                                 </Badge>
                             )}
@@ -134,19 +131,17 @@ export function NotificationList() {
                     </div>
                 </div>
 
-                <div className="divide-y divide-border/40">
+                <div className="divide-y divide-[var(--vms-line)]">
                     <AnimatePresence mode="popLayout">
                         {filteredNotifications.length === 0 ? (
-                            <div className="py-20 text-center">
-                                <EmptyState
-                                    icon={Bell}
-                                    title="No notifications found"
-                                    description={searchTerm ? "Try adjusting your search or filters" : "You're all caught up!"}
-                                />
-                            </div>
+                            <EmptyState
+                                icon={Bell}
+                                title="No notifications found"
+                                description={searchTerm ? "Try adjusting your search or filters." : "You're all caught up."}
+                            />
                         ) : (
                             filteredNotifications.map((notification) => (
-                                <div key={notification.id} className="my-2">
+                                <div key={notification.id}>
                                     <NotificationRow notification={notification} />
                                 </div>
                             ))
@@ -155,7 +150,7 @@ export function NotificationList() {
                 </div>
 
                 {data?.total_pages || 0 > 1 && (
-                    <div className="p-4 border-border/40">
+                    <div className="border-t border-[var(--vms-line)] p-4">
                         <PaginationBar
                             page={data?.page || 1}
                             pageSize={data?.page_size || 10}
@@ -190,20 +185,20 @@ function NotificationRow({ notification }: { notification: any }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={cn(
-                "group flex mx-2 items-center gap-4 p-4 border-b rounded-xs border-border/40 transition-all hover:bg-muted/30 cursor-pointer relative dark:bg-white/10",
-                !is_read && "bg-foreground/10 dark:bg-background/10"
+                "group relative flex cursor-pointer items-center gap-4 border-b border-[var(--vms-line)] p-4 transition-colors hover:bg-[var(--vms-surface-subtle)]",
+                !is_read && "bg-[var(--vms-surface-subtle)]"
             )}
         >
-            <div className="hidden group-hover:block absolute left-0 top-0 bottom-0 w-1 bg-[rgb(var(--brand-primary,#213928))]/40 " />
+            <div className={cn("absolute inset-y-0 left-0 w-1 bg-[var(--vms-active-accent)]", is_read && "hidden")} />
 
             <div className={cn("flex-shrink-0 relative")}>
 
                 <div className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg border transition-all",
-                    is_read ? "bg-muted/50 border-border/40 text-muted-foreground/60 dark:border-white/20" :
-                        payload.intent === "success" ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-sm shadow-green-500/5" :
-                            payload.intent === "warning" ? "bg-amber-500/10 border-amber-500/20 text-amber-600 shadow-sm shadow-amber-500/5" :
-                                "bg-[rgb(var(--brand-primary,#213928)/0.1)] border-[rgb(var(--brand-primary,#213928)/0.2)] text-[rgb(var(--brand-primary,#213928))] shadow-sm shadow-[rgb(var(--brand-primary,#213928)/0.05)] dark:text-white/50 dark:border-white/20"
+                    "flex h-9 w-9 items-center justify-center rounded-[var(--vms-radius-control)] border transition-colors",
+                    is_read ? "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]" :
+                        payload.intent === "success" ? "border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]" :
+                            payload.intent === "warning" ? "border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]" :
+                                "border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-action)]"
                 )}>
                     {payload.intent === "success" ? <CheckCircle2 className="h-4 w-4" /> :
                         payload.intent === "warning" ? <AlertTriangle className="h-4 w-4" /> :
@@ -215,17 +210,17 @@ function NotificationRow({ notification }: { notification: any }) {
                 <div className="flex items-center gap-2">
                     <h3 className={cn(
                         "text-sm font-bold truncate",
-                        is_read ? "text-foreground/70" : "text-foreground"
+                        is_read ? "text-[var(--vms-ink-muted)]" : "text-[var(--vms-ink)]"
                     )}>
                         {payload.title}
                     </h3>
-                    <Badge variant="outline" className="text-[9px] uppercase font-black tracking-widest h-4 px-1 py-0 border-border/40 text-muted-foreground/50 bg-muted/20">
+                    <Badge variant="outline" className="h-4 px-1 py-0 text-[9px] uppercase tracking-widest">
                         {event.replace(/_/g, " ")}
                     </Badge>
                 </div>
                 <p className={cn(
                     "text-xs line-clamp-1 font-medium",
-                    is_read ? "text-muted-foreground/60" : "text-muted-foreground"
+                    is_read ? "text-[var(--vms-ink-muted)]" : "text-[var(--vms-ink-muted)]"
                 )}>
                     {payload.message}
                 </p>
@@ -233,26 +228,27 @@ function NotificationRow({ notification }: { notification: any }) {
 
             <div className="flex-shrink-0 flex items-center gap-4 text-right">
                 <div className="hidden sm:flex flex-col items-end gap-0.5 min-w-[80px]">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase whitespace-nowrap tracking-widest">
+                    <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-widest text-[var(--vms-ink-muted)]">
                         {formatDateTime(created_at).split(',')[0]}
                     </span>
-                    <span className="text-[10px] text-muted-foreground/50 font-bold">
+                    <span className="text-[10px] text-[var(--vms-ink-muted)]">
                         {formatDateTime(created_at).split(',')[1]}
                     </span>
                 </div>
 
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                     {!is_read ? (
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={handleMarkRead}
-                            className="h-8 w-8 p-0 rounded-lg hover:bg-[rgb(var(--brand-primary,#213928))]/10 hover:text-[rgb(var(--brand-primary,#213928))] border-border/40"
+                            className="h-11 w-11 p-0 sm:h-8 sm:w-8"
+                            aria-label={`Mark ${payload.title} as read`}
                         >
                             <Check className="h-4 w-4" />
                         </Button>
                     ) : (
-                        <div className="h-8 w-8 flex items-center justify-center text-muted-foreground/30">
+                        <div className="flex h-8 w-8 items-center justify-center text-[var(--vms-ink-muted)]">
                             <CheckCircle2 className="h-4 w-4 opacity-20" />
                         </div>
                     )}

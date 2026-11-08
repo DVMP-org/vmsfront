@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
         <div className="text-center">
           <Link
             href="/auth/login"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-[var(--brand-primary)] transition-colors group"
+            className="group inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--vms-ink-muted)] transition-colors hover:text-[var(--vms-ink)]"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to login

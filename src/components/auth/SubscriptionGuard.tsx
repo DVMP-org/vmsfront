@@ -75,7 +75,7 @@ export function SubscriptionGuard({
                     animate={{ opacity: 1 }}
                     className="flex flex-col items-center gap-4"
                 >
-                    <Loader2 className="h-8 w-8 text-[rgb(var(--brand-primary))] animate-spin" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--vms-action)] motion-reduce:animate-none" />
                     <p className="text-sm text-zinc-500">Redirecting to plans...</p>
                 </motion.div>
             </div>

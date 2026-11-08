@@ -94,7 +94,7 @@ export default function LoginPage() {
             <div className="flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-xs font-medium text-[rgb(var(--brand-primary))] dark:text-white/70 hover:underline opacity-80 hover:opacity-100 transition-opacity"
+                className="text-xs font-medium text-[var(--vms-action)] hover:underline"
               >
                 Forgot password?
               </Link>
@@ -117,7 +117,7 @@ export default function LoginPage() {
           </span>
           <Link
             href="/auth/register"
-            className="text-[rgb(var(--brand-primary))] dark:text-white/70 hover:underline font-bold transition-all"
+            className="font-semibold text-[var(--vms-action)] hover:underline"
           >
             Create account
           </Link>

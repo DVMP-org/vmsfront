@@ -51,12 +51,12 @@ export default function WorkspacePage() {
     : null;
 
   return (
-    <div className="occupancy-surface min-h-screen bg-[#f7f9fc] text-[#0f1b31]">
+    <div className="occupancy-surface min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <Header type="select" />
       <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-9">
         <Link
           href="/select"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#667085] hover:text-[#0f1b31]"
+          className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"
         >
           <ArrowLeft className="h-4 w-4" />
           All workspaces
@@ -65,40 +65,40 @@ export default function WorkspacePage() {
         {context.isError ? (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"
+            className="rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5 text-sm text-[var(--vms-danger)]"
           >
             {parseApiError(context.error).message}
           </div>
         ) : context.isPending ? (
           <div role="status" className="space-y-3">
-            <div className="h-10 w-72 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-            <div className="h-48 animate-pulse rounded-xl bg-white dark:bg-slate-900" />
+            <div className="h-10 w-72 animate-pulse rounded bg-[var(--vms-surface-subtle)] motion-reduce:animate-none" />
+            <div className="h-48 animate-pulse rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none" />
           </div>
         ) : !relationship ? (
-          <section className="rounded-xl border border-[#dce3ee] bg-white p-8">
+          <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-8">
             <h1 className="text-2xl font-semibold">
               Workspace access unavailable
             </h1>
-            <p className="mt-2 text-sm text-[#667085]">
+            <p className="mt-2 text-sm text-[var(--vms-ink-muted)]">
               This workspace is not active for your account in the selected
               organization.
             </p>
           </section>
         ) : (
           <>
-            <header className="mb-5 rounded-xl border border-[#dce3ee] bg-white p-5 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#2563eb]">
+            <header className="mb-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
                 {meta.title}
               </p>
               <div className="mt-3 flex items-start gap-4">
-                <div className="grid h-11 w-11 place-items-center rounded-lg bg-[#edf3ff] text-[#2563eb]">
+                <div className="grid h-11 w-11 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
                   <Icon className="h-6 w-6" />
                 </div>
                 <div>
                   <h1 className="text-[28px] font-semibold tracking-[-0.04em]">
                     {placeTitle}
                   </h1>
-                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">
+                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
                     {relationship.place.kind} workspace ·{" "}
                     {roleLabel(relationship.role)} access
                   </p>
@@ -162,25 +162,25 @@ export default function WorkspacePage() {
               />
             </div>
 
-            <section className="mt-5 rounded-xl border border-[#dce3ee] bg-white p-5 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-6">
+            <section className="mt-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Workspace access</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--vms-ink-muted)]">
                 {area === "guest"
                   ? "This is your personal stay workspace. You can invite visitors here; hotel staff retain reservations, room assignment and stay-management controls."
                   : area === "staff"
                     ? "This is your assigned staff workspace. You can create visitor invitations for this property; site administration remains a separate permission boundary."
                     : `This is your personal ${roleLabel(relationship.role).toLowerCase()} workspace. You can create and manage visitor invitations for this property.`}
               </p>
-              <div className="mt-4 rounded-lg border border-[#dce3ee] bg-[#f8faff] p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#667085]">
+              <div className="mt-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
                   Account identity
                 </p>
-                <p className="mt-2 text-sm font-semibold text-[#0f1b31]">
+                <p className="mt-2 text-sm font-semibold text-[var(--vms-ink)]">
                   {context.data?.party?.display_name ||
                     context.data?.user.name ||
                     context.data?.user.email}
                 </p>
-                <p className="mt-1 text-xs text-[#667085]">
+                <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
                   {context.data?.party?.email || context.data?.user.email}
                 </p>
               </div>
@@ -204,13 +204,13 @@ function InfoCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-      <Icon className="h-4 w-4 text-[#2563eb]" />
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#98a2b3]">
+    <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+      <Icon className="h-4 w-4 text-[var(--vms-action)]" />
+      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
         {label}
       </p>
       <p className="mt-1 text-sm font-semibold capitalize">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-[#667085]">
+      <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
         {detail}
       </p>
     </div>

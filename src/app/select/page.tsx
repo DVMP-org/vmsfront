@@ -44,11 +44,13 @@ const accessIcon = {
 
 const roleBadgeClass: Record<WorkspaceArea, string> = {
   management:
-    "bg-[rgb(var(--workspace-accent,33_57_10)/0.08)] text-[rgb(var(--workspace-accent,33_57_10))] dark:bg-emerald-950/40 dark:text-emerald-200",
+    "border border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]",
   occupancy:
-    "bg-[rgb(var(--workspace-accent,33_57_10)/0.08)] text-[rgb(var(--workspace-accent,33_57_10))] dark:bg-emerald-950/40 dark:text-emerald-200",
-  staff: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200",
-  guest: "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+    "border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
+  staff:
+    "border border-[color-mix(in_srgb,var(--vms-info)_35%,white)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+  guest:
+    "border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
 };
 
 export default function SelectPage() {
@@ -129,7 +131,7 @@ export default function SelectPage() {
   }
 
   return (
-    <div className="workspace-switcher min-h-screen bg-[#f4f7fb] text-[#0f1b31]">
+    <div className="workspace-switcher min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <div className="flex min-h-screen">
         <WorkspaceSelectSidebar
           userName={userName}
@@ -139,33 +141,33 @@ export default function SelectPage() {
           <Header type="select" />
           <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
         <header className="mb-5">
-          <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#2563eb]">
+          <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
             <Building2 className="h-4 w-4" />
             {organization?.name || "Organization"}
           </p>
-          <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#0f1b31] sm:text-[40px]">
+          <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[var(--vms-ink)] sm:text-[32px]">
             Choose your workspace
           </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#667085]">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#eaf1ff] text-[11px] font-semibold uppercase text-[#1d4ed8]">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[var(--vms-ink-muted)]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[11px] font-semibold uppercase text-[var(--vms-ink)]">
               {initials(userName)}
             </span>
-            <span className="font-semibold text-[#0f1b31]">
+            <span className="font-semibold text-[var(--vms-ink)]">
               {userName}
             </span>
-            <span className="hidden h-5 w-px bg-[#dce3ee] sm:block" />
+            <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
             <span>
               Role:{" "}
-              <span className="font-medium text-[#0f1b31]">
+              <span className="font-medium text-[var(--vms-ink)]">
                 {managementRole ||
                   adminProfile?.role?.name ||
                   "Organization member"}
               </span>
             </span>
-            <span className="hidden h-5 w-px bg-[#dce3ee] sm:block" />
+            <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
             <span>
               Organization:{" "}
-              <span className="font-medium text-[#0f1b31]">
+              <span className="font-medium text-[var(--vms-ink)]">
                 {organization?.name || "Current organization"}
               </span>
             </span>
@@ -175,7 +177,7 @@ export default function SelectPage() {
         {notice ? (
           <div
             role="status"
-            className="mb-5 flex items-start gap-3 rounded-lg border border-[#E7C76B] bg-[#FFF6DB] px-4 py-3 text-sm text-[#684500]"
+            className="mb-5 flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)]"
           >
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{notice}</span>
@@ -213,22 +215,22 @@ export default function SelectPage() {
         ) : loading ? (
           <WorkspaceSkeleton />
         ) : workspaces.length === 0 ? (
-          <section className="rounded-xl border border-dashed border-[#c8d1df] bg-white p-10 text-center">
-            <Building2 className="mx-auto h-10 w-10 text-zinc-400" />
+          <section className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] p-10 text-center">
+            <Building2 className="mx-auto h-10 w-10 text-[var(--vms-ink-muted)]" />
             <h2 className="mt-4 text-lg font-semibold">No workspace access</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[#667085]">
+            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--vms-ink-muted)]">
               Your account has no active management, residency, tenancy, staff
               or guest role in this organization.
             </p>
           </section>
         ) : (
           <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-            <aside className="overflow-hidden rounded-xl border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-              <div className="border-b border-[#edf0f5] px-4 py-4">
+            <aside className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+              <div className="border-b border-[var(--vms-line)] px-4 py-4">
                 <h2 className="text-base font-semibold tracking-[-0.02em]">
                   Properties ({workspaces.length})
                 </h2>
-                <p className="mt-1 text-xs text-[#667085]">
+                <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
                   Select a property to view available access.
                 </p>
               </div>
@@ -258,14 +260,14 @@ export default function SelectPage() {
           </div>
         )}
 
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[#667085]">
+        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--vms-ink-muted)]">
           <p>
             Management rights do not create resident, tenant or guest
             membership.
           </p>
           <Link
             href="/organization"
-            className="font-semibold text-[#2563eb] hover:underline"
+            className="font-semibold text-[var(--vms-action)] hover:underline"
           >
             Organization home
           </Link>
@@ -285,20 +287,20 @@ function WorkspaceSelectSidebar({
   userInitials: string;
 }) {
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-[#dce3ee] bg-white lg:sticky lg:top-0 lg:flex">
-      <div className="border-b border-[#edf0f5] px-4 py-4">
-        <Link href="/" aria-label="VMSCore home" className="inline-flex text-[#0f1b31]">
-          <LogoFull width={92} height={34} color="#0f1b31" />
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-[var(--vms-line)] bg-[var(--vms-surface)] lg:sticky lg:top-0 lg:flex">
+      <div className="border-b border-[var(--vms-line)] px-4 py-4">
+        <Link href="/" aria-label="VMSCore home" className="inline-flex text-[var(--vms-ink)]">
+          <LogoFull width={92} height={34} color="#1f2933" />
         </Link>
         <div className="mt-4 flex items-center gap-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eaf1ff] text-[11px] font-bold text-[#1d4ed8]">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[11px] font-bold text-[var(--vms-ink)]">
             {userInitials}
           </span>
           <span className="min-w-0">
             <strong className="block truncate text-xs font-semibold">
               Workspaces
             </strong>
-            <span className="mt-0.5 block truncate text-[10px] text-[#667085]">
+            <span className="mt-0.5 block truncate text-[10px] text-[var(--vms-ink-muted)]">
               {userName}
             </span>
           </span>
@@ -306,27 +308,27 @@ function WorkspaceSelectSidebar({
       </div>
 
       <nav aria-label="Workspace navigation" className="flex-1 p-3">
-        <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+        <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
           Place access
         </p>
-        <span className="flex items-center gap-2.5 rounded-md bg-[#edf3ff] px-3 py-2.5 text-xs font-semibold text-[#1d4ed8]">
+        <span className="flex items-center gap-2.5 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] px-3 py-2.5 text-xs font-semibold text-[var(--vms-ink)]">
           <LayoutGrid className="h-4 w-4" />
           Choose workspace
         </span>
-        <p className="px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+        <p className="px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
           Organization
         </p>
         <Link
           href="/organization"
-          className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+          className="flex items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 py-2.5 text-xs font-medium text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]"
         >
           <ArrowLeft className="h-4 w-4" />
           Organization home
         </Link>
       </nav>
 
-      <div className="border-t border-[#edf0f5] p-3">
-        <p className="px-2 text-[10px] leading-4 text-[#98a2b3]">
+      <div className="border-t border-[var(--vms-line)] p-3">
+        <p className="px-2 text-[10px] leading-4 text-[var(--vms-ink-muted)]">
           Choose a role and property here. Management and personal access stay
           independent.
         </p>
@@ -345,14 +347,14 @@ function Metric({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-[#dce3ee] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-      <span className="grid h-9 w-9 place-items-center rounded-md bg-[#f1f6ff] text-[#2563eb]">
+    <div className="flex items-center gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-4 py-3">
+      <span className="grid h-9 w-9 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
         <Icon className="h-4 w-4" />
       </span>
       <p className="text-2xl font-semibold tabular-nums tracking-[-0.03em]">
         {String(value).padStart(2, "0")}
       </p>
-      <p className="text-sm font-medium text-[#667085]">
+      <p className="text-sm font-medium text-[var(--vms-ink-muted)]">
         {label}
       </p>
     </div>
@@ -377,20 +379,20 @@ function PropertyListItem({
       onClick={onSelect}
       aria-current={selected ? "true" : undefined}
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--workspace-accent,33_57_10)/0.35)]",
+        "flex w-full items-start gap-3 rounded-[var(--vms-radius-control)] px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
         selected
-          ? "bg-[rgb(var(--workspace-accent,33_57_10)/0.08)] text-zinc-950 dark:bg-emerald-950/30 dark:text-white"
-          : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/70",
+          ? "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]"
+          : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
       )}
     >
-      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
+      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink-muted)]">
         <Building2 className="h-4 w-4" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">
           {workspaceDisplayName(workspace)}
         </span>
-        <span className="mt-0.5 block truncate text-[11px] capitalize text-zinc-500 dark:text-zinc-400">
+        <span className="mt-0.5 block truncate text-[11px] capitalize text-[var(--vms-ink-muted)]">
           {details.kind} · {details.useCase} · {details.address}
         </span>
         <span className="mt-1 flex flex-wrap gap-1">
@@ -431,36 +433,36 @@ function PropertyWorkspaceDetail({
     .map((parent) => parent.name);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <header className="border-b border-zinc-100 p-5 dark:border-zinc-800 sm:p-6">
+    <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+      <header className="border-b border-[var(--vms-line)] p-5 sm:p-6">
         <div className="flex items-start gap-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]">
             <Building2 className="h-6 w-6" />
           </span>
           <div className="min-w-0">
             {parentPath.length ? (
-              <p className="mb-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+              <p className="mb-1 text-[11px] font-medium text-[var(--vms-ink-muted)]">
                 {parentPath.join(" / ")}
               </p>
             ) : null}
             <h2 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
               {workspaceDisplayName(workspace)}
             </h2>
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-[var(--vms-ink-muted)]">
               <MapPin className="h-4 w-4 shrink-0" />
               {details.address}
             </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-[0.1em] text-zinc-400">
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
               {details.kind} · {details.useCase}
             </p>
           </div>
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
-          <UserRound className="h-4 w-4 text-zinc-400" />
-          <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+          <UserRound className="h-4 w-4 text-[var(--vms-ink-muted)]" />
+          <span className="font-semibold text-[var(--vms-ink)]">
             Roles:
           </span>
-          <span className="text-zinc-600 dark:text-zinc-300">
+          <span className="text-[var(--vms-ink-muted)]">
             {roles.join(", ")}
           </span>
         </div>
@@ -499,31 +501,31 @@ function AccessCard({
     <button
       type="button"
       onClick={() => onOpen(workspace, access)}
-      className="group flex w-full items-start gap-4 rounded-xl border border-zinc-200/80 bg-white p-4 text-left transition hover:border-zinc-300 hover:bg-zinc-50/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--workspace-accent,33_57_10)/0.35)] dark:border-zinc-700/80 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/70"
+      className="group flex w-full items-start gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 text-left transition hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
     >
       <span
         className={cn(
           "grid h-10 w-10 shrink-0 place-items-center rounded-lg",
           access.area === "management" || access.area === "occupancy"
-            ? "bg-[rgb(var(--workspace-accent,33_57_10)/0.08)] text-[rgb(var(--workspace-accent,33_57_10))] dark:bg-emerald-950/40 dark:text-emerald-200"
+            ? "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]"
             : access.area === "staff"
-              ? "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200"
-              : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+              ? "bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]"
+              : "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
         )}
       >
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-base font-semibold">{access.title}</span>
-        <span className="mt-1 block text-sm leading-5 text-zinc-500 dark:text-zinc-400">
+        <span className="mt-1 block text-sm leading-5 text-[var(--vms-ink-muted)]">
           {access.description}
         </span>
-        <span className="mt-2 flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+        <span className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--vms-ink)]">
           <UserRound className="h-3.5 w-3.5" />
           {access.roleLabel}
         </span>
       </span>
-      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[rgb(var(--workspace-accent,33_57_10))] transition-transform group-hover:translate-x-1 dark:text-emerald-300" />
+      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[var(--vms-action)] transition-transform group-hover:translate-x-1" />
     </button>
   );
 }
@@ -540,14 +542,14 @@ function StatusPanel({
   return (
     <div
       role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+      className="rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5 text-sm text-[var(--vms-danger)]"
     >
       <p className="font-semibold">{title}</p>
       <p className="mt-1">{detail}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-700 px-3 py-2 font-semibold text-white"
+        className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-[var(--vms-radius-control)] bg-[var(--vms-danger)] px-3 py-2 font-semibold text-white"
       >
         <RefreshCw className="h-4 w-4" />
         Retry
@@ -563,8 +565,8 @@ function WorkspaceSkeleton() {
       role="status"
     >
       <span className="sr-only">Loading workspaces</span>
-      <div className="h-96 animate-pulse rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" />
-      <div className="h-96 animate-pulse rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" />
+      <div className="h-96 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none" />
+      <div className="h-96 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none" />
     </div>
   );
 }
