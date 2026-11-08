@@ -149,13 +149,10 @@ export const config = {
   matcher: [
     '/admin',
     '/admin/:path*',
-    '/residency',
-    '/residency/:path*',
     '/select',
     '/organization',
     '/organization/:path*',
     '/auth/:path*',
-    '/visit/:path*',
     '/organizations',
     '/organizations/:path*'
   ],

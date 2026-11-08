@@ -294,11 +294,11 @@ export default function ResidentProfilePage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => router.push(`/residency/${residency.id}/forum`)}
-                                title="Open Residency Portal"
+                                onClick={() => router.push("/select")}
+                                title="Choose a workspace"
                               >
                                 <ExternalLink className="h-4 w-4" />
-                                <span className="sr-only">Open</span>
+                                <span className="sr-only">Choose workspace</span>
                               </Button>
                             </td>
                           </tr>
