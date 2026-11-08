@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { useAuthStore } from "@/store/auth-store";
+import { ActionCard } from "@/components/ui/ActionCard";
 
 export default function OrganizationHomePage() {
   const { organization, isLoading, isError, refetch } =
@@ -91,11 +92,7 @@ export default function OrganizationHomePage() {
         <Fact label="Operating use case" value={titleCase(useCase)} />
         <Fact label="Organization URL" value={organization.slug} />
         <Fact label="Subscription" value={titleCase(subscription)} />
-        <Fact
-          label="Signed in"
-          value={displayName}
-          detail={user?.email}
-        />
+        <Fact label="Signed in" value={displayName} detail={user?.email} />
       </section>
 
       {organization.needs_first_site ? (
@@ -146,24 +143,36 @@ export default function OrganizationHomePage() {
           aria-labelledby="organization-admin-heading"
           className="rounded-lg border border-[#E5E7EB] bg-white p-5"
         >
-          <h2 id="organization-admin-heading" className="text-base font-semibold">
+          <h2
+            id="organization-admin-heading"
+            className="text-base font-semibold"
+          >
             Organization administration
           </h2>
-          <div className="mt-3 grid gap-1">
-            <AdminLink
+          <div className="mt-4 grid gap-2">
+            <ActionCard
               href="/organization/settings/administrators"
               icon={UserCog}
-              label="Administrators"
+              title="Administrators"
+              description="Manage organization-wide access and delegation."
+              eyebrow="Access"
+              tone="coral"
             />
-            <AdminLink
+            <ActionCard
               href="/organization/settings/roles"
               icon={ShieldCheck}
-              label="Roles & permissions"
+              title="Roles & permissions"
+              description="Review the authority model behind every workspace."
+              eyebrow="Governance"
+              tone="ink"
             />
-            <AdminLink
+            <ActionCard
               href="/organization/settings"
               icon={Settings}
-              label="Organization settings"
+              title="Organization settings"
+              description="Shape identity, plugins and shared configuration."
+              eyebrow="Configuration"
+              tone="info"
             />
           </div>
         </section>
@@ -193,27 +202,6 @@ function Fact({
         <p className="mt-0.5 truncate text-xs text-[#667280]">{detail}</p>
       ) : null}
     </div>
-  );
-}
-
-function AdminLink({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex min-h-11 items-center gap-3 rounded-md px-2 text-sm font-medium text-[#344054] transition hover:bg-[#F5F7F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
-    >
-      <Icon className="h-4 w-4 text-[#596675]" />
-      {label}
-      <ArrowRight className="ml-auto h-3.5 w-3.5 text-[#9AA4AE]" />
-    </Link>
   );
 }
 

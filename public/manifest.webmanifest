@@ -1,14 +1,20 @@
 {
-  "name": "VMSCORE",
-  "short_name": "VMSCORE",
+  "name": "VMS Core",
+  "short_name": "VMS Core",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "description": "White-label visitor and resident access management",
+  "background_color": "#f5f7f8",
+  "theme_color": "#1f2933",
+  "description": "Property operations, access and administration in context",
   "lang": "en-US",
   "scope": "/",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",

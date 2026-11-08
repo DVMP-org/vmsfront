@@ -6,18 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   LogOut,
-  Settings,
   User,
   ChevronDown,
-  ChevronsUpDown,
   Building2,
+  CircleHelp,
 } from "lucide-react";
 import { useAuth, useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "../ui/Button";
 import { cn, getFullName, getInitials } from "@/lib/utils";
-import { LogoFull } from "../LogoFull";
-import { useAdminProfile } from "@/hooks/use-admin";
+import { VmsWordmark } from "../brand/VmsBrand";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
@@ -39,7 +37,7 @@ export const Header = memo(function Header({
 }: HeaderProps) {
   const { user, logout } = useAuth();
   // Fetch user profile if authenticated but user data is missing (cross-subdomain support)
-  const { data: profileData, isLoading: isProfileLoading } = useProfile();
+  const { data: profileData } = useProfile();
   const currentUser = user || profileData;
 
   const { organization } = useAppStore();
@@ -48,21 +46,14 @@ export const Header = memo(function Header({
   const router = useRouter();
 
   const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
-  const isResidencyRoute =
-    type == "resident" || pathname?.startsWith("/residency");
-  const isSelectRoute =
-    type == "select" ||
-    pathname?.startsWith("/select") ||
-    pathname?.startsWith("/organization/workspaces");
-  const isAdminUser = useAdminProfile();
   const commandProfile = useQuery({
     queryKey: ["command-profile", organization?.id, currentUser?.id],
     queryFn: async () => (await adminService.getAdminProfile()).data,
     enabled: isAdminRoute && !!organization?.id && !!currentUser?.id,
     staleTime: 0,
   });
-  const profileHref = isAdminUser ? "/admin/profile" : "/resident/profile";
-  const dashboardHref = "/organization/workspaces";
+  const profileHref = isAdminRoute ? "/admin/profile" : "/resident/profile";
+  const roleLabel = isAdminRoute ? "Administrator" : "Workspace member";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -79,7 +70,7 @@ export const Header = memo(function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#1F2933] text-white shadow-sm">
-      <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-5">
+      <div className="flex h-14 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
@@ -94,20 +85,21 @@ export const Header = memo(function Header({
           <Link
             href="/organizations"
             aria-label="VMSCore organizations"
-            className="hidden shrink-0 items-center sm:flex"
+            className="shrink-0 items-center"
           >
-            <LogoFull width={88} height={30} color="#FFFFFF" />
+            <VmsWordmark compact size="md" className="sm:hidden" />
+            <VmsWordmark size="md" className="hidden sm:inline-flex" />
           </Link>
           {currentUser ? (
-            <div className="hidden min-w-0 sm:block">
+            <div className="hidden min-w-0 md:block">
               <OrganizationSwitcher />
             </div>
           ) : null}
         </div>
 
-        {currentUser && (
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {isAdminRoute && (
+        {currentUser && isAdminRoute ? (
+          <div className="flex min-w-0 flex-1 justify-center px-1 sm:max-w-[34rem] sm:px-3">
+            <div className="w-full max-w-[29rem]">
               <CommandNavigation
                 modules={workspaceContext.data?.modules || []}
                 moduleGroups={workspaceContext.data?.module_groups || []}
@@ -126,7 +118,14 @@ export const Header = memo(function Header({
                 contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`}
                 navigate={(href) => router.push(href)}
               />
-            )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1" aria-hidden="true" />
+        )}
+
+        {currentUser && (
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <div className="[&_button]:text-white/80 [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
               <NotificationDropdown />
             </div>
@@ -135,29 +134,21 @@ export const Header = memo(function Header({
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="flex min-h-11 items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-2 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933] sm:gap-2 sm:px-3"
+                className="flex min-h-10 items-center gap-1 rounded-md px-1 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]"
                 id="profile_dropdown_button"
+                aria-expanded={menuOpen}
+                aria-label={`Open account menu for ${getFullName(
+                  currentUser.first_name,
+                  currentUser.last_name,
+                  currentUser.email,
+                )}`}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E85D3F] text-[10px] font-bold text-white sm:hidden">
+                <span className="grid h-8 w-8 items-center justify-center rounded-full bg-[var(--vms-coral)] text-[10px] font-bold text-white ring-2 ring-white/20">
                   {getInitials(currentUser.first_name, currentUser.last_name)}
-                </div>
-                <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="max-w-[120px] truncate text-[12px] font-semibold text-white xl:max-w-none">
-                    {getFullName(
-                      currentUser.first_name,
-                      currentUser.last_name,
-                      currentUser.email,
-                    )}
-                  </span>
-                  {!isSelectRoute && (
-                    <span className="text-[9px] uppercase text-white/55">
-                      {isAdminUser ? "Admin" : "Resident"}
-                    </span>
-                  )}
-                </div>
-                <ChevronsUpDown
+                </span>
+                <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-white/60 transition sm:h-5 sm:w-5",
+                    "h-3.5 w-3.5 text-white/60 transition",
                     menuOpen && "rotate-180 text-white",
                   )}
                 />
@@ -165,7 +156,7 @@ export const Header = memo(function Header({
 
               {menuOpen && (
                 <div className="absolute right-0 z-50 mt-2 w-[calc(100vw-1.5rem)] rounded-lg border border-[#DDE2E6] bg-white p-2 text-sm text-[#1F2933] shadow-xl sm:w-64">
-                  <div className="mb-2 flex items-center gap-3 border-b border-[#E5E7EB] px-2 py-3 sm:hidden">
+                  <div className="mb-2 flex items-center gap-3 border-b border-[#E5E7EB] px-2 py-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E85D3F] font-bold text-white">
                       {getInitials(
                         currentUser.first_name,
@@ -183,25 +174,28 @@ export const Header = memo(function Header({
                       <span className="text-xs text-[#667280]">
                         {currentUser.email}
                       </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9AA4AE]">
+                        {roleLabel}
+                      </span>
                     </div>
                   </div>
                   <MenuAction
                     icon={User}
-                    label="Profile settings"
+                    label="Account settings"
                     onClick={() => {
                       router.push(profileHref);
                       setMenuOpen(false);
                     }}
-                    description={currentUser.email}
+                    description="Profile, security and preferences"
                   />
                   <MenuAction
-                    icon={Settings}
-                    label="Dashboard preferences"
+                    icon={CircleHelp}
+                    label="Help & support"
                     onClick={() => {
-                      router.push(dashboardHref);
+                      window.location.href = "mailto:support@vmscore.to";
                       setMenuOpen(false);
                     }}
-                    description="Your dashboard prefs"
+                    description="Get help with your workspace"
                   />
                   <MenuAction
                     icon={Building2}
