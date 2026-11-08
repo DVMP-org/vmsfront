@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@/lib/error-utils";
 import { loadFacets, FacetItem } from "./client";
@@ -13,6 +13,9 @@ export function FacetPicker({
   onChange,
   contextKey,
   excludeIds = [],
+  id,
+  description,
+  error,
 }: {
   facet: "parties" | "places";
   kind?: string;
@@ -21,7 +24,12 @@ export function FacetPicker({
   onChange: (item: FacetItem | null) => void;
   contextKey: string;
   excludeIds?: string[];
+  id?: string;
+  description?: string;
+  error?: string;
 }) {
+  const generatedId = useId();
+  const inputId = id || `facet-${facet}-${generatedId.replace(/:/g, "")}`;
   const [search, setSearch] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const query = useQuery({
@@ -64,8 +72,18 @@ export function FacetPicker({
       onChange(null);
   }, [value, selected.isSuccess, selected.data, onChange]);
   return (
-    <fieldset className="stay-picker facet-picker">
+    <fieldset
+      className="stay-picker facet-picker"
+      aria-describedby={
+        [description ? `${inputId}-description` : "", error ? `${inputId}-error` : ""]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
+    >
       <legend>{label}</legend>
+      {description ? (
+        <p id={`${inputId}-description`}>{description}</p>
+      ) : null}
       {value ? (
         <div className="stay-selected facet-selected">
           {selected.data?.items.find((item) => item.value === value.value)
@@ -87,12 +105,15 @@ export function FacetPicker({
           <label>
             Search {label.toLowerCase()}
             <input
+              id={inputId}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCursor(null);
               }}
               autoComplete="off"
+              aria-invalid={error ? true : undefined}
+              aria-errormessage={error ? `${inputId}-error` : undefined}
             />
           </label>
           {query.isFetching ? (
@@ -144,6 +165,11 @@ export function FacetPicker({
           )}
         </>
       )}
+      {error ? (
+        <p id={`${inputId}-error`} role="alert">
+          {error}
+        </p>
+      ) : null}
     </fieldset>
   );
 }

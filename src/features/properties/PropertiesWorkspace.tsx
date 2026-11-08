@@ -1,5 +1,11 @@
 "use client";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { contextApi, UseCase } from "@/features/context/api";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -21,6 +27,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
@@ -28,6 +35,14 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { SetupProgress } from "@/components/onboarding/SetupProgress";
+import { Button } from "@/components/ui/Button";
+import {
+  Field,
+  fieldControlClassName,
+} from "@/components/ui/form/Field";
+import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { FormSection } from "@/components/ui/form/FormSection";
+import { Modal } from "@/components/ui/Modal";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Table,
@@ -38,6 +53,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   Property,
   PropertyDetail,
@@ -640,179 +656,444 @@ function PropertyForm({
   onSaved: (p: Property) => void;
   onCancel: () => void;
 }) {
-  const catalog=useQuery({queryKey:["context-catalog",context],queryFn:contextApi.catalog});
-  const organization=useAppStore(s=>s.organization);
-  const [buildingType,setBuildingType]=useState(property?.building_type||"");
-  const [useCase,setUseCase]=useState<UseCase|"">(property?.use_case||"");
-  const [name, setName] = useState(property?.name || ""),
-    [kind, setKind] = useState<PropertyKind>(
-      property?.kind ||
-        (initialParent
-          ? initialParent.kind === "site"
-            ? "building"
-            : initialParent.kind === "building"
-              ? "unit"
-              : initialParent.kind === "unit"
-                ? "room"
-                : "space"
-          : "site"),
-    ),
-    [address, setAddress] = useState(property?.address || ""),
-    [description, setDescription] = useState(property?.description || "");
-  const [parent, setParent] = useState<FacetItem | null>(
-      initialParent
-        ? {
-            value: initialParent.id,
-            label: initialParent.name,
-            disabled: !initialParent.is_active,
-            meta: {
-              kind: initialParent.kind,
-              slug: "",
-              parent_id: initialParent.parent_id,
-            },
-          }
-        : null,
-    ),
-    [asChild, setAsChild] = useState(!!initialParent),
-    [validation, setValidation] = useState("");
+  const catalog = useQuery({
+    queryKey: ["context-catalog", context],
+    queryFn: contextApi.catalog,
+  });
+  const organization = useAppStore((state) => state.organization);
+  const inferredKind: PropertyKind =
+    property?.kind ||
+    (initialParent
+      ? initialParent.kind === "site"
+        ? "building"
+        : initialParent.kind === "building"
+          ? "unit"
+          : initialParent.kind === "unit"
+            ? "room"
+            : "space"
+      : "site");
+  const initialParentFacet: FacetItem | null = initialParent
+    ? {
+        value: initialParent.id,
+        label: initialParent.name,
+        disabled: !initialParent.is_active,
+        meta: {
+          kind: initialParent.kind,
+          slug: "",
+          parent_id: initialParent.parent_id,
+        },
+      }
+    : null;
+  const [name, setName] = useState(property?.name || "");
+  const [kind, setKind] = useState<PropertyKind>(inferredKind);
+  const [buildingType, setBuildingType] = useState(
+    property?.building_type || "",
+  );
+  const [useCase, setUseCase] = useState<UseCase | "">(
+    property?.use_case || "",
+  );
+  const [address, setAddress] = useState(property?.address || "");
+  const [description, setDescription] = useState(property?.description || "");
+  const [parent, setParent] = useState<FacetItem | null>(initialParentFacet);
+  const [asChild, setAsChild] = useState(!!initialParent);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState("");
+  const initialValue = useMemo(
+    () =>
+      JSON.stringify({
+        name: property?.name || "",
+        kind: inferredKind,
+        buildingType: property?.building_type || "",
+        useCase: property?.use_case || "",
+        address: property?.address || "",
+        description: property?.description || "",
+        parentId: initialParent?.id || null,
+        asChild: !!initialParent,
+      }),
+    [inferredKind, initialParent, property],
+  );
+  const isDirty =
+    initialValue !==
+    JSON.stringify({
+      name,
+      kind,
+      buildingType,
+      useCase,
+      address,
+      description,
+      parentId: parent?.value || null,
+      asChild,
+    });
+  const canLeave = useUnsavedChanges(isDirty);
   const mutation = useMutation({
     mutationFn: (
       input:
         | { mode: "create"; body: PropertyInput }
-        | { mode: "update"; body: Omit<PropertyInput, "kind" | "parent_id" | "building_type" | "use_case"> },
+        | {
+            mode: "update";
+            body: Omit<
+              PropertyInput,
+              "kind" | "parent_id" | "building_type" | "use_case"
+            >;
+          },
     ) =>
       input.mode === "update"
         ? propertiesApi.update(property!.id, input.body)
         : propertiesApi.create(input.body),
-    onSuccess: onSaved,
+    onSuccess: (saved) => {
+      toast.success(property ? "Property details saved." : "Property created.");
+      onSaved(saved);
+    },
+    onError: (error) => {
+      setServerError(parseApiError(error).message);
+    },
   });
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) {
-      setValidation("Enter a name.");
-      return;
-    }
-    if (!property && asChild && !parent) {
-      setValidation("Choose a parent property or space.");
-      return;
-    }
-    setValidation("");
-    const body = { name: name.trim(), address, description };
+  const clearError = (field: string) =>
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  const close = () => {
+    if (canLeave()) onCancel();
+  };
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    if (!name.trim()) nextErrors["property-name"] = "Enter a property name.";
+    if (!property && asChild && !parent)
+      nextErrors["property-parent"] =
+        "Choose the property or space that contains this record.";
+    setErrors(nextErrors);
+    setServerError("");
+    if (Object.keys(nextErrors).length) return;
+
+    const body = {
+      name: name.trim(),
+      address: address.trim(),
+      description: description.trim(),
+    };
     if (property) {
       mutation.mutate({ mode: "update", body });
       return;
     }
     mutation.mutate({
       mode: "create",
-      body: { ...body, kind, building_type: buildingType||null, use_case: useCase||null, parent_id: asChild ? parent?.value : null },
+      body: {
+        ...body,
+        kind,
+        building_type: buildingType || null,
+        use_case: useCase || null,
+        parent_id: asChild ? parent?.value || null : null,
+      },
     });
   }
+
+  const title = property ? "Edit property details" : "Add property";
+  const availableBuildingTypes =
+    catalog.data?.building_types.filter((type) => type.kinds.includes(kind)) ||
+    [];
+  const selectedBuildingType = catalog.data?.building_types.find(
+    (type) => type.value === property?.building_type,
+  )?.label;
+  const selectedUseCase = catalog.data?.use_cases.find(
+    (option) => option.value === property?.use_case,
+  )?.label;
+
   return (
-    <form className="property-editor" onSubmit={submit}>
-      <p className="property-eyebrow">
-        {property
-          ? property.name
-          : initialParent
-            ? `Inside ${initialParent.name}`
-            : "Top level within your organization"}
-      </p>
-      <h2>{property ? "Edit details" : "Create property or space"}</h2>
-      <fieldset disabled={mutation.isPending}>
-        <label>
-          Name
-          <input
-            required
-            maxLength={255}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        {property ? (
-          <div className="property-fixed-kind">
-            <span>Structure type</span>
-            <strong>{propertyKinds[property.kind]}</strong>
-            <small>
-              This structure is fixed. Use Move to change where it belongs.
-            </small>
-          </div>
-        ) : (
-          <label>
-            Structure type
-            <select
-              value={kind}
-              onChange={(e) => {setKind(e.target.value as PropertyKind);setBuildingType("");}}
+    <form
+      className="property-editor property-form"
+      onSubmit={submit}
+      noValidate
+      aria-labelledby="property-form-title"
+    >
+      <header className="property-form-header">
+        <div>
+          <p className="property-eyebrow">
+            {property
+              ? property.name
+              : initialParent
+                ? `Inside ${initialParent.name}`
+                : "Top level within your organization"}
+          </p>
+          <h2 id="property-form-title">{title}</h2>
+          <p>
+            {property
+              ? "Update the public details. Structure and classification stay fixed."
+              : "Create a managed property or a child space inside the current organization hierarchy."}
+          </p>
+        </div>
+        <span className="property-form-mode">
+          {property ? "Editable details" : "New record"}
+        </span>
+      </header>
+
+      <FormErrorSummary errors={errors} />
+      {serverError ? (
+        <div className="property-form-server-error" role="alert">
+          <strong>We could not save this property.</strong>
+          <span>{serverError}</span>
+          <button type="button" onClick={() => setServerError("")}>
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
+      <fieldset
+        disabled={mutation.isPending || catalog.isPending}
+        className="property-form-fields"
+      >
+        <div className="property-form-sections">
+          <FormSection
+            title="Property identity"
+            description="Use the name and address operators recognise in daily work."
+          >
+            <Field
+              id="property-name"
+              label="Property name"
+              required
+              error={errors["property-name"]}
+              description="Shown across Workspaces, People and Access."
             >
-              {Object.entries(propertyKinds).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <small>
-              Use a site for a top-level property or a separately managed estate.
-            </small>
-          </label>
-        )}
-        {!property ? <>
-          {kind !== "site" && <label>Building type<select value={buildingType} onChange={e=>setBuildingType(e.target.value)}><option value="">Unspecified</option>{catalog.data?.building_types.filter(t=>t.kinds.includes(kind)).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}</select></label>}
-          {organization?.use_case==="mixed_use"&&<label>Operating use case<select value={useCase} onChange={e=>setUseCase(e.target.value as UseCase|"")}><option value="">Inherit parent context</option>{catalog.data?.use_cases.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select><small>Fixed at creation; this governs workflows within this property.</small></label>}
-          {catalog.isError&&<p role="alert">Could not load building types. <button type="button" onClick={()=>catalog.refetch()}>Retry</button></p>}
-        </> : <div className="property-fixed-kind"><span>Building type / operating context</span><strong>{catalog.data?.building_types.find(t=>t.value===property.building_type)?.label||"Unspecified"} · {catalog.data?.use_cases.find(c=>c.value===property.use_case)?.label||"Inherited"}</strong><small>Classification is fixed at creation.</small></div>}
-        <label>
-          Address
-          <input
-            maxLength={255}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </label>
-        <label>
-          Description
-          <textarea
-            maxLength={255}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        {!property && (
-          <>
-            <label className="property-checkbox">
-              <input
-                type="checkbox"
-                checked={asChild}
-                onChange={(e) => setAsChild(e.target.checked)}
-              />
-              Place inside another property or space
-            </label>
-            {asChild && (
-              <FacetPicker
-                facet="places"
-                label="Parent property or space"
-                value={parent}
-                onChange={setParent}
-                contextKey={context}
-              />
+              {(control) => (
+                <input
+                  {...control}
+                  className={fieldControlClassName}
+                  autoComplete="off"
+                  maxLength={255}
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    clearError("property-name");
+                  }}
+                />
+              )}
+            </Field>
+
+            {property ? (
+              <dl className="property-fixed-kind">
+                <div>
+                  <dt>Structure</dt>
+                  <dd>{propertyKinds[property.kind]}</dd>
+                </div>
+                <div>
+                  <dt>Building type</dt>
+                  <dd>{selectedBuildingType || "Unspecified"}</dd>
+                </div>
+                <div>
+                  <dt>Operating context</dt>
+                  <dd>{selectedUseCase || "Inherited"}</dd>
+                </div>
+              </dl>
+            ) : (
+              <Field
+                id="property-kind"
+                label="Structure type"
+                required
+                description="Structure is fixed after creation. Use Move to change the hierarchy location."
+              >
+                {(control) => (
+                  <select
+                    {...control}
+                    className={fieldControlClassName}
+                    value={kind}
+                    onChange={(event) => {
+                      setKind(event.target.value as PropertyKind);
+                      setBuildingType("");
+                    }}
+                  >
+                    {Object.entries(propertyKinds).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
             )}
-          </>
-        )}
+
+            <Field
+              id="property-address"
+              label="Address"
+              description="Street, building and locality used by operators."
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  className={fieldControlClassName}
+                  autoComplete="street-address"
+                  maxLength={255}
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                />
+              )}
+            </Field>
+            <Field
+              id="property-description"
+              label="Description"
+              description={`${description.length}/255 characters`}
+            >
+              {(control) => (
+                <textarea
+                  {...control}
+                  className={`${fieldControlClassName} min-h-28 resize-y py-3`}
+                  rows={4}
+                  maxLength={255}
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                />
+              )}
+            </Field>
+          </FormSection>
+
+          {!property ? (
+            <FormSection
+              title="Operating classification"
+              description="These values govern available specialist workflows. They are fixed after creation."
+            >
+              {kind !== "site" ? (
+                <Field
+                  id="property-building-type"
+                  label="Building type"
+                  description="Choose a catalogued type that matches this structure."
+                >
+                  {(control) => (
+                    <select
+                      {...control}
+                      className={fieldControlClassName}
+                      value={buildingType}
+                      onChange={(event) =>
+                        setBuildingType(event.target.value)
+                      }
+                    >
+                      <option value="">Unspecified</option>
+                      {availableBuildingTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+              ) : (
+                <p className="property-form-note">
+                  A site is the top-level structural record. Building type is
+                  not assigned to sites.
+                </p>
+              )}
+              {organization?.use_case === "mixed_use" ? (
+                <Field
+                  id="property-use-case"
+                  label="Operating context"
+                  description="Choose an explicit context or inherit from the selected parent."
+                >
+                  {(control) => (
+                    <select
+                      {...control}
+                      className={fieldControlClassName}
+                      value={useCase}
+                      onChange={(event) =>
+                        setUseCase(event.target.value as UseCase | "")
+                      }
+                    >
+                      <option value="">Inherit parent context</option>
+                      {catalog.data?.use_cases.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+              ) : null}
+              {catalog.isError ? (
+                <div className="property-form-inline-error" role="alert">
+                  <span>
+                    Could not load classification options. Editing is paused to
+                    avoid unsupported values.
+                  </span>
+                  <button type="button" onClick={() => catalog.refetch()}>
+                    Retry
+                  </button>
+                </div>
+              ) : null}
+            </FormSection>
+          ) : null}
+
+          {!property ? (
+            <FormSection
+              title="Hierarchy"
+              description="Create a top-level site or place this record inside an existing structure."
+            >
+              <label className="property-form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={asChild}
+                  disabled={!!initialParent}
+                  onChange={(event) => {
+                    setAsChild(event.target.checked);
+                    if (!event.target.checked) setParent(null);
+                    clearError("property-parent");
+                  }}
+                />
+                <span>
+                  Place inside another property or space
+                  {initialParent ? (
+                    <small>Locked by the route that opened this form.</small>
+                  ) : null}
+                </span>
+              </label>
+              {asChild ? (
+                <FacetPicker
+                  id="property-parent"
+                  facet="places"
+                  label="Parent property or space"
+                  description="The new record inherits context from this selection unless an explicit mixed-use context is chosen."
+                  error={errors["property-parent"]}
+                  value={parent}
+                  onChange={(item) => {
+                    setParent(item);
+                    clearError("property-parent");
+                  }}
+                  contextKey={context}
+                />
+              ) : (
+                <p className="property-form-note">
+                  This will be a top-level site in the organization.
+                </p>
+              )}
+            </FormSection>
+          ) : null}
+        </div>
       </fieldset>
-      {(validation || mutation.isError) && (
-        <p className="property-error" role="alert">
-          {validation || parseApiError(mutation.error).message}
+
+      <footer className="property-form-actions">
+        <p>
+          {isDirty
+            ? "Unsaved changes will be lost if you leave."
+            : "No unsaved changes."}
         </p>
-      )}
-      <div className="property-actions">
-        <button type="button" disabled={mutation.isPending} onClick={onCancel}>
-          Close editor
-        </button>
-        <button className="property-primary" disabled={mutation.isPending}>
-          {mutation.isPending
-            ? "Saving…"
-            : property
-              ? "Save details"
-              : "Create property"}
-        </button>
-      </div>
+        <div>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={mutation.isPending}
+            onClick={close}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            isLoading={mutation.isPending}
+            loadingLabel="Saving…"
+            disabled={catalog.isPending || catalog.isError}
+          >
+            {property ? "Save details" : "Create property"}
+          </Button>
+        </div>
+      </footer>
     </form>
   );
 }
@@ -840,7 +1121,9 @@ function PropertyDetails({
   const [confirm, setConfirm] = useState(false),
     [parent, setParent] = useState<FacetItem | null>(null),
     [toRoot, setToRoot] = useState(false),
-    [validation, setValidation] = useState("");
+    [moveErrors, setMoveErrors] = useState<Record<string, string>>({});
+  const moveDraftDirty = mode === "move" && (toRoot || !!parent);
+  const canLeaveMove = useUnsavedChanges(moveDraftDirty);
   const mutation = useMutation({
     mutationFn: ({
       action,
@@ -852,10 +1135,17 @@ function PropertyDetails({
       action === "move"
         ? propertiesApi.move(property.id, parentId ?? null)
         : propertiesApi.toggle(property.id, !property.is_active),
-    onSuccess: (p) => {
+    onSuccess: (saved, variables) => {
+      toast.success(
+        variables.action === "move"
+          ? "Property moved."
+          : saved.is_active
+            ? "Property activated."
+            : "Property archived.",
+      );
       setMode(null);
       setConfirm(false);
-      onSaved(p, "Property updated.");
+      onSaved(saved, "Property updated.");
     },
   });
   if (mode === "edit")
@@ -893,30 +1183,47 @@ function PropertyDetails({
         </span>
       </div>
       <div className="property-actions property-record-actions">
-        <button className="property-primary" onClick={()=>{setSelectedProperty({id:property.id,name:property.name});router.push("/admin");}}>Open workspace</button>
+        <Button
+          onClick={() => {
+            setSelectedProperty({ id: property.id, name: property.name });
+            router.push("/admin");
+          }}
+        >
+          Open workspace
+        </Button>
         {allowed("update") && (
-          <button disabled={mutation.isPending} onClick={() => setMode("edit")}>
+          <Button
+            variant="secondary"
+            disabled={mutation.isPending}
+            onClick={() => setMode("edit")}
+          >
             Edit details
-          </button>
+          </Button>
         )}
         {property.kind !== "site" && allowed("move") && (
-          <button
+          <Button
+            variant="secondary"
             disabled={mutation.isPending}
             onClick={() => {
               setMode("move");
-              setValidation("");
+              setMoveErrors({});
+              setParent(null);
+              setToRoot(false);
             }}
           >
             Move property or space
-          </button>
+          </Button>
         )}
         {property.kind !== "site" && allowed("toggle_active") && (
-          <button
+          <Button
+            variant={
+              property.is_active ? "destructive-outlined" : "secondary"
+            }
             disabled={mutation.isPending}
             onClick={() => setConfirm(true)}
           >
             {property.is_active ? "Archive" : "Activate"}
-          </button>
+          </Button>
         )}
       </div>
       <dl className="property-facts">
@@ -1043,100 +1350,158 @@ function PropertyDetails({
           )}
         </div>
       </section>
-      {confirm && (
-        <section
-          className="property-confirm"
-          aria-label="Confirm status change"
-        >
-          <h3>
-            {property.is_active
-              ? "Archive this property?"
-              : "Activate this property?"}
-          </h3>
+      <Modal
+        isOpen={confirm}
+        onClose={() => {
+          if (!mutation.isPending) setConfirm(false);
+        }}
+        title={
+          property.is_active ? "Archive this property?" : "Activate this property?"
+        }
+        description={
+          property.is_active
+            ? "Active children, relationships, reservations, occupied rooms, gates or running access operations can prevent archiving. Existing history is retained."
+            : "The parent must be active before this property can be activated."
+        }
+        size="sm"
+      >
+        <div className="property-confirm-actions">
           <p>
+            <strong>{property.name}</strong>
             {property.is_active
-              ? "Active children, relationships, reservations, occupied rooms, gates or running access operations can prevent archiving. Existing history is retained."
-              : "The parent must be active before this property can be activated."}
+              ? " will leave the active directory but remain available in history."
+              : " will return to the active directory if its parent is active."}
           </p>
-          <div className="property-actions">
-            <button
-              disabled={mutation.isPending}
-              onClick={() => setConfirm(false)}
-            >
-              Keep current status
-            </button>
-            <button
-              className="property-primary"
-              disabled={mutation.isPending}
-              onClick={() => mutation.mutate({ action: "toggle" })}
-            >
-              {mutation.isPending ? "Saving…" : "Confirm status change"}
-            </button>
+          <div className="property-form-actions">
+            <div>
+              <Button
+                variant="secondary"
+                disabled={mutation.isPending}
+                onClick={() => setConfirm(false)}
+              >
+                Keep current status
+              </Button>
+              <Button
+                variant={property.is_active ? "destructive" : "primary"}
+                isLoading={mutation.isPending}
+                loadingLabel="Saving…"
+                onClick={() => mutation.mutate({ action: "toggle" })}
+              >
+                {property.is_active ? "Archive property" : "Activate property"}
+              </Button>
+            </div>
           </div>
-        </section>
-      )}
+        </div>
+      </Modal>
       {mode === "move" && (
         <form
-          className="property-editor property-move-editor"
+          className="property-editor property-form property-move-editor"
           onSubmit={(e) => {
             e.preventDefault();
             if (!toRoot && !parent) {
-              setValidation(
-                "Choose a destination or make this a top-level property.",
-              );
+              setMoveErrors({
+                "property-move-destination":
+                  "Choose a destination or make this a top-level property.",
+              });
               return;
             }
-            setValidation("");
+            setMoveErrors({});
             mutation.mutate({
               action: "move",
               parentId: toRoot ? null : parent!.value,
             });
           }}
+          noValidate
         >
-          <h3>Choose a new location</h3>
-          <p className="property-muted">
-            All child spaces move with this property. A property cannot move
-            inside itself or one of its descendants.
-          </p>
-          <fieldset disabled={mutation.isPending}>
-            <label className="property-checkbox">
+          <header className="property-form-header">
+            <div>
+              <p className="property-eyebrow">PROPERTY HIERARCHY</p>
+              <h2 id="property-move-title">Move {property.name}</h2>
+              <p>
+                The record keeps its fixed structure and classification. All
+                child spaces move with it.
+              </p>
+            </div>
+          </header>
+          <FormErrorSummary errors={moveErrors} />
+          <fieldset disabled={mutation.isPending || mutation.isError}>
+            <label className="property-form-checkbox">
               <input
                 type="checkbox"
                 checked={toRoot}
-                onChange={(e) => setToRoot(e.target.checked)}
+                onChange={(event) => {
+                  setToRoot(event.target.checked);
+                  setMoveErrors({});
+                }}
               />
-              Make this a top-level property
+              <span>
+                Make this a top-level property
+                <small>
+                  Only permitted when the organization hierarchy allows another
+                  root site.
+                </small>
+              </span>
             </label>
             {!toRoot && (
               <FacetPicker
+                id="property-move-destination"
                 facet="places"
                 label="Destination property or space"
+                description="A property cannot move inside itself or one of its descendants. Unsupported destinations are disabled by the server contract."
+                error={moveErrors["property-move-destination"]}
                 value={parent}
-                onChange={setParent}
+                onChange={(item) => {
+                  setParent(item);
+                  setMoveErrors({});
+                }}
                 contextKey={context}
                 excludeIds={[property.id]}
               />
             )}
           </fieldset>
-          <div className="property-actions">
-            <button
-              type="button"
-              disabled={mutation.isPending}
-              onClick={() => setMode(null)}
-            >
-              Cancel move
-            </button>
-            <button className="property-primary" disabled={mutation.isPending}>
-              {mutation.isPending ? "Moving…" : "Move here"}
-            </button>
-          </div>
+          {mutation.isError ? (
+            <div className="property-form-server-error" role="alert">
+              <strong>This property could not be moved.</strong>
+              <span>{parseApiError(mutation.error).message}</span>
+              <button type="button" onClick={() => mutation.reset()}>
+                Dismiss
+              </button>
+            </div>
+          ) : null}
+          <footer className="property-form-actions">
+            <p>
+              Destination:{" "}
+              <strong>
+                {toRoot ? "Top level in organization" : parent?.label || "None"}
+              </strong>
+            </p>
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={mutation.isPending}
+                onClick={() => {
+                  if (canLeaveMove("Discard this move draft?")) setMode(null);
+                }}
+              >
+                Cancel move
+              </Button>
+              <Button
+                type="submit"
+                isLoading={mutation.isPending}
+                loadingLabel="Moving…"
+              >
+                Move here
+              </Button>
+            </div>
+          </footer>
         </form>
       )}
-      {(validation || mutation.isError) && (
+      {mutation.isError && mode !== "move" ? (
         <p className="property-error" role="alert">
-          {validation || parseApiError(mutation.error).message}
+          {parseApiError(mutation.error).message}
         </p>
-      )}
+      ) : null}
     </>
   );
 }

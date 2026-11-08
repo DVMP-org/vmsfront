@@ -2204,3 +2204,228 @@
     border-radius: 0;
   }
 }
+
+/* OH-05 contextual form workflow */
+.property-workspace .property-form {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0;
+  overflow: clip;
+  border: 1px solid var(--property-line);
+  border-radius: 10px;
+  background: var(--property-paper);
+  box-shadow: none;
+}
+
+.property-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--property-line);
+}
+
+.property-form-header h2 {
+  margin: 5px 0 6px;
+  font: 650 clamp(24px, 3vw, 30px) / 1.15 Inter, ui-sans-serif, system-ui,
+    sans-serif;
+  letter-spacing: -0.035em;
+}
+
+.property-form-header p:last-child {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--property-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.property-form-mode {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid var(--property-line);
+  border-radius: 6px;
+  color: var(--property-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.property-form > [role="alert"] {
+  margin: 20px 24px 0;
+}
+
+.property-form-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+}
+
+.property-form-sections {
+  display: grid;
+  gap: 24px;
+}
+
+.property-form-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 0;
+  color: var(--property-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.property-form-checkbox input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--property-action);
+}
+
+.property-form-checkbox small {
+  display: block;
+  margin-top: 3px;
+  color: var(--property-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.property-form-note {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--property-line);
+  border-radius: 7px;
+  background: #f8fafb;
+  color: var(--property-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.property-form-inline-error,
+.property-form-server-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  background: #fef0ee;
+  color: #8f1b12;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.property-form-server-error {
+  margin: 20px 24px 0;
+}
+
+.property-form-server-error strong,
+.property-form-server-error span {
+  display: block;
+}
+
+.property-form-inline-error button,
+.property-form-server-error button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.property-form-actions {
+  position: sticky;
+  z-index: 4;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 14px 24px max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--property-line);
+  background: color-mix(in srgb, var(--property-paper) 96%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.property-form-actions p {
+  margin: 0;
+  color: var(--property-muted);
+  font-size: 12px;
+}
+
+.property-form-actions > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.property-form-actions button {
+  min-height: 40px;
+}
+
+.property-confirm-actions > p {
+  margin: 0 0 18px;
+  color: var(--property-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.property-confirm-actions .property-form-actions {
+  position: static;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+@media (max-width: 767px) {
+  .property-workspace .property-form {
+    border-radius: 8px;
+  }
+
+  .property-form-header,
+  .property-form-fields {
+    padding: 18px 16px;
+  }
+
+  .property-form-header {
+    flex-direction: column;
+  }
+
+  .property-form > [role="alert"],
+  .property-form-server-error {
+    margin: 16px 16px 0;
+  }
+
+  .property-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .property-form-actions > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+
+  .property-form-actions button,
+  .property-form-checkbox {
+    min-height: 44px;
+  }
+
+  .property-confirm-actions .property-form-actions {
+    padding: 0;
+  }
+}
