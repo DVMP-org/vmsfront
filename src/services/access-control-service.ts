@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import type { ApiResponse } from "@/types";
 
 export type AccessSiteStatus = "active" | "degraded" | "offline";
 export type AccessLaneAvailability = "unknown" | "online" | "offline" | "fault";
@@ -91,7 +92,7 @@ export interface AccessSiteTopology {
 }
 
 export interface AccessTopologyResponse {
-  sites: AccessSiteTopology[];
+  places: AccessSiteTopology[];
 }
 
 export interface AccessDecisionPayload {
@@ -99,6 +100,7 @@ export interface AccessDecisionPayload {
   outcome: AccessDecisionOutcome;
   reason_code: string;
   gate_event_id?: string | null;
+  checkpoint_event_id?: string | null;
   subject_type?: string | null;
   subject_id?: string | null;
   command_action?: AccessCommandAction;
@@ -115,13 +117,20 @@ const ACCESS_CONTROL_API = "/admin/access-control";
 
 export const accessControlService = {
   async getTopology(): Promise<AccessTopologyResponse> {
-    return apiClient.get<AccessTopologyResponse>(
-      `${ACCESS_CONTROL_API}/topology`,
-    );
+    return (
+      await apiClient.get<ApiResponse<AccessTopologyResponse>>(
+        `${ACCESS_CONTROL_API}/topology`,
+      )
+    ).data;
   },
 
   async createSite(payload: { name: string }): Promise<AccessSite> {
-    return apiClient.post<AccessSite>(`${ACCESS_CONTROL_API}/sites`, payload);
+    return (
+      await apiClient.post<ApiResponse<AccessSite>>(
+        `${ACCESS_CONTROL_API}/sites`,
+        payload,
+      )
+    ).data;
   },
 
   async createLane(
@@ -133,57 +142,72 @@ export const accessControlService = {
       driver_name?: string;
     },
   ): Promise<AccessLane> {
-    return apiClient.post<AccessLane>(
-      `${ACCESS_CONTROL_API}/sites/${siteId}/lanes`,
-      payload,
-    );
+    return (
+      await apiClient.post<ApiResponse<AccessLane>>(
+        `${ACCESS_CONTROL_API}/sites/${siteId}/lanes`,
+        payload,
+      )
+    ).data;
   },
 
   async simulateDecision(
     laneId: string,
     payload: AccessDecisionPayload,
   ): Promise<AccessSimulationResponse> {
-    return apiClient.post<AccessSimulationResponse>(
-      `${ACCESS_CONTROL_API}/lanes/${laneId}/decisions`,
-      payload,
-    );
+    return (
+      await apiClient.post<ApiResponse<AccessSimulationResponse>>(
+        `${ACCESS_CONTROL_API}/lanes/${laneId}/decisions`,
+        payload,
+      )
+    ).data;
   },
 
   async updateLaneState(
     laneId: string,
     payload: AccessLaneStatePayload,
   ): Promise<AccessLane> {
-    return apiClient.post<AccessLane>(
-      `${ACCESS_CONTROL_API}/lanes/${laneId}/state`,
-      payload,
-    );
+    return (
+      await apiClient.post<ApiResponse<AccessLane>>(
+        `${ACCESS_CONTROL_API}/lanes/${laneId}/state`,
+        payload,
+      )
+    ).data;
   },
 
   async acknowledgeCommand(
     commandId: string,
     payload: { accepted: boolean; message?: string },
   ): Promise<AccessCommand> {
-    return apiClient.post<AccessCommand>(
-      `${ACCESS_CONTROL_API}/commands/${commandId}/acknowledge`,
-      payload,
-    );
+    return (
+      await apiClient.post<ApiResponse<AccessCommand>>(
+        `${ACCESS_CONTROL_API}/commands/${commandId}/acknowledge`,
+        payload,
+      )
+    ).data;
   },
 
   async expireCommands(): Promise<{ expired: number }> {
-    return apiClient.post<{ expired: number }>(
-      `${ACCESS_CONTROL_API}/commands/expire`,
-    );
+    return (
+      await apiClient.post<ApiResponse<{ expired: number }>>(
+        `${ACCESS_CONTROL_API}/commands/expire`,
+      )
+    ).data;
   },
 
   async listCommands(params?: {
     laneId?: string;
     status?: AccessCommandStatus;
   }): Promise<AccessCommand[]> {
-    return apiClient.get<AccessCommand[]>(`${ACCESS_CONTROL_API}/commands`, {
-      params: {
-        lane_id: params?.laneId,
-        status: params?.status,
-      },
-    });
+    return (
+      await apiClient.get<ApiResponse<AccessCommand[]>>(
+        `${ACCESS_CONTROL_API}/commands`,
+        {
+          params: {
+            lane_id: params?.laneId,
+            status: params?.status,
+          },
+        },
+      )
+    ).data;
   },
 };

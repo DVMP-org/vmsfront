@@ -1,12 +1,18 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
+import {
+  AccessCommand,
+  AccessLane,
+  AccessSimulationResponse,
+  accessControlService,
+} from "@/services/access-control-service";
 import { checkpointsApi, Passage, PassageInput } from "./api";
 import "./styles.css";
 function useAccess() {
@@ -62,6 +68,86 @@ function Outcome({ event }: { event: Passage }) {
       <Link href={`/admin/checkpoints/${event.gate_id}/events/${event.id}`}>
         Open passage record
       </Link>
+    </section>
+  );
+}
+
+function commandStatusLabel(command?: AccessCommand | null) {
+  if (!command) return "No command";
+  const labels: Record<AccessCommand["status"], string> = {
+    pending: "Waiting for device acknowledgement",
+    acknowledged: "Acknowledged; physical result unconfirmed",
+    completed: "Requested physical state observed",
+    timed_out: "Command timed out",
+    rejected: "Command rejected",
+    offline: "Lane offline; command not delivered",
+  };
+  return labels[command.status];
+}
+
+function HardwareState({
+  lane,
+  simulation,
+  loading,
+  onRefresh,
+}: {
+  lane?: AccessLane;
+  simulation: AccessSimulationResponse | null;
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const command = simulation?.command;
+  return (
+    <section className="checkpoint-hardware" aria-label="Hardware status">
+      <header>
+        <div>
+          <h2>Decision to physical state</h2>
+          <p>
+            These are separate states. Only a completed device report confirms
+            the door or barrier moved.
+          </p>
+        </div>
+        <button type="button" disabled={loading} onClick={onRefresh}>
+          {loading ? "Refreshing…" : "Refresh hardware"}
+        </button>
+      </header>
+      <div className="checkpoint-hardware-grid">
+        <div>
+          <span>1. Policy decision</span>
+          <strong>{simulation?.decision.outcome || "Not created"}</strong>
+          <small>{simulation?.decision.reason_code || "No access decision"}</small>
+        </div>
+        <div>
+          <span>2. Device command</span>
+          <strong>{command?.action || "None"}</strong>
+          <small>{commandStatusLabel(command)}</small>
+        </div>
+        <div>
+          <span>3. Acknowledgement</span>
+          <strong>{command?.acknowledged_at ? "Received" : "Not received"}</strong>
+          <small>
+            {command?.acknowledged_at
+              ? new Date(command.acknowledged_at).toLocaleTimeString()
+              : "Awaiting device confirmation"}
+          </small>
+        </div>
+        <div>
+          <span>4. Observed physical state</span>
+          <strong>{lane?.observed_state || "Unknown"}</strong>
+          <small>
+            Device report
+            {lane?.last_seen_at
+              ? ` · ${new Date(lane.last_seen_at).toLocaleTimeString()}`
+              : ""}
+          </small>
+        </div>
+      </div>
+      {command?.status === "offline" || lane?.availability === "offline" ? (
+        <p className="checkpoint-fail-safe" role="status">
+          Fail-safe active: the decision may be recorded, but no physical action
+          was confirmed. Follow the site&apos;s manual access procedure.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -186,6 +272,30 @@ export function createIdempotencyKey(): string {
   throw new Error("Secure random values are unavailable");
 }
 
+interface QueuedPassage {
+  input: PassageInput;
+  queued_at: string;
+}
+
+function queueStorageKey(context: string, gateId: string) {
+  return `vms:access-queue:${context}:${gateId}`;
+}
+
+function loadQueuedPassages(key: string): QueuedPassage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = window.localStorage.getItem(key);
+    const parsed = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is QueuedPassage =>
+        !!item?.input?.authorization_code && !!item?.input?.idempotency_key,
+    );
+  } catch {
+    return [];
+  }
+}
+
 function Console({
   gateId,
   access,
@@ -201,6 +311,15 @@ function Console({
   const [page, setPage] = useState(1);
   const [intent, setIntent] = useState<PassageInput | null>(null);
   const [result, setResult] = useState<Passage | null>(null);
+  const [simulation, setSimulation] =
+    useState<AccessSimulationResponse | null>(null);
+  const [selectedLaneId, setSelectedLaneId] = useState("");
+  const [online, setOnline] = useState(true);
+  const storageKey = queueStorageKey(context, gateId);
+  const [queued, setQueued] = useState<QueuedPassage[]>(() =>
+    loadQueuedPassages(storageKey),
+  );
+  const [queueNotice, setQueueNotice] = useState("");
   const gate = useQuery({
     queryKey: ["checkpoint-gate", context, gateId],
     queryFn: () => checkpointsApi.gate(gateId),
@@ -211,16 +330,93 @@ function Console({
     queryFn: () => checkpointsApi.history(gateId, page),
     enabled: allowed("checkpoint_events.list"),
   });
+  const topology = useQuery({
+    queryKey: ["checkpoint-access-topology", context, gateId],
+    queryFn: accessControlService.getTopology,
+    enabled: allowed("gates.show"),
+  });
+  const lanes = useMemo<AccessLane[]>(
+    () =>
+      (topology.data?.places || []).flatMap((site) =>
+        site.gates
+          .filter((candidate) => candidate.id === gateId)
+          .flatMap((candidate) => candidate.lanes),
+      ),
+    [gateId, topology.data],
+  );
+  const selectedLane =
+    lanes.find((lane) => lane.id === selectedLaneId) || lanes[0];
+  const canRecord = allowed("checkpoint_events.record");
   const mutation = useMutation({
-    mutationFn: (body: PassageInput) => checkpointsApi.record(gateId, body),
-    onSuccess: (event) => {
+    mutationFn: async (body: PassageInput) => {
+      const event = await checkpointsApi.record(gateId, body);
+      const access = selectedLane
+        ? await accessControlService.simulateDecision(selectedLane.id, {
+            idempotency_key: `${body.idempotency_key}:access`,
+            checkpoint_event_id: event.id,
+            outcome: event.outcome === "allowed" ? "allowed" : "denied",
+            reason_code: event.reason_code,
+            command_action: "open",
+            timeout_seconds: 15,
+          })
+        : null;
+      return { event, access };
+    },
+    onSuccess: ({ event, access }, body) => {
       setResult(event);
+      setSimulation(access);
+      setQueued((current) =>
+        current.filter(
+          (item) => item.input.idempotency_key !== body.idempotency_key,
+        ),
+      );
+      setQueueNotice("");
       setIntent(null);
       client.invalidateQueries({
         queryKey: ["checkpoint-history", context, gateId],
       });
+      if (selectedLane) {
+        client.invalidateQueries({
+          queryKey: ["checkpoint-access-topology", context, gateId],
+        });
+      }
     },
   });
+  useEffect(() => {
+    const update = () => setOnline(window.navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, JSON.stringify(queued));
+  }, [queued, storageKey]);
+  useEffect(() => {
+    if (!selectedLaneId && lanes.length) {
+      setSelectedLaneId(
+        lanes.find((lane) => lane.availability === "online")?.id ||
+          lanes[0].id,
+      );
+    }
+  }, [lanes, selectedLaneId]);
+  useEffect(() => {
+    if (
+      !online ||
+      mutation.isPending ||
+      intent ||
+      !queued.length ||
+      !canRecord
+    ) {
+      return;
+    }
+    const next = queued[0];
+    setIntent(next.input);
+    mutation.mutate(next.input);
+  }, [canRecord, intent, mutation, online, queued]);
   if (profile.isError)
     return <Failure error={profile.error} retry={() => profile.refetch()} />;
   if (!profile.isFetchedAfterMount)
@@ -237,10 +433,69 @@ function Console({
         <p>ACCESS OPERATIONS</p>
         <h1>{gate.data?.name}</h1>
         <p>
-          Record a guest arrival or departure using their authorization code.
+          Tablet check-in and checkout. A recorded decision does not imply the
+          barrier opened.
         </p>
       </header>
-      {allowed("checkpoint_events.record") ? (
+      <section className="checkpoint-status-strip" aria-label="Access status">
+        <div className={online ? "online" : "offline"}>
+          <strong>{online ? "Network online" : "Network offline"}</strong>
+          <span>
+            {online
+              ? "Passages are verified immediately."
+              : "Passages are queued provisionally on this device."}
+          </span>
+        </div>
+        <div>
+          <strong>{selectedLane?.name || "No lane selected"}</strong>
+          <span>
+            {selectedLane
+              ? `${selectedLane.availability} · observed ${selectedLane.observed_state}`
+              : "Passage decisions can be recorded without hardware control."}
+          </span>
+        </div>
+        <div>
+          <strong>Fail-safe</strong>
+          <span>
+            Never infer an open door from an allowance or command response.
+          </span>
+        </div>
+      </section>
+      {topology.isError ? (
+        <div role="alert" className="checkpoint-inline-alert">
+          <p>Lane state could not be verified.</p>
+          <p>{parseApiError(topology.error).message}</p>
+          <button type="button" onClick={() => topology.refetch()}>
+            Retry lane status
+          </button>
+        </div>
+      ) : null}
+      {queued.length ? (
+        <section className="checkpoint-queue" aria-live="polite">
+          <strong>
+            {queued.length} provisional{" "}
+            {queued.length === 1 ? "passage" : "passages"} queued
+          </strong>
+          <p>
+            These are not checked in. Keep this device online until the server
+            confirms each result.
+          </p>
+          {queueNotice ? <p>{queueNotice}</p> : null}
+          <button
+            type="button"
+            disabled={!online || mutation.isPending || !!intent}
+            onClick={() => {
+              const next = queued[0];
+              if (!next) return;
+              setIntent(next.input);
+              mutation.mutate(next.input);
+            }}
+          >
+            {online ? "Verify next queued passage" : "Waiting for connection"}
+          </button>
+        </section>
+      ) : null}
+      {canRecord ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -249,8 +504,21 @@ function Console({
               authorization_code: code.trim(),
               direction,
               ...(suffix ? { guest_suffix: suffix } : {}),
+              ...(selectedLane ? { lane_id: selectedLane.id } : {}),
               idempotency_key: createIdempotencyKey(),
             };
+            if (!online) {
+              setQueued((current) => [
+                ...current,
+                { input: body, queued_at: new Date().toISOString() },
+              ]);
+              setQueueNotice(
+                "Queued locally. It remains provisional until reconnect and server confirmation.",
+              );
+              setCode("");
+              setSuffix("");
+              return;
+            }
             setIntent(body);
             mutation.mutate(body);
           }}
@@ -289,8 +557,31 @@ function Console({
                 <option value="exit">Check out</option>
               </select>
             </label>
+            <label>
+              Door or barrier
+              <select
+                value={selectedLane?.id || ""}
+                onChange={(e) => setSelectedLaneId(e.target.value)}
+                disabled={topology.isPending || lanes.length === 0}
+              >
+                {lanes.length ? (
+                  lanes.map((lane) => (
+                    <option key={lane.id} value={lane.id}>
+                      {lane.name} · {lane.availability} ·{" "}
+                      {lane.observed_state}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No hardware lane configured</option>
+                )}
+              </select>
+            </label>
             <button disabled={!code.trim()}>
-              {mutation.isPending ? "Recording…" : "Record passage"}
+              {mutation.isPending
+                ? "Verifying…"
+                : online
+                  ? "Record and verify passage"
+                  : "Queue offline check"}
             </button>
           </fieldset>
         </form>
@@ -325,9 +616,31 @@ function Console({
       {result && (
         <>
           <Outcome event={result} />
+          <HardwareState
+            lane={selectedLane}
+            simulation={simulation}
+            loading={topology.isFetching}
+            onRefresh={() => {
+              topology.refetch();
+              if (selectedLane) {
+                accessControlService
+                  .listCommands({ laneId: selectedLane.id })
+                  .then((commands) => {
+                    const command = commands.find(
+                      (item) => item.decision_id === simulation?.decision.id,
+                    );
+                    if (command && simulation) {
+                      setSimulation({ ...simulation, command });
+                    }
+                  })
+                  .catch(() => undefined);
+              }
+            }}
+          />
           <button
             onClick={() => {
               setResult(null);
+              setSimulation(null);
               setCode("");
               setSuffix("");
               mutation.reset();
