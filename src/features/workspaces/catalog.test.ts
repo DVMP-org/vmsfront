@@ -4,7 +4,10 @@ import {
   areaForRelationship,
   buildPropertyWorkspaces,
   buildWorkspaceCards,
+  canOpenManagementDashboard,
+  qualifiedPlaceName,
   roleLabel,
+  workspaceDisplayName,
 } from "./catalog";
 
 function relationship(role: string, placeId: string): WorkspaceRelationship {
@@ -45,7 +48,7 @@ describe("workspace catalog", () => {
       relationship("tenant", "office"),
       relationship("employee", "hotel"),
       relationship("guest_of", "hotel"),
-    ]);
+    ], relationship("admin", "organization").place);
 
     expect(cards.map((card) => card.area)).toEqual([
       "management",
@@ -55,10 +58,25 @@ describe("workspace catalog", () => {
       "guest",
     ]);
     expect(cards[0].roleLabel).toBe("Super administrator");
+    expect(cards[0].title).toBe("Place organization management");
     expect(cards.at(-1)?.href).toBe("/workspace/hotel");
     expect(cards.find((card) => card.area === "guest")?.title).toMatch(
       /Stay at/,
     );
+  });
+
+  it("does not create a management dashboard before a place admin exists", () => {
+    const admin = {
+      role: { name: "Super Admin", permissions_parsed: ["*"] },
+    } as Admin;
+
+    expect(buildWorkspaceCards(admin, [])).toEqual([]);
+  });
+
+  it("requires a selected place and place-admin authority for the dashboard", () => {
+    expect(canOpenManagementDashboard(null, true)).toBe(false);
+    expect(canOpenManagementDashboard("place", false)).toBe(false);
+    expect(canOpenManagementDashboard("place", true)).toBe(true);
   });
 
   it("classifies tenant roles as occupancy and formats labels", () => {
@@ -125,5 +143,35 @@ describe("workspace catalog", () => {
     ]);
     expect(workspace.accesses[0].roleLabel).toBe("Estate Manager");
     expect(workspace.accesses[1].roleLabel).toBe("Tenant");
+  });
+
+  it("qualifies non-site workspace titles with the API-provided site", () => {
+    const occupant = relationship("resident", "apartment");
+    occupant.place.name = "Apartment 4B";
+    occupant.place.site_name = "Harbour Court";
+
+    const [workspace] = buildPropertyWorkspaces({
+      admin: null,
+      relationships: [occupant],
+    });
+
+    expect(qualifiedPlaceName(occupant.place)).toBe(
+      "Harbour Court - Apartment 4B",
+    );
+    expect(workspaceDisplayName(workspace)).toBe(
+      "Harbour Court - Apartment 4B",
+    );
+  });
+
+  it("uses the managed path when site metadata is absent", () => {
+    const unit = relationship("resident", "apartment").place;
+    unit.name = "Apartment 4B";
+    const site = relationship("admin", "site").place;
+    site.name = "Harbour Court";
+    site.kind = "site";
+
+    expect(qualifiedPlaceName(unit, [site, unit])).toBe(
+      "Harbour Court - Apartment 4B",
+    );
   });
 });

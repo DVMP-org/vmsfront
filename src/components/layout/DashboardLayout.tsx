@@ -51,7 +51,10 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))] text-foreground">
+    <div
+      className="app-shell flex h-screen overflow-hidden bg-[hsl(var(--background))] text-foreground"
+      data-surface={type === "admin" ? "management" : "occupancy"}
+    >
       {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobile && sidebarOpen && (
@@ -99,13 +102,13 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
         <main
           className={cn(
             "flex-1 min-h-0 overflow-y-auto",
-            "px-3 py-4 xs:px-4 xs:py-5 sm:px-5 sm:py-6 md:px-6 md:py-7 lg:px-8 lg:py-8 xl:px-12",
+            "px-3 py-4 xs:px-4 xs:py-5 sm:px-5 sm:py-6 md:px-6 md:py-7 lg:px-7 lg:py-7 xl:px-9 xl:py-8",
           )}
         >
           <div
             className={cn(
-              "mx-auto flex w-full max-w-6xl flex-col",
-              "gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8",
+              "mx-auto flex w-full max-w-[1440px] flex-col",
+              "gap-4 xs:gap-5 sm:gap-5 md:gap-6",
             )}
           >
             {type === "admin" ? <RecentContextBar /> : null}

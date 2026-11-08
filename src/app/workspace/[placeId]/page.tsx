@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -16,13 +15,14 @@ import {
 import { Header } from "@/components/layout/Header";
 import {
   areaForRelationship,
+  qualifiedPlaceName,
   roleLabel,
   workspaceAreaMeta,
 } from "@/features/workspaces/catalog";
 import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
+import { MyCharges } from "@/features/charges/my-charges/MyCharges";
 import { GuestStayDashboard } from "@/features/guest-stay/GuestStayDashboard";
-import { contextApi } from "@/features/context/api";
-import { ManagementAuthorityCard } from "@/features/management/ManagementAuthorityCard";
+import { WorkspaceNotifications } from "@/features/workspace-notifications/WorkspaceNotifications";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -43,23 +43,20 @@ export default function WorkspacePage() {
       ),
     [context.data, params.placeId],
   );
-  const placeContext = useQuery({
-    queryKey: ["workspace-place-context", params.placeId],
-    queryFn: () => contextApi.workspace(params.placeId),
-    enabled: !!relationship,
-    retry: false,
-  });
   const area = relationship ? areaForRelationship(relationship) : "occupancy";
   const meta = workspaceAreaMeta[area];
   const Icon = areaIcon[area];
+  const placeTitle = relationship
+    ? qualifiedPlaceName(relationship.place)
+    : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+    <div className="occupancy-surface min-h-screen bg-[#f7f9fc] text-[#0f1b31]">
       <Header type="select" />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-9">
         <Link
           href="/select"
-          className="mb-7 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#667085] hover:text-[#0f1b31]"
         >
           <ArrowLeft className="h-4 w-4" />
           All workspaces
@@ -68,7 +65,7 @@ export default function WorkspacePage() {
         {context.isError ? (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+            className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"
           >
             {parseApiError(context.error).message}
           </div>
@@ -78,30 +75,30 @@ export default function WorkspacePage() {
             <div className="h-48 animate-pulse rounded-xl bg-white dark:bg-slate-900" />
           </div>
         ) : !relationship ? (
-          <section className="rounded-xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
+          <section className="rounded-xl border border-[#dce3ee] bg-white p-8">
             <h1 className="text-2xl font-semibold">
               Workspace access unavailable
             </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm text-[#667085]">
               This workspace is not active for your account in the selected
               organization.
             </p>
           </section>
         ) : (
           <>
-            <header className="mb-6 border-b border-slate-200 pb-6 dark:border-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--brand-primary,#213928))] dark:text-emerald-300">
+            <header className="mb-5 rounded-xl border border-[#dce3ee] bg-white p-5 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#2563eb]">
                 {meta.title}
               </p>
               <div className="mt-3 flex items-start gap-4">
-                <div className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-[rgb(var(--brand-primary,#213928))] shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-emerald-300">
+                <div className="grid h-11 w-11 place-items-center rounded-lg bg-[#edf3ff] text-[#2563eb]">
                   <Icon className="h-6 w-6" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-semibold tracking-[-0.03em]">
-                    {relationship.place.name}
+                  <h1 className="text-[28px] font-semibold tracking-[-0.04em]">
+                    {placeTitle}
                   </h1>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">
                     {relationship.place.kind} workspace ·{" "}
                     {roleLabel(relationship.role)} access
                   </p>
@@ -113,7 +110,7 @@ export default function WorkspacePage() {
               <InfoCard
                 icon={MapPin}
                 label="Property"
-                value={relationship.place.name}
+                value={placeTitle || relationship.place.name}
                 detail={`${relationship.place.kind} · ${relationship.place.slug}`}
               />
               <InfoCard
@@ -138,17 +135,18 @@ export default function WorkspacePage() {
               />
             </div>
 
+            <WorkspaceNotifications userId={context.data.user.id} />
+
+            <MyCharges
+              placeId={relationship.place.id}
+              placeName={placeTitle || relationship.place.name}
+            />
+
             {area === "guest" ? (
               <div className="mt-4">
                 <GuestStayDashboard />
               </div>
             ) : null}
-
-            <div className="mt-4">
-              <ManagementAuthorityCard
-                management={placeContext.data?.management}
-              />
-            </div>
 
             <div className="mt-6">
               <AccessWorkspace
@@ -164,25 +162,25 @@ export default function WorkspacePage() {
               />
             </div>
 
-            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <section className="mt-5 rounded-xl border border-[#dce3ee] bg-white p-5 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-6">
               <h2 className="text-lg font-semibold">Workspace access</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
                 {area === "guest"
                   ? "This is your personal stay workspace. You can invite visitors here; hotel staff retain reservations, room assignment and stay-management controls."
                   : area === "staff"
                     ? "This is your assigned staff workspace. You can create visitor invitations for this property; site administration remains a separate permission boundary."
                     : `This is your personal ${roleLabel(relationship.role).toLowerCase()} workspace. You can create and manage visitor invitations for this property.`}
               </p>
-              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+              <div className="mt-4 rounded-lg border border-[#dce3ee] bg-[#f8faff] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#667085]">
                   Account identity
                 </p>
-                <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <p className="mt-2 text-sm font-semibold text-[#0f1b31]">
                   {context.data?.party?.display_name ||
                     context.data?.user.name ||
                     context.data?.user.email}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-[#667085]">
                   {context.data?.party?.email || context.data?.user.email}
                 </p>
               </div>
@@ -206,13 +204,13 @@ function InfoCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-      <p className="mt-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+    <div className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+      <Icon className="h-4 w-4 text-[#2563eb]" />
+      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#98a2b3]">
         {label}
       </p>
       <p className="mt-1 text-sm font-semibold capitalize">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+      <p className="mt-1 text-xs leading-5 text-[#667085]">
         {detail}
       </p>
     </div>

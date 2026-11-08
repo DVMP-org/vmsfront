@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Settings,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -203,6 +204,20 @@ export function SidebarOrganizationHeader({
                   <Plus className="h-3.5 w-3.5" />
                 </span>
                 Add organization
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExpanded(false);
+                  onMobileClose?.();
+                  router.push("/admin/organization");
+                }}
+                className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-950"
+              >
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-zinc-100">
+                  <Settings className="h-3.5 w-3.5" />
+                </span>
+                Organization settings
               </button>
             </div>
           </motion.div>

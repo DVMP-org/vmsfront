@@ -63,6 +63,11 @@ describe("SidebarOrganizationHeader", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Add organization/i }));
     expect(mocks.push).toHaveBeenCalledWith("/organizations/new");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Organization settings/i }),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/admin/organization");
   });
 
   it("keeps a clear expand action in collapsed mode", () => {

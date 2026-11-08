@@ -5,20 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
   Building2,
   ConciergeBell,
   Home,
   KeyRound,
+  LayoutGrid,
   MapPin,
   RefreshCw,
+  Settings,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { LogoFull } from "@/components/LogoFull";
 import {
   buildPropertyWorkspaces,
+  workspaceDisplayName,
   type PropertyAccess,
   type PropertyWorkspace,
   type WorkspaceArea,
@@ -109,43 +114,50 @@ export default function SelectPage() {
   function openAccess(workspace: PropertyWorkspace, access: PropertyAccess) {
     setSelectedProperty({
       id: workspace.place.id,
-      name: workspace.place.name,
+      name: workspaceDisplayName(workspace),
     });
     router.push(access.href);
   }
 
   return (
-    <div className="workspace-switcher min-h-screen bg-zinc-50 text-zinc-900 dark:bg-background dark:text-zinc-50">
-      <Header type="select" />
-      <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
+    <div className="workspace-switcher min-h-screen bg-[#f4f7fb] text-[#0f1b31]">
+      <div className="flex min-h-screen">
+        <WorkspaceSelectSidebar
+          organizationName={organization?.name || "Organization"}
+          userName={userName}
+          userInitials={initials(userName)}
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header type="select" />
+          <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
         <header className="mb-5">
-          <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--workspace-accent,33_57_10))] dark:text-emerald-300">
+          <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#2563eb]">
             <Building2 className="h-4 w-4" />
             {organization?.name || "Organization"}
           </p>
-          <h1 className="text-3xl font-semibold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50 sm:text-4xl">
-            Workspace access
+          <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#0f1b31] sm:text-[40px]">
+            Choose your workspace
           </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-zinc-600 dark:text-zinc-300">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-200 text-[11px] font-semibold uppercase text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#667085]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#eaf1ff] text-[11px] font-semibold uppercase text-[#1d4ed8]">
               {initials(userName)}
             </span>
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+            <span className="font-semibold text-[#0f1b31]">
               {userName}
             </span>
-            <span className="hidden h-5 w-px bg-zinc-300 dark:bg-zinc-700 sm:block" />
+            <span className="hidden h-5 w-px bg-[#dce3ee] sm:block" />
             <span>
               Role:{" "}
-              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              <span className="font-medium text-[#0f1b31]">
                 {managementRole ||
                   adminProfile?.role?.name ||
                   "Organization member"}
               </span>
             </span>
-            <span className="hidden h-5 w-px bg-zinc-300 dark:bg-zinc-700 sm:block" />
+            <span className="hidden h-5 w-px bg-[#dce3ee] sm:block" />
             <span>
               Organization:{" "}
-              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              <span className="font-medium text-[#0f1b31]">
                 {organization?.name || "Current organization"}
               </span>
             </span>
@@ -183,22 +195,22 @@ export default function SelectPage() {
         ) : loading ? (
           <WorkspaceSkeleton />
         ) : workspaces.length === 0 ? (
-          <section className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="rounded-xl border border-dashed border-[#c8d1df] bg-white p-10 text-center">
             <Building2 className="mx-auto h-10 w-10 text-zinc-400" />
             <h2 className="mt-4 text-lg font-semibold">No workspace access</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#667085]">
               Your account has no active management, residency, tenancy, staff
               or guest role in this organization.
             </p>
           </section>
         ) : (
           <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-            <aside className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="border-b border-zinc-100 px-4 py-4 dark:border-zinc-800">
+            <aside className="overflow-hidden rounded-xl border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+              <div className="border-b border-[#edf0f5] px-4 py-4">
                 <h2 className="text-base font-semibold tracking-[-0.02em]">
                   Properties ({workspaces.length})
                 </h2>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#667085]">
                   Select a property to view available access.
                 </p>
               </div>
@@ -216,6 +228,15 @@ export default function SelectPage() {
                   />
                 ))}
               </div>
+              <div className="border-t border-[#edf0f5] p-3">
+                <Link
+                  href="/admin/organization"
+                  className="flex items-center justify-between rounded-md px-2 py-2 text-xs font-semibold text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+                >
+                  Organization settings
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </aside>
 
             {selectedWorkspace ? (
@@ -228,20 +249,97 @@ export default function SelectPage() {
           </div>
         )}
 
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[#667085]">
           <p>
             Management rights do not create resident, tenant or guest
             membership.
           </p>
           <Link
             href="/organizations"
-            className="font-semibold text-[rgb(var(--workspace-accent,33_57_10))] hover:underline dark:text-emerald-300"
+            className="font-semibold text-[#2563eb] hover:underline"
           >
             Switch organization
           </Link>
         </footer>
-      </main>
+          </main>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function WorkspaceSelectSidebar({
+  organizationName,
+  userName,
+  userInitials,
+}: {
+  organizationName: string;
+  userName: string;
+  userInitials: string;
+}) {
+  return (
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-[#dce3ee] bg-white lg:sticky lg:top-0 lg:flex">
+      <div className="border-b border-[#edf0f5] px-4 py-4">
+        <Link href="/" aria-label="VMSCore home" className="inline-flex text-[#0f1b31]">
+          <LogoFull width={92} height={34} color="#0f1b31" />
+        </Link>
+        <div className="mt-4 flex items-center gap-2.5 rounded-lg bg-[#f8faff] p-2.5 ring-1 ring-[#e4eaf3]">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eaf1ff] text-[11px] font-bold text-[#1d4ed8]">
+            {userInitials}
+          </span>
+          <span className="min-w-0">
+            <strong className="block truncate text-xs font-semibold">
+              {organizationName}
+            </strong>
+            <span className="mt-0.5 block truncate text-[10px] text-[#667085]">
+              {userName}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <nav aria-label="Workspace navigation" className="flex-1 p-3">
+        <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+          Workspace
+        </p>
+        <span className="flex items-center gap-2.5 rounded-md bg-[#edf3ff] px-3 py-2.5 text-xs font-semibold text-[#1d4ed8]">
+          <LayoutGrid className="h-4 w-4" />
+          Choose workspace
+        </span>
+        <Link
+          href="/admin"
+          className="mt-1 flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <Home className="h-4 w-4" />
+          Management dashboard
+        </Link>
+
+        <p className="px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+          Organization
+        </p>
+        <Link
+          href="/admin/organization"
+          className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <Settings className="h-4 w-4" />
+          Settings
+        </Link>
+        <Link
+          href="/organizations"
+          className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Switch organization
+        </Link>
+      </nav>
+
+      <div className="border-t border-[#edf0f5] p-3">
+        <p className="px-2 text-[10px] leading-4 text-[#98a2b3]">
+          Choose a role and property here. Management and personal access stay
+          independent.
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -255,14 +353,14 @@ function Metric({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+    <div className="flex items-center gap-3 rounded-lg border border-[#dce3ee] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+      <span className="grid h-9 w-9 place-items-center rounded-md bg-[#f1f6ff] text-[#2563eb]">
         <Icon className="h-4 w-4" />
       </span>
       <p className="text-2xl font-semibold tabular-nums tracking-[-0.03em]">
         {String(value).padStart(2, "0")}
       </p>
-      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+      <p className="text-sm font-medium text-[#667085]">
         {label}
       </p>
     </div>
@@ -298,7 +396,7 @@ function PropertyListItem({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">
-          {workspace.place.name}
+          {workspaceDisplayName(workspace)}
         </span>
         <span className="mt-0.5 block truncate text-[11px] capitalize text-zinc-500 dark:text-zinc-400">
           {details.kind} · {details.useCase} · {details.address}
@@ -354,7 +452,7 @@ function PropertyWorkspaceDetail({
               </p>
             ) : null}
             <h2 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              {workspace.place.name}
+              {workspaceDisplayName(workspace)}
             </h2>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
               <MapPin className="h-4 w-4 shrink-0" />

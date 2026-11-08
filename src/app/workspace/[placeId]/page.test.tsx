@@ -16,6 +16,14 @@ vi.mock("@/components/layout/Header", () => ({
   Header: () => <header>Workspace header</header>,
 }));
 
+vi.mock("@/features/charges/my-charges/MyCharges", () => ({
+  MyCharges: () => <section>Personal charges</section>,
+}));
+
+vi.mock("@/features/workspace-notifications/WorkspaceNotifications", () => ({
+  WorkspaceNotifications: () => <section>Account activity</section>,
+}));
+
 vi.mock("@/hooks/use-auth", () => ({
   useVerifyToken: vi.fn(),
 }));
@@ -75,6 +83,7 @@ const relationship = {
     name: "Suite 402",
     slug: "suite-402",
     kind: "room",
+    site_name: "Harbour Hotel",
     is_active: true,
   },
 };
@@ -170,7 +179,9 @@ describe("hotel guest workspace", () => {
     renderPage();
 
     expect(await screen.findByText("Arrival scheduled")).toBeInTheDocument();
-    expect(screen.getAllByText("Suite 402").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", { name: "Harbour Hotel - Suite 402" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /create invitation/i }),
     ).toBeInTheDocument();
@@ -180,5 +191,7 @@ describe("hotel guest workspace", () => {
     expect(
       screen.queryByRole("button", { name: /check in guest/i }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText("Personal charges")).toBeInTheDocument();
+    expect(screen.getByText("Account activity")).toBeInTheDocument();
   });
 });

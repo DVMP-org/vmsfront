@@ -7,6 +7,7 @@ export interface Gate {
 export interface Passage {
   id: string;
   gate_id: string;
+  lane_id?: string | null;
   direction: "entry" | "exit";
   outcome: string;
   reason_code: string;
@@ -17,6 +18,7 @@ export interface PassageInput {
   authorization_code: string;
   guest_suffix?: string;
   direction: "entry" | "exit";
+  lane_id?: string;
   idempotency_key: string;
 }
 export const checkpointsApi = {

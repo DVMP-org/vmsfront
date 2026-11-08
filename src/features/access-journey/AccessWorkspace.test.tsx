@@ -154,6 +154,55 @@ describe("AccessWorkspace", () => {
     );
   });
 
+  it("creates one invitation for a group of guests", async () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: /create invitation/i }));
+    fireEvent.change(screen.getByLabelText(/visitor name/i), {
+      target: { value: "Primary Guest" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add another guest/i }));
+    fireEvent.change(screen.getByLabelText(/additional visitor 1 name/i), {
+      target: { value: "Second Guest" },
+    });
+    fireEvent.change(screen.getByLabelText(/additional visitor 1 email/i), {
+      target: { value: "second@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
+
+    await waitFor(() => expect(accessJourneyApi.create).toHaveBeenCalled());
+    expect(vi.mocked(accessJourneyApi.create).mock.calls[0][0].guests).toEqual([
+      expect.objectContaining({ display_name: "Primary Guest" }),
+      expect.objectContaining({
+        display_name: "Second Guest",
+        email: "second@example.com",
+      }),
+    ]);
+  });
+
+  it("requires a name for every added guest", async () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: /create invitation/i }));
+    fireEvent.change(screen.getByLabelText(/visitor name/i), {
+      target: { value: "Primary Guest" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add another guest/i }));
+    fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Enter visitor 2’s name.",
+    );
+    expect(accessJourneyApi.create).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /remove guest 2/i }));
+    fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
+    await waitFor(() =>
+      expect(accessJourneyApi.create).toHaveBeenCalledTimes(1),
+    );
+    expect(
+      vi.mocked(accessJourneyApi.create).mock.calls[0][0].guests,
+    ).toHaveLength(1);
+  });
+
   it("opens the reusable invitation detail and QR", async () => {
     renderWorkspace();
 
@@ -170,7 +219,28 @@ describe("AccessWorkspace", () => {
       screen.getByText("Present this code at arrival"),
     ).toBeInTheDocument();
     expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
-    expect(await screen.findByText("No checkpoint events yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No checkpoint events yet."),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps invitation details keyboard-contained and restores focus", async () => {
+    renderWorkspace();
+    const openButton = await screen.findByRole("button", {
+      name: /view details/i,
+    });
+    openButton.focus();
+    fireEvent.click(openButton);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close invitation details" }),
+    ).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(openButton).toHaveFocus();
   });
 
   it("shows host-owned checkpoint arrival history", async () => {

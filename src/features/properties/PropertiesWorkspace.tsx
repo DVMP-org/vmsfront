@@ -10,6 +10,7 @@ import {
   MapPin,
   Plus,
   Search,
+  Users,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
@@ -18,6 +19,7 @@ import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
+import { SetupProgress } from "@/components/onboarding/SetupProgress";
 import {
   Property,
   PropertyDetail,
@@ -27,7 +29,12 @@ import {
   propertyKinds,
 } from "@/features/properties/api";
 import "@/app/admin/properties/styles.css";
-export interface PropertyRoute { id?: string; action?: "new" | "edit" | "move"; parentId?: string }
+export interface PropertyRoute {
+  id?: string;
+  action?: "new" | "edit" | "move";
+  parentId?: string;
+  setup?: "first-place";
+}
 export default function PropertiesPage({ route = {} }: { route?: PropertyRoute }) {
   const organization = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
@@ -367,13 +374,20 @@ function Workspace({
           aria-label="Property details"
         >
           {creating && allowed("create") ? (
-            <PropertyForm
-              key={createParent ? `child:${createParent.id}` : "new-root"}
-              context={context}
-              initialParent={createParent}
-              onCancel={() => router.push("/admin/properties")}
-              onSaved={changed}
-            />
+            <>
+              {route.setup === "first-place" ? (
+                <div className="mb-5">
+                  <SetupProgress currentStep="workspace" />
+                </div>
+              ) : null}
+              <PropertyForm
+                key={createParent ? `child:${createParent.id}` : "new-root"}
+                context={context}
+                initialParent={createParent}
+                onCancel={() => router.push("/admin/properties")}
+                onSaved={changed}
+              />
+            </>
           ) : selected && allowed("show") ? (
             detail.isPending ? (
               <p className="property-loading" role="status">
@@ -746,6 +760,34 @@ function PropertyDetails({
           </dd>
         </div>
       </dl>
+      <section className="property-people-callout">
+        <span className="property-people-callout-icon">
+          <Users size={18} aria-hidden="true" />
+        </span>
+        <div>
+          <p className="property-eyebrow">PEOPLE &amp; ACCESS</p>
+          <h3>
+            {property.kind === "site"
+              ? "Manage site administrators"
+              : "Assign the people who belong here"}
+          </h3>
+          <p>
+            {property.kind === "site"
+              ? "Site administration stays separate from resident, employee and guest access."
+              : "Add occupants using the roles allowed by this property’s operating context. New accounts receive onboarding."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedProperty({ id: property.id, name: property.name });
+            router.push("/admin/people");
+          }}
+        >
+          Manage people
+          <ArrowUpRight size={15} aria-hidden="true" />
+        </button>
+      </section>
       <section className="property-structure" aria-label="Property structure">
         <div className="property-section-heading">
           <div>
