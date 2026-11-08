@@ -105,7 +105,7 @@ describe("organization settings page", () => {
 
   it("renders a read-only settings surface without update permission", async () => {
     mount(["organizations.show"]);
-    expect(await screen.findByText("Harbour Estate")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Name")).toHaveValue("Harbour Estate");
     expect(screen.getByLabelText("Name")).toBeDisabled();
     expect(
       screen.queryByRole("button", { name: "Save organization" }),

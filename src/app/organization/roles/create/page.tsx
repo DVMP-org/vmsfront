@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { FlaskConical } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -31,6 +31,8 @@ const emptyDraft: RoleDraft = {
 };
 
 export default function RoleDraftPage() {
+  const pathname = usePathname();
+  const embedded = pathname?.startsWith("/organization/settings/roles") === true;
   const searchParams = useSearchParams();
   const roleId = searchParams.get("role");
   const roles = useAdminRoles({ page: 1, pageSize: 100 });
@@ -74,17 +76,19 @@ export default function RoleDraftPage() {
 
   return (
     <div className="space-y-5">
-      <OrganizationAdminHeader
-        eyebrow="Organization administration / Prototype"
-        title={
-          sourceRole
-            ? `Inspect ${sourceRole.name}`
-            : "Draft an organization role"
-        }
-        description="Explore how a role is composed. This prototype does not create, update, assign or delete any role."
-        backHref="/organization/roles"
-        backLabel="Roles & permissions"
-      />
+      {!embedded ? (
+        <OrganizationAdminHeader
+          eyebrow="Organization administration / Prototype"
+          title={
+            sourceRole
+              ? `Inspect ${sourceRole.name}`
+              : "Draft an organization role"
+          }
+          description="Explore how a role is composed. This prototype does not create, update, assign or delete any role."
+          backHref="/organization/settings/roles"
+          backLabel="Roles & permissions"
+        />
+      ) : null}
 
       <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] p-4 text-sm text-[var(--vms-info)]">
         <FlaskConical

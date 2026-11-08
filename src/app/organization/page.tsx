@@ -151,12 +151,12 @@ export default function OrganizationHomePage() {
           </h2>
           <div className="mt-3 grid gap-1">
             <AdminLink
-              href="/organization/administrators"
+              href="/organization/settings/administrators"
               icon={UserCog}
               label="Administrators"
             />
             <AdminLink
-              href="/organization/roles"
+              href="/organization/settings/roles"
               icon={ShieldCheck}
               label="Roles & permissions"
             />

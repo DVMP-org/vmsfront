@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { apiClient } from "@/lib/api-client";
@@ -39,6 +39,9 @@ import { pluginEntitlementLabel } from "@/lib/plugin-utils";
 
 export default function PluginsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const embedded =
+    pathname?.startsWith("/organization/settings/plugins") === true;
   const queryClient = useQueryClient();
   
   const config = useMemo(() => ({
@@ -278,7 +281,8 @@ export default function PluginsPage() {
       <div className="space-y-6">
         {/* Header Section */}
         <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {!embedded ? (
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-dashed  border-[var(--vms-line-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -314,14 +318,21 @@ export default function PluginsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.push("/admin/plugins/marketplace")}
+                onClick={() =>
+                  router.push(
+                    embedded
+                      ? "/organization/settings/plugins/marketplace"
+                      : "/admin/plugins/marketplace",
+                  )
+                }
                 className="gap-2"
               >
                 <Store className="h-4 w-4" />
                 Browse Marketplace
               </Button>
             </div>
-          </div>
+            </div>
+          ) : null}
 
           {/* Search Bar */}
           <div className="relative">

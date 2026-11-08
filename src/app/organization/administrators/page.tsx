@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Mail,
@@ -80,6 +81,9 @@ function isProtected(admin: Admin) {
 }
 
 export default function OrganizationAdministratorsPage() {
+  const pathname = usePathname();
+  const embedded =
+    pathname?.startsWith("/organization/settings/administrators") === true;
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -167,19 +171,21 @@ export default function OrganizationAdministratorsPage() {
 
   return (
     <div className="space-y-5">
-      <OrganizationAdminHeader
-        eyebrow="Organization administration"
-        title="Administrators"
-        description="Manage organization-level access. Site administration and occupancy relationships remain separate in Places and People."
-        actions={
-          canCreate ? (
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Add administrator
-            </Button>
-          ) : undefined
-        }
-      />
+      {!embedded ? (
+        <OrganizationAdminHeader
+          eyebrow="Organization administration"
+          title="Administrators"
+          description="Manage organization-level access. Site administration and occupancy relationships remain separate in Places and People."
+          actions={
+            canCreate ? (
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add administrator
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : null}
 
       {notice ? (
         <div

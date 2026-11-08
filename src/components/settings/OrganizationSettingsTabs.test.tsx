@@ -1,18 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { OrganizationSettingsTabs } from "./OrganizationSettingsTabs";
+import {
+  OrganizationSettingsTabs,
+  organizationSettingsSectionFromPath,
+} from "./OrganizationSettingsTabs";
 
 describe("OrganizationSettingsTabs", () => {
   it("uses organization routes and marks the active configuration section", () => {
-    render(<OrganizationSettingsTabs active="branding" />);
+    render(<OrganizationSettingsTabs active="plugins" />);
 
     expect(
       screen.getByRole("link", { name: "General details" }),
     ).toHaveAttribute("href", "/organization/settings");
-    expect(screen.getByRole("link", { name: "Branding" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Plugins" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+    expect(
+      screen.getByRole("link", { name: "Administrators" }),
+    ).toHaveAttribute("href", "/organization/settings/administrators");
     expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute(
       "href",
       "/organization/settings/payment",
@@ -20,5 +26,19 @@ describe("OrganizationSettingsTabs", () => {
     expect(screen.getByRole("link", { name: "Integrations" })).not.toHaveAttribute(
       "aria-current",
     );
+  });
+
+  it("derives the active section from settings paths", () => {
+    expect(organizationSettingsSectionFromPath("/organization/settings")).toBe(
+      "general",
+    );
+    expect(
+      organizationSettingsSectionFromPath(
+        "/organization/settings/administrators",
+      ),
+    ).toBe("administrators");
+    expect(
+      organizationSettingsSectionFromPath("/organization/settings/plugins"),
+    ).toBe("plugins");
   });
 });

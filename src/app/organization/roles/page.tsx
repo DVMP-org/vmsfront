@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ArrowRight,
   FlaskConical,
@@ -20,6 +21,8 @@ import { parseApiError } from "@/lib/error-utils";
 import { OrganizationAdminHeader } from "@/features/organization-admin/OrganizationAdminHeader";
 
 export default function OrganizationRolesPage() {
+  const pathname = usePathname();
+  const embedded = pathname?.startsWith("/organization/settings/roles") === true;
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const roles = useAdminRoles({
@@ -32,19 +35,21 @@ export default function OrganizationRolesPage() {
 
   return (
     <div className="space-y-5">
-      <OrganizationAdminHeader
-        eyebrow="Organization administration"
-        title="Roles & permissions"
-        description="Review the roles that govern organization administration. Role authoring is a visual prototype in this release and does not persist changes."
-        actions={
-          <Button asChild>
-            <Link href="/organization/roles/create">
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Create draft role
-            </Link>
-          </Button>
-        }
-      />
+      {!embedded ? (
+        <OrganizationAdminHeader
+          eyebrow="Organization administration"
+          title="Roles & permissions"
+          description="Review the roles that govern organization administration. Role authoring is a visual prototype in this release and does not persist changes."
+          actions={
+            <Button asChild>
+              <Link href="/organization/roles/create">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Create draft role
+              </Link>
+            </Button>
+          }
+        />
+      ) : null}
 
       <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] p-4 text-sm text-[var(--vms-info)]">
         <FlaskConical
