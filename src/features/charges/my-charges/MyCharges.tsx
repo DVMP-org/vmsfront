@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, CreditCard, ExternalLink, ReceiptText } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { parseApiError } from "@/lib/error-utils";
 import { CurrentCharge, myChargesApi } from "./api";
 
@@ -38,8 +40,8 @@ export function MyCharges({
 
   if (charges.isPending) {
     return (
-      <section className="mt-4 rounded-xl border border-[#dce3ee] bg-white p-5">
-        <p role="status" className="text-sm text-[#667085]">
+      <section className="mt-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
+        <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
           Loading charges…
         </p>
       </section>
@@ -50,7 +52,7 @@ export function MyCharges({
     return (
       <section
         role="alert"
-        className="mt-4 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"
+        className="mt-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-5 text-sm text-[var(--vms-danger)]"
       >
         <p>Charges could not be loaded.</p>
         <p className="mt-1">{parseApiError(charges.error).message}</p>
@@ -66,18 +68,18 @@ export function MyCharges({
   }
 
   return (
-    <section className="mt-4 overflow-hidden rounded-xl border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-      <header className="flex flex-col gap-3 border-b border-[#edf0f5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="mt-4 overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+      <header className="flex flex-col gap-3 border-b border-[var(--vms-line)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2563eb]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
             Personal charges
           </p>
           <h2 className="mt-1 text-lg font-semibold">
             Charges for {placeName}
           </h2>
         </div>
-        <div className="rounded-lg bg-[#f1f6ff] px-3 py-2 text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#667085]">
+        <div className="rounded-lg bg-[var(--vms-surface-subtle)] px-3 py-2 text-right">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
             Outstanding
           </p>
           <p className="mt-0.5 text-lg font-semibold tabular-nums">
@@ -86,7 +88,7 @@ export function MyCharges({
         </div>
       </header>
       {items.length ? (
-        <ul className="divide-y divide-[#edf0f5]">
+        <ul className="divide-y divide-[var(--vms-line)]">
           {items.map((charge) => (
             <ChargeRow
               key={charge.id}
@@ -98,9 +100,9 @@ export function MyCharges({
         </ul>
       ) : (
         <div className="px-5 py-8 text-center">
-          <ReceiptText className="mx-auto h-7 w-7 text-[#98a2b3]" />
+          <ReceiptText className="mx-auto h-7 w-7 text-[var(--vms-ink-muted)]" />
           <h3 className="mt-3 text-sm font-semibold">No charges due</h3>
-          <p className="mt-1 text-xs text-[#667085]">
+          <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
             Charges assigned to you for this property will appear here.
           </p>
         </div>
@@ -108,7 +110,7 @@ export function MyCharges({
       {pay.isError ? (
         <p
           role="alert"
-          className="border-t border-red-200 bg-red-50 px-5 py-3 text-xs text-red-800"
+          className="border-t border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-5 py-3 text-xs text-[var(--vms-danger)]"
         >
           {parseApiError(pay.error).message}
         </p>
@@ -132,14 +134,14 @@ function ChargeRow({
   return (
     <li className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f1f6ff] text-[#2563eb]">
+        <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
           <ReceiptText className="h-4 w-4" />
         </span>
         <span className="min-w-0">
           <strong className="block truncate text-sm">
             {charge.charge_definition.name}
           </strong>
-          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#667085]">
+          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--vms-ink-muted)]">
             <span className="inline-flex items-center gap-1">
               <CalendarClock className="h-3.5 w-3.5" />
               Due {due.toLocaleDateString(undefined, {
@@ -159,25 +161,33 @@ function ChargeRow({
           <strong className="block text-sm tabular-nums">
             {charge.currency} {formatAmount(balance)}
           </strong>
-          <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#667085]">
+          <Badge
+            className="mt-1"
+            variant={
+              charge.status === "paid"
+                ? "success"
+                : charge.status === "void"
+                  ? "danger"
+                  : "neutral"
+            }
+          >
             {charge.status}
-          </span>
+          </Badge>
         </span>
         {payable ? (
-          <button
-            type="button"
-            disabled={paying}
+          <Button
+            isLoading={paying}
             onClick={onPay}
-            className="inline-flex items-center gap-2 rounded-md bg-[#2563eb] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1d4ed8] disabled:opacity-60"
+            className="min-h-11"
           >
             {paying ? "Opening…" : "Pay balance"}
-            <ExternalLink className="h-3.5 w-3.5" />
-          </button>
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </Button>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700">
-            <CreditCard className="h-3.5 w-3.5" />
+          <Badge variant="success" className="min-h-8 px-3">
+            <CreditCard className="h-4 w-4" aria-hidden="true" />
             Settled
-          </span>
+          </Badge>
         )}
       </div>
     </li>

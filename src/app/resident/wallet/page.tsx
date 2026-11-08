@@ -31,18 +31,18 @@ const formatCurrency = (value: number) => {
 const TransactionItem = React.memo(({ transaction, onViewAll }: { transaction: WalletTransaction; onViewAll: () => void }) => {
     const isCredit = transaction.type === "credit";
     const Icon = isCredit ? ArrowDownRight : ArrowUpRight;
-    const amountColor = isCredit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+    const amountColor = isCredit ? "text-[var(--vms-success)]" : "text-[var(--vms-danger)]";
 
     const statusConfig = useMemo(() => {
         switch (transaction.status) {
             case "success":
-                return { color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100", icon: CheckCircle2 };
+                return { color: "border-[var(--vms-success)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]", icon: CheckCircle2 };
             case "pending":
-                return { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100", icon: Clock };
+                return { color: "border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]", icon: Clock };
             case "failed":
-                return { color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100", icon: XCircle };
+                return { color: "border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]", icon: XCircle };
             default:
-                return { color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100", icon: Clock };
+                return { color: "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]", icon: Clock };
         }
     }, [transaction.status]);
 
@@ -52,9 +52,9 @@ const TransactionItem = React.memo(({ transaction, onViewAll }: { transaction: W
         <button
             type="button"
             onClick={onViewAll}
-            className="flex items-center gap-4 rounded-lg border border-border bg-background p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm w-full"
+            className="flex items-center gap-4 rounded-lg border border-border bg-background p-4 text-left transition-all hover:border-[var(--vms-line-strong)] hover:shadow-sm w-full"
         >
-            <div className={`rounded-full p-2 ${isCredit ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+            <div className={`rounded-full p-2 ${isCredit ? "bg-[var(--vms-success-subtle)]" : "bg-[var(--vms-danger-subtle)]"}`}>
                 <Icon className={`h-4 w-4 ${amountColor}`} />
             </div>
             <div className="flex-1 min-w-0">
@@ -216,9 +216,9 @@ export default function WalletPage() {
                 {/* Professional Enterprise Balance Panel */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Balance Card - Clean & Professional */}
-                    <Card className="lg:col-span-2 overflow-hidden border-border bg-card shadow-sm relative group transition-all duration-300 hover:shadow-md">
+                    <Card className="relative col-span-1 overflow-hidden border-[var(--vms-line)] bg-[var(--vms-surface)] transition-colors lg:col-span-2">
                         <div className="absolute top-0 right-0 p-8 opacity-5">
-                            <Wallet className="h-48 w-48 text-primary -rotate-12 translate-x-12 -translate-y-12" />
+                            <Wallet className="h-48 w-48 text-[var(--vms-ink)] -rotate-12 translate-x-12 -translate-y-12" />
                         </div>
 
                         <CardContent className="p-8 relative z-10 flex flex-col justify-between min-h-[220px]">
@@ -228,8 +228,8 @@ export default function WalletPage() {
                                         <Badge
                                             variant="outline"
                                             className={cn(
-                                                "uppercase text-[10px] font-bold tracking-widest px-2.5 py-0.5 bg-background/50 backdrop-blur-sm",
-                                                wallet?.status === "active" ? "text-green-600 border-green-200 bg-green-50/50" : "text-zinc-500"
+                                                "uppercase text-[10px] font-bold tracking-widest px-2.5 py-0.5",
+                                                wallet?.status === "active" ? "text-[var(--vms-success)] border-green-200 bg-[var(--vms-success-subtle)]/50" : "text-zinc-500"
                                             )}
                                         >
                                             {wallet?.status === 'active' ? 'Active Status' : wallet?.status || 'Unknown Status'}
@@ -237,8 +237,8 @@ export default function WalletPage() {
                                     </div>
                                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Available Balance</h3>
                                 </div>
-                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-sm">
-                                    <Wallet className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+                                <div className="h-10 w-10 rounded-xl bg-[var(--vms-surface-subtle)] flex items-center justify-center text-[var(--vms-ink)] border border-[var(--vms-line)] shadow-sm">
+                                    <Wallet className="h-5 w-5 text-[var(--vms-action)]" />
                                 </div>
                             </div>
 
@@ -272,7 +272,7 @@ export default function WalletPage() {
                     {/* Stats Column - Vertical Stack */}
                     <div className="space-y-4">
                         {/* Total In */}
-                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[var(--vms-action)] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Total Credits</p>
@@ -280,14 +280,14 @@ export default function WalletPage() {
                                         {walletStats ? formatCurrency(walletStats.totalCredits) : "—"}
                                     </p>
                                 </div>
-                                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600">
+                                <div className="h-10 w-10 rounded-lg bg-[var(--vms-success-subtle)]0/10 flex items-center justify-center text-[var(--vms-success)]">
                                     <ArrowDownRight className="h-5 w-5" />
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Total Out */}
-                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[var(--vms-action)] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Total Debits</p>
@@ -295,14 +295,14 @@ export default function WalletPage() {
                                         {walletStats ? formatCurrency(walletStats.totalDebits) : "—"}
                                     </p>
                                 </div>
-                                <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-600">
+                                <div className="h-10 w-10 rounded-lg bg-[var(--vms-danger-subtle)]0/10 flex items-center justify-center text-[var(--vms-danger)]">
                                     <ArrowUpRight className="h-5 w-5" />
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Pending */}
-                        <Card className="border-l-4 border-[rgb(var(--brand-primary))] bg-card/50 shadow-sm hover:shadow transition-all">
+                        <Card className="border-l-4 border-[var(--vms-action)] bg-card/50 shadow-sm hover:shadow transition-all">
                             <CardContent className="p-5 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Pending</p>
@@ -310,7 +310,7 @@ export default function WalletPage() {
                                         {walletStats?.pendingCount || 0}
                                     </p>
                                 </div>
-                                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                <div className="h-10 w-10 rounded-lg bg-[var(--vms-warning-subtle)]0/10 flex items-center justify-center text-[var(--vms-warning)]">
                                     <Clock className="h-5 w-5" />
                                 </div>
                             </CardContent>
@@ -322,12 +322,12 @@ export default function WalletPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded bg-primary/10 text-primary">
-                                <History className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
+                            <div className="p-1.5 rounded bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]">
+                                <History className="h-4 w-4 text-[var(--vms-action)]" />
                             </div>
                             <h3 className="text-lg font-bold text-foreground">Recent Activity</h3>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={handleViewHistory} className="text-xs hover:bg-transparent hover:text-primary group">
+                        <Button variant="ghost" size="sm" onClick={handleViewHistory} className="text-xs hover:bg-transparent hover:text-[var(--vms-ink)] group">
                             View Full History
                             <ArrowRight className="h-3.5 w-3.5 ml-1 transition-transform group-hover:translate-x-1" />
                         </Button>
@@ -344,8 +344,8 @@ export default function WalletPage() {
                                         <div className={cn(
                                             "h-10 w-10 rounded-full flex items-center justify-center border shadow-sm flex-shrink-0",
                                             txn.type === 'credit'
-                                                ? "bg-green-50 border-green-100 text-green-600 dark:bg-green-900/20 dark:border-green-800/50"
-                                                : "bg-red-50 border-red-100 text-red-600 dark:bg-red-900/20 dark:border-red-800/50"
+                                                ? "bg-[var(--vms-success-subtle)] border-green-100 text-[var(--vms-success)]"
+                                                : "bg-[var(--vms-danger-subtle)] border-red-100 text-[var(--vms-danger)]"
                                         )}>
                                             {txn.type === 'credit' ? <ArrowDownRight className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
                                         </div>
@@ -356,9 +356,9 @@ export default function WalletPage() {
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <Badge variant="outline" className={cn(
                                                         "text-[9px] uppercase px-1.5 py-0 h-5 font-bold border-0",
-                                                        txn.status === 'success' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                                            txn.status === 'pending' ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                                                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                        txn.status === 'success' ? "bg-[var(--vms-success-subtle)] text-[var(--vms-success)]" :
+                                                            txn.status === 'pending' ? "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]" :
+                                                                "bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]"
                                                     )}>
                                                         {txn.status}
                                                     </Badge>
@@ -371,7 +371,7 @@ export default function WalletPage() {
                                             <div className="flex items-center justify-end">
                                                 <span className={cn(
                                                     "font-bold font-mono tracking-tight",
-                                                    txn.type === 'credit' ? "text-green-600 dark:text-green-400" : "text-foreground"
+                                                    txn.type === 'credit' ? "text-[var(--vms-success)]" : "text-foreground"
                                                 )}>
                                                     {txn.type === 'credit' ? '+' : '-'}{formatCurrency(Math.abs(txn.amount))}
                                                 </span>
@@ -413,13 +413,13 @@ export default function WalletPage() {
                     }}
                 >
                     <div className="space-y-6 pt-2">
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800 flex gap-3">
+                        <div className="bg-[var(--vms-surface-subtle)] p-4 rounded-lg border border-[var(--vms-line)] flex gap-3">
                             <div className="flex-shrink-0 mt-0.5">
-                                <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <CreditCard className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                             </div>
                             <div className="space-y-1">
-                                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200">Payment Gateway</h4>
-                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                <h4 className="text-sm font-semibold text-[var(--vms-ink-muted)]">Payment Gateway</h4>
+                                <p className="text-xs text-[var(--vms-ink-muted)]">
                                     You will be redirected to our secure payment processor to complete this transaction.
                                 </p>
                             </div>
@@ -455,13 +455,13 @@ export default function WalletPage() {
                             </div>
 
                             {paymentReference && (
-                                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-800 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="p-4 bg-[var(--vms-warning-subtle)] rounded-md border border-amber-200 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                                     <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin flex-shrink-0" />
                                     <div>
-                                        <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                                        <p className="text-sm font-medium text-amber-900">
                                             Awaiting Payment...
                                         </p>
-                                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                                        <p className="text-xs text-[var(--vms-warning)] mt-0.5">
                                             Please complete the transaction in the popup window.
                                         </p>
                                     </div>
