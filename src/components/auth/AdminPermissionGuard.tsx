@@ -64,7 +64,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
             return;
         }
         setRedirecting(true);
-        router.replace("/select?reason=management-required");
+        router.replace("/organization/workspaces?reason=management-required");
     }, [
         isLoading,
         managementAccess,
@@ -132,7 +132,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                     <Button variant="outline" asChild>
-                        <Link href="/select">
+                        <Link href="/organization/workspaces">
                             <Home className="mr-2 h-4 w-4" />
                             Back to Workspaces
                         </Link>

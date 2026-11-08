@@ -139,7 +139,12 @@ function PluginContent({ params }: Props) {
                         description={`The plugin route "${fullPath}" could not be found. Please check the URL and try again.`}
                         action={{
                             label: "Go to Dashboard",
-                            onClick: () => router.push(notFoundLayoutType === "admin" ? "/admin" : "/select"),
+                            onClick: () =>
+                              router.push(
+                                notFoundLayoutType === "admin"
+                                  ? "/admin"
+                                  : "/organization/workspaces",
+                              ),
                         }}
                     />
                 </CardContent>

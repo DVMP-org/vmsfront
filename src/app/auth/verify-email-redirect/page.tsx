@@ -40,7 +40,7 @@ export default function VerifyEmailRedirectPage() {
           setState("success");
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
-            router.push("/select");
+            router.push("/organization/workspaces");
           }, 2000);
         } else {
           setErrorMessage(

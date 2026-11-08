@@ -94,10 +94,13 @@ export function useAuth() {
 
       try {
         const organizations = await organizationService.getMyOrganizations();
-        const destination = resolvePostAuthDestination(organizations.data);
         if (redirectTarget) {
           clearRedirectQueryParam();
+          router.refresh();
+          router.replace(redirectTarget);
+          return;
         }
+        const destination = resolvePostAuthDestination(organizations.data);
         router.refresh();
         router.replace(destination);
       } catch {
@@ -263,7 +266,7 @@ export function useOnboard() {
       queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
 
       toast.success("Onboarding complete! Welcome.");
-      router.push("/select");
+      router.push("/organization/workspaces");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
@@ -303,7 +306,7 @@ export function useSocialCallback() {
       queryClient.invalidateQueries({ queryKey: ["auth", "profile"] });
 
       toast.success("Login successful!");
-      router.replace("/select");
+      router.replace("/organization/workspaces");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);

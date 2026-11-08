@@ -16,7 +16,7 @@ import { useAppStore } from "@/store/app-store";
 
 const links = [
   { href: "/organization", label: "Home", icon: Home },
-  { href: "/select", label: "Workspaces", icon: LayoutGrid },
+  { href: "/organization/workspaces", label: "Workspaces", icon: LayoutGrid },
   {
     href: "/organization/administrators",
     label: "Administrators",

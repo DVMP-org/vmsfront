@@ -249,7 +249,7 @@ export default function ResidentOnboardingPage() {
               "Onboarding complete! Redirecting to your dashboard.",
             );
             router.refresh();
-            router.replace("/select");
+            router.replace("/organization/workspaces");
           },
         },
       );
@@ -326,7 +326,7 @@ export default function ResidentOnboardingPage() {
                 <CardFooter className="flex flex-col gap-3">
                   <Button
                     className="w-full"
-                    onClick={() => router.replace("/select")}
+                    onClick={() => router.replace("/organization/workspaces")}
                   >
                     Continue to dashboard
                   </Button>

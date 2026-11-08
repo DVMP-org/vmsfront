@@ -98,7 +98,7 @@ describe("WorkspaceSwitcher", () => {
     expect(screen.queryByText("Organization overview")).toBeNull();
     expect(
       screen.getByRole("link", { name: /View all workspaces/i }),
-    ).toHaveAttribute("href", "/select");
+    ).toHaveAttribute("href", "/organization/workspaces");
   });
 
   it("sets the selected property before opening management", () => {

@@ -55,7 +55,7 @@ export default function WorkspacePage() {
       <Header type="select" />
       <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-9">
         <Link
-          href="/select"
+          href="/organization/workspaces"
           className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"
         >
           <ArrowLeft className="h-4 w-4" />

@@ -116,7 +116,7 @@ export default function OrganizationPage() {
             </p>
           </div>
           <Button asChild variant="secondary" size="sm">
-            <Link href="/select">
+            <Link href="/organization/workspaces">
               View workspaces
               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
@@ -173,7 +173,7 @@ export default function OrganizationPage() {
             label="Subscription"
           />
           <SettingsLink
-            href="/select"
+            href="/organization/workspaces"
             icon={LayoutGrid}
             label="Workspaces"
           />

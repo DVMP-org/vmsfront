@@ -77,9 +77,10 @@ export function middleware(request: NextRequest) {
   const isAuthPath = pathname.startsWith('/auth');
   const isVerifyEmailPath = pathname.startsWith('/auth/verify-email');
   const isOrganizationsPath = pathname.startsWith('/organizations');
-  const isDashboardPath = pathname.startsWith('/admin') || pathname.startsWith('/residency');
+  const isDashboardPath = pathname.startsWith('/admin');
   const isSelectPath = pathname.startsWith('/select');
-  const isOrganizationPath = pathname.startsWith('/organization');
+  const isOrganizationPath =
+    pathname === '/organization' || pathname.startsWith('/organization/');
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
@@ -99,7 +100,7 @@ export function middleware(request: NextRequest) {
   }
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
-  // Dashboard routes (/admin, /residency, /select) require org context from subdomain
+  // Dashboard and organization routes require tenant context from a subdomain.
   if (!isOnSubdomain && (isDashboardPath || isSelectPath || isOrganizationPath)) {
     if (isAuthenticated) {
       return NextResponse.redirect(getBaseDomainUrl('/organizations', '', request));

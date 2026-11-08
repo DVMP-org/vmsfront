@@ -96,7 +96,7 @@ export function WorkspaceSwitcher({
     return (
       <div className="flex flex-col items-center gap-2 px-2 py-3">
         <Link
-          href="/select"
+          href="/organization/workspaces"
           aria-label="Switch workspace"
           className="grid h-10 w-10 place-items-center rounded-md border border-[#E5E7EB] bg-[#F5F7F8] text-[#1F2933] transition hover:bg-[#EEF1F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A]"
         >
@@ -232,7 +232,7 @@ export function WorkspaceSwitcher({
 
           <div className="my-2 border-t border-[#E5E7EB]" />
           <Link
-            href="/select"
+            href="/organization/workspaces"
             onClick={() => {
               setOpen(false);
               onMobileClose?.();

@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
-  Home,
   BarChart3,
   Settings,
   Shield,
@@ -53,7 +52,6 @@ function buildResidentLinks(
   isSuperUser: boolean = false,
 ) {
   const links = [
-    { href: "/select", label: "Workspaces", icon: Home },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];

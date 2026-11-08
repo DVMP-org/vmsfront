@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import SelectPage from "./page";
+import { WorkspaceDirectoryPage } from "@/features/workspaces/WorkspaceDirectoryPage";
 
-vi.mock("@/components/layout/Header", () => ({ Header: () => null }));
 vi.mock("@/hooks/use-email-verification-guard", () => ({
   useRequireEmailVerification: vi.fn(),
 }));
@@ -135,7 +134,7 @@ vi.mock("@/hooks/use-auth", () => ({
 
 describe("workspaces page", () => {
   it("groups management, occupancy, and guest access by property", () => {
-    render(<SelectPage />);
+    render(<WorkspaceDirectoryPage />);
     expect(
       screen.getByRole("heading", { name: "Choose your workspace" }),
     ).toBeInTheDocument();
