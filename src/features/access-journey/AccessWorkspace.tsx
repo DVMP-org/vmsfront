@@ -39,32 +39,30 @@ const statusMeta: Record<
   requested: {
     label: "Awaiting approval",
     className:
-      "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+      "border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]   ",
   },
   approved: {
     label: "Approved",
     className:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
+      "border-[var(--vms-success)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]   ",
   },
   declined: {
     label: "Declined",
     className:
-      "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200",
+      "border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]   ",
   },
   expired: {
     label: "Expired",
-    className:
-      "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+    className: "border-zinc-200 bg-zinc-50 text-zinc-600   ",
   },
   cancelled: {
     label: "Cancelled",
-    className:
-      "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+    className: "border-zinc-200 bg-zinc-50 text-zinc-600   ",
   },
   revoked: {
     label: "Revoked",
     className:
-      "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200",
+      "border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]   ",
   },
 };
 
@@ -137,11 +135,11 @@ export function AccessWorkspace({
         />
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-col gap-4 border-b border-zinc-200 p-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm  ">
+        <div className="flex flex-col gap-4 border-b border-zinc-200 p-5  sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold">Visitor invitations</h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-500 ">
               Invite visitors to {relationship.place.name} and follow their
               approval and arrival status.
             </p>
@@ -149,7 +147,7 @@ export function AccessWorkspace({
           <button
             type="button"
             onClick={() => setShowComposer((current) => !current)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[rgb(var(--brand-primary,#213928))] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
           >
             {showComposer ? (
               <XCircle className="h-4 w-4" />
@@ -184,13 +182,13 @@ export function AccessWorkspace({
           <div className="p-10 text-center">
             <KeyRound className="mx-auto h-10 w-10 text-zinc-400" />
             <h3 className="mt-4 text-base font-semibold">No invitations yet</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 ">
               Create a visitor invitation for this workspace. Site approval may
               be required before the pass becomes active.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <div className="divide-y divide-zinc-200 ">
             {items.map((invitation) => (
               <InvitationRow
                 key={invitation.id}
@@ -209,11 +207,11 @@ export function AccessWorkspace({
       </section>
 
       {relationship.place.address ? (
-        <section className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-sm shadow-sm  ">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
           <div>
             <p className="font-medium">Destination</p>
-            <p className="mt-0.5 text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-zinc-500 ">
               {relationship.place.address}
             </p>
           </div>
@@ -303,17 +301,17 @@ function InvitationComposer({
   return (
     <form
       onSubmit={submit}
-      className="border-b border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/30"
+      className="border-b border-zinc-200 bg-zinc-50/80 p-5  "
     >
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-semibold">Create a visitor invitation</h3>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-500 ">
             Hosted by {partyName} at {destinationName}.
           </p>
         </div>
         {partyEmail ? (
-          <span className="hidden rounded-full bg-white px-3 py-1 text-xs text-zinc-500 shadow-sm dark:bg-zinc-800 dark:text-zinc-400 sm:block">
+          <span className="hidden rounded-full bg-white px-3 py-1 text-xs text-zinc-500 shadow-sm   sm:block">
             {partyEmail}
           </span>
         ) : null}
@@ -357,13 +355,13 @@ function InvitationComposer({
       </div>
 
       <section
-        className="mt-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+        className="mt-5 rounded-lg border border-zinc-200 bg-white p-4  "
         aria-label="Invited guests"
       >
         <div className="flex items-center justify-between gap-3">
           <div>
             <h4 className="text-sm font-semibold">Guests</h4>
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-xs text-zinc-500 ">
               Add everyone covered by this invitation.
             </p>
           </div>
@@ -373,7 +371,7 @@ function InvitationComposer({
             onClick={() =>
               setGuests((current) => [...current, createGuestDraft()])
             }
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50  "
           >
             <Plus className="h-3.5 w-3.5" />
             Add another guest
@@ -383,10 +381,10 @@ function InvitationComposer({
           {guests.map((guest, index) => (
             <div
               key={guest.id}
-              className="rounded-md border border-zinc-200 p-3 dark:border-zinc-700"
+              className="rounded-md border border-zinc-200 p-3 "
             >
               <div className="mb-3 flex items-center justify-between">
-                <strong className="text-xs uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                <strong className="text-xs uppercase tracking-[0.08em] text-zinc-500 ">
                   Guest {index + 1}
                 </strong>
                 {guests.length > 1 ? (
@@ -398,7 +396,7 @@ function InvitationComposer({
                         current.filter((item) => item.id !== guest.id),
                       )
                     }
-                    className="text-xs font-semibold text-red-700 hover:underline"
+                    className="text-xs font-semibold text-[var(--vms-danger)] hover:underline"
                   >
                     Remove
                   </button>
@@ -479,7 +477,7 @@ function InvitationComposer({
       {error ? (
         <p
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+          className="mt-4 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-3 py-2 text-sm text-[var(--vms-danger)]   "
         >
           {error}
         </p>
@@ -489,7 +487,7 @@ function InvitationComposer({
         <button
           type="submit"
           disabled={createInvitation.isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[rgb(var(--brand-primary,#213928))] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {createInvitation.isPending ? (
             <RefreshCw className="h-4 w-4 animate-spin" />
@@ -569,7 +567,7 @@ function InvitationRow({
             {status.label}
           </span>
         </div>
-        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-500 ">
           <span className="inline-flex items-center gap-1">
             <CalendarClock className="h-3.5 w-3.5" />
             {formatWindow(invitation.valid_from, invitation.valid_to)}
@@ -589,7 +587,7 @@ function InvitationRow({
         <button
           type="button"
           onClick={onOpen}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50   "
         >
           View details
           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -597,7 +595,7 @@ function InvitationRow({
         <button
           type="button"
           onClick={onCopy}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-zinc-50   "
         >
           <Copy className="h-3.5 w-3.5" />
           Copy code
@@ -607,7 +605,7 @@ function InvitationRow({
             type="button"
             onClick={onCancel}
             disabled={cancelling}
-            className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+            className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-xs font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
           >
             {cancelling ? "Cancelling…" : "Cancel"}
           </button>
@@ -705,7 +703,7 @@ function InvitationDetail({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-zinc-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
       role="presentation"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -716,11 +714,11 @@ function InvitationDetail({
         role="dialog"
         aria-modal="true"
         aria-labelledby="invitation-detail-title"
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl sm:rounded-2xl"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-zinc-200 bg-white shadow-2xl   sm:max-w-2xl sm:rounded-2xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 ">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 ">
               Visitor invitation
             </p>
             <h2
@@ -739,7 +737,7 @@ function InvitationDetail({
             type="button"
             onClick={onClose}
             aria-label="Close invitation details"
-            className="grid h-9 w-9 place-items-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="grid h-9 w-9 place-items-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50   "
           >
             <XCircle className="h-4 w-4" />
           </button>
@@ -767,7 +765,7 @@ function InvitationDetail({
                   {status.label}
                 </span>
               ) : null}
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs text-zinc-500 ">
                 Requested {formatDateTime(data.requested_at)}
               </span>
             </div>
@@ -809,7 +807,7 @@ function InvitationDetail({
                 ) : null}
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-700 dark:bg-zinc-800/60">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-center  ">
                 <div className="mx-auto grid h-36 w-36 place-items-center rounded-lg bg-white p-3 shadow-sm">
                   <QRCodeSVG
                     value={data.qr_code_url || data.code}
@@ -820,7 +818,7 @@ function InvitationDetail({
                 <p className="mt-3 break-all font-mono text-sm font-semibold tracking-[0.08em]">
                   {data.code}
                 </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-[11px] text-zinc-500 ">
                   Present this code at arrival
                 </p>
               </div>
@@ -828,7 +826,7 @@ function InvitationDetail({
 
             <div>
               <h3 className="text-sm font-semibold">Guests</h3>
-              <div className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+              <div className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200  ">
                 {data.guests.map((guest) => (
                   <div
                     key={guest.id}
@@ -838,13 +836,13 @@ function InvitationDetail({
                       <p className="font-medium">
                         {guest.display_name_snapshot}
                       </p>
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-0.5 text-xs text-zinc-500 ">
                         {guest.email_snapshot ||
                           guest.phone_snapshot ||
                           "No contact provided"}
                       </p>
                     </div>
-                    <span className="rounded bg-zinc-100 px-2 py-1 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                    <span className="rounded bg-zinc-100 px-2 py-1 font-mono text-[10px] text-zinc-600  ">
                       {guest.suffix}
                     </span>
                   </div>
@@ -864,19 +862,19 @@ function InvitationDetail({
             />
 
             {data.decline_reason ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+              <div className="rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
                 <p className="font-semibold">Declined</p>
                 <p className="mt-1">{data.decline_reason}</p>
               </div>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4  sm:flex-row sm:justify-end">
               {(data.status === "requested" || data.status === "approved") && (
                 <button
                   type="button"
                   onClick={onCancel}
                   disabled={cancelling}
-                  className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                  className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-sm font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
                 >
                   {cancelling ? "Cancelling…" : "Cancel invitation"}
                 </button>
@@ -884,7 +882,7 @@ function InvitationDetail({
               <button
                 type="button"
                 onClick={shareInvitation}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[rgb(var(--brand-primary,#213928))] px-4 py-2 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 py-2 text-sm font-semibold text-white"
               >
                 <Share2 className="h-4 w-4" />
                 Share invitation
@@ -922,32 +920,30 @@ function ArrivalHistory({
           <h3 id="arrival-history-title" className="text-sm font-semibold">
             Arrival history
           </h3>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-0.5 text-xs text-zinc-500 ">
             Checkpoint decisions recorded for this invitation.
           </p>
         </div>
-        <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600  ">
           {events.length} {events.length === 1 ? "event" : "events"}
         </span>
       </div>
 
       {loading ? (
-        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-          Loading arrival history…
-        </p>
+        <p className="mt-3 text-sm text-zinc-500 ">Loading arrival history…</p>
       ) : error ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
           <span>{error}</span>
           <button type="button" onClick={onRetry} className="font-semibold">
             Retry
           </button>
         </div>
       ) : events.length === 0 ? (
-        <p className="mt-3 rounded-lg border border-dashed border-zinc-200 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <p className="mt-3 rounded-lg border border-dashed border-zinc-200 p-3 text-sm text-zinc-500  ">
           No checkpoint events yet.
         </p>
       ) : (
-        <ol className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+        <ol className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200  ">
           {events.map((event) => (
             <li
               key={event.id}
@@ -957,13 +953,13 @@ function ArrivalHistory({
                 <p className="text-sm font-medium capitalize">
                   {event.direction} · {event.outcome}
                 </p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-0.5 text-xs text-zinc-500 ">
                   Gate {event.gate_id.slice(0, 8)} · {event.reason_code}
                 </p>
               </div>
               <time
                 dateTime={event.occurred_at}
-                className="text-right text-xs text-zinc-500 dark:text-zinc-400"
+                className="text-right text-xs text-zinc-500 "
               >
                 {formatDateTime(event.occurred_at)}
               </time>
@@ -986,13 +982,11 @@ function DetailLine({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-500  ">
         <Icon className="h-4 w-4" />
       </div>
       <div>
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          {label}
-        </p>
+        <p className="text-xs font-medium text-zinc-500 ">{label}</p>
         <p className="mt-0.5 text-sm font-medium">{value}</p>
       </div>
     </div>
@@ -1011,13 +1005,11 @@ function Summary({
   detail: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <Icon className="h-5 w-5 text-[rgb(var(--brand-primary,#213928))] dark:text-emerald-300" />
-      <p className="mt-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-        {label}
-      </p>
+    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm  ">
+      <Icon className="h-5 w-5 text-[var(--vms-action)] " />
+      <p className="mt-4 text-xs font-medium text-zinc-500 ">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{detail}</p>
+      <p className="mt-1 text-xs text-zinc-500 ">{detail}</p>
     </div>
   );
 }
@@ -1035,7 +1027,9 @@ function Field({
     <label className="block text-sm font-medium">
       <span>
         {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        {required ? (
+          <span className="ml-1 text-[var(--vms-danger)]">*</span>
+        ) : null}
       </span>
       <span className="mt-1.5 block">{children}</span>
     </label>
@@ -1051,7 +1045,7 @@ function ErrorState({
 }) {
   return (
     <div role="alert" className="p-6">
-      <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+      <div className="flex items-start gap-3 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]   ">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
         <div className="flex-1">
           <p className="font-semibold">Invitations unavailable</p>
@@ -1076,7 +1070,7 @@ function LoadingRows() {
       {[0, 1].map((item) => (
         <div
           key={item}
-          className="h-24 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+          className="h-24 animate-pulse rounded-lg bg-zinc-100 "
         />
       ))}
     </div>
@@ -1126,4 +1120,4 @@ function toLocalInput(date: Date) {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-[rgb(var(--brand-primary,#213928))] focus:ring-2 focus:ring-[rgb(var(--brand-primary,#213928)/0.12)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50";
+  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[var(--vms-focus)]/20   ";

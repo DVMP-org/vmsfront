@@ -121,7 +121,7 @@ const SidebarLink = memo(function SidebarLink({
       />
 
       {(isMobile || !collapsed) && (
-          <span className={cn("flex-1 truncate", isActive && "font-semibold")}>
+        <span className={cn("flex-1 truncate", isActive && "font-semibold")}>
           {link.label}
         </span>
       )}
@@ -314,8 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     if (actualType === "admin") {
       baseLinks = baseLinks.filter(
-        (link: any) =>
-          link.href !== "/admin" || managementDashboardAvailable,
+        (link: any) => link.href !== "/admin" || managementDashboardAvailable,
       );
       // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
       // only show non-permission links to avoid flickering.
@@ -616,8 +615,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                       <Icon
                         className={cn(
                           "h-5 w-5 flex-shrink-0",
-                          activeChild &&
-                            "text-[#1F2933]",
+                          activeChild && "text-[#1F2933]",
                         )}
                       />
                       {(isMobile || !collapsed) && (
@@ -653,7 +651,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                           damping: 35,
                           mass: 0.5,
                         }}
-                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
+                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 "
                       >
                         {link.children.map((child: any) => {
                           const ChildIcon = child.icon;
@@ -692,7 +690,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                 {actualType === "admin" &&
                   (!collapsed || isMobile) &&
                   link.group !== (links[index - 1] as any)?.group && (
-                  <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#98a2b3]">
+                    <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#98a2b3]">
                       {link.group}
                     </p>
                   )}
@@ -743,8 +741,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         className={cn(
                           "h-5 w-5 flex-shrink-0",
                           pluginIcon,
-                          hasActiveRoute &&
-                            "text-[rgb(var(--brand-primary,#213928))]",
+                          hasActiveRoute && "text-[var(--vms-action)]",
                         )}
                       />
                       {(isMobile || !collapsed) && (
@@ -781,7 +778,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                           damping: 35,
                           mass: 0.5,
                         }}
-                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 dark:border-zinc-800"
+                        className="mt-1 ml-4 space-y-0.5 overflow-hidden border-l border-zinc-200 "
                       >
                         {getPluginRoutesMemoized(plugin)?.map((route) => {
                           const isActive = isPluginRouteActive(
@@ -804,8 +801,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   "group relative",
                                   "gap-3 px-3 py-2",
                                   isActive
-                                ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
-                                : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
+                                    ? "border-l-2 border-[#E85D3F] bg-transparent pl-[10px] font-semibold text-[#1F2933]"
+                                    : "text-[#596675] hover:bg-[#F5F7F8] hover:text-[#1F2933]",
                                 )}
                                 href={routeHref}
                               >

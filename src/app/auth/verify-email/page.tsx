@@ -75,11 +75,7 @@ export default function VerifyEmailPage() {
           >
             <div className="relative">
               <div className="relative rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-8 shadow-[var(--vms-shadow-overlay)]">
-                <Loader
-                  size={48}
-                  colour="brand-primary"
-                  className="animate-spin"
-                />
+                <Loader size={48} colour="action" className="animate-spin" />
               </div>
             </div>
             <motion.div

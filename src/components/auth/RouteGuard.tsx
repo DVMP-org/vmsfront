@@ -45,7 +45,7 @@ export function RouteGuard({ children }: RouteGuardProps) {
         <div className="flex flex-col items-center gap-6 relative z-10">
           <div className="relative">
             <div className="flex h-16 w-16 items-center justify-center rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-              <Loader size={32} colour="brand-primary" />
+              <Loader size={32} colour="action" />
             </div>
           </div>
           <div className="space-y-1 text-center">

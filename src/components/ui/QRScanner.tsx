@@ -13,7 +13,12 @@ interface QRScannerProps {
   className?: string;
 }
 
-export function QRScanner({ onScan, onError, onClose, className }: QRScannerProps) {
+export function QRScanner({
+  onScan,
+  onError,
+  onClose,
+  className,
+}: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -29,7 +34,7 @@ export function QRScanner({ onScan, onError, onClose, className }: QRScannerProp
         const elementId = "qr-reader";
         scanner = new Html5Qrcode(elementId);
         scannerRef.current = scanner;
-        
+
         const config = {
           fps: 10,
           qrbox: { width: 250, height: 250 },
@@ -49,13 +54,14 @@ export function QRScanner({ onScan, onError, onClose, className }: QRScannerProp
           (errorMessage) => {
             // Ignore scanning errors, they're frequent during scanning
             // Only log actual errors that aren't "not found" errors
-          }
+          },
         );
 
         setIsScanning(true);
         setError(null);
       } catch (err: any) {
-        const errorMsg = err.message || err.toString() || "Failed to start camera";
+        const errorMsg =
+          err.message || err.toString() || "Failed to start camera";
         setError(errorMsg);
         setIsScanning(false);
         if (onError) {
@@ -101,7 +107,12 @@ export function QRScanner({ onScan, onError, onClose, className }: QRScannerProp
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 xs:p-4", className)}>
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 xs:p-4",
+        className,
+      )}
+    >
       <div className="relative bg-background rounded-lg p-4 xs:p-6 max-w-md w-full mx-auto max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3 xs:mb-4">
           <h3 className="text-base xs:text-lg font-semibold">Scan QR Code</h3>
@@ -123,9 +134,9 @@ export function QRScanner({ onScan, onError, onClose, className }: QRScannerProp
           />
 
           {error && (
-            <div className="p-2.5 xs:p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-xs xs:text-sm text-red-800 dark:text-red-200">{error}</p>
-              <p className="text-xs text-red-600 dark:text-red-300 mt-1">
+            <div className="rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3">
+              <p className="text-sm text-[var(--vms-danger)]">{error}</p>
+              <p className="mt-1 text-xs text-[var(--vms-danger)]">
                 Please ensure camera permissions are granted and try again.
               </p>
             </div>
@@ -156,4 +167,3 @@ export function QRScanner({ onScan, onError, onClose, className }: QRScannerProp
     </div>
   );
 }
-
