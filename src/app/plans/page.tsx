@@ -523,15 +523,15 @@ export default function PlansPage() {
 
   const finishSetup = useCallback(() => {
     window.sessionStorage.removeItem("organization-setup-step");
-    if (!firstWorkspaceSetup) {
-      router.push("/admin");
+    if (organization?.needs_first_site === true) {
+      router.replace("/admin/properties/new?setup=first-place");
       return;
     }
-    router.push(
-      organization?.needs_first_site
-        ? "/admin/properties/new?setup=first-place"
-        : "/admin/properties",
-    );
+    if (!firstWorkspaceSetup) {
+      router.replace("/admin");
+      return;
+    }
+    router.replace("/admin/properties");
   }, [firstWorkspaceSetup, organization?.needs_first_site, router]);
 
   const activePlans =
