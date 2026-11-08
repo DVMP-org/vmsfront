@@ -7,8 +7,6 @@ import {
   Home,
   LayoutGrid,
   Settings,
-  ShieldCheck,
-  UserCog,
 } from "lucide-react";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
@@ -18,18 +16,8 @@ const links = [
   { href: "/organization", label: "Home", icon: Home },
   { href: "/organization/workspaces", label: "Workspaces", icon: LayoutGrid },
   {
-    href: "/organization/administrators",
-    label: "Administrators",
-    icon: UserCog,
-  },
-  {
-    href: "/organization/roles",
-    label: "Roles & permissions",
-    icon: ShieldCheck,
-  },
-  {
     href: "/organization/settings",
-    label: "Organization settings",
+    label: "Settings",
     icon: Settings,
   },
 ];

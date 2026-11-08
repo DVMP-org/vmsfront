@@ -4,17 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
-  Blocks,
-  Building2,
   CheckCircle2,
-  LayoutGrid,
-  Mail,
-  Palette,
-  Shield,
-  ShieldCheck,
-  SlidersHorizontal,
-  WalletCards,
 } from "lucide-react";
 import { contextApi } from "@/features/context/api";
 import { useAppStore } from "@/store/app-store";
@@ -26,7 +16,6 @@ import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { OrganizationSettingsTabs } from "@/components/settings/OrganizationSettingsTabs";
 
 export default function OrganizationPage() {
   const organization = useAppStore((state) => state.organization);
@@ -94,118 +83,25 @@ export default function OrganizationPage() {
     )?.label || details.data.use_case?.replaceAll("_", " ");
 
   return (
-    <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-          <Building2 className="h-3.5 w-3.5 text-[var(--vms-action)]" />
-          <span>{details.data.name}</span>
-          <span className="text-[var(--vms-line-strong)]">/</span>
-          <span>Settings</span>
-        </div>
-        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-              Organization administration
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              Organization settings
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
-              Manage the identity, operating context and configuration that
-              sit above your properties and workspaces.
-            </p>
-          </div>
-          <Button asChild variant="secondary" size="sm">
-            <Link href="/organization/workspaces">
-              View workspaces
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </Button>
-        </div>
-      </header>
-
-      <OrganizationSettingsTabs />
-
-      <div className="grid items-start gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2">
-          <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-            Organization
-          </p>
-          <SettingsLink
-            href="/organization/settings"
-            icon={SlidersHorizontal}
-            label="General details"
-            active
-          />
-          <SettingsLink
-            href="/organization/administrators"
-            icon={ShieldCheck}
-            label="Administrators"
-          />
-          <SettingsLink
-            href="/organization/roles"
-            icon={Shield}
-            label="Roles & permissions"
-          />
-          <SettingsLink
-            href="/organization/settings/branding"
-            icon={Palette}
-            label="Brand and theme"
-          />
-          <SettingsLink
-            href="/organization/settings/payment"
-            icon={WalletCards}
-            label="Payments"
-          />
-          <SettingsLink
-            href="/organization/settings/integrations"
-            icon={Blocks}
-            label="Integrations"
-          />
-          <SettingsLink
-            href="/organization/settings/mailer"
-            icon={Mail}
-            label="Mail delivery"
-          />
-          <SettingsLink
-            href="/organization/settings/subscription"
-            icon={WalletCards}
-            label="Subscription"
-          />
-          <SettingsLink
-            href="/organization/workspaces"
-            icon={LayoutGrid}
-            label="Workspaces"
-          />
-          <SettingsLink
-            href="/plans"
-            icon={WalletCards}
-            label="Plan and billing"
-          />
-        </aside>
-
-        <section className="space-y-4">
-          <div className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2">
-            <Summary
-              label="Operating use case"
-              value={useCase || "Not configured"}
-              detail="Fixed when the organization is created"
-            />
-            <Summary
-              label="Organization URL"
-              value={details.data.slug}
-              detail="The tenant subdomain cannot be changed here"
-            />
-          </div>
-
-          <OrganizationEditor
-            key={`${key}:${details.data.updated_at}`}
-            org={details.data}
-            editable={hasAdminPermission(profile.data, "organizations.update")}
-          />
-        </section>
+    <div className="space-y-4">
+      <div className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2">
+        <Summary
+          label="Operating use case"
+          value={useCase || "Not configured"}
+          detail="Fixed when the organization is created"
+        />
+        <Summary
+          label="Organization URL"
+          value={details.data.slug}
+          detail="The tenant subdomain cannot be changed here"
+        />
       </div>
-    </main>
+      <OrganizationEditor
+        key={`${key}:${details.data.updated_at}`}
+        org={details.data}
+        editable={hasAdminPermission(profile.data, "organizations.update")}
+      />
+    </div>
   );
 }
 
@@ -361,41 +257,12 @@ function Summary({
   );
 }
 
-function SettingsLink({
-  href,
-  icon: Icon,
-  label,
-  active = false,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        active
-          ? "relative flex min-h-11 items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 text-xs font-semibold text-[var(--vms-ink)] before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-[var(--vms-active-accent)]"
-          : "flex min-h-11 items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 text-xs font-medium text-[var(--vms-ink-muted)] transition-colors hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]"
-      }
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </Link>
-  );
-}
-
 function SettingsSkeleton() {
   return (
     <div role="status" className="space-y-4">
       <span className="sr-only">Loading organization settings</span>
       <Skeleton className="h-24" />
-      <div className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-96" />
-      </div>
+      <Skeleton className="h-96" />
     </div>
   );
 }

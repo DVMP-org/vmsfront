@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/organization/roles/create",
   useSearchParams: () => mocks.params,
 }));
 
