@@ -12,8 +12,9 @@ describe("command navigation", () => {
       "Profile",
     ]);
     const commands = permittedCommands(role(["roles.list"]));
-    expect(commands.some((entry) => entry.label === "Roles & permissions")).toBe(true);
+    expect(commands.some((entry) => entry.label === "Roles & permissions")).toBe(false);
     expect(commands.some((entry) => entry.href === "/admin/admins")).toBe(false);
+    expect(commands.some((entry) => entry.href === "/admin/organization")).toBe(false);
     const all = permittedCommands(role(["*"]));
     expect(new Set(all.map((entry) => entry.href)).size).toBe(all.length);
   });
@@ -70,13 +71,13 @@ describe("command navigation", () => {
     HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
     HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); };
     const navigate = vi.fn();
-    render(<CommandNavigation role={role(["roles.list"])} contextKey="tenant:user" navigate={navigate} />);
+    render(<CommandNavigation role={role(["charges.list"])} contextKey="tenant:user" navigate={navigate} />);
     fireEvent.click(screen.getByRole("button", { name: /Find a page/ }));
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "no match" } });
     expect(screen.getByRole("status").textContent).toContain("No available pages");
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "roles" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "charges" } });
     fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
-    expect(navigate).toHaveBeenCalledWith("/admin/admins/roles");
+    expect(navigate).toHaveBeenCalledWith("/admin/charges");
   });
 });
 

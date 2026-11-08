@@ -58,7 +58,7 @@ export default function CreateRolePage() {
       },
       {
         onSuccess: () => {
-          router.push("/admin/admins/roles");
+          router.push("/organization/roles");
         },
       }
     );

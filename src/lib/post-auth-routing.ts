@@ -14,7 +14,7 @@ export function resolvePostAuthDestination(
   const destination = ACTIVE_SUBSCRIPTION_STATUSES.has(
     organization.subscription?.status || "",
   )
-    ? "/select"
+    ? "/organization"
     : "/plans";
 
   return buildSubdomainUrl(organization.slug, destination);

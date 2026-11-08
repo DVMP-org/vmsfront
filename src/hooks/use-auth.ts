@@ -88,7 +88,7 @@ export function useAuth() {
           clearRedirectQueryParam();
         }
         router.refresh();
-        router.replace(redirectTarget || "/select");
+        router.replace(redirectTarget || "/organization");
         return;
       }
 

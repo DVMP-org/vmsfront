@@ -14,20 +14,23 @@ import { useAdminDashboard } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import type { AdminDashboard } from "@/types";
+import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
 
 export function RecentContextBar() {
-  const organization = useAppStore((state) => state.organization);
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const workspace = useWorkspaceContext();
-  const contextLabel = selectedProperty
-    ? "Property context"
-    : "Organization overview";
-  const contextName =
-    selectedProperty?.name || organization?.name || "Workspace";
+  const canManage = canOpenManagementDashboard(
+    selectedProperty?.id,
+    workspace.data?.management?.is_administrator,
+  );
+  const contextLabel = "Property workspace";
+  const contextName = selectedProperty?.name || "Choose a property";
   const useCase =
     workspace.data?.effective_use_case?.replaceAll("_", " ") || "Loading";
   const canViewWorkQueue =
     workspace.data?.modules.includes("check_in_out") || false;
+
+  if (!canManage) return null;
 
   return (
     <section

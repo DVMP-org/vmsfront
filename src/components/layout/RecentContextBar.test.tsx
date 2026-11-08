@@ -37,6 +37,7 @@ vi.mock("@/features/context/use-workspace-context", () => ({
     data: {
       effective_use_case: "commercial",
       modules: mocks.workspaceModules,
+      management: { is_administrator: true },
     },
   }),
 }));
@@ -65,7 +66,7 @@ describe("RecentContextBar", () => {
   it("shows the active property, work queue and recent checkpoint context", () => {
     render(<RecentContextBar />);
 
-    expect(screen.getByText("Property context")).toBeInTheDocument();
+    expect(screen.getByText("Property workspace")).toBeInTheDocument();
     expect(screen.getByText(/Harbour Offices/)).toHaveTextContent("commercial");
     expect(
       screen.getByRole("link", { name: /Awaiting approval 2/ }),
