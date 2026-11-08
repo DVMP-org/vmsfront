@@ -96,7 +96,7 @@ function SinglePaymentCard({
 }) {
     const [showActions, setShowActions] = useState(false);
     const brandConfig = BRAND_CONFIG[paymentMethod.brand?.toLowerCase() || ""] || {
-        gradient: "from-zinc-700 to-zinc-900",
+        gradient: " ",
         logo: paymentMethod.brand?.toUpperCase() || "CARD"
     };
 
@@ -104,23 +104,23 @@ function SinglePaymentCard({
         <div className="group relative">
             {/* Default badge */}
             {isDefault && (
-                <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-medium shadow-lg">
+                <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-medium shadow-[var(--vms-shadow-raised)]">
                     <Star className="h-3 w-3 fill-current" />
                     Default
                 </div>
             )}
 
             <div className={cn(
-                "relative w-full h-44 rounded-2xl text-white overflow-hidden shadow-lg transition-all duration-300",
-                "bg-gradient-to-br",
+                "relative w-full h-44 rounded-[var(--vms-radius-surface)] text-white overflow-hidden shadow-[var(--vms-shadow-raised)] transition-all duration-300",
+                "",
                 brandConfig.gradient,
-                isDefault ? "ring-2 ring-green-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900" : "",
-                "hover:shadow-xl hover:scale-[1.02]"
+                isDefault ? "ring-2 ring-green-500 ring-offset-2 ring-offset-white " : "",
+                "hover:shadow-[var(--vms-shadow-overlay)] hover:scale-[1.02]"
             )}>
                 {/* Background decorations */}
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--vms-surface)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-[var(--vms-surface)] rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
                 </div>
 
                 {/* Subtle pattern */}
@@ -128,7 +128,7 @@ function SinglePaymentCard({
 
                 {/* Card chip */}
                 <div className="absolute top-4 left-4">
-                    <div className="w-10 h-7 rounded bg-gradient-to-br from-amber-200 via-amber-300 to-amber-400 shadow-sm">
+                    <div className="w-10 h-7 rounded  from-amber-200 via-amber-300 to-amber-400 shadow-sm">
                         <div className="w-full h-full rounded flex items-center justify-center border border-amber-400/50">
                             <div className="w-5 h-3 border border-amber-500/40 rounded-sm bg-amber-200/30" />
                         </div>
@@ -170,7 +170,7 @@ function SinglePaymentCard({
                 {/* Hover actions overlay */}
                 {(onSetDefault || onDelete) && (
                     <div className={cn(
-                        "absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center gap-3 transition-opacity duration-200",
+                        "absolute inset-0 flex items-center justify-center gap-3 bg-black/55 transition-opacity duration-200",
                         showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     )}>
                         {onSetDefault && !isDefault && (
@@ -179,7 +179,7 @@ function SinglePaymentCard({
                                 variant="secondary"
                                 onClick={onSetDefault}
                                 disabled={isSettingDefault}
-                                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                                className="bg-[var(--vms-surface)]/20 hover:bg-[var(--vms-surface)]/30 text-white border-white/30"
                             >
                                 {isSettingDefault ? (
                                     <span className="animate-spin mr-2">⏳</span>
@@ -218,25 +218,25 @@ function AddPaymentMethodCard({ onAdd, isLoading }: { onAdd: () => void; isLoadi
             onClick={onAdd}
             disabled={isLoading}
             className={cn(
-                "w-full h-44 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700",
-                "bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800",
-                "hover:border-[rgb(var(--brand-primary))] hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                "w-full h-44 rounded-[var(--vms-radius-surface)] border-2 border-dashed border-[var(--vms-line)] ",
+                "   ",
+                "hover:border-[var(--vms-action)] hover:bg-[var(--vms-surface-subtle)] ",
                 "transition-all duration-300 group cursor-pointer",
                 "flex flex-col items-center justify-center gap-3"
             )}
         >
-            <div className="w-14 h-14 rounded-2xl bg-white dark:bg-zinc-700 shadow-md flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-zinc-200 dark:border-zinc-600">
+            <div className="w-14 h-14 rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)] shadow-[var(--vms-shadow-raised)] flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-[var(--vms-line)] ">
                 {isLoading ? (
                     <span className="animate-spin text-xl">⏳</span>
                 ) : (
-                    <Plus className="h-7 w-7 text-zinc-400 group-hover:text-[rgb(var(--brand-primary))] transition-colors" />
+                    <Plus className="h-7 w-7 text-[var(--vms-ink-muted)] group-hover:text-[var(--vms-ink)] transition-colors" />
                 )}
             </div>
             <div className="text-center">
-                <p className="font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-[rgb(var(--brand-primary))] transition-colors">
+                <p className="font-medium text-[var(--vms-ink)] group-hover:text-[var(--vms-ink)] transition-colors">
                     Add Payment Method
                 </p>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-[var(--vms-ink-muted)] mt-1">
                     Credit or debit card
                 </p>
             </div>
@@ -258,9 +258,9 @@ function PaymentMethodsSection() {
     if (isLoading) {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-44 rounded-2xl" />
-                <Skeleton className="h-44 rounded-2xl" />
-                <Skeleton className="h-44 rounded-2xl opacity-50" />
+                <Skeleton className="h-44 rounded-[var(--vms-radius-surface)]" />
+                <Skeleton className="h-44 rounded-[var(--vms-radius-surface)]" />
+                <Skeleton className="h-44 rounded-[var(--vms-radius-surface)] opacity-50" />
             </div>
         );
     }
@@ -269,16 +269,16 @@ function PaymentMethodsSection() {
 
     if (!hasPaymentMethods) {
         return (
-            <div className="relative p-8 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+            <div className="relative p-8 rounded-[var(--vms-radius-surface)] border-2 border-dashed border-[var(--vms-line)] text-center    ">
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)] pointer-events-none" />
                 <div className="relative">
-                    <div className="mx-auto w-20 h-20 rounded-2xl bg-white dark:bg-zinc-800 shadow-lg flex items-center justify-center mb-4 border border-zinc-200 dark:border-zinc-700">
-                        <CreditCard className="h-10 w-10 text-zinc-400" />
+                    <div className="mx-auto w-20 h-20 rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)] shadow-[var(--vms-shadow-raised)] flex items-center justify-center mb-4 border border-[var(--vms-line)] ">
+                        <CreditCard className="h-10 w-10 text-[var(--vms-ink-muted)]" />
                     </div>
-                    <h4 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
+                    <h4 className="text-xl font-semibold text-[var(--vms-ink)] mb-2">
                         No Payment Methods
                     </h4>
-                    <p className="text-sm text-zinc-500 mb-6 max-w-sm mx-auto">
+                    <p className="text-sm text-[var(--vms-ink-muted)] mb-6 max-w-sm mx-auto">
                         Add a payment method to enable automatic billing and ensure uninterrupted service
                     </p>
                     <Button onClick={handleAddPaymentMethod} isLoading={isCreating} size="lg">
@@ -313,7 +313,7 @@ function PaymentMethodsSection() {
                 ))}
                 <AddPaymentMethodCard onAdd={handleAddPaymentMethod} isLoading={isCreating} />
             </div>
-            <p className="text-xs text-zinc-500 flex items-center gap-2 mt-4">
+            <p className="text-xs text-[var(--vms-ink-muted)] flex items-center gap-2 mt-4">
                 <ShieldCheck className="h-4 w-4" />
                 Your payment information is encrypted and securely stored. We never store your full card number.
             </p>
@@ -335,12 +335,12 @@ function FormSection({
     return (
         <div className="relative">
             <div className="flex items-start gap-4 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[rgb(var(--brand-primary))]/10 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[var(--vms-action)]/10 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-[var(--vms-ink)]" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+                    <h3 className="text-sm font-semibold text-[var(--vms-ink)] ">{title}</h3>
+                    <p className="text-xs text-[var(--vms-ink-muted)] ">{description}</p>
                 </div>
             </div>
             <div className="pl-14">
@@ -365,13 +365,13 @@ function FormField({
 }) {
     return (
         <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <label className="text-sm font-medium text-[var(--vms-ink)] flex items-center gap-2">
                 {label}
-                {optional && <span className="text-xs text-zinc-400 font-normal">(Optional)</span>}
+                {optional && <span className="text-xs text-[var(--vms-ink-muted)] font-normal">(Optional)</span>}
             </label>
             {children}
             {error && <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="h-3 w-3" />{error}</p>}
-            {hint && !error && <p className="text-xs text-zinc-500">{hint}</p>}
+            {hint && !error && <p className="text-xs text-[var(--vms-ink-muted)]">{hint}</p>}
         </div>
     );
 }
@@ -445,7 +445,7 @@ export function BillingSettingsSection() {
                         <Skeleton className="h-4 w-72 mt-2" />
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Skeleton className="h-40 w-full rounded-2xl" />
+                        <Skeleton className="h-40 w-full rounded-[var(--vms-radius-surface)]" />
                     </CardContent>
                 </Card>
                 <Card>
@@ -467,12 +467,12 @@ export function BillingSettingsSection() {
         <div className="space-y-6">
             {/* Payment Method */}
             <Card className="overflow-hidden">
-                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <CardHeader className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]/50 ">
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-[rgb(var(--brand-primary))]/10 flex items-center justify-center">
-                                    <CreditCard className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
+                                <div className="w-8 h-8 rounded-lg bg-[var(--vms-action)]/10 flex items-center justify-center">
+                                    <CreditCard className="h-4 w-4 text-[var(--vms-ink)]" />
                                 </div>
                                 Payment Method
                             </CardTitle>
@@ -480,7 +480,7 @@ export function BillingSettingsSection() {
                                 Securely manage your payment information
                             </CardDescription>
                         </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 ">
                             <ShieldCheck className="h-4 w-4" />
                             <span className="text-xs font-medium">256-bit SSL</span>
                         </div>
@@ -493,12 +493,12 @@ export function BillingSettingsSection() {
 
             {/* Billing Information */}
             <Card className="overflow-hidden">
-                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <CardHeader className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]/50 ">
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-[rgb(var(--brand-primary))]/10 flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-[rgb(var(--brand-primary))]" />
+                                <div className="w-8 h-8 rounded-lg bg-[var(--vms-action)]/10 flex items-center justify-center">
+                                    <FileText className="h-4 w-4 text-[var(--vms-ink)]" />
                                 </div>
                                 Billing Information
                             </CardTitle>
@@ -509,15 +509,15 @@ export function BillingSettingsSection() {
                         {/* Completion indicator */}
                         <div className="flex items-center gap-3">
                             <div className="text-right">
-                                <span className="text-xs text-zinc-500">Profile Completion</span>
+                                <span className="text-xs text-[var(--vms-ink-muted)]">Profile Completion</span>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-24 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                    <div className="w-24 h-2 bg-[var(--vms-line-strong)] rounded-full overflow-hidden">
                                         <div
                                             className={cn(
                                                 "h-full rounded-full transition-all duration-500",
                                                 completionPercentage === 100
                                                     ? "bg-green-500"
-                                                    : "bg-[rgb(var(--brand-primary))]"
+                                                    : "bg-[var(--vms-action)]"
                                             )}
                                             style={{ width: `${completionPercentage}%` }}
                                         />
@@ -525,8 +525,8 @@ export function BillingSettingsSection() {
                                     <span className={cn(
                                         "text-sm font-semibold",
                                         completionPercentage === 100
-                                            ? "text-green-600 dark:text-green-400"
-                                            : "text-zinc-700 dark:text-zinc-300"
+                                            ? "text-green-600 "
+                                            : "text-[var(--vms-ink)] "
                                     )}>
                                         {completionPercentage}%
                                     </span>
@@ -537,11 +537,11 @@ export function BillingSettingsSection() {
                 </CardHeader>
                 <CardContent className="pt-6">
                     {error && (
-                        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 mb-6">
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 mb-6">
                             <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-medium text-red-800 dark:text-red-200">Error saving settings</p>
-                                <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                                <p className="text-sm font-medium text-red-800 ">Error saving settings</p>
+                                <p className="text-sm text-red-700 ">{error}</p>
                             </div>
                         </div>
                     )}
@@ -588,7 +588,7 @@ export function BillingSettingsSection() {
                             </div>
                         </FormSection>
 
-                        <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                        <div className="border-t border-[var(--vms-line)] " />
 
                         {/* Billing Address */}
                         <FormSection
@@ -687,9 +687,9 @@ export function BillingSettingsSection() {
                                                 value={formState.country}
                                                 onChange={(e) => handleInputChange("country", e.target.value)}
                                                 className={cn(
-                                                    "w-full h-11 pl-10 pr-4 rounded-md border border-zinc-300 dark:border-zinc-700",
-                                                    "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
-                                                    "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary))] focus:border-transparent",
+                                                    "w-full h-11 pl-10 pr-4 rounded-md border border-[var(--vms-line)] ",
+                                                    "bg-[var(--vms-surface)] text-[var(--vms-ink)] ",
+                                                    "focus:outline-none focus:ring-2 focus:ring-[var(--vms-focus)] focus:border-transparent",
                                                     "appearance-none cursor-pointer",
                                                     fieldErrors.country && "border-red-500 focus:ring-red-500"
                                                 )}
@@ -701,9 +701,9 @@ export function BillingSettingsSection() {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--vms-ink-muted)] pointer-events-none" />
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                                <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg className="h-4 w-4 text-[var(--vms-ink-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             </div>
@@ -713,7 +713,7 @@ export function BillingSettingsSection() {
                             </div>
                         </FormSection>
 
-                        <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                        <div className="border-t border-[var(--vms-line)] " />
 
                         {/* Tax Information */}
                         <FormSection
@@ -744,14 +744,14 @@ export function BillingSettingsSection() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="flex items-center justify-between pt-6 mt-8 border-t border-zinc-100 dark:border-zinc-800">
-                        <div className="flex items-center gap-2 text-sm text-zinc-500">
+                    <div className="flex items-center justify-between pt-6 mt-8 border-t border-[var(--vms-line)] ">
+                        <div className="flex items-center gap-2 text-sm text-[var(--vms-ink-muted)]">
                             <ShieldCheck className="h-4 w-4" />
                             Your information is encrypted and secure
                         </div>
                         <div className="flex items-center gap-3">
                             {hasChanges && (
-                                <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                <span className="text-sm text-amber-600 flex items-center gap-1">
                                     <Sparkles className="h-4 w-4" />
                                     Unsaved changes
                                 </span>

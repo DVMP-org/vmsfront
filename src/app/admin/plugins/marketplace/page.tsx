@@ -139,7 +139,7 @@ export default function MarketplacePage() {
                             }`}
                     />
                 ))}
-                <span className="ml-1 text-xs text-muted-foreground">
+                <span className="ml-1 text-xs text-[var(--vms-ink-muted)]">
                     ({rating?.toFixed(1)})
                 </span>
             </div>
@@ -150,36 +150,36 @@ export default function MarketplacePage() {
         <>
             <div className="space-y-6">
                 {/* Header Section */}
-                <div className="space-y-4 rounded-3xl border bg-gradient-to-br from-[var(--brand-primary,#213928)]/10 via-white to-white p-6 shadow-sm">
+                <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--brand-primary,#213928)]/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary,#213928)]">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-dashed  border-[var(--vms-line-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink)]">
                                 <Sparkles className="h-3.5 w-3.5" />
                                 Discover & Install
                             </div>
-                            <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-foreground">
+                            <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-[var(--vms-ink)]">
                                 Plugin Marketplace
                             </h1>
-                            <p className="text-sm sm:text-base text-muted-foreground">
+                            <p className="text-sm sm:text-base text-[var(--vms-ink-muted)]">
                                 Browse and install plugins to extend your VMS capabilities
                             </p>
                         </div>
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-4">
                                 <div className="text-center">
-                                    <div className="text-2xl font-bold text-foreground">
+                                    <div className="text-2xl font-bold text-[var(--vms-ink)]">
                                         {installedCount}
                                     </div>
-                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                    <div className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
                                         Installed
                                     </div>
                                 </div>
                                 <div className="h-10 w-px bg-border" />
                                 <div className="text-center">
-                                    <div className="text-2xl font-bold text-foreground">
+                                    <div className="text-2xl font-bold text-[var(--vms-ink)]">
                                         {totalPlugins}
                                     </div>
-                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                    <div className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
                                         Available
                                     </div>
                                 </div>
@@ -198,7 +198,7 @@ export default function MarketplacePage() {
 
                     {/* Search Bar */}
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]" />
                         <Input
                             type="text"
                             placeholder="Search plugins by name, description, or author..."
@@ -207,7 +207,7 @@ export default function MarketplacePage() {
                                 setSearchQuery(e.target.value);
                                 setPage(1);
                             }}
-                            className="pl-10 bg-white"
+                            className="pl-10  bg-[var(--vms-surface)]"
                         />
                     </div>
 
@@ -266,12 +266,12 @@ export default function MarketplacePage() {
                         {plugins.map((plugin) => (
                             <Card
                                 key={plugin.id}
-                                className="group overflow-hidden border transition-all duration-300 hover:border-[var(--brand-primary,#213928)]/50 hover:shadow-lg cursor-pointer"
+                                className="group overflow-hidden border transition-all duration-300 hover:border-[var(--vms-line-strong)]  cursor-pointer"
                                 onClick={() => handleOpenDetails(plugin)}
                                 onMouseEnter={() => prefetchPlugin(plugin.id)}
                             >
                                 {/* Plugin Image Area */}
-                                <div className="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+                                <div className="relative h-40 bg-[var(--vms-surface-subtle)] overflow-hidden">
                                     {plugin.image ? (
                                         <img
                                             src={plugin.image}
@@ -280,7 +280,7 @@ export default function MarketplacePage() {
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <Package className="h-20 w-20 text-slate-400/50" />
+                                            <Package className="h-20 w-20 text-[var(--vms-ink-muted)]/30" />
                                         </div>
                                     )}
 
@@ -291,7 +291,7 @@ export default function MarketplacePage() {
                                             className={
                                                 plugin.price === 0
                                                     ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                                                    : "bg-white/90 backdrop-blur-sm"
+                                                    : " bg-[var(--vms-surface)]/90 "
                                             }
                                         >
                                             {formatPrice(plugin.price, plugin.currency)}
@@ -327,7 +327,7 @@ export default function MarketplacePage() {
                                     <div className="absolute bottom-3 left-3">
                                         <Badge
                                             variant="default"
-                                            className="bg-white/90 backdrop-blur-sm"
+                                            className=" bg-[var(--vms-surface)]/90 "
                                         >
                                             {titleCase(plugin.category)}
                                         </Badge>
@@ -337,10 +337,10 @@ export default function MarketplacePage() {
                                 <CardHeader className="pb-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
-                                            <CardTitle className="text-lg truncate text-red-100">
+                                            <CardTitle className="truncate text-lg text-[var(--vms-ink)]">
                                                 {titleCase(plugin.name)}
                                             </CardTitle>
-                                            <p className="text-sm text-muted-foreground mt-0.5">
+                                            <p className="text-sm text-[var(--vms-ink-muted)] mt-0.5">
                                                 by {plugin.author || process.env.NEXT_PUBLIC_APP_NAME}
                                             </p>
                                             <CardDescription className="mt-1.5 line-clamp-2">
@@ -352,7 +352,7 @@ export default function MarketplacePage() {
                                     {/* Rating & Stats */}
                                     <div className="flex items-center justify-between mt-3 pt-3 border-t">
                                         {renderStars(plugin.rating)}
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                        <div className="flex items-center gap-3 text-xs text-[var(--vms-ink-muted)]">
                                             <span className="flex items-center gap-1">
                                                 <Download className="h-3 w-3" />
                                                 {formatNumber(plugin.installed_count)}
@@ -419,10 +419,10 @@ export default function MarketplacePage() {
                     <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center justify-center py-16">
                             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                                <Store className="h-10 w-10 text-muted-foreground" />
+                                <Store className="h-10 w-10 text-[var(--vms-ink-muted)]" />
                             </div>
                             <h3 className="mt-4 text-lg font-semibold">No plugins found</h3>
-                            <p className="mt-2 text-sm text-muted-foreground text-center max-w-md">
+                            <p className="mt-2 text-sm text-[var(--vms-ink-muted)] text-center max-w-md">
                                 {searchQuery || selectedCategory
                                     ? "Try adjusting your search or filters to find what you're looking for."
                                     : "No plugins are available in the marketplace yet. Check back later!"}
@@ -454,7 +454,7 @@ export default function MarketplacePage() {
                         >
                             Previous
                         </Button>
-                        <span className="text-sm text-muted-foreground px-4">
+                        <span className="text-sm text-[var(--vms-ink-muted)] px-4">
                             Page {page} of {pluginsData.total_pages}
                         </span>
                         <Button
@@ -480,7 +480,7 @@ export default function MarketplacePage() {
                     <div className="space-y-6">
                         {/* Header */}
                         <div className="flex items-start gap-4">
-                            <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <div className="h-20 w-20 rounded-xl bg-[var(--vms-surface-subtle)] flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {selectedPlugin.image ? (
                                     <img
                                         src={selectedPlugin.image}
@@ -488,14 +488,14 @@ export default function MarketplacePage() {
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
-                                    <Package className="h-10 w-10 text-slate-400" />
+                                    <Package className="h-10 w-10 text-[var(--vms-ink-muted)]" />
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <h3 className="text-xl font-semibold">{selectedPlugin.name}</h3>
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-sm text-[var(--vms-ink-muted)]">
                                             by {selectedPlugin.author || process.env.NEXT_PUBLIC_APP_NAME} • v{selectedPlugin.version}
                                         </p>
                                     </div>
@@ -512,7 +512,7 @@ export default function MarketplacePage() {
                                 </div>
                                 <div className="flex items-center gap-4 mt-2">
                                     {renderStars(selectedPlugin.rating)}
-                                    <span className="text-sm text-muted-foreground">
+                                    <span className="text-sm text-[var(--vms-ink-muted)]">
                                         {selectedPlugin.review_count} reviews
                                     </span>
                                 </div>
@@ -522,16 +522,16 @@ export default function MarketplacePage() {
                         {/* Description */}
                         <div>
                             <h4 className="font-medium mb-2">Description</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-[var(--vms-ink-muted)]">
                                 {selectedPlugin.description}
                             </p>
                         </div>
 
-                        <div className="rounded-2xl border bg-muted/40 p-4">
+                        <div className="rounded-[var(--vms-radius-surface)] border bg-muted/40 p-4">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p className="text-sm font-semibold">Plugin availability</p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-[var(--vms-ink-muted)]">
                                         Installation, activation, setup, and licensing are tracked independently.
                                     </p>
                                 </div>
@@ -548,14 +548,14 @@ export default function MarketplacePage() {
                                 ].map(([label, enabled]) => (
                                     <div key={String(label)} className="flex items-center gap-2 text-sm">
                                         <CheckCircle2
-                                            className={`h-4 w-4 ${enabled ? "text-emerald-500" : "text-muted-foreground"}`}
+                                            className={`h-4 w-4 ${enabled ? "text-emerald-500" : "text-[var(--vms-ink-muted)]"}`}
                                         />
                                         <span>{label}</span>
                                     </div>
                                 ))}
                             </div>
                             {selectedPlugin.plan_name && (
-                                <p className="mt-3 text-xs text-muted-foreground">
+                                <p className="mt-3 text-xs text-[var(--vms-ink-muted)]">
                                     Plan: {selectedPlugin.plan_name}
                                 </p>
                             )}
@@ -574,27 +574,27 @@ export default function MarketplacePage() {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-4">
                             <div className="rounded-xl border bg-muted/50 p-4 text-center">
-                                <Download className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                                <Download className="h-6 w-6 mx-auto mb-2 text-[var(--vms-ink-muted)]" />
                                 <div className="text-lg font-semibold">
                                     {formatNumber(selectedPlugin.installed_count)}
                                 </div>
-                                <div className="text-xs text-muted-foreground">Downloads</div>
+                                <div className="text-xs text-[var(--vms-ink-muted)]">Downloads</div>
                             </div>
                             <div className="rounded-xl border bg-muted/50 p-4 text-center">
                                 <Star className="h-6 w-6 mx-auto mb-2 text-amber-400" />
                                 <div className="text-lg font-semibold">
                                     {selectedPlugin?.rating?.toFixed(1)}
                                 </div>
-                                <div className="text-xs text-muted-foreground">Rating</div>
+                                <div className="text-xs text-[var(--vms-ink-muted)]">Rating</div>
                             </div>
                             <div className="rounded-xl border bg-muted/50 p-4 text-center">
-                                <Clock className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                                <Clock className="h-6 w-6 mx-auto mb-2 text-[var(--vms-ink-muted)]" />
                                 <div className="text-lg font-semibold">
                                     {selectedPlugin?.lastUpdated
                                         ? new Date(selectedPlugin.lastUpdated).toLocaleDateString()
                                         : "N/A"}
                                 </div>
-                                <div className="text-xs text-muted-foreground">Last Updated</div>
+                                <div className="text-xs text-[var(--vms-ink-muted)]">Last Updated</div>
                             </div>
                         </div>
 
@@ -604,8 +604,8 @@ export default function MarketplacePage() {
                                 <h4 className="font-medium mb-2">Use Cases</h4>
                                 <ul className="space-y-1">
                                     {selectedPlugin.details.useCases.slice(0, 4).map((useCase, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                            <CheckCircle2 className="h-4 w-4 text-[var(--brand-primary,#213928)] flex-shrink-0 mt-0.5" />
+                                        <li key={i} className="flex items-start gap-2 text-sm text-[var(--vms-ink-muted)]">
+                                            <CheckCircle2 className="h-4 w-4 text-[var(--vms-ink)] flex-shrink-0 mt-0.5" />
                                             <span>{useCase}</span>
                                         </li>
                                     ))}
@@ -620,7 +620,7 @@ export default function MarketplacePage() {
                                 <h4 className="font-medium mb-2">Requirements</h4>
                                 <ul className="space-y-1">
                                     {selectedPlugin.details.requirements.map((req, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <li key={i} className="flex items-center gap-2 text-sm text-[var(--vms-ink-muted)]">
                                             <Shield className="h-4 w-4 flex-shrink-0" />
                                             {req}
                                         </li>

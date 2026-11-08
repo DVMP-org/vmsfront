@@ -174,14 +174,14 @@ export function PaymentGatewaysSection() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-[var(--vms-ink-muted)]" />
             </div>
         );
     }
 
     if (!gateways || gateways.length === 0) {
         return (
-            <div className="border border-zinc-200 rounded-lg p-8 text-center">
+            <div className="border border-[var(--vms-line)] rounded-lg p-8 text-center">
                 <p className="text-sm text-muted-foreground">No payment gateways configured</p>
             </div>
         );
@@ -205,8 +205,8 @@ export function PaymentGatewaysSection() {
                 </div>
             )}
 
-            <div className="border border-zinc-200 rounded-lg">
-                <div className="border-b border-zinc-200 px-4 py-3">
+            <div className="border border-[var(--vms-line)] rounded-lg">
+                <div className="border-b border-[var(--vms-line)] px-4 py-3">
                     <h2 className="text-sm font-semibold text-foreground">Payment Gateways</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">Manage payment gateway credentials and settings</p>
                 </div>
@@ -236,7 +236,7 @@ export function PaymentGatewaysSection() {
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1.5 bg-muted/50 rounded px-2 py-1.5 border border-zinc-200">
+                                                <div className="flex items-center gap-1.5 bg-muted/50 rounded px-2 py-1.5 border border-[var(--vms-line)]">
                                                     <Webhook className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                                                     <code className="text-xs font-mono text-foreground truncate">
                                                         {webhookUrl}
@@ -327,7 +327,7 @@ export function PaymentGatewaysSection() {
                                     type="checkbox"
                                     checked={formState.sandbox_mode}
                                     onChange={(e) => setFormState((prev) => ({ ...prev, sandbox_mode: e.target.checked }))}
-                                    className="h-4 w-4 rounded border-zinc-300"
+                                    className="h-4 w-4 rounded border-[var(--vms-line)]"
                                 />
                                 <span className="text-sm text-muted-foreground">Enable sandbox mode</span>
                             </div>
@@ -339,7 +339,7 @@ export function PaymentGatewaysSection() {
                                     type="checkbox"
                                     checked={formState.active}
                                     onChange={(e) => setFormState((prev) => ({ ...prev, active: e.target.checked }))}
-                                    className="h-4 w-4 rounded border-zinc-300"
+                                    className="h-4 w-4 rounded border-[var(--vms-line)]"
                                 />
                                 <span className="text-sm text-muted-foreground">Enable gateway</span>
                             </div>

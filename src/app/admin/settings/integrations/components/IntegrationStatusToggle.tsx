@@ -48,12 +48,12 @@ export function IntegrationStatusToggle({
                     sizes.track,
                     enabled
                         ? "bg-emerald-500"
-                        : "bg-zinc-200 dark:bg-zinc-700"
+                        : "bg-[var(--vms-line-strong)] "
                 )}
             >
                 <span
                     className={cn(
-                        "pointer-events-none inline-block rounded-full bg-white shadow-sm ring-0 transition-transform",
+                        "pointer-events-none inline-block rounded-full bg-[var(--vms-surface)] shadow-sm ring-0 transition-transform",
                         sizes.thumb,
                         enabled ? sizes.translate : "translate-x-0.5",
                         "mt-0.5"

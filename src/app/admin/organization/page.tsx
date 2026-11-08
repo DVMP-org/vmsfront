@@ -5,9 +5,11 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpRight,
+  Blocks,
   Building2,
   CheckCircle2,
   LayoutGrid,
+  Mail,
   Palette,
   Shield,
   ShieldCheck,
@@ -20,6 +22,11 @@ import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
+import { Button } from "@/components/ui/Button";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { OrganizationSettingsTabs } from "@/components/settings/OrganizationSettingsTabs";
 
 export default function OrganizationPage() {
   const organization = useAppStore((state) => state.organization);
@@ -50,7 +57,7 @@ export default function OrganizationPage() {
     return (
       <div
         role="alert"
-        className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-800"
+        className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-5 text-sm text-[var(--vms-danger)]"
       >
         <p>{parseApiError(profile.error || details.error).message}</p>
         <button
@@ -73,7 +80,7 @@ export default function OrganizationPage() {
     return (
       <div
         role="alert"
-        className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+        className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-5 text-sm text-[var(--vms-warning)]"
       >
         You do not have permission to view organization settings.
       </div>
@@ -87,40 +94,41 @@ export default function OrganizationPage() {
     )?.label || details.data.use_case?.replaceAll("_", " ");
 
   return (
-    <main className="space-y-5 pb-10 text-[#0f1b31]">
-      <header className="border-b border-[#dce3ee] pb-5">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#667085]">
-          <Building2 className="h-3.5 w-3.5 text-[#2563eb]" />
+    <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+          <Building2 className="h-3.5 w-3.5 text-[var(--vms-action)]" />
           <span>{details.data.name}</span>
-          <span className="text-[#c3cad6]">/</span>
+          <span className="text-[var(--vms-line-strong)]">/</span>
           <span>Settings</span>
         </div>
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2563eb]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
               Organization administration
             </p>
-            <h1 className="mt-1 text-[30px] font-semibold tracking-[-0.04em]">
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
               Organization settings
             </h1>
-            <p className="mt-1 max-w-2xl text-sm text-[#667085]">
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
               Manage the identity, operating context and configuration that
               sit above your properties and workspaces.
             </p>
           </div>
-          <Link
-            href="/select"
-            className="inline-flex items-center gap-2 rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-xs font-semibold text-[#344054] transition hover:bg-[#f8faff]"
-          >
-            View workspaces
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/select">
+              View workspaces
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </Button>
         </div>
       </header>
 
+      <OrganizationSettingsTabs />
+
       <div className="grid items-start gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="rounded-lg border border-[#dce3ee] bg-white p-2 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-          <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+        <aside className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2">
+          <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
             Organization
           </p>
           <SettingsLink
@@ -140,9 +148,29 @@ export default function OrganizationPage() {
             label="Roles & permissions"
           />
           <SettingsLink
-            href="/admin/settings?tab=branding"
+            href="/organization/settings/branding"
             icon={Palette}
             label="Brand and theme"
+          />
+          <SettingsLink
+            href="/organization/settings/payment"
+            icon={WalletCards}
+            label="Payments"
+          />
+          <SettingsLink
+            href="/organization/settings/integrations"
+            icon={Blocks}
+            label="Integrations"
+          />
+          <SettingsLink
+            href="/organization/settings/mailer"
+            icon={Mail}
+            label="Mail delivery"
+          />
+          <SettingsLink
+            href="/organization/settings/subscription"
+            icon={WalletCards}
+            label="Subscription"
           />
           <SettingsLink
             href="/select"
@@ -157,7 +185,7 @@ export default function OrganizationPage() {
         </aside>
 
         <section className="space-y-4">
-          <div className="grid overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:grid-cols-2">
+          <div className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2">
             <Summary
               label="Operating use case"
               value={useCase || "Not configured"}
@@ -211,92 +239,102 @@ function OrganizationEditor({
 
   return (
     <form
-      className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]"
+      className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
       onSubmit={submit}
     >
-      <header className="border-b border-[#edf0f5] px-5 py-4">
+      <header className="border-b border-[var(--vms-line)] px-5 py-4">
         <h2 className="text-base font-semibold">General details</h2>
-        <p className="mt-1 text-xs text-[#667085]">
+        <p className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]">
           These details identify the organization across management surfaces.
         </p>
       </header>
       <fieldset
-        className="grid gap-4 p-5 md:grid-cols-2"
+        className="grid gap-5 p-5 md:grid-cols-2"
         disabled={!editable || mutation.isPending}
       >
-        <label className="block text-xs font-semibold text-[#344054]">
-          Name
-          <input
-            required
-            maxLength={255}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="mt-1.5 w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm font-normal outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
-          />
-        </label>
-        <label className="block text-xs font-semibold text-[#344054]">
-          Organization URL
-          <input
-            value={org.slug}
-            readOnly
-            className="mt-1.5 w-full rounded-md border border-[#e4e7ec] bg-[#f8faff] px-3 py-2.5 text-sm font-normal text-[#667085]"
-          />
-          <span className="mt-1 block font-normal text-[#98a2b3]">
-            Fixed after creation.
-          </span>
-        </label>
-        <label className="block text-xs font-semibold text-[#344054] md:col-span-2">
-          Description
-          <textarea
-            maxLength={2000}
-            rows={4}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            className="mt-1.5 w-full resize-y rounded-md border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm font-normal outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff]"
-          />
-        </label>
+        <Field id="organization-name" label="Name" required>
+          {(control) => (
+            <input
+              {...control}
+              aria-label="Name"
+              maxLength={255}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className={fieldControlClassName}
+            />
+          )}
+        </Field>
+        <Field
+          id="organization-url"
+          label="Organization URL"
+          description="Fixed after creation."
+        >
+          {(control) => (
+            <input
+              {...control}
+              aria-label="Organization URL"
+              value={org.slug}
+              readOnly
+              className={`${fieldControlClassName} bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]`}
+            />
+          )}
+        </Field>
+        <Field
+          id="organization-description"
+          label="Description"
+          className="md:col-span-2"
+        >
+          {(control) => (
+            <textarea
+              {...control}
+              aria-label="Description"
+              maxLength={2000}
+              rows={4}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className={`${fieldControlClassName} resize-y`}
+            />
+          )}
+        </Field>
       </fieldset>
       {!editable ? (
-        <p className="mx-5 rounded-md border border-[#dce3ee] bg-[#f8faff] px-3 py-2 text-xs text-[#667085]">
+        <p className="mx-5 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3 py-2 text-xs text-[var(--vms-ink-muted)]">
           You can view these settings. An authorized organization administrator
           must make changes.
         </p>
       ) : null}
       {mutation.isError ? (
-        <p
-          role="alert"
-          className="mx-5 mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
-        >
-          {parseApiError(mutation.error).message}
-        </p>
+        <FormErrorSummary
+          errors={{ "organization-name": parseApiError(mutation.error).message }}
+          className="mx-5 mt-3"
+        />
       ) : null}
       {mutation.isSuccess ? (
         <p
           role="status"
-          className="mx-5 mt-3 flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
+          className="mx-5 mt-3 flex items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-success)] bg-[var(--vms-success-subtle)] px-3 py-2 text-xs text-[var(--vms-success)]"
         >
           <CheckCircle2 className="h-4 w-4" />
           Organization saved.
         </p>
       ) : null}
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#edf0f5] px-5 py-4">
-        <p className="text-xs text-[#667085]">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--vms-line)] px-5 py-4">
+        <p className="text-xs text-[var(--vms-ink-muted)]">
           Need to manage access?{" "}
           <Link
             href="/admin/admins"
-            className="font-semibold text-[#2563eb] hover:underline"
+            className="font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
           >
             Review administrators
           </Link>
         </p>
         {editable ? (
-          <button
+          <Button
             type="submit"
-            className="rounded-md bg-[#2563eb] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={mutation.isPending || !name.trim()}
           >
             {mutation.isPending ? "Saving…" : "Save organization"}
-          </button>
+          </Button>
         ) : null}
       </footer>
     </form>
@@ -313,12 +351,12 @@ function Summary({
   detail: string;
 }) {
   return (
-    <div className="border-b border-[#edf0f5] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#98a2b3]">
+    <div className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
         {label}
       </p>
       <p className="mt-1.5 text-sm font-semibold capitalize">{value}</p>
-      <p className="mt-1 text-[11px] text-[#667085]">{detail}</p>
+      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
     </div>
   );
 }
@@ -339,8 +377,8 @@ function SettingsLink({
       href={href}
       className={
         active
-          ? "flex items-center gap-2.5 rounded-md bg-[#edf3ff] px-3 py-2.5 text-xs font-semibold text-[#1d4ed8]"
-          : "flex items-center gap-2.5 rounded-md px-3 py-2.5 text-xs font-medium text-[#475467] transition hover:bg-[#f4f7fb] hover:text-[#0f1b31]"
+          ? "relative flex min-h-11 items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 text-xs font-semibold text-[var(--vms-ink)] before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-[var(--vms-active-accent)]"
+          : "flex min-h-11 items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 text-xs font-medium text-[var(--vms-ink-muted)] transition-colors hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]"
       }
     >
       <Icon className="h-4 w-4" />
@@ -353,10 +391,10 @@ function SettingsSkeleton() {
   return (
     <div role="status" className="space-y-4">
       <span className="sr-only">Loading organization settings</span>
-      <div className="h-24 animate-pulse rounded-lg bg-[#e8edf5]" />
+      <Skeleton className="h-24" />
       <div className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <div className="h-64 animate-pulse rounded-lg bg-[#e8edf5]" />
-        <div className="h-96 animate-pulse rounded-lg bg-[#e8edf5]" />
+        <Skeleton className="h-64" />
+        <Skeleton className="h-96" />
       </div>
     </div>
   );

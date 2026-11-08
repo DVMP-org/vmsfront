@@ -145,9 +145,9 @@ export default function IntegrationsSection() {
     return (
         <div className="space-y-4">
             {/* Header */}
-            <div className="border-b border-zinc-200 pb-3">
+            <div className="border-b border-[var(--vms-line)] pb-3">
                 <div className="flex items-center gap-2 mb-1">
-                    <Puzzle className="h-4 w-4 text-zinc-600" />
+                    <Puzzle className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                     <h1 className="text-lg font-semibold text-foreground">Integrations</h1>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -196,8 +196,8 @@ export default function IntegrationsSection() {
                     <button
                         onClick={() => setFilterType("")}
                         className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${!filterType
-                            ? "bg-zinc-900 text-white border-zinc-900"
-                            : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300"
+                            ? "border-[var(--vms-action)] bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                            : "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] border-[var(--vms-line)] hover:border-[var(--vms-line)]"
                             }`}
                     >
                         All Types
@@ -207,8 +207,8 @@ export default function IntegrationsSection() {
                             key={type}
                             onClick={() => setFilterType(filterType === type ? "" : type)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${filterType === type
-                                ? "bg-zinc-900 text-white border-zinc-900"
-                                : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300"
+                                ? "border-[var(--vms-action)] bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                                : "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] border-[var(--vms-line)] hover:border-[var(--vms-line)]"
                                 }`}
                         >
                             {INTEGRATION_TYPE_LABELS[type]}
@@ -222,8 +222,8 @@ export default function IntegrationsSection() {
                 <button
                     onClick={() => setFilterStatus("")}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors ${!filterStatus
-                        ? "bg-zinc-100 border-zinc-300 text-zinc-700"
-                        : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300"
+                        ? "bg-[var(--vms-surface-subtle)] border-[var(--vms-line)] text-[var(--vms-ink)]"
+                        : "bg-[var(--vms-surface)] border-[var(--vms-line)] text-[var(--vms-ink-muted)] hover:border-[var(--vms-line)]"
                         }`}
                 >
                     All
@@ -232,7 +232,7 @@ export default function IntegrationsSection() {
                     onClick={() => setFilterStatus(filterStatus === "enabled" ? "" : "enabled")}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors ${filterStatus === "enabled"
                         ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                        : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300"
+                        : "bg-[var(--vms-surface)] border-[var(--vms-line)] text-[var(--vms-ink-muted)] hover:border-[var(--vms-line)]"
                         }`}
                 >
                     Enabled
@@ -240,8 +240,8 @@ export default function IntegrationsSection() {
                 <button
                     onClick={() => setFilterStatus(filterStatus === "disabled" ? "" : "disabled")}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors ${filterStatus === "disabled"
-                        ? "bg-zinc-100 border-zinc-300 text-zinc-700"
-                        : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300"
+                        ? "bg-[var(--vms-surface-subtle)] border-[var(--vms-line)] text-[var(--vms-ink)]"
+                        : "bg-[var(--vms-surface)] border-[var(--vms-line)] text-[var(--vms-ink-muted)] hover:border-[var(--vms-line)]"
                         }`}
                 >
                     Disabled
@@ -250,7 +250,7 @@ export default function IntegrationsSection() {
                     onClick={() => setFilterStatus(filterStatus === "unconfigured" ? "" : "unconfigured")}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors ${filterStatus === "unconfigured"
                         ? "bg-amber-50 border-amber-200 text-amber-700"
-                        : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300"
+                        : "bg-[var(--vms-surface)] border-[var(--vms-line)] text-[var(--vms-ink-muted)] hover:border-[var(--vms-line)]"
                         }`}
                 >
                     Needs Setup
@@ -260,7 +260,7 @@ export default function IntegrationsSection() {
             {/* Loading State */}
             {isLoading && (
                 <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                    <Loader2 className="h-5 w-5 animate-spin text-[var(--vms-ink-muted)]" />
                 </div>
             )}
 
@@ -279,7 +279,7 @@ export default function IntegrationsSection() {
 
             {/* Integrations Table */}
             {!isLoading && filteredIntegrations.length > 0 && (
-                <div className="border border-zinc-200 rounded-lg">
+                <div className="border border-[var(--vms-line)] rounded-lg">
                     <Table>
                         <TableHeader>
                             <TableRow>

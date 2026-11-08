@@ -27,10 +27,13 @@ export function SubscriptionSection() {
     const [activeSubTab, setActiveSubTab] = useState<SubscriptionSubTab>("subscription");
 
     return (
-        <div className="flex gap-6">
+        <div className="flex flex-col gap-5 md:flex-row md:gap-6">
             {/* Side Tabs */}
-            <div className="w-48 flex-shrink-0">
-                <nav className="space-y-1">
+            <div className="w-full shrink-0 md:w-48">
+                <nav
+                    aria-label="Subscription sections"
+                    className="grid grid-cols-3 gap-1 md:block md:space-y-1"
+                >
                     {SUB_TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeSubTab === tab.id;
@@ -38,15 +41,17 @@ export function SubscriptionSection() {
                         return (
                             <button
                                 key={tab.id}
+                                type="button"
                                 onClick={() => setActiveSubTab(tab.id)}
+                                aria-current={isActive ? "page" : undefined}
                                 className={cn(
-                                    "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                                    "flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--vms-radius-control)] px-2 py-2 text-sm font-semibold transition-colors md:justify-start md:gap-3 md:px-3",
                                     isActive
-                                        ? "bg-[rgb(var(--brand-primary))]/10 text-[rgb(var(--brand-primary))] border-l-2 border-[rgb(var(--brand-primary))]"
-                                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-50"
+                                        ? "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)] md:border-l-2 md:border-[var(--vms-active-accent)]"
+                                        : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]"
                                 )}
                             >
-                                <Icon className="h-4 w-4" />
+                                <Icon className="h-4 w-4" aria-hidden="true" />
                                 {tab.label}
                             </button>
                         );

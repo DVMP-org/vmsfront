@@ -54,17 +54,17 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
     const { mutate: downloadInvoice, isPending } = useDownloadInvoice();
 
     return (
-        <TableRow className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+        <TableRow className="hover:bg-[var(--vms-surface-subtle)] ">
             <TableCell>
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                        <FileText className="h-5 w-5 text-zinc-500" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--vms-surface-subtle)] ">
+                        <FileText className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                     </div>
                     <div>
-                        <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                        <div className="font-medium text-[var(--vms-ink)] ">
                             Invoice #{invoice.id.slice(0, 8).toUpperCase()}
                         </div>
-                        <div className="text-sm text-zinc-500">
+                        <div className="text-sm text-[var(--vms-ink-muted)]">
                             {invoice.period_start && invoice.period_end
                                 ? `${formatDateShort(invoice.period_start)} - ${formatDateShort(invoice.period_end)}`
                                 : "—"}
@@ -73,15 +73,15 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
                 </div>
             </TableCell>
             <TableCell>
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
-                    <Calendar className="h-4 w-4 text-zinc-400" />
+                <div className="flex items-center gap-2 text-[var(--vms-ink-muted)] ">
+                    <Calendar className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                     {invoice.created_at ? formatDateLong(invoice.created_at) : "—"}
                 </div>
             </TableCell>
             <TableCell>
                 <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-zinc-400" />
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                    <DollarSign className="h-4 w-4 text-[var(--vms-ink-muted)]" />
+                    <span className="font-medium text-[var(--vms-ink)] ">
                         {formatCurrency(invoice.amount_due, invoice.currency)}
                     </span>
                 </div>
@@ -117,17 +117,17 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
     const { mutate: downloadInvoice, isPending } = useDownloadInvoice();
 
     return (
-        <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <div className="p-4 rounded-lg border border-[var(--vms-line)] hover:bg-[var(--vms-surface-subtle)] transition-colors">
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                        <FileText className="h-5 w-5 text-zinc-500" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--vms-surface-subtle)] ">
+                        <FileText className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                     </div>
                     <div>
-                        <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                        <div className="font-medium text-[var(--vms-ink)] ">
                             Invoice #{invoice.id.slice(0, 8).toUpperCase()}
                         </div>
-                        <div className="text-sm text-zinc-500">
+                        <div className="text-sm text-[var(--vms-ink-muted)]">
                             {invoice.created_at ? formatDateShort(invoice.created_at) : "—"}
                         </div>
                     </div>
@@ -137,14 +137,14 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <span className="text-xs text-zinc-500 uppercase tracking-wide">Amount</span>
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    <span className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">Amount</span>
+                    <div className="font-semibold text-[var(--vms-ink)] ">
                         {formatCurrency(invoice.amount_due, invoice.currency)}
                     </div>
                 </div>
                 <div>
-                    <span className="text-xs text-zinc-500 uppercase tracking-wide">Period</span>
-                    <div className="text-sm text-zinc-600 dark:text-zinc-300">
+                    <span className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">Period</span>
+                    <div className="text-sm text-[var(--vms-ink-muted)] ">
                         {invoice.period_start && invoice.period_end
                             ? `${formatDateShort(invoice.period_start)} - ${formatDateShort(invoice.period_end)}`
                             : "—"}
@@ -202,7 +202,7 @@ export function InvoicesSection() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                        <Receipt className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+                        <Receipt className="h-5 w-5 text-[var(--vms-ink)]" />
                         Billing History
                     </CardTitle>
                     <CardDescription>View and download your past invoices</CardDescription>

@@ -147,7 +147,7 @@ export function BrandingSection() {
     if (themesLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-[var(--vms-ink-muted)]" />
             </div>
         );
     }
@@ -165,7 +165,7 @@ export function BrandingSection() {
             </div>
 
             {activeTheme && (
-                <div className="border border-green-200 bg-green-50/50 dark:bg-green-50 rounded-lg p-3 mb-4">
+                <div className="border border-green-200 bg-green-50/50 rounded-lg p-3 mb-4">
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <div>
@@ -176,8 +176,8 @@ export function BrandingSection() {
                 </div>
             )}
 
-            <div className="border border-zinc-200 rounded-lg">
-                <div className="border-b border-zinc-200 px-4 py-3">
+            <div className="border border-[var(--vms-line)] rounded-lg">
+                <div className="border-b border-[var(--vms-line)] px-4 py-3">
                     <h2 className="text-sm font-semibold text-foreground">Branding Themes</h2>
                 </div>
                 {!themes || themes.length === 0 ? (
@@ -219,12 +219,12 @@ export function BrandingSection() {
                                         <TableCell>
                                             <div className="flex items-center gap-1.5">
                                                 <div
-                                                    className="h-5 w-5 rounded-full border border-zinc-300"
+                                                    className="h-5 w-5 rounded-full border border-[var(--vms-line)]"
                                                     style={{ backgroundColor: theme.primary_color }}
                                                     title={`Primary: ${theme.primary_color}`}
                                                 />
                                                 <div
-                                                    className="h-5 w-5 rounded-full border border-zinc-300"
+                                                    className="h-5 w-5 rounded-full border border-[var(--vms-line)]"
                                                     style={{ backgroundColor: theme.secondary_color }}
                                                     title={`Secondary: ${theme.secondary_color}`}
                                                 />
