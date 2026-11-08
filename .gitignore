@@ -12,6 +12,13 @@
 # testing
 /coverage
 
+# Browser evidence images are generated locally; keep their Markdown reports in Git.
+/docs/evidence/**/*.png
+/docs/evidence/**/*.jpg
+/docs/evidence/**/*.jpeg
+/docs/evidence/**/*.webp
+/docs/evidence/**/*.gif
+
 # Playwright
 /playwright/test-results/
 /playwright/playwright-report/
