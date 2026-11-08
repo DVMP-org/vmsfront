@@ -16,7 +16,9 @@ export default function VerifyEmailRedirectPage() {
   const searchParams = useSearchParams();
   const token = searchParams?.get("token");
   const { user } = useAuthStore();
-  const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [state, setState] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,7 +26,9 @@ export default function VerifyEmailRedirectPage() {
       try {
         // Validate token exists
         if (!token) {
-          setErrorMessage("No verification token provided. Please check your email link.");
+          setErrorMessage(
+            "No verification token provided. Please check your email link.",
+          );
           setState("error");
           return;
         }
@@ -39,13 +43,16 @@ export default function VerifyEmailRedirectPage() {
             router.push("/select");
           }, 2000);
         } else {
-          setErrorMessage(response.message || "Email verification failed. Please try again.");
+          setErrorMessage(
+            response.message || "Email verification failed. Please try again.",
+          );
           setState("error");
         }
       } catch (error: any) {
-        const errorMsg = error?.response?.data?.message || 
-                        error?.message || 
-                        "Failed to verify email. Please check your link and try again.";
+        const errorMsg =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to verify email. Please check your link and try again.";
         setErrorMessage(errorMsg);
         setState("error");
       }
@@ -114,11 +121,7 @@ export default function VerifyEmailRedirectPage() {
             >
               <div className="relative">
                 <div className="relative rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-8 shadow-[var(--vms-shadow-overlay)]">
-                  <Loader
-                    size={48}
-                    colour="brand-primary"
-                    className="animate-spin"
-                  />
+                  <Loader size={48} colour="action" className="animate-spin" />
                 </div>
               </div>
             </motion.div>

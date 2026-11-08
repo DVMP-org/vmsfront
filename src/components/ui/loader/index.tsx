@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 type Colours =
   | "current"
   | "primary"
+  | "action"
   | "secondary"
   | "brand-primary"
   | "brand-secondary"
@@ -26,6 +27,8 @@ export const Loader = ({
       height={size}
       viewBox="0 0 20 20"
       fill="none"
+      aria-hidden="true"
+      focusable="false"
     >
       <circle cx="10" cy="10" r="9.25" stroke="transparent" strokeWidth="1.5" />
       <path
@@ -34,10 +37,11 @@ export const Loader = ({
         className={cn(
           colour === "current" && "text-current",
           colour === "primary" && "text-primary",
+          colour === "action" && "text-[var(--vms-action)]",
           colour === "secondary" && "text-muted-foreground",
-          colour === "brand-primary" && "text-[rgb(var(--brand-primary))]",
+          colour === "brand-primary" && "text-[var(--vms-action)]",
           colour === "brand-secondary" && "text-[rgb(var(--brand-secondary))]",
-          colour === "indigo" && "text-indigo-600"
+          colour === "indigo" && "text-indigo-600",
         )}
       />
     </svg>

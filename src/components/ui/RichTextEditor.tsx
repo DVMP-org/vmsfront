@@ -54,8 +54,8 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-background dark:bg-background shadow-sm transition focus-within:border-[var(--brand-primary,#213928)] focus-within:ring-2 focus-within:ring-[var(--brand-primary,#213928)]/20",
-        className
+        "rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] shadow-[var(--vms-shadow-raised)] transition focus-within:border-[var(--vms-focus)] focus-within:ring-2 focus-within:ring-[var(--vms-focus)]/20",
+        className,
       )}
     >
       <ReactQuill
@@ -109,17 +109,17 @@ export function RichTextEditor({
         .rich-quill .ql-toolbar button:hover,
         .rich-quill .ql-toolbar button:focus,
         .rich-quill .ql-toolbar button.ql-active {
-          color: var(--brand-primary, #213928);
+          color: var(--vms-action);
         }
         .rich-quill .ql-toolbar button:hover .ql-stroke,
         .rich-quill .ql-toolbar button:focus .ql-stroke,
         .rich-quill .ql-toolbar button.ql-active .ql-stroke {
-          stroke: var(--brand-primary, #213928);
+          stroke: var(--vms-action);
         }
         .rich-quill .ql-toolbar button:hover .ql-fill,
         .rich-quill .ql-toolbar button:focus .ql-fill,
         .rich-quill .ql-toolbar button.ql-active .ql-fill {
-          fill: var(--brand-primary, #213928);
+          fill: var(--vms-action);
         }
         .dark .rich-quill .ql-toolbar {
           background: hsl(var(--muted));

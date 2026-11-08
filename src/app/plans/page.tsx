@@ -112,15 +112,15 @@ function PlanCard({
       whileHover={{ y: -4 }}
       className={cn(
         "relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300",
-        "bg-white dark:bg-zinc-900",
+        "bg-[var(--vms-surface)]",
         isSelected
-          ? "border-[rgb(var(--brand-primary,#213928))] shadow-xl ring-2 ring-[rgb(var(--brand-primary,#213928))]/20"
-          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-lg",
+          ? "border-[var(--vms-focus)] ring-2 ring-[var(--vms-focus)]/20"
+          : "border-zinc-200  hover:border-zinc-300  hover:shadow-lg",
       )}
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[rgb(var(--brand-primary,#213928))] text-white text-xs font-semibold">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--vms-action)] px-3 py-1 text-xs font-semibold text-[var(--vms-on-action)]">
             <Crown className="h-3 w-3" />
             Most Popular
           </span>
@@ -128,35 +128,31 @@ function PlanCard({
       )}
 
       <div className="mb-4">
-        <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-          {plan.name}
-        </h3>
+        <h3 className="text-xl font-bold text-zinc-900 ">{plan.name}</h3>
         {plan.description && (
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            {plan.description}
-          </p>
+          <p className="mt-1 text-sm text-zinc-500 ">{plan.description}</p>
         )}
       </div>
 
       <div className="mb-6">
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50">
+          <span className="text-4xl font-extrabold text-zinc-900 ">
             {formatPrice(monthlyEquivalent)}
           </span>
-          <span className="text-zinc-500 dark:text-zinc-400">/month</span>
+          <span className="text-zinc-500 ">/month</span>
         </div>
         {billingCycle === "yearly" && (
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-500 ">
             {formatPrice(price)} billed annually
             {savings > 0 && (
-              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--vms-success-subtle)] text-[var(--vms-success)]  text-xs font-medium">
                 Save {savings}%
               </span>
             )}
           </p>
         )}
         {plan.trial_days && plan.trial_days > 0 && (
-          <p className="mt-2 text-sm text-[rgb(var(--brand-primary,#213928))] font-medium">
+          <p className="mt-2 text-sm font-medium text-[var(--vms-action)]">
             {plan.trial_days}-day free trial
           </p>
         )}
@@ -165,8 +161,8 @@ function PlanCard({
       <ul className="flex-1 space-y-3 mb-6">
         {features.map(([key, value]) => (
           <li key={key} className="flex items-start gap-3">
-            <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-            <span className="text-sm text-zinc-600 dark:text-zinc-300">
+            <Check className="mt-0.5 h-5 w-5 shrink-0 text-[var(--vms-success)]" />
+            <span className="text-sm text-zinc-600 ">
               {typeof value === "boolean" ? key : `${key}: ${value}`}
             </span>
           </li>
@@ -215,18 +211,18 @@ function BillingForm({
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-2xl mx-auto"
     >
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg overflow-hidden">
+      <div className="bg-white  rounded-2xl border border-zinc-200  shadow-lg overflow-hidden">
         {/* Header */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between p-5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+          className="w-full flex items-center justify-between p-5 text-left hover:bg-zinc-50  transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[rgb(var(--brand-primary))]/10 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-[rgb(var(--brand-primary))]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
+              <FileText className="h-5 w-5 text-[var(--vms-action)]" />
             </div>
             <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+              <h3 className="font-semibold text-zinc-900 ">
                 Billing Information
               </h3>
               <p className="text-sm text-zinc-500">
@@ -250,17 +246,18 @@ function BillingForm({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="px-5 pb-5 space-y-5 border-t border-zinc-100 dark:border-zinc-800 pt-5">
+              <div className="px-5 pb-5 space-y-5 border-t border-zinc-100  pt-5">
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 ">
                     <Mail className="h-4 w-4 text-zinc-400" />
                     Contact Details
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                        Billing Email <span className="text-red-500">*</span>
+                      <label className="text-sm font-medium text-zinc-600 ">
+                        Billing Email{" "}
+                        <span className="text-[var(--vms-danger)]">*</span>
                       </label>
                       <Input
                         type="email"
@@ -276,15 +273,15 @@ function BillingForm({
                         )}
                       />
                       {errors.billing_email && (
-                        <p className="text-xs text-red-500">
+                        <p className="text-xs text-[var(--vms-danger)]">
                           {errors.billing_email}
                         </p>
                       )}
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      <label className="text-sm font-medium text-zinc-600 ">
                         Company / Full Name{" "}
-                        <span className="text-red-500">*</span>
+                        <span className="text-[var(--vms-danger)]">*</span>
                       </label>
                       <Input
                         type="text"
@@ -300,7 +297,7 @@ function BillingForm({
                         )}
                       />
                       {errors.billing_name && (
-                        <p className="text-xs text-red-500">
+                        <p className="text-xs text-[var(--vms-danger)]">
                           {errors.billing_name}
                         </p>
                       )}
@@ -310,14 +307,15 @@ function BillingForm({
 
                 {/* Address */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 ">
                     <MapPin className="h-4 w-4 text-zinc-400" />
                     Billing Address
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                        Street Address <span className="text-red-500">*</span>
+                      <label className="text-sm font-medium text-zinc-600 ">
+                        Street Address{" "}
+                        <span className="text-[var(--vms-danger)]">*</span>
                       </label>
                       <Input
                         type="text"
@@ -333,13 +331,13 @@ function BillingForm({
                         )}
                       />
                       {errors.address_line1 && (
-                        <p className="text-xs text-red-500">
+                        <p className="text-xs text-[var(--vms-danger)]">
                           {errors.address_line1}
                         </p>
                       )}
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      <label className="text-sm font-medium text-zinc-600 ">
                         Apt, Suite, etc.{" "}
                         <span className="text-zinc-400 text-xs font-normal">
                           (Optional)
@@ -357,8 +355,9 @@ function BillingForm({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                          City <span className="text-red-500">*</span>
+                        <label className="text-sm font-medium text-zinc-600 ">
+                          City{" "}
+                          <span className="text-[var(--vms-danger)]">*</span>
                         </label>
                         <Input
                           type="text"
@@ -371,11 +370,13 @@ function BillingForm({
                           )}
                         />
                         {errors.city && (
-                          <p className="text-xs text-red-500">{errors.city}</p>
+                          <p className="text-xs text-[var(--vms-danger)]">
+                            {errors.city}
+                          </p>
                         )}
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                        <label className="text-sm font-medium text-zinc-600 ">
                           State / Province
                         </label>
                         <Input
@@ -389,7 +390,7 @@ function BillingForm({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                        <label className="text-sm font-medium text-zinc-600 ">
                           Postal / ZIP Code
                         </label>
                         <Input
@@ -403,8 +404,9 @@ function BillingForm({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                          Country <span className="text-red-500">*</span>
+                        <label className="text-sm font-medium text-zinc-600 ">
+                          Country{" "}
+                          <span className="text-[var(--vms-danger)]">*</span>
                         </label>
                         <div className="relative">
                           <select
@@ -413,9 +415,9 @@ function BillingForm({
                               onChange("country", e.target.value)
                             }
                             className={cn(
-                              "w-full h-11 pl-10 pr-4 rounded-md border border-zinc-300 dark:border-zinc-700",
-                              "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
-                              "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand-primary))] focus:border-transparent",
+                              "w-full h-11 pl-10 pr-4 rounded-md border border-zinc-300 ",
+                              "bg-white  text-zinc-900 ",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:border-transparent",
                               "appearance-none cursor-pointer text-sm",
                               errors.country &&
                                 "border-red-500 focus:ring-red-500",
@@ -432,7 +434,7 @@ function BillingForm({
                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                         </div>
                         {errors.country && (
-                          <p className="text-xs text-red-500">
+                          <p className="text-xs text-[var(--vms-danger)]">
                             {errors.country}
                           </p>
                         )}
@@ -443,7 +445,7 @@ function BillingForm({
 
                 {/* Tax ID */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 ">
                     <Building2 className="h-4 w-4 text-zinc-400" />
                     Tax Information{" "}
                     <span className="text-zinc-400 text-xs font-normal">
@@ -451,7 +453,7 @@ function BillingForm({
                     </span>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                    <label className="text-sm font-medium text-zinc-600 ">
                       Tax ID / VAT Number
                     </label>
                     <Input
@@ -706,11 +708,7 @@ export default function PlansPage() {
   const popularPlanIndex = Math.floor(activePlans.length / 2);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-background relative overflow-hidden flex flex-col">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-[rgb(var(--brand-primary,#213928))]/5 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
       <Header type="select" />
 
       <main className="flex-1 relative z-10">
@@ -727,17 +725,17 @@ export default function PlansPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 mb-6">
-              <Sparkles className="h-8 w-8 text-[rgb(var(--brand-primary,#213928))]" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white  shadow-xl border border-zinc-200/50  mb-6">
+              <Sparkles className="h-8 w-8 text-[var(--vms-action)]" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900  sm:text-4xl">
               {firstWorkspaceSetup ? "Continue setting up" : "Choose Your Plan"}
             </h1>
-            <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
+            <p className="mt-3 text-lg text-zinc-500  max-w-xl mx-auto">
               {firstWorkspaceSetup ? (
                 <>
                   Choose a plan for{" "}
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  <span className="font-semibold text-zinc-700 ">
                     {organization?.name || "your organization"}
                   </span>
                   . Your management workspace comes next.
@@ -745,7 +743,7 @@ export default function PlansPage() {
               ) : organization?.name ? (
                 <>
                   Select a subscription plan for{" "}
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  <span className="font-semibold text-zinc-700 ">
                     {organization.name}
                   </span>
                 </>
@@ -762,14 +760,14 @@ export default function PlansPage() {
             transition={{ delay: 0.2 }}
             className="flex justify-center mb-10"
           >
-            <div className="inline-flex items-center gap-3 px-1 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div className="inline-flex items-center gap-3 px-1 py-1 rounded-full bg-zinc-100 ">
               <button
                 onClick={() => setBillingCycle("monthly")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all",
                   billingCycle === "monthly"
-                    ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-50"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
+                    ? "bg-white  shadow-sm text-zinc-900 "
+                    : "text-zinc-500 hover:text-zinc-700 ",
                 )}
               >
                 Monthly
@@ -779,12 +777,12 @@ export default function PlansPage() {
                 className={cn(
                   "relative px-4 py-2 rounded-full text-sm font-medium transition-all",
                   billingCycle === "yearly"
-                    ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-50"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
+                    ? "bg-white  shadow-sm text-zinc-900 "
+                    : "text-zinc-500 hover:text-zinc-700 ",
                 )}
               >
                 Yearly
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--vms-success-subtle)] text-[var(--vms-success)] ">
                   SAVE
                 </span>
               </button>
@@ -802,7 +800,7 @@ export default function PlansPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-xl text-center"
+              className="bg-white  rounded-3xl p-8 border border-zinc-200  shadow-xl text-center"
             >
               <EmptyState
                 icon={Zap}
@@ -864,14 +862,14 @@ export default function PlansPage() {
                   className="mt-10 text-center"
                 >
                   {paymentReference ? (
-                    <div className="inline-flex flex-col items-center gap-4 p-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <div className="inline-flex flex-col items-center gap-4 p-6 rounded-2xl bg-amber-50  border border-amber-200 ">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
                         <div className="text-left">
-                          <p className="font-semibold text-amber-900 dark:text-amber-200">
+                          <p className="font-semibold text-amber-900 ">
                             Awaiting Payment...
                           </p>
-                          <p className="text-sm text-amber-700 dark:text-amber-400">
+                          <p className="text-sm text-amber-700 ">
                             Please complete the transaction in the popup window.
                           </p>
                         </div>
@@ -907,7 +905,7 @@ export default function PlansPage() {
                           </>
                         )}
                       </Button>
-                      <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-3 text-sm text-zinc-500 ">
                         {requiresPayment
                           ? "You will be redirected to our secure payment portal"
                           : "You can upgrade to a paid plan at any time"}
@@ -926,7 +924,7 @@ export default function PlansPage() {
             transition={{ delay: 0.4 }}
             className="mt-16 text-center"
           >
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+            <h3 className="text-lg font-semibold text-zinc-900  mb-4">
               All plans include
             </h3>
             <div className="flex flex-wrap justify-center gap-4">
@@ -939,9 +937,9 @@ export default function PlansPage() {
               ].map((feature) => (
                 <span
                   key={feature}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-300"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white  border border-zinc-200  text-sm text-zinc-600 "
                 >
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-[var(--vms-success)]" />
                   {feature}
                 </span>
               ))}

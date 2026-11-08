@@ -24,7 +24,7 @@ export function WorkspaceNotifications({ userId }: { userId: string }) {
     >
       <header className="flex flex-col gap-3 border-b border-[#edf0f5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f1f6ff] text-[#2563eb]">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
             <Bell className="h-4 w-4" aria-hidden="true" />
           </span>
           <div>
@@ -47,7 +47,7 @@ export function WorkspaceNotifications({ userId }: { userId: string }) {
           ) : null}
           <Link
             href="/notifications"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563eb] hover:underline"
+            className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-[var(--vms-action)] hover:underline"
           >
             View all
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
