@@ -7,9 +7,6 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Home,
-  Users,
-  CreditCard,
-  Building2,
   BarChart3,
   Settings,
   Shield,
@@ -20,11 +17,9 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  MessageSquare,
   UserCog,
   Puzzle,
   Wallet,
-  Receipt,
   Palette,
   FolderTree,
 } from "lucide-react";
@@ -54,44 +49,18 @@ interface SidebarProps {
 }
 
 function buildResidentLinks(
-  residencyId?: string,
+  _residencyId?: string,
   isSuperUser: boolean = false,
 ) {
-  const base = residencyId ? `/residency/${residencyId}` : "/select";
   const links = [
-    { href: residencyId ? base : "/select", label: "Dashboard", icon: Home },
-    {
-      href: residencyId ? `${base}/passes` : "/select",
-      label: "My Passes",
-      icon: CreditCard,
-    },
-    {
-      href: residencyId ? `${base}/visitors` : "/select",
-      label: "Visitors",
-      icon: Users,
-    },
-    {
-      href: residencyId ? `${base}/forum` : "/select",
-      label: "Forum",
-      icon: MessageSquare,
-    },
-    {
-      href: residencyId ? `${base}/visit-requests` : "/select",
-      label: "Visit Requests",
-      icon: Building2,
-    },
-    {
-      href: residencyId ? `${base}/dues` : "/select",
-      label: "Dues",
-      icon: Receipt,
-    },
+    { href: "/select", label: "Workspaces", icon: Home },
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
     { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
 
   if (isSuperUser) {
     links.push({
-      href: residencyId ? `${base}/settings` : "/select",
+      href: "/organization/settings",
       label: "Settings",
       icon: Settings,
     });
