@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types";
 import { useCreateGate, useUpdateGate, useAdmins, useAdminGates } from "@/hooks/use-admin";
 
@@ -30,6 +31,7 @@ interface GateFormModalProps {
 
 export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
     const isEditing = !!gate;
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const {
         register,
@@ -93,6 +95,7 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
         }));
 
     const onSubmit = async (data: GateFormValues) => {
+        setSubmitError(null);
         try {
             if (isEditing && gate) {
                 await updateGate.mutateAsync({
@@ -104,66 +107,100 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
             }
             onClose();
         } catch (error) {
-            console.error("Failed to save gate:", error);
+            setSubmitError(
+                error instanceof Error ? error.message : "The gate could not be saved.",
+            );
         }
+    };
+
+    const fieldErrors = {
+        ...(errors.name?.message ? { "gate-name": errors.name.message } : {}),
+        ...(errors.admin_ids?.message
+            ? { "gate-admins": errors.admin_ids.message }
+            : {}),
+        ...(submitError ? { "gate-form-error": submitError } : {}),
     };
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={isEditing ? "Edit Gate" : "Create Gate"}
-            className="bg-card"
+            title={isEditing ? "Edit gate" : "Create gate"}
+            description="Name the checkpoint, assign operators and optionally declare a dependency."
         >
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Gate Name</label>
-                    <Input
-                        placeholder="Main Entrance"
-                        {...register("name")}
-                        error={errors.name?.message}
-                    />
-                </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-5">
+                <FormErrorSummary errors={fieldErrors} />
+
+                <Field
+                    id="gate-name"
+                    label="Gate name"
+                    required
+                    error={errors.name?.message}
+                >
+                    {(control) => (
+                        <input
+                            {...control}
+                            {...register("name")}
+                            placeholder="Main entrance"
+                            className={fieldControlClassName}
+                        />
+                    )}
+                </Field>
 
                 {isEditing && (
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Slug</label>
-                        <Input
-                            placeholder="main-entrance"
-                            {...register("slug")}
-                            error={errors.slug?.message}
-                        />
-                    </div>
+                    <Field id="gate-slug" label="Slug" error={errors.slug?.message}>
+                        {(control) => (
+                            <input
+                                {...control}
+                                {...register("slug")}
+                                placeholder="main-entrance"
+                                className={fieldControlClassName}
+                            />
+                        )}
+                    </Field>
                 )}
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Gate Admins</label>
-                    <SearchableSelect
-                        isMulti
-                        options={adminOptions}
-                        placeholder="Select admins..."
-                        value={watchAdminIds}
-                        onChange={(values: any) => {
-                            setValue("admin_ids", values || []);
-                        }}
-                    />
-                    {errors.admin_ids && (
-                        <p className="text-xs text-red-500">{errors.admin_ids.message}</p>
+                <Field
+                    id="gate-admins"
+                    label="Gate administrators"
+                    description="Only assigned administrators can manage this checkpoint."
+                    required
+                    error={errors.admin_ids?.message}
+                >
+                    {() => (
+                        <SearchableSelect
+                            inputId="gate-admins"
+                            isMulti
+                            options={adminOptions}
+                            placeholder="Select administrators"
+                            value={watchAdminIds}
+                            onChange={(values: string[] | undefined) => {
+                                setValue("admin_ids", values || [], {
+                                    shouldValidate: true,
+                                });
+                            }}
+                        />
                     )}
-                </div>
+                </Field>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Dependency Gate (Optional)</label>
-                    <SearchableSelect
-                        options={gateOptions}
-                        isClearable
-                        placeholder="Select dependency gate..."
-                        value={watchDependencyId || undefined}
-                        onChange={(value: any) => {
-                            setValue("dependency_id", value || null);
-                        }}
-                    />
-                </div>
+                <Field
+                    id="gate-dependency"
+                    label="Dependency gate (optional)"
+                    description="Use this when another gate must exist before this one is available."
+                >
+                    {() => (
+                        <SearchableSelect
+                            inputId="gate-dependency"
+                            options={gateOptions}
+                            isClearable
+                            placeholder="Select dependency gate"
+                            value={watchDependencyId || undefined}
+                            onChange={(value: string | undefined) => {
+                                setValue("dependency_id", value || null);
+                            }}
+                        />
+                    )}
+                </Field>
 
                 <div className="flex items-center space-x-2">
                     <Checkbox
@@ -174,7 +211,7 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
                     />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] bg-[var(--vms-surface)] pt-4 sm:flex-row sm:justify-end">
                     <Button variant="outline" type="button" onClick={onClose}>
                         Cancel
                     </Button>
@@ -182,7 +219,7 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
                         type="submit"
                         isLoading={createGate.isPending || updateGate.isPending}
                     >
-                        {isEditing ? "Save Changes" : "Create Gate"}
+                        {isEditing ? "Save changes" : "Create gate"}
                     </Button>
                 </div>
             </form>

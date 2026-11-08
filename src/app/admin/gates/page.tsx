@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, Column, FilterConfig, FilterDefinition } from "@/components/ui/DataTable";
-import { Plus, Settings, Trash2, UserPlus, Eye, GitGraph } from "lucide-react";
+import {
+  ArrowUpRight,
+  Eye,
+  GitGraph,
+  Plus,
+  Settings,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
 import { Gate } from "@/types";
 import { useAdminGates, useDeleteGate } from "@/hooks/use-admin";
-import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/Card";
-import { cn } from "@/lib/utils";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { GateFormModal } from "@/components/admin/gate-modals/GateFormModal";
 import { GateToggleAdminModal } from "@/components/admin/gate-modals/GateToggleAdminModal";
@@ -48,6 +54,7 @@ export default function AdminGatesPage() {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isToggleAdminModalOpen, setIsToggleAdminModalOpen] = useState(false);
     const [isDependencyModalOpen, setIsDependencyModalOpen] = useState(false);
+    const [gatePendingDelete, setGatePendingDelete] = useState<Gate | null>(null);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -132,12 +139,11 @@ export default function AdminGatesPage() {
     };
 
     const handleDelete = async (gate: Gate) => {
-        if (window.confirm(`Are you sure you want to delete gate "${gate.name}"?`)) {
-            try {
-                await deleteGateMutation.mutateAsync(gate.id);
-            } catch (error) {
-                // Error toast is handled in the hook
-            }
+        try {
+            await deleteGateMutation.mutateAsync(gate.id);
+            setGatePendingDelete(null);
+        } catch {
+            // Error toast is handled in the hook.
         }
     };
 
@@ -147,9 +153,9 @@ export default function AdminGatesPage() {
             header: "Name",
             sortable: true,
             accessor: (row) => (
-                <div className="flex flex-col">
-                    <span className="font-medium text-sm">{row.name}</span>
-                    <span className="text-xs text-muted-foreground">{row.slug}</span>
+                <div className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-[var(--vms-ink)]">{row.name}</span>
+                    <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">{row.slug}</span>
                 </div>
             ),
         },
@@ -173,17 +179,17 @@ export default function AdminGatesPage() {
                         row.gate_admins.slice(0, 3).map((gateAdmin) => (
                             <div
                                 key={gateAdmin.admin_id}
-                                className="inline-block m-2 h-7 w-7 ring-2 dark:ring-white/20 ring-zinc-500 rounded-full dark:bg-white/40 bg-zinc-200 flex items-center justify-center text-[10px] font-medium"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--vms-surface-subtle)] text-[10px] font-semibold ring-2 ring-[var(--vms-surface)]"
                                 title={gateAdmin.admin?.user?.first_name + " " + gateAdmin.admin?.user?.last_name || gateAdmin.admin?.user?.email || "Admin"}
                             >
                                 {gateAdmin.admin?.user?.first_name?.[0] || "?"}
                             </div>
                         ))
                     ) : (
-                        <span className="text-xs text-muted-foreground italic">None</span>
+                        <span className="text-xs italic text-[var(--vms-ink-muted)]">None</span>
                     )}
                     {row.gate_admins && row.gate_admins.length > 3 && (
-                        <div className="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-zinc-200 flex items-center justify-center text-[10px] font-medium">
+                        <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--vms-surface-subtle)] text-[10px] font-semibold ring-2 ring-[var(--vms-surface)]">
                             +{row.gate_admins.length - 3}
                         </div>
                     )}
@@ -194,14 +200,14 @@ export default function AdminGatesPage() {
             key: "dependency",
             header: "Dependency",
             sortable: false,
-            accessor: (row) => row.dependency?.name || row.dependency_id || <span className="text-muted-foreground italic">—</span>
+            accessor: (row) => row.dependency?.name || row.dependency_id || <span className="italic text-[var(--vms-ink-muted)]">—</span>
         },
         {
             key: "created_at",
             header: "Created",
             sortable: true,
             accessor: (row) => (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-[var(--vms-ink-muted)]">
                     {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                 </span>
             ),
@@ -211,16 +217,21 @@ export default function AdminGatesPage() {
             header: "Actions",
             accessor: (row) => (
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleView(row)} title="View">
+                    <Button asChild variant="ghost" size="icon-sm" aria-label={`Open checkpoint for ${row.name}`}>
+                        <a href={`/admin/checkpoints/${row.id}`}>
+                            <ArrowUpRight className="h-4 w-4" />
+                        </a>
+                    </Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => handleView(row)} aria-label={`View ${row.name}`}>
                         <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(row)} title="Edit">
+                    <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(row)} aria-label={`Edit ${row.name}`}>
                         <Settings className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(row)} title="Toggle Admins">
+                    <Button variant="ghost" size="icon-sm" onClick={() => handleToggleAdmin(row)} aria-label={`Manage administrators for ${row.name}`}>
                         <UserPlus className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(row)} className="text-red-500 hover:text-red-600 hover:bg-red-50" title="Delete">
+                    <Button variant="ghost" size="icon-sm" onClick={() => setGatePendingDelete(row)} className="text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] hover:text-[var(--vms-danger)]" aria-label={`Delete ${row.name}`}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -229,29 +240,37 @@ export default function AdminGatesPage() {
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
+            <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Gates Management</h1>
-                    <p className="text-muted-foreground">
-                        {total} total gate{total !== 1 ? "s" : ""} configured
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+                        Access operations
+                    </p>
+                    <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">Gates</h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+                        Configure logical checkpoints, dependencies and the administrators who operate them.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button variant="outline" onClick={() => setIsDependencyModalOpen(true)}>
-                        <GitGraph className="mr-2 h-4 w-4" />
-                        Dependency Map
+                        <GitGraph className="h-4 w-4" aria-hidden="true" />
+                        Dependency map
                     </Button>
                     <Button onClick={() => setIsCreateModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Gate
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        Create gate
                     </Button>
                 </div>
-            </div>
+            </header>
 
-            <Card>
-                <CardContent className="p-6">
-                    <DataTable
+            <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+                <div className="border-b border-[var(--vms-line)] px-4 py-3">
+                    <h2 className="text-base font-semibold">Gate register</h2>
+                    <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
+                        {total} gate{total !== 1 ? "s" : ""} configured
+                    </p>
+                </div>
+                <DataTable
                         data={gates}
                         columns={columns}
                         searchable={true}
@@ -285,8 +304,7 @@ export default function AdminGatesPage() {
                         }}
                         isLoading={isLoading || isFetching}
                     />
-                </CardContent>
-            </Card>
+            </section>
 
             <GateFormModal
                 isOpen={isCreateModalOpen}
@@ -324,6 +342,41 @@ export default function AdminGatesPage() {
                 isOpen={isDependencyModalOpen}
                 onClose={() => setIsDependencyModalOpen(false)}
             />
-        </div>
+
+            <Modal
+                isOpen={!!gatePendingDelete}
+                onClose={() => {
+                    if (!deleteGateMutation.isPending) setGatePendingDelete(null);
+                }}
+                title="Delete gate?"
+                description="This removes the logical checkpoint. Existing passage history remains auditable."
+            >
+                <div className="space-y-5 p-5">
+                    <p className="text-sm text-[var(--vms-ink-muted)]">
+                        Delete{" "}
+                        <strong className="text-[var(--vms-ink)]">
+                            {gatePendingDelete?.name}
+                        </strong>
+                        ? Check the dependency map before continuing.
+                    </p>
+                    <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+                        <Button
+                            variant="outline"
+                            disabled={deleteGateMutation.isPending}
+                            onClick={() => setGatePendingDelete(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            isLoading={deleteGateMutation.isPending}
+                            onClick={() => gatePendingDelete && handleDelete(gatePendingDelete)}
+                        >
+                            Delete gate
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        </main>
     );
 }

@@ -536,26 +536,20 @@ export default function AccessControlSimulatorPage() {
   const barrierOpen = selectedLane?.observed_state === "open";
 
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 px-5 py-6 text-white shadow-sm sm:px-7">
+    <main className="space-y-6 pb-10 text-[var(--vms-ink)]">
+      <div className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-5 py-6 sm:px-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
             <div className="flex flex-wrap gap-2">
-              <Badge className="border-white/15 bg-white/10 text-white">
-                Policy decision
-              </Badge>
-              <Badge className="border-white/15 bg-white/10 text-white">
-                Hardware command
-              </Badge>
-              <Badge className="border-white/15 bg-white/10 text-white">
-                Observed state
-              </Badge>
+              <Badge>Policy decision</Badge>
+              <Badge>Hardware command</Badge>
+              <Badge>Observed state</Badge>
             </div>
-            <h1 className="mt-3 flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-              <RadioTower className="h-7 w-7 text-emerald-300" />
+            <h1 className="mt-3 flex items-center gap-3 text-3xl font-semibold tracking-[-0.04em]">
+              <RadioTower className="h-7 w-7 text-[var(--vms-action)]" />
               Access control simulator
             </h1>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
+            <p className="mt-2 text-sm leading-6 text-[var(--vms-ink-muted)] sm:text-base">
               Exercise access decisions, command dispatch, acknowledgement,
               timeout, offline behavior, and the physical state reported by a
               device adapter.
@@ -563,14 +557,14 @@ export default function AccessControlSimulatorPage() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
-              variant="light-outlined"
+              variant="outline"
               leftNode={<Plus className="h-4 w-4" />}
               onClick={() => setShowSiteSetup(true)}
             >
               New site
             </Button>
             <Button
-              variant="light"
+              variant="primary"
               leftNode={<Plus className="h-4 w-4" />}
               onClick={() => setShowLaneSetup(true)}
               disabled={sites.length === 0 || gates.length === 0}
@@ -608,10 +602,10 @@ export default function AccessControlSimulatorPage() {
                     setSelectedLaneId(lane.id);
                     setLastSimulation(null);
                   }}
-                  className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                  className={`min-h-11 rounded-[var(--vms-radius-control)] border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] ${
                     lane.id === selectedLaneId
-                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                      : "bg-background hover:bg-muted/40"
+                      ? "border-[var(--vms-active-accent)] bg-[var(--vms-surface-subtle)]"
+                      : "border-[var(--vms-line)] bg-[var(--vms-surface)] hover:bg-[var(--vms-surface-subtle)]"
                   }`}
                 >
                   <span className="block text-sm font-semibold">
@@ -676,7 +670,7 @@ export default function AccessControlSimulatorPage() {
                       </div>
                       <div className="absolute bottom-20 left-[17%] h-16 w-7 rounded-md bg-slate-500" />
                       <div className="absolute bottom-24 left-[17.7%] h-2 w-6 rounded bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.9)]" />
-                      <div className="absolute bottom-8 right-5 rounded-lg bg-black/40 px-3 py-2 text-xs text-slate-200 backdrop-blur">
+                      <div className="absolute bottom-8 right-5 rounded-[var(--vms-radius-control)] bg-black/60 px-3 py-2 text-xs text-slate-200">
                         Physical state:{" "}
                         <strong className="text-white">
                           {selectedLane.observed_state}
@@ -898,7 +892,7 @@ export default function AccessControlSimulatorPage() {
                           </div>
                         )}
                         {currentCommand.status === "acknowledged" && (
-                          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                          <p className="mt-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-3 text-xs text-[var(--vms-warning)]">
                             Waiting for the lane to report the requested
                             physical state.
                           </p>
@@ -928,7 +922,7 @@ export default function AccessControlSimulatorPage() {
                       inferred from an API response.
                     </p>
                     {selectedLane.last_error_code && (
-                      <p className="mt-3 rounded bg-red-50 px-2 py-1.5 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-200">
+                      <p className="mt-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-2 py-1.5 text-xs text-[var(--vms-danger)]">
                         {selectedLane.last_error_code}
                       </p>
                     )}
@@ -989,6 +983,6 @@ export default function AccessControlSimulatorPage() {
           onSave={(values) => createLaneMutation.mutate(values)}
         />
       )}
-    </div>
+    </main>
   );
 }

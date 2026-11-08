@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Gate } from "@/types";
@@ -23,22 +22,22 @@ export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Gate Details"
+            title="Gate details"
             size="md"
-            className="bg-card"
+            description="Checkpoint identity, operator assignments and dependencies."
         >
-            <div className="space-y-6">
+            <div className="space-y-6 p-5">
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase uppercase tracking-wider">Gate Name</label>
-                        <p className="text-sm font-medium mt-1">{gate.name}</p>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Gate name</span>
+                        <p className="mt-1 text-sm font-medium">{gate.name}</p>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Slug</label>
-                        <p className="text-sm font-medium mt-1">{gate.slug}</p>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Slug</span>
+                        <p className="mt-1 text-sm font-medium">{gate.slug}</p>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Default Gate</label>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Default gate</span>
                         <div className="mt-1">
                             <Badge variant={gate.is_default ? "success" : "secondary"}>
                                 {gate.is_default ? "Yes" : "No"}
@@ -46,28 +45,28 @@ export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created At</label>
-                        <p className="text-sm font-medium mt-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Created at</span>
+                        <p className="mt-1 text-sm font-medium">
                             {format(new Date(gate.created_at), "PPP p")}
                         </p>
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dependency</label>
-                    <p className="text-sm font-medium mt-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Dependency</span>
+                    <p className="mt-1 text-sm font-medium">
                         {gate.dependency?.name || gate.dependency_id || "None"}
                     </p>
                 </div>
 
                 <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admins ({gate.gate_admins?.length || 0})</label>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--vms-ink-muted)]">Administrators ({gate.gate_admins?.length || 0})</span>
                     <div className="mt-2 space-y-2">
                         {gate.gate_admins && gate.gate_admins.length > 0 ? (
                             gate.gate_admins.map((gateAdmin) => (
-                                <div key={gateAdmin.admin_id} className="flex items-center justify-between p-2 rounded-md bg-white/10 border border-white/20">
+                                <div key={gateAdmin.admin_id} className="flex items-center justify-between gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="h-8 w-8 rounded-full bg-white/50 flex items-center justify-center text-xs font-medium">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--vms-surface)] text-xs font-semibold ring-1 ring-[var(--vms-line)]">
                                             {gateAdmin.admin?.user?.first_name?.[0] || gateAdmin.admin?.user?.last_name?.[0] || "?"}
                                         </div>
                                         <div className="flex flex-col">
@@ -83,7 +82,7 @@ export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 text-[10px] uppercase font-bold tracking-tight hover:bg-white/20"
+                                        className="min-h-11 text-xs font-semibold"
                                         onClick={() => toggleStatus.mutate({ gateId: gate.id, gateAdminIds: [gateAdmin.id] })}
                                         disabled={toggleStatus.isPending && toggleStatus.variables?.gateAdminIds.includes(gateAdmin.id)}
                                     >
@@ -103,10 +102,10 @@ export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
 
                 {gate.dependencies && gate.dependencies.length > 0 && (
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase ">Dependent Gates ({gate.dependencies.length})</label>
+                        <span className="text-xs font-semibold uppercase text-[var(--vms-ink-muted)]">Dependent gates ({gate.dependencies.length})</span>
                         <div className="mt-2 space-y-1">
                             {gate.dependencies.map(dep => (
-                                <div key={dep.id} className="text-sm p-2 rounded bg-white/10 border border-white/50">
+                                <div key={dep.id} className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-2 text-sm">
                                     {dep.name}
                                 </div>
                             ))}
