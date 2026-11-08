@@ -108,9 +108,13 @@ describe("charge routes", () => {
 
   it("renders charge definitions as stable detail links", async () => {
     mount();
-    expect(
-      await screen.findByRole("link", { name: /Service charge/ }),
-    ).toHaveAttribute("href", "/admin/charges/definitions/charge");
+    const definitionLinks = await screen.findAllByRole("link", {
+      name: /Service charge/,
+    });
+    expect(definitionLinks[0]).toHaveAttribute(
+      "href",
+      "/admin/charges/definitions/charge",
+    );
     expect(
       screen.getByRole("link", { name: "Create charge" }),
     ).toHaveAttribute("href", "/admin/charges/new");
@@ -119,7 +123,7 @@ describe("charge routes", () => {
   it("shows an explicit empty state without inventing balances", async () => {
     mocks.definitions.mockResolvedValue({ items: [], total_pages: 0 });
     mount();
-    expect(await screen.findByText("No charges yet.")).toBeInTheDocument();
+    expect((await screen.findAllByText("No charges yet.")).length).toBeGreaterThan(0);
     expect(screen.queryByText(/NGN 15000/)).toBeNull();
   });
 
@@ -134,13 +138,49 @@ describe("charge routes", () => {
     expect(mocks.definitions).not.toHaveBeenCalled();
   });
 
+  it("hides mutating controls for read-only finance access", async () => {
+    mocks.profile.mockResolvedValue({
+      data: { effective_permissions: ["charges.list"] },
+    });
+    mount();
+    expect((await screen.findAllByText("Service charge")).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("link", { name: "Create charge" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a retryable failure when the charge directory is unavailable", async () => {
+    mocks.definitions.mockRejectedValue(new Error("Charge service offline"));
+    mount();
+    expect(
+      await screen.findByText("Charges could not be loaded"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Charge service offline")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Retry/ })).toBeInTheDocument();
+  });
+
+  it("validates a new charge with a linked error summary", async () => {
+    mount("new");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Create charge" }),
+    );
+    expect(
+      (await screen.findAllByText("Enter a charge name.")).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Enter an amount greater than zero.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByRole("alert")).toHaveFocus();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   it("creates a definition and opens its detail route", async () => {
     mocks.create.mockResolvedValue(definition);
     mount("new");
-    fireEvent.change(await screen.findByLabelText("Name"), {
+    fireEvent.change(await screen.findByLabelText(/^Name/), {
       target: { value: "Service charge" },
     });
-    fireEvent.change(screen.getByLabelText("Amount"), {
+    fireEvent.change(screen.getByLabelText(/^Amount/), {
       target: { value: "15000" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create charge" }));
@@ -153,9 +193,13 @@ describe("charge routes", () => {
 
   it("opens assignment actions without duplicate definitions", async () => {
     mount("definition");
-    expect(
-      await screen.findByRole("link", { name: /Harbour House/ }),
-    ).toHaveAttribute("href", "/admin/charges/assignments/assignment");
+    const assignmentLinks = await screen.findAllByRole("link", {
+      name: /Harbour House/,
+    });
+    expect(assignmentLinks[0]).toHaveAttribute(
+      "href",
+      "/admin/charges/assignments/assignment",
+    );
     expect(
       screen.getByRole("link", { name: "Assign to a property" }),
     ).toHaveAttribute("href", "/admin/charges/definitions/charge/assign");
@@ -210,13 +254,11 @@ describe("charge routes", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("Ade Resident").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/15,000\.00/).length).toBeGreaterThan(0);
-    expect(screen.getByText("scheduled")).toBeInTheDocument();
+    expect(screen.getAllByText("scheduled").length).toBeGreaterThan(0);
   });
 
   it("reviews and transfers an unpaid responsibility", async () => {
     mocks.transfer.mockResolvedValue({});
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
-
     mount("assignment", "assignment");
 
     fireEvent.click(
@@ -224,11 +266,14 @@ describe("charge routes", () => {
         name: "Choose New responsible person or organization",
       }),
     );
-    fireEvent.change(screen.getByLabelText("Reason"), {
+    fireEvent.change(screen.getByLabelText(/^Reason/), {
       target: { value: "Occupancy changed" },
     });
     fireEvent.click(
       screen.getByRole("button", { name: "Review and transfer" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Transfer responsibility" }),
     );
 
     await waitFor(() =>
@@ -238,8 +283,6 @@ describe("charge routes", () => {
         reason: "Occupancy changed",
       }),
     );
-    expect(confirm).toHaveBeenCalledOnce();
-    confirm.mockRestore();
   });
 
   it("generates additional schedules for an assignment", async () => {
@@ -247,7 +290,7 @@ describe("charge routes", () => {
 
     mount("assignment", "assignment");
 
-    fireEvent.change(await screen.findByLabelText("Schedules"), {
+    fireEvent.change(await screen.findByLabelText(/^Schedules/), {
       target: { value: "3" },
     });
     fireEvent.click(

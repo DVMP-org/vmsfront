@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
-  ArrowRight,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
@@ -20,18 +19,24 @@ import {
   UserRound,
 } from "lucide-react";
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
 import { hasAdminPermission } from "@/lib/permissions";
 import { adminService } from "@/services/admin-service";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   chargesApi,
   type Assignment,
   type Definition,
   type Schedule,
 } from "./api";
-import "./charges.css";
 
 type ChargeAction = "new" | "definition" | "assign" | "assignment";
 
@@ -91,7 +96,7 @@ export default function ChargesWorkspace({
   }
 
   return (
-    <main className="space-y-5 pb-10 text-[#0f1b31]">
+    <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
       <ChargeHeader action={action} />
       {action === "new" ? (
         <NewDefinition />
@@ -118,15 +123,15 @@ export default function ChargesWorkspace({
 
 function ChargeHeader({ action }: { action?: ChargeAction }) {
   return (
-    <header className="border-b border-[#dce3ee] pb-5">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-[#667085]">
-        <ReceiptText className="h-3.5 w-3.5 text-[#2563eb]" />
+    <header className="border-b border-[var(--vms-line)] pb-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+        <ReceiptText className="h-3.5 w-3.5 text-[var(--vms-action)]" />
         <span>Finance</span>
-        <span className="text-[#c3cad6]">/</span>
+        <span className="text-[var(--vms-line-strong)]">/</span>
         <span>Charges</span>
         {action ? (
           <>
-            <span className="text-[#c3cad6]">/</span>
+            <span className="text-[var(--vms-line-strong)]">/</span>
             <span className="capitalize">{action}</span>
           </>
         ) : null}
@@ -136,14 +141,14 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
           <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] sm:text-[36px]">
             Charges
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[#667085]">
+          <p className="mt-1 max-w-2xl text-sm text-[var(--vms-ink-muted)]">
             Define what is billed, assign it to a property, and keep the
             responsible Party and every schedule visible.
           </p>
         </div>
         <Link
           href="/admin/charges"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#2563eb] hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--vms-action)] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
           Charge directory
@@ -164,13 +169,67 @@ function Directory({
   const query = useQuery({
     queryKey: ["charges", contextKey, "definitions", page],
     queryFn: () => chargesApi.definitions(page),
+    placeholderData: (previous) => previous,
   });
   const activeOnPage =
     query.data?.items.filter((definition) => definition.is_active).length || 0;
+  const columns: Column<Definition>[] = [
+    {
+      key: "name",
+      header: "Charge",
+      sortable: false,
+      accessor: (definition) => (
+        <span className="min-w-0">
+          <Link
+            href={`/admin/charges/definitions/${definition.id}`}
+            className="block truncate font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+          >
+            {definition.name}
+          </Link>
+          <span className="mt-1 block max-w-md truncate text-xs text-[var(--vms-ink-muted)]">
+            {definition.description || "No description"}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      accessor: (definition) => (
+        <span className="whitespace-nowrap font-semibold tabular-nums">
+          {formatMoney(definition.amount, definition.currency)}
+        </span>
+      ),
+    },
+    {
+      key: "recurrence",
+      header: "Schedule",
+      accessor: (definition) => recurrenceLabel(definition.recurrence),
+    },
+    {
+      key: "is_active",
+      header: "Status",
+      accessor: (definition) => (
+        <StatusBadge active={definition.is_active} />
+      ),
+    },
+    {
+      key: "open",
+      header: "Action",
+      className: "text-right",
+      accessor: (definition) => (
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/admin/charges/definitions/${definition.id}`}>
+            Open
+          </Link>
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <>
-      <section className="grid overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:grid-cols-3">
+    <div className="space-y-4">
+      <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
         <SummaryMetric
           label="Definitions"
           value={query.data?.total ?? "—"}
@@ -191,107 +250,106 @@ function Directory({
         />
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-        <div className="flex flex-col gap-3 border-b border-[#dce3ee] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+        <div className="flex flex-col gap-3 border-b border-[var(--vms-line)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Charge definitions</h2>
-            <p className="mt-0.5 text-xs text-[#667085]">
+            <h2 className="text-base font-semibold">Charge definitions</h2>
+            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
               Reusable amounts and schedules. Assignments connect a definition
               to a property and payer.
             </p>
           </div>
           {allow("create") ? (
-            <Link
-              href="/admin/charges/new"
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-[#2563eb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1d4ed8]"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create charge
-            </Link>
+            <Button asChild>
+              <Link href="/admin/charges/new">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Create charge
+              </Link>
+            </Button>
           ) : null}
         </div>
 
         {query.isPending ? (
           <TableSkeleton />
-        ) : query.isError ? (
+        ) : query.isError && !query.data ? (
           <InlineFailure
             title="Charges could not be loaded"
             error={query.error}
             onRetry={() => query.refetch()}
           />
-        ) : query.data.items.length ? (
-          <div className="overflow-x-auto">
-            <div
-              className="charge-directory-header border-b border-[#edf0f5] bg-[#f8faff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#667085]"
-              style={directoryGridStyle}
-            >
-              <span>Charge</span>
-              <span>Amount</span>
-              <span>Schedule</span>
-              <span>Status</span>
-              <span />
-            </div>
-            <ul className="divide-y divide-[#edf0f5]">
-              {query.data.items.map((definition) => (
-                <li key={definition.id}>
-                  <Link
-                    href={`/admin/charges/definitions/${definition.id}`}
-                    className="charge-directory-row px-4 py-3.5 transition hover:bg-[#f8faff]"
-                    style={directoryGridStyle}
-                  >
-                    <span className="min-w-0">
-                      <strong className="block truncate text-sm font-semibold">
-                        {definition.name}
-                      </strong>
-                      <span className="mt-0.5 block truncate text-xs text-[#667085]">
-                        {definition.description || "No description"}
-                      </span>
-                    </span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {formatMoney(
-                        definition.amount,
-                        definition.currency,
-                      )}
-                    </span>
-                    <span className="text-sm capitalize text-[#475467]">
-                      {recurrenceLabel(definition.recurrence)}
-                    </span>
-                    <span>
-                      <StatusBadge active={definition.is_active} />
-                    </span>
-                    <ArrowRight className="hidden h-4 w-4 shrink-0 justify-self-end text-[#98a2b3] md:block" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         ) : (
-          <EmptyState
-            icon={ReceiptText}
-            title="No charges yet."
-            detail="Create a definition first, then assign it to a property and responsible person."
-            action={
-              allow("create") ? (
-                <Link
-                  href="/admin/charges/new"
-                  className="inline-flex items-center gap-2 rounded-md bg-[#2563eb] px-3 py-2 text-xs font-semibold text-white"
+          <>
+            {query.isError ? (
+              <div
+                role="status"
+                className="flex flex-col gap-2 border-b border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)] sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span>Showing the last successful charge snapshot.</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => query.refetch()}
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  Create the first charge
-                </Link>
-              ) : null
-            }
-          />
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+            <DataTable
+              data={query.data?.items || []}
+              columns={columns}
+              searchable={false}
+              serverSide
+              pageSize={20}
+              total={query.data?.total || 0}
+              currentPage={page}
+              onPageChange={setPage}
+              isLoading={false}
+              emptyMessage="No charges yet."
+              tableLabel="Charge definitions"
+              scrollHint="Scroll horizontally to compare charge details."
+              mobileSummary={(definition) => (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/charges/definitions/${definition.id}`}
+                        className="block truncate text-sm font-semibold underline-offset-4 hover:underline"
+                      >
+                        {definition.name}
+                      </Link>
+                      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                        {definition.description || "No description"}
+                      </p>
+                    </div>
+                    <StatusBadge active={definition.is_active} />
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <dt className="text-[var(--vms-ink-muted)]">Amount</dt>
+                      <dd className="mt-1 font-semibold tabular-nums">
+                        {formatMoney(definition.amount, definition.currency)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--vms-ink-muted)]">Schedule</dt>
+                      <dd className="mt-1 font-semibold">
+                        {recurrenceLabel(definition.recurrence)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/admin/charges/definitions/${definition.id}`}>
+                      Open charge
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            />
+          </>
         )}
-
-        <Pagination
-          page={page}
-          totalPages={query.data?.total_pages || 0}
-          busy={query.isFetching}
-          onPage={setPage}
-        />
       </section>
-    </>
+    </div>
   );
 }
 
@@ -302,6 +360,10 @@ function NewDefinition() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [recurrence, setRecurrence] = useState("one_time");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const isDirty =
+    !!name || !!description || !!amount || currency !== "NGN" || recurrence !== "one_time";
+  const canLeave = useUnsavedChanges(isDirty);
   const mutation = useMutation({
     mutationFn: () =>
       chargesApi.create({
@@ -314,105 +376,149 @@ function NewDefinition() {
     onSuccess: (definition) =>
       router.push(`/admin/charges/definitions/${definition.id}`),
   });
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    if (!name.trim()) nextErrors["charge-name"] = "Enter a charge name.";
+    if (!amount || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+      nextErrors["charge-amount"] = "Enter an amount greater than zero.";
+    }
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      nextErrors["charge-currency"] = "Use a three-letter currency code.";
+    }
+    setErrors(nextErrors);
+    if (!Object.keys(nextErrors).length) mutation.mutate();
+  }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
-      <section className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-5">
+    <div className="grid gap-4 pb-20 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)] xl:pb-0">
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5">
         <div>
           <h2 className="text-base font-semibold">Create a charge</h2>
-          <p className="mt-1 text-xs text-[#667085]">
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
             Start with the reusable amount and recurrence. Property and payer
             are selected during assignment.
           </p>
         </div>
-        <form className="mt-5 space-y-4" onSubmit={(event) => {
-          event.preventDefault();
-          mutation.mutate();
-        }}>
+        <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
+          <FormErrorSummary errors={errors} />
           <fieldset className="space-y-4" disabled={mutation.isPending}>
-            <FormField label="Name" hint="A short name operators will recognise.">
-              <input
-                aria-label="Name"
-                required
-                maxLength={255}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Monthly service charge"
-                className={inputClass}
-              />
-            </FormField>
-            <FormField
-              label="Description"
-              hint="Optional context shown on the definition."
+            <Field
+              id="charge-name"
+              label="Name"
+              description="A short name operators will recognise."
+              error={errors["charge-name"]}
+              required
             >
-              <textarea
-                aria-label="Description"
-                maxLength={500}
-                rows={3}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="What this charge covers"
-                className={inputClass}
-              />
-            </FormField>
+              {(control) => (
+                <input
+                  {...control}
+                  maxLength={255}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Monthly service charge"
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
+            <Field
+              id="charge-description"
+              label="Description"
+              description="Optional context shown on the definition."
+            >
+              {(control) => (
+                <textarea
+                  {...control}
+                  maxLength={500}
+                  rows={3}
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="What this charge covers"
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Amount">
-                <input
-                  aria-label="Amount"
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="25000.00"
-                  className={inputClass}
-                />
-              </FormField>
-              <FormField label="Currency">
-                <input
-                  aria-label="Currency"
-                  required
-                  pattern="[A-Z]{3}"
-                  minLength={3}
-                  maxLength={3}
-                  value={currency}
-                  onChange={(event) =>
-                    setCurrency(event.target.value.toUpperCase())
-                  }
-                  className={inputClass}
-                />
-              </FormField>
-            </div>
-            <FormField label="Recurrence">
-              <select
-                aria-label="Recurrence"
-                value={recurrence}
-                onChange={(event) => setRecurrence(event.target.value)}
-                className={inputClass}
+              <Field
+                id="charge-amount"
+                label="Amount"
+                error={errors["charge-amount"]}
+                required
               >
-                {Object.entries(recurrenceLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+                {(control) => (
+                  <input
+                    {...control}
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    step="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    placeholder="25000.00"
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+              <Field
+                id="charge-currency"
+                label="Currency"
+                error={errors["charge-currency"]}
+                required
+              >
+                {(control) => (
+                  <input
+                    {...control}
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    pattern="[A-Z]{3}"
+                    minLength={3}
+                    maxLength={3}
+                    value={currency}
+                    onChange={(event) =>
+                      setCurrency(event.target.value.toUpperCase())
+                    }
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+            </div>
+            <Field id="charge-recurrence" label="Recurrence" required>
+              {(control) => (
+                <select
+                  {...control}
+                  value={recurrence}
+                  onChange={(event) => setRecurrence(event.target.value)}
+                  className={fieldControlClassName}
+                >
+                  {Object.entries(recurrenceLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
           </fieldset>
           {mutation.isError ? (
             <InlineError error={mutation.error} />
           ) : null}
-          <div className="flex justify-end gap-2 border-t border-[#edf0f5] pt-4">
-            <Link href="/admin/charges" className={secondaryButtonClass}>
-              Cancel
-            </Link>
-            <button
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+            <Button
+              asChild
+              variant="secondary"
+              onClick={(event) => {
+                if (!canLeave()) event.preventDefault();
+              }}
+            >
+              <Link href="/admin/charges">Cancel</Link>
+            </Button>
+            <Button
               type="submit"
               disabled={mutation.isPending}
-              className={primaryButtonClass}
+              className="min-h-11"
             >
               {mutation.isPending ? "Creating charge…" : "Create charge"}
-            </button>
+            </Button>
           </div>
         </form>
       </section>
@@ -470,12 +576,57 @@ function DefinitionDetail({
   }
 
   const definition = query.data;
+  const assignmentColumns: Column<Assignment>[] = [
+    {
+      key: "place",
+      header: "Property",
+      accessor: (assignment) => (
+        <Link
+          href={`/admin/charges/assignments/${assignment.id}`}
+          className="font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+        >
+          {assignment.target_place.name}
+        </Link>
+      ),
+    },
+    {
+      key: "responsible",
+      header: "Responsible Party",
+      accessor: (assignment) =>
+        assignment.current_responsibility?.responsible_party.display_name ||
+        "No responsible person",
+    },
+    {
+      key: "outstanding",
+      header: "Outstanding",
+      accessor: (assignment) => (
+        <span className="whitespace-nowrap font-semibold tabular-nums">
+          {formatMoney(
+            assignment.outstanding_amount,
+            assignment.charge_definition.currency,
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "action",
+      header: "Action",
+      className: "text-right",
+      accessor: (assignment) => (
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/admin/charges/assignments/${assignment.id}`}>
+            Open assignment
+          </Link>
+        </Button>
+      ),
+    },
+  ];
   return (
     <>
-      <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div className="flex min-w-0 gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#edf3ff] text-[#2563eb]">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
               <ReceiptText className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -485,36 +636,34 @@ function DefinitionDetail({
                 </h2>
                 <StatusBadge active={definition.is_active} />
               </div>
-              <p className="mt-1 text-sm text-[#667085]">
+              <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
                 {definition.description || "No description provided."}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {allow("create") && definition.is_active ? (
-              <Link
-                href={`/admin/charges/definitions/${id}/assign`}
-                className={primaryButtonClass}
-              >
-                <UserRound className="h-3.5 w-3.5" />
-                Assign to a property
-              </Link>
+              <Button asChild>
+                <Link href={`/admin/charges/definitions/${id}/assign`}>
+                  <UserRound className="h-4 w-4" aria-hidden="true" />
+                  Assign to a property
+                </Link>
+              </Button>
             ) : null}
             {allow("update") ? (
-              <button
-                type="button"
-                disabled={toggle.isPending}
+              <Button
+                variant="secondary"
+                isLoading={toggle.isPending}
                 onClick={() => toggle.mutate()}
-                className={secondaryButtonClass}
               >
                 {definition.is_active
                   ? "Deactivate future assignments"
                   : "Activate charge"}
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
-        <div className="grid border-t border-[#edf0f5] sm:grid-cols-3">
+        <div className="grid border-t border-[var(--vms-line)] sm:grid-cols-3">
           <Fact label="Amount" value={formatMoney(definition.amount, definition.currency)} />
           <Fact label="Recurrence" value={recurrenceLabel(definition.recurrence)} />
           <Fact
@@ -529,16 +678,16 @@ function DefinitionDetail({
           />
         </div>
         {toggle.isError ? (
-          <div className="border-t border-[#edf0f5] p-4">
+          <div className="border-t border-[var(--vms-line)] p-4">
             <InlineError error={toggle.error} />
           </div>
         ) : null}
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-        <div className="border-b border-[#dce3ee] px-4 py-3.5">
-          <h2 className="text-sm font-semibold">Property assignments</h2>
-          <p className="mt-0.5 text-xs text-[#667085]">
+      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+        <div className="border-b border-[var(--vms-line)] px-4 py-4">
+          <h2 className="text-base font-semibold">Property assignments</h2>
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
             The property receiving the charge and the Party responsible for
             payment.
           </p>
@@ -547,59 +696,67 @@ function DefinitionDetail({
           <RestrictedState detail="You can view the definition, but not its property assignments." />
         ) : assignments.isPending ? (
           <TableSkeleton rows={3} />
-        ) : assignments.isError ? (
+        ) : assignments.isError && !assignments.data ? (
           <InlineFailure
             title="Assignments could not be loaded"
             error={assignments.error}
             onRetry={() => assignments.refetch()}
           />
-        ) : assignments.data.items.length ? (
-          <ul className="divide-y divide-[#edf0f5]">
-            {assignments.data.items.map((assignment) => (
-              <li key={assignment.id}>
-                <Link
-                  href={`/admin/charges/assignments/${assignment.id}`}
-                  className="flex flex-col gap-3 px-4 py-3.5 transition hover:bg-[#f8faff] sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <span className="min-w-0">
-                    <strong className="block truncate text-sm">
-                      {assignment.target_place.name}
-                    </strong>
-                    <span className="mt-0.5 block truncate text-xs text-[#667085]">
-                      Responsible:{" "}
+        ) : (
+          <DataTable
+            data={assignments.data?.items || []}
+            columns={assignmentColumns}
+            searchable={false}
+            serverSide
+            pageSize={20}
+            total={assignments.data?.total || 0}
+            currentPage={page}
+            onPageChange={setPage}
+            isLoading={assignments.isFetching && !assignments.data}
+            emptyMessage="No assignments yet. Assign this charge to a property and responsible Party."
+            tableLabel="Charge property assignments"
+            scrollHint="Scroll horizontally to compare assignment details."
+            isStale={assignments.isError && !!assignments.data}
+            onRetry={() => assignments.refetch()}
+            mobileSummary={(assignment) => (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    href={`/admin/charges/assignments/${assignment.id}`}
+                    className="font-semibold underline-offset-4 hover:underline"
+                  >
+                    {assignment.target_place.name}
+                  </Link>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/admin/charges/assignments/${assignment.id}`}>
+                      Open
+                    </Link>
+                  </Button>
+                </div>
+                <dl className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <dt className="text-[var(--vms-ink-muted)]">Responsible</dt>
+                    <dd className="mt-1 font-semibold">
                       {assignment.current_responsibility?.responsible_party
                         .display_name || "No responsible person"}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-4 text-xs">
-                    <span>
-                      Outstanding{" "}
-                      <strong className="tabular-nums">
-                        {formatMoney(
-                          assignment.outstanding_amount,
-                          assignment.charge_definition.currency,
-                        )}
-                      </strong>
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-[#98a2b3]" />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState
-            icon={Landmark}
-            title="No assignments yet."
-            detail="Assign this charge to a property and responsible Party to generate schedules."
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[var(--vms-ink-muted)]">
+                      Outstanding
+                    </dt>
+                    <dd className="mt-1 font-semibold tabular-nums">
+                      {formatMoney(
+                        assignment.outstanding_amount,
+                        assignment.charge_definition.currency,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
           />
         )}
-        <Pagination
-          page={page}
-          totalPages={assignments.data?.total_pages || 0}
-          busy={assignments.isFetching}
-          onPage={setPage}
-        />
       </section>
     </>
   );
@@ -617,6 +774,8 @@ function AssignCharge({
   const [party, setParty] = useState<FacetItem | null>(null);
   const [scheduleCount, setScheduleCount] = useState(1);
   const [firstDueDate, setFirstDueDate] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const canLeave = useUnsavedChanges(!!place || !!party || !!firstDueDate);
   const definition = useQuery({
     queryKey: ["charges", contextKey, "definition", id],
     queryFn: () => chargesApi.definition(id),
@@ -633,24 +792,37 @@ function AssignCharge({
     onSuccess: (assignment) =>
       router.push(`/admin/charges/assignments/${assignment.id}`),
   });
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    if (!place) nextErrors["charge-target"] = "Choose the target property.";
+    if (!party) {
+      nextErrors["charge-responsible"] = "Choose the responsible person.";
+    }
+    if (
+      !Number.isFinite(scheduleCount) ||
+      scheduleCount < 1 ||
+      scheduleCount > 120
+    ) {
+      nextErrors["charge-schedule-count"] =
+        "Enter between 1 and 120 schedules.";
+    }
+    setErrors(nextErrors);
+    if (!Object.keys(nextErrors).length) mutation.mutate();
+  }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
-      <section className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)] sm:p-5">
+    <div className="grid gap-4 pb-20 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)] xl:pb-0">
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5">
         <h2 className="text-base font-semibold">
           Assign {definition.data?.name || "charge"}
         </h2>
-        <p className="mt-1 text-xs text-[#667085]">
+        <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
           Choose where the charge applies and who is currently responsible for
           paying it.
         </p>
-        <form
-          className="mt-5 space-y-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            mutation.mutate();
-          }}
-        >
+        <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
+          <FormErrorSummary errors={errors} />
           <fieldset className="space-y-5" disabled={mutation.isPending}>
             <FacetPicker
               facet="places"
@@ -658,6 +830,7 @@ function AssignCharge({
               value={place}
               onChange={setPlace}
               contextKey={contextKey}
+              error={errors["charge-target"]}
             />
             <FacetPicker
               facet="parties"
@@ -665,57 +838,72 @@ function AssignCharge({
               value={party}
               onChange={setParty}
               contextKey={contextKey}
+              error={errors["charge-responsible"]}
             />
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
+              <Field
+                id="charge-schedule-count"
                 label="Initial schedules"
-                hint="Between 1 and 120 schedules."
+                description="Between 1 and 120 schedules."
+                error={errors["charge-schedule-count"]}
+                required
               >
-                <input
-                  aria-label="Initial schedules"
-                  type="number"
-                  min={1}
-                  max={120}
-                  required
-                  value={scheduleCount}
-                  onChange={(event) =>
-                    setScheduleCount(Number(event.target.value))
-                  }
-                  className={inputClass}
-                />
-              </FormField>
-              <FormField
+                {(control) => (
+                  <input
+                    {...control}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={120}
+                    value={scheduleCount}
+                    onChange={(event) =>
+                      setScheduleCount(Number(event.target.value))
+                    }
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+              <Field
+                id="charge-first-due-date"
                 label="First due date"
-                hint="Optional; the server supplies its normal schedule date."
+                description="Optional; the server supplies its normal schedule date."
               >
-                <input
-                  aria-label="First due date"
-                  type="date"
-                  value={firstDueDate}
-                  onChange={(event) => setFirstDueDate(event.target.value)}
-                  className={inputClass}
-                />
-              </FormField>
+                {(control) => (
+                  <input
+                    {...control}
+                    type="date"
+                    value={firstDueDate}
+                    onChange={(event) => setFirstDueDate(event.target.value)}
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
             </div>
           </fieldset>
           {mutation.isError ? <InlineError error={mutation.error} /> : null}
-          <div className="flex justify-end gap-2 border-t border-[#edf0f5] pt-4">
-            <Link href={`/admin/charges/definitions/${id}`} className={secondaryButtonClass}>
-              Cancel
-            </Link>
-            <button
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+            <Button
+              asChild
+              variant="secondary"
+              onClick={(event) => {
+                if (!canLeave()) event.preventDefault();
+              }}
+            >
+              <Link href={`/admin/charges/definitions/${id}`}>Cancel</Link>
+            </Button>
+            <Button
               type="submit"
               disabled={mutation.isPending || !place || !party}
-              className={primaryButtonClass}
+              className="min-h-11"
             >
               {mutation.isPending ? "Creating assignment…" : "Create assignment"}
-            </button>
+            </Button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-lg border border-[#cddbf5] bg-[#f1f6ff] p-4 sm:p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2563eb]">
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 sm:p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-action)]">
           Review before commit
         </p>
         <h2 className="mt-1 text-base font-semibold">
@@ -723,7 +911,7 @@ function AssignCharge({
             ? formatMoney(definition.data.amount, definition.data.currency)
             : "Charge amount"}
         </h2>
-        <p className="mt-1 text-xs leading-5 text-[#667085]">
+        <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
           {definition.data
             ? recurrenceLabel(definition.data.recurrence)
             : "Loading recurrence"}
@@ -737,8 +925,8 @@ function AssignCharge({
             value={`${scheduleCount} scheduled charge${scheduleCount === 1 ? "" : "s"}`}
           />
         </dl>
-        <div className="mt-5 flex gap-2 rounded-md bg-white p-3 text-xs leading-5 text-[#475467] ring-1 ring-[#d6e2f8]">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#2563eb]" />
+        <div className="mt-5 flex gap-2 rounded-md bg-white p-3 text-xs leading-5 text-[var(--vms-ink)] ring-1 ring-[var(--vms-line)]">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--vms-action)]" />
           The assignment creates schedules in one operation. Confirm the place
           and payer; a later change must use responsibility transfer.
         </div>
@@ -761,6 +949,9 @@ function AssignmentDetail({
   const [newParty, setNewParty] = useState<FacetItem | null>(null);
   const [reason, setReason] = useState("");
   const [scheduleCount, setScheduleCount] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmTransfer, setConfirmTransfer] = useState(false);
+  const canLeave = useUnsavedChanges(!!newParty || !!reason);
   const query = useQuery({
     queryKey: ["charges", contextKey, "assignment", id],
     queryFn: () => chargesApi.assignment(id),
@@ -769,6 +960,7 @@ function AssignmentDetail({
     queryKey: ["charges", contextKey, "schedules", id, page],
     queryFn: () => chargesApi.schedules(id, page),
     enabled: allow("list"),
+    placeholderData: (previous) => previous,
   });
   const mutation = useMutation({
     mutationFn: (operation: "transfer" | "schedule") =>
@@ -801,31 +993,78 @@ function AssignmentDetail({
   }
 
   const assignment = query.data;
+  const scheduleColumns: Column<Schedule>[] = [
+    {
+      key: "due_date",
+      header: "Due date",
+      accessor: (schedule) => (
+        <time dateTime={schedule.due_date}>
+          {formatDate(schedule.due_date)}
+        </time>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      accessor: (schedule) => (
+        <span className="whitespace-nowrap tabular-nums">
+          {formatMoney(schedule.amount, schedule.currency)}
+        </span>
+      ),
+    },
+    {
+      key: "balance",
+      header: "Balance",
+      accessor: (schedule) => (
+        <span className="whitespace-nowrap font-semibold tabular-nums">
+          {formatMoney(schedule.balance, schedule.currency)}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      accessor: (schedule) => (
+        <Badge
+          variant={
+            schedule.status === "paid"
+              ? "success"
+              : schedule.status === "void"
+                ? "danger"
+                : "neutral"
+          }
+        >
+          {schedule.status}
+        </Badge>
+      ),
+    },
+  ];
   return (
     <>
-      <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+      <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2563eb]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-action)]">
               Charge assignment
             </p>
             <h2 className="mt-1 text-lg font-semibold">
               {assignment.charge_definition.name}
             </h2>
-            <p className="mt-1 text-sm text-[#667085]">
+            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
               {assignment.target_place.name} · Responsible:{" "}
               {assignment.current_responsibility?.responsible_party
                 .display_name || "Unassigned"}
             </p>
           </div>
-          <Link
-            href={`/admin/charges/definitions/${assignment.charge_definition_id}`}
-            className={secondaryButtonClass}
-          >
-            View definition
-          </Link>
+          <Button asChild variant="secondary">
+            <Link
+              href={`/admin/charges/definitions/${assignment.charge_definition_id}`}
+            >
+              View definition
+            </Link>
+          </Button>
         </div>
-        <div className="grid border-t border-[#edf0f5] sm:grid-cols-3">
+        <div className="grid border-t border-[var(--vms-line)] sm:grid-cols-3">
           <Fact
             label="Outstanding"
             value={formatMoney(
@@ -854,10 +1093,10 @@ function AssignmentDetail({
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.65fr)]">
-        <section className="overflow-hidden rounded-lg border border-[#dce3ee] bg-white shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
-          <div className="border-b border-[#dce3ee] px-4 py-3.5">
-            <h2 className="text-sm font-semibold">Schedules and balances</h2>
-            <p className="mt-0.5 text-xs text-[#667085]">
+        <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <div className="border-b border-[var(--vms-line)] px-4 py-4">
+            <h2 className="text-base font-semibold">Schedules and balances</h2>
+            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
               Amount, due date and remaining balance for this assignment.
             </p>
           </div>
@@ -865,44 +1104,72 @@ function AssignmentDetail({
             <RestrictedState detail="You can view the assignment, but not its schedules." />
           ) : schedules.isPending ? (
             <TableSkeleton rows={4} />
-          ) : schedules.isError ? (
+          ) : schedules.isError && !schedules.data ? (
             <InlineFailure
               title="Schedules could not be loaded"
               error={schedules.error}
               onRetry={() => schedules.refetch()}
             />
-          ) : schedules.data.items.length ? (
-            <>
-              <div className="overflow-x-auto">
-                <div
-                  className="charge-schedule-header border-b border-[#edf0f5] bg-[#f8faff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#667085]"
-                  style={scheduleGridStyle}
-                >
-                  <span>Due date</span>
-                  <span>Amount</span>
-                  <span>Balance</span>
-                  <span>Status</span>
-                </div>
-                <ul className="divide-y divide-[#edf0f5]">
-                  {schedules.data.items.map((schedule) => (
-                    <ScheduleRow key={schedule.id} schedule={schedule} />
-                  ))}
-                </ul>
-              </div>
-            </>
           ) : (
-            <EmptyState
-              icon={CalendarDays}
-              title="No schedules yet."
-              detail="Generate a schedule when the assignment is ready to bill."
+            <DataTable
+              data={schedules.data?.items || []}
+              columns={scheduleColumns}
+              searchable={false}
+              serverSide
+              pageSize={20}
+              total={schedules.data?.total || 0}
+              currentPage={page}
+              onPageChange={setPage}
+              isLoading={schedules.isFetching && !schedules.data}
+              emptyMessage="No schedules yet. Generate a schedule when the assignment is ready to bill."
+              tableLabel="Charge schedules"
+              scrollHint="Scroll horizontally to compare due dates and balances."
+              isStale={schedules.isError && !!schedules.data}
+              onRetry={() => schedules.refetch()}
+              mobileSummary={(schedule) => (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-[var(--vms-ink-muted)]">
+                        Due date
+                      </p>
+                      <time
+                        dateTime={schedule.due_date}
+                        className="mt-1 block text-sm font-semibold"
+                      >
+                        {formatDate(schedule.due_date)}
+                      </time>
+                    </div>
+                    <Badge
+                      variant={
+                        schedule.status === "paid"
+                          ? "success"
+                          : schedule.status === "void"
+                            ? "danger"
+                            : "neutral"
+                      }
+                    >
+                      {schedule.status}
+                    </Badge>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <dt className="text-[var(--vms-ink-muted)]">Amount</dt>
+                      <dd className="mt-1 font-semibold tabular-nums">
+                        {formatMoney(schedule.amount, schedule.currency)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--vms-ink-muted)]">Balance</dt>
+                      <dd className="mt-1 font-semibold tabular-nums">
+                        {formatMoney(schedule.balance, schedule.currency)}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
             />
           )}
-          <Pagination
-            page={page}
-            totalPages={schedules.data?.total_pages || 0}
-            busy={schedules.isFetching}
-            onPage={setPage}
-          />
         </section>
 
         <section className="space-y-4">
@@ -918,26 +1185,34 @@ function AssignmentDetail({
                   mutation.mutate("schedule");
                 }}
               >
-                <FormField label="Schedules">
-                  <input
-                    aria-label="Schedules"
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={scheduleCount}
-                    onChange={(event) =>
-                      setScheduleCount(Number(event.target.value))
-                    }
-                    className={inputClass}
-                  />
-                </FormField>
-                <button
+                <Field
+                  id="charge-generate-count"
+                  label="Schedules"
+                  description="Add between 1 and 120 due dates."
+                  required
+                >
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={120}
+                      value={scheduleCount}
+                      onChange={(event) =>
+                        setScheduleCount(Number(event.target.value))
+                      }
+                      className={fieldControlClassName}
+                    />
+                  )}
+                </Field>
+                <Button
                   type="submit"
-                  disabled={mutation.isPending}
-                  className={primaryButtonClass}
+                  isLoading={mutation.isPending}
+                  className="min-h-11 w-full"
                 >
                   Generate schedules
-                </button>
+                </Button>
               </form>
             </ActionPanel>
           ) : null}
@@ -951,42 +1226,56 @@ function AssignmentDetail({
                 className="space-y-3"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  if (
-                    window.confirm(
-                      "Transfer responsibility for unpaid charges?",
-                    )
-                  ) {
-                    mutation.mutate("transfer");
+                  const nextErrors: Record<string, string> = {};
+                  if (!newParty) {
+                    nextErrors["charge-new-responsible"] =
+                      "Choose the new responsible Party.";
+                  }
+                  if (!reason.trim()) {
+                    nextErrors["charge-transfer-reason"] =
+                      "Explain why responsibility is changing.";
+                  }
+                  setErrors(nextErrors);
+                  if (!Object.keys(nextErrors).length) {
+                    setConfirmTransfer(true);
                   }
                 }}
               >
+                <FormErrorSummary errors={errors} />
                 <FacetPicker
                   facet="parties"
                   label="New responsible person or organization"
                   value={newParty}
                   onChange={setNewParty}
                   contextKey={contextKey}
+                  error={errors["charge-new-responsible"]}
                 />
-                <FormField label="Reason">
-                  <input
-                    aria-label="Reason"
-                    required
-                    maxLength={255}
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    placeholder="Why responsibility is changing"
-                    className={inputClass}
-                  />
-                </FormField>
-                <button
+                <Field
+                  id="charge-transfer-reason"
+                  label="Reason"
+                  error={errors["charge-transfer-reason"]}
+                  required
+                >
+                  {(control) => (
+                    <input
+                      {...control}
+                      maxLength={255}
+                      value={reason}
+                      onChange={(event) => setReason(event.target.value)}
+                      placeholder="Why responsibility is changing"
+                      className={fieldControlClassName}
+                    />
+                  )}
+                </Field>
+                <Button
                   type="submit"
                   disabled={
                     !newParty || !reason.trim() || mutation.isPending
                   }
-                  className={primaryButtonClass}
+                  className="min-h-11 w-full"
                 >
                   Review and transfer
-                </button>
+                </Button>
               </form>
             </ActionPanel>
           ) : null}
@@ -1002,29 +1291,45 @@ function AssignmentDetail({
           ) : null}
         </section>
       </div>
+      <Modal
+        isOpen={confirmTransfer}
+        onClose={() => setConfirmTransfer(false)}
+        title="Transfer charge responsibility?"
+        description="Unpaid schedules will follow the new responsible Party. Paid schedules keep their current payer and history."
+      >
+        <dl className="space-y-3 text-sm">
+          <div className="flex items-start justify-between gap-4 border-b border-[var(--vms-line)] pb-3">
+            <dt className="text-[var(--vms-ink-muted)]">Current Party</dt>
+            <dd className="text-right font-semibold">
+              {assignment.current_responsibility?.responsible_party
+                .display_name || "Unassigned"}
+            </dd>
+          </div>
+          <div className="flex items-start justify-between gap-4 border-b border-[var(--vms-line)] pb-3">
+            <dt className="text-[var(--vms-ink-muted)]">New Party</dt>
+            <dd className="text-right font-semibold">{newParty?.label}</dd>
+          </div>
+          <div>
+            <dt className="text-[var(--vms-ink-muted)]">Reason</dt>
+            <dd className="mt-1">{reason}</dd>
+          </div>
+        </dl>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="secondary" onClick={() => setConfirmTransfer(false)}>
+            Keep current Party
+          </Button>
+          <Button
+            isLoading={mutation.isPending}
+            onClick={() => {
+              mutation.mutate("transfer");
+              setConfirmTransfer(false);
+            }}
+          >
+            Transfer responsibility
+          </Button>
+        </div>
+      </Modal>
     </>
-  );
-}
-
-function ScheduleRow({ schedule }: { schedule: Schedule }) {
-  return (
-    <li
-      className="charge-schedule-row px-4 py-3 text-sm"
-      style={scheduleGridStyle}
-    >
-      <span className="font-medium">
-        {formatDate(schedule.due_date)}
-      </span>
-      <span className="tabular-nums">
-        {formatMoney(schedule.amount, schedule.currency)}
-      </span>
-      <span className="tabular-nums text-[#475467]">
-        {formatMoney(schedule.balance, schedule.currency)}
-      </span>
-      <span className="w-fit rounded-full bg-[#f1f6ff] px-2 py-1 text-[10px] font-semibold capitalize text-[#1d4ed8]">
-        {schedule.status}
-      </span>
-    </li>
   );
 }
 
@@ -1038,33 +1343,11 @@ function ActionPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-[#dce3ee] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
+    <section className="rounded-lg border border-[var(--vms-line)] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <p className="mt-1 text-xs leading-5 text-[#667085]">{description}</p>
+      <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">{description}</p>
       <div className="mt-4">{children}</div>
     </section>
-  );
-}
-
-function FormField({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className="block text-xs font-semibold text-[#344054]">
-      {label}
-      <span className="mt-1.5 block">{children}</span>
-      {hint ? (
-        <span className="mt-1.5 block text-[11px] font-normal leading-4 text-[#98a2b3]">
-          {hint}
-        </span>
-      ) : null}
-    </label>
   );
 }
 
@@ -1080,27 +1363,27 @@ function SummaryMetric({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="border-b border-[#edf0f5] px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+    <div className="border-b border-[var(--vms-line)] px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div className="flex items-start justify-between gap-3">
         <span>
-          <span className="block text-xs text-[#667085]">{label}</span>
+          <span className="block text-xs text-[var(--vms-ink-muted)]">{label}</span>
           <strong className="mt-2 block text-[24px] font-semibold leading-none tracking-[-0.035em]">
             {value}
           </strong>
         </span>
-        <span className="grid h-8 w-8 place-items-center rounded-md bg-[#f1f6ff] text-[#2563eb]">
+        <span className="grid h-8 w-8 place-items-center rounded-md bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="mt-2 text-[11px] leading-4 text-[#98a2b3]">{detail}</p>
+      <p className="mt-2 text-[11px] leading-4 text-[var(--vms-ink-muted)]">{detail}</p>
     </div>
   );
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-[#edf0f5] px-4 py-3.5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <dt className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#98a2b3]">
+    <div className="border-b border-[var(--vms-line)] px-4 py-3.5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
         {label}
       </dt>
       <dd className="mt-1 text-sm font-semibold">{value}</dd>
@@ -1118,15 +1401,15 @@ function GuidePanel({
   items: string[];
 }) {
   return (
-    <section className="rounded-lg border border-[#cddbf5] bg-[#f1f6ff] p-4 sm:p-5">
-      <span className="grid h-9 w-9 place-items-center rounded-md bg-white text-[#2563eb] ring-1 ring-[#d6e2f8]">
+    <section className="rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 sm:p-5">
+      <span className="grid h-9 w-9 place-items-center rounded-md bg-white text-[var(--vms-action)] ring-1 ring-[var(--vms-line)]">
         <Icon className="h-4 w-4" />
       </span>
       <h2 className="mt-4 text-sm font-semibold">{title}</h2>
       <ol className="mt-3 space-y-3">
         {items.map((item, index) => (
-          <li key={item} className="flex gap-3 text-xs leading-5 text-[#475467]">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[10px] font-bold text-[#2563eb] ring-1 ring-[#d6e2f8]">
+          <li key={item} className="flex gap-3 text-xs leading-5 text-[var(--vms-ink)]">
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--vms-action)] ring-1 ring-[var(--vms-line)]">
               {index + 1}
             </span>
             {item}
@@ -1147,13 +1430,13 @@ function ReviewFact({
   value?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 border-b border-[#d6e2f8] pb-3 last:border-0 last:pb-0">
-      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2563eb]" />
+    <div className="flex items-start gap-3 border-b border-[var(--vms-line)] pb-3 last:border-0 last:pb-0">
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--vms-action)]" />
       <div>
-        <dt className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#667085]">
+        <dt className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
           {label}
         </dt>
-        <dd className="mt-0.5 font-medium text-[#0f1b31]">
+        <dd className="mt-0.5 font-medium text-[var(--vms-ink)]">
           {value || "Not selected"}
         </dd>
       </div>
@@ -1175,48 +1458,6 @@ function StatusBadge({ active }: { active: boolean }) {
   );
 }
 
-function Pagination({
-  page,
-  totalPages,
-  busy,
-  onPage,
-}: {
-  page: number;
-  totalPages: number;
-  busy: boolean;
-  onPage: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-  return (
-    <nav
-      aria-label="Charge pagination"
-      className="flex items-center justify-between border-t border-[#edf0f5] px-4 py-3 text-xs"
-    >
-      <span className="text-[#667085]">
-        Page {page} of {totalPages}
-      </span>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={page <= 1 || busy}
-          onClick={() => onPage(page - 1)}
-          className={secondaryButtonClass}
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          disabled={page >= totalPages || busy}
-          onClick={() => onPage(page + 1)}
-          className={secondaryButtonClass}
-        >
-          Next
-        </button>
-      </div>
-    </nav>
-  );
-}
-
 function EmptyState({
   icon: Icon,
   title,
@@ -1230,11 +1471,11 @@ function EmptyState({
 }) {
   return (
     <div className="px-5 py-10 text-center">
-      <span className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-[#f1f6ff] text-[#2563eb]">
+      <span className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
         <Icon className="h-5 w-5" />
       </span>
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-[#667085]">
+      <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-[var(--vms-ink-muted)]">
         {detail}
       </p>
       {action ? <div className="mt-4">{action}</div> : null}
@@ -1244,7 +1485,7 @@ function EmptyState({
 
 function RestrictedState({ detail }: { detail: string }) {
   return (
-    <div className="flex items-start gap-3 px-4 py-6 text-sm text-[#667085]">
+    <div className="flex items-start gap-3 px-4 py-6 text-sm text-[var(--vms-ink-muted)]">
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       {detail}
     </div>
@@ -1255,7 +1496,7 @@ function InlineError({ error }: { error: unknown }) {
   return (
     <p
       role="alert"
-      className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
+      className="flex items-start gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-3 py-2 text-xs text-[var(--vms-danger)]"
     >
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       {parseApiError(error).message}
@@ -1276,13 +1517,13 @@ function InlineFailure({
     <div role="alert" className="px-5 py-8 text-center">
       <AlertCircle className="mx-auto h-6 w-6 text-red-600" />
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-xs text-[#667085]">
+      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
         {parseApiError(error).message}
       </p>
-      <button type="button" onClick={onRetry} className={`${secondaryButtonClass} mt-4`}>
-        <RefreshCw className="h-3.5 w-3.5" />
+      <Button variant="secondary" className="mt-4" onClick={onRetry}>
+        <RefreshCw className="h-4 w-4" aria-hidden="true" />
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -1299,17 +1540,17 @@ function PageState({
   return (
     <section
       role={onRetry ? "alert" : "alert"}
-      className="rounded-lg border border-[#dce3ee] bg-white p-6 text-center shadow-[0_1px_2px_rgba(15,27,49,0.04)]"
+      className="rounded-lg border border-[var(--vms-line)] bg-white p-6 text-center shadow-[0_1px_2px_rgba(15,27,49,0.04)]"
     >
-      <AlertCircle className="mx-auto h-6 w-6 text-[#667085]" />
+      <AlertCircle className="mx-auto h-6 w-6 text-[var(--vms-ink-muted)]" />
       <h1 className="mt-3 text-base font-semibold">{title}</h1>
-      <p className="mx-auto mt-1 max-w-lg text-sm leading-6 text-[#667085]">
+      <p className="mx-auto mt-1 max-w-lg text-sm leading-6 text-[var(--vms-ink-muted)]">
         {detail}
       </p>
       {onRetry ? (
-        <button type="button" onClick={onRetry} className={`${secondaryButtonClass} mt-4`}>
+        <Button variant="secondary" className="mt-4" onClick={onRetry}>
           Retry
-        </button>
+        </Button>
       ) : null}
     </section>
   );
@@ -1319,24 +1560,24 @@ function PageSkeleton({ label }: { label: string }) {
   return (
     <div className="space-y-4" role="status">
       <span className="sr-only">{label}</span>
-      <div className="h-24 animate-pulse rounded-lg bg-[#e8edf5]" />
+      <div className="h-24 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
       <div className="grid gap-3 sm:grid-cols-3">
         {[0, 1, 2].map((item) => (
-          <div key={item} className="h-24 animate-pulse rounded-lg bg-[#e8edf5]" />
+          <div key={item} className="h-24 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
         ))}
       </div>
-      <div className="h-72 animate-pulse rounded-lg bg-[#e8edf5]" />
+      <div className="h-72 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
     </div>
   );
 }
 
 function TableSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-[#edf0f5] px-4" role="status">
+    <div className="divide-y divide-[var(--vms-line)] px-4" role="status">
       <span className="sr-only">Loading charge rows</span>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className="h-14 animate-pulse py-3">
-          <div className="h-full rounded bg-[#eef2f7]" />
+          <div className="h-full rounded bg-[var(--vms-surface-subtle)]" />
         </div>
       ))}
     </div>
@@ -1373,25 +1614,3 @@ function formatDate(value: string) {
 function recurrenceLabel(value: string) {
   return recurrenceLabels[value] || value.replaceAll("_", " ");
 }
-
-const inputClass =
-  "w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm text-[#0f1b31] outline-none transition placeholder:text-[#98a2b3] focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbe7ff] disabled:cursor-not-allowed disabled:bg-[#f8fafc]";
-const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-md bg-[#2563eb] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-55";
-const secondaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-xs font-semibold text-[#475467] transition hover:border-[#94a3b8] hover:bg-[#f8faff] hover:text-[#0f1b31] disabled:cursor-not-allowed disabled:opacity-50";
-const directoryGridStyle: CSSProperties = {
-  display: "grid",
-  minWidth: "760px",
-  gridTemplateColumns:
-    "minmax(0, 2fr) minmax(9rem, 1fr) minmax(8rem, 1fr) 6rem 1.5rem",
-  alignItems: "center",
-  gap: "1rem",
-};
-const scheduleGridStyle: CSSProperties = {
-  display: "grid",
-  minWidth: "560px",
-  gridTemplateColumns: "minmax(0, 1.2fr) repeat(2, minmax(8rem, 1fr)) 7rem",
-  alignItems: "center",
-  gap: "1rem",
-};
