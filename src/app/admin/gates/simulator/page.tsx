@@ -322,7 +322,7 @@ export default function AccessControlSimulatorPage() {
     },
   });
 
-  const sites = topologyQuery.data?.sites || [];
+  const sites = topologyQuery.data?.places || [];
   const lanes = useMemo(
     () =>
       sites.flatMap((site) =>
