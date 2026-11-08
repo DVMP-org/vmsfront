@@ -30,6 +30,7 @@ import {
   workspaceAreaMeta,
   type WorkspaceArea,
   type WorkspaceCard,
+  type WorkspaceCardPlace,
 } from "@/features/workspaces/catalog";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Residency } from "@/types";
@@ -122,6 +123,11 @@ export const Header = memo(function Header({
               <WorkspaceSwitcher
                 selectedResidency={selectedResidency}
                 isAdminRoute={isAdminRoute}
+                managementPlace={
+                  workspaceContext.data?.management?.is_administrator
+                    ? workspaceContext.data.management.authoritative_place
+                    : null
+                }
               />
             )}
           </div>
@@ -276,9 +282,11 @@ const MenuAction = memo(function MenuAction({
 function WorkspaceSwitcher({
   selectedResidency,
   isAdminRoute,
+  managementPlace,
 }: {
   selectedResidency: Residency | null;
   isAdminRoute?: boolean | null;
+  managementPlace?: WorkspaceCardPlace | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -299,6 +307,7 @@ function WorkspaceSwitcher({
   const workspaceCards = buildWorkspaceCards(
     isAdmin ? adminProfile : null,
     currentContext.data?.workspaces || [],
+    managementPlace,
   );
   const managementWorkspace = workspaceCards.find(
     (card) => card.area === "management",
@@ -314,7 +323,7 @@ function WorkspaceSwitcher({
     .filter((group) => group.cards.length > 0);
 
   const currentWorkspaceName = isAdminRoute
-    ? selectedProperty?.name || "Management workspace"
+    ? selectedProperty?.name || "Organization workspace"
     : selectedResidency?.name || "Select Estate";
 
   const currentWorkspaceIcon = isAdminRoute ? (
@@ -350,7 +359,11 @@ function WorkspaceSwitcher({
 
   const handleWorkspaceSwitch = (card: WorkspaceCard) => {
     if (card.area === "management") {
-      setSelectedProperty(null);
+      setSelectedProperty(
+        card.place
+          ? { id: card.place.id, name: card.place.name }
+          : null,
+      );
     } else if (card.relationship) {
       setSelectedProperty({
         id: card.relationship.place.id,

@@ -84,6 +84,15 @@ export default function AdminDashboardPage() {
     if (requested) setShowFirstWorkspaceSetup(true);
   }, []);
 
+  useEffect(() => {
+    if (!data) return;
+    if (!data.root_places.length) {
+      router.replace("/admin/properties/new?setup=first-place");
+    } else if (!selectedProperty) {
+      router.replace("/admin/properties");
+    }
+  }, [data, router, selectedProperty]);
+
   if (dashboard.isPending) return <DashboardSkeleton />;
   if (dashboard.isError && !data) {
     return (
@@ -100,6 +109,30 @@ export default function AdminDashboardPage() {
           onClick={() => dashboard.refetch()}
         >
           Retry
+        </Button>
+      </div>
+    );
+  }
+  if (!data?.root_places.length || !selectedProperty) {
+    return (
+      <p role="status" className="text-sm text-slate-600">
+        Opening property setup…
+      </p>
+    );
+  }
+  if (!context.data?.management?.is_administrator) {
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+      >
+        <p className="font-semibold">Property management access required</p>
+        <p className="mt-1">
+          The management dashboard belongs to a property. Select a property you
+          administer or create the first property for this organization.
+        </p>
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/admin/properties">Open Properties</Link>
         </Button>
       </div>
     );

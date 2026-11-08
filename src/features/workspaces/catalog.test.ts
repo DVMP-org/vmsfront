@@ -4,6 +4,7 @@ import {
   areaForRelationship,
   buildPropertyWorkspaces,
   buildWorkspaceCards,
+  canOpenManagementDashboard,
   qualifiedPlaceName,
   roleLabel,
   workspaceDisplayName,
@@ -47,7 +48,7 @@ describe("workspace catalog", () => {
       relationship("tenant", "office"),
       relationship("employee", "hotel"),
       relationship("guest_of", "hotel"),
-    ]);
+    ], relationship("admin", "organization").place);
 
     expect(cards.map((card) => card.area)).toEqual([
       "management",
@@ -57,10 +58,25 @@ describe("workspace catalog", () => {
       "guest",
     ]);
     expect(cards[0].roleLabel).toBe("Super administrator");
+    expect(cards[0].title).toBe("Place organization management");
     expect(cards.at(-1)?.href).toBe("/workspace/hotel");
     expect(cards.find((card) => card.area === "guest")?.title).toMatch(
       /Stay at/,
     );
+  });
+
+  it("does not create a management dashboard before a place admin exists", () => {
+    const admin = {
+      role: { name: "Super Admin", permissions_parsed: ["*"] },
+    } as Admin;
+
+    expect(buildWorkspaceCards(admin, [])).toEqual([]);
+  });
+
+  it("requires a selected place and place-admin authority for the dashboard", () => {
+    expect(canOpenManagementDashboard(null, true)).toBe(false);
+    expect(canOpenManagementDashboard("place", false)).toBe(false);
+    expect(canOpenManagementDashboard("place", true)).toBe(true);
   });
 
   it("classifies tenant roles as occupancy and formats labels", () => {

@@ -19,6 +19,7 @@ import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
+import { SetupProgress } from "@/components/onboarding/SetupProgress";
 import {
   Property,
   PropertyDetail,
@@ -28,7 +29,12 @@ import {
   propertyKinds,
 } from "@/features/properties/api";
 import "@/app/admin/properties/styles.css";
-export interface PropertyRoute { id?: string; action?: "new" | "edit" | "move"; parentId?: string }
+export interface PropertyRoute {
+  id?: string;
+  action?: "new" | "edit" | "move";
+  parentId?: string;
+  setup?: "first-place";
+}
 export default function PropertiesPage({ route = {} }: { route?: PropertyRoute }) {
   const organization = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
@@ -368,13 +374,20 @@ function Workspace({
           aria-label="Property details"
         >
           {creating && allowed("create") ? (
-            <PropertyForm
-              key={createParent ? `child:${createParent.id}` : "new-root"}
-              context={context}
-              initialParent={createParent}
-              onCancel={() => router.push("/admin/properties")}
-              onSaved={changed}
-            />
+            <>
+              {route.setup === "first-place" ? (
+                <div className="mb-5">
+                  <SetupProgress currentStep="workspace" />
+                </div>
+              ) : null}
+              <PropertyForm
+                key={createParent ? `child:${createParent.id}` : "new-root"}
+                context={context}
+                initialParent={createParent}
+                onCancel={() => router.push("/admin/properties")}
+                onSaved={changed}
+              />
+            </>
           ) : selected && allowed("show") ? (
             detail.isPending ? (
               <p className="property-loading" role="status">
