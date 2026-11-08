@@ -1,0 +1,67 @@
+[
+  {
+    "viewport": "320",
+    "status": 200,
+    "documentWidth": 320,
+    "viewportWidth": 320,
+    "bodyWidth": 320,
+    "horizontalOverflow": false,
+    "focus": {
+      "tag": "A",
+      "label": "VMS foundations home"
+    },
+    "pageErrors": []
+  },
+  {
+    "viewport": "390",
+    "status": 200,
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focus": {
+      "tag": "A",
+      "label": "VMS foundations home"
+    },
+    "pageErrors": []
+  },
+  {
+    "viewport": "768",
+    "status": 200,
+    "documentWidth": 768,
+    "viewportWidth": 768,
+    "bodyWidth": 768,
+    "horizontalOverflow": false,
+    "focus": {
+      "tag": "A",
+      "label": "VMS foundations home"
+    },
+    "pageErrors": []
+  },
+  {
+    "viewport": "1024",
+    "status": 200,
+    "documentWidth": 1024,
+    "viewportWidth": 1024,
+    "bodyWidth": 1024,
+    "horizontalOverflow": false,
+    "focus": {
+      "tag": "A",
+      "label": "VMS foundations home"
+    },
+    "pageErrors": []
+  },
+  {
+    "viewport": "1440",
+    "status": 200,
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "bodyWidth": 1440,
+    "horizontalOverflow": false,
+    "focus": {
+      "tag": "A",
+      "label": "VMS foundations home"
+    },
+    "pageErrors": []
+  }
+]

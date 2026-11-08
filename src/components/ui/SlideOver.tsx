@@ -1,94 +1,100 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { cn } from "@/lib/utils";
+import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-interface SlideOverProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title?: string;
-    description?: string;
-    children: React.ReactNode;
-    size?: "sm" | "md" | "lg" | "xl" | "full";
+import { cn } from "@/lib/utils";
+import { useDialogFocus } from "./useDialogFocus";
+
+export interface SlideOverProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  description?: string;
+  children: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
+  className?: string;
+  ariaLabel?: string;
 }
 
+const sizes: Record<NonNullable<SlideOverProps["size"]>, string> = {
+  sm: "sm:max-w-md",
+  md: "sm:max-w-xl",
+  lg: "sm:max-w-3xl",
+  xl: "sm:max-w-5xl",
+  full: "sm:max-w-full",
+};
+
 export function SlideOver({
-    isOpen,
-    onClose,
-    title,
-    description,
-    children,
-    size = "md",
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+  size = "md",
+  className,
+  ariaLabel = "Panel",
 }: SlideOverProps) {
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const generatedId = React.useId();
+  const titleId = `drawer-title-${generatedId.replace(/:/g, "")}`;
+  const descriptionId = `drawer-description-${generatedId.replace(/:/g, "")}`;
+  useDialogFocus(isOpen, onClose, panelRef);
 
-        if (isOpen) {
-            document.addEventListener("keydown", handleEscape);
-            document.body.style.overflow = "hidden";
-        }
+  if (!isOpen || typeof document === "undefined") return null;
 
-        return () => {
-            document.removeEventListener("keydown", handleEscape);
-            document.body.style.overflow = "unset";
-        };
-    }, [isOpen, onClose]);
-
-    const sizes = {
-        sm: "max-w-md",
-        md: "max-w-lg xs:max-w-xl",
-        lg: "max-w-2xl xs:max-w-3xl",
-        xl: "max-w-4xl xs:max-w-5xl",
-        full: "max-w-full",
-    };
-
-    return (
-        <div
-            className={cn(
-                "fixed inset-0 z-50 flex justify-end overflow-hidden transition-opacity duration-300",
-                isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-            )}
-        >
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
-                onClick={onClose}
-                aria-hidden="true"
-            />
-
-            {/* Panel */}
-            <div
-                className={cn(
-                    "relative flex w-full flex-col bg-background shadow-2xl transition-transform duration-500 ease-in-out sm:duration-700",
-                    isOpen ? "translate-x-0" : "translate-x-full",
-                    sizes[size]
-                )}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between border-b px-4 py-4 sm:px-6">
-                    <div>
-                        {title && (
-                            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-                        )}
-                        {description && (
-                            <p className="text-sm text-muted-foreground">{description}</p>
-                        )}
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                        aria-label="Close"
-                    >
-                        <X className="h-6 w-6" />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">{children}</div>
-            </div>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <section
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : ariaLabel}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
+        className={cn(
+          "relative flex h-full w-full flex-col border-l border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
+          sizes[size],
+          className,
+        )}
+      >
+        <header className="flex min-h-16 items-start justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
+          <div className="min-w-0">
+            {title ? (
+              <h2 id={titleId} className="text-lg font-semibold leading-6">
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                id={descriptionId}
+                className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]"
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close panel"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+          >
+            <X aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6">
+          {children}
         </div>
-    );
+      </section>
+    </div>,
+    document.body,
+  );
 }

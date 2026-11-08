@@ -1,87 +1,97 @@
-import React, { useEffect } from "react";
-import { cn } from "@/lib/utils";
+"use client";
+
+import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-interface ModalProps {
+import { cn } from "@/lib/utils";
+import { useDialogFocus } from "./useDialogFocus";
+
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  description?: string;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
+  ariaLabel?: string;
 }
+
+const sizes: Record<NonNullable<ModalProps["size"]>, string> = {
+  sm: "max-w-md",
+  md: "max-w-xl",
+  lg: "max-w-3xl",
+  xl: "max-w-5xl",
+};
 
 export function Modal({
   isOpen,
   onClose,
   title,
+  description,
   children,
   size = "md",
-  className
+  className,
+  ariaLabel = "Dialog",
 }: ModalProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const generatedId = React.useId();
+  const titleId = `dialog-title-${generatedId.replace(/:/g, "")}`;
+  const descriptionId = `dialog-description-${generatedId.replace(/:/g, "")}`;
+  useDialogFocus(isOpen, onClose, panelRef);
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
+  if (!isOpen || typeof document === "undefined") return null;
 
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  const sizes = {
-    sm: "max-w-md",
-    md: "max-w-lg xs:max-w-xl",
-    lg: "max-w-2xl xs:max-w-3xl",
-    xl: "max-w-4xl xs:max-w-5xl",
-  };
-
-  return (
-    <div className={"fixed inset-0 z-50 flex items-center justify-center px-3 py-4 xs:px-4 xs:py-6 sm:px-0"}>
-      {/* Backdrop */}
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:items-center sm:px-4 sm:py-6">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
         onClick={onClose}
         aria-hidden="true"
       />
-
-      {/* Modal */}
-      <div
+      <section
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : ariaLabel}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
         className={cn(
-          "relative w-full rounded-xl bg-background shadow-lg",
-          "max-h-[95vh] xs:max-h-[90vh] overflow-y-auto",
-          "animate-in fade-in zoom-in-95 duration-200",
+          "relative flex max-h-[min(94dvh,58rem)] w-full flex-col overflow-hidden rounded-t-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)] sm:rounded-[var(--vms-radius-overlay)]",
           sizes[size],
-          className
+          className,
         )}
       >
-        {/* Header */}
-        {title && (
-          <div className="flex items-center justify-between border-b px-3 py-3 xs:px-4 xs:py-4 sm:px-6">
-            <h2 className="text-base xs:text-lg sm:text-xl font-semibold pr-2 truncate">
-              {title}
-            </h2>
-            <button
-              onClick={onClose}
-              className="rounded-md p-1.5 hover:bg-accent transition-colors flex-shrink-0 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
-              aria-label="Close modal"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <header className="flex min-h-14 items-start justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            {title ? (
+              <h2 id={titleId} className="text-lg font-semibold leading-6">
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                id={descriptionId}
+                className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]"
+              >
+                {description}
+              </p>
+            ) : null}
           </div>
-        )}
-
-        {/* Content */}
-        <div className="px-3 py-4 xs:px-4 xs:py-5 sm:px-6">{children}</div>
-      </div>
-    </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+          >
+            <X aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="overflow-y-auto p-4 sm:p-5">{children}</div>
+      </section>
+    </div>,
+    document.body,
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "@fontsource-variable/inter";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import "@vms/ui/tokens.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4f7fb",
+  themeColor: "#f5f7f8",
   width: "device-width",
   initialScale: 1,
 }
@@ -53,11 +54,19 @@ export default function RootLayout({
                   const cached = localStorage.getItem('active-branding-theme');
                   if (cached) {
                     const theme = JSON.parse(cached);
-                    if (theme.primary_color) {
-                      root.style.setProperty('--brand-primary', theme.primary_color);
+                    const toRgb = function(hex) {
+                      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return null;
+                      return [1, 3, 5].map(function(offset) {
+                        return parseInt(hex.slice(offset, offset + 2), 16);
+                      }).join(' ');
+                    };
+                    const primary = toRgb(theme.primary_color);
+                    const secondary = toRgb(theme.secondary_color);
+                    if (primary) {
+                      root.style.setProperty('--brand-primary', primary);
                     }
-                    if (theme.secondary_color) {
-                      root.style.setProperty('--brand-secondary', theme.secondary_color);
+                    if (secondary) {
+                      root.style.setProperty('--brand-secondary', secondary);
                     }
                     if (theme.favicon_url) {
                       let favicon = document.querySelector("link[rel='icon']");

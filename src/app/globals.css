@@ -4,96 +4,47 @@
 
 @layer base {
   :root {
-    /* VMSCore light operations palette. Dark mode is intentionally deferred. */
     color-scheme: light;
-    --background: 216 33% 97%;
-    --foreground: 219 48% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 219 48% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 219 48% 11%;
-
-    --primary: 221 83% 53%;
+    /* Compatibility aliases while feature pages migrate to Operations Hub atoms. */
+    --background: var(--vms-canvas-hsl);
+    --foreground: var(--vms-ink-hsl);
+    --card: var(--vms-surface-hsl);
+    --card-foreground: var(--vms-ink-hsl);
+    --popover: var(--vms-surface-hsl);
+    --popover-foreground: var(--vms-ink-hsl);
+    --primary: var(--vms-action-hsl);
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 216 30% 94%;
-    --secondary-foreground: 219 48% 11%;
-
-    --muted: 216 28% 95%;
-    --muted-foreground: 217 13% 44%;
-
-    --accent: 217 42% 95%;
-    --accent-foreground: 221 72% 42%;
-
-    --destructive: 0 72% 51%;
+    --secondary: var(--vms-surface-subtle-hsl);
+    --secondary-foreground: var(--vms-ink-hsl);
+    --muted: var(--vms-surface-subtle-hsl);
+    --muted-foreground: var(--vms-ink-muted-hsl);
+    --accent: var(--vms-surface-subtle-hsl);
+    --accent-foreground: var(--vms-ink-hsl);
+    --destructive: var(--vms-danger-hsl);
     --destructive-foreground: 0 0% 100%;
+    --border: var(--vms-line-hsl);
+    --input: var(--vms-line-hsl);
+    --ring: var(--vms-focus-hsl);
 
-    --border: 216 25% 87%;
-    --input: 216 25% 87%;
-    --ring: 221 83% 53%;
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --radius: 6px;
 
-    --radius-xs: 0.25rem;
-    --radius-sm: 0.375rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-    --radius-xl: 0.875rem;
-    --radius: 0.625rem;
-
-    --brand-primary: 37 99 235;
-    --brand-secondary: 30 64 175;
-    --canvas: #f4f7fb;
-    --ink: #0f1b31;
-    --muted-ink: #667085;
-    --line: #dce3ee;
-    --action: #2563eb;
-  }
-
-  .dark {
-    /* Dark mode - richer, deeper tones */
-    --background: 240 10% 4%;
-    --foreground: 240 5% 96%;
-    --card: 240 6% 10%;
-    --card-foreground: 240 5% 96%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 240 5% 96%;
-
-    /* Primary - brighter for contrast */
-    --primary: 220 90% 61%;
-    --primary-foreground: 240 10% 4%;
-
-    /* Secondary - more defined */
-    --secondary: 240 5% 15%;
-    --secondary-foreground: 240 5% 96%;
-
-    /* Muted - better contrast */
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-
-    /* Accent */
-    --accent: 240 4% 16%;
-    --accent-foreground: 240 5% 96%;
-
-    /* Destructive - softer in dark mode */
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Borders - more visible */
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 220 90% 61%;
-
-    /* Brand colors - adjusted for dark */
-    --brand-primary: #3b82f6;
-    --brand-secondary: #64748b;
+    --brand-primary: 31 41 51;
+    --brand-secondary: 89 102 117;
+    --canvas: var(--vms-canvas);
+    --ink: var(--vms-ink);
+    --muted-ink: var(--vms-ink-muted);
+    --line: var(--vms-line);
+    --action: var(--vms-action);
   }
 }
 
 .workspace-switcher {
   --workspace-accent: 33 57 10;
-}
-
-.dark .workspace-switcher {
-  --workspace-accent: 67 96 54;
 }
 
 @layer base {
@@ -123,65 +74,19 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    @apply bg-zinc-200 dark:bg-zinc-800 rounded-full border-2 border-transparent bg-clip-padding transition-colors;
+    @apply rounded-full border-2 border-transparent bg-zinc-300 bg-clip-padding transition-colors;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    @apply bg-zinc-300 dark:bg-zinc-700;
+    @apply bg-zinc-400;
   }
-}
-
-html.dark {
-  color-scheme: light;
-}
-
-html.dark body {
-  background: var(--canvas);
-  color: var(--ink);
 }
 
 @layer components {
-  /* Custom card styles - more distinctive, less generic */
   .card-base {
-    @apply border border-border/60 bg-card;
-    border-radius: var(--radius-lg);
-    box-shadow:
-      0 1px 2px 0 rgba(0, 0, 0, 0.03),
-      0 1px 3px 0 rgba(0, 0, 0, 0.06),
-      0 2px 6px -1px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-  }
-
-  .card-base:hover {
-    box-shadow:
-      0 2px 4px 0 rgba(0, 0, 0, 0.04),
-      0 4px 8px 0 rgba(0, 0, 0, 0.06),
-      0 8px 16px -2px rgba(0, 0, 0, 0.08);
-    border-color: hsl(var(--border));
-  }
-
-  /* Subtle inset effect for depth */
-  .card-inset {
-    position: relative;
-  }
-
-  .card-inset::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(255, 255, 255, 0)
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    @apply border border-[var(--vms-line)] bg-[var(--vms-surface)];
+    border-radius: var(--vms-radius-surface);
+    box-shadow: none;
   }
 }
 

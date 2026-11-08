@@ -1,31 +1,87 @@
-/* Semantic defaults; tenant overrides are produced by the validated brand kit. */
+/*
+ * Operations Hub foundation tokens.
+ *
+ * These are product semantics, not tenant branding. Tenant marks and restrained
+ * identity accents may sit beside them, but may not replace action, focus,
+ * data-series or semantic-state colors.
+ */
+:root,
 [data-vms-theme="light"] {
   color-scheme: light;
-  --vms-surface: #f6f5f1;
-  --vms-text: #202332;
-  --vms-primary: #4143a5;
-  --vms-on-primary: #ffffff;
-  --vms-focus: #4143a5;
-  --vms-border: #848693;
-  --vms-danger: #a12222;
 
-}
-[data-vms-theme="dark"] {
-  color-scheme: dark;
-  --vms-surface: #191b2a;
-  --vms-text: #f5f4f7;
-  --vms-primary: #b9baff;
-  --vms-on-primary: #000000;
-  --vms-focus: #b9baff;
-  --vms-border: #a8a9b8;
-  --vms-danger: #ffb4ab;
-}
-[data-vms-theme] {
-  --vms-radius: 0.7rem;
+  --vms-canvas: #f5f7f8;
+  --vms-surface: #ffffff;
+  --vms-surface-subtle: #eef1f3;
+  --vms-ink: #1f2933;
+  --vms-ink-muted: #667280;
+  --vms-line: #e5e7eb;
+  --vms-line-strong: #c7cdd3;
+
+  --vms-action: #1f2933;
+  --vms-action-hover: #111820;
+  --vms-on-action: #ffffff;
+  --vms-active-accent: #e85d3f;
+  --vms-focus: #b8402a;
+
+  --vms-data-primary: #1f2933;
+  --vms-data-secondary: #596675;
+  --vms-data-tertiary: #9aa4ae;
+
+  --vms-success: #137a4b;
+  --vms-success-subtle: #eaf7f0;
+  --vms-warning: #946200;
+  --vms-warning-subtle: #fff6db;
+  --vms-danger: #b42318;
+  --vms-danger-subtle: #fef0ee;
+  --vms-info: #245fae;
+
+  /* HSL channels support the existing Tailwind opacity utilities. */
+  --vms-canvas-hsl: 200 14% 97%;
+  --vms-surface-hsl: 0 0% 100%;
+  --vms-surface-subtle-hsl: 204 17% 94%;
+  --vms-ink-hsl: 210 24% 16%;
+  --vms-ink-muted-hsl: 214 11% 45%;
+  --vms-line-hsl: 220 13% 91%;
+  --vms-line-strong-hsl: 210 12% 80%;
+  --vms-action-hsl: 210 24% 16%;
+  --vms-action-hover-hsl: 213 31% 10%;
+  --vms-focus-hsl: 11 63% 44%;
+  --vms-success-hsl: 153 73% 28%;
+  --vms-warning-hsl: 39 100% 29%;
+  --vms-danger-hsl: 4 76% 40%;
+
+  --vms-font-interface: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --vms-font-display: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+
+  --vms-radius-control: 6px;
+  --vms-radius-surface: 8px;
+  --vms-radius-overlay: 10px;
   --vms-space-control: 0.625rem;
-  --vms-font-interface: Inter, system-ui, sans-serif;
-  --vms-font-display: Georgia, serif;
-  --vms-motion: 150ms;
+  --vms-control-height: 2.5rem;
+  --vms-control-height-compact: 2rem;
+  --vms-control-height-touch: 2.75rem;
+
+  --vms-motion: 160ms;
+  --vms-motion-slow: 220ms;
+  --vms-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.05);
+  --vms-shadow-overlay: 0 18px 55px rgb(15 23 42 / 0.2);
 }
-[data-vms-density="compact"] { --vms-space-control: 0.375rem; }
-@media (prefers-reduced-motion: reduce) { [data-vms-theme] { --vms-motion: 0ms; } }
+
+[data-vms-density="compact"] {
+  --vms-space-control: 0.375rem;
+  --vms-control-height: 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  [data-vms-theme] {
+    --vms-motion: 0ms;
+    --vms-motion-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

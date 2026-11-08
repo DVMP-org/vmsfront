@@ -1,29 +1,54 @@
-import React from "react";
+import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
-interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "success" | "warning" | "danger" | "secondary" | "outline";
+type BadgeVariant =
+  | "default"
+  | "neutral"
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+  | "secondary"
+  | "outline";
+
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: BadgeVariant;
 }
 
-export function Badge({ className, variant = "default", ...props }: BadgeProps) {
-  const variants = {
-    default: "bg-[rgb(var(--brand-primary)/0.2)] text-[rgb(var(--brand-primary))]",
-    success: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    secondary: "bg-secondary text-secondary-foreground",
-    outline: "bg-transparent border border-border text-border text-muted-foreground",
-  };
+const variants: Record<BadgeVariant, string> = {
+  default:
+    "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
+  neutral:
+    "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
+  info:
+    "border-[color-mix(in_srgb,var(--vms-info)_35%,white)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+  success:
+    "border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]",
+  warning:
+    "border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
+  danger:
+    "border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]",
+  secondary:
+    "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]",
+  outline:
+    "border-[var(--vms-line-strong)] bg-transparent text-[var(--vms-ink-muted)]",
+};
 
-  return (
-    <div
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant = "default", ...props }, ref) => (
+    <span
+      ref={ref}
       className={cn(
-        "inline-flex items-center rounded-full px-2 xs:px-2.5 py-0.5 text-xs font-semibold transition-colors",
+        "inline-flex min-h-6 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold leading-4",
         variants[variant],
-        className
+        className,
       )}
       {...props}
     />
-  );
-}
+  ),
+);
 
+Badge.displayName = "Badge";
+
+export { Badge };
