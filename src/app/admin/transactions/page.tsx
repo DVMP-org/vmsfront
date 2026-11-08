@@ -1,17 +1,27 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminTransactions } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
-import { Card, CardContent } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
-import { DataTable, Column, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  type Column,
+  type FilterConfig,
+  type FilterDefinition,
+} from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { CreditCard, Eye, Search, FilterX } from "lucide-react";
-import { formatCurrency, formatDate, formatDateTime, titleCase } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { AlertCircle, CreditCard, Eye, RefreshCcw } from "lucide-react";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+  titleCase,
+} from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { Transaction, TransactionType } from "@/types";
 
@@ -99,7 +109,8 @@ export default function TransactionsPage() {
         return filters;
     }, [type, status, dateFrom, dateTo]);
 
-    const { data, isLoading, isFetching } = useAdminTransactions({
+    const { data, isLoading, isFetching, isError, error, refetch } =
+      useAdminTransactions({
         page,
         pageSize,
         search: search.trim() || undefined,
@@ -193,76 +204,152 @@ export default function TransactionsPage() {
         },
     ];
 
+    const stale = isError && !!data;
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">System Transactions</h1>
-                    <p className="text-muted-foreground">Monitor and audit all payments and ledger entries.</p>
+        <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+            <PageHeader
+                eyebrow={
+                    <span className="inline-flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5" aria-hidden />
+                        Finance / Transactions
+                    </span>
+                }
+                title="Transactions"
+                description="Monitor payment attempts, settlement outcomes and ledger references for the selected property context."
+                metadata={
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+                        <Badge variant="neutral">{formatNumber(total)} records</Badge>
+                        <span>Newest records first</span>
+                    </div>
+                }
+                primaryAction={
+                    <Button
+                        variant="secondary"
+                        onClick={() => refetch()}
+                        isLoading={isFetching}
+                    >
+                        {!isFetching ? (
+                            <RefreshCcw className="h-4 w-4" aria-hidden />
+                        ) : null}
+                        Refresh
+                    </Button>
+                }
+            />
+
+            {stale ? (
+                <div
+                    role="alert"
+                    className="flex flex-col gap-3 rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <span>
+                        The latest transaction request failed. The previous successful
+                        page remains visible.
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => refetch()}
+                        isLoading={isFetching}
+                    >
+                        Retry
+                    </Button>
                 </div>
-            </div>
+            ) : null}
 
-            <Card className="rounded-lg shadow-none border-border/60">
-                <CardContent className="p-0">
-                    {isLoading || isFetching ? (
-                        <div className="p-6">
-                            <TableSkeleton />
-                        </div>
-                    ) : (
-                        <DataTable
-                            data={transactions}
-                            columns={columns}
-                            searchable={true}
-                            searchPlaceholder="Search by reference..."
-                            pageSize={pageSize}
-                            pageSizeOptions={PAGE_SIZE_OPTIONS}
-                            onPageSizeChange={(s) => {
-                                setPage(1);
-                                setPageSize(s);
-                            }}
-                            showPagination={true}
-                            emptyMessage="No transactions found matching your criteria"
-                            serverSide={true}
-                            total={total}
-                            currentPage={page}
-                            onPageChange={setPage}
-                            initialSearch={search}
-                            onSearchChange={(value) => {
-                                setPage(1);
-                                setSearch(value);
-                            }}
-                            availableFilters={availableFilters}
-                            initialFilters={initialFilters}
-                            onFiltersChange={(filters) => {
-                                setPage(1);
-                                const typeFilter = filters.find((f) => f.field === "type");
-                                const statusFilter = filters.find((f) => f.field === "status");
-
-                                // DataTable uses field_from and field_to internally for date-range
-                                // But they are passed back as individual filters if mapped that way
-                                // Actually handleFilterChange updates the filterValues map
-                                // DataTable.tsx: handleFilterChange(`${filterDef.field}_from`, ...)
-                                const dateFromFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                                const dateToFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
-
-                                setType(typeFilter?.value as string | undefined || undefined);
-                                setStatus(statusFilter?.value as string | undefined || undefined);
-                                setDateFrom(dateFromFilter?.value as string | undefined || undefined);
-                                setDateTo(dateToFilter?.value as string | undefined || undefined);
-                            }}
-                            initialSort={sort}
-                            onSortChange={(newSort) => {
-                                setPage(1);
-                                setSort(newSort);
-                            }}
-                            className="border-none"
-                            disableClientSideFiltering={true}
-                            disableClientSideSorting={true}
-                            isLoading={isLoading || isFetching}
-                        />
-                    )}
-                </CardContent>
-            </Card>
+            {isLoading && !data ? (
+                <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-6">
+                    <TableSkeleton />
+                </div>
+            ) : isError && !data ? (
+                <div
+                    role="alert"
+                    className="rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5 text-sm"
+                >
+                    <p className="flex items-center gap-2 font-semibold">
+                        <AlertCircle className="h-4 w-4" aria-hidden />
+                        Transactions are unavailable
+                    </p>
+                    <p className="mt-1 text-[var(--vms-ink-muted)]">
+                        {(error as Error)?.message ||
+                            "The transaction ledger could not be loaded."}
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => refetch()}
+                        isLoading={isFetching}
+                    >
+                        Retry
+                    </Button>
+                </div>
+            ) : (
+                <DataTable
+                    data={transactions}
+                    columns={columns}
+                    searchable
+                    searchPlaceholder="Search by reference…"
+                    pageSize={pageSize}
+                    pageSizeOptions={PAGE_SIZE_OPTIONS}
+                    onPageSizeChange={(size) => {
+                        setPage(1);
+                        setPageSize(size);
+                    }}
+                    showPagination
+                    emptyMessage="No transactions match the current search and filters."
+                    serverSide
+                    total={total}
+                    currentPage={page}
+                    onPageChange={setPage}
+                    initialSearch={search}
+                    onSearchChange={(value) => {
+                        setPage(1);
+                        setSearch(value);
+                    }}
+                    availableFilters={availableFilters}
+                    initialFilters={initialFilters}
+                    onFiltersChange={(filters) => {
+                        setPage(1);
+                        const typeFilter = filters.find(
+                            (filter) => filter.field === "type",
+                        );
+                        const statusFilter = filters.find(
+                            (filter) => filter.field === "status",
+                        );
+                        const dateFromFilter = filters.find(
+                            (filter) =>
+                                filter.field === "created_at" &&
+                                filter.operator === "gte",
+                        );
+                        const dateToFilter = filters.find(
+                            (filter) =>
+                                filter.field === "created_at" &&
+                                filter.operator === "lte",
+                        );
+                        setType(
+                            (typeFilter?.value as string | undefined) || undefined,
+                        );
+                        setStatus(
+                            (statusFilter?.value as string | undefined) || undefined,
+                        );
+                        setDateFrom(
+                            (dateFromFilter?.value as string | undefined) || undefined,
+                        );
+                        setDateTo(
+                            (dateToFilter?.value as string | undefined) || undefined,
+                        );
+                    }}
+                    initialSort={sort}
+                    onSortChange={(nextSort) => {
+                        setPage(1);
+                        setSort(nextSort);
+                    }}
+                    disableClientSideFiltering
+                    disableClientSideSorting
+                    isLoading={isFetching}
+                />
+            )}
         </div>
     );
 }
