@@ -17,6 +17,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "organization-create-draft-v1";
+const SLUG_UNAVAILABLE_MESSAGE =
+  "This workspace URL is already in use. Choose a different URL.";
 
 interface OrganizationDraft {
   name: string;
@@ -40,6 +42,7 @@ export default function CreateOrganizationPage() {
   const [draftReady, setDraftReady] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [slugCheckPending, setSlugCheckPending] = useState(false);
   const catalog = useQuery({
     queryKey: ["context-catalog"],
     queryFn: contextApi.catalog,
@@ -89,14 +92,38 @@ export default function CreateOrganizationPage() {
   }, [draft.name, draft.slugManuallyEdited]);
 
   useEffect(() => {
+    let cancelled = false;
     const timeout = window.setTimeout(async () => {
       if (draft.slug.length >= 2) {
-        setSlugAvailable(await checkSlug(draft.slug));
+        setSlugCheckPending(true);
+        const available = await checkSlug(draft.slug);
+        if (cancelled) return;
+        setSlugCheckPending(false);
+        setSlugAvailable(available);
+        setErrors((current) => {
+          if (available) {
+            if (current.slug !== SLUG_UNAVAILABLE_MESSAGE) return current;
+            const next = { ...current };
+            delete next.slug;
+            return next;
+          }
+          return { ...current, slug: SLUG_UNAVAILABLE_MESSAGE };
+        });
       } else {
+        setSlugCheckPending(false);
         setSlugAvailable(null);
+        setErrors((current) => {
+          if (current.slug !== SLUG_UNAVAILABLE_MESSAGE) return current;
+          const next = { ...current };
+          delete next.slug;
+          return next;
+        });
       }
     }, 300);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
   }, [draft.slug, checkSlug]);
 
   const update = <Key extends keyof OrganizationDraft>(
@@ -297,7 +324,6 @@ export default function CreateOrganizationPage() {
                     {draft.slug || "your-organization"}.
                     {process.env.NEXT_PUBLIC_BASE_DOMAIN || "yourdomain.com"}
                   </p>
-                  <FieldError message={combinedErrors.slug} />
                 </div>
               </div>
 
@@ -331,9 +357,18 @@ export default function CreateOrganizationPage() {
                 </Link>
                 <Button
                   type="submit"
-                  disabled={isLoading || slugAvailable === false}
+                  disabled={
+                    isLoading ||
+                    isChecking ||
+                    slugCheckPending ||
+                    slugAvailable === false
+                  }
                 >
-                  {isLoading ? "Creating organization…" : "Continue to plan"}
+                  {isLoading
+                    ? "Creating organization…"
+                    : isChecking || slugCheckPending
+                      ? "Checking workspace URL…"
+                      : "Continue to plan"}
                 </Button>
               </div>
             </form>
