@@ -1,9 +1,10 @@
 import manifest from "./manifest.json";
 import routes from "./routes";
 
-export default {
+const electricityPlugin = {
     manifest,
-    routes: routes.routes, // Legacy routes for backward compatibility
     adminRoutes: routes.adminRoutes,
     residentRoutes: routes.residentRoutes
 };
+
+export default electricityPlugin;

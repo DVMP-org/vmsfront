@@ -38,7 +38,6 @@ interface BackendPlugin {
  */
 function validatePlugin(plugin: any): plugin is {
     manifest: any;
-    routes?: any[];
     adminRoutes?: any[];
     residentRoutes?: any[]
 } {
@@ -67,12 +66,10 @@ function validatePlugin(plugin: any): plugin is {
         return false;
     }
 
-    // Check if plugin has at least one route type
-    const hasLegacyRoutes = Array.isArray(plugin.routes) && plugin.routes.length > 0;
     const hasAdminRoutes = Array.isArray(plugin.adminRoutes) && plugin.adminRoutes.length > 0;
     const hasResidentRoutes = Array.isArray(plugin.residentRoutes) && plugin.residentRoutes.length > 0;
 
-    if (!hasLegacyRoutes && !hasAdminRoutes && !hasResidentRoutes) {
+    if (!hasAdminRoutes && !hasResidentRoutes) {
         console.warn(`Plugin ${plugin.manifest.name} has no routes defined`);
     }
 
@@ -205,10 +202,7 @@ async function fetchEnabledPlugins(useCache: boolean = true): Promise<BackendPlu
         // If API fails, try to return cached data as fallback
         if (useCache) {
             const cached = getCachedPlugins();
-            if (cached) {
-                console.log("Using cached plugins due to API error");
-                return cached;
-            }
+            if (cached) return cached;
         }
         // Return empty array on error - plugins won't load
         return [];
@@ -264,7 +258,6 @@ export async function loadPlugins(useCache: boolean = true): Promise<LoadedPlugi
                     ...plugin.manifest,
                     backendVersion: backendPlugin.version,
                 },
-                routes: plugin.routes,
                 adminRoutes: plugin.adminRoutes,
                 residentRoutes: plugin.residentRoutes,
                 backendId: backendPlugin.id,
@@ -293,7 +286,6 @@ export function getPluginRoutesForUserType(
     plugin: LoadedPlugin,
     userType: "admin" | "resident"
 ): PluginRoute[] {
-    // If plugin has separate admin/resident routes, use those
     if (userType === "admin" && plugin.adminRoutes && plugin.adminRoutes.length > 0) {
         return plugin.adminRoutes;
     }
@@ -301,12 +293,6 @@ export function getPluginRoutesForUserType(
         return plugin.residentRoutes;
     }
 
-    // Otherwise, use legacy routes (applies to both)
-    if (plugin.routes && plugin.routes.length > 0) {
-        return plugin.routes;
-    }
-
-    // Fallback to empty array
     return [];
 }
 

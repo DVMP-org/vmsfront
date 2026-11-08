@@ -10,9 +10,6 @@ const AdminPurchasesPage = dynamic(() => import("./pages/admin/PurchasesPage"));
 const ResidentElectricityDashboard = dynamic(() => import("./pages/resident/ElectricityHome"));
 const ResidentPurchaseMeter = dynamic(() => import("./pages/resident/PurchaseMeter"));
 
-// Legacy routes (for backward compatibility - applies to both admin and resident)
-const routes = [];
-
 // Admin-specific routes
 const adminRoutes = [
     {
@@ -51,8 +48,9 @@ const residentRoutes = [
     }
 ];
 
-export default {
-    routes, // Legacy: for backward compatibility
+const pluginRoutes = {
     adminRoutes,
     residentRoutes
 };
+
+export default pluginRoutes;

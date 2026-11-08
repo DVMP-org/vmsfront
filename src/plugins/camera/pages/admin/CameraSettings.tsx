@@ -25,8 +25,11 @@ import {
 } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PluginNotice } from "@/components/plugins/PluginUi";
 import { parseApiError } from "@/lib/error-utils";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { CameraSettings, cameraService } from "@/services/camera-service";
 
 const defaultSettings: CameraSettings = {
@@ -63,17 +66,19 @@ function SettingToggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-start justify-between gap-4 rounded-xl border p-4 text-left transition-colors hover:bg-muted/40"
+      className="flex min-h-11 w-full items-start justify-between gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 text-left transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2"
     >
       <span>
         <span className="block text-sm font-semibold">{label}</span>
-        <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+        <span className="mt-1 block text-xs leading-5 text-[var(--vms-ink-muted)]">
           {description}
         </span>
       </span>
       <span
         className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"
+          checked
+            ? "bg-[var(--vms-success)]"
+            : "bg-[var(--vms-line-strong)]"
         }`}
       >
         <span
@@ -122,6 +127,12 @@ export default function CameraSettingsPage() {
       toast.error(parseApiError(error).message);
     },
   });
+  const isDirty =
+    !!draft &&
+    !!settingsQuery.data &&
+    JSON.stringify(draft) !==
+      JSON.stringify({ ...defaultSettings, ...settingsQuery.data });
+  useUnsavedChanges(isDirty);
 
   if (settingsQuery.isLoading || (!draft && !settingsQuery.isError)) {
     return (
@@ -160,54 +171,70 @@ export default function CameraSettingsPage() {
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-5 pb-8 text-[var(--vms-ink)]"
       onSubmit={(event) => {
         event.preventDefault();
         saveMutation.mutate(draft);
       }}
     >
-      <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-900 px-5 py-6 text-white shadow-sm sm:px-7">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <Badge className="border-white/15 bg-white/10 text-white">
-              Organization-scoped
-            </Badge>
-            <h1 className="mt-3 flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-              <SlidersHorizontal className="h-7 w-7 text-indigo-300" />
-              Camera settings
-            </h1>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
-              Configure secure connectivity, stream limits, screenshots, and
-              retention for cameras in this organization only.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
+      <PageHeader
+        eyebrow="Extensions / Camera"
+        title="Camera settings"
+        description="Configure secure connectivity, stream limits, screenshots, and retention for cameras in this organization only."
+        metadata={<Badge variant="outline">Organization-scoped</Badge>}
+        secondaryActions={
+          <Button
+            type="button"
+            variant="outline"
+            leftNode={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
+            onClick={() => settingsQuery.refetch()}
+            disabled={saveMutation.isPending}
+          >
+            Reload
+          </Button>
+        }
+        primaryAction={
+          <Button
+            type="submit"
+            leftNode={<Save className="h-4 w-4" aria-hidden="true" />}
+            isLoading={saveMutation.isPending}
+            disabled={!isDirty}
+          >
+            Save settings
+          </Button>
+        }
+      />
+
+      {saveMutation.isError ? (
+        <PluginNotice
+          tone="danger"
+          title="Camera settings were not saved"
+          action={
             <Button
               type="button"
-              variant="light-outlined"
-              leftNode={<RefreshCw className="h-4 w-4" />}
-              onClick={() => settingsQuery.refetch()}
-              disabled={saveMutation.isPending}
+              size="sm"
+              variant="outline"
+              onClick={() => saveMutation.mutate(draft)}
             >
-              Reload
+              Retry save
             </Button>
-            <Button
-              type="submit"
-              variant="light"
-              leftNode={<Save className="h-4 w-4" />}
-              isLoading={saveMutation.isPending}
-            >
-              Save settings
-            </Button>
-          </div>
-        </div>
-      </div>
+          }
+        >
+          {parseApiError(saveMutation.error).message}
+        </PluginNotice>
+      ) : null}
+
+      {saveMutation.isSuccess ? (
+        <PluginNotice tone="success" title="Camera settings saved">
+          The configured limits now apply to this organization.
+        </PluginNotice>
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Network className="h-5 w-5 text-indigo-600" />
+              <Network className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
               Connectivity and security
             </CardTitle>
             <CardDescription>
@@ -307,7 +334,7 @@ export default function CameraSettingsPage() {
                     event.target.value as CameraSettings["stream_quality"],
                   )
                 }
-                className="h-10 w-full rounded border bg-background px-3 text-sm"
+                className="h-10 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] sm:text-sm"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -321,7 +348,7 @@ export default function CameraSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Video className="h-5 w-5 text-indigo-600" />
+              <Video className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
               Recording behavior
             </CardTitle>
             <CardDescription>
@@ -372,7 +399,7 @@ export default function CameraSettingsPage() {
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <HardDrive className="h-5 w-5 text-indigo-600" />
+              <HardDrive className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
               Screenshots and storage
             </CardTitle>
             <CardDescription>
@@ -443,10 +470,10 @@ export default function CameraSettingsPage() {
 
       <Card className="border-dashed">
         <CardContent className="flex gap-3 py-4">
-          <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
+          <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vms-success)]" aria-hidden="true" />
           <div>
             <p className="font-semibold">Tenant boundary preserved</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
               These settings are stored on this organization&apos;s camera
               plugin installation. Another tenant cannot read or reuse them.
             </p>
@@ -457,7 +484,7 @@ export default function CameraSettingsPage() {
       <div className="flex justify-end">
         <Button
           type="submit"
-          leftNode={<Save className="h-4 w-4" />}
+          leftNode={<Save className="h-4 w-4" aria-hidden="true" />}
           isLoading={saveMutation.isPending}
         >
           Save camera settings

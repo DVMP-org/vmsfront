@@ -4,17 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PluginMetricStrip } from "@/components/plugins/PluginUi";
+import { Skeleton } from "@/components/ui/Skeleton";
 import {
     Zap,
     Plus,
     CreditCard,
-    Users,
-    Activity,
     ArrowUpRight,
-    TrendingUp,
-    DollarSign
+    Users,
+    DollarSign,
+    AlertCircle,
 } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
+import { parseApiError } from "@/lib/error-utils";
 import { electricityService } from "../../services/electricity-service";
 import { ElectricityStats } from "../../types";
 
@@ -28,7 +32,7 @@ const defaultStats: ElectricityStats = {
 };
 
 export default function AdminElectricityDashboard() {
-    const { data: statsResponse, isLoading } = useQuery({
+    const { data: statsResponse, isLoading, isError, error, refetch } = useQuery({
         queryKey: ["electricity", "stats"],
         queryFn: async () => {
             const response = await electricityService.getStats();
@@ -40,46 +44,43 @@ export default function AdminElectricityDashboard() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Electricity Management</h1>
-                        <p className="text-muted-foreground">
-                            Manage meters, purchases, and residents
-                        </p>
-                    </div>
+            <div className="space-y-5">
+                <PageHeader
+                    eyebrow="Extensions / Electricity"
+                    title="Electricity management"
+                    description="Loading meters and purchase activity…"
+                />
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {[0, 1, 2, 3].map((item) => (
+                        <Skeleton key={item} className="h-28 w-full" />
+                    ))}
                 </div>
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
+                <Skeleton className="h-64 w-full" />
             </div>
         );
     }
 
-    const statCards = [
+    const metrics = [
         {
-            title: "Total Meters",
+            label: "Total meters",
             value: stats.total_meters,
-            description: `${stats.active_meters} active`,
+            detail: `${stats.active_meters} active`,
             icon: Zap,
-            accent: "text-red-500",
         },
         {
-            title: "Total Purchases",
+            label: "Total purchases",
             value: stats.total_purchases,
-            description: "All time",
+            detail: "All time",
             icon: CreditCard,
-            accent: "text-primary",
         },
         {
-            title: "Total Revenue",
+            label: "Total revenue",
             value: `₦${stats.total_revenue?.toLocaleString()}`,
-            description: "All time",
+            detail: "All time",
             icon: DollarSign,
-            accent: "text-blue-500",
         },
         {
-            title: "Active Residencies",
+            label: "Active property relationships",
             value: Array.from(
                 new Set(
                     (stats.residencies || [])
@@ -88,68 +89,46 @@ export default function AdminElectricityDashboard() {
                         .filter(Boolean)
                 )
             ).length,
-            description: "With meters",
+            detail: "With meters",
             icon: Users,
-            accent: "text-red-500",
         },
     ];
 
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Electricity Management</h1>
-                    <p className="text-muted-foreground">
-                        Manage meters, purchases, and residents
-                    </p>
-                </div>
-                <div className="flex gap-2">
+        <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
+            <PageHeader
+                eyebrow="Extensions / Electricity"
+                title="Electricity management"
+                description="Monitor meters, purchases, and property relationships in this organization."
+                primaryAction={
                     <Button
                         onClick={() => {
                             window.location.href = "/plugins/electricity/admin/meters";
                         }}
-                        className="gap-2"
                     >
-                        <Plus className="h-4 w-4" />
-                        Add Meter
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        Add meter
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {statCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                        <Card
-                            key={card.title}
-                            className={`overflow-hidden border-none `}
-                        >
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium ">
-                                    {card.title}
-                                </CardTitle>
-                                <span className="rounded-full bg-[rgb(var(--brand-primary)/0.2)] p-2 text-muted-foreground shadow-sm">
-                                    <Icon className="h-5 w-5 p-3 rounded-full text-[rgb(var(--brand-primary))]" />
-                                </span>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-3xl font-bold">
-                                    {card.value}
-                                </div>
-                                <p className="text-sm mt-1">
-                                    {card.description}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
+            {isError ? (
+                <EmptyState
+                    icon={AlertCircle}
+                    title="Electricity summary unavailable"
+                    description={parseApiError(error).message}
+                    action={{ label: "Retry", onClick: () => refetch() }}
+                />
+            ) : (
+                <PluginMetricStrip
+                    label="Electricity summary"
+                    metrics={metrics}
+                />
+            )}
 
             {/* Quick Actions */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -209,19 +188,17 @@ export default function AdminElectricityDashboard() {
                 </CardHeader>
                 <CardContent>
                     {stats.recent_purchases.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>No purchases yet</p>
-                            <p className="text-sm mt-2">
-                                Purchases will appear here once residents start buying electricity
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon={CreditCard}
+                            title="No purchases yet"
+                            description="Purchases will appear here once occupants begin buying electricity."
+                        />
                     ) : (
                         <div className="space-y-4">
                             {stats.recent_purchases.map((purchase) => (
                                 <div
                                     key={purchase.id}
-                                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                                    className="flex items-center justify-between gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] p-4 transition-colors hover:bg-[var(--vms-surface-subtle)]"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
@@ -237,10 +214,10 @@ export default function AdminElectricityDashboard() {
                                                 {titleCase(purchase.status?.replace("_", " "))}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-sm text-[var(--vms-ink-muted)]">
                                             Meter: {purchase.meter_number} • {purchase.units} units
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
+                                        <p className="text-xs text-[var(--vms-ink-muted)] mt-1">
                                             {formatDate(purchase.date)}
                                         </p>
                                     </div>

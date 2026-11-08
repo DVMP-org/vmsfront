@@ -8,8 +8,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { Badge } from "@/components/ui/Badge";
-import { CreditCard, Search, DollarSign } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { CreditCard, Search, AlertCircle } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
+import { parseApiError } from "@/lib/error-utils";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +22,7 @@ export default function AdminPurchasesPage() {
     const [searchQuery, setSearchQuery] = useState("");
 
     // Fetch purchases
-    const { data: purchasesData, isLoading, isFetching } = useQuery({
+    const { data: purchasesData, isLoading, isFetching, isError, error, refetch } = useQuery({
         queryKey: ["electricity", "purchases", page],
         queryFn: async () => {
             const response = await electricityService.getPurchases({
@@ -126,40 +128,32 @@ export default function AdminPurchasesPage() {
     ];
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Electricity Purchases</h1>
-                    <p className="text-muted-foreground">
-                        View all electricity purchase transactions
-                    </p>
-                </div>
-                {totalRevenue > 0 && (
-                    <Card className="rounded-3xl bg-gradient-to-br from-[var(--brand-primary,#213928)] to-[var(--brand-secondary,#64748b)] text-white shadow-xl">
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2 text-white">
-
-                                <div>
-                                    <p className="text-xs text-white/80">Total Revenue</p>
-                                    <p className="text-2xl font-bold">
-                                        ₦{totalRevenue.toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
+        <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
+            <PageHeader
+                eyebrow="Extensions / Electricity"
+                title="Electricity purchases"
+                description="Review token purchases made for meters in this organization."
+                metadata={
+                    totalRevenue > 0 ? (
+                        <p className="text-sm text-[var(--vms-ink-muted)]">
+                            Successful revenue on this page:{" "}
+                            <strong className="font-semibold tabular-nums text-[var(--vms-ink)]">
+                                ₦{totalRevenue.toLocaleString()}
+                            </strong>
+                        </p>
+                    ) : undefined
+                }
+            />
 
             {/* Purchases Table */}
             <Card>
-                <CardHeader>
+                <CardHeader className="border-b border-[var(--vms-line)]">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <CardTitle>All Purchases</CardTitle>
+                        <CardTitle>Purchase register</CardTitle>
                         <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]" aria-hidden="true" />
                             <Input
+                                aria-label="Search purchases"
                                 placeholder="Search purchases..."
                                 value={searchQuery}
                                 onChange={(e) => {
@@ -174,6 +168,13 @@ export default function AdminPurchasesPage() {
                 <CardContent>
                     {isLoading ? (
                         <TableSkeleton />
+                    ) : isError ? (
+                        <EmptyState
+                            icon={AlertCircle}
+                            title="Purchases could not be loaded"
+                            description={parseApiError(error).message}
+                            action={{ label: "Retry", onClick: () => refetch() }}
+                        />
                     ) : filteredPurchases.length === 0 ? (
                         <EmptyState
                             icon={CreditCard}
