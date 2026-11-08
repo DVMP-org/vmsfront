@@ -7,6 +7,8 @@ import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
+import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
@@ -95,9 +97,19 @@ function HospitalityWorkspace({
     return <p role="status">Loading hospitality permissions…</p>;
   if (profile.isError)
     return (
-      <div role="alert">
-        Could not verify your permissions.{" "}
-        <button onClick={() => profile.refetch()}>Retry</button>
+      <div
+        role="alert"
+        className="rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5 text-sm text-[var(--vms-ink)]"
+      >
+        <p>Could not verify your hospitality permissions.</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => profile.refetch()}
+        >
+          Retry
+        </Button>
       </div>
     );
   if (!allowed("list"))
@@ -106,29 +118,28 @@ function HospitalityWorkspace({
     );
   return (
     <main className="stay-workspace">
-      <header className="stay-heading">
-        <div>
-          <p className="stay-eyebrow">SITE MANAGEMENT / HOTEL OPERATIONS</p>
-          <h1>Hotel operations</h1>
-          <p>
-            {propertyName
-              ? `Manage ${propertyName}, its people, stays and guest arrivals.`
-              : "Manage the selected site, its people, stays and guest arrivals."}
-          </p>
-        </div>
-        {allowed("create") && (
-          <button
-            className="stay-primary"
-            onClick={() => {
-              setCreating(true);
-              setSelected(null);
-              setNotice("");
-            }}
-          >
-            New reservation
-          </button>
-        )}
-      </header>
+      <PageHeader
+        eyebrow="Operations Hub / Hospitality"
+        title="Hotel operations"
+        description={
+          propertyName
+            ? `Manage ${propertyName}, its people, room assignments, stays and guest arrivals.`
+            : "Manage the selected site, its people, room assignments, stays and guest arrivals."
+        }
+        primaryAction={
+          allowed("create") ? (
+            <Button
+              onClick={() => {
+                setCreating(true);
+                setSelected(null);
+                setNotice("");
+              }}
+            >
+              New reservation
+            </Button>
+          ) : null
+        }
+      />
       {notice && (
         <p role="status" className="stay-notice">
           {notice}
@@ -195,9 +206,11 @@ function HospitalityWorkspace({
           {list.isPending ? (
             <p role="status">Loading stays…</p>
           ) : list.isError ? (
-            <div role="alert">
-              {parseApiError(list.error).message}
-              <button onClick={() => list.refetch()}>Retry stays</button>
+            <div role="alert" className="stay-error">
+              <p>{parseApiError(list.error).message}</p>
+              <Button variant="outline" size="sm" onClick={() => list.refetch()}>
+                Retry stays
+              </Button>
             </div>
           ) : (
             <>

@@ -1,13 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAdminTransaction } from "@/hooks/use-admin";
-import {
-    formatCurrency,
-    formatDate,
-    titleCase,
-    cn
-} from "@/lib/utils";
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils";
 import {
     Card,
     CardContent,
@@ -16,6 +12,8 @@ import {
 } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
     ArrowLeft,
@@ -30,6 +28,7 @@ import {
     Server,
     FileText,
     Copy,
+    RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,7 +37,12 @@ export default function TransactionDetailPage() {
     const router = useRouter();
     const transactionId = params?.transactionId as string;
 
-    const { data: transaction, isLoading } = useAdminTransaction(transactionId);
+    const {
+        data: transaction,
+        isLoading,
+        isError,
+        refetch,
+    } = useAdminTransaction(transactionId);
 
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -47,17 +51,19 @@ export default function TransactionDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto px-4 py-8">
-                <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+                <PageHeader
+                    eyebrow="Finance / Transactions"
+                    title="Transaction"
+                    description="Loading transaction details."
+                />
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div className="lg:col-span-2 space-y-6">
-                        <Skeleton className="h-48 w-full rounded-xl" />
-                        <Skeleton className="h-96 w-full rounded-xl" />
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-96 w-full" />
                     </div>
                     <div className="space-y-6">
-                        <Skeleton className="h-64 w-full rounded-xl" />
+                        <Skeleton className="h-64 w-full" />
                     </div>
                 </div>
             </div>
@@ -66,17 +72,34 @@ export default function TransactionDetailPage() {
 
     if (!transaction) {
         return (
-            <div className="flex flex-col items-center justify-center py-24">
-                <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-6">
-                    <Search className="h-8 w-8 text-muted-foreground/40" />
+            <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+                <PageHeader
+                    eyebrow="Finance / Transactions"
+                    title="Transaction record"
+                    description="The requested transaction could not be loaded."
+                />
+                <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+                    <EmptyState
+                        icon={Search}
+                        title={isError ? "Transaction data is unavailable" : "Transaction not found"}
+                        description={
+                            isError
+                                ? "The transaction service did not return this record. Retry before treating it as missing."
+                                : "The requested transaction does not exist in the current property context."
+                        }
+                        action={
+                            isError ? (
+                                <Button onClick={() => refetch()} variant="outline">
+                                    <RefreshCcw className="h-4 w-4" aria-hidden />
+                                    Retry
+                                </Button>
+                            ) : {
+                                label: "Back to transactions",
+                                onClick: () => router.push("/admin/transactions"),
+                            }
+                        }
+                    />
                 </div>
-                <h2 className="text-xl font-bold">Transaction Not Found</h2>
-                <p className="text-muted-foreground mt-2 max-w-xs text-center">
-                    The requested transaction record could not be found or has been moved.
-                </p>
-                <Button variant="outline" className="mt-8 px-8" onClick={() => router.push("/admin/transactions")}>
-                    Back to Transactions
-                </Button>
             </div>
         );
     }
@@ -88,133 +111,167 @@ export default function TransactionDetailPage() {
     };
 
     return (
-        <div className="space-y-8 max-w-7xl mx-auto pb-12">
-            {/* Header / Breadcrumbs */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                        <button
-                            onClick={() => router.push("/admin/transactions")}
-                            className="hover:text-foreground flex items-center gap-1 transition-colors"
+        <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+            <PageHeader
+                breadcrumbs={
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="mb-3 flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]"
+                    >
+                        <Button asChild variant="ghost" size="sm">
+                            <Link href="/admin/transactions">
+                                <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+                                Transactions
+                            </Link>
+                        </Button>
+                        <ChevronRight className="h-3 w-3" aria-hidden />
+                        <span>Transaction details</span>
+                    </nav>
+                }
+                eyebrow={
+                    <span className="inline-flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5" aria-hidden />
+                        Finance / Transaction
+                    </span>
+                }
+                title={
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                        {transaction.reference}
+                        <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Copy transaction reference"
+                            onClick={() =>
+                                handleCopy(transaction.reference, "Reference")
+                            }
                         >
-                            <ArrowLeft className="h-3 w-3" />
-                            Transactions
-                        </button>
-                        <ChevronRight className="h-3 w-3" />
-                        <span className="text-foreground/60">Details</span>
+                            <Copy className="h-4 w-4" aria-hidden />
+                        </Button>
+                    </span>
+                }
+                description={`Transaction ID ${transaction.id}`}
+                metadata={
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                            variant={
+                                statusVariants[transaction.status] || "secondary"
+                            }
+                        >
+                            {titleCase(transaction.status)}
+                        </Badge>
+                        <span className="text-xs text-[var(--vms-ink-muted)]">
+                            Created {formatDate(transaction.created_at)}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-brand-primary/10 rounded-xl">
-                            <CreditCard className="h-6 w-6 text-brand-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-black tracking-tight flex items-center gap-3">
-                                {transaction.reference}
-                                <button
-                                    onClick={() => handleCopy(transaction.reference, "Reference")}
-                                    className="p-1 hover:bg-muted rounded text-muted-foreground/40 hover:text-foreground transition-colors"
-                                >
-                                    <Copy className="h-4 w-4" />
-                                </button>
-                            </h1>
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
-                                Transaction ID: {transaction.id}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <Badge
-                    variant={statusVariants[transaction.status] || "secondary"}
-                    className="px-4 py-1.5 text-xs font-black uppercase tracking-widest rounded-full"
-                >
-                    {transaction.status}
-                </Badge>
-            </div>
+                }
+                primaryAction={
+                    <Button
+                        variant="secondary"
+                        onClick={() => refetch()}
+                    >
+                        <RefreshCcw className="h-4 w-4" aria-hidden />
+                        Refresh
+                    </Button>
+                }
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-8">
+                <div className="space-y-4 lg:col-span-2">
                     {/* Summary Metrics */}
-                    <Card className="rounded-2xl shadow-sm border-border/40 overflow-hidden bg-gradient-to-br from-card to-card/50">
-                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-b border-border/40">
-                            <div className="p-8">
-                                <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-[0.2em] mb-3">Amount</p>
+                    <Card>
+                        <div className="grid grid-cols-1 border-b border-[var(--vms-line)] md:grid-cols-2 md:divide-x md:divide-[var(--vms-line)]">
+                            <div className="p-5 sm:p-6">
+                                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+                                    Amount
+                                </p>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-black tabular-nums">{formatCurrency(transaction.amount)}</span>
-                                    <span className="text-xs font-bold text-muted-foreground uppercase">{transaction.currency}</span>
+                                    <span className="mt-3 text-4xl font-semibold tabular-nums tracking-[-0.04em]">
+                                        {formatCurrency(transaction.amount)}
+                                    </span>
+                                    <span className="text-xs font-semibold uppercase text-[var(--vms-ink-muted)]">
+                                        {transaction.currency}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="p-8">
-                                <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-[0.2em] mb-3">Processor</p>
+                            <div className="border-t border-[var(--vms-line)] p-5 sm:p-6 md:border-t-0">
+                                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+                                    Processor
+                                </p>
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-muted rounded-xl flex items-center justify-center">
-                                        <Server className="h-5 w-5 text-muted-foreground" />
+                                    <div className="mt-3 grid h-10 w-10 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
+                                        <Server className="h-5 w-5 text-[var(--vms-ink-muted)]" />
                                     </div>
-                                    <span className="text-lg font-bold capitalize">{transaction.processor || "Standard"}</span>
+                                    <span className="mt-3 text-base font-semibold capitalize">
+                                        {transaction.processor || "Standard"}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 bg-muted/30 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-5 bg-[var(--vms-surface-subtle)] p-5 sm:grid-cols-3 sm:p-6">
                             <div className="flex items-center gap-3">
-                                <Activity className="h-4 w-4 text-muted-foreground" />
+                                <Activity className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                                 <div>
-                                    <p className="text-[9px] uppercase font-bold text-muted-foreground/60">Type</p>
-                                    <p className="text-xs font-bold">{titleCase(transaction.type)}</p>
+                                    <p className="text-[11px] uppercase text-[var(--vms-ink-muted)]">Type</p>
+                                    <p className="text-xs font-semibold">{titleCase(transaction.type)}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <Calendar className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                                 <div>
-                                    <p className="text-[9px] uppercase font-bold text-muted-foreground/60">Date Created</p>
-                                    <p className="text-xs font-bold">{formatDate(transaction.created_at)}</p>
+                                    <p className="text-[11px] uppercase text-[var(--vms-ink-muted)]">Date created</p>
+                                    <p className="text-xs font-semibold">{formatDate(transaction.created_at)}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <Clock className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                                 <div>
-                                    <p className="text-[9px] uppercase font-bold text-muted-foreground/60">Paid At</p>
-                                    <p className="text-xs font-bold">{transaction.paid_at ? formatDate(transaction.paid_at) : "—"}</p>
+                                    <p className="text-[11px] uppercase text-[var(--vms-ink-muted)]">Paid at</p>
+                                    <p className="text-xs font-semibold">{transaction.paid_at ? formatDate(transaction.paid_at) : "—"}</p>
                                 </div>
                             </div>
                         </div>
                     </Card>
 
                     {/* Data Display Sections */}
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div className="flex items-center gap-3 px-1">
-                            <Code className="h-5 w-5 text-brand-primary" />
-                            <h3 className="text-lg font-black tracking-tight">Technical Data</h3>
+                            <Code className="h-5 w-5 text-[var(--vms-ink-muted)]" />
+                            <h2 className="text-base font-semibold">Technical data</h2>
                         </div>
 
-                        <Card className="rounded-2xl shadow-none border-border/40 overflow-hidden">
-                            <CardHeader className="border-b border-border/40 px-6 py-4 bg-muted/20">
+                        <Card>
+                            <CardHeader className="border-b border-[var(--vms-line)]">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Payload Response</CardTitle>
-                                    <Badge variant="outline" className="text-[10px] font-bold">JSON</Badge>
+                                    <CardTitle className="text-xs uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">Payload response</CardTitle>
+                                    <Badge variant="outline">JSON</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="max-h-[400px] overflow-auto bg-zinc-950 p-6 font-mono text-xs leading-relaxed group relative">
-                                    <button
+                                <div className="group relative max-h-[400px] overflow-auto bg-[var(--vms-surface-subtle)] p-5 font-mono text-xs leading-relaxed">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         onClick={() => handleCopy(JSON.stringify(transaction.payload, null, 2), "Payload")}
-                                        className="absolute right-4 top-4 p-2 bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:text-white"
+                                        className="absolute right-3 top-3 opacity-70 group-hover:opacity-100"
+                                        aria-label="Copy transaction payload"
                                     >
                                         <Copy className="h-4 w-4" />
-                                    </button>
-                                    <pre className="text-zinc-300">
+                                    </Button>
+                                    <pre className="whitespace-pre-wrap break-words text-[var(--vms-ink)]">
                                         {transaction.payload ? JSON.stringify(transaction.payload, null, 4) : "// No payload data available"}
                                     </pre>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl shadow-none border-border/40 overflow-hidden">
-                            <CardHeader className="border-b border-border/40 px-6 py-4 bg-muted/20">
-                                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Metadata</CardTitle>
+                        <Card>
+                            <CardHeader className="border-b border-[var(--vms-line)]">
+                                <CardTitle className="text-xs uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">Metadata</CardTitle>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="bg-zinc-950 p-6 font-mono text-xs leading-relaxed min-h-[100px]">
-                                    <pre className="text-zinc-300">
+                                <div className="min-h-24 bg-[var(--vms-surface-subtle)] p-5 font-mono text-xs leading-relaxed">
+                                    <pre className="whitespace-pre-wrap break-words text-[var(--vms-ink)]">
                                         {transaction.metadata ? JSON.stringify(transaction.metadata, null, 4) : "// No metadata attached"}
                                     </pre>
                                 </div>
@@ -224,34 +281,34 @@ export default function TransactionDetailPage() {
                 </div>
 
                 {/* Sidebar Info */}
-                <div className="space-y-6">
-                    <Card className="rounded-2xl shadow-none border-border/40 overflow-hidden sticky top-8">
-                        <CardHeader className="border-b border-border/40 px-6 py-5">
-                            <CardTitle className="text-sm font-black flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-brand-primary" />
+                <div className="space-y-4">
+                    <Card className="lg:sticky lg:top-4">
+                        <CardHeader className="border-b border-[var(--vms-line)]">
+                            <CardTitle className="flex items-center gap-2 text-sm">
+                                <FileText className="h-4 w-4 text-[var(--vms-ink-muted)]" />
                                 Description
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
-                            <p className="text-sm leading-relaxed text-muted-foreground">
+                        <CardContent className="space-y-5">
+                            <p className="text-sm leading-6 text-[var(--vms-ink-muted)]">
                                 {transaction.description || "No specific description provided for this transaction."}
                             </p>
 
-                            <div className="pt-4 border-t border-border/40 space-y-4">
+                            <div className="space-y-4 border-t border-[var(--vms-line)] pt-4">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase text-muted-foreground/50 tracking-widest">ID</p>
-                                    <p className="text-xs font-mono break-all text-foreground/80 bg-muted/50 p-2 rounded-lg">
+                                    <p className="text-[11px] uppercase text-[var(--vms-ink-muted)]">Record ID</p>
+                                    <p className="break-all rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-2 font-mono text-xs">
                                         {transaction.id}
                                     </p>
                                 </div>
 
-                                <div className="p-4 bg-brand-primary/[0.03] border border-brand-primary/10 rounded-xl space-y-3">
-                                    <div className="flex items-center gap-2 text-brand-primary">
+                                <div className="space-y-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
+                                    <div className="flex items-center gap-2 font-semibold">
                                         <ShieldCheck className="h-4 w-4" />
-                                        <span className="text-[10px] font-black uppercase tracking-wider">Audit Security</span>
+                                        <span className="text-xs uppercase tracking-[0.08em]">Audit context</span>
                                     </div>
-                                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                                        This record is immutable and digitally signed. Any manual changes will invalidate the verification seal.
+                                    <p className="text-xs leading-5 text-[var(--vms-ink-muted)]">
+                                        Provider payloads and metadata are shown for operational traceability. This page does not mutate the transaction.
                                     </p>
                                 </div>
                             </div>

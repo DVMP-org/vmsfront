@@ -2,67 +2,59 @@
 
 import { useMemo, type ReactNode } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-import { useAdminAnalyticsSummary } from "@/hooks/use-admin";
-import { formatDate } from "@/lib/utils";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  BarChart,
-  Bar,
-} from "recharts";
-import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Building2,
   RefreshCcw,
-  Users,
-  Home,
+  ShieldCheck,
   Ticket,
   UserCheck,
-  Activity,
-  ShieldCheck,
-  ShieldX,
   UserCog,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
+  Users,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-const numberFormatter = new Intl.NumberFormat("en-US");
+import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  MetricStrip,
+  PanelState,
+  ReportPanel,
+  StaleDataBanner,
+} from "@/features/dashboard/DashboardPrimitives";
+import { useAdminAnalyticsSummary } from "@/hooks/use-admin";
+import { formatDate } from "@/lib/utils";
+import type { AnalyticsTimeSeriesPoint } from "@/types";
+
+const numberFormatter = new Intl.NumberFormat();
 const formatNumber = (value?: number) => numberFormatter.format(value ?? 0);
 const formatSignedNumber = (value: number) =>
   `${value > 0 ? "+" : value < 0 ? "-" : ""}${formatNumber(Math.abs(value))}`;
 
-const formatDateLabel = (date: string) =>
-  new Date(date).toLocaleDateString("en-US", {
+function formatDateLabel(date: string) {
+  return new Date(date).toLocaleDateString(undefined, {
     month: "short",
     day: "2-digit",
   });
+}
 
 type TooltipPayload = {
-  color: string;
-  name: string;
-  value: number;
+  color?: string;
+  name?: string;
+  value?: number;
 };
 
 function ChartTooltip({
@@ -77,22 +69,22 @@ function ChartTooltip({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-lg border bg-background/95 backdrop-blur-sm px-3 py-2 text-xs shadow-lg">
-      <p className="mb-2 font-semibold text-foreground">{label}</p>
+    <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3 py-2 text-xs shadow-[var(--vms-shadow-raised)]">
+      <p className="mb-2 font-semibold text-[var(--vms-ink)]">{label}</p>
       <div className="space-y-1.5">
         {payload.map((item) => (
           <div
             key={item.name}
-            className="flex items-center justify-between gap-6"
+            className="flex min-w-40 items-center justify-between gap-5"
           >
-            <span className="flex items-center gap-2 text-muted-foreground">
+            <span className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
               <span
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
               {item.name}
             </span>
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold tabular-nums">
               {formatNumber(item.value)}
             </span>
           </div>
@@ -104,29 +96,124 @@ function ChartTooltip({
 
 function AnalyticsSkeleton() {
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {Array.from({ length: 9 }).map((_, index) => (
-          <Card key={index} className="border-2">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Skeleton className="h-8 w-8 rounded-lg" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-              <Skeleton className="h-8 w-24" />
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-4" role="status" aria-live="polite">
+      <span className="sr-only">Loading analytics</span>
+      <Skeleton className="h-24 w-full" />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.7fr)]">
+        <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-80 w-full" />
       </div>
-      <Card className="h-[360px] shadow-sm">
-        <CardHeader className="border-b pb-4">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="mt-2 h-4 w-64" />
-        </CardHeader>
-        <CardContent className="h-full p-6">
-          <div className="h-full rounded border border-dashed border-muted-foreground/20" />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-72 w-full" />
+      </div>
+    </div>
+  );
+}
+
+function ChartDataTable({
+  label,
+  columns,
+  rows,
+}: {
+  label: string;
+  columns: Array<{ key: string; label: string }>;
+  rows: Array<Record<string, string | number>>;
+}) {
+  return (
+    <details className="border-t border-[var(--vms-line)] px-4 py-3 sm:px-5">
+      <summary className="cursor-pointer text-xs font-semibold text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2">
+        View chart data
+      </summary>
+      <div
+        className="mt-3 overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+        role="region"
+        aria-label={`${label} data`}
+        tabIndex={0}
+      >
+        <table className="w-full min-w-[480px] border-collapse text-left text-xs">
+          <caption className="sr-only">{label}</caption>
+          <thead>
+            <tr className="border-b border-[var(--vms-line)]">
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  scope="col"
+                  className="px-2 py-2 font-semibold text-[var(--vms-ink-muted)]"
+                >
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr
+                key={String(row[columns[0].key] ?? index)}
+                className="border-b border-[var(--vms-line)] last:border-0"
+              >
+                {columns.map((column) => (
+                  <td key={column.key} className="px-2 py-2 tabular-nums">
+                    {typeof row[column.key] === "number"
+                      ? formatNumber(row[column.key] as number)
+                      : String(row[column.key] ?? "")}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-xl font-semibold tracking-[-0.02em] text-[var(--vms-ink)]">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Highlight({
+  label,
+  value,
+  helper,
+  attention = false,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  attention?: boolean;
+}) {
+  return (
+    <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.07em] text-[var(--vms-ink-muted)]">
+        {label}
+      </p>
+      <p
+        className={`mt-2 text-2xl font-semibold tabular-nums tracking-[-0.03em] ${
+          attention ? "text-[var(--vms-warning)]" : "text-[var(--vms-ink)]"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{helper}</p>
     </div>
   );
 }
@@ -154,764 +241,511 @@ export default function AnalyticsPage() {
     );
   }, [analytics]);
 
-  const summaryMetrics = useMemo(() => {
-    if (!analytics) return [];
-
-    return [
-      {
-        label: "Residents",
-        value: analytics.total_residents,
-        icon: Users,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50 dark:bg-blue-950/20",
-        borderColor: "border-blue-200 dark:border-blue-800",
-      },
-      {
-        label: "Residencies",
-        value: analytics.total_residencies,
-        icon: Home,
-        color: "text-emerald-600",
-        bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
-        borderColor: "border-emerald-200 dark:border-emerald-800",
-      },
-      {
-        label: "Gate Passes",
-        value: analytics.total_gate_passes,
-        icon: Ticket,
-        color: "text-amber-600",
-        bgColor: "bg-amber-50 dark:bg-amber-950/20",
-        borderColor: "border-amber-200 dark:border-amber-800",
-      },
-      {
-        label: "Visitors",
-        value: analytics.total_visitors,
-        icon: UserCheck,
-        color: "text-purple-600",
-        bgColor: "bg-purple-50 dark:bg-purple-950/20",
-        borderColor: "border-purple-200 dark:border-purple-800",
-      },
-      {
-        label: "Gate Events",
-        value: analytics.total_gate_events,
-        icon: Activity,
-        color: "text-indigo-600",
-        bgColor: "bg-indigo-50 dark:bg-indigo-950/20",
-        borderColor: "border-indigo-200 dark:border-indigo-800",
-      },
-      {
-        label: "Approved",
-        value: analytics.total_gate_events_approved,
-        icon: ShieldCheck,
-        color: "text-green-600",
-        bgColor: "bg-green-50 dark:bg-green-950/20",
-        borderColor: "border-green-200 dark:border-green-800",
-      },
-      {
-        label: "Denied",
-        value: analytics.total_gate_events_denied,
-        icon: ShieldX,
-        color: "text-red-600",
-        bgColor: "bg-red-50 dark:bg-red-950/20",
-        borderColor: "border-red-200 dark:border-red-800",
-      },
-      {
-        label: "Admins",
-        value: analytics.total_admins,
-        icon: UserCog,
-        color: "text-slate-600",
-        bgColor: "bg-slate-50 dark:bg-slate-950/20",
-        borderColor: "border-slate-200 dark:border-slate-800",
-      },
-      {
-        label: "Roles",
-        value: analytics.total_roles,
-        icon: UserCog,
-        color: "text-slate-600",
-        bgColor: "bg-slate-50 dark:bg-slate-950/20",
-        borderColor: "border-slate-200 dark:border-slate-800",
-      },
-    ];
-  }, [analytics]);
-
   const trendSeries = useMemo(() => {
     if (!analytics) return [];
-
     const entries = new Map<
       string,
-      { date: string; residencies: number; gate_passes: number; visitors: number }
+      { date: string; residencies: number; gatePasses: number; visitors: number }
     >();
-
     const ingest = (
-      key: "residencies" | "gate_passes" | "visitors",
-      data: { date: string; count: number }[]
+      key: "residencies" | "gatePasses" | "visitors",
+      data: AnalyticsTimeSeriesPoint[],
     ) => {
       data.forEach((point) => {
         const current = entries.get(point.date) ?? {
           date: point.date,
           residencies: 0,
-          gate_passes: 0,
+          gatePasses: 0,
           visitors: 0,
         };
         current[key] = point.count;
         entries.set(point.date, current);
       });
     };
-
     ingest("residencies", analytics.time_series.residencies);
-    ingest("gate_passes", analytics.time_series.gate_passes);
+    ingest("gatePasses", analytics.time_series.gate_passes);
     ingest("visitors", analytics.time_series.visitors);
-
     return Array.from(entries.values())
-      .sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      )
-      .map((point) => ({
-        ...point,
-        label: formatDateLabel(point.date),
-      }));
+      .sort((left, right) => left.date.localeCompare(right.date))
+      .map((point) => ({ ...point, label: formatDateLabel(point.date) }));
   }, [analytics]);
 
   const gateFlowSeries = useMemo(() => {
     if (!analytics) return [];
-
-    const { checkins, checkouts } = analytics.time_series;
     const dates = new Set<string>();
-    checkins.forEach((item) => dates.add(item.date));
-    checkouts.forEach((item) => dates.add(item.date));
-
-    return Array.from(dates.values())
-      .sort(
-        (a, b) => new Date(a).getTime() - new Date(b).getTime()
-      )
+    analytics.time_series.checkins.forEach((item) => dates.add(item.date));
+    analytics.time_series.checkouts.forEach((item) => dates.add(item.date));
+    return Array.from(dates)
+      .sort()
       .map((date) => ({
         date,
         label: formatDateLabel(date),
-        checkins: checkins.find((item) => item.date === date)?.count ?? 0,
-        checkouts: checkouts.find((item) => item.date === date)?.count ?? 0,
+        checkins:
+          analytics.time_series.checkins.find((item) => item.date === date)
+            ?.count ?? 0,
+        checkouts:
+          analytics.time_series.checkouts.find((item) => item.date === date)
+            ?.count ?? 0,
       }));
   }, [analytics]);
 
-  const topGateDays = useMemo(() => {
-    if (!analytics) return [];
+  const topGateDays = useMemo(
+    () =>
+      analytics
+        ? [...analytics.time_series.gate_passes]
+            .sort((left, right) => right.count - left.count)
+            .slice(0, 5)
+        : [],
+    [analytics],
+  );
 
-    return [...analytics.time_series.gate_passes]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [analytics]);
-
-  const averageDailyPasses = useMemo(() => {
-    if (!analytics) return 0;
-    const { gate_passes } = analytics.time_series;
-    if (!gate_passes.length) return 0;
-    const total = gate_passes.reduce((sum, point) => sum + point.count, 0);
-    return total / gate_passes.length;
-  }, [analytics]);
-
-  const averageDailyVisitors = useMemo(() => {
-    if (!analytics) return 0;
-    const { visitors } = analytics.time_series;
-    if (!visitors.length) return 0;
-    const total = visitors.reduce((sum, point) => sum + point.count, 0);
-    return total / visitors.length;
-  }, [analytics]);
-
-  const movementStats = useMemo(() => {
-    if (!analytics) {
-      return {
-        totalCheckins: 0,
-        totalCheckouts: 0,
-        averageCheckins: 0,
-        averageCheckouts: 0,
-      };
-    }
-
-    const totalCheckins = analytics.time_series.checkins.reduce(
-      (sum, item) => sum + item.count,
-      0
-    );
-    const totalCheckouts = analytics.time_series.checkouts.reduce(
-      (sum, item) => sum + item.count,
-      0
-    );
-    const averageCheckins =
-      analytics.time_series.checkins.length > 0
-        ? totalCheckins / analytics.time_series.checkins.length
-        : 0;
-    const averageCheckouts =
-      analytics.time_series.checkouts.length > 0
-        ? totalCheckouts / analytics.time_series.checkouts.length
-        : 0;
-
+  const movement = useMemo(() => {
+    const checkins = analytics?.time_series.checkins ?? [];
+    const checkouts = analytics?.time_series.checkouts ?? [];
+    const totalCheckins = checkins.reduce((sum, item) => sum + item.count, 0);
+    const totalCheckouts = checkouts.reduce((sum, item) => sum + item.count, 0);
     return {
       totalCheckins,
       totalCheckouts,
-      averageCheckins,
-      averageCheckouts,
+      averageCheckins: checkins.length ? totalCheckins / checkins.length : 0,
+      averageCheckouts: checkouts.length
+        ? totalCheckouts / checkouts.length
+        : 0,
     };
   }, [analytics]);
 
-  const observationWindowDays =
-    analytics?.time_series.gate_passes.length ?? 0;
+  const visitorSpike = useMemo(
+    () =>
+      analytics?.time_series.visitors.reduce<AnalyticsTimeSeriesPoint | null>(
+        (highest, point) =>
+          !highest || point.count > highest.count ? point : highest,
+        null,
+      ) ?? null,
+    [analytics],
+  );
 
-  const gateEventsPerAdmin = useMemo(() => {
-    if (!analytics || analytics.total_admins === 0) return 0;
-    return analytics.total_gate_events / analytics.total_admins;
-  }, [analytics]);
+  const header = (
+    <PageHeader
+      eyebrow="Operations Hub / Reporting"
+      title="Analytics"
+      description="Exact access and relationship activity for the selected property context, summarized for decisions and backed by tabular detail."
+      primaryAction={
+        <Button
+          variant="secondary"
+          onClick={() => refetch()}
+          isLoading={isFetching}
+        >
+          {!isFetching ? (
+            <RefreshCcw className="h-4 w-4" aria-hidden />
+          ) : null}
+          Refresh data
+        </Button>
+      }
+    />
+  );
 
-  const visitorSpike = useMemo(() => {
-    if (!analytics || analytics.time_series.visitors.length === 0) {
-      return null;
-    }
-    return analytics.time_series.visitors.reduce((prev, current) =>
-      current.count > prev.count ? current : prev
-    );
-  }, [analytics]);
-
-  if (isLoading) {
+  if (isLoading && !analytics) {
     return (
-      <>
-        <div className="space-y-8">
-          <PageHeader
-            onRefresh={() => refetch()}
-            isRefreshing={isFetching}
-          />
-          <AnalyticsSkeleton />
-        </div>
-      </>
+      <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+        {header}
+        <AnalyticsSkeleton />
+      </div>
     );
   }
 
-  if (isError) {
+  if (isError && !analytics) {
     return (
-      <>
-        <div className="space-y-8">
-          <PageHeader
-            onRefresh={() => refetch()}
-            isRefreshing={isFetching}
+      <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+        {header}
+        <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <PanelState
+            kind="error"
+            title="Unable to load analytics"
+            description="The analytics summary could not be requested. Retry before treating the property as inactive."
+            onRetry={() => refetch()}
+            isRetrying={isFetching}
           />
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle>Unable to load analytics</CardTitle>
-              <CardDescription>
-                Something went wrong while fetching analytics summary. Please
-                try again.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => refetch()}
-                className="flex items-center gap-2"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
         </div>
-      </>
+      </div>
     );
   }
 
   if (!analytics) {
     return (
-      <>
-        <div className="space-y-8">
-          <PageHeader
-            onRefresh={() => refetch()}
-            isRefreshing={isFetching}
-          />
-          <EmptyState
+      <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+        {header}
+        <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <PanelState
+            kind="empty"
             title="No analytics yet"
-            description="We could not find analytics for your estate yet. Once activity starts flowing through the gate, you'll see trends and usage details here."
-            action={{
-              label: "Reload",
-              onClick: () => refetch(),
-            }}
+            description="Activity will appear after relationship, invitation or checkpoint records are created."
+            onRetry={() => refetch()}
+            isRetrying={isFetching}
           />
         </div>
-      </>
+      </div>
     );
   }
 
+  const observationDays =
+    analytics.time_series.gate_passes.length ||
+    analytics.time_series.checkins.length;
+  const netFlow = movement.totalCheckins - movement.totalCheckouts;
+
   return (
-    <>
-      <div className="space-y-8">
-        <PageHeader onRefresh={() => refetch()} isRefreshing={isFetching} />
+    <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
+      {header}
 
-        <Section title="Overview">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {summaryMetrics.map((metric) => {
-              const Icon = metric.icon;
-              return (
-                <Card
-                  key={metric.label}
-                  className={`group relative overflow-hidden border-2 transition-all hover:shadow-md hover:scale-[1.02] ${metric.borderColor}`}
-                >
-                  <div
-                    className={`absolute inset-0 ${metric.bgColor} opacity-0 transition-opacity group-hover:opacity-100`}
-                  />
-                  <CardContent className="relative p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-3 flex items-center gap-2">
-                          <div
-                            className={`rounded-lg p-2 ${metric.bgColor} ${metric.color}`}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            {metric.label}
-                          </p>
-                        </div>
-                        <p className="text-2xl font-bold text-foreground">
-                          {formatNumber(metric.value)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </Section>
+      {isError ? (
+        <StaleDataBanner
+          message="The latest analytics refresh failed. The last successful summary remains visible."
+          onRetry={() => refetch()}
+          isRetrying={isFetching}
+        />
+      ) : null}
 
-        <Section
-          title="Engagement timeline"
-          description="Gate passes, housing, and visitor trends over the selected period."
-        >
-          <div className="grid gap-6 xl:grid-cols-3">
-            <Card className="xl:col-span-2 shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                      Activity overview
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      Smooth trendlines make it easy to spot spikes across metrics.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="h-[360px] p-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendSeries}>
-                    <defs>
-                      <linearGradient id="colorPasses" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorResidencies" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="label" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="gate_passes"
-                      name="Gate passes"
-                      stroke="#f97316"
-                      fillOpacity={1}
-                      fill="url(#colorPasses)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="visitors"
-                      name="Visitors"
-                      stroke="#a855f7"
-                      fillOpacity={1}
-                      fill="url(#colorVisitors)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="residencies"
-                      name="Residencies"
-                      stroke="#0ea5e9"
-                      fillOpacity={1}
-                      fill="url(#colorResidencies)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+      <MetricStrip
+        metrics={[
+          {
+            label: "People",
+            value: formatNumber(analytics.total_residents),
+            detail: "Active person records",
+            icon: Users,
+          },
+          {
+            label: "Occupancy relationships",
+            value: formatNumber(analytics.total_residencies),
+            detail: `${formatNumber(analytics.total_visitors)} visitor records`,
+            icon: Building2,
+          },
+          {
+            label: "Gate passes",
+            value: formatNumber(analytics.total_gate_passes),
+            detail: "Issued access passes",
+            icon: Ticket,
+          },
+          {
+            label: "Gate events",
+            value: formatNumber(analytics.total_gate_events),
+            detail: `${approvalRate.toFixed(1)}% approved`,
+            icon: Activity,
+          },
+          {
+            label: "Denied",
+            value: formatNumber(analytics.total_gate_events_denied),
+            detail: `${denialRate.toFixed(1)}% of decisions`,
+            icon: UserCheck,
+            attention: analytics.total_gate_events_denied > 0,
+          },
+          {
+            label: "Administrators",
+            value: formatNumber(analytics.total_admins),
+            detail: `${formatNumber(analytics.total_roles)} assigned roles`,
+            icon: UserCog,
+          },
+        ]}
+      />
 
-            <Card className="shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg">Activity highlights</CardTitle>
-                <CardDescription className="mt-1">
-                  Key callouts pulled from the current observation window.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                {(visitorSpike || topGateDays[0]) && (
-                  <div className="space-y-3 rounded-lg border-2 bg-gradient-to-br from-primary/5 to-primary/10 p-4">
-                    {visitorSpike && (
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-2">
-                          <ArrowUpRight className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Busiest visitor day
-                          </p>
-                          <p className="mt-1 text-lg font-bold text-foreground">
-                            {formatDate(visitorSpike.date)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatNumber(visitorSpike.count)} visitors processed
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {topGateDays[0] && (
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-amber-500/10 p-2">
-                          <TrendingUp className="h-4 w-4 text-amber-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Gate pass spike
-                          </p>
-                          <p className="mt-1 text-lg font-bold text-foreground">
-                            {formatDate(topGateDays[0].date)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatNumber(topGateDays[0].count)} passes issued
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="space-y-3">
-                  <HighlightStat
-                    label="Avg passes per day"
-                    value={`${averageDailyPasses.toFixed(1)}`}
-                    helper={`Across ${observationWindowDays || "0"} days`}
-                  />
-                  <HighlightStat
-                    label="Avg visitors per day"
-                    value={`${averageDailyVisitors.toFixed(1)}`}
-                    helper="Unique visitor entries"
-                  />
-                  <HighlightStat
-                    label="Gate events per admin"
-                    value={gateEventsPerAdmin.toFixed(1)}
-                    helper="Indicates load on admin team"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </Section>
-
-        <Section
-          title="Access control health"
-          description="Decision quality and high-volume touch points."
-        >
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg">Gate decision quality</CardTitle>
-                <CardDescription className="mt-1">
-                  Approval vs denial rate across all recorded events
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-muted-foreground">
-                      Approval rate
-                    </span>
-                    <span className="font-bold text-emerald-600">
-                      {approvalRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500"
-                      style={{ width: `${Math.min(approvalRate, 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-muted-foreground">
-                      Denial rate
-                    </span>
-                    <span className="font-bold text-red-600">
-                      {denialRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500"
-                      style={{ width: `${Math.min(denialRate, 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="rounded-lg border-2 bg-gradient-to-br from-slate-50 to-slate-100/50 p-5 dark:from-slate-900/50 dark:to-slate-800/30">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Approvals vs denials
-                  </p>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <p className="text-3xl font-bold text-foreground">
-                      {formatNumber(analytics.total_gate_events_approved)}
-                    </p>
-                    <span className="text-muted-foreground">/</span>
-                    <p className="text-3xl font-bold text-foreground">
-                      {formatNumber(analytics.total_gate_events_denied)}
-                    </p>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Out of {formatNumber(analytics.total_gate_events)} total gate
-                    events
-                  </p>
-                </div>
-                {visitorSpike && (
-                  <div className="rounded-lg border-2 bg-gradient-to-br from-purple-50 to-purple-100/50 p-4 dark:from-purple-950/20 dark:to-purple-900/10">
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-full bg-purple-500/10 p-1.5">
-                        <UserCheck className="h-3.5 w-3.5 text-purple-600" />
-                      </div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Busiest visitor day
-                      </p>
-                    </div>
-                    <p className="mt-2 text-xl font-bold text-foreground">
-                      {formatDate(visitorSpike.date)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatNumber(visitorSpike.count)} visitors processed
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg">High-velocity days</CardTitle>
-                <CardDescription className="mt-1">
-                  Dates with the most gate pass creations
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 p-6">
-                {topGateDays.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Gate pass volume data is not available yet. Activity will
-                    populate as soon as new passes are issued.
-                  </p>
-                ) : (
-                  topGateDays.map((day, index) => (
-                    <div
-                      key={day.date}
-                      className="group flex items-center justify-between rounded-lg border-2 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${index === 0
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
-                            : "bg-muted text-muted-foreground"
-                            }`}
-                        >
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            {formatDate(day.date)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {index === 0 ? "Busiest day" : `Top ${index + 1}`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-foreground">
-                          {formatNumber(day.count)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          passes issued
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </Section>
-
-        <Section
-          title="Gate flow"
-          description="Balance of check-ins and check-outs for visitors."
-        >
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg">Check-ins vs check-outs</CardTitle>
-                <CardDescription className="mt-1">
-                  Daily balance of visitor movements
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[360px] p-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={gateFlowSeries}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="label" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Legend />
-                    <Bar dataKey="checkins" name="Check-ins" fill="#0ea5e9" />
-                    <Bar dataKey="checkouts" name="Check-outs" fill="#6366f1" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg">Movement snapshot</CardTitle>
-                <CardDescription className="mt-1">
-                  Aggregate check-ins and check-outs across the period
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5 p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg border-2 bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 dark:from-blue-950/20 dark:to-blue-900/10">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Total check-ins
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-foreground">
-                      {formatNumber(movementStats.totalCheckins)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {movementStats.averageCheckins.toFixed(1)} avg / day
-                    </p>
-                  </div>
-                  <div className="rounded-lg border-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-4 dark:from-indigo-950/20 dark:to-indigo-900/10">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Total check-outs
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-foreground">
-                      {formatNumber(movementStats.totalCheckouts)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {movementStats.averageCheckouts.toFixed(1)} avg / day
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-lg border-2 bg-gradient-to-br from-slate-50 to-slate-100/50 p-5 dark:from-slate-900/50 dark:to-slate-800/30">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-primary/10 p-1.5">
-                      {movementStats.totalCheckins - movementStats.totalCheckouts >= 0 ? (
-                        <ArrowUpRight className="h-4 w-4 text-primary" />
-                      ) : (
-                        <ArrowDownRight className="h-4 w-4 text-red-600" />
-                      )}
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Net flow
-                    </p>
-                  </div>
-                  <p className="mt-2 text-3xl font-bold text-foreground">
-                    {formatSignedNumber(
-                      movementStats.totalCheckins - movementStats.totalCheckouts
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Difference between entries and exits
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Based on {observationWindowDays || "current"} days of activity.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </Section>
-      </div>
-    </>
-  );
-}
-
-function PageHeader({
-  onRefresh,
-  isRefreshing,
-}: {
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Monitor residents, visitors, and gate efficiency in real time.
-        </p>
-      </div>
-      <Button
-        variant="outline"
-        onClick={onRefresh}
-        isLoading={isRefreshing}
-        className="flex items-center gap-2 shadow-sm transition-all hover:shadow"
+      <Section
+        title="Activity"
+        description="Relationship and visitor activity across the available observation window."
       >
-        <RefreshCcw className="h-4 w-4" />
-        Refresh data
-      </Button>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.7fr)]">
+          <ReportPanel
+            title="Activity trend"
+            description="Gate passes, visitors and occupancy relationships by day."
+          >
+            {trendSeries.length ? (
+              <>
+                <div
+                  className="h-80 p-3 sm:p-5"
+                  role="img"
+                  aria-label="Line chart comparing daily gate passes, visitors and occupancy relationships"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendSeries}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="var(--vms-line)"
+                      />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="gatePasses"
+                        name="Gate passes"
+                        stroke="var(--vms-data-primary)"
+                        strokeWidth={2.5}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="visitors"
+                        name="Visitors"
+                        stroke="var(--vms-data-secondary)"
+                        strokeWidth={1.75}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="residencies"
+                        name="Relationships"
+                        stroke="var(--vms-data-tertiary)"
+                        strokeWidth={1.75}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <ChartDataTable
+                  label="Daily activity"
+                  columns={[
+                    { key: "label", label: "Day" },
+                    { key: "gatePasses", label: "Gate passes" },
+                    { key: "visitors", label: "Visitors" },
+                    { key: "residencies", label: "Relationships" },
+                  ]}
+                  rows={trendSeries}
+                />
+              </>
+            ) : (
+              <PanelState
+                kind="empty"
+                compact
+                title="No activity points"
+                description="No daily gate-pass, visitor or relationship series was returned."
+              />
+            )}
+          </ReportPanel>
+
+          <ReportPanel
+            title="Activity highlights"
+            description="Exact callouts from the current observation window."
+          >
+            <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-1">
+              <Highlight
+                label="Busiest visitor day"
+                value={
+                  visitorSpike
+                    ? `${formatNumber(visitorSpike.count)} visitors`
+                    : "No activity"
+                }
+                helper={
+                  visitorSpike ? formatDate(visitorSpike.date) : "No dates available"
+                }
+              />
+              <Highlight
+                label="Busiest gate-pass day"
+                value={
+                  topGateDays[0]
+                    ? `${formatNumber(topGateDays[0].count)} passes`
+                    : "No activity"
+                }
+                helper={
+                  topGateDays[0]
+                    ? formatDate(topGateDays[0].date)
+                    : "No dates available"
+                }
+              />
+              <Highlight
+                label="Average check-ins"
+                value={movement.averageCheckins.toFixed(1)}
+                helper={`Across ${observationDays || 0} observed days`}
+              />
+              <Highlight
+                label="Net flow"
+                value={formatSignedNumber(netFlow)}
+                helper="Entries minus exits"
+                attention={netFlow < 0}
+              />
+            </div>
+          </ReportPanel>
+        </div>
+      </Section>
+
+      <Section
+        title="Access control"
+        description="Decision quality and movement balance across recorded checkpoint events."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ReportPanel
+            title="Decision quality"
+            description="Allowed and denied gate decisions, with exact totals."
+          >
+            <div className="space-y-5 p-5">
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+                    <ShieldCheck className="h-4 w-4 text-[var(--vms-success)]" />
+                    Approved
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {formatNumber(analytics.total_gate_events_approved)} ·{" "}
+                    {approvalRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--vms-surface-subtle)]">
+                  <div
+                    className="h-full rounded-full bg-[var(--vms-success)] motion-reduce:transition-none"
+                    style={{ width: `${Math.min(approvalRate, 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+                    <ArrowDownRight className="h-4 w-4 text-[var(--vms-danger)]" />
+                    Denied
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {formatNumber(analytics.total_gate_events_denied)} ·{" "}
+                    {denialRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--vms-surface-subtle)]">
+                  <div
+                    className="h-full rounded-full bg-[var(--vms-danger)] motion-reduce:transition-none"
+                    style={{ width: `${Math.min(denialRate, 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Highlight
+                  label="Decision total"
+                  value={formatNumber(analytics.total_gate_events)}
+                  helper="Recorded checkpoint events"
+                />
+                <Highlight
+                  label="Gate events per admin"
+                  value={
+                    analytics.total_admins
+                      ? (
+                          analytics.total_gate_events /
+                          analytics.total_admins
+                        ).toFixed(1)
+                      : "—"
+                  }
+                  helper="Current administrator count"
+                />
+              </div>
+            </div>
+          </ReportPanel>
+
+          <ReportPanel
+            title="Gate flow"
+            description="Daily check-in and check-out balance."
+          >
+            {gateFlowSeries.length ? (
+              <>
+                <div
+                  className="h-64 p-3 sm:p-5"
+                  role="img"
+                  aria-label="Bar chart comparing daily check-ins and check-outs"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={gateFlowSeries}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="var(--vms-line)"
+                      />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend />
+                      <Bar
+                        dataKey="checkins"
+                        name="Check-ins"
+                        fill="var(--vms-data-primary)"
+                        radius={[3, 3, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="checkouts"
+                        name="Check-outs"
+                        fill="var(--vms-data-secondary)"
+                        radius={[3, 3, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <ChartDataTable
+                  label="Daily gate flow"
+                  columns={[
+                    { key: "label", label: "Day" },
+                    { key: "checkins", label: "Check-ins" },
+                    { key: "checkouts", label: "Check-outs" },
+                  ]}
+                  rows={gateFlowSeries}
+                />
+                <div className="grid grid-cols-2 gap-3 border-t border-[var(--vms-line)] p-4">
+                  <Highlight
+                    label="Total check-ins"
+                    value={formatNumber(movement.totalCheckins)}
+                    helper={`${movement.averageCheckins.toFixed(1)} average/day`}
+                  />
+                  <Highlight
+                    label="Total check-outs"
+                    value={formatNumber(movement.totalCheckouts)}
+                    helper={`${movement.averageCheckouts.toFixed(1)} average/day`}
+                  />
+                </div>
+              </>
+            ) : (
+              <PanelState
+                kind="empty"
+                compact
+                title="No gate-flow points"
+                description="No check-in or check-out series was returned."
+              />
+            )}
+          </ReportPanel>
+        </div>
+      </Section>
+
+      <Section
+        title="High-velocity days"
+        description="Days with the highest recorded pass creation volume."
+      >
+        <ReportPanel
+          title="Top gate-pass days"
+          description="Ordered by daily pass volume; this is not a performance score."
+        >
+          {topGateDays.length ? (
+            <ol className="divide-y divide-[var(--vms-line)]">
+              {topGateDays.map((day, index) => (
+                <li
+                  key={day.date}
+                  className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-5"
+                >
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-xs font-semibold tabular-nums">
+                    {index + 1}
+                  </span>
+                  <span>
+                    <strong className="block text-sm font-semibold">
+                      {formatDate(day.date)}
+                    </strong>
+                    <span className="text-xs text-[var(--vms-ink-muted)]">
+                      {index === 0 ? "Highest observed day" : `Rank ${index + 1}`}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1 text-lg font-semibold tabular-nums">
+                    <ArrowUpRight className="h-4 w-4 text-[var(--vms-ink-muted)]" />
+                    {formatNumber(day.count)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <PanelState
+              kind="empty"
+              compact
+              title="No pass-volume data"
+              description="Daily gate-pass counts will appear after passes are issued."
+            />
+          )}
+        </ReportPanel>
+      </Section>
     </div>
   );
 }
-
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-        {description && (
-          <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
-        )}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function HighlightStat({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: string;
-  helper: string;
-}) {
-  return (
-    <div className="rounded-lg border-2 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1.5 text-xl font-bold text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
-    </div>
-  );
-}
-

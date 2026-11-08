@@ -1,26 +1,17 @@
 .stay-workspace {
-  --stay-ink: #18181b;
-  --stay-paper: #ffffff;
-  --stay-canvas: #fafaf9;
-  --stay-line: #e4e4e7;
-  --stay-accent: #213928;
-  --stay-primary: #213928;
-  --stay-danger: #b42318;
+  --stay-ink: var(--vms-ink);
+  --stay-paper: var(--vms-surface);
+  --stay-canvas: var(--vms-canvas);
+  --stay-line: var(--vms-line);
+  --stay-accent: var(--vms-active-accent);
+  --stay-primary: var(--vms-action);
+  --stay-danger: var(--vms-danger);
   color: var(--stay-ink);
   max-width: 1440px;
   margin: auto;
   padding: 12px 0 40px;
   font-size: 14px;
   line-height: 1.55;
-}
-.dark .stay-workspace {
-  --stay-ink: #f4f4f5;
-  --stay-paper: #18181b;
-  --stay-canvas: #0a0a0a;
-  --stay-line: #3f3f46;
-  --stay-accent: #8eb47a;
-  --stay-primary: #3f6033;
-  --stay-danger: #fca5a5;
 }
 .stay-heading,
 .stay-list-heading,
@@ -45,7 +36,7 @@
   font-size: 11px;
   letter-spacing: 0.13em;
   font-weight: 700;
-  color: var(--stay-accent);
+  color: var(--vms-ink-muted);
 }
 .stay-layout {
   display: grid;
@@ -55,11 +46,11 @@
 }
 .stay-panel {
   border: 1px solid var(--stay-line);
-  border-radius: 12px;
+  border-radius: var(--vms-radius-surface);
   background: var(--stay-paper);
   padding: 24px;
   min-width: 0;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  box-shadow: none;
 }
 .stay-panel h2 {
   font-size: 20px;
@@ -77,23 +68,25 @@
 }
 .stay-workspace button {
   border: 1px solid var(--stay-line);
-  border-radius: 8px;
+  border-radius: var(--vms-radius-control);
   padding: 9px 13px;
   min-height: 40px;
   font-weight: 600;
   text-align: left;
-  background: transparent;
-  transition: background 120ms;
+  background: var(--vms-surface);
+  color: var(--vms-ink);
+  transition: background var(--vms-motion), border-color var(--vms-motion);
 }
 .stay-workspace button:hover {
-  background: color-mix(in srgb, var(--stay-accent) 10%, transparent);
+  background: var(--vms-surface-subtle);
+  border-color: var(--vms-line-strong);
 }
 .stay-workspace button:focus-visible,
 .stay-workspace input:focus-visible,
 .stay-workspace textarea:focus-visible,
 .stay-workspace select:focus-visible {
-  outline: 3px solid var(--stay-accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--vms-focus);
+  outline-offset: 2px;
 }
 .stay-workspace button:disabled {
   opacity: 0.45;
@@ -101,11 +94,12 @@
 }
 .stay-workspace button.stay-primary {
   background: var(--stay-primary);
-  color: white;
+  color: var(--vms-on-action);
   border-color: var(--stay-primary);
 }
 .stay-workspace button.stay-primary:hover {
-  filter: brightness(0.94);
+  background: var(--vms-action-hover);
+  border-color: var(--vms-action-hover);
 }
 .stay-workspace label {
   display: flex;
@@ -118,9 +112,9 @@
 .stay-workspace input,
 .stay-workspace select,
 .stay-workspace textarea {
-  background: transparent;
+  background: var(--vms-surface);
   border: 1px solid var(--stay-line);
-  border-radius: 8px;
+  border-radius: var(--vms-radius-control);
   padding: 10px;
   min-width: 0;
   max-width: 100%;
@@ -165,7 +159,7 @@
   gap: 6px;
 }
 .stay-list li > button[aria-current="true"] {
-  background: color-mix(in srgb, var(--stay-accent) 12%, transparent);
+  background: var(--vms-surface-subtle);
   box-shadow: inset 3px 0 var(--stay-accent);
 }
 .stay-list-title {
@@ -174,25 +168,30 @@
   align-items: start;
 }
 .stay-status {
-  font: 600 10px/1.3 system-ui;
+  font: 600 11px/1.3 var(--vms-font-interface);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 5px 7px;
   border: 1px solid var(--stay-line);
-  border-radius: 3px;
+  border-radius: 999px;
   white-space: nowrap;
+  background: var(--vms-surface-subtle);
+  color: var(--vms-ink-muted);
 }
 .stay-status.checked_in {
-  background: #d2eee4;
-  color: #15543f;
+  background: var(--vms-success-subtle);
+  color: var(--vms-success);
+  border-color: color-mix(in srgb, var(--vms-success) 28%, white);
 }
 .stay-status.cancelled {
-  background: #fbe4e5;
-  color: #831d2b;
+  background: var(--vms-danger-subtle);
+  color: var(--vms-danger);
+  border-color: color-mix(in srgb, var(--vms-danger) 28%, white);
 }
 .stay-status.reserved {
-  background: #e5e5ff;
-  color: #36308b;
+  background: var(--vms-warning-subtle);
+  color: var(--vms-warning);
+  border-color: color-mix(in srgb, var(--vms-warning) 28%, white);
 }
 .stay-pagination {
   display: flex;
@@ -254,15 +253,17 @@
   padding-top: 12px;
 }
 .stay-notice {
-  background: #d2eee4;
-  color: #15543f;
-  border-radius: 5px;
+  background: var(--vms-success-subtle);
+  color: var(--vms-success);
+  border: 1px solid color-mix(in srgb, var(--vms-success) 28%, white);
+  border-radius: var(--vms-radius-control);
   padding: 12px 16px;
 }
 .stay-error {
-  background: #fbe4e5;
-  color: #831d2b;
-  border-radius: 5px;
+  background: var(--vms-danger-subtle);
+  color: var(--vms-danger);
+  border: 1px solid color-mix(in srgb, var(--vms-danger) 28%, white);
+  border-radius: var(--vms-radius-control);
   padding: 12px;
 }
 .stay-picker {
@@ -292,9 +293,9 @@
 }
 .hotel-admin-overview {
   border: 1px solid var(--stay-line);
-  border-radius: 12px;
+  border-radius: var(--vms-radius-surface);
   background: var(--stay-paper);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  box-shadow: none;
   margin-bottom: 20px;
   overflow: hidden;
 }
@@ -343,7 +344,7 @@
   border-right: 0;
 }
 .hotel-metric svg {
-  color: var(--stay-accent);
+  color: var(--vms-ink-muted);
 }
 .hotel-metric span {
   font-size: 12px;
@@ -379,7 +380,7 @@
   color: color-mix(in srgb, var(--stay-ink) 60%, transparent);
 }
 .hotel-panel-heading > svg {
-  color: var(--stay-accent);
+  color: var(--vms-ink-muted);
 }
 .hotel-people-list,
 .hotel-arrival-list {
@@ -404,8 +405,8 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  color: var(--stay-accent);
-  background: color-mix(in srgb, var(--stay-accent) 9%, transparent);
+  color: var(--vms-ink-muted);
+  background: var(--vms-surface-subtle);
 }
 .hotel-people-list strong,
 .hotel-people-list small,
@@ -480,6 +481,7 @@
   }
   .stay-workspace input {
     width: 100%;
+    font-size: 16px;
   }
   .hotel-admin-intro {
     align-items: flex-start;
