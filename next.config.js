@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const localBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "localhost";
-const { legacyRedirects } = require("./config/legacy-redirects");
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
@@ -38,9 +37,6 @@ const nextConfig = {
     "vmsfront.to",
     "dashboard.vmscore.to"
   ],
-  async redirects() {
-    return legacyRedirects;
-  },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vmscore.to'
     return [
