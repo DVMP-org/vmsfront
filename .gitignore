@@ -18,6 +18,7 @@
 /docs/evidence/**/*.jpeg
 /docs/evidence/**/*.webp
 /docs/evidence/**/*.gif
+!/docs/evidence/final-operations-hub/**/*.png
 
 # Playwright
 /playwright/test-results/
