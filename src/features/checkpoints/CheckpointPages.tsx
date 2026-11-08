@@ -7,6 +7,11 @@ import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   AccessCommand,
   AccessLane,
@@ -37,35 +42,61 @@ function useAccess() {
 }
 function Failure({ error, retry }: { error: unknown; retry: () => void }) {
   return (
-    <div role="alert">
-      <p>{parseApiError(error).message}</p>
-      <button onClick={retry}>Retry</button>
+    <div
+      role="alert"
+      className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]"
+    >
+      <p className="font-semibold">{parseApiError(error).message}</p>
+      <Button variant="outline" size="sm" className="mt-3" onClick={retry}>
+        Retry
+      </Button>
     </div>
   );
 }
 function Outcome({ event }: { event: Passage }) {
+  const allowed = event.outcome === "allowed";
   return (
     <section
-      className={`checkpoint-outcome ${event.outcome}`}
+      className={`checkpoint-outcome ${event.outcome} rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5`}
       aria-label="Passage result"
     >
-      <h2>
-        {event.outcome === "allowed" ? "Allowed" : "Denied"} ·{" "}
-        {event.direction === "entry" ? "Check-in" : "Checkout"}
-      </h2>
-      <p>{event.reason_code.replaceAll("_", " ")}</p>
-      <p>{new Date(event.occurred_at).toLocaleString()}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+            Recorded decision
+          </p>
+          <h2 className="mt-1 text-xl font-semibold">
+            {allowed ? "Allowed" : "Denied"} ·{" "}
+            {event.direction === "entry" ? "Check-in" : "Checkout"}
+          </h2>
+        </div>
+        <Badge variant={allowed ? "success" : "danger"}>
+          {allowed ? "Allowed" : "Denied"}
+        </Badge>
+      </div>
+      <p className="mt-3 text-sm capitalize text-[var(--vms-ink-muted)]">
+        {event.reason_code.replaceAll("_", " ")}
+      </p>
+      <time
+        className="mt-1 block text-xs text-[var(--vms-ink-muted)]"
+        dateTime={event.occurred_at}
+      >
+        {new Date(event.occurred_at).toLocaleString()}
+      </time>
       {event.replayed && (
-        <p>
+        <p className="mt-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-info)]/30 bg-[var(--vms-surface-subtle)] p-3 text-sm">
           Previously recorded result recovered. No duplicate passage was
           created.
         </p>
       )}
-      <p>
+      <p className="mt-3 text-sm text-[var(--vms-ink-muted)]">
         This is the recorded passage decision. Hardware command, acknowledgement
         and physical state are separate.
       </p>
-      <Link href={`/admin/checkpoints/${event.gate_id}/events/${event.id}`}>
+      <Link
+        className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+        href={`/admin/checkpoints/${event.gate_id}/events/${event.id}`}
+      >
         Open passage record
       </Link>
     </section>
@@ -97,19 +128,38 @@ function HardwareState({
   onRefresh: () => void;
 }) {
   const command = simulation?.command;
+  const commandTone =
+    command?.status === "completed"
+      ? "success"
+      : command?.status === "acknowledged" || command?.status === "pending"
+        ? "warning"
+        : command?.status === "rejected" ||
+            command?.status === "offline" ||
+            command?.status === "timed_out"
+          ? "danger"
+          : "neutral";
   return (
-    <section className="checkpoint-hardware" aria-label="Hardware status">
+    <section
+      className="checkpoint-hardware rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5"
+      aria-label="Hardware status"
+    >
       <header>
         <div>
-          <h2>Decision to physical state</h2>
-          <p>
+          <h2 className="text-lg font-semibold">Decision to physical state</h2>
+          <p className="text-sm text-[var(--vms-ink-muted)]">
             These are separate states. Only a completed device report confirms
             the door or barrier moved.
           </p>
         </div>
-        <button type="button" disabled={loading} onClick={onRefresh}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          isLoading={loading}
+          onClick={onRefresh}
+        >
           {loading ? "Refreshing…" : "Refresh hardware"}
-        </button>
+        </Button>
       </header>
       <div className="checkpoint-hardware-grid">
         <div>
@@ -121,6 +171,9 @@ function HardwareState({
           <span>2. Device command</span>
           <strong>{command?.action || "None"}</strong>
           <small>{commandStatusLabel(command)}</small>
+          <Badge variant={commandTone} className="mt-2">
+            {command?.status?.replaceAll("_", " ") || "Not dispatched"}
+          </Badge>
         </div>
         <div>
           <span>3. Acknowledgement</span>
@@ -143,7 +196,10 @@ function HardwareState({
         </div>
       </div>
       {command?.status === "offline" || lane?.availability === "offline" ? (
-        <p className="checkpoint-fail-safe" role="status">
+        <p
+          className="checkpoint-fail-safe mt-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-warning)]/40 bg-[var(--vms-warning-subtle)] p-3 text-sm font-semibold text-[var(--vms-warning)]"
+          role="status"
+        >
           Fail-safe active: the decision may be recorded, but no physical action
           was confirmed. Follow the site&apos;s manual access procedure.
         </p>
@@ -169,71 +225,83 @@ export function CheckpointDirectory() {
     return <p role="alert">You do not have permission to select a gate.</p>;
   return (
     <main className="checkpoint-page">
-      <header>
-        <p>ACCESS OPERATIONS</p>
-        <h1>Check-in / checkout</h1>
-        <p>
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+          Access operations
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+          Check-in / checkout
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
           Choose the checkpoint you are operating. Access decisions are shared
           across every use case.
         </p>
       </header>
       <form
+        className="flex flex-col gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:flex-row sm:items-end"
         onSubmit={(e) => {
           e.preventDefault();
           setSearch(input.trim());
           setPage(1);
         }}
       >
-        <label>
-          Search gates
-          <input
-            type="search"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            maxLength={100}
-          />
-        </label>
-        <button>Search</button>
+        <Field id="checkpoint-gate-search" label="Search gates" className="flex-1">
+          {(control) => (
+            <input
+              {...control}
+              type="search"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              maxLength={100}
+              placeholder="Gate or checkpoint name"
+              className={fieldControlClassName}
+            />
+          )}
+        </Field>
+        <Button type="submit">Search</Button>
       </form>
       {list.isPending ? (
-        <p role="status">Loading gates…</p>
+        <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
+          Loading gates…
+        </p>
       ) : list.isError ? (
         <Failure error={list.error} retry={() => list.refetch()} />
       ) : (
         <>
-          <ul className="checkpoint-directory">
+          <ul className="checkpoint-directory overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
             {list.data?.items.map((g) => (
-              <li key={g.id}>
-                <Link href={`/admin/checkpoints/${g.id}`}>
-                  <strong>{g.name}</strong>
-                  <span>Open checkpoint →</span>
+              <li
+                key={g.id}
+                className="border-b border-[var(--vms-line)] last:border-b-0"
+              >
+                <Link
+                  href={`/admin/checkpoints/${g.id}`}
+                  className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]"
+                >
+                  <strong className="text-sm">{g.name}</strong>
+                  <span className="text-sm font-semibold text-[var(--vms-action)]">
+                    Open checkpoint
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
           {!list.data?.items.length && (
-            <p>
-              No gates match this search. Configure a gate in Gates before
-              recording passages.
-            </p>
+            <EmptyState
+              title="No gates found"
+              description="No checkpoint matches this search. Configure a gate before recording passages."
+            />
           )}
-          <nav aria-label="Gate pagination">
-            <button
-              disabled={page === 1 || list.isFetching}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {page}</span>
-            <button
-              disabled={
-                page >= (list.data?.total_pages || 0) || list.isFetching
-              }
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </nav>
+          <PaginationBar
+            page={page}
+            totalPages={list.data?.total_pages || 0}
+            hasPrevious={page > 1}
+            hasNext={page < (list.data?.total_pages || 0)}
+            isFetching={list.isFetching}
+            resourceLabel="checkpoints"
+            onChange={setPage}
+            className="border-[var(--vms-line)] bg-[var(--vms-surface)]"
+          />
         </>
       )}
     </main>
@@ -428,11 +496,20 @@ function Console({
     return <Failure error={gate.error} retry={() => gate.refetch()} />;
   return (
     <main className="checkpoint-page">
-      <Link href="/admin/checkpoints">← All checkpoints</Link>
-      <header>
-        <p>ACCESS OPERATIONS</p>
-        <h1>{gate.data?.name}</h1>
-        <p>
+      <Link
+        href="/admin/checkpoints"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+      >
+        Back to all checkpoints
+      </Link>
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+          Access operations
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+          {gate.data?.name}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
           Tablet check-in and checkout. A recorded decision does not imply the
           barrier opened.
         </p>
@@ -462,16 +539,28 @@ function Console({
         </div>
       </section>
       {topology.isError ? (
-        <div role="alert" className="checkpoint-inline-alert">
-          <p>Lane state could not be verified.</p>
+        <div
+          role="alert"
+          className="checkpoint-inline-alert rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]"
+        >
+          <p className="font-semibold">Lane state could not be verified.</p>
           <p>{parseApiError(topology.error).message}</p>
-          <button type="button" onClick={() => topology.refetch()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => topology.refetch()}
+          >
             Retry lane status
-          </button>
+          </Button>
         </div>
       ) : null}
       {queued.length ? (
-        <section className="checkpoint-queue" aria-live="polite">
+        <section
+          className="checkpoint-queue rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]"
+          aria-live="polite"
+        >
           <strong>
             {queued.length} provisional{" "}
             {queued.length === 1 ? "passage" : "passages"} queued
@@ -481,8 +570,11 @@ function Console({
             confirms each result.
           </p>
           {queueNotice ? <p>{queueNotice}</p> : null}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
             disabled={!online || mutation.isPending || !!intent}
             onClick={() => {
               const next = queued[0];
@@ -492,11 +584,12 @@ function Console({
             }}
           >
             {online ? "Verify next queued passage" : "Waiting for connection"}
-          </button>
+          </Button>
         </section>
       ) : null}
       {canRecord ? (
         <form
+          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5"
           onSubmit={(e) => {
             e.preventDefault();
             if (intent || mutation.isPending) return;
@@ -523,85 +616,141 @@ function Console({
             mutation.mutate(body);
           }}
         >
-          <fieldset disabled={!!intent || mutation.isPending || !!result}>
-            <legend>New passage</legend>
-            <label>
-              Authorization code
-              <input
+          <fieldset
+            disabled={!!intent || mutation.isPending || !!result}
+            className="space-y-4"
+          >
+            <div>
+              <legend className="text-lg font-semibold">New passage</legend>
+              <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                Record the person first. Hardware state stays separate from the
+                access decision.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                id="checkpoint-authorization-code"
+                label="Authorization code"
                 required
-                value={code}
-                maxLength={100}
-                onChange={(e) => setCode(e.target.value)}
-                autoComplete="off"
-              />
-            </label>
-            <label>
-              Guest suffix (for group invitations)
-              <input
-                value={suffix}
-                pattern="[0-9]{2,10}"
-                maxLength={10}
-                onChange={(e) => setSuffix(e.target.value)}
-                inputMode="numeric"
-              />
-            </label>
-            <label>
-              Direction
-              <select
-                value={direction}
-                onChange={(e) =>
-                  setDirection(e.target.value as "entry" | "exit")
-                }
               >
-                <option value="entry">Check in</option>
-                <option value="exit">Check out</option>
-              </select>
-            </label>
-            <label>
-              Door or barrier
-              <select
-                value={selectedLane?.id || ""}
-                onChange={(e) => setSelectedLaneId(e.target.value)}
-                disabled={topology.isPending || lanes.length === 0}
-              >
-                {lanes.length ? (
-                  lanes.map((lane) => (
-                    <option key={lane.id} value={lane.id}>
-                      {lane.name} · {lane.availability} ·{" "}
-                      {lane.observed_state}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No hardware lane configured</option>
+                {(control) => (
+                  <input
+                    {...control}
+                    aria-label="Authorization code"
+                    value={code}
+                    maxLength={100}
+                    onChange={(e) => setCode(e.target.value)}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    className={fieldControlClassName}
+                  />
                 )}
-              </select>
-            </label>
-            <button disabled={!code.trim()}>
+              </Field>
+              <Field
+                id="checkpoint-guest-suffix"
+                label="Guest suffix (for group invitations)"
+                description="Use the numbered suffix assigned to a group guest."
+              >
+                {(control) => (
+                  <input
+                    {...control}
+                    aria-label="Guest suffix (for group invitations)"
+                    value={suffix}
+                    pattern="[0-9]{2,10}"
+                    maxLength={10}
+                    onChange={(e) => setSuffix(e.target.value)}
+                    inputMode="numeric"
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+              <Field id="checkpoint-direction" label="Direction" required>
+                {(control) => (
+                  <select
+                    {...control}
+                    aria-label="Direction"
+                    value={direction}
+                    onChange={(e) =>
+                      setDirection(e.target.value as "entry" | "exit")
+                    }
+                    className={fieldControlClassName}
+                  >
+                    <option value="entry">Check in</option>
+                    <option value="exit">Check out</option>
+                  </select>
+                )}
+              </Field>
+              <Field id="checkpoint-lane" label="Door or barrier">
+                {(control) => (
+                  <select
+                    {...control}
+                    aria-label="Door or barrier"
+                    value={selectedLane?.id || ""}
+                    onChange={(e) => setSelectedLaneId(e.target.value)}
+                    disabled={topology.isPending || lanes.length === 0}
+                    className={fieldControlClassName}
+                  >
+                    {lanes.length ? (
+                      lanes.map((lane) => (
+                        <option key={lane.id} value={lane.id}>
+                          {lane.name} · {lane.availability} ·{" "}
+                          {lane.observed_state}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No hardware lane configured</option>
+                    )}
+                  </select>
+                )}
+              </Field>
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={!code.trim()}
+              isLoading={mutation.isPending}
+            >
               {mutation.isPending
                 ? "Verifying…"
                 : online
                   ? "Record and verify passage"
                   : "Queue offline check"}
-            </button>
+            </Button>
           </fieldset>
         </form>
       ) : (
-        <p>You can view this checkpoint but cannot record passages.</p>
+        <p
+          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 text-sm text-[var(--vms-ink-muted)]"
+          role="status"
+        >
+          You can view this checkpoint but cannot record passages.
+        </p>
       )}
       {mutation.isError && (
-        <div role="alert">
-          <p>{parseApiError(mutation.error).message}</p>
+        <div
+          role="alert"
+          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]"
+        >
+          <p className="font-semibold">
+            {parseApiError(mutation.error).message}
+          </p>
           <p>
             The outcome may be unknown. Retry uses the same request to avoid a
             duplicate passage.
           </p>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
             disabled={mutation.isPending}
             onClick={() => intent && mutation.mutate(intent)}
           >
             Retry same passage
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-3"
             onClick={() => {
               setIntent(null);
               mutation.reset();
@@ -610,7 +759,7 @@ function Console({
             }}
           >
             Start a different passage
-          </button>
+          </Button>
         </div>
       )}
       {result && (
@@ -637,7 +786,9 @@ function Console({
               }
             }}
           />
-          <button
+          <Button
+            variant="outline"
+            size="lg"
             onClick={() => {
               setResult(null);
               setSimulation(null);
@@ -647,55 +798,75 @@ function Console({
             }}
           >
             Next person
-          </button>
+          </Button>
         </>
       )}
-      <section>
-        <h2>Passage history</h2>
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+        <div className="border-b border-[var(--vms-line)] px-4 py-4">
+          <h2 className="text-lg font-semibold">Passage history</h2>
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+            Exact checkpoint records, including denied outcomes and repeated
+            scans.
+          </p>
+        </div>
         {!allowed("checkpoint_events.list") ? (
-          <p>You do not have permission to view history.</p>
+          <p className="p-4 text-sm text-[var(--vms-ink-muted)]">
+            You do not have permission to view history.
+          </p>
         ) : history.isPending ? (
-          <p role="status">Loading history…</p>
+          <p className="p-4 text-sm text-[var(--vms-ink-muted)]" role="status">
+            Loading history…
+          </p>
         ) : history.isError ? (
-          <Failure error={history.error} retry={() => history.refetch()} />
+          <div className="p-4">
+            <Failure error={history.error} retry={() => history.refetch()} />
+          </div>
         ) : (
           <>
-            <ul className="checkpoint-history">
+            <ul className="checkpoint-history divide-y divide-[var(--vms-line)]">
               {history.data?.items.map((event) => (
                 <li key={event.id}>
                   <Link
                     href={`/admin/checkpoints/${gateId}/events/${event.id}`}
+                    className="grid min-h-16 gap-2 px-4 py-3 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
                   >
-                    <time>{new Date(event.occurred_at).toLocaleString()}</time>
+                    <time
+                      dateTime={event.occurred_at}
+                      className="text-sm text-[var(--vms-ink-muted)]"
+                    >
+                      {new Date(event.occurred_at).toLocaleString()}
+                    </time>
                     <strong>
                       {event.direction === "entry" ? "Check-in" : "Checkout"} ·{" "}
                       {event.outcome}
                     </strong>
-                    <span>{event.reason_code.replaceAll("_", " ")}</span>
+                    <Badge
+                      variant={
+                        event.outcome === "allowed" ? "success" : "danger"
+                      }
+                    >
+                      {event.reason_code.replaceAll("_", " ")}
+                    </Badge>
                   </Link>
                 </li>
               ))}
             </ul>
             {!history.data?.items.length && (
-              <p>No passages recorded at this checkpoint.</p>
+              <EmptyState
+                title="No passages yet"
+                description="No passages have been recorded at this checkpoint."
+              />
             )}
-            <nav aria-label="Passage pagination">
-              <button
-                disabled={page === 1 || history.isFetching}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </button>
-              <span>Page {page}</span>
-              <button
-                disabled={
-                  page >= (history.data?.total_pages || 0) || history.isFetching
-                }
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </button>
-            </nav>
+            <PaginationBar
+              page={page}
+              totalPages={history.data?.total_pages || 0}
+              hasPrevious={page > 1}
+              hasNext={page < (history.data?.total_pages || 0)}
+              isFetching={history.isFetching}
+              resourceLabel="passages"
+              onChange={setPage}
+              className="rounded-none border-0 border-t"
+            />
           </>
         )}
       </section>
@@ -723,8 +894,20 @@ export function CheckpointRecord({
     return <p role="alert">You do not have permission to view this passage.</p>;
   return (
     <main className="checkpoint-page">
-      <Link href={`/admin/checkpoints/${gateId}`}>← Checkpoint</Link>
-      <h1>Passage record</h1>
+      <Link
+        href={`/admin/checkpoints/${gateId}`}
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+      >
+        Back to checkpoint
+      </Link>
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+          Access record
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+          Passage record
+        </h1>
+      </header>
       {record.isPending ? (
         <p role="status">Loading passage…</p>
       ) : record.isError ? (

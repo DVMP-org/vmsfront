@@ -22,23 +22,23 @@ const GateNodeComponent = ({ node, level = 0 }: { node: GateNode; level?: number
                 {/* Connection Line from Parent */}
                 {level > 0 && (
                     <div className="absolute -left-10 top-1/2 -translate-y-1/2 flex items-center">
-                        <div className="h-px w-10 bg-zinc-300 dark:bg-zinc-700 group-hover:bg-primary/50 transition-colors" />
-                        <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-700 group-hover:bg-primary/50 -ml-1 transition-colors" />
+                        <div className="h-px w-10 bg-[var(--vms-line-strong)] transition-colors group-hover:bg-[var(--vms-ink-muted)]" />
+                        <div className="-ml-1 h-2 w-2 rounded-full bg-[var(--vms-line-strong)] transition-colors group-hover:bg-[var(--vms-ink-muted)]" />
                     </div>
                 )}
 
                 <Card className={cn(
-                    "flex-1 min-w-[280px] max-w-[360px] transition-all duration-300 border-zinc-200/60 dark:border-zinc-800/60",
-                    "hover:border-primary/40 hover:shadow-sm shadow-none",
-                    "bg-white dark:bg-zinc-900/50 backdrop-blur-sm"
+                    "min-w-[280px] max-w-[360px] flex-1 border-[var(--vms-line)] transition-colors duration-150",
+                    "shadow-none hover:border-[var(--vms-line-strong)]",
+                    "bg-[var(--vms-surface)]"
                 )}>
                     <CardContent className="p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <div className={cn(
-                                "h-10 w-10 rounded-xl flex items-center justify-center transition-colors shadow-smShrink-0",
+                                "flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--vms-radius-control)] transition-colors",
                                 node.is_default
-                                    ? "bg-primary text-white shadow-primary/20"
-                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                    ? "bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                                    : "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]"
                             )}>
                                 <DoorOpen className="h-5 w-5" />
                             </div>
@@ -49,7 +49,7 @@ const GateNodeComponent = ({ node, level = 0 }: { node: GateNode; level?: number
                                         <Badge variant="default" className="text-[8px] px-1 h-3.5 font-bold uppercase tracking-wider">Default</Badge>
                                     )}
                                 </div>
-                                <span className="text-[9px] text-muted-foreground font-mono bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded uppercase tracking-wider self-start truncate">
+                                <span className="self-start truncate rounded bg-[var(--vms-surface-subtle)] px-1 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--vms-ink-muted)]">
                                     {node.slug}
                                 </span>
                             </div>
@@ -61,19 +61,19 @@ const GateNodeComponent = ({ node, level = 0 }: { node: GateNode; level?: number
                                     node.gate_admins.slice(0, 3).map((ga, idx) => (
                                         <div
                                             key={idx}
-                                            className="h-6 w-6 rounded-full ring-2 ring-background bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                                            className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface)] text-[9px] font-bold ring-2 ring-[var(--vms-surface)]"
                                             title={ga.admin?.user?.email}
                                         >
                                             {ga.admin?.user?.first_name?.[0] || "?"}
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="h-6 w-6 rounded-full border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-zinc-400">
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-[var(--vms-line-strong)] text-[var(--vms-ink-muted)]">
                                         <Shield className="h-2.5 w-2.5" />
                                     </div>
                                 )}
                             </div>
-                            <span className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest leading-none">
+                            <span className="text-[8px] font-bold uppercase leading-none tracking-widest text-[var(--vms-ink-muted)]">
                                 {node.gate_admins?.length || 0} Admins
                             </span>
                         </div>
@@ -82,7 +82,7 @@ const GateNodeComponent = ({ node, level = 0 }: { node: GateNode; level?: number
             </motion.div>
 
             {node.children && node.children.length > 0 && (
-                <div className="ml-[20px] pl-10 border-l border-zinc-200 dark:border-zinc-800 mt-4 space-y-4 pb-2">
+                <div className="ml-[20px] mt-4 space-y-4 border-l border-[var(--vms-line)] pb-2 pl-10">
                     {node.children.map((child) => (
                         <GateNodeComponent
                             key={child.id}
@@ -113,18 +113,18 @@ export function GateDependencyModal({ isOpen, onClose }: GateDependencyModalProp
             className="max-w-[1000px]"
         >
             <div className="space-y-6">
-                <div className="flex items-center justify-between gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-                            Root Gate
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--vms-ink-muted)]">
+                            <div className="h-2.5 w-2.5 rounded-full bg-[var(--vms-action)]" />
+                            Root gate
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                            <div className="h-2.5 w-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                            Child Gate
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--vms-ink-muted)]">
+                            <div className="h-2.5 w-2.5 rounded-full bg-[var(--vms-line-strong)]" />
+                            Child gate
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-medium">
+                    <div className="flex items-center gap-2 text-[10px] font-medium text-[var(--vms-ink-muted)]">
                         <Clock className="h-3 w-3" />
                         Updated: {new Date().toLocaleDateString()}
                     </div>
@@ -133,8 +133,8 @@ export function GateDependencyModal({ isOpen, onClose }: GateDependencyModalProp
                 <div className="relative min-h-[400px] overflow-x-auto pb-8">
                     {isLoading ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                            <div className="h-10 w-10 border-3 border-primary/20 border-t-primary rounded-full animate-spin" />
-                            <p className="text-zinc-400 text-sm font-medium animate-pulse">Mapping dependencies...</p>
+                            <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--vms-line)] border-t-[var(--vms-action)] motion-reduce:animate-none" />
+                            <p className="text-sm font-medium text-[var(--vms-ink-muted)]">Mapping dependencies…</p>
                         </div>
                     ) : (
                         <div className="pt-4">
@@ -150,12 +150,12 @@ export function GateDependencyModal({ isOpen, onClose }: GateDependencyModalProp
                                             animate={{ opacity: 1, scale: 1 }}
                                             className="flex flex-col items-center justify-center py-20 text-center gap-4"
                                         >
-                                            <div className="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                                            <div className="flex h-16 w-16 items-center justify-center rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
                                                 <DoorOpen className="h-8 w-8" />
                                             </div>
                                             <div className="space-y-1">
-                                                <h3 className="text-lg font-bold">No Dependencies Mapped</h3>
-                                                <p className="text-sm text-zinc-500 max-w-xs mx-auto">Configure gate dependencies to see them visualized.</p>
+                                                <h3 className="text-lg font-semibold">No dependencies mapped</h3>
+                                                <p className="mx-auto max-w-xs text-sm text-[var(--vms-ink-muted)]">Configure gate dependencies to see them visualized.</p>
                                             </div>
                                         </motion.div>
                                     )}

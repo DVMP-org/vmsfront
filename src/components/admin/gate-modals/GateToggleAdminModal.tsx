@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { Field } from "@/components/ui/form/Field";
 import { Gate } from "@/types";
 import { useUpdateGate, useAdmins } from "@/hooks/use-admin";
 
@@ -15,6 +16,7 @@ interface GateToggleAdminModalProps {
 
 export function GateToggleAdminModal({ isOpen, onClose, gate }: GateToggleAdminModalProps) {
     const [selectedAdminIds, setSelectedAdminIds] = useState<string[]>([]);
+    const [error, setError] = useState("");
     const updateGate = useUpdateGate();
     const { data: adminsData, isLoading: isLoadingAdmins } = useAdmins({ page: 1, pageSize: 100 });
 
@@ -31,14 +33,19 @@ export function GateToggleAdminModal({ isOpen, onClose, gate }: GateToggleAdminM
 
     const handleSubmit = async () => {
         if (!gate) return;
+        setError("");
         try {
             await updateGate.mutateAsync({
                 gateId: gate.id,
                 data: { admin_ids: selectedAdminIds },
             });
             onClose();
-        } catch (error) {
-            console.error("Failed to update admins:", error);
+        } catch (submitError) {
+            setError(
+                submitError instanceof Error
+                    ? submitError.message
+                    : "Administrators could not be updated.",
+            );
         }
     };
 
@@ -46,28 +53,41 @@ export function GateToggleAdminModal({ isOpen, onClose, gate }: GateToggleAdminM
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Manage Admins for ${gate?.name}`}
+            title={`Manage administrators for ${gate?.name}`}
+            description="Assigned administrators can configure and operate this gate."
         >
-            <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                    Select or remove admins who have access to manage this gate.
-                </p>
+            <div className="space-y-5 p-5">
+                <Field
+                    id="gate-admin-assignments"
+                    label="Gate administrators"
+                    description="At least one administrator is required."
+                    required
+                >
+                    {() => (
+                        <SearchableSelect
+                            inputId="gate-admin-assignments"
+                            isMulti
+                            options={adminOptions}
+                            isLoading={isLoadingAdmins}
+                            placeholder="Select administrators"
+                            value={selectedAdminIds}
+                            onChange={(values: string[] | undefined) => {
+                                setSelectedAdminIds(values || []);
+                                setError("");
+                            }}
+                        />
+                    )}
+                </Field>
+                {error ? (
+                    <p
+                        role="alert"
+                        className="rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]"
+                    >
+                        {error}
+                    </p>
+                ) : null}
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Gate Admins</label>
-                    <SearchableSelect
-                        isMulti
-                        options={adminOptions}
-                        isLoading={isLoadingAdmins}
-                        placeholder="Select admins..."
-                        value={selectedAdminIds}
-                        onChange={(values: any) => {
-                            setSelectedAdminIds(values || []);
-                        }}
-                    />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] bg-[var(--vms-surface)] pt-4 sm:flex-row sm:justify-end">
                     <Button variant="outline" type="button" onClick={onClose}>
                         Cancel
                     </Button>
@@ -76,7 +96,7 @@ export function GateToggleAdminModal({ isOpen, onClose, gate }: GateToggleAdminM
                         isLoading={updateGate.isPending}
                         disabled={selectedAdminIds.length === 0}
                     >
-                        Update Admins
+                        Update administrators
                     </Button>
                 </div>
             </div>
