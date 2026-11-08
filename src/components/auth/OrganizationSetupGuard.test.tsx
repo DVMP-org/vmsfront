@@ -50,7 +50,7 @@ describe("OrganizationSetupGuard", () => {
   });
 
   it("allows the first-place creation route", () => {
-    mocks.pathname = "/admin/properties/new";
+    mocks.pathname = "/admin/properties/new/";
     render(
       <OrganizationSetupGuard>
         <p>Create first place</p>

@@ -14,7 +14,10 @@ export function OrganizationSetupGuard({
   const pathname = usePathname();
   const router = useRouter();
   const { organization, isPending } = useCurrentOrganization();
-  const isCreatingFirstPlace = pathname?.startsWith(FIRST_PLACE_PATH) === true;
+  const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
+  const isCreatingFirstPlace =
+    normalizedPathname === FIRST_PLACE_PATH ||
+    normalizedPathname.startsWith(`${FIRST_PLACE_PATH}/`);
   const requiresFirstPlace =
     !isPending &&
     organization?.needs_first_site === true &&
