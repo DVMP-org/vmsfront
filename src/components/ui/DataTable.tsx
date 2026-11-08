@@ -26,7 +26,9 @@ import {
   Square,
   FilterX,
   Calendar as CalendarIcon,
-  Loader2
+  Loader2,
+  RefreshCw,
+  TriangleAlert
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { format, parseISO, isValid } from "date-fns";
@@ -106,6 +108,15 @@ interface DataTableProps<T> {
   // Bulk actions
   bulkActions?: BulkAction[];
   isLoading?: boolean | null;
+  /** Optional mobile representation. When provided, the desktop table becomes a labelled row-summary list below md. */
+  mobileSummary?: (row: T) => ReactNode;
+  /** Accessible name for the desktop comparison region. */
+  tableLabel?: string;
+  scrollHint?: string;
+  /** Existing data can remain visible while a failed refresh is retried. */
+  isStale?: boolean;
+  staleMessage?: string;
+  onRetry?: () => void;
   // Row styling
   rowClassName?: (row: T) => string;
   enableRowStriping?: boolean;
@@ -147,6 +158,12 @@ export function DataTable<T extends Record<string, any>>({
   disableClientSideSorting = false,
   bulkActions = [],
   isLoading = false,
+  mobileSummary,
+  tableLabel = "Data table",
+  scrollHint,
+  isStale = false,
+  staleMessage = "Showing the last available data.",
+  onRetry,
   rowClassName,
   enableRowStriping = true,
 }: DataTableProps<T>) {
@@ -714,9 +731,30 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         ) : (
             <div className="relative">
+              {isStale ? (
+                <div
+                  className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+                  role="status"
+                >
+                  <span className="flex items-center gap-2">
+                    <TriangleAlert className="h-4 w-4 flex-none" aria-hidden="true" />
+                    {staleMessage}
+                  </span>
+                  {onRetry ? (
+                    <Button variant="outline" size="sm" onClick={onRetry}>
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                      Retry
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
               {/* Horizontal scroll container with shadow indicators */}
-              <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-                <Table className="min-w-full text-xs sm:text-sm">
+              <div className={cn(mobileSummary && "hidden md:block")}>
+                <Table
+                  className="min-w-full text-xs sm:text-sm"
+                  scrollLabel={tableLabel}
+                  scrollHint={scrollHint}
+                >
             <TableHeader>
               <TableRow>
                 {selectable && (
@@ -746,6 +784,15 @@ export function DataTable<T extends Record<string, any>>({
                       column.responsiveHide === "lg" && "hidden lg:table-cell"
                     )}
                     style={column.minWidth ? { minWidth: column.minWidth } : undefined}
+                    aria-sort={
+                      sortState.column === column.key && sortState.direction
+                        ? sortState.direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : column.sortable
+                          ? "none"
+                          : undefined
+                    }
                   >
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <span className="whitespace-nowrap">{column.header}</span>
@@ -848,6 +895,54 @@ export function DataTable<T extends Record<string, any>>({
             </TableBody>
           </Table>
               </div>
+              {mobileSummary ? (
+                <ul
+                  className="divide-y divide-border rounded-lg border border-border md:hidden"
+                  aria-label={`${tableLabel} row summaries`}
+                >
+                  {paginatedData.length === 0 ? (
+                    <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      <p>{emptyMessage}</p>
+                      {hasActiveFilters ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="mt-3"
+                        >
+                          Clear filters to see all results
+                        </Button>
+                      ) : null}
+                    </li>
+                  ) : (
+                    paginatedData.map((row, index) => {
+                      const rowId = getRowId(row);
+                      return (
+                        <li
+                          key={rowId || index}
+                          className={cn(
+                            "px-4 py-4",
+                            selected.has(rowId) && "bg-accent/20"
+                          )}
+                        >
+                          {selectable ? (
+                            <label className="mb-3 flex min-h-11 items-center gap-2 text-xs font-medium">
+                              <input
+                                type="checkbox"
+                                checked={selected.has(rowId)}
+                                onChange={() => toggleRowSelection(rowId)}
+                                className="h-5 w-5 rounded border-input"
+                              />
+                              Select row
+                            </label>
+                          ) : null}
+                          {mobileSummary(row)}
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+              ) : null}
             </div>
         )}
       </div>

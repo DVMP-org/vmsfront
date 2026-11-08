@@ -1,0 +1,432 @@
+[
+  {
+    "state": "success",
+    "viewport": "1440",
+    "screenshot": "properties-1440.png",
+    "dimensions": {
+      "viewport": 1440,
+      "document": 1440,
+      "body": 1440,
+      "elements": [
+        {
+          "selector": ".property-workspace",
+          "left": 329.703125,
+          "right": 1404,
+          "width": 1074.296875
+        },
+        {
+          "selector": ".property-registry",
+          "left": 329.703125,
+          "right": 1404,
+          "width": 1074.296875
+        },
+        {
+          "selector": ".property-table-region",
+          "left": 329.703125,
+          "right": 1404,
+          "width": 1074.296875
+        },
+        {
+          "selector": ".property-table",
+          "left": 330.703125,
+          "right": 1403,
+          "width": 1072.296875
+        },
+        {
+          "selector": ".property-table tbody tr",
+          "left": 330.703125,
+          "right": 1403,
+          "width": 1072.296875
+        }
+      ],
+      "firstRow": {
+        "display": "table-row",
+        "gridTemplateColumns": "none",
+        "cells": [
+          {
+            "label": "Property",
+            "left": 330.703125,
+            "top": 449.1875,
+            "width": 471.796875,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Structure",
+            "left": 802.5,
+            "top": 449.1875,
+            "width": 171.5625,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Location",
+            "left": 974.0625,
+            "top": 449.1875,
+            "width": 300.234375,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Action",
+            "left": 1274.296875,
+            "top": 449.1875,
+            "width": 128.703125,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          }
+        ]
+      }
+    },
+    "pageErrors": [],
+    "consoleErrors": []
+  },
+  {
+    "state": "success",
+    "viewport": "1024",
+    "screenshot": "properties-1024.png",
+    "dimensions": {
+      "viewport": 1024,
+      "document": 1024,
+      "body": 1024,
+      "elements": [
+        {
+          "selector": ".property-workspace",
+          "left": 321.703125,
+          "right": 996,
+          "width": 674.296875
+        },
+        {
+          "selector": ".property-registry",
+          "left": 321.703125,
+          "right": 996,
+          "width": 674.296875
+        },
+        {
+          "selector": ".property-table-region",
+          "left": 321.703125,
+          "right": 996,
+          "width": 674.296875
+        },
+        {
+          "selector": ".property-table",
+          "left": 322.703125,
+          "right": 995,
+          "width": 672.296875
+        },
+        {
+          "selector": ".property-table tbody tr",
+          "left": 322.703125,
+          "right": 995,
+          "width": 672.296875
+        }
+      ],
+      "firstRow": {
+        "display": "table-row",
+        "gridTemplateColumns": "none",
+        "cells": [
+          {
+            "label": "Property",
+            "left": 322.703125,
+            "top": 518.375,
+            "width": 295.796875,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Structure",
+            "left": 618.5,
+            "top": 518.375,
+            "width": 107.5625,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Location",
+            "left": 726.0625,
+            "top": 518.375,
+            "width": 188.234375,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Action",
+            "left": 914.296875,
+            "top": 518.375,
+            "width": 80.703125,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          }
+        ]
+      }
+    },
+    "pageErrors": [],
+    "consoleErrors": []
+  },
+  {
+    "state": "success",
+    "viewport": "768",
+    "screenshot": "properties-768.png",
+    "dimensions": {
+      "viewport": 768,
+      "document": 768,
+      "body": 768,
+      "elements": [
+        {
+          "selector": ".property-workspace",
+          "left": 24,
+          "right": 744,
+          "width": 720
+        },
+        {
+          "selector": ".property-registry",
+          "left": 24,
+          "right": 744,
+          "width": 720
+        },
+        {
+          "selector": ".property-table-region",
+          "left": 24,
+          "right": 744,
+          "width": 720
+        },
+        {
+          "selector": ".property-table",
+          "left": 25,
+          "right": 743,
+          "width": 718
+        },
+        {
+          "selector": ".property-table tbody tr",
+          "left": 25,
+          "right": 743,
+          "width": 718
+        }
+      ],
+      "firstRow": {
+        "display": "table-row",
+        "gridTemplateColumns": "none",
+        "cells": [
+          {
+            "label": "Property",
+            "left": 25,
+            "top": 540.59375,
+            "width": 315.90625,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Structure",
+            "left": 340.90625,
+            "top": 540.59375,
+            "width": 114.875,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Location",
+            "left": 455.78125,
+            "top": 540.59375,
+            "width": 201.03125,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Action",
+            "left": 656.8125,
+            "top": 540.59375,
+            "width": 86.1875,
+            "display": "table-cell",
+            "gridColumn": "auto",
+            "gridRow": "auto"
+          }
+        ]
+      }
+    },
+    "pageErrors": [],
+    "consoleErrors": []
+  },
+  {
+    "state": "success",
+    "viewport": "390",
+    "screenshot": "properties-390.png",
+    "dimensions": {
+      "viewport": 390,
+      "document": 390,
+      "body": 390,
+      "elements": [
+        {
+          "selector": ".property-workspace",
+          "left": 12,
+          "right": 378,
+          "width": 366
+        },
+        {
+          "selector": ".property-registry",
+          "left": 12,
+          "right": 378,
+          "width": 366
+        },
+        {
+          "selector": ".property-table-region",
+          "left": 12,
+          "right": 378,
+          "width": 366
+        },
+        {
+          "selector": ".property-table",
+          "left": 12,
+          "right": 378,
+          "width": 366
+        },
+        {
+          "selector": ".property-table tbody tr",
+          "left": 12,
+          "right": 378,
+          "width": 366
+        }
+      ],
+      "firstRow": {
+        "display": "grid",
+        "gridTemplateColumns": "292px 44px",
+        "cells": [
+          {
+            "label": "Property",
+            "left": 27,
+            "top": 694.890625,
+            "width": 292,
+            "display": "block",
+            "gridColumn": "1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Structure",
+            "left": 27,
+            "top": 738.890625,
+            "width": 336,
+            "display": "flex",
+            "gridColumn": "1 / -1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Location",
+            "left": 27,
+            "top": 763.890625,
+            "width": 336,
+            "display": "flex",
+            "gridColumn": "1 / -1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Action",
+            "left": 319,
+            "top": 694.890625,
+            "width": 44,
+            "display": "block",
+            "gridColumn": "2",
+            "gridRow": "1"
+          }
+        ]
+      }
+    },
+    "pageErrors": [],
+    "consoleErrors": []
+  },
+  {
+    "state": "success",
+    "viewport": "320",
+    "screenshot": "properties-320.png",
+    "dimensions": {
+      "viewport": 320,
+      "document": 320,
+      "body": 320,
+      "elements": [
+        {
+          "selector": ".property-workspace",
+          "left": 12,
+          "right": 308,
+          "width": 296
+        },
+        {
+          "selector": ".property-registry",
+          "left": 12,
+          "right": 308,
+          "width": 296
+        },
+        {
+          "selector": ".property-table-region",
+          "left": 12,
+          "right": 308,
+          "width": 296
+        },
+        {
+          "selector": ".property-table",
+          "left": 12,
+          "right": 308,
+          "width": 296
+        },
+        {
+          "selector": ".property-table tbody tr",
+          "left": 12,
+          "right": 308,
+          "width": 296
+        }
+      ],
+      "firstRow": {
+        "display": "grid",
+        "gridTemplateColumns": "222px 44px",
+        "cells": [
+          {
+            "label": "Property",
+            "left": 27,
+            "top": 714.890625,
+            "width": 222,
+            "display": "block",
+            "gridColumn": "1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Structure",
+            "left": 27,
+            "top": 758.890625,
+            "width": 266,
+            "display": "flex",
+            "gridColumn": "1 / -1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Location",
+            "left": 27,
+            "top": 783.890625,
+            "width": 266,
+            "display": "flex",
+            "gridColumn": "1 / -1",
+            "gridRow": "auto"
+          },
+          {
+            "label": "Action",
+            "left": 249,
+            "top": 714.890625,
+            "width": 44,
+            "display": "block",
+            "gridColumn": "2",
+            "gridRow": "1"
+          }
+        ]
+      }
+    },
+    "pageErrors": [],
+    "consoleErrors": []
+  }
+]

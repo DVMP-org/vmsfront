@@ -1,7 +1,7 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { contextApi, UseCase } from "@/features/context/api";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
   ChevronRight,
@@ -9,10 +9,18 @@ import {
   FolderTree,
   MapPin,
   Plus,
+  RefreshCw,
   Search,
+  TriangleAlert,
   Users,
+  X,
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { adminService } from "@/services/admin-service";
@@ -20,6 +28,16 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
 import { SetupProgress } from "@/components/onboarding/SetupProgress";
+import { PaginationBar } from "@/components/ui/PaginationBar";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 import {
   Property,
   PropertyDetail,
@@ -34,6 +52,63 @@ export interface PropertyRoute {
   action?: "new" | "edit" | "move";
   parentId?: string;
   setup?: "first-place";
+}
+
+type PropertyDirectoryState = {
+  page: number;
+  search: string;
+  kind: string;
+  status: "active" | "archived" | "all";
+  rootOnly: boolean;
+};
+
+type PropertyListResult = {
+  items: Property[];
+  page: number;
+  total_pages: number;
+  total: number;
+};
+
+const DEFAULT_DIRECTORY_STATE: PropertyDirectoryState = {
+  page: 1,
+  search: "",
+  kind: "",
+  status: "active",
+  rootOnly: true,
+};
+
+function readDirectoryState(
+  params: Pick<URLSearchParams, "get">,
+): PropertyDirectoryState {
+  const pageValue = Number.parseInt(params.get("page") || "1", 10);
+  const status = params.get("status");
+  return {
+    page: Number.isFinite(pageValue) && pageValue > 0 ? pageValue : 1,
+    search: (params.get("search") || "").slice(0, 100),
+    kind: params.get("kind") || "",
+    status:
+      status === "archived" || status === "all" ? status : "active",
+    rootOnly: params.get("all_levels") !== "true",
+  };
+}
+
+function writeDirectoryState(
+  current: URLSearchParams,
+  next: PropertyDirectoryState,
+) {
+  const params = new URLSearchParams(current.toString());
+  const values: Array<[string, string | undefined]> = [
+    ["page", next.page === 1 ? undefined : String(next.page)],
+    ["search", next.search || undefined],
+    ["kind", next.kind || undefined],
+    ["status", next.status === "active" ? undefined : next.status],
+    ["all_levels", next.rootOnly ? undefined : "true"],
+  ];
+  values.forEach(([key, value]) => {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  });
+  return params;
 }
 export default function PropertiesPage({ route = {} }: { route?: PropertyRoute }) {
   const organization = useAppStore((s) => s.organization);
@@ -69,16 +144,60 @@ function Workspace({
   route: PropertyRoute;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryString = searchParams?.toString() || "";
+  const initialDirectory = readDirectoryState(
+    new URLSearchParams(queryString),
+  );
   const client = useQueryClient();
-  const [page, setPage] = useState(1),
-    [search, setSearch] = useState(""),
-    [searchInput, setSearchInput] = useState("");
-  const [kind, setKind] = useState(""),
-    [status, setStatus] = useState("active"),
-    [rootOnly, setRootOnly] = useState(true);
+  const [page, setPage] = useState(initialDirectory.page),
+    [search, setSearch] = useState(initialDirectory.search),
+    [searchInput, setSearchInput] = useState(initialDirectory.search);
+  const [kind, setKind] = useState(initialDirectory.kind),
+    [status, setStatus] = useState(initialDirectory.status),
+    [rootOnly, setRootOnly] = useState(initialDirectory.rootOnly);
   const selected = route.id || null;
   const creating = route.action === "new";
   const notice = "";
+
+  useEffect(() => {
+    const next = readDirectoryState(new URLSearchParams(queryString));
+    setPage(next.page);
+    setSearch(next.search);
+    setSearchInput(next.search);
+    setKind(next.kind);
+    setStatus(next.status);
+    setRootOnly(next.rootOnly);
+  }, [queryString]);
+
+  const updateDirectory = useCallback(
+    (next: PropertyDirectoryState) => {
+      setPage(next.page);
+      setSearch(next.search);
+      setSearchInput(next.search);
+      setKind(next.kind);
+      setStatus(next.status);
+      setRootOnly(next.rootOnly);
+      const params = writeDirectoryState(
+        new URLSearchParams(queryString),
+        next,
+      );
+      const nextQuery = params.toString();
+      router.replace(
+        nextQuery ? `${pathname}?${nextQuery}` : pathname,
+        { scroll: false },
+      );
+    },
+    [pathname, queryString, router],
+  );
+
+  function currentDirectory(
+    updates: Partial<PropertyDirectoryState> = {},
+  ): PropertyDirectoryState {
+    return { page, search, kind, status, rootOnly, ...updates };
+  }
+
   const parent = useQuery({queryKey:["properties",context,"detail",route.parentId],queryFn:()=>propertiesApi.get(route.parentId!),enabled:!!route.parentId && creating});
   const createParent = parent.data;
   const profile = useQuery({
@@ -113,7 +232,14 @@ function Workspace({
         root_only: rootOnly,
       }),
     enabled: allowed("list"),
+    placeholderData: keepPreviousData,
   });
+  const [lastSuccessfulList, setLastSuccessfulList] =
+    useState<PropertyListResult>();
+  useEffect(() => {
+    if (list.data) setLastSuccessfulList(list.data);
+  }, [list.data]);
+  const visibleList = list.data ?? lastSuccessfulList;
   const detail = useQuery({
     queryKey: ["properties", context, "detail", selected],
     queryFn: () => propertiesApi.get(selected!),
@@ -135,6 +261,12 @@ function Workspace({
   if (creating && route.parentId && parent.isPending) return <p role="status">Loading parent property…</p>;
   if (creating && parent.isError) return <ErrorState error={parent.error} retry={() => parent.refetch()} />;
   const inRecord = !!selected || creating;
+  const hasActiveFilters =
+    !!search ||
+    !!kind ||
+    status !== DEFAULT_DIRECTORY_STATE.status ||
+    !rootOnly;
+  const retainStaleRows = !!visibleList && list.isError;
   return (
     <main className="property-workspace">
       <header className="property-heading">
@@ -145,7 +277,7 @@ function Workspace({
             <span>/</span>Property directory
           </p>
           <h1>
-            Properties<span className="property-heading-period">.</span>
+            Properties
           </h1>
           <p className="property-heading-copy">
             The properties your organization operates. Every building, room and
@@ -160,52 +292,49 @@ function Workspace({
             }}
           >
             <Plus size={16} aria-hidden="true" />
-            New property or space
+            New property
           </button>
         )}
       </header>
-      <div className="property-viewline">
-        <div>
-          <span className="property-view-index">01</span>
-          {inRecord ? (
+      {inRecord && (
+        <div className="property-viewline">
+          <div>
+            <span className="property-view-index">01</span>
             <button
               className="property-directory-back"
               onClick={() => {
                 router.push("/admin/properties");
               }}
             >
-              Directory
+              Properties
             </button>
-          ) : (
-            <strong>Directory</strong>
-          )}
-          {inRecord && (
-            <>
-              <ChevronRight size={14} aria-hidden="true" />
-              <span>{creating ? "New structure" : "Property workspace"}</span>
-            </>
-          )}
+            <ChevronRight size={14} aria-hidden="true" />
+            <span>{creating ? "New property" : "Property record"}</span>
+          </div>
+          <span className="property-view-hint">
+            {organizationName} / Property / Record
+          </span>
         </div>
-        <span className="property-view-hint">
-          {inRecord
-            ? "Organization / Property / Space"
-            : "A connected record of your properties"}
-        </span>
-      </div>
+      )}
       {notice && (
         <p className="property-notice" role="status">
           {notice}
         </p>
       )}
       {!inRecord ? (
-        <section className="property-registry" aria-label="Property list">
+        <section className="property-registry" aria-labelledby="property-register-heading">
+          <h2 id="property-register-heading" className="sr-only">
+            Property register
+          </h2>
           <div className="property-toolbar">
             <form
               className="property-search"
               onSubmit={(e) => {
                 e.preventDefault();
-                setSearch(searchInput.trim());
-                setPage(1);
+                const nextSearch = searchInput.trim();
+                updateDirectory(
+                  currentDirectory({ search: nextSearch, page: 1 }),
+                );
               }}
             >
               <label>
@@ -217,9 +346,10 @@ function Workspace({
                   onChange={(e) => setSearchInput(e.target.value)}
                   maxLength={100}
                   type="search"
+                  autoComplete="off"
                 />
               </label>
-              <button>Search</button>
+              <button type="submit">Search</button>
             </form>
             <div className="property-filters">
               <label>
@@ -227,8 +357,9 @@ function Workspace({
                 <select
                   value={kind}
                   onChange={(e) => {
-                    setKind(e.target.value);
-                    setPage(1);
+                    updateDirectory(
+                      currentDirectory({ kind: e.target.value, page: 1 }),
+                    );
                   }}
                 >
                   <option value="">All types</option>
@@ -244,8 +375,12 @@ function Workspace({
                 <select
                   value={status}
                   onChange={(e) => {
-                    setStatus(e.target.value);
-                    setPage(1);
+                    updateDirectory(
+                      currentDirectory({
+                        status: e.target.value as PropertyDirectoryState["status"],
+                        page: 1,
+                      }),
+                    );
                   }}
                 >
                   <option value="active">Active</option>
@@ -253,6 +388,18 @@ function Workspace({
                   <option value="all">All statuses</option>
                 </select>
               </label>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="property-clear-filters"
+                  onClick={() =>
+                    updateDirectory(DEFAULT_DIRECTORY_STATE)
+                  }
+                >
+                  <X size={14} aria-hidden="true" />
+                  Clear all
+                </button>
+              )}
             </div>
           </div>
           <div className="property-registry-meta">
@@ -261,73 +408,124 @@ function Workspace({
                 type="checkbox"
                 checked={rootOnly}
                 onChange={(e) => {
-                  setRootOnly(e.target.checked);
-                  setPage(1);
+                  updateDirectory(
+                    currentDirectory({
+                      rootOnly: e.target.checked,
+                      page: 1,
+                    }),
+                  );
                 }}
               />
               Top-level within this organization
             </label>
-            <span>
-              {list.data?.total ?? "—"} records{" "}
-              {search && <span>matching “{search}”</span>}
+            <span className="property-result-count" aria-live="polite">
+              {list.isPending && !visibleList
+                ? "Loading records"
+                : `${visibleList?.total ?? 0} ${visibleList?.total === 1 ? "record" : "records"}`}
+              {search && (!list.isPending || visibleList) ? (
+                <span> matching “{search}”</span>
+              ) : null}
+              {list.isFetching && visibleList ? (
+                <span className="property-refresh-status">
+                  <RefreshCw size={12} aria-hidden="true" />
+                  Updating
+                </span>
+              ) : null}
             </span>
           </div>
-          <div className="property-registry-columns" aria-hidden="true">
-            <span>Property or space</span>
-            <span>Structure</span>
-            <span>Location</span>
-            <span />
-          </div>
-          {list.isPending ? (
+          {list.isPending && !visibleList ? (
             <div className="property-loading" role="status">
               <span className="property-skeleton" />
               <span className="property-skeleton" />
               <span className="property-skeleton" />
               Loading properties…
             </div>
-          ) : list.isError ? (
+          ) : list.isError && !visibleList ? (
             <ErrorState error={list.error} retry={() => list.refetch()} />
           ) : (
             <>
-              {list.data?.items.length ? (
-                <ul className="property-list">
-                  {list.data.items.map((property) => (
-                    <li key={property.id}>
-                      <button
-                        aria-label={`${property.name} ${property.is_active ? "Active" : "Archived"}`}
-                        disabled={!allowed("show")}
-                        onClick={() => select(property.id)}
-                      >
-                        <span className="property-registry-place">
-                          <StructureMark kind={property.kind} />
-                          <span>
-                            <strong>{property.name}</strong>
-                            <span
-                              className={`property-status ${property.is_active ? "active" : "archived"}`}
-                            >
-                              {property.is_active ? "Active" : "Archived"}
+              {retainStaleRows ? (
+                <div className="property-stale" role="status">
+                  <span>
+                    <TriangleAlert size={16} aria-hidden="true" />
+                    The latest update failed. The last available records remain
+                    visible.
+                  </span>
+                  <button type="button" onClick={() => list.refetch()}>
+                    <RefreshCw size={14} aria-hidden="true" />
+                    Retry update
+                  </button>
+                </div>
+              ) : null}
+              {visibleList?.items.length ? (
+                <Table
+                  className="property-table"
+                  containerClassName="property-table-region"
+                  scrollLabel="Properties comparison table"
+                >
+                  <TableCaption className="sr-only">
+                    Properties register
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead scope="col">Property</TableHead>
+                      <TableHead scope="col">Structure</TableHead>
+                      <TableHead scope="col">Location</TableHead>
+                      <TableHead scope="col" className="text-right">
+                        Action
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visibleList.items.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell data-label="Property">
+                          <span className="property-registry-place">
+                            <StructureMark kind={property.kind} />
+                            <span>
+                              <strong>{property.name}</strong>
+                              <span
+                                className={`property-status ${property.is_active ? "active" : "archived"}`}
+                              >
+                                {property.is_active ? "Active" : "Archived"}
+                              </span>
                             </span>
                           </span>
-                        </span>
-                        <span className="property-registry-kind">
-                          {propertyKinds[property.kind] || "Space"}
-                        </span>
-                        <span className="property-registry-location">
-                          <MapPin size={14} aria-hidden="true" />
-                          {property.address ||
-                            (property.parent_id
-                              ? "Inside another property or space"
-                              : "Top level in organization")}
-                        </span>
-                        <ArrowUpRight
-                          className="property-open-arrow"
-                          size={19}
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                        </TableCell>
+                        <TableCell data-label="Structure">
+                          <span className="property-registry-kind">
+                            {propertyKinds[property.kind] || "Space"}
+                          </span>
+                        </TableCell>
+                        <TableCell data-label="Location">
+                          <span className="property-registry-location">
+                            <MapPin size={14} aria-hidden="true" />
+                            <span>
+                              {property.address ||
+                                (property.parent_id
+                                  ? "Inside another property"
+                                  : "Top level in organization")}
+                            </span>
+                          </span>
+                        </TableCell>
+                        <TableCell
+                          data-label="Action"
+                          className="property-row-action-cell"
+                        >
+                          <button
+                            className="property-row-action"
+                            aria-label={`Open ${property.name}`}
+                            disabled={!allowed("show")}
+                            onClick={() => select(property.id)}
+                          >
+                            Open
+                            <ArrowUpRight size={16} aria-hidden="true" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               ) : (
                 <div className="property-empty">
                   <StructureMark kind="building" />
@@ -339,32 +537,20 @@ function Workspace({
                   </p>
                 </div>
               )}
-              <nav
+              <PaginationBar
+                page={page}
+                pageSize={10}
+                total={visibleList?.total ?? 0}
+                totalPages={visibleList?.total_pages ?? 0}
+                resourceLabel="properties"
+                isFetching={list.isFetching}
+                onChange={(nextPage) =>
+                  updateDirectory(
+                    currentDirectory({ page: Math.max(1, nextPage) }),
+                  )
+                }
                 className="property-pagination"
-                aria-label="Property pagination"
-              >
-                <span>
-                  Showing {list.data?.items.length || 0} of{" "}
-                  {list.data?.total || 0} properties and spaces
-                </span>
-                <div>
-                  <button
-                    disabled={page === 1 || list.isFetching}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Previous
-                  </button>
-                  <span>Page {page}</span>
-                  <button
-                    disabled={
-                      page >= (list.data?.total_pages || 0) || list.isFetching
-                    }
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </nav>
+              />
             </>
           )}
         </section>
