@@ -4,7 +4,7 @@ const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
   output: "standalone",
-  transpilePackages: ["@vms/api-client"],
+  transpilePackages: ["@vms/api-client", "@vms/ui"],
   images: {
     domains: ['localhost', "storage.googleapis.com", "vmscore.to", "vmscore.vercel.app"],
     remotePatterns: [

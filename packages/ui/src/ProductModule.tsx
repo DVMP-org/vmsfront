@@ -18,34 +18,35 @@ export function ProductModule({
         margin: 0,
         display: "grid",
         placeItems: "center",
-        background: "#f5f6f8",
-        color: "#17191f",
-        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        background: "var(--vms-canvas)",
+        color: "var(--vms-ink)",
+        fontFamily: "var(--vms-font-interface)",
       }}
     >
       <section
         style={{
           width: "min(560px, calc(100vw - 48px))",
-          border: "1px solid #dfe2e8",
-          borderRadius: 18,
-          background: "#fff",
-          padding: 32,
+          border: "1px solid var(--vms-line)",
+          borderRadius: "var(--vms-radius-surface)",
+          background: "var(--vms-surface)",
+          padding: 24,
+          boxShadow: "var(--vms-shadow-raised)",
         }}
       >
         <p
           style={{
             margin: 0,
-            color: "#5b6270",
+            color: "var(--vms-ink-muted)",
             fontSize: 12,
             fontWeight: 700,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
           }}
         >
           {eyebrow}
         </p>
-        <h1 style={{ margin: "10px 0 16px", fontSize: 32 }}>{title}</h1>
-        <div style={{ lineHeight: 1.6 }}>{children}</div>
+        <h1 style={{ margin: "8px 0 16px", fontSize: 28, lineHeight: 1.25 }}>{title}</h1>
+        <div style={{ color: "var(--vms-ink-muted)", lineHeight: 1.6 }}>{children}</div>
       </section>
     </main>
   );

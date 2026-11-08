@@ -19,10 +19,13 @@ const FormLabel = React.forwardRef<
       {...props}
     >
       {showAsterisk ? (
-        <p>
+        <span>
           {children}
-          <span className="text-red-500">*</span>
-        </p>
+          <span aria-hidden="true" className="ml-0.5 text-[var(--vms-danger)]">
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
+        </span>
       ) : (
         children
       )}

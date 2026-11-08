@@ -1,21 +1,3 @@
-// const variants = {
-//   primary:
-//     "bg-[var(--brand-primary,#1e40af)] text-primary-foreground hover:bg-[var(--brand-primary,#1e40af)] hover:opacity-90 focus-visible:ring-primary active:bg-[var(--brand-primary,#1e40af)] active:opacity-95 active:scale-[0.98]",
-//   secondary:
-//     "bg-[var(--brand-secondary,#475569)] text-secondary-foreground hover:bg-[var(--brand-secondary,#475569)] hover:opacity-90 focus-visible:ring-secondary active:bg-[var(--brand-secondary,#475569)] active:opacity-95 active:scale-[0.98]",
-//   outline:
-//     "border-2 border-[var(--brand-primary,#1e40af)] bg-white hover:bg-[var(--brand-primary,#1e40af)] hover:text-white active:bg-[var(--brand-primary,#1e40af)] active:text-white active:scale-[0.98]",
-//   ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 active:scale-[0.98]",
-//   destructive:
-//     "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive active:bg-destructive/95 active:scale-[0.98]",
-// };
-
-// const sizes = {
-//   sm: "h-9 min-h-[36px] px-3 text-xs xs:text-sm",
-//   md: "h-10 min-h-[40px] px-4 py-2 text-sm xs:text-base",
-//   lg: "h-11 min-h-[44px] px-6 xs:px-8 text-base xs:text-lg",
-// };
-
 "use client";
 
 import * as React from "react";
@@ -24,69 +6,65 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import { Loader } from "./loader";
-import { ButtonHTMLAttributes } from "react";
-import { DetailedHTMLProps } from "react";
 
 const buttonVariants = cva(
-  "inline-flex h-fit items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:!pointer-events-none",
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--vms-radius-control)] border text-sm font-semibold",
+    "transition-[background-color,border-color,color,box-shadow] duration-[var(--vms-motion)]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+    "[&_svg]:shrink-0",
+  ],
   {
     variants: {
       variant: {
         primary:
-          // "border-brand-primary bg-brand-primary disabled:bg-brand-primary/70 text-white font-bold border-2",
-          "border border-[rgb(var(--brand-primary,#2563eb))] bg-[rgb(var(--brand-primary,#2563eb))] text-white font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.18)] hover:border-[rgb(var(--brand-secondary,#1e40af))] hover:bg-[rgb(var(--brand-secondary,#1e40af))] disabled:bg-[rgb(var(--brand-primary,#2563eb))]/60",
-        // "border-primary bg-primary disabled:bg-primary/70 text-white font-bold",
-        destructive:
-          "border-red-600 bg-red-600 disabled:bg-red-600/70 text-white font-bold",
-        // secondary: "!border-0 bg-transparent text-primary disabled:opacity-60",
+          "border-[var(--vms-action)] bg-[var(--vms-action)] text-[var(--vms-on-action)] hover:border-[var(--vms-action-hover)] hover:bg-[var(--vms-action-hover)]",
         secondary:
-          "bg-[rgb(var(--brand-secondary,#475569))] text-secondary-foreground hover:bg-[rgb(var(--brand-secondary,#475569))] hover:opacity-90 focus-visible:ring-secondary active:bg-[rgb(var(--brand-secondary,#475569))] active:opacity-95 active:scale-[0.98]",
-        // outline: "border border-primary text-primary disabled:opacity-60",
-        // "destructive-outlined":
+          "border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)] hover:border-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]",
         outline:
-          "border border-[#cbd5e1] bg-white text-[#344054] hover:border-[#94a3b8] hover:bg-[#f8faff] hover:text-[#0f1b31]",
-        "destructive-outlined":
-          "border border-red-600 text-red-600 disabled:opacity-60",
-        "light-outlined": "border-white text-white disabled:opacity-60",
-        "dark-text":
-          "border-transparent bg-transparent hover:bg-opacity-70 disabled:bg-opacity-70 text-foreground dark:text-foreground font-medium",
-        light:
-          "border-white bg-white hover:bg-opacity-70 disabled:bg-opacity-70  text-primary font-semibold",
+          "border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)] hover:border-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
+          "border-transparent bg-transparent text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)]",
+        destructive:
+          "border-[var(--vms-danger)] bg-[var(--vms-danger)] text-white hover:border-[#8f1b12] hover:bg-[#8f1b12]",
+        "destructive-outlined":
+          "border-[var(--vms-danger)] bg-[var(--vms-surface)] text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)]",
+        "light-outlined":
+          "border-white/70 bg-transparent text-white hover:bg-white/10",
+        "dark-text":
+          "border-transparent bg-transparent text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)]",
+        light:
+          "border-white bg-white text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)]",
       },
       size: {
-        // lg: "h-15 px-8 items-center",
-        // sm: "h-10 px-3.5 items-center text-sm",
+        sm: "h-8 min-w-8 px-3 text-xs [@media(pointer:coarse)]:min-h-11",
         default:
-          "rounded-md px-[1.25rem] py-[0.625rem] text-[0.875rem] font-medium leading-[1.25rem]",
-        sm: "rounded-md px-[0.875rem] py-[0.5rem] text-[0.8125rem] font-semibold leading-[1rem]",
-        lg: "rounded-md px-[1.5rem] py-[0.75rem] text-[1rem] font-medium leading-[1.5rem]",
-        md: "rounded-md px-[1.25rem] py-[0.625rem] text-[0.875rem] font-medium leading-[1.25rem]",
+          "h-[var(--vms-control-height)] min-w-[var(--vms-control-height)] px-4 text-sm [@media(pointer:coarse)]:min-h-11",
+        md: "h-10 min-w-10 px-4 text-sm [@media(pointer:coarse)]:min-h-11",
+        lg: "h-[var(--vms-control-height-touch)] min-w-[var(--vms-control-height-touch)] px-5 text-base",
         "icon-sm":
-          "h-[1.75rem] w-[1.75rem] flex justify-center items-center font-medium rounded-sm",
-        icon: "h-[2.5rem] w-[2.75rem] flex justify-center items-center font-medium rounded-sm",
-        "icon-lg":
-          "h-[3rem] w-[3rem] flex justify-center items-center font-medium rounded-sm",
+          "h-8 w-8 min-w-8 p-0 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
+        icon:
+          "h-10 w-10 min-w-10 p-0 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
+        "icon-lg": "h-11 w-11 min-w-11 p-0",
       },
     },
     defaultVariants: {
       variant: "primary",
       size: "default",
     },
-  }
+  },
 );
 
 export type ButtonVariant = VariantProps<typeof buttonVariants>["variant"];
+
 export interface ButtonProps
-  // extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-  extends DetailedHTMLProps<
-    ButtonHTMLAttributes<HTMLButtonElement>,
-    HTMLButtonElement
-  >,
-  VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;
+  loadingLabel?: string;
   leftNode?: React.ReactNode;
   rightNode?: React.ReactNode;
   LoaderSize?: number;
@@ -100,49 +78,45 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       asChild = false,
       isLoading = false,
+      loadingLabel = "Working…",
       leftNode,
       rightNode,
-      LoaderSize,
-      // ref,
+      LoaderSize = 16,
+      children,
+      disabled,
+      type,
       ...props
     },
-    ref
+    ref,
   ) => {
     const Component = asChild ? Slot : "button";
-
-    const { children, disabled, ...rest } = props;
-    const reference = React.useRef<HTMLButtonElement>(null);
+    const content = isLoading ? (
+      <>
+        <Loader size={LoaderSize} colour="current" />
+        <span>{children || loadingLabel}</span>
+      </>
+    ) : (
+      <>
+        {leftNode}
+        {children}
+        {rightNode}
+      </>
+    );
 
     return (
       <Component
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={reference || ref}
-        disabled={disabled || isLoading}
-        {...rest}
+        ref={ref}
+        type={asChild ? undefined : type || "button"}
+        className={cn(buttonVariants({ variant, size }), className)}
+        disabled={asChild ? undefined : disabled || isLoading}
+        aria-busy={isLoading || undefined}
+        aria-disabled={asChild && (disabled || isLoading) ? true : undefined}
+        {...props}
       >
-        <div className="flex font-medium justify-center items-center gap-2">
-          {/* {leftNode}
-        {children}
-        {rightNode}
-        {isLoading && <Loader />} */}
-
-          {isLoading ? (
-            <>
-              <span className="mx-auto">
-                <Loader size={LoaderSize} colour="secondary" />
-              </span>
-            </>
-          ) : (
-            <>
-              {leftNode}
-              {children}
-              {rightNode}
-            </>
-          )}
-        </div>
+        {content}
       </Component>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

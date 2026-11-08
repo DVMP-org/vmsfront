@@ -16,7 +16,7 @@ const ErrorMessage = React.forwardRef<
   return (
     <p
       ref={ref}
-      className={cn("text-xs font-normal text-[#F04248]", className)}
+      className={cn("text-xs font-medium text-[var(--vms-danger)]", className)}
       {...props}
     >
       {body}
