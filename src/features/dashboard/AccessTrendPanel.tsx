@@ -35,7 +35,8 @@ export function buildDecisionSeries(
     kind: "allowed" | "denied",
     points: AnalyticsTimeSeriesPoint[] | undefined,
   ) => {
-    (points ?? []).forEach((point) => {
+    const safePoints = Array.isArray(points) ? points : [];
+    safePoints.forEach((point) => {
       const date = normalizeDate(point.date);
       const parsed = new Date(`${date}T00:00:00`);
       const label = Number.isNaN(parsed.getTime())

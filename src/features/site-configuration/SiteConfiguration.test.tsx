@@ -1,0 +1,98 @@
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { propertiesApi } from "@/features/properties/api";
+import { SiteConfiguration } from "./SiteConfiguration";
+
+const mocks = vi.hoisted(() => ({
+  selectedProperty: { id: "site-1", name: "Harbour Campus" } as {
+    id: string;
+    name: string;
+  } | null,
+  workspace: {
+    data: {
+      effective_use_case: "hospitality",
+      management: { is_administrator: true, mode: "local" },
+    },
+  },
+}));
+
+vi.mock("@/store/app-store", () => ({
+  useAppStore: (
+    selector: (state: {
+      selectedProperty: typeof mocks.selectedProperty;
+    }) => unknown,
+  ) => selector({ selectedProperty: mocks.selectedProperty }),
+}));
+vi.mock("@/features/context/use-workspace-context", () => ({
+  useWorkspaceContext: () => mocks.workspace,
+}));
+vi.mock("@/features/modules/PlaceModulesPanel", () => ({
+  PlaceModulesPanel: ({
+    placeId,
+    canEdit,
+  }: {
+    placeId: string;
+    canEdit: boolean;
+  }) => (
+    <div data-testid="site-modules">
+      {placeId}:{String(canEdit)}
+    </div>
+  ),
+}));
+vi.mock("@/features/properties/api", () => ({
+  propertiesApi: { get: vi.fn() },
+}));
+
+function mount() {
+  return render(
+    <QueryClientProvider
+      client={
+        new QueryClient({
+          defaultOptions: { queries: { retry: false } },
+        })
+      }
+    >
+      <SiteConfiguration />
+    </QueryClientProvider>,
+  );
+}
+
+describe("SiteConfiguration", () => {
+  beforeEach(() => {
+    mocks.selectedProperty = { id: "site-1", name: "Harbour Campus" };
+    vi.mocked(propertiesApi.get).mockResolvedValue({
+      id: "site-1",
+      name: "Harbour Campus",
+      kind: "site",
+      use_case: "hospitality",
+      parent_id: null,
+      building_type: null,
+      description: null,
+      address: "1 Harbour Road",
+      is_active: true,
+      updated_at: "2026-11-09T00:00:00Z",
+      ancestors: [],
+      children: [],
+    });
+  });
+
+  it("loads the selected site module configuration and planned access automation", async () => {
+    mount();
+
+    expect(
+      await screen.findByRole("heading", { name: "Harbour Campus" }),
+    ).toBeVisible();
+    expect(screen.getByTestId("site-modules")).toHaveTextContent("site-1:true");
+    expect(screen.getByText("Automatic rotation")).toBeVisible();
+    expect(screen.getByText("Planned")).toBeVisible();
+  });
+
+  it("asks the user to select a site instead of guessing a workspace", () => {
+    mocks.selectedProperty = null;
+    mount();
+
+    expect(screen.getByText("Select a site workspace")).toBeVisible();
+  });
+});
