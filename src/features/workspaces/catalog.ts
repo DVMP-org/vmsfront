@@ -68,6 +68,7 @@ const STAFF_ROLES = new Set([
   "hotel_staff",
   "operator",
   "manager",
+  "contractor",
 ]);
 const GUEST_ROLES = new Set(["guest", "guest_of"]);
 const ADMIN_RELATIONSHIP_ROLES = new Set(["admin", "super_admin"]);
@@ -118,8 +119,7 @@ export function buildWorkspaceCards(
       key: `management:${managementPlace.id}`,
       area: "management",
       title: `${managementPlace.name} management`,
-      subtitle:
-        "Property people, finance, access and operating workflows.",
+      subtitle: "Property people, finance, access and operating workflows.",
       roleLabel:
         managementRole === "Super Admin"
           ? "Super administrator"
