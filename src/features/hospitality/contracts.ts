@@ -1,5 +1,9 @@
 export type StayStatus =
-  "reserved" | "checked_in" | "checked_out" | "cancelled" | "no_show";
+  | "reserved"
+  | "checked_in"
+  | "checked_out"
+  | "cancelled"
+  | "no_show";
 export interface Stay {
   id: string;
   status: StayStatus;
@@ -20,7 +24,90 @@ export interface Stay {
     room: { id: string; name: string };
   }[];
 }
+export type RoomOperationalStatus =
+  | "available"
+  | "reserved"
+  | "occupied"
+  | "cleaning"
+  | "out_of_service";
+export type HousekeepingStatus =
+  | "clean"
+  | "dirty"
+  | "in_progress"
+  | "inspected";
+export interface HospitalityRoom {
+  id: string;
+  name: string;
+  room_number: string;
+  room_type: string;
+  floor: string | null;
+  capacity: number;
+  base_rate: string;
+  currency: string;
+  status: RoomOperationalStatus;
+  housekeeping_status: HousekeepingStatus;
+  current_stay_id: string | null;
+  current_guest_name: string | null;
+  next_arrival: string | null;
+  maintenance_open: number;
+  updated_at: string;
+}
+export interface AvailabilityCell {
+  date: string;
+  status: "available" | "reserved" | "occupied" | "blocked";
+  stay_id: string | null;
+  guest_name: string | null;
+}
+export interface RoomAvailability {
+  room: HospitalityRoom;
+  days: AvailabilityCell[];
+}
+export interface HousekeepingTask {
+  id: string;
+  room_id: string;
+  room_name: string;
+  status: HousekeepingStatus;
+  priority: "normal" | "high" | "urgent";
+  assigned_to: string | null;
+  notes: string | null;
+  due_at: string | null;
+  updated_at: string;
+}
+export interface GuestFolioLine {
+  id: string;
+  description: string;
+  category: "room" | "service" | "charge" | "payment";
+  amount: string;
+  currency: string;
+  created_at: string;
+}
+export interface GuestFolio {
+  id: string;
+  stay_id: string;
+  guest_name: string;
+  status: "open" | "settled" | "void";
+  currency: string;
+  total: string;
+  paid: string;
+  balance: string;
+  lines: GuestFolioLine[];
+}
+export interface HospitalityMaintenanceRequest {
+  id: string;
+  room_id: string | null;
+  room_name: string | null;
+  title: string;
+  description: string;
+  priority: "low" | "normal" | "high" | "urgent";
+  status: "open" | "assigned" | "in_progress" | "resolved" | "closed";
+  assigned_to: string | null;
+  reported_by: string;
+  created_at: string;
+  updated_at: string;
+}
 export const statusLabel = (status: string) => status.replaceAll("_", " ");
+export const roomStatusLabel = (status: RoomOperationalStatus) =>
+  status.replaceAll("_", " ");
 export function localInput(iso: string) {
   const date = new Date(iso);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000)

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download } from "lucide-react";
@@ -17,6 +18,7 @@ import {
 import { PageHeader } from "@/components/ui/PageHeader";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
+import { HospitalityModuleNav } from "@/features/hospitality/HospitalityModuleNav";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import {
@@ -247,6 +249,9 @@ function HospitalityWorkspace({
           ) : null
         }
       />
+      <div className="mt-4">
+        <HospitalityModuleNav />
+      </div>
       {notice && (
         <p role="status" className="stay-notice">
           {notice}
@@ -680,6 +685,13 @@ function StayDetail({
         </p>
       )}
       <div className="stay-actions">
+        {allowed("show") ? (
+          <Button asChild variant="secondary">
+            <Link href={`/admin/hospitality/billing?stay=${stay.id}`}>
+              Guest billing
+            </Link>
+          </Button>
+        ) : null}
         {active && allowed("update") && (
           <button
             disabled={mutation.isPending}
