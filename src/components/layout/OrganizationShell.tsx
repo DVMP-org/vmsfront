@@ -5,10 +5,13 @@ import { usePathname } from "next/navigation";
 import { Building2, Home, LayoutGrid, Settings } from "lucide-react";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
+import { useAdminProfile } from "@/hooks/use-admin";
+import { hasAdminPermission } from "@/lib/permissions";
 import { useAppStore } from "@/store/app-store";
 
 const links = [
   { href: "/organization", label: "Home", icon: Home },
+  { href: "/organization/properties", label: "Properties", icon: Building2 },
   { href: "/organization/workspaces", label: "Workspaces", icon: LayoutGrid },
   {
     href: "/organization/settings",
@@ -20,6 +23,12 @@ const links = [
 export function OrganizationShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const organization = useAppStore((state) => state.organization);
+  const profile = useAdminProfile();
+  const visibleLinks = links.filter(
+    (link) =>
+      link.href !== "/organization/properties" ||
+      hasAdminPermission(profile.data, "places.list"),
+  );
 
   return (
     <div className="min-h-screen bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
@@ -35,7 +44,7 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
             </p>
           </div>
           <nav aria-label="Organization navigation" className="space-y-1 p-3">
-            {links.map((link) => {
+            {visibleLinks.map((link) => {
               const Icon = link.icon;
               const active =
                 pathname === link.href ||
@@ -76,7 +85,7 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
               aria-label="Organization navigation"
               className="mb-5 flex gap-1 overflow-x-auto pb-1 lg:hidden"
             >
-              {links.map((link) => {
+              {visibleLinks.map((link) => {
                 const active =
                   pathname === link.href ||
                   (link.href !== "/organization" &&

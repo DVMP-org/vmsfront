@@ -36,6 +36,7 @@ import {
 import { useResidentResidency } from "@/hooks/use-resident-data";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { workspacePermissions } from "@/features/context/api";
 import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
 import { hasAdminPermission } from "@/lib/permissions";
 import { contextualAdminLinks } from "@/config/admin-routes";
@@ -301,7 +302,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     if (actualType === "admin") {
       const workspaceGrants =
-        workspaceContext.data?.effective_permissions ?? [];
+        workspacePermissions(workspaceContext.data);
       const workspaceAllows = (permission?: string | string[]) => {
         if (!permission) return true;
         const permissions = Array.isArray(permission)

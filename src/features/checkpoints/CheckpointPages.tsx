@@ -16,6 +16,7 @@ import {
 } from "@/services/access-control-service";
 import { checkpointsApi, Passage, PassageInput } from "./api";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { workspacePermissions } from "@/features/context/api";
 import "./styles.css";
 function useAccess() {
   const org = useAppStore((s) => s.organization);
@@ -26,7 +27,7 @@ function useAccess() {
     context,
     workspace,
     allowed: (permission: string) => {
-      const permissions = workspace.data?.effective_permissions ?? [];
+      const permissions = workspacePermissions(workspace.data);
       return permissions.some((grant) => {
         if (grant === "*") return true;
         if (grant.endsWith(".*")) {

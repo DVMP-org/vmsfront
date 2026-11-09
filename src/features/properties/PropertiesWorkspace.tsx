@@ -60,8 +60,10 @@ type DirectoryValues = {
 
 export default function PropertiesPage({
   route = {},
+  basePath = "/admin/properties",
 }: {
   route?: PropertyRoute;
+  basePath?: string;
 }) {
   const organization = useAppStore((state) => state.organization);
   const user = useAuthStore((state) => state.user);
@@ -72,6 +74,7 @@ export default function PropertiesPage({
       context={context}
       organizationName={organization?.name || "Organization"}
       route={route}
+      basePath={basePath}
     />
   );
 }
@@ -80,10 +83,12 @@ function SitesWorkspace({
   context,
   organizationName,
   route,
+  basePath,
 }: {
   context: string;
   organizationName: string;
   route: PropertyRoute;
+  basePath: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -102,7 +107,7 @@ function SitesWorkspace({
   const selectedId = route.id;
   const creating = route.action === "new";
   const allowed = (action: string) =>
-    profile.isFetchedAfterMount &&
+    profile.isSuccess &&
     !profile.isError &&
     hasAdminPermission(profile.data, `places.${action}`);
   const list = useQuery({
@@ -111,7 +116,6 @@ function SitesWorkspace({
       sitesApi.list({
         page,
         page_size: 10,
-        root_only: true,
         ...(search ? { search } : {}),
         ...(status !== "all" ? { is_active: status === "active" } : {}),
       }),
@@ -133,6 +137,9 @@ function SitesWorkspace({
     queryFn: () => sitesApi.get(route.parentId!),
     enabled: !!route.parentId && creating,
   });
+  const siteNames = new Map(
+    (list.data?.items ?? []).map((site) => [site.id, site.name]),
+  );
   const columns: Column<Site>[] = [
     {
       key: "site",
@@ -163,6 +170,14 @@ function SitesWorkspace({
       ),
     },
     {
+      key: "hierarchy",
+      header: "Hierarchy",
+      accessor: (site) =>
+        site.parent_site_id
+          ? siteNames.get(site.parent_site_id) || "Child Site"
+          : "Root Site",
+    },
+    {
       key: "status",
       header: "Status",
       accessor: (site) => (
@@ -176,15 +191,35 @@ function SitesWorkspace({
       header: "Action",
       mobileHide: true,
       accessor: (site) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => router.push(`/admin/properties/${site.id}`)}
-          disabled={!allowed("show")}
-        >
-          Open
-          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            disabled={!allowed("show")}
+          >
+            <Link href={`${basePath}/${site.id}`}>Details</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            disabled={!allowed("update")}
+          >
+            <Link href={`${basePath}/${site.id}/edit`}>Edit</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            disabled={!allowed("create")}
+          >
+            <Link href={`${basePath}/new?parent=${site.id}`}>
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              Child
+            </Link>
+          </Button>
+        </div>
       ),
     },
   ];
@@ -262,7 +297,7 @@ function SitesWorkspace({
           </p>
         </div>
         {allowed("create") ? (
-          <Button onClick={() => router.push("/admin/properties/new")}>
+          <Button onClick={() => router.push(`${basePath}/new`)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             New Site
           </Button>
@@ -344,6 +379,7 @@ function SitesWorkspace({
           <DataTable
             data={list.data?.items ?? []}
             columns={columns}
+            searchable={false}
             tableLabel="Organization Sites"
             serverSide
             total={list.data?.total ?? 0}
@@ -374,12 +410,12 @@ function SitesWorkspace({
           <SiteForm
             context={context}
             parent={parent.data}
-            onCancel={() => router.push("/admin/properties")}
+            onCancel={() => router.push(basePath)}
             onSaved={async (site) => {
               await queryClient.invalidateQueries({
                 queryKey: ["sites", context],
               });
-              router.push(`/admin/properties/${site.id}`);
+              router.push(`${basePath}/${site.id}`);
             }}
           />
         )
@@ -396,6 +432,7 @@ function SitesWorkspace({
             context={context}
             routeAction={route.action}
             allowed={allowed}
+            basePath={basePath}
             onAddPlace={() => setAddPlaceOpen(true)}
             onSaved={async (message) => {
               setNotice(message);
@@ -599,6 +636,7 @@ function SiteDetails({
   context,
   routeAction,
   allowed,
+  basePath,
   onAddPlace,
   onSaved,
 }: {
@@ -606,6 +644,7 @@ function SiteDetails({
   context: string;
   routeAction?: PropertyRoute["action"];
   allowed: (action: string) => boolean;
+  basePath: string;
   onAddPlace: () => void;
   onSaved: (message: string) => Promise<void>;
 }) {
@@ -624,7 +663,7 @@ function SiteDetails({
       sitesApi.move(site.id, parentSiteId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["sites", context] });
-      router.push(`/admin/properties/${site.id}`);
+      router.push(`${basePath}/${site.id}`);
     },
   });
   return (
@@ -635,7 +674,7 @@ function SiteDetails({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => router.push("/admin/properties")}
+            onClick={() => router.push(basePath)}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Sites
@@ -749,7 +788,12 @@ function SiteDetails({
         </aside>
       </section>
       <section className="mt-5 grid gap-4 xl:grid-cols-2">
-        <ChildSites sites={site.child_sites} />
+        <ChildSites
+          sites={site.child_sites}
+          basePath={basePath}
+          canCreate={allowed("create")}
+          parentId={site.id}
+        />
         <Places
           site={site}
           onAddPlace={onAddPlace}
@@ -885,10 +929,30 @@ function MoveSiteControl({
   );
 }
 
-function ChildSites({ sites }: { sites: Site[] }) {
+function ChildSites({
+  sites,
+  basePath,
+  canCreate,
+  parentId,
+}: {
+  sites: Site[];
+  basePath: string;
+  canCreate: boolean;
+  parentId: string;
+}) {
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
-      <h2 className="text-lg font-semibold">Child Sites</h2>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold">Child Sites</h2>
+        {canCreate ? (
+          <Button asChild size="sm" variant="outline">
+            <Link href={`${basePath}/new?parent=${parentId}`}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create child
+            </Link>
+          </Button>
+        ) : null}
+      </div>
       <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
         Only this Site's direct children appear here. Siblings and ancestors are
         never included in this workspace.
@@ -898,7 +962,7 @@ function ChildSites({ sites }: { sites: Site[] }) {
           sites.map((site) => (
             <Link
               key={site.id}
-              href={`/admin/properties/${site.id}`}
+              href={`${basePath}/${site.id}`}
               className="flex min-h-12 items-center justify-between gap-3 py-2"
             >
               <span>

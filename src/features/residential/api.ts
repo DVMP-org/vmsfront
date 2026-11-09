@@ -148,6 +148,8 @@ export function descendantIds(
   rootId: string,
 ): Set<string> {
   const root = flattenPlaces(roots).find((place) => place.id === rootId);
-  if (!root) return new Set();
+  if (!root) {
+    return new Set(flattenPlaces(roots).map((place) => place.id));
+  }
   return new Set(flattenPlaces([root]).map((place) => place.id));
 }

@@ -26,8 +26,13 @@ vi.mock("@/hooks/use-admin", () => ({
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => ({
     data: {
-      modules: ["dashboard"],
-      management: { is_administrator: mocks.isAdministrator },
+      modules: mocks.pathname.startsWith("/admin/residential")
+        ? ["residential"]
+        : ["dashboard"],
+      management: {
+        is_administrator: mocks.isAdministrator,
+        effective_permissions: ["*"],
+      },
     },
     isPending: mocks.pending,
     isError: mocks.error,
@@ -105,5 +110,17 @@ describe("AdminPermissionGuard management boundary", () => {
         "/organization?reason=management-required",
       ),
     );
+  });
+
+  it("opens the configured Residential overview for a SiteAdmin wildcard", () => {
+    mocks.pathname = "/admin/residential";
+    render(
+      <AdminPermissionGuard>
+        <div>Residential operations</div>
+      </AdminPermissionGuard>,
+    );
+
+    expect(screen.getByText("Residential operations")).toBeInTheDocument();
+    expect(mocks.replace).not.toHaveBeenCalled();
   });
 });

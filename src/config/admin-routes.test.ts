@@ -55,4 +55,17 @@ describe("residential administration routing", () => {
       "/admin/mixed-use/facilities",
     );
   });
+
+  it("uses domain-specific unit and resident routes instead of generic property and people links", () => {
+    const links = contextualAdminLinks(
+      ["residential", "properties", "people", "maintenance"],
+      [],
+      "residential",
+    );
+    const hrefs = links.map((link) => link.href);
+    expect(hrefs).toContain("/admin/residential/units");
+    expect(hrefs).toContain("/admin/residential/occupancies");
+    expect(hrefs).not.toContain("/admin/properties");
+    expect(hrefs).not.toContain("/admin/people");
+  });
 });
