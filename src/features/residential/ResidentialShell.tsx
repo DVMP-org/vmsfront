@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { useAppStore } from "@/store/app-store";
 import { useSiteAccess } from "@/features/context/use-site-access";
-import { ResidentialModuleNav } from "./ResidentialModuleNav";
 
 export function useResidentialAccess() {
   const access = useSiteAccess();
@@ -91,8 +90,6 @@ export function ResidentialShell({
         }
         primaryAction={primaryAction}
       />
-
-      <ResidentialModuleNav />
 
       {!selectedProperty ? (
         <PropertyContext contextKey={contextKey} />

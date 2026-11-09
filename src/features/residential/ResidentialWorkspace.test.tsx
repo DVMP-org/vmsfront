@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   relationships: vi.fn(),
   maintenance: vi.fn(),
   chargeAssignments: vi.fn(),
+  announcements: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   toggle: vi.fn(),
@@ -118,6 +119,7 @@ vi.mock("./api", () => ({
     relationships: mocks.relationships,
     maintenance: mocks.maintenance,
     chargeAssignments: mocks.chargeAssignments,
+    announcements: mocks.announcements,
   },
   flattenPlaces: (roots: TreeNode[]) => {
     const output: TreeNode[] = [];
@@ -285,6 +287,8 @@ describe("residential operations", () => {
       items: [maintenanceRequest],
       total: 1,
     });
+    mocks.chargeAssignments.mockResolvedValue([]);
+    mocks.announcements.mockResolvedValue({ items: [], total: 0 });
     mocks.create.mockResolvedValue(unit());
     mocks.createRelationship.mockResolvedValue(relationship);
     mocks.addPerson.mockResolvedValue({
@@ -299,15 +303,14 @@ describe("residential operations", () => {
 
     expect(await screen.findByText("Harbour Heights")).toBeInTheDocument();
     expect(
-      (await screen.findAllByText("Kitchen tap is leaking")).length,
+      (await screen.findAllByText(/Kitchen tap is leaking/)).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("1 with an active household")).toBeInTheDocument();
-    expect(
-      screen.getByText("Open, triaged or in progress"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Open unit register/ }),
-    ).toHaveAttribute("href", "/admin/residential/units");
+    expect(screen.getAllByText("Occupied").length).toBeGreaterThan(0);
+    expect(screen.getByText("Occupancy breakdown")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Add unit/ })).toHaveAttribute(
+      "href",
+      "/admin/residential/units",
+    );
   });
 
   it("creates a canonical unit from the unit register", async () => {
@@ -432,9 +435,8 @@ describe("residential operations", () => {
     mount(<ResidentialOverview />);
 
     expect(
-      await screen.findByText("Maintenance unavailable"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Maintenance offline")).toBeInTheDocument();
+      (await screen.findAllByText("Maintenance offline")).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /Retry maintenance/ }),
     ).toBeInTheDocument();

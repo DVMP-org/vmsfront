@@ -173,7 +173,9 @@ describe("shared maintenance workspace", () => {
   it("loads SiteAdmin activity and updates assignment, schedule and workflow", async () => {
     mount(<MaintenanceWorkspace domain="residential" />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+    fireEvent.click(
+      (await screen.findAllByRole("button", { name: "Review" }))[0],
+    );
 
     expect(await screen.findByText("Site Manager")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Assigned operator" }));

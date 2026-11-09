@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   keepPreviousData,
@@ -9,7 +9,16 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Clock3, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  UsersRound,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -22,9 +31,9 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Drawer } from "@/components/ui/Drawer";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
-import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type {
   VisitAuthorization,
@@ -35,17 +44,18 @@ import { useSiteAccess } from "@/features/context/use-site-access";
 import { invitationApprovalsApi, type ApprovalFilter } from "./api";
 
 const PAGE_SIZE = 25;
+const MAX_GROUP_GUESTS = 20;
 const statusFilters: Array<{ value: ApprovalFilter; label: string }> = [
+  { value: "all", label: "All invitations" },
   { value: "requested", label: "Awaiting approval" },
   { value: "approved", label: "Approved" },
   { value: "declined", label: "Declined" },
-  { value: "all", label: "All invitations" },
 ];
 
 function validStatus(value: string | null): ApprovalFilter {
   return statusFilters.some((item) => item.value === value)
     ? (value as ApprovalFilter)
-    : "requested";
+    : "all";
 }
 
 function validPage(value: string | null) {
@@ -91,14 +101,34 @@ export function InvitationApprovals() {
     placeholderData: keepPreviousData,
     retry: false,
   });
-  const pending = useQuery({
-    queryKey: ["admin-invitation-approvals", "pending-count"],
-    queryFn: () =>
-      invitationApprovalsApi.list({
-        status: "requested",
-        page: 1,
-        pageSize: 1,
-      }),
+  const summary = useQuery({
+    queryKey: ["admin-invitation-approvals", "summary"],
+    queryFn: async () => {
+      const [all, requested, approved, declined] = await Promise.all([
+        invitationApprovalsApi.list({ status: "all", page: 1, pageSize: 1 }),
+        invitationApprovalsApi.list({
+          status: "requested",
+          page: 1,
+          pageSize: 1,
+        }),
+        invitationApprovalsApi.list({
+          status: "approved",
+          page: 1,
+          pageSize: 1,
+        }),
+        invitationApprovalsApi.list({
+          status: "declined",
+          page: 1,
+          pageSize: 1,
+        }),
+      ]);
+      return {
+        all: all.total,
+        requested: requested.total,
+        approved: approved.total,
+        declined: declined.total,
+      };
+    },
     enabled: canList,
     retry: false,
   });
@@ -137,6 +167,15 @@ export function InvitationApprovals() {
   }
 
   const items = invitations.data?.items || [];
+  const summaryCounts: Record<ApprovalFilter, number | undefined> | null =
+    summary.data
+      ? {
+          ...summary.data,
+          expired: undefined,
+          cancelled: undefined,
+          revoked: undefined,
+        }
+      : null;
   const activeLabel =
     statusFilters.find((item) => item.value === status)?.label || "Invitations";
   const columns: Column<VisitAuthorization>[] = [
@@ -145,12 +184,20 @@ export function InvitationApprovals() {
       header: "Guest",
       sortable: true,
       accessor: (invitation) => (
-        <div className="min-w-0">
+        <div className="min-w-52 max-w-80">
+          {invitation.guests.length > 1 ? (
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+              <UsersRound className="h-3 w-3" aria-hidden="true" />
+              Group · {invitation.guests.length} visitors
+            </span>
+          ) : null}
           <Link
             href={`/admin/invitations/${invitation.id}`}
-            className="block truncate font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
+            className="block font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
           >
-            {guestNames(invitation)}
+            {invitation.guests
+              .map((guest) => guest.display_name_snapshot)
+              .join(", ") || "Unnamed guest"}
           </Link>
           <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
             {invitation.code}
@@ -201,14 +248,13 @@ export function InvitationApprovals() {
       header: "",
       mobileHide: true,
       accessor: (invitation) => (
-        <Button asChild variant="ghost" size="sm">
-          <Link
-            href={`/admin/invitations/${invitation.id}`}
-            aria-label={`Open invitation for ${guestNames(invitation)}`}
-          >
-            Open
-          </Link>
-        </Button>
+        <Link
+          href={`/admin/invitations/${invitation.id}`}
+          aria-label={`Open invitation for ${guestNames(invitation)}`}
+          className="inline-flex min-h-9 items-center rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-xs font-semibold hover:bg-[var(--vms-surface-subtle)]"
+        >
+          Details
+        </Link>
       ),
     },
   ];
@@ -267,7 +313,7 @@ export function InvitationApprovals() {
             <span className="inline-flex items-center gap-1.5">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
               <strong className="font-semibold tabular-nums text-[var(--vms-ink)]">
-                {pending.data?.total ?? "—"}
+                {summary.data?.requested ?? "—"}
               </strong>
               awaiting approval
             </span>
@@ -277,7 +323,10 @@ export function InvitationApprovals() {
         }
         primaryAction={
           canCreate ? (
-            <Button onClick={() => setCreateOpen(true)}>New invitation</Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create invitation
+            </Button>
           ) : undefined
         }
         secondaryActions={
@@ -294,6 +343,36 @@ export function InvitationApprovals() {
           </Button>
         }
       />
+
+      <section
+        className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Invitation summary"
+      >
+        <InvitationMetric
+          icon={CalendarDays}
+          label="All invitations"
+          value={summary.data?.all}
+          detail="Every invitation recorded for this Site"
+        />
+        <InvitationMetric
+          icon={Clock3}
+          label="Awaiting approval"
+          value={summary.data?.requested}
+          detail="Needs a SiteAdmin decision"
+        />
+        <InvitationMetric
+          icon={CheckCircle2}
+          label="Approved"
+          value={summary.data?.approved}
+          detail="Eligible at active Site checkpoints"
+        />
+        <InvitationMetric
+          icon={XCircle}
+          label="Declined"
+          value={summary.data?.declined}
+          detail="Access was not granted"
+        />
+      </section>
 
       <nav
         className="flex gap-1 overflow-x-auto border-b border-[var(--vms-line)]"
@@ -322,6 +401,11 @@ export function InvitationApprovals() {
               }
             >
               {filter.label}
+              {summaryCounts ? (
+                <span className="ml-1.5 tabular-nums text-[var(--vms-ink-muted)]">
+                  ({summaryCounts[filter.value] ?? 0})
+                </span>
+              ) : null}
               {active ? (
                 <span className="absolute inset-x-2 bottom-0 h-0.5 bg-[var(--vms-active-accent)]" />
               ) : null}
@@ -370,7 +454,9 @@ export function InvitationApprovals() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <strong className="block truncate text-sm font-semibold">
-                  {guestNames(invitation)}
+                  {invitation.guests.length > 1
+                    ? `Group invitation · ${invitation.guests.length} visitors`
+                    : guestNames(invitation)}
                 </strong>
                 <span className="mt-0.5 block font-mono text-[11px] text-[var(--vms-ink-muted)]">
                   {invitation.code}
@@ -395,7 +481,7 @@ export function InvitationApprovals() {
           </Link>
         )}
       />
-      <CreateInvitationModal
+      <CreateInvitationDrawer
         open={createOpen}
         siteId={profile.data?.site_id || ""}
         contextKey={profile.data?.organization_id || ""}
@@ -417,7 +503,24 @@ export function guestNames(invitation: VisitAuthorization) {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
 }
 
-function CreateInvitationModal({
+interface GuestDraft {
+  id: string;
+  name: string;
+  email: string;
+}
+
+let guestDraftSequence = 0;
+
+function newGuestDraft(): GuestDraft {
+  guestDraftSequence += 1;
+  return {
+    id: `guest-draft-${guestDraftSequence}`,
+    name: "",
+    email: "",
+  };
+}
+
+function CreateInvitationDrawer({
   open,
   siteId,
   contextKey,
@@ -432,62 +535,140 @@ function CreateInvitationModal({
 }) {
   const [host, setHost] = useState<FacetItem | null>(null);
   const [destination, setDestination] = useState<FacetItem | null>(null);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
+  const [kind, setKind] = useState<"single" | "group">("single");
+  const [guests, setGuests] = useState<GuestDraft[]>(() => [newGuestDraft()]);
   const [purpose, setPurpose] = useState("");
   const [maxUses, setMaxUses] = useState(1);
+  const [validFrom, setValidFrom] = useState(() => toLocalDateTime(new Date()));
   const [validTo, setValidTo] = useState(() => {
     const value = new Date();
-    value.setDate(value.getDate() + 1);
-    value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
-    return value.toISOString().slice(0, 16);
+    value.setHours(value.getHours() + 4);
+    return toLocalDateTime(value);
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const create = useMutation({
     mutationFn: () => {
-      const now = new Date();
       return invitationApprovalsApi.create({
         host_party_id: host!.value,
         site_id: siteId,
         destination_place_id: destination!.value,
-        valid_from: now.toISOString(),
+        valid_from: new Date(validFrom).toISOString(),
         valid_to: new Date(validTo).toISOString(),
         max_uses: maxUses,
         status: "approved",
         purpose: purpose.trim() || undefined,
-        guests: [
-          {
-            display_name: guestName.trim(),
-            email: guestEmail.trim() || undefined,
-            suffix: "001",
-          },
-        ],
+        guests: guests.map((guest, index) => ({
+          display_name: guest.name.trim(),
+          email: guest.email.trim() || undefined,
+          suffix: String(index + 1).padStart(3, "0"),
+        })),
       });
     },
     onSuccess: onSaved,
     onError: (error) => setErrors({ form: parseApiError(error).message }),
   });
+
+  useEffect(() => {
+    if (!open) return;
+    setHost(null);
+    setDestination(null);
+    setKind("single");
+    setGuests([newGuestDraft()]);
+    setPurpose("");
+    setMaxUses(1);
+    setValidFrom(toLocalDateTime(new Date()));
+    const end = new Date();
+    end.setHours(end.getHours() + 4);
+    setValidTo(toLocalDateTime(end));
+    setErrors({});
+  }, [open]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
     const next: Record<string, string> = {};
+    const start = new Date(validFrom);
+    const end = new Date(validTo);
     if (!host) next.host = "Choose the responsible Party.";
     if (!destination) next.destination = "Choose the destination Place.";
-    if (guestName.trim().length < 2) next.guest = "Enter the visitor name.";
+    guests.forEach((guest, index) => {
+      if (guest.name.trim().length < 2) {
+        next[`guest-${index}`] = `Enter visitor ${index + 1}’s full name.`;
+      }
+    });
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+      next.window = "Choose a valid arrival window.";
+    } else if (end <= start) {
+      next.window = "The invitation must end after it starts.";
+    }
     setErrors(next);
     if (Object.keys(next).length) return;
     create.mutate();
   }
+
+  function updateKind(nextKind: "single" | "group") {
+    setKind(nextKind);
+    if (nextKind === "single") {
+      setGuests((current) => current.slice(0, 1));
+    } else if (guests.length < 2) {
+      setGuests((current) => [...current, newGuestDraft()]);
+    }
+  }
+
+  function updateGuest(
+    guestId: string,
+    field: "name" | "email",
+    value: string,
+  ) {
+    setGuests((current) =>
+      current.map((guest) =>
+        guest.id === guestId ? { ...guest, [field]: value } : guest,
+      ),
+    );
+  }
+
   return (
-    <Modal
+    <Drawer
       isOpen={open}
       onClose={onClose}
-      title="Create visitor invitation"
-      description="Create an approved invitation for a Party host and destination Place."
-      size="lg"
-      className="sm:ml-auto sm:mr-0 sm:h-[calc(100dvh-3rem)] sm:max-h-none sm:rounded-r-none"
+      title="New invitation"
+      description="Create an approved visitor pass for this Site."
+      className="max-w-2xl"
     >
-      <form className="space-y-4" onSubmit={submit}>
+      <form className="flex min-h-full flex-col gap-5" onSubmit={submit}>
         <FormErrorSummary errors={errors} />
+        <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3 text-xs leading-5 text-[var(--vms-ink-muted)]">
+          Group invitations remain one pass with one invitation code. Each
+          visitor receives a numbered suffix such as 001 and 002 for checkpoint
+          validation.
+        </div>
+        <fieldset>
+          <legend className="mb-2 text-[13px] font-semibold">
+            Visitor type <span className="text-[var(--vms-danger)]">*</span>
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            {(["single", "group"] as const).map((value) => (
+              <label
+                key={value}
+                className={[
+                  "flex min-h-11 cursor-pointer items-center gap-2 rounded-[var(--vms-radius-control)] border px-3 text-sm font-medium",
+                  kind === value
+                    ? "border-[var(--vms-ink)] bg-[var(--vms-surface-subtle)]"
+                    : "border-[var(--vms-line)]",
+                ].join(" ")}
+              >
+                <input
+                  type="radio"
+                  name="invitation-kind"
+                  value={value}
+                  checked={kind === value}
+                  onChange={() => updateKind(value)}
+                  className="accent-[var(--vms-ink)]"
+                />
+                {value === "single" ? "Single" : "Group"}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <FacetPicker
           facet="parties"
           kind="person"
@@ -507,35 +688,18 @@ function CreateInvitationModal({
           error={errors.destination}
           description="The unit, room, office or shared Place the guest may access."
         />
-        <Field
-          id="invite-guest-name"
-          label="Visitor name"
-          required
-          error={errors.guest}
-        >
-          {(control) => (
-            <input
-              {...control}
-              value={guestName}
-              onChange={(event) => setGuestName(event.target.value)}
-              className={fieldControlClassName}
-              autoComplete="name"
-            />
-          )}
-        </Field>
-        <Field id="invite-guest-email" label="Visitor email">
-          {(control) => (
-            <input
-              {...control}
-              type="email"
-              value={guestEmail}
-              onChange={(event) => setGuestEmail(event.target.value)}
-              className={fieldControlClassName}
-              autoComplete="email"
-            />
-          )}
-        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="invite-valid-from" label="Valid from" required>
+            {(control) => (
+              <input
+                {...control}
+                type="datetime-local"
+                value={validFrom}
+                onChange={(event) => setValidFrom(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
           <Field id="invite-valid-to" label="Valid until" required>
             {(control) => (
               <input
@@ -547,6 +711,107 @@ function CreateInvitationModal({
               />
             )}
           </Field>
+        </div>
+        {errors.window ? (
+          <p role="alert" className="text-sm text-[var(--vms-danger)]">
+            {errors.window}
+          </p>
+        ) : null}
+        <section
+          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)]"
+          aria-label="Invited visitors"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-3">
+            <div>
+              <h3 className="text-sm font-semibold">
+                {kind === "group" ? "Visitors" : "Visitor"}
+              </h3>
+              <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
+                Everyone listed travels under the same invitation code.
+              </p>
+            </div>
+            {kind === "group" ? (
+              <span className="text-xs font-semibold tabular-nums text-[var(--vms-ink-muted)]">
+                {guests.length} / {MAX_GROUP_GUESTS}
+              </span>
+            ) : null}
+          </div>
+          <div className="space-y-4 p-4">
+            {guests.map((guest, index) => (
+              <div
+                key={guest.id}
+                className="grid gap-3 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] sm:items-end"
+              >
+                <Field
+                  id={`invite-guest-${guest.id}`}
+                  label={
+                    index === 0 ? "Visitor full name" : `Visitor ${index + 1}`
+                  }
+                  required={index === 0}
+                  error={errors[`guest-${index}`]}
+                >
+                  {(control) => (
+                    <input
+                      {...control}
+                      value={guest.name}
+                      onChange={(event) =>
+                        updateGuest(guest.id, "name", event.target.value)
+                      }
+                      className={fieldControlClassName}
+                      autoComplete={index === 0 ? "name" : "off"}
+                    />
+                  )}
+                </Field>
+                <Field id={`invite-guest-email-${guest.id}`} label="Email">
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="email"
+                      value={guest.email}
+                      onChange={(event) =>
+                        updateGuest(guest.id, "email", event.target.value)
+                      }
+                      className={fieldControlClassName}
+                      autoComplete={index === 0 ? "email" : "off"}
+                      placeholder="Optional"
+                    />
+                  )}
+                </Field>
+                {kind === "group" && guests.length > 1 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="justify-self-start text-[var(--vms-danger)] sm:justify-self-end"
+                    aria-label={`Remove visitor ${index + 1}`}
+                    onClick={() =>
+                      setGuests((current) =>
+                        current.filter((item) => item.id !== guest.id),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+            {kind === "group" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={guests.length >= MAX_GROUP_GUESTS}
+                onClick={() =>
+                  setGuests((current) => [...current, newGuestDraft()])
+                }
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add visitor
+              </Button>
+            ) : null}
+          </div>
+        </section>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field id="invite-max-uses" label="Allowed entries">
             {(control) => (
               <input
@@ -560,29 +825,86 @@ function CreateInvitationModal({
               />
             )}
           </Field>
+          <Field id="invite-purpose" label="Purpose">
+            {(control) => (
+              <input
+                {...control}
+                value={purpose}
+                onChange={(event) => setPurpose(event.target.value)}
+                className={fieldControlClassName}
+                placeholder="Guest, family visit, delivery"
+              />
+            )}
+          </Field>
         </div>
-        <Field id="invite-purpose" label="Purpose">
-          {(control) => (
-            <input
-              {...control}
-              value={purpose}
-              onChange={(event) => setPurpose(event.target.value)}
-              className={fieldControlClassName}
-              placeholder="Guest, family visit, delivery, appointment"
-            />
-          )}
-        </Field>
-        <div className="flex justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            Checkpoint access
+          </div>
+          <p className="mt-1.5 text-sm">
+            Active gates for this Site validate the pass. Gate-specific policy
+            is applied by the Site checkpoint service.
+          </p>
+        </div>
+        <div className="mt-auto flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={create.isPending}
+          >
             Cancel
           </Button>
-          <Button type="submit" isLoading={create.isPending}>
-            Create invitation
+          <Button
+            type="submit"
+            isLoading={create.isPending}
+            loadingLabel="Creating invitation"
+          >
+            {kind === "group"
+              ? `Create group pass · ${guests.length}`
+              : "Create pass"}
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
+}
+
+function InvitationMetric({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof CalendarDays;
+  label: string;
+  value: number | undefined;
+  detail: string;
+}) {
+  return (
+    <div className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-r sm:even:border-r-0 sm:last:border-b xl:border-b-0 xl:even:border-r xl:last:border-r-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-2xl font-semibold tracking-[-0.035em] tabular-nums">
+            {value === undefined ? "—" : value}
+          </p>
+          <p className="mt-1 text-sm font-medium">{label}</p>
+        </div>
+        <span className="grid h-10 w-10 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[var(--vms-ink-muted)]">
+        {detail}
+      </p>
+    </div>
+  );
+}
+
+function toLocalDateTime(value: Date) {
+  const local = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
 }
 
 export function StatusBadge({ status }: { status: VisitAuthorizationStatus }) {
