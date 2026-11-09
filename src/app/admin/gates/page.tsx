@@ -225,10 +225,10 @@ export default function AdminGatesPage() {
         operatorsByGate.get(row.id) ? (
           <div>
             <span className="block text-sm font-semibold text-[var(--vms-ink)]">
-              {operatorsByGate.get(row.id)?.party.display_name}
+              {operatorsByGate.get(row.id)?.site_admin.user.name}
             </span>
             <span className="text-xs text-[var(--vms-ink-muted)]">
-              {operatorsByGate.get(row.id)?.party.email || "Assigned"}
+              {operatorsByGate.get(row.id)?.site_admin.user.email || "Assigned"}
             </span>
           </div>
         ) : (

@@ -23,7 +23,8 @@ const management = {
   },
   administrators: [
     {
-      party_id: "admin",
+      site_admin_id: "site-admin",
+      user_id: "admin",
       display_name: "Complex Admin",
       email: "admin@example.test",
       role: "admin",

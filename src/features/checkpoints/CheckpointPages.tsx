@@ -297,7 +297,7 @@ export function CheckpointDirectory() {
                 {assignment.gate_name}
               </strong>
               <span className="mt-1 block text-sm text-[var(--vms-ink-muted)]">
-                Assigned to {assignment.party.display_name}
+                Assigned to {assignment.site_admin.user.name}
               </span>
             </Link>
           ))}

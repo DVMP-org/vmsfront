@@ -43,14 +43,14 @@ describe("checkpoint API", () => {
     });
 
     await checkpointsApi.operators("place-1");
-    await checkpointsApi.assignOperator("checkpoint-1", "party-2");
+    await checkpointsApi.assignOperator("checkpoint-1", "admin-2");
 
     expect(apiClient.get).toHaveBeenCalledWith("/admin/checkpoints/operators", {
       params: { site_id: "place-1" },
     });
     expect(apiClient.put).toHaveBeenCalledWith(
       "/admin/checkpoints/checkpoint-1/operator",
-      { party_id: "party-2" },
+      { site_admin_id: "admin-2" },
     );
   });
 

@@ -3,19 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  ShieldCheck,
-  UserCog,
-  Users,
-} from "lucide-react";
+import { Plus, ShieldCheck, UserCog, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import {
-  DataTable,
-  type Column,
-} from "@/components/ui/DataTable";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
@@ -23,11 +15,7 @@ import { useAdminProfile } from "@/hooks/use-admin";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
-import {
-  type SiteManager,
-  managersApi,
-  type SiteRole,
-} from "./api";
+import { type SiteManager, managersApi, type SiteRole } from "./api";
 
 export function ManagersWorkspace() {
   const selectedSite = useAppStore((state) => state.selectedProperty);
@@ -55,7 +43,7 @@ export function ManagersWorkspace() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (managers.data?.managers ?? []).filter((manager) =>
-      [manager.party.display_name, manager.party.email || ""]
+      [manager.user.name, manager.user.email || ""]
         .join(" ")
         .toLowerCase()
         .includes(term),
@@ -67,9 +55,9 @@ export function ManagersWorkspace() {
       header: "Manager",
       accessor: (manager) => (
         <span>
-          <strong className="block">{manager.party.display_name}</strong>
+          <strong className="block">{manager.user.name}</strong>
           <span className="block text-xs text-[var(--vms-ink-muted)]">
-            {manager.party.email || "No email"}
+            {manager.user.email || "No email"}
           </span>
         </span>
       ),
@@ -160,9 +148,9 @@ export function ManagersWorkspace() {
             Managers
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Site managers administer this Site and its child hierarchy. They
-            are separate from Place parties and may also hold a Party
-            relationship at any child Place.
+            Site managers administer this Site and its child hierarchy. They are
+            separate from Place parties and may also hold a Party relationship
+            at any child Place.
           </p>
         </div>
         <div className="flex gap-2">
@@ -190,7 +178,11 @@ export function ManagersWorkspace() {
           tone="danger"
           title="Managers could not be loaded"
           action={
-            <Button size="sm" variant="outline" onClick={() => managers.refetch()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => managers.refetch()}
+            >
               Retry
             </Button>
           }
@@ -213,9 +205,9 @@ export function ManagersWorkspace() {
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               </span>
               <span>
-                <strong className="block">{manager.party.display_name}</strong>
+                <strong className="block">{manager.user.name}</strong>
                 <span className="text-xs text-[var(--vms-ink-muted)]">
-                  {manager.party.email || "Site manager"}
+                  {manager.user.email || "Site manager"}
                 </span>
               </span>
             </span>
@@ -341,7 +333,9 @@ function AddManagerModal({
           </Button>
           <Button
             type="submit"
-            disabled={mutation.isPending || !displayName.trim() || !email.trim()}
+            disabled={
+              mutation.isPending || !displayName.trim() || !email.trim()
+            }
           >
             {mutation.isPending ? "Adding…" : "Add manager"}
           </Button>
@@ -370,15 +364,14 @@ function ManagerRolesModal({
     setSelected(manager?.roles.map((role) => role.id) ?? []);
   }, [manager]);
   const mutation = useMutation({
-    mutationFn: () =>
-      managersApi.replaceRoles(siteId, currentId!, selected),
+    mutationFn: () => managersApi.replaceRoles(siteId, currentId!, selected),
     onSuccess: onSaved,
   });
   return (
     <Modal
       isOpen={!!manager}
       onClose={onClose}
-      title={`Roles for ${manager?.party.display_name || "manager"}`}
+      title={`Roles for ${manager?.user.name || "manager"}`}
     >
       <form
         className="space-y-4 p-1"
@@ -422,7 +415,10 @@ function ManagerRolesModal({
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!selected.length || mutation.isPending}>
+          <Button
+            type="submit"
+            disabled={!selected.length || mutation.isPending}
+          >
             {mutation.isPending ? "Saving…" : "Replace roles"}
           </Button>
         </div>

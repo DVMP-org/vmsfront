@@ -66,10 +66,9 @@ describe("GateOperatorModal", () => {
       managers: [
         {
           assignment_id: "admin-1",
-          party: {
-            id: "party-1",
-            kind: "person",
-            display_name: "Amina Bello",
+          user: {
+            id: "user-1",
+            name: "Amina Bello",
             email: "amina@example.test",
             is_active: true,
           },
@@ -95,12 +94,14 @@ describe("GateOperatorModal", () => {
         kind: "site",
         is_active: true,
       },
-      party: {
-        id: "party-1",
-        kind: "person",
-        display_name: "Amina Bello",
-        email: "amina@example.test",
-        is_active: true,
+      site_admin: {
+        id: "admin-1",
+        user: {
+          id: "user-1",
+          name: "Amina Bello",
+          email: "amina@example.test",
+          is_active: true,
+        },
       },
       assigned_at: "2026-11-09T00:00:00Z",
       is_active: true,
@@ -123,7 +124,7 @@ describe("GateOperatorModal", () => {
     await waitFor(() =>
       expect(checkpointsApi.assignOperator).toHaveBeenCalledWith(
         "checkpoint-1",
-        "party-1",
+        "admin-1",
       ),
     );
     await waitFor(() => expect(onClose).toHaveBeenCalled());

@@ -114,7 +114,7 @@ beforeEach(() => {
     automatic_direction: true,
     manual_direction_override: false,
     policy_version: 1,
-    operator_party_id: "party",
+    operator_site_admin_id: "site-admin",
     operator_name: "Operator",
     lanes: [
       {

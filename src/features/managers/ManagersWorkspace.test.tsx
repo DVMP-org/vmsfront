@@ -28,7 +28,8 @@ vi.mock("@/store/app-store", () => {
     },
   };
   return {
-    useAppStore: (selector: (value: typeof state) => unknown) => selector(state),
+    useAppStore: (selector: (value: typeof state) => unknown) =>
+      selector(state),
   };
 });
 
@@ -102,10 +103,9 @@ describe("Site managers", () => {
       managers: [
         {
           assignment_id: "site-admin-1",
-          party: {
-            id: "party-1",
-            kind: "person",
-            display_name: "Dana Manager",
+          user: {
+            id: "user-1",
+            name: "Dana Manager",
             email: "dana@example.test",
             is_active: true,
           },

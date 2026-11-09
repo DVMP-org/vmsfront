@@ -37,6 +37,9 @@ export default function FirstPlaceSetupPage() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminPhone, setAdminPhone] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const needsFirstPlace = organization?.needs_first_site === true;
@@ -83,7 +86,11 @@ export default function FirstPlaceSetupPage() {
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
-    if (!name.trim()) nextErrors["first-place-name"] = "Enter a place name.";
+    if (!name.trim()) nextErrors["first-place-name"] = "Enter a Site name.";
+    if (!adminEmail.trim()) {
+      nextErrors["first-place-admin-email"] =
+        "Enter the Site administrator email.";
+    }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
@@ -91,6 +98,9 @@ export default function FirstPlaceSetupPage() {
       name: name.trim(),
       address: address.trim(),
       description: description.trim(),
+      admin_email: adminEmail.trim(),
+      admin_name: adminName.trim() || null,
+      admin_phone: adminPhone.trim() || null,
       parent_site_id: null,
       use_case: organization?.use_case || null,
     });
@@ -129,7 +139,7 @@ export default function FirstPlaceSetupPage() {
             }
           >
             We could not load the organization that is waiting for its first
-            place.
+            Site.
           </InlineAlert>
         </main>
       </div>
@@ -143,14 +153,14 @@ export default function FirstPlaceSetupPage() {
         <main className="mx-auto flex min-h-[70vh] max-w-xl items-center px-4">
           <InlineAlert
             tone="success"
-            title="Your organization already has a place"
+            title="Your organization already has a Site"
             action={
               <Button asChild size="sm">
                 <Link href="/organization/workspaces">Open Workspaces</Link>
               </Button>
             }
           >
-            First-place setup is complete. Choose a permitted workspace to
+            First-Site setup is complete. Choose a permitted workspace to
             continue.
           </InlineAlert>
         </main>
@@ -176,11 +186,11 @@ export default function FirstPlaceSetupPage() {
             Set up your operating workspace
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-            Create your first place
+            Create your first Site
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Your plan is active. Add the top-level place that will own people,
-            access and operations before entering a management workspace.
+            Your plan is active. Add the top-level Site and its administrator
+            before entering a management workspace.
           </p>
         </header>
 
@@ -192,29 +202,29 @@ export default function FirstPlaceSetupPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
                 {organization.name}
               </p>
-              <h2 className="mt-1 text-xl font-semibold">Place identity</h2>
+              <h2 className="mt-1 text-xl font-semibold">Site identity</h2>
               <p className="mt-1 text-sm leading-6 text-[var(--vms-ink-muted)]">
-                Start with the site or property that operators recognize. You
-                can add buildings, units and rooms after this step.
+                Start with the Site that operators recognize. You can add
+                Places, buildings, units and rooms after this step.
               </p>
             </div>
 
             <form onSubmit={submit} className="space-y-5 p-5 sm:p-7" noValidate>
               <FormErrorSummary errors={errors} />
               {serverError ? (
-                <InlineAlert tone="danger" title="First place was not created">
+                <InlineAlert tone="danger" title="First Site was not created">
                   {serverError}
                 </InlineAlert>
               ) : null}
 
               <FormSection
                 title="Core details"
-                description="These details identify the first place across the organization."
+                description="These details identify the first Site across the organization."
               >
                 <Field
                   id="first-place-name"
-                  label="Place name"
-                  description="The name shown in the workspace switcher and property register."
+                  label="Site name"
+                  description="The name shown in the workspace switcher and Site register."
                   required
                   error={errors["first-place-name"]}
                 >
@@ -256,7 +266,7 @@ export default function FirstPlaceSetupPage() {
                 <Field
                   id="first-place-description"
                   label="Description"
-                  description="Optional operational context for this place."
+                  description="Optional operational context for this Site."
                 >
                   {(control) => (
                     <textarea
@@ -266,7 +276,61 @@ export default function FirstPlaceSetupPage() {
                       onChange={(event) => setDescription(event.target.value)}
                       rows={4}
                       maxLength={500}
-                      placeholder="What does this place operate?"
+                      placeholder="What does this Site operate?"
+                      disabled={mutation.isPending}
+                    />
+                  )}
+                </Field>
+              </FormSection>
+
+              <FormSection
+                title="Site administrator"
+                description="We create or reuse the administrator User, grant Site management authority and send onboarding when required. No Place Party relationship is created."
+              >
+                <Field
+                  id="first-place-admin-email"
+                  label="Administrator email"
+                  required
+                  error={errors["first-place-admin-email"]}
+                >
+                  {(control) => (
+                    <input
+                      {...control}
+                      className={fieldControlClassName}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={adminEmail}
+                      onChange={(event) => {
+                        setAdminEmail(event.target.value);
+                        setErrors({});
+                      }}
+                      disabled={mutation.isPending}
+                    />
+                  )}
+                </Field>
+                <Field id="first-place-admin-name" label="Administrator name">
+                  {(control) => (
+                    <input
+                      {...control}
+                      className={fieldControlClassName}
+                      autoComplete="name"
+                      value={adminName}
+                      onChange={(event) => setAdminName(event.target.value)}
+                      disabled={mutation.isPending}
+                    />
+                  )}
+                </Field>
+                <Field id="first-place-admin-phone" label="Phone number">
+                  {(control) => (
+                    <input
+                      {...control}
+                      className={fieldControlClassName}
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={adminPhone}
+                      onChange={(event) => setAdminPhone(event.target.value)}
                       disabled={mutation.isPending}
                     />
                   )}
@@ -278,9 +342,7 @@ export default function FirstPlaceSetupPage() {
                   <dt className="text-xs font-medium text-[var(--vms-ink-muted)]">
                     Structure
                   </dt>
-                  <dd className="mt-1 font-semibold">
-                    Top-level site / property
-                  </dd>
+                  <dd className="mt-1 font-semibold">Top-level Site</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-[var(--vms-ink-muted)]">
@@ -298,7 +360,9 @@ export default function FirstPlaceSetupPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={mutation.isPending}
+                  disabled={
+                    mutation.isPending || !name.trim() || !adminEmail.trim()
+                  }
                   aria-busy={mutation.isPending}
                 >
                   {mutation.isPending ? (
@@ -306,9 +370,7 @@ export default function FirstPlaceSetupPage() {
                   ) : (
                     <Building2 className="h-4 w-4" />
                   )}
-                  {mutation.isPending
-                    ? "Creating place…"
-                    : "Create first place"}
+                  {mutation.isPending ? "Creating Site…" : "Create first Site"}
                   {!mutation.isPending ? (
                     <ArrowRight className="h-4 w-4" />
                   ) : null}
@@ -333,16 +395,16 @@ export default function FirstPlaceSetupPage() {
                 />
                 <SetupFact
                   index="3"
-                  title="First place"
-                  detail="Create the place that owns management context."
+                  title="First Site"
+                  detail="Create the Site that owns management context."
                   current
                 />
               </ol>
             </section>
 
-            <InlineAlert tone="info" title="Management stays place-scoped">
+            <InlineAlert tone="info" title="Management stays Site-scoped">
               Organization membership does not create a management workspace.
-              Work modes appear only after this place exists and access is
+              Work modes appear only after this Site exists and access is
               assigned.
             </InlineAlert>
 
@@ -353,7 +415,7 @@ export default function FirstPlaceSetupPage() {
               </p>
               <p className="mt-2 text-xs leading-5 text-[var(--vms-ink-muted)]">
                 This first record is a site. Add buildings, units, rooms or
-                spaces from the place workspace after setup.
+                spaces from the Site workspace after setup.
               </p>
             </section>
           </aside>

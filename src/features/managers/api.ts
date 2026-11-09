@@ -11,11 +11,12 @@ export interface ManagerRole {
 
 export interface SiteManager {
   assignment_id: string;
-  party: {
+  user: {
     id: string;
-    kind: string;
-    display_name: string;
-    email: string | null;
+    name: string;
+    email: string;
+    phone?: string | null;
+    onboarded?: boolean | null;
     is_active: boolean;
   };
   role: "site_admin";
@@ -39,7 +40,7 @@ export interface SiteRole {
 }
 
 export interface AddManagerInput {
-  display_name: string;
+  display_name?: string;
   email: string;
   phone?: string;
   role_ids?: string[];

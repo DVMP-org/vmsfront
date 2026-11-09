@@ -19,8 +19,13 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DataTable, type BulkAction, type Column } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  type BulkAction,
+  type Column,
+} from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormSection } from "@/components/ui/form/FormSection";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { useAdminProfile } from "@/hooks/use-admin";
@@ -314,7 +319,11 @@ function SitesWorkspace({
               tone="danger"
               title="Sites could not be loaded"
               action={
-                <Button size="sm" variant="outline" onClick={() => list.refetch()}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => list.refetch()}
+                >
                   Retry
                 </Button>
               }
@@ -324,7 +333,10 @@ function SitesWorkspace({
           ) : list.isError && list.data ? (
             <InlineAlert tone="warning" title="Showing last available Sites">
               The latest refresh failed.{" "}
-              <button className="font-semibold underline" onClick={() => list.refetch()}>
+              <button
+                className="font-semibold underline"
+                onClick={() => list.refetch()}
+              >
                 Retry
               </button>
             </InlineAlert>
@@ -364,7 +376,9 @@ function SitesWorkspace({
             parent={parent.data}
             onCancel={() => router.push("/admin/properties")}
             onSaved={async (site) => {
-              await queryClient.invalidateQueries({ queryKey: ["sites", context] });
+              await queryClient.invalidateQueries({
+                queryKey: ["sites", context],
+              });
               router.push(`/admin/properties/${site.id}`);
             }}
           />
@@ -385,10 +399,7 @@ function SitesWorkspace({
             onAddPlace={() => setAddPlaceOpen(true)}
             onSaved={async (message) => {
               setNotice(message);
-              await Promise.all([
-                detail.refetch(),
-                list.refetch(),
-              ]);
+              await Promise.all([detail.refetch(), list.refetch()]);
             }}
           />
         ) : null
@@ -429,12 +440,18 @@ function SiteForm({
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [useCase, setUseCase] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminPhone, setAdminPhone] = useState("");
   const mutation = useMutation({
     mutationFn: () =>
       sitesApi.create({
         name: name.trim(),
         address: address.trim(),
         description: description.trim() || null,
+        admin_email: adminEmail.trim(),
+        admin_name: adminName.trim() || null,
+        admin_phone: adminPhone.trim() || null,
         parent_site_id: parent?.id || null,
         ...(useCase ? { use_case: useCase as SiteInput["use_case"] } : {}),
       }),
@@ -444,7 +461,7 @@ function SiteForm({
     <form
       onSubmit={(event: FormEvent) => {
         event.preventDefault();
-        if (name.trim()) mutation.mutate();
+        if (name.trim() && adminEmail.trim()) mutation.mutate();
       }}
       className="space-y-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5"
     >
@@ -514,6 +531,49 @@ function SiteForm({
           </select>
         )}
       </Field>
+      <FormSection
+        title="Site administrator"
+        description="The administrator is onboarded as a User with Site management authority. This does not create a Place Party relationship."
+      >
+        <Field id="site-admin-email" label="Administrator email" required>
+          {(control) => (
+            <input
+              {...control}
+              className={fieldControlClassName}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={adminEmail}
+              onChange={(event) => setAdminEmail(event.target.value)}
+              required
+            />
+          )}
+        </Field>
+        <Field id="site-admin-name" label="Administrator name">
+          {(control) => (
+            <input
+              {...control}
+              className={fieldControlClassName}
+              autoComplete="name"
+              value={adminName}
+              onChange={(event) => setAdminName(event.target.value)}
+            />
+          )}
+        </Field>
+        <Field id="site-admin-phone" label="Phone number">
+          {(control) => (
+            <input
+              {...control}
+              className={fieldControlClassName}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={adminPhone}
+              onChange={(event) => setAdminPhone(event.target.value)}
+            />
+          )}
+        </Field>
+      </FormSection>
       {mutation.isError ? (
         <InlineAlert tone="danger" title="Site could not be created">
           {parseApiError(mutation.error).message}
@@ -523,7 +583,10 @@ function SiteForm({
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={mutation.isPending || !name.trim()}>
+        <Button
+          type="submit"
+          disabled={mutation.isPending || !name.trim() || !adminEmail.trim()}
+        >
           {mutation.isPending ? "Creating…" : "Create Site"}
         </Button>
       </div>
@@ -788,7 +851,10 @@ function MoveSiteControl({
     queryKey: ["site-move-options", site.id],
     queryFn: () => sitesApi.list({ page: 1, page_size: 100, is_active: true }),
   });
-  const excluded = new Set([site.id, ...site.child_sites.map((child) => child.id)]);
+  const excluded = new Set([
+    site.id,
+    ...site.child_sites.map((child) => child.id),
+  ]);
   const options = (sites.data?.items ?? []).filter(
     (candidate) => !excluded.has(candidate.id),
   );

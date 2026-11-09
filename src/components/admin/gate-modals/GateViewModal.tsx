@@ -87,10 +87,10 @@ export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
           ) : assignment ? (
             <div className="mt-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3">
               <p className="text-sm font-medium">
-                {assignment.party.display_name}
+                {assignment.site_admin.user.name}
               </p>
               <p className="text-xs text-[var(--vms-ink-muted)]">
-                {assignment.party.email || "No email recorded"}
+                {assignment.site_admin.user.email || "No email recorded"}
               </p>
             </div>
           ) : (
