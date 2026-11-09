@@ -132,8 +132,8 @@ describe("organization Site register", () => {
       data: { effective_permissions: ["*"] },
     });
     vi.mocked(sitesApi.list).mockResolvedValue({
-      items: [site],
-      total: 1,
+      items: [site, childSite],
+      total: 2,
       page: 1,
       page_size: 10,
       total_pages: 1,
@@ -176,8 +176,18 @@ describe("organization Site register", () => {
     expect(screen.queryByText("Organization overview")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New Site" })).toBeVisible();
     expect(sitesApi.list).toHaveBeenCalledWith(
-      expect.objectContaining({ root_only: true, page: 1 }),
+      expect.objectContaining({ page: 1 }),
     );
+    expect(screen.getAllByText("Harbour Annex").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: /Details/ }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Edit/ }).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.getAllByRole("link", { name: /Child/ }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("shows direct child Sites and Places without a hierarchy diagram", async () => {

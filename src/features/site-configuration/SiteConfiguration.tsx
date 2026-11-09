@@ -18,6 +18,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { workspacePermissions } from "@/features/context/api";
 import { sitesApi } from "@/features/sites/api";
 import { useAppStore } from "@/store/app-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -88,8 +89,9 @@ export function SiteConfiguration() {
   const canManage = workspace.data?.management?.is_administrator === true;
   const canEditModules =
     canManage && workspace.data?.management?.mode === "local";
-  const grants = workspace.data?.effective_permissions?.length
-    ? workspace.data.effective_permissions
+  const permissions = workspacePermissions(workspace.data);
+  const grants = permissions.length
+    ? permissions
     : canManage
       ? ["*"]
       : [];

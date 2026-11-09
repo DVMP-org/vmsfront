@@ -3,6 +3,8 @@ import { adminService } from "@/services/admin-service";
 import { adminGateService } from "@/services/admin-gate-service";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
+import { contextApi } from "@/features/context/api";
+import { getApiErrorStatus } from "@/lib/error-utils";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types/gate";
 import {
   CreateResidencyRequest,
@@ -1039,7 +1041,86 @@ export function useAdminDuePayments(
 export function useAdminProfile() {
   const {token,_hasHydrated,isAuthenticated,user}=useAuthStore();
   const organization=useAppStore(s=>s.organization);
-  return useQuery<Admin>({queryKey:["admin","profile",organization?.id,user?.id],queryFn:async()=>(await adminService.getAdminProfile()).data,staleTime:0,refetchOnMount:"always",enabled:_hasHydrated&&!!organization?.id&&(!!token||isAuthenticated),retry:false});
+  const selectedProperty = useAppStore((state) => state.selectedProperty);
+
+  return useQuery<Admin>({
+    queryKey: [
+      "admin",
+      "profile",
+      organization?.id,
+      user?.id,
+      selectedProperty?.id,
+    ],
+    queryFn: async () => {
+      try {
+        return (await adminService.getAdminProfile()).data;
+      } catch (error) {
+        if (getApiErrorStatus(error) !== 404 || !user) throw error;
+        const context = await contextApi.workspace(selectedProperty?.id);
+        const management = context.management;
+        if (
+          !management?.is_administrator ||
+          !management.site_admin_id
+        ) {
+          throw error;
+        }
+        return siteAdminProfile(context, user);
+      }
+    },
+    staleTime: 30_000,
+    refetchOnMount: false,
+    enabled:
+      _hasHydrated &&
+      !!organization?.id &&
+      (!!token || isAuthenticated),
+    retry: false,
+  });
+}
+
+function siteAdminProfile(
+  context: Awaited<ReturnType<typeof contextApi.workspace>>,
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>["user"]>,
+): Admin {
+  const management = context.management;
+  const siteAdminId = management?.site_admin_id;
+  const permissions = management?.effective_permissions ?? [];
+  if (!management?.is_administrator || !siteAdminId) {
+    throw new Error("Active Site management is required");
+  }
+  const now = new Date().toISOString();
+  const roles = management.roles?.map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: "Effective authority for the selected Site",
+    code: item.code,
+    permissions: item.permissions,
+    permissions_parsed: item.permissions,
+    created_at: now,
+    updated_at: now,
+  }));
+  const role: AdminRole =
+    roles?.[0] ?? {
+      id: siteAdminId,
+      name: "Site administrator",
+      description: "Effective authority for the selected Site",
+      code: "site_admin",
+      permissions,
+      permissions_parsed: permissions,
+      created_at: now,
+      updated_at: now,
+    };
+  return {
+    id: siteAdminId,
+    user: user as Admin["user"],
+    role_id: role.id,
+    permissions: "*",
+    role,
+    roles: roles?.length ? roles : [role],
+    effective_permissions: permissions,
+    name: user.name || user.email,
+    created_at: now,
+    updated_at: now,
+  };
 }
 
 // Transactions

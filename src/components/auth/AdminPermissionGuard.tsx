@@ -2,8 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminProfile } from "@/hooks/use-admin";
-import { adminLinks } from "@/config/admin-routes";
+import { contextualAdminLinks } from "@/config/admin-routes";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { workspacePermissions } from "@/features/context/api";
 import { hasAdminPermission } from "@/lib/permissions";
 import { ShieldAlert, Home, ArrowLeft } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -25,9 +26,13 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   const activeRole = useMemo(() => adminProfile, [adminProfile]);
 
   const matchedRoute = useMemo(() => {
-    // Flatten links to find the match for the current pathname
+    const links = contextualAdminLinks(
+      workspace.data?.modules,
+      workspace.data?.module_groups,
+      workspace.data?.effective_use_case,
+    );
     const flattened: any[] = [];
-    adminLinks.forEach((link) => {
+    links.forEach((link) => {
       flattened.push(link);
       if (link.children) {
         flattened.push(...link.children);
@@ -44,14 +49,19 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         link.href !== "#" &&
         (pathname === link.href || pathname?.startsWith(link.href + "/")),
     );
-  }, [pathname]);
+  }, [
+    pathname,
+    workspace.data?.effective_use_case,
+    workspace.data?.module_groups,
+    workspace.data?.modules,
+  ]);
   const requiredPermission = matchedRoute?.permission;
   const workspaceHasPermission = useMemo(() => {
     if (!requiredPermission) return true;
     const required = Array.isArray(requiredPermission)
       ? requiredPermission
       : [requiredPermission];
-    const grants = workspace.data?.effective_permissions ?? [];
+    const grants = workspacePermissions(workspace.data);
     return required.some((permission) =>
       grants.some((grant) => {
         if (grant === "*") return true;
@@ -61,7 +71,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         return grant === permission;
       }),
     );
-  }, [requiredPermission, workspace.data?.effective_permissions]);
+  }, [requiredPermission, workspace.data]);
 
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
   const requiresManagementContext =

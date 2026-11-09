@@ -61,6 +61,13 @@ export interface WorkspaceContext {
       email: string | null;
       role: string;
     }>;
+    roles: Array<{
+      id: string;
+      name: string;
+      code: string;
+      permissions: string[];
+    }>;
+    effective_permissions: string[];
   };
   roles?: Array<{
     id: string;
@@ -69,6 +76,16 @@ export interface WorkspaceContext {
     permissions: string[];
   }>;
   effective_permissions?: string[];
+}
+
+export function workspacePermissions(
+  context: WorkspaceContext | undefined,
+): string[] {
+  return (
+    context?.management?.effective_permissions ??
+    context?.effective_permissions ??
+    []
+  );
 }
 
 export const contextApi = {
