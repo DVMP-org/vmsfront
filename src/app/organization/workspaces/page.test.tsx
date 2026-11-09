@@ -40,7 +40,10 @@ vi.mock("@/store/app-store", () => ({
 }));
 vi.mock("@/hooks/use-admin", () => ({
   useAdminProfile: () => ({
-    data: { role: { name: "Super Admin" } },
+    data: {
+      role: { name: "Super Admin" },
+      effective_permissions: ["places.list", "place_relationships.create"],
+    },
     isPending: false,
     isError: false,
   }),
