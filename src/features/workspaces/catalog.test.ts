@@ -42,13 +42,17 @@ describe("workspace catalog", () => {
     const admin = {
       role: { name: "Super Admin", permissions_parsed: ["*"] },
     } as Admin;
-    const cards = buildWorkspaceCards(admin, [
-      relationship("admin", "organization"),
-      relationship("resident", "home"),
-      relationship("tenant", "office"),
-      relationship("employee", "hotel"),
-      relationship("guest_of", "hotel"),
-    ], relationship("admin", "organization").place);
+    const cards = buildWorkspaceCards(
+      admin,
+      [
+        relationship("admin", "organization"),
+        relationship("resident", "home"),
+        relationship("tenant", "office"),
+        relationship("employee", "hotel"),
+        relationship("guest_of", "hotel"),
+      ],
+      relationship("admin", "organization").place,
+    );
 
     expect(cards.map((card) => card.area)).toEqual([
       "management",
@@ -65,7 +69,7 @@ describe("workspace catalog", () => {
     );
   });
 
-  it("does not create a management dashboard before a place admin exists", () => {
+  it("does not create a management dashboard before a site admin exists", () => {
     const admin = {
       role: { name: "Super Admin", permissions_parsed: ["*"] },
     } as Admin;
@@ -73,25 +77,17 @@ describe("workspace catalog", () => {
     expect(buildWorkspaceCards(admin, [])).toEqual([]);
   });
 
-  it("does not infer management from an admin profile with no grants", () => {
-    const profile = {
-      role: null,
-      roles: [],
-      effective_permissions: ["profile.show"],
-    } as unknown as Admin;
-
-    const [workspace] = buildPropertyWorkspaces({
-      admin: profile,
+  it("does not infer Site management from organization administration", () => {
+    const workspaces = buildPropertyWorkspaces({
       relationships: [relationship("resident", "home")],
-      managedPlaces: [relationship("admin", "organization").place],
     });
 
-    expect(workspace.accesses.map((access) => access.area)).toEqual([
+    expect(workspaces[0].accesses.map((access) => access.area)).toEqual([
       "occupancy",
     ]);
   });
 
-  it("requires a selected place and place-admin authority for the dashboard", () => {
+  it("requires a selected site and site-admin authority for the dashboard", () => {
     expect(canOpenManagementDashboard(null, true)).toBe(false);
     expect(canOpenManagementDashboard("place", false)).toBe(false);
     expect(canOpenManagementDashboard("place", true)).toBe(true);
@@ -109,11 +105,7 @@ describe("workspace catalog", () => {
   });
 
   it("only attaches management to the place that grants administration", () => {
-    const admin = {
-      role: { name: "Super Admin", permissions_parsed: ["*"] },
-    } as Admin;
     const workspaces = buildPropertyWorkspaces({
-      admin,
       relationships: [
         relationship("resident", "home"),
         relationship("guest_of", "hotel"),
@@ -153,23 +145,19 @@ describe("workspace catalog", () => {
     ).toEqual(["guest"]);
   });
 
-  it("keeps independent management and tenancy access on one property", () => {
-    const admin = {
-      role: { name: "Estate Manager", permissions_parsed: [] },
-    } as Admin;
+  it("keeps site management separate from place tenancy access", () => {
     const tenancy = {
       ...relationship("tenant", "office"),
       id: "tenancy",
     };
-    const [workspace] = buildPropertyWorkspaces({
-      admin,
+    const workspaces = buildPropertyWorkspaces({
       relationships: [tenancy],
       managedSites: [
         {
           assignment_id: "site-admin",
           role: "site_admin",
           site: {
-            id: "office",
+            id: "office-site",
             name: "Harbour Offices",
             slug: "harbour-offices",
             parent_site_id: null,
@@ -181,12 +169,17 @@ describe("workspace catalog", () => {
       ],
     });
 
-    expect(workspace.accesses.map((access) => access.area)).toEqual([
-      "management",
+    const occupancy = workspaces.find((item) => item.place.id === "office");
+    expect(occupancy?.accesses.map((access) => access.area)).toEqual([
       "occupancy",
     ]);
-    expect(workspace.accesses[0].roleLabel).toBe("Estate Manager");
-    expect(workspace.accesses[1].roleLabel).toBe("Tenant");
+    const management = workspaces.find(
+      (item) => item.place.id === "office-site",
+    );
+    expect(management?.accesses.map((access) => access.area)).toEqual([
+      "management",
+    ]);
+    expect(management?.accesses[0].roleLabel).toBe("Site Administrator");
   });
 
   it("qualifies non-site workspace titles with the API-provided site", () => {
@@ -195,7 +188,6 @@ describe("workspace catalog", () => {
     occupant.place.site_name = "Harbour Court";
 
     const [workspace] = buildPropertyWorkspaces({
-      admin: null,
       relationships: [occupant],
     });
 

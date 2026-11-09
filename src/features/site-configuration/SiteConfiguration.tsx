@@ -87,18 +87,17 @@ export function SiteConfiguration() {
   const orgCanManage =
     !!profile.data && hasAdminPermission(profile.data, "places.update");
   const canEditModules =
-    orgCanManage ||
-    (canManage && workspace.data?.management?.mode === "local");
-  const grants =
-    workspace.data?.effective_permissions?.length
-      ? workspace.data.effective_permissions
-      : canManage
-        ? ["*"]
-        : [];
+    orgCanManage || (canManage && workspace.data?.management?.mode === "local");
+  const grants = workspace.data?.effective_permissions?.length
+    ? workspace.data.effective_permissions
+    : canManage
+      ? ["*"]
+      : [];
   const allowed = (permission: string) =>
     grants.some((grant) => {
       if (grant === "*") return true;
-      if (grant.endsWith(".*")) return permission.startsWith(grant.slice(0, -1));
+      if (grant.endsWith(".*"))
+        return permission.startsWith(grant.slice(0, -1));
       return grant === permission;
     });
   const tabs = [
@@ -114,10 +113,7 @@ export function SiteConfiguration() {
     if (id === "operations") return allowed("places.update");
     return true;
   }) as Array<
-    [
-      "general" | "gates" | "access" | "roles" | "operations",
-      string,
-    ]
+    ["general" | "gates" | "access" | "roles" | "operations", string]
   >;
 
   return (
@@ -287,7 +283,7 @@ export function SiteConfiguration() {
         <ConfigurationLinkCard
           icon={Users}
           title="Roles & permissions"
-          description="Manage the Site managers and their effective role grants. Manager authority remains scoped to this Site."
+          description="Manage site administrators and their effective role grants. Administrator authority remains scoped to this site."
           href="/admin/managers"
           action="Manage site administrators"
         />

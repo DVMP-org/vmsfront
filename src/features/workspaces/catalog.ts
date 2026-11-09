@@ -195,22 +195,16 @@ export const workspaceAreaMeta: Record<
 };
 
 export function buildPropertyWorkspaces({
-  admin,
   relationships,
-  managedPlaces = [],
   managedSites = [],
   managementRole: managementRoleOverride,
 }: {
-  admin: Admin | null | undefined;
   relationships: WorkspaceRelationship[];
-  managedPlaces?: PropertyWorkspacePlace[];
   managedSites?: ManagedSiteWorkspace[];
   managementRole?: string | null;
 }): PropertyWorkspace[] {
   const byPlace = new Map<string, PropertyWorkspace>();
-  const managedPlaceById = new Map(
-    managedPlaces.map((place) => [place.id, place]),
-  );
+  const managedPlaceById = new Map<string, PropertyWorkspacePlace>();
   const hierarchyFor = (place: PropertyWorkspacePlace) => {
     const path: PropertyWorkspacePlace[] = [];
     const seen = new Set<string>();
@@ -239,8 +233,7 @@ export function buildPropertyWorkspaces({
     byPlace.set(place.id, workspace);
     return workspace;
   };
-  const managementRole =
-    managementRoleOverride?.trim() || admin?.role?.name || "Administrator";
+  const managementRole = managementRoleOverride?.trim() || "Site administrator";
   const managementAccess = (label: string): PropertyAccess => ({
     area: "management",
     title: "Management console",
@@ -292,10 +285,7 @@ export function buildPropertyWorkspaces({
       site_name: null,
       parent_id: managed.site.parent_site_id,
     };
-    addAccess(
-      ensure(sitePlace),
-      managementAccess(managementRole),
-    );
+    addAccess(ensure(sitePlace), managementAccess(managementRole));
   }
 
   const areaOrder: WorkspaceArea[] = [

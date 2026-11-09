@@ -21,7 +21,6 @@ import {
   type PropertyWorkspace,
   type WorkspaceArea,
 } from "@/features/workspaces/catalog";
-import { useAdminProfile } from "@/hooks/use-admin";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { parseApiError } from "@/lib/error-utils";
@@ -52,7 +51,6 @@ export function WorkspaceDirectoryPage() {
   const organization = useAppStore((state) => state.organization);
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
   const context = useVerifyToken();
-  const admin = useAdminProfile();
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     null,
   );
@@ -68,13 +66,10 @@ export function WorkspaceDirectoryPage() {
     }
   }, []);
 
-  const adminProfile = admin.isError ? null : admin.data;
-  const loading = context.isPending || admin.isPending;
+  const loading = context.isPending;
   const workspaces = buildPropertyWorkspaces({
-    admin: adminProfile,
     relationships: context.data?.workspaces || [],
     managedSites: context.data?.site_workspaces || [],
-    managementRole: adminProfile?.role?.name,
   });
   const selectedWorkspace =
     workspaces.find((workspace) => workspace.key === selectedPropertyId) ||
@@ -131,9 +126,7 @@ export function WorkspaceDirectoryPage() {
           <span>
             Role:{" "}
             <span className="font-medium text-[var(--vms-ink)]">
-              {managementRole ||
-                adminProfile?.role?.name ||
-                "Organization member"}
+              {managementRole || "Organization member"}
             </span>
           </span>
           <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
