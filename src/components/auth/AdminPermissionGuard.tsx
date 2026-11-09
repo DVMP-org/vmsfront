@@ -63,16 +63,23 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     );
   }, [requiredPermission, workspace.data?.effective_permissions]);
 
-  const hasAccess = useMemo(() => {
-    if (!requiredPermission) return true;
-    if (workspaceHasPermission) return true;
-    if (!activeRole) return false;
-    return hasAdminPermission(activeRole, requiredPermission);
-  }, [activeRole, requiredPermission, workspaceHasPermission]);
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
   const requiresManagementContext =
     normalizedPathname.startsWith("/admin") &&
     normalizedPathname !== "/admin/profile";
+
+  const hasAccess = useMemo(() => {
+    if (!requiredPermission) return true;
+    if (workspaceHasPermission) return true;
+    if (requiresManagementContext) return false;
+    if (!activeRole) return false;
+    return hasAdminPermission(activeRole, requiredPermission);
+  }, [
+    activeRole,
+    requiredPermission,
+    requiresManagementContext,
+    workspaceHasPermission,
+  ]);
   const managementAccess =
     workspace.data?.management?.is_administrator === true;
 

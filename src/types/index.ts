@@ -431,6 +431,7 @@ export interface CurrentUserContext {
   party: WorkspaceParty | null;
   admin: AdminSummary | null;
   workspaces: WorkspaceRelationship[];
+  managed_sites: WorkspacePlace[];
 }
 
 export interface DashboardSelect {
