@@ -4,47 +4,37 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
-import { Copy } from "lucide-react";
-import { toast } from "sonner";
-import { adminService } from "@/services/admin-service";
-import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import {
-  DataTable,
-  type BulkAction,
-  type Column,
-} from "@/components/ui/DataTable";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
-import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   AccessCommand,
   AccessLane,
   AccessSimulationResponse,
   accessControlService,
 } from "@/services/access-control-service";
-import { checkpointsApi, Gate, Passage, PassageInput } from "./api";
+import { checkpointsApi, Passage, PassageInput } from "./api";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import "./styles.css";
 function useAccess() {
   const org = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
   const context = `${org?.id}:${user?.id}`;
-  const profile = useQuery({
-    queryKey: ["checkpoint-profile", context],
-    queryFn: async () => (await adminService.getAdminProfile()).data,
-    enabled: !!org?.id && !!user?.id,
-    staleTime: 0,
-    refetchOnMount: "always",
-  });
+  const workspace = useWorkspaceContext();
   return {
     context,
-    profile,
-    allowed: (p: string) =>
-      profile.isFetchedAfterMount &&
-      !profile.isError &&
-      hasAdminPermission(profile.data, p),
+    workspace,
+    allowed: (permission: string) => {
+      const permissions = workspace.data?.effective_permissions ?? [];
+      return permissions.some((grant) => {
+        if (grant === "*") return true;
+        if (grant.endsWith(".*")) {
+          return permission.startsWith(grant.slice(0, -1));
+        }
+        return grant === permission;
+      });
+    },
   };
 }
 function Failure({ error, retry }: { error: unknown; retry: () => void }) {
@@ -73,7 +63,7 @@ function Outcome({ event }: { event: Passage }) {
             Recorded decision
           </p>
           <h2 className="mt-1 text-xl font-semibold">
-            {allowed ? "Allowed" : "Denied"} ·{" "}
+            {event.person_name || "Credential holder"} ·{" "}
             {event.direction === "entry" ? "Check-in" : "Checkout"}
           </h2>
         </div>
@@ -84,6 +74,27 @@ function Outcome({ event }: { event: Passage }) {
       <p className="mt-3 text-sm capitalize text-[var(--vms-ink-muted)]">
         {event.reason_code.replaceAll("_", " ")}
       </p>
+      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+        <div>
+          <dt className="text-xs text-[var(--vms-ink-muted)]">Destination</dt>
+          <dd className="mt-1 font-semibold">
+            {event.place_name || "Current property"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-[var(--vms-ink-muted)]">Access state</dt>
+          <dd className="mt-1 font-semibold">
+            {(event.state_before || "unknown").replaceAll("_", " ")} to{" "}
+            {(event.state_after || "unknown").replaceAll("_", " ")}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-[var(--vms-ink-muted)]">Checkpoint</dt>
+          <dd className="mt-1 font-semibold">
+            {event.gate_name || "Current checkpoint"}
+          </dd>
+        </div>
+      </dl>
       <time
         className="mt-1 block text-xs text-[var(--vms-ink-muted)]"
         dateTime={event.occurred_at}
@@ -102,9 +113,9 @@ function Outcome({ event }: { event: Passage }) {
       </p>
       <Link
         className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
-        href={`/admin/checkpoints/${event.gate_id}/events/${event.id}`}
+        href={`/admin/passages/${event.id}`}
       >
-        Open passage record
+        Open access event
       </Link>
     </section>
   );
@@ -219,66 +230,44 @@ function HardwareState({
   );
 }
 export function CheckpointDirectory() {
-  const { context, profile, allowed } = useAccess();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const list = useQuery({
-    queryKey: ["checkpoint-gates", context, page, search],
-    queryFn: () => checkpointsApi.gates(page, search),
-    enabled: allowed("gates.list"),
+  const access = useAccess();
+  const assignments = useQuery({
+    queryKey: ["my-checkpoint-assignments", access.context],
+    queryFn: checkpointsApi.myAssignments,
+    enabled:
+      !access.workspace.isPending &&
+      !access.workspace.isError &&
+      access.workspace.data?.management?.is_administrator === true,
+    retry: false,
   });
-  if (profile.isError)
-    return <Failure error={profile.error} retry={() => profile.refetch()} />;
-  if (!profile.isFetchedAfterMount)
-    return <p role="status">Loading permissions…</p>;
-  if (!allowed("gates.list"))
-    return <p role="alert">You do not have permission to select a gate.</p>;
-  const columns: Column<Gate>[] = [
-    {
-      key: "name",
-      header: "Checkpoint",
-      sortable: true,
-      accessor: (gate) => (
-        <div className="min-w-0">
-          <Link
-            href={`/admin/checkpoints/${gate.id}`}
-            className="block truncate font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
-          >
-            {gate.name}
-          </Link>
-          <span className="text-xs text-[var(--vms-ink-muted)]">
-            Physical access checkpoint
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "actions",
-      header: "",
-      mobileHide: true,
-      accessor: (gate) => (
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/admin/checkpoints/${gate.id}`}>Open checkpoint</Link>
-        </Button>
-      ),
-    },
-  ];
-  const bulkActions: BulkAction[] = [
-    {
-      label: "Copy checkpoint IDs",
-      icon: Copy,
-      onClick: async (ids) => {
-        try {
-          await navigator.clipboard.writeText(ids.join("\n"));
-          toast.success(
-            `${ids.length} checkpoint ID${ids.length === 1 ? "" : "s"} copied.`,
-          );
-        } catch {
-          toast.error("Checkpoint IDs could not be copied.");
-        }
-      },
-    },
-  ];
+  if (access.workspace.isError)
+    return (
+      <Failure
+        error={access.workspace.error}
+        retry={() => access.workspace.refetch()}
+      />
+    );
+  if (access.workspace.isPending)
+    return <p role="status">Loading checkpoint authority…</p>;
+  if (!access.workspace.data?.management?.is_administrator)
+    return <p role="alert">An active site administrator is required.</p>;
+  if (assignments.isPending)
+    return <p role="status">Loading assigned checkpoint…</p>;
+  if (assignments.isError)
+    return (
+      <Failure error={assignments.error} retry={() => assignments.refetch()} />
+    );
+  const assigned = assignments.data?.assignments ?? [];
+  if (assigned.length === 1) {
+    return (
+      <Console
+        key={`${access.context}:${assigned[0].gate_id}`}
+        gateId={assigned[0].gate_id}
+        access={access}
+        showBack={false}
+      />
+    );
+  }
   return (
     <main className="checkpoint-page">
       <header className="border-b border-[var(--vms-line)] pb-5">
@@ -286,62 +275,48 @@ export function CheckpointDirectory() {
           Access operations
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-          Check-in / checkout
+          Access Console
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-          Choose the checkpoint you are operating. Access decisions are shared
-          across every use case.
+          Your operator account has multiple active checkpoint assignments.
+          Choose the physical checkpoint you are stationed at.
         </p>
       </header>
-      <DataTable
-        data={list.data?.items ?? []}
-        columns={columns}
-        tableLabel="Checkpoint directory"
-        searchPlaceholder="Search gate or checkpoint name"
-        initialSearch={search}
-        onSearchChange={(value) => {
-          setSearch(value.trim().slice(0, 100));
-          setPage(1);
-        }}
-        serverSide
-        total={list.data?.total ?? 0}
-        currentPage={page}
-        onPageChange={setPage}
-        pageSize={20}
-        pageSizeOptions={[20]}
-        isLoading={list.isPending}
-        errorMessage={
-          list.isError && !list.data
-            ? parseApiError(list.error).message
-            : undefined
-        }
-        isStale={list.isError && !!list.data}
-        onRetry={() => list.refetch()}
-        emptyMessage={
-          search
-            ? "No gates match this search"
-            : "No checkpoint gates configured"
-        }
-        selectable
-        getRowId={(gate) => gate.id}
-        bulkActions={bulkActions}
-        mobileSummary={(gate) => (
-          <Link
-            href={`/admin/checkpoints/${gate.id}`}
-            className="flex min-h-11 items-center justify-between gap-4"
-          >
-            <span>
-              <strong className="block text-sm">{gate.name}</strong>
-              <span className="text-xs text-[var(--vms-ink-muted)]">
-                Physical access checkpoint
+      {assigned.length ? (
+        <section className="grid gap-3 sm:grid-cols-2">
+          {assigned.map((assignment) => (
+            <Link
+              key={assignment.id}
+              href={`/admin/checkpoints/${assignment.gate_id}`}
+              className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 transition-colors hover:bg-[var(--vms-surface-subtle)]"
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+                {assignment.place.name}
               </span>
-            </span>
-            <span className="text-sm font-semibold text-[var(--vms-action)]">
-              Open
-            </span>
-          </Link>
-        )}
-      />
+              <strong className="mt-2 block text-lg">
+                {assignment.gate_name}
+              </strong>
+              <span className="mt-1 block text-sm text-[var(--vms-ink-muted)]">
+                Assigned to {assignment.party.display_name}
+              </span>
+            </Link>
+          ))}
+        </section>
+      ) : (
+        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-5 text-sm text-[var(--vms-warning)]">
+          <p className="font-semibold">No checkpoint is assigned to you.</p>
+          <p className="mt-1">
+            A site administrator must assign an active checkpoint operator
+            before check-in or checkout can begin.
+          </p>
+        </section>
+      )}
+      <Link
+        href="/admin/passages"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+      >
+        Open passage history
+      </Link>
     </main>
   );
 }
@@ -352,6 +327,7 @@ export function CheckpointConsole({ gateId }: { gateId: string }) {
       key={`${access.context}:${gateId}`}
       gateId={gateId}
       access={access}
+      showBack
     />
   );
 }
@@ -395,7 +371,8 @@ function loadQueuedPassages(key: string): QueuedPassage[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (item): item is QueuedPassage =>
-        !!item?.input?.authorization_code && !!item?.input?.idempotency_key,
+        !!(item?.input?.credential || item?.input?.authorization_code) &&
+        !!item?.input?.idempotency_key,
     );
   } catch {
     return [];
@@ -405,16 +382,17 @@ function loadQueuedPassages(key: string): QueuedPassage[] {
 function Console({
   gateId,
   access,
+  showBack,
 }: {
   gateId: string;
   access: ReturnType<typeof useAccess>;
+  showBack: boolean;
 }) {
-  const { context, profile, allowed } = access;
+  const { context, workspace, allowed } = access;
   const client = useQueryClient();
   const [code, setCode] = useState("");
   const [suffix, setSuffix] = useState("");
-  const [direction, setDirection] = useState<"entry" | "exit">("entry");
-  const [page, setPage] = useState(1);
+  const [direction, setDirection] = useState<"" | "entry" | "exit">("");
   const [intent, setIntent] = useState<PassageInput | null>(null);
   const [result, setResult] = useState<Passage | null>(null);
   const [simulation, setSimulation] = useState<AccessSimulationResponse | null>(
@@ -427,29 +405,18 @@ function Console({
     loadQueuedPassages(storageKey),
   );
   const [queueNotice, setQueueNotice] = useState("");
+  const [manualOverride, setManualOverride] = useState(false);
+  const [overrideReason, setOverrideReason] = useState("");
   const gate = useQuery({
-    queryKey: ["checkpoint-gate", context, gateId],
-    queryFn: () => checkpointsApi.gate(gateId),
-    enabled: allowed("gates.show"),
-  });
-  const history = useQuery({
-    queryKey: ["checkpoint-history", context, gateId, page],
-    queryFn: () => checkpointsApi.history(gateId, page),
-    enabled: allowed("checkpoint_events.list"),
-  });
-  const topology = useQuery({
-    queryKey: ["checkpoint-access-topology", context, gateId],
-    queryFn: accessControlService.getTopology,
-    enabled: allowed("gates.show"),
+    queryKey: ["checkpoint-console", context, gateId],
+    queryFn: () => checkpointsApi.console(gateId),
+    enabled:
+      allowed("checkpoint_events.record") &&
+      workspace.data?.management?.is_administrator === true,
   });
   const lanes = useMemo<AccessLane[]>(
-    () =>
-      (topology.data?.places || []).flatMap((site) =>
-        site.gates
-          .filter((candidate) => candidate.id === gateId)
-          .flatMap((candidate) => candidate.lanes),
-      ),
-    [gateId, topology.data],
+    () => gate.data?.lanes ?? [],
+    [gate.data?.lanes],
   );
   const selectedLane =
     lanes.find((lane) => lane.id === selectedLaneId) || lanes[0];
@@ -479,14 +446,10 @@ function Console({
       );
       setQueueNotice("");
       setIntent(null);
+      client.invalidateQueries({ queryKey: ["access-events"] });
       client.invalidateQueries({
-        queryKey: ["checkpoint-history", context, gateId],
+        queryKey: ["checkpoint-console", context, gateId],
       });
-      if (selectedLane) {
-        client.invalidateQueries({
-          queryKey: ["checkpoint-access-topology", context, gateId],
-        });
-      }
     },
   });
   useEffect(() => {
@@ -523,23 +486,27 @@ function Console({
     setIntent(next.input);
     mutation.mutate(next.input);
   }, [canRecord, intent, mutation, online, queued]);
-  if (profile.isError)
-    return <Failure error={profile.error} retry={() => profile.refetch()} />;
-  if (!profile.isFetchedAfterMount)
+  if (workspace.isError)
+    return (
+      <Failure error={workspace.error} retry={() => workspace.refetch()} />
+    );
+  if (workspace.isPending)
     return <p role="status">Loading checkpoint permissions…</p>;
-  if (!allowed("gates.show"))
-    return <p role="alert">You do not have permission to open this gate.</p>;
+  if (!allowed("checkpoint_events.record"))
+    return <p role="alert">You do not have checkpoint recording permission.</p>;
   if (gate.isPending) return <p role="status">Loading checkpoint…</p>;
   if (gate.isError)
     return <Failure error={gate.error} retry={() => gate.refetch()} />;
   return (
     <main className="checkpoint-page">
-      <Link
-        href="/admin/checkpoints"
-        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
-      >
-        Back to all checkpoints
-      </Link>
+      {showBack ? (
+        <Link
+          href="/admin/checkpoints"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+        >
+          Back to access console
+        </Link>
+      ) : null}
       <header className="border-b border-[var(--vms-line)] pb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
           Access operations
@@ -548,9 +515,15 @@ function Console({
           {gate.data?.name}
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-          Tablet check-in and checkout. A recorded decision does not imply the
-          barrier opened.
+          Scan an invitation, badge, permanent code or signed QR credential. The
+          server resolves identity, policy and movement direction.
         </p>
+        <Link
+          href="/admin/passages"
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+        >
+          Open passage history
+        </Link>
       </header>
       <section className="checkpoint-status-strip" aria-label="Access status">
         <div className={online ? "online" : "offline"}>
@@ -558,7 +531,9 @@ function Console({
           <span>
             {online
               ? "Passages are verified immediately."
-              : "Passages are queued provisionally on this device."}
+              : gate.data?.offline_policy === "deny"
+                ? "This checkpoint denies access while offline."
+                : "Passages are queued provisionally on this device."}
           </span>
         </div>
         <div>
@@ -576,24 +551,6 @@ function Console({
           </span>
         </div>
       </section>
-      {topology.isError ? (
-        <div
-          role="alert"
-          className="checkpoint-inline-alert rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]"
-        >
-          <p className="font-semibold">Lane state could not be verified.</p>
-          <p>{parseApiError(topology.error).message}</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => topology.refetch()}
-          >
-            Retry lane status
-          </Button>
-        </div>
-      ) : null}
       {queued.length ? (
         <section
           className="checkpoint-queue rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-4 text-sm text-[var(--vms-warning)]"
@@ -632,13 +589,25 @@ function Console({
             e.preventDefault();
             if (intent || mutation.isPending) return;
             const body: PassageInput = {
-              authorization_code: code.trim(),
-              direction,
+              credential: code.trim(),
+              ...(direction ? { direction } : {}),
               ...(suffix ? { guest_suffix: suffix } : {}),
               ...(selectedLane ? { lane_id: selectedLane.id } : {}),
+              ...(manualOverride
+                ? {
+                    manual_override: true,
+                    override_reason: overrideReason.trim(),
+                  }
+                : {}),
               idempotency_key: createIdempotencyKey(),
             };
             if (!online) {
+              if (gate.data?.offline_policy === "deny") {
+                setQueueNotice(
+                  "This checkpoint requires a server connection before any access transition can be recorded.",
+                );
+                return;
+              }
               setQueued((current) => [
                 ...current,
                 { input: body, queued_at: new Date().toISOString() },
@@ -667,32 +636,33 @@ function Console({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
-                id="checkpoint-authorization-code"
-                label="Authorization code"
+                id="checkpoint-credential"
+                label="Credential"
+                description="Invitation ID, invitation QR, badge QR, or permanent access code."
                 required
               >
                 {(control) => (
                   <input
                     {...control}
-                    aria-label="Authorization code"
+                    aria-label="Credential"
                     value={code}
-                    maxLength={100}
+                    maxLength={2048}
                     onChange={(e) => setCode(e.target.value)}
                     autoComplete="off"
-                    autoCapitalize="characters"
+                    autoCapitalize="none"
                     className={fieldControlClassName}
                   />
                 )}
               </Field>
               <Field
                 id="checkpoint-guest-suffix"
-                label="Guest suffix (for group invitations)"
-                description="Use the numbered suffix assigned to a group guest."
+                label="Guest suffix (optional)"
+                description="Required only for a parent group invitation without its appended visitor suffix."
               >
                 {(control) => (
                   <input
                     {...control}
-                    aria-label="Guest suffix (for group invitations)"
+                    aria-label="Guest suffix"
                     value={suffix}
                     pattern="[0-9]{2,10}"
                     maxLength={10}
@@ -702,17 +672,18 @@ function Console({
                   />
                 )}
               </Field>
-              <Field id="checkpoint-direction" label="Direction" required>
+              <Field id="checkpoint-direction" label="Movement">
                 {(control) => (
                   <select
                     {...control}
-                    aria-label="Direction"
+                    aria-label="Movement"
                     value={direction}
                     onChange={(e) =>
-                      setDirection(e.target.value as "entry" | "exit")
+                      setDirection(e.target.value as "" | "entry" | "exit")
                     }
                     className={fieldControlClassName}
                   >
+                    <option value="">Automatic (server resolves)</option>
                     <option value="entry">Check in</option>
                     <option value="exit">Check out</option>
                   </select>
@@ -725,7 +696,7 @@ function Console({
                     aria-label="Door or barrier"
                     value={selectedLane?.id || ""}
                     onChange={(e) => setSelectedLaneId(e.target.value)}
-                    disabled={topology.isPending || lanes.length === 0}
+                    disabled={gate.isPending || lanes.length === 0}
                     className={fieldControlClassName}
                   >
                     {lanes.length ? (
@@ -742,17 +713,54 @@ function Console({
                 )}
               </Field>
             </div>
+            <label className="flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={manualOverride}
+                onChange={(event) => setManualOverride(event.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                <strong className="block">Authorized exception</strong>
+                <span className="text-[var(--vms-ink-muted)]">
+                  Requires checkpoint override permission and a permanent audit
+                  reason.
+                </span>
+              </span>
+            </label>
+            {manualOverride ? (
+              <Field
+                id="checkpoint-override-reason"
+                label="Override reason"
+                required
+              >
+                {(control) => (
+                  <textarea
+                    {...control}
+                    aria-label="Override reason"
+                    value={overrideReason}
+                    maxLength={255}
+                    onChange={(event) => setOverrideReason(event.target.value)}
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+            ) : null}
             <Button
               type="submit"
               size="lg"
-              disabled={!code.trim()}
+              disabled={
+                !code.trim() || (manualOverride && !overrideReason.trim())
+              }
               isLoading={mutation.isPending}
             >
               {mutation.isPending
                 ? "Verifying…"
                 : online
                   ? "Record and verify passage"
-                  : "Queue offline check"}
+                  : gate.data?.offline_policy === "deny"
+                    ? "Connection required by checkpoint policy"
+                    : "Queue provisional offline check"}
             </Button>
           </fieldset>
         </form>
@@ -806,22 +814,9 @@ function Console({
           <HardwareState
             lane={selectedLane}
             simulation={simulation}
-            loading={topology.isFetching}
+            loading={gate.isFetching}
             onRefresh={() => {
-              topology.refetch();
-              if (selectedLane) {
-                accessControlService
-                  .listCommands({ laneId: selectedLane.id })
-                  .then((commands) => {
-                    const command = commands.find(
-                      (item) => item.decision_id === simulation?.decision.id,
-                    );
-                    if (command && simulation) {
-                      setSimulation({ ...simulation, command });
-                    }
-                  })
-                  .catch(() => undefined);
-              }
+              gate.refetch();
             }}
           />
           <Button
@@ -839,75 +834,6 @@ function Console({
           </Button>
         </>
       )}
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-        <div className="border-b border-[var(--vms-line)] px-4 py-4">
-          <h2 className="text-lg font-semibold">Passage history</h2>
-          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-            Exact checkpoint records, including denied outcomes and repeated
-            scans.
-          </p>
-        </div>
-        {!allowed("checkpoint_events.list") ? (
-          <p className="p-4 text-sm text-[var(--vms-ink-muted)]">
-            You do not have permission to view history.
-          </p>
-        ) : history.isPending ? (
-          <p className="p-4 text-sm text-[var(--vms-ink-muted)]" role="status">
-            Loading history…
-          </p>
-        ) : history.isError ? (
-          <div className="p-4">
-            <Failure error={history.error} retry={() => history.refetch()} />
-          </div>
-        ) : (
-          <>
-            <ul className="checkpoint-history divide-y divide-[var(--vms-line)]">
-              {history.data?.items.map((event) => (
-                <li key={event.id}>
-                  <Link
-                    href={`/admin/checkpoints/${gateId}/events/${event.id}`}
-                    className="grid min-h-16 gap-2 px-4 py-3 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
-                  >
-                    <time
-                      dateTime={event.occurred_at}
-                      className="text-sm text-[var(--vms-ink-muted)]"
-                    >
-                      {new Date(event.occurred_at).toLocaleString()}
-                    </time>
-                    <strong>
-                      {event.direction === "entry" ? "Check-in" : "Checkout"} ·{" "}
-                      {event.outcome}
-                    </strong>
-                    <Badge
-                      variant={
-                        event.outcome === "allowed" ? "success" : "danger"
-                      }
-                    >
-                      {event.reason_code.replaceAll("_", " ")}
-                    </Badge>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {!history.data?.items.length && (
-              <EmptyState
-                title="No passages yet"
-                description="No passages have been recorded at this checkpoint."
-              />
-            )}
-            <PaginationBar
-              page={page}
-              totalPages={history.data?.total_pages || 0}
-              hasPrevious={page > 1}
-              hasNext={page < (history.data?.total_pages || 0)}
-              isFetching={history.isFetching}
-              resourceLabel="passages"
-              onChange={setPage}
-              className="rounded-none border-0 border-t"
-            />
-          </>
-        )}
-      </section>
     </main>
   );
 }
@@ -918,16 +844,17 @@ export function CheckpointRecord({
   gateId: string;
   eventId: string;
 }) {
-  const { context, profile, allowed } = useAccess();
+  const { context, workspace, allowed } = useAccess();
   const record = useQuery({
     queryKey: ["checkpoint-event", context, eventId],
     queryFn: () => checkpointsApi.event(eventId),
     enabled: allowed("checkpoint_events.show"),
   });
-  if (profile.isError)
-    return <Failure error={profile.error} retry={() => profile.refetch()} />;
-  if (!profile.isFetchedAfterMount)
-    return <p role="status">Loading permissions…</p>;
+  if (workspace.isError)
+    return (
+      <Failure error={workspace.error} retry={() => workspace.refetch()} />
+    );
+  if (workspace.isPending) return <p role="status">Loading permissions…</p>;
   if (!allowed("checkpoint_events.show"))
     return <p role="alert">You do not have permission to view this passage.</p>;
   return (

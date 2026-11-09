@@ -299,6 +299,23 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     );
 
     if (actualType === "admin") {
+      const workspaceGrants =
+        workspaceContext.data?.effective_permissions ?? [];
+      const workspaceAllows = (permission?: string | string[]) => {
+        if (!permission) return true;
+        const permissions = Array.isArray(permission)
+          ? permission
+          : [permission];
+        return permissions.some((required) =>
+          workspaceGrants.some((grant) => {
+            if (grant === "*") return true;
+            if (grant.endsWith(".*")) {
+              return required.startsWith(grant.slice(0, -1));
+            }
+            return grant === required;
+          }),
+        );
+      };
       baseLinks = baseLinks.filter(
         (link: any) => link.href !== "/admin" || managementDashboardAvailable,
       );
@@ -309,7 +326,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       }
 
       // If we are mounted but have no activeRole (unauthorized or logged out), restrict strictly.
-      if (!activeRole) {
+      if (!activeRole && !workspaceContext.data?.management?.is_administrator) {
         return baseLinks.filter((link: any) => !link.permission);
       }
 
@@ -318,15 +335,24 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           if (
             link.managementOnly &&
             !workspaceContext.data?.management?.is_administrator &&
-            !hasAdminPermission(activeRole, [
+            !workspaceAllows([
               "parties.create",
               "place_relationships.create",
-            ])
+            ]) &&
+            !(
+              activeRole &&
+              hasAdminPermission(activeRole, [
+                "parties.create",
+                "place_relationships.create",
+              ])
+            )
           )
             return false;
           if (!link.permission) return true;
-          if (!activeRole) return false;
-          return hasAdminPermission(activeRole, link.permission);
+          return (
+            workspaceAllows(link.permission) ||
+            (!!activeRole && hasAdminPermission(activeRole, link.permission))
+          );
         })
         .map((link: any) => {
           const l = link as any;
@@ -335,7 +361,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             ...link,
             children: l.children.filter((child: any) => {
               if (!child.permission) return true;
-              return hasAdminPermission(activeRole, child.permission);
+              return (
+                workspaceAllows(child.permission) ||
+                (!!activeRole &&
+                  hasAdminPermission(activeRole, child.permission))
+              );
             }),
           };
         })

@@ -747,6 +747,12 @@ function InvitationDetail({
     enabled: invitation.isSuccess,
     retry: false,
   });
+  const guestCredentials = useQuery({
+    queryKey: ["workspace", "visit-credentials", invitationId],
+    queryFn: () => accessJourneyApi.credentials(invitationId),
+    enabled: invitation.isSuccess && invitation.data?.status === "approved",
+    retry: false,
+  });
   const data = invitation.data;
   const status = data ? statusMeta[data.status] : null;
 
@@ -927,7 +933,7 @@ function InvitationDetail({
                   {data.code}
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-500 ">
-                  Present this code at arrival
+                  Human-readable invitation reference
                 </p>
               </div>
             </div>
@@ -953,6 +959,20 @@ function InvitationDetail({
                     <span className="rounded bg-zinc-100 px-2 py-1 font-mono text-[10px] text-zinc-600  ">
                       {guest.suffix}
                     </span>
+                    {guestCredentials.data?.find(
+                      (credential) => credential.guest_id === guest.id,
+                    ) ? (
+                      <QRCodeSVG
+                        value={
+                          guestCredentials.data.find(
+                            (credential) => credential.guest_id === guest.id,
+                          )?.credential || data.code
+                        }
+                        size={56}
+                        level="M"
+                        aria-label={`Secure access QR for ${guest.display_name_snapshot}`}
+                      />
+                    ) : null}
                   </div>
                 ))}
               </div>

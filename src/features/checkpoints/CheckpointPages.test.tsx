@@ -15,8 +15,11 @@ import {
 } from "./CheckpointPages";
 const m = vi.hoisted(() => ({
   profile: vi.fn(),
+  permissions: ["*"] as string[],
   gates: vi.fn(),
+  myAssignments: vi.fn(),
   gate: vi.fn(),
+  console: vi.fn(),
   history: vi.fn(),
   record: vi.fn(),
   event: vi.fn(),
@@ -32,6 +35,18 @@ vi.mock("@/store/auth-store", () => ({
 }));
 vi.mock("@/services/admin-service", () => ({
   adminService: { getAdminProfile: m.profile },
+}));
+vi.mock("@/features/context/use-workspace-context", () => ({
+  useWorkspaceContext: () => ({
+    data: {
+      effective_permissions: m.permissions,
+      management: { is_administrator: true, mode: "local" },
+    },
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
 }));
 vi.mock("@/services/access-control-service", () => ({
   accessControlService: {
@@ -63,16 +78,60 @@ const event = {
   direction: "entry",
   outcome: "allowed",
   reason_code: "entry_recorded",
+  person_name: "Guest",
+  subject_type: "visitor",
+  state_before: "not_checked_in",
+  state_after: "checked_in",
   occurred_at: "2026-11-07T10:00:00Z",
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  m.permissions = ["*"];
   m.profile.mockResolvedValue({ data: { role: { permissions: ["*"] } } });
   m.gates.mockResolvedValue({
     items: [{ id: "gate", name: "Main entrance" }],
     total_pages: 1,
   });
+  m.myAssignments.mockResolvedValue({
+    assignments: [
+      {
+        id: "assignment",
+        gate_id: "gate",
+        gate_name: "Main entrance",
+        place: { id: "site", name: "North Campus" },
+        party: { id: "party", display_name: "Operator" },
+      },
+    ],
+  });
   m.gate.mockResolvedValue({ id: "gate", name: "Main entrance" });
+  m.console.mockResolvedValue({
+    id: "gate",
+    name: "Main entrance",
+    place_id: "site",
+    place_name: "North Campus",
+    allowed_entry: true,
+    allowed_exit: true,
+    automatic_direction: true,
+    manual_direction_override: false,
+    policy_version: 1,
+    operator_party_id: "party",
+    operator_name: "Operator",
+    lanes: [
+      {
+        id: "lane",
+        place_id: "site",
+        gate_id: "gate",
+        name: "Entry barrier",
+        slug: "entry-barrier",
+        kind: "barrier",
+        driver_name: "simulator",
+        availability: "online",
+        observed_state: "closed",
+        created_at: "2026-11-07T10:00:00Z",
+        updated_at: "2026-11-07T10:00:00Z",
+      },
+    ],
+  });
   m.history.mockResolvedValue({ items: [], total_pages: 0 });
   m.event.mockResolvedValue(event);
   m.topology.mockResolvedValue({
@@ -138,11 +197,12 @@ it("creates idempotency keys without crypto.randomUUID on local HTTP", () => {
     vi.unstubAllGlobals();
   }
 });
-it("uses real routes for gate directory and passage drilldown", async () => {
+it("opens the assigned checkpoint directly in the access console", async () => {
   mount(<CheckpointDirectory />);
   expect(
-    (await screen.findAllByRole("link", { name: /Main entrance/ }))[0],
-  ).toHaveAttribute("href", "/admin/checkpoints/gate");
+    await screen.findByRole("heading", { name: "Main entrance" }),
+  ).toBeVisible();
+  expect(screen.getByLabelText("Credential")).toBeVisible();
 });
 it("retries the same immutable passage after unknown failure then offers next person", async () => {
   m.record
@@ -150,17 +210,17 @@ it("retries the same immutable passage after unknown failure then offers next pe
     .mockResolvedValue({ ...event, replayed: true });
   mount(<CheckpointConsole gateId="gate" />);
   await screen.findByRole("heading", { name: "Main entrance" });
-  fireEvent.change(screen.getByLabelText("Authorization code"), {
+  fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
   fireEvent.click(
     screen.getByRole("button", { name: "Record and verify passage" }),
   );
   await screen.findByRole("button", { name: "Retry same passage" });
-  expect(screen.getByLabelText("Authorization code")).toBeDisabled();
+  expect(screen.getByLabelText("Credential")).toBeDisabled();
   const first = m.record.mock.calls[0][1];
   fireEvent.click(screen.getByRole("button", { name: "Retry same passage" }));
-  await screen.findByRole("heading", { name: "Allowed · Check-in" });
+  await screen.findByRole("heading", { name: "Guest · Check-in" });
   expect(m.record.mock.calls[1][1]).toEqual(first);
   expect(first.idempotency_key).toBeTruthy();
   expect(screen.getByText(/Previously recorded/)).toBeInTheDocument();
@@ -176,9 +236,9 @@ it("retries the same immutable passage after unknown failure then offers next pe
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Next person" }));
   await waitFor(() =>
-    expect(screen.getByLabelText("Authorization code")).toHaveValue(""),
+    expect(screen.getByLabelText("Credential")).toHaveValue(""),
   );
-  expect(screen.getByLabelText("Authorization code")).toBeEnabled();
+  expect(screen.getByLabelText("Credential")).toBeEnabled();
 });
 it("distinguishes denied result and checkout direction", async () => {
   m.record.mockResolvedValue({
@@ -198,16 +258,16 @@ it("distinguishes denied result and checkout direction", async () => {
   });
   mount(<CheckpointConsole gateId="gate" />);
   await screen.findByRole("heading", { name: "Main entrance" });
-  fireEvent.change(screen.getByLabelText("Authorization code"), {
+  fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
-  fireEvent.change(screen.getByLabelText("Direction"), {
+  fireEvent.change(screen.getByLabelText("Movement"), {
     target: { value: "exit" },
   });
   fireEvent.click(
     screen.getByRole("button", { name: "Record and verify passage" }),
   );
-  await screen.findByRole("heading", { name: "Denied · Checkout" });
+  await screen.findByRole("heading", { name: "Guest · Checkout" });
   expect(screen.getByText("not present")).toBeInTheDocument();
   expect(screen.getByText("2. Device command")).toBeInTheDocument();
   expect(screen.getByText("No command")).toBeInTheDocument();
@@ -221,10 +281,12 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   m.record.mockResolvedValue(event);
   mount(<CheckpointConsole gateId="gate" />);
   await screen.findByRole("heading", { name: "Main entrance" });
-  fireEvent.change(screen.getByLabelText("Authorization code"), {
+  fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT-OFFLINE" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Queue offline check" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Queue provisional offline check" }),
+  );
 
   expect(screen.getByText("1 provisional passage queued")).toBeInTheDocument();
   expect(
@@ -241,15 +303,15 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   await act(async () => {
     window.dispatchEvent(new Event("online"));
   });
-  await screen.findByRole("heading", { name: "Allowed · Check-in" });
+  await screen.findByRole("heading", { name: "Guest · Check-in" });
   await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
   expect(screen.queryByText(/provisional passage queued/i)).toBeNull();
 });
 it("fails closed for missing permission instead of loading forever", async () => {
-  m.profile.mockResolvedValue({ data: { role: { permissions: [] } } });
+  m.permissions = [];
   mount(<CheckpointConsole gateId="gate" />);
-  await screen.findByText("You do not have permission to open this gate.");
-  expect(m.gate).not.toHaveBeenCalled();
+  await screen.findByText("You do not have checkpoint recording permission.");
+  expect(m.console).not.toHaveBeenCalled();
   expect(m.record).not.toHaveBeenCalled();
 });
 it("does not show a passage fetched under another gate route", async () => {

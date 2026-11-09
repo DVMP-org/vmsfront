@@ -46,12 +46,29 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     );
   }, [pathname]);
   const requiredPermission = matchedRoute?.permission;
+  const workspaceHasPermission = useMemo(() => {
+    if (!requiredPermission) return true;
+    const required = Array.isArray(requiredPermission)
+      ? requiredPermission
+      : [requiredPermission];
+    const grants = workspace.data?.effective_permissions ?? [];
+    return required.some((permission) =>
+      grants.some((grant) => {
+        if (grant === "*") return true;
+        if (grant.endsWith(".*")) {
+          return permission.startsWith(grant.slice(0, -1));
+        }
+        return grant === permission;
+      }),
+    );
+  }, [requiredPermission, workspace.data?.effective_permissions]);
 
   const hasAccess = useMemo(() => {
     if (!requiredPermission) return true;
+    if (workspaceHasPermission) return true;
     if (!activeRole) return false;
     return hasAdminPermission(activeRole, requiredPermission);
-  }, [activeRole, requiredPermission]);
+  }, [activeRole, requiredPermission, workspaceHasPermission]);
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
   const requiresManagementContext =
     normalizedPathname.startsWith("/admin") &&
