@@ -236,7 +236,6 @@ export function buildPropertyWorkspaces({
     const role = relationship.role.toLowerCase();
     const workspace = ensure(relationship.place);
     if (ADMIN_RELATIONSHIP_ROLES.has(role)) {
-      addAccess(workspace, managementAccess(managementRole));
       continue;
     }
     const area = areaForRelationship(relationship);
