@@ -1,4 +1,5 @@
 node_modules
+.worktrees
 .next
 out
 build
@@ -10,3 +11,6 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+playwright/evidence
+playwright/playwright-report
+playwright/test-results

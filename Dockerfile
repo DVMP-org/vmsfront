@@ -27,6 +27,10 @@ ENV NEXT_PUBLIC_ENFORCE_SUBSCRIPTIONS=$NEXT_PUBLIC_ENFORCE_SUBSCRIPTIONS
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps ./apps
+COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/plugins ./plugins
+COPY --from=deps /app/playwright ./playwright
 
 COPY . .
 
