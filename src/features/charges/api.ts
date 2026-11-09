@@ -11,6 +11,7 @@ export interface Definition {
   recurrence: string;
   start_date?: string | null;
   is_active: boolean;
+  created_by_site_admin_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,9 +20,11 @@ export interface Assignment {
   id: string;
   charge_definition_id: string;
   charge_definition: Definition;
+  target_site_id?: string;
   target_place: { id: string; name: string };
   current_responsibility: {
     id: string;
+    created_by_site_admin_id?: string | null;
     responsible_party: {
       id?: string;
       kind?: string;
@@ -32,6 +35,7 @@ export interface Assignment {
   outstanding_amount: string;
   status?: string;
   effective_from?: string | null;
+  created_by_site_admin_id?: string | null;
 }
 
 export interface Schedule {

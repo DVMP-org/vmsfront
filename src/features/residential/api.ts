@@ -13,8 +13,6 @@ import {
 import type {
   Announcement,
   AnnouncementInput,
-  MaintenanceInput,
-  MaintenanceRequest,
 } from "./contracts";
 import { useAppStore } from "@/store/app-store";
 
@@ -26,7 +24,6 @@ type ListParams = {
   priority?: string;
 };
 
-const maintenanceBase = "/admin/residential/maintenance";
 const announcementBase = "/admin/residential/announcements";
 
 const unwrap = async <T>(request: Promise<ApiResponse<T>>) =>
@@ -113,34 +110,6 @@ export const residentialApi = {
     }
     return assignments;
   },
-  maintenance: async (params: ListParams = {}) =>
-    (
-      await apiClient.get<ApiResponse<PaginatedResponse<MaintenanceRequest>>>(
-        maintenanceBase,
-        {
-          params: { page: 1, page_size: 100, ...params },
-        },
-      )
-    ).data,
-  createMaintenance: (body: MaintenanceInput) =>
-    unwrap(
-      apiClient.post<ApiResponse<MaintenanceRequest>>(maintenanceBase, body),
-    ),
-  updateMaintenance: (
-    id: string,
-    body: Partial<
-      Pick<
-        MaintenanceRequest,
-        "status" | "priority" | "assigned_to_party_id" | "due_at"
-      >
-    >,
-  ) =>
-    unwrap(
-      apiClient.patch<ApiResponse<MaintenanceRequest>>(
-        `${maintenanceBase}/${id}`,
-        body,
-      ),
-    ),
   announcements: async (params: ListParams = {}) =>
     (
       await apiClient.get<ApiResponse<PaginatedResponse<Announcement>>>(

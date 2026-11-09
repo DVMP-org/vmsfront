@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
       management: { is_administrator: true, mode: "local" },
     },
   },
+  update: vi.fn(),
 }));
 
 vi.mock("@/store/app-store", () => ({
@@ -42,7 +43,7 @@ vi.mock("@/features/modules/SiteModulesPanel", () => ({
   ),
 }));
 vi.mock("@/features/sites/api", () => ({
-  sitesApi: { get: vi.fn() },
+  sitesApi: { get: vi.fn(), update: mocks.update },
 }));
 
 function mount() {
@@ -71,6 +72,13 @@ describe("SiteConfiguration", () => {
       description: null,
       address: "1 Harbour Road",
       is_active: true,
+      notification_settings: {
+        maintenance_updates: true,
+        resident_announcements: true,
+        emergency_alerts: true,
+        visitor_arrivals: true,
+        weekly_operations_summary: false,
+      },
       updated_at: "2026-11-09T00:00:00Z",
       created_at: "2026-11-09T00:00:00Z",
       slug: "harbour-campus",
@@ -78,6 +86,7 @@ describe("SiteConfiguration", () => {
       child_sites: [],
       places: [],
     });
+    mocks.update.mockResolvedValue({});
   });
 
   it("loads the selected site module configuration and planned access automation", async () => {
@@ -100,5 +109,28 @@ describe("SiteConfiguration", () => {
     mount();
 
     expect(screen.getByText("Select a site workspace")).toBeVisible();
+  });
+
+  it("persists Site-level notification preferences", async () => {
+    mount();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Notifications" }),
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Weekly operations summary/ }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save notification preferences" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.update).toHaveBeenCalledWith("site-1", {
+        notification_settings: expect.objectContaining({
+          maintenance_updates: true,
+          weekly_operations_summary: true,
+        }),
+      }),
+    );
   });
 });

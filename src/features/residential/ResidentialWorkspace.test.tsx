@@ -9,7 +9,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
-import ResidentialMaintenance from "./ResidentialMaintenance";
 import ResidentialOverview from "./ResidentialOverview";
 import ResidentialUnits from "./ResidentialUnits";
 
@@ -17,8 +16,6 @@ const mocks = vi.hoisted(() => ({
   tree: vi.fn(),
   relationships: vi.fn(),
   maintenance: vi.fn(),
-  createMaintenance: vi.fn(),
-  updateMaintenance: vi.fn(),
   chargeAssignments: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
@@ -97,13 +94,15 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock("@/features/maintenance/api", () => ({
+  maintenanceApi: { list: mocks.maintenance },
+}));
+
 vi.mock("./api", () => ({
   residentialApi: {
     tree: mocks.tree,
     relationships: mocks.relationships,
     maintenance: mocks.maintenance,
-    createMaintenance: mocks.createMaintenance,
-    updateMaintenance: mocks.updateMaintenance,
     chargeAssignments: mocks.chargeAssignments,
   },
   flattenPlaces: (roots: TreeNode[]) => {
@@ -209,21 +208,33 @@ const relationship = {
 
 const maintenanceRequest = {
   id: "request",
-  place_id: "unit-4b",
+  property_place_id: "site",
   place: { id: "unit-4b", name: "Apartment 4B" },
-  reported_by_party_id: "resident",
+  domain: "residential" as const,
+  request_type: "request" as const,
   reported_by: { id: "resident", display_name: "Ada Resident" },
-  assigned_to_party_id: null,
   assigned_to: null,
+  contractor: null,
+  approval_status: "not_required" as const,
   title: "Kitchen tap is leaking",
   description: "The cold-water tap under the sink is continuously dripping.",
   category: "plumbing",
   priority: "high" as const,
   status: "open" as const,
   due_at: "2026-11-10T09:00:00Z",
+  scheduled_for: null,
+  closed_at: null,
+  resolution_notes: null,
+  cost_estimate: null,
+  actual_cost: null,
+  currency: "NGN",
+  requires_access_authorization: true,
+  affects_room_availability: false,
+  expense_allocation_required: false,
   created_at: "2026-11-09T08:00:00Z",
   updated_at: "2026-11-09T08:00:00Z",
   resolved_at: null,
+  activities: [],
 };
 
 function mount(node: ReactNode) {
@@ -257,11 +268,6 @@ describe("residential operations", () => {
       total: 1,
     });
     mocks.create.mockResolvedValue(unit());
-    mocks.createMaintenance.mockResolvedValue(maintenanceRequest);
-    mocks.updateMaintenance.mockResolvedValue({
-      ...maintenanceRequest,
-      status: "in_progress",
-    });
   });
 
   it("derives the residential summary from units, relationships and requests", async () => {
@@ -327,45 +333,6 @@ describe("residential operations", () => {
     expect(
       screen.queryByRole("button", { name: "Add unit" }),
     ).not.toBeInTheDocument();
-  });
-
-  it("validates and raises a unit-linked maintenance request", async () => {
-    mount(<ResidentialMaintenance />);
-
-    expect(
-      (await screen.findAllByText("Kitchen tap is leaking")).length,
-    ).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: "Raise request" }));
-    const dialog = await screen.findByRole("dialog", {
-      name: "Raise a maintenance request",
-    });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Raise request" }),
-    );
-    expect(within(dialog).getByRole("alert")).toHaveTextContent(
-      "Enter a concise issue title",
-    );
-    expect(mocks.createMaintenance).not.toHaveBeenCalled();
-
-    fireEvent.change(within(dialog).getByLabelText(/^Issue/), {
-      target: { value: "Lobby light failure" },
-    });
-    fireEvent.change(within(dialog).getByLabelText(/^Description/), {
-      target: { value: "The shared lobby light no longer turns on." },
-    });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Raise request" }),
-    );
-    await waitFor(() =>
-      expect(mocks.createMaintenance).toHaveBeenCalledWith(
-        expect.objectContaining({
-          place_id: "unit-4b",
-          title: "Lobby light failure",
-          category: "plumbing",
-          priority: "normal",
-        }),
-      ),
-    );
   });
 
   it("shows a retryable maintenance error without inventing a zero balance", async () => {

@@ -35,14 +35,8 @@
     },
     {
       "id": "leasing",
-      "label": "Leasing & finance",
+      "label": "Finance",
       "items": [
-        {
-          "label": "Leases & occupancy",
-          "href": "/admin/residential/occupancies",
-          "icon": "scale",
-          "module": "leases"
-        },
         {
           "label": "Rent & service charges",
           "href": "/admin/residential/finance",

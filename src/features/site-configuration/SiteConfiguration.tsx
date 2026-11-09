@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   ArrowRight,
+  Bell,
   Building2,
   Cable,
   CalendarClock,
@@ -19,11 +20,15 @@ import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { sitesApi } from "@/features/sites/api";
 import { useAppStore } from "@/store/app-store";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type {
+  SiteDetail,
+  SiteNotificationSettings,
+} from "@/features/sites/api";
 
 export function SiteConfiguration() {
   const [activeTab, setActiveTab] = useState<
-    "general" | "gates" | "access" | "roles" | "operations"
+    "general" | "gates" | "access" | "roles" | "operations" | "notifications"
   >("general");
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const workspace = useWorkspaceContext();
@@ -101,14 +106,24 @@ export function SiteConfiguration() {
     ["access", "Access policies"],
     ["roles", "Roles & permissions"],
     ["operations", "Operational settings"],
+    ["notifications", "Notifications"],
   ].filter(([id]) => {
     if (id === "gates") return allowed("gates.list");
     if (id === "access") return allowed("checkpoint_events.list");
     if (id === "roles") return allowed("parties.update");
     if (id === "operations") return allowed("places.update");
+    if (id === "notifications") return allowed("places.update");
     return true;
   }) as Array<
-    ["general" | "gates" | "access" | "roles" | "operations", string]
+    [
+      | "general"
+      | "gates"
+      | "access"
+      | "roles"
+      | "operations"
+      | "notifications",
+      string,
+    ]
   >;
 
   return (
@@ -291,7 +306,126 @@ export function SiteConfiguration() {
           canEdit={canEditModules}
         />
       ) : null}
+
+      {activeTab === "notifications" ? (
+        <NotificationSettingsPanel
+          property={property.data}
+          canEdit={canEditModules}
+        />
+      ) : null}
     </main>
+  );
+}
+
+const notificationOptions: Array<{
+  key: keyof SiteNotificationSettings;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "maintenance_updates",
+    label: "Maintenance updates",
+    description: "Assignment, scheduling, resolution and closure changes.",
+  },
+  {
+    key: "resident_announcements",
+    label: "Resident announcements",
+    description: "Publication of Site notices and resident communication.",
+  },
+  {
+    key: "emergency_alerts",
+    label: "Emergency alerts",
+    description: "Incident triggers, acknowledgements and resolutions.",
+  },
+  {
+    key: "visitor_arrivals",
+    label: "Visitor arrivals",
+    description: "Invitation approvals and checkpoint arrival events.",
+  },
+  {
+    key: "weekly_operations_summary",
+    label: "Weekly operations summary",
+    description: "A weekly digest of unresolved work and operating activity.",
+  },
+];
+
+function NotificationSettingsPanel({
+  property,
+  canEdit,
+}: {
+  property: SiteDetail;
+  canEdit: boolean;
+}) {
+  const client = useQueryClient();
+  const [values, setValues] = useState<SiteNotificationSettings>(
+    property.notification_settings,
+  );
+  const save = useMutation({
+    mutationFn: () =>
+      sitesApi.update(property.id, { notification_settings: values }),
+    onSuccess: async () => {
+      await client.invalidateQueries({
+        queryKey: ["site-configuration-site", property.id],
+      });
+    },
+  });
+
+  return (
+    <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
+      <Bell className="h-6 w-6" aria-hidden="true" />
+      <h2 className="mt-4 text-lg font-semibold">Site notifications</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+        Choose which Site operations can produce communication for its
+        administrators and residents. Organization-wide integration delivery
+        remains controlled from Organization settings.
+      </p>
+      <div className="mt-5 divide-y divide-[var(--vms-line)] rounded-[var(--vms-radius-control)] border border-[var(--vms-line)]">
+        {notificationOptions.map((option) => (
+          <label
+            key={option.key}
+            className="flex cursor-pointer items-start gap-3 p-4"
+          >
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4"
+              checked={values[option.key]}
+              disabled={!canEdit || save.isPending}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  [option.key]: event.target.checked,
+                }))
+              }
+            />
+            <span>
+              <span className="block text-sm font-semibold">
+                {option.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--vms-ink-muted)]">
+                {option.description}
+              </span>
+            </span>
+          </label>
+        ))}
+      </div>
+      {save.isError ? (
+        <p role="alert" className="mt-4 text-sm text-[var(--vms-danger)]">
+          Notification preferences could not be saved. Try again.
+        </p>
+      ) : save.isSuccess ? (
+        <p role="status" className="mt-4 text-sm text-[var(--vms-success)]">
+          Notification preferences saved.
+        </p>
+      ) : null}
+      <Button
+        className="mt-5"
+        disabled={!canEdit}
+        isLoading={save.isPending}
+        onClick={() => save.mutate()}
+      >
+        Save notification preferences
+      </Button>
+    </section>
   );
 }
 
