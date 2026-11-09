@@ -39,6 +39,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { Modal } from "@/components/ui/Modal";
+import { PlaceModulesPanel } from "@/features/modules/PlaceModulesPanel";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   Property,
@@ -1303,6 +1304,13 @@ function PropertyDetails({
           </dd>
         </div>
       </dl>
+      {property.kind === "site" ? (
+        <PlaceModulesPanel
+          placeId={property.id}
+          placeName={property.name}
+          canEdit={allowed("update")}
+        />
+      ) : null}
       <section className="property-people-callout">
         <span className="property-people-callout-icon">
           <Users size={18} aria-hidden="true" />
