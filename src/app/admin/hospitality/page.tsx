@@ -383,6 +383,7 @@ function HospitalityWorkspace({
           {creating && allowed("create") ? (
             <ReservationForm
               context={context}
+              siteId={propertyId}
               onCancel={() => setCreating(false)}
               onSaved={(s) => changed(s, "Reservation created.")}
             />
@@ -419,10 +420,12 @@ function HospitalityWorkspace({
 }
 function ReservationForm({
   context,
+  siteId,
   onSaved,
   onCancel,
 }: {
   context: string;
+  siteId?: string;
   onSaved: (stay: Stay) => void;
   onCancel: () => void;
 }) {
@@ -435,8 +438,10 @@ function ReservationForm({
   const [validation, setValidation] = useState("");
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!siteId) throw new Error("Select a Site first.");
       if (!guest) throw new Error("Choose a primary guest.");
       return hospitalityApi.create({
+        site_id: siteId,
         ...interval(start, end),
         primary_guest_party_id: guest.value,
         additional_guest_party_ids: additional

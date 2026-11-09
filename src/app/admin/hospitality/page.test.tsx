@@ -35,6 +35,7 @@ vi.mock("@/features/context/api", () => ({
 vi.mock("@/components/facets/FacetPicker", () => ({ FacetPicker: () => null }));
 const stay = {
   id: "stay",
+  site_id: "site-1",
   status: "reserved",
   planned_check_in: "2027-01-02T15:00:00Z",
   planned_check_out: "2027-01-04T11:00:00Z",

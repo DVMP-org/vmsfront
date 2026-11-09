@@ -1,11 +1,8 @@
 export type StayStatus =
-  | "reserved"
-  | "checked_in"
-  | "checked_out"
-  | "cancelled"
-  | "no_show";
+  "reserved" | "checked_in" | "checked_out" | "cancelled" | "no_show";
 export interface Stay {
   id: string;
+  site_id: string;
   status: StayStatus;
   planned_check_in: string;
   planned_check_out: string;
@@ -25,16 +22,9 @@ export interface Stay {
   }[];
 }
 export type RoomOperationalStatus =
-  | "available"
-  | "reserved"
-  | "occupied"
-  | "cleaning"
-  | "out_of_service";
+  "available" | "reserved" | "occupied" | "cleaning" | "out_of_service";
 export type HousekeepingStatus =
-  | "clean"
-  | "dirty"
-  | "in_progress"
-  | "inspected";
+  "clean" | "dirty" | "in_progress" | "inspected";
 export interface HospitalityRoom {
   id: string;
   name: string;
