@@ -185,10 +185,12 @@ export function buildPropertyWorkspaces({
   admin,
   relationships,
   managedPlaces = [],
+  managementRole: managementRoleOverride,
 }: {
   admin: Admin | null | undefined;
   relationships: WorkspaceRelationship[];
   managedPlaces?: PropertyWorkspacePlace[];
+  managementRole?: string | null;
 }): PropertyWorkspace[] {
   const canManagePlaces = hasAdminPermission(admin, [
     "places.list",
@@ -226,7 +228,8 @@ export function buildPropertyWorkspaces({
     byPlace.set(place.id, workspace);
     return workspace;
   };
-  const managementRole = admin?.role?.name || "Administrator";
+  const managementRole =
+    managementRoleOverride?.trim() || admin?.role?.name || "Administrator";
   const managementAccess = (label: string): PropertyAccess => ({
     area: "management",
     title: "Management console",

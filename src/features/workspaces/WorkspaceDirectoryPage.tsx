@@ -96,6 +96,7 @@ export function WorkspaceDirectoryPage() {
     admin: canManagePlaces ? adminProfile : null,
     relationships: context.data?.workspaces || [],
     managedPlaces: managedPlaces.data?.items || [],
+    managementRole: adminProfile?.role?.name,
   });
   const selectedWorkspace =
     workspaces.find((workspace) => workspace.key === selectedPropertyId) ||
