@@ -51,6 +51,13 @@ export interface WorkspaceContext {
       role: string;
     }>;
   };
+  roles?: Array<{
+    id: string;
+    name: string;
+    code: string;
+    permissions: string[];
+  }>;
+  effective_permissions?: string[];
 }
 
 export const contextApi = {

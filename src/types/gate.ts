@@ -23,6 +23,21 @@ export interface Gate {
   gate_admins?: GateAdmin[];
   dependency?: Gate;
   dependencies?: Gate[];
+  allowed_entry?: boolean;
+  allowed_exit?: boolean;
+  automatic_direction?: boolean;
+  manual_direction_override?: boolean;
+  offline_policy?: "deny" | "queue" | "allow_verified";
+  reentry_policy?: "allowed" | "denied" | "manual";
+  allowed_credential_types?: Array<
+    "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
+  > | null;
+  access_schedule?: {
+    days?: number[];
+    start?: string;
+    end?: string;
+  } | null;
+  policy_version?: number;
 }
 
 export interface GateNode extends Gate {
@@ -33,6 +48,20 @@ export interface CreateGateRequest {
   name: string;
   place_id: string;
   dependency_id: string | null;
+  allowed_entry?: boolean;
+  allowed_exit?: boolean;
+  automatic_direction?: boolean;
+  manual_direction_override?: boolean;
+  offline_policy?: "deny" | "queue" | "allow_verified";
+  reentry_policy?: "allowed" | "denied" | "manual";
+  allowed_credential_types?: Array<
+    "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
+  >;
+  access_schedule?: {
+    days?: number[];
+    start?: string;
+    end?: string;
+  } | null;
 }
 
 export interface UpdateGateRequest {
@@ -40,4 +69,18 @@ export interface UpdateGateRequest {
   dependency_id?: string | null;
   is_default?: boolean;
   slug?: string;
+  allowed_entry?: boolean;
+  allowed_exit?: boolean;
+  automatic_direction?: boolean;
+  manual_direction_override?: boolean;
+  offline_policy?: "deny" | "queue" | "allow_verified";
+  reentry_policy?: "allowed" | "denied" | "manual";
+  allowed_credential_types?: Array<
+    "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
+  >;
+  access_schedule?: {
+    days?: number[];
+    start?: string;
+    end?: string;
+  } | null;
 }

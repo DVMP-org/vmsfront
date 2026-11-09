@@ -19,6 +19,7 @@ vi.mock("./api", async () => {
       get: vi.fn(),
       cancel: vi.fn(),
       checkpointEvents: vi.fn(),
+      credentials: vi.fn(),
     },
   };
 });
@@ -116,6 +117,15 @@ describe("AccessWorkspace", () => {
       page_size: 100,
       total_pages: 0,
     });
+    vi.mocked(accessJourneyApi.credentials).mockResolvedValue([
+      {
+        guest_id: "guest",
+        display_name: "Ada Visitor",
+        suffix: "001",
+        credential_type: "invitation_qr",
+        credential: "signed.invitation.token",
+      },
+    ]);
   });
 
   it("shows the host's invitations and active pass", async () => {
@@ -218,7 +228,7 @@ describe("AccessWorkspace", () => {
       await screen.findByRole("button", { name: /share invitation/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Present this code at arrival"),
+      screen.getByText("Human-readable invitation reference"),
     ).toBeInTheDocument();
     expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
     expect(

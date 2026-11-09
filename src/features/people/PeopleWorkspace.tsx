@@ -9,6 +9,7 @@ import {
   Building2,
   CheckCircle2,
   Download,
+  KeyRound,
   Mail,
   Plus,
   ShieldCheck,
@@ -31,6 +32,7 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
+import { AccessCredentialDialog } from "@/features/access-credentials/AccessCredentialDialog";
 import {
   AddPlacePersonInput,
   peopleApi,
@@ -484,6 +486,9 @@ function PeopleRegister({
   onRemove: (person: PlacePerson) => void;
   effectiveUseCase: PlacePeople["effective_use_case"];
 }) {
+  const [credentialPerson, setCredentialPerson] = useState<PlacePerson | null>(
+    null,
+  );
   const rowId = (row: PeopleRow) =>
     `${row.person.source}:${row.person.party.id}:${row.person.assignment_id}`;
   const columns: Column<PeopleRow>[] = [
@@ -560,15 +565,27 @@ function PeopleRegister({
       mobileHide: true,
       accessor: ({ person }) =>
         canManage ? (
-          <Button
-            type="button"
-            variant="destructive-outlined"
-            size="sm"
-            aria-label={`Review access change for ${person.party.display_name}`}
-            onClick={() => onRemove(person)}
-          >
-            Review access
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={`Manage access credentials for ${person.party.display_name}`}
+              onClick={() => setCredentialPerson(person)}
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Credentials
+            </Button>
+            <Button
+              type="button"
+              variant="destructive-outlined"
+              size="sm"
+              aria-label={`Review access change for ${person.party.display_name}`}
+              onClick={() => onRemove(person)}
+            >
+              Review access
+            </Button>
+          </div>
         ) : (
           <span className="text-xs text-[var(--vms-ink-muted)]">
             {permissionPending ? "Checking access…" : "Read-only"}
@@ -612,57 +629,73 @@ function PeopleRegister({
   ];
 
   return (
-    <DataTable
-      data={rows}
-      columns={columns}
-      tableLabel="Property people"
-      searchPlaceholder="Find a person, role or email"
-      selectable
-      getRowId={rowId}
-      bulkActions={bulkActions}
-      showPagination={rows.length > 10}
-      pageSize={10}
-      emptyMessage={`No people match. New administration and ${occupantLabel(
-        effectiveUseCase,
-      ).toLowerCase()} relationships will appear here.`}
-      mobileSummary={({ person, scopeLabel }) => (
-        <div className="flex items-start gap-3">
-          <span
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-xs font-semibold"
-            aria-hidden="true"
-          >
-            {initials(person.party.display_name)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <strong className="block truncate text-sm">
-              {person.party.display_name}
-            </strong>
-            <span className="block truncate text-xs text-[var(--vms-ink-muted)]">
-              {person.party.email || "No email"}
+    <>
+      <DataTable
+        data={rows}
+        columns={columns}
+        tableLabel="Property people"
+        searchPlaceholder="Find a person, role or email"
+        selectable
+        getRowId={rowId}
+        bulkActions={bulkActions}
+        showPagination={rows.length > 10}
+        pageSize={10}
+        emptyMessage={`No people match. New administration and ${occupantLabel(
+          effectiveUseCase,
+        ).toLowerCase()} relationships will appear here.`}
+        mobileSummary={({ person, scopeLabel }) => (
+          <div className="flex items-start gap-3">
+            <span
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-xs font-semibold"
+              aria-hidden="true"
+            >
+              {initials(person.party.display_name)}
             </span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Badge variant="neutral">{scopeLabel}</Badge>
-              <Badge
-                variant={person.status === "active" ? "success" : "neutral"}
-              >
-                {roleLabel(person.status)}
-              </Badge>
+            <div className="min-w-0 flex-1">
+              <strong className="block truncate text-sm">
+                {person.party.display_name}
+              </strong>
+              <span className="block truncate text-xs text-[var(--vms-ink-muted)]">
+                {person.party.email || "No email"}
+              </span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge variant="neutral">{scopeLabel}</Badge>
+                <Badge
+                  variant={person.status === "active" ? "success" : "neutral"}
+                >
+                  {roleLabel(person.status)}
+                </Badge>
+              </div>
+              {canManage ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCredentialPerson(person)}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    Credentials
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive-outlined"
+                    size="sm"
+                    onClick={() => onRemove(person)}
+                  >
+                    Review access
+                  </Button>
+                </div>
+              ) : null}
             </div>
-            {canManage ? (
-              <Button
-                type="button"
-                variant="destructive-outlined"
-                size="sm"
-                className="mt-3"
-                onClick={() => onRemove(person)}
-              >
-                Review access
-              </Button>
-            ) : null}
           </div>
-        </div>
-      )}
-    />
+        )}
+      />
+      <AccessCredentialDialog
+        person={credentialPerson}
+        onClose={() => setCredentialPerson(null)}
+      />
+    </>
   );
 }
 

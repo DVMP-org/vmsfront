@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PlaceModulesPanel } from "@/features/modules/PlaceModulesPanel";
+import { CheckpointPolicyPanel } from "@/features/checkpoints/CheckpointPolicyPanel";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { propertiesApi } from "@/features/properties/api";
 import { useAppStore } from "@/store/app-store";
@@ -177,6 +178,8 @@ export function SiteConfiguration() {
         placeName={property.data.name}
         canEdit={canManage}
       />
+
+      <CheckpointPolicyPanel placeId={property.data.id} canEdit={canManage} />
 
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <header className="border-b border-[var(--vms-line)] p-5">

@@ -53,4 +53,37 @@ describe("checkpoint API", () => {
       { party_id: "party-2" },
     );
   });
+
+  it("loads the direct operator context and server-filtered access history", async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ data: { id: "checkpoint" } })
+      .mockResolvedValueOnce({ data: { assignments: [] } })
+      .mockResolvedValueOnce({ data: { items: [], total: 0 } });
+
+    await checkpointsApi.active();
+    await checkpointsApi.myAssignments();
+    await checkpointsApi.accessEvents({
+      page: 2,
+      outcome: "denied",
+      direction: "entry",
+      search: "INV-123456",
+    });
+
+    expect(apiClient.get).toHaveBeenNthCalledWith(
+      1,
+      "/admin/checkpoints/active",
+    );
+    expect(apiClient.get).toHaveBeenNthCalledWith(
+      2,
+      "/admin/checkpoints/operators/mine",
+    );
+    expect(apiClient.get).toHaveBeenNthCalledWith(3, "/admin/access-events", {
+      params: {
+        page: 2,
+        outcome: "denied",
+        direction: "entry",
+        search: "INV-123456",
+      },
+    });
+  });
 });

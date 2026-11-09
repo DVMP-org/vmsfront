@@ -2,12 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export type VisitAuthorizationStatus =
-  | "requested"
-  | "approved"
-  | "declined"
-  | "expired"
-  | "cancelled"
-  | "revoked";
+  "requested" | "approved" | "declined" | "expired" | "cancelled" | "revoked";
 
 export interface VisitGuest {
   id: string;
@@ -62,6 +57,13 @@ export interface CheckpointEvent {
   scanned_by_admin_id: string | null;
   occurred_at: string;
   created_at: string;
+}
+export interface VisitGuestCredential {
+  guest_id: string;
+  display_name: string;
+  suffix: string;
+  credential_type: "invitation_qr";
+  credential: string;
 }
 
 export interface CreateVisitAuthorizationInput {
@@ -120,6 +122,12 @@ export const accessJourneyApi = {
             page_size: 100,
           },
         },
+      )
+    ).data,
+  credentials: async (authorizationId: string) =>
+    (
+      await apiClient.get<ApiResponse<VisitGuestCredential[]>>(
+        `/workspace/visit-authorizations/${authorizationId}/credentials`,
       )
     ).data,
 };
