@@ -55,7 +55,8 @@ export interface WorkspaceContext {
       parent_site_id: string | null;
     } | null;
     administrators: Array<{
-      party_id: string;
+      site_admin_id: string;
+      user_id: string;
       display_name: string;
       email: string | null;
       role: string;

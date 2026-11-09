@@ -101,7 +101,8 @@ beforeEach(() => {
       },
       administrators: [
         {
-          party_id: "admin-party",
+          site_admin_id: "site-admin",
+          user_id: "admin-user",
           display_name: "Dana Admin",
           email: "dana@example.test",
           role: "site_admin",
@@ -176,7 +177,8 @@ it("shows inherited site administration provenance", async () => {
       },
       administrators: [
         {
-          party_id: "parent-admin",
+          site_admin_id: "parent-site-admin",
+          user_id: "parent-user",
           display_name: "Morgan Manager",
           email: "morgan@example.test",
           role: "site_admin",

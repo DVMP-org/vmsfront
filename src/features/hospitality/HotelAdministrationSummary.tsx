@@ -28,7 +28,8 @@ const STAFF_ROLES = new Set([
 const GUEST_ROLES = new Set(["guest", "guest_of"]);
 
 export interface SiteAdministrator {
-  party_id: string;
+  site_admin_id: string;
+  user_id: string;
   display_name: string;
   email: string | null;
   role: string;
@@ -131,7 +132,7 @@ export function HotelAdministrationSummary({
           ) : administrators.length || relationships.length ? (
             <ul className="hotel-people-list">
               {administrators.slice(0, 4).map((administrator) => (
-                <li key={administrator.party_id}>
+                <li key={administrator.site_admin_id}>
                   <span className="hotel-person-icon">
                     <ShieldCheck className="h-4 w-4" />
                   </span>

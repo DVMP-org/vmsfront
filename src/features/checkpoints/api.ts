@@ -23,7 +23,7 @@ export interface ActiveCheckpoint {
   reentry_policy?: "allowed" | "denied" | "manual";
   allowed_credential_types?: string[];
   policy_version: number;
-  operator_party_id: string;
+  operator_site_admin_id: string;
   operator_name: string;
 }
 export interface CheckpointConsoleContext extends ActiveCheckpoint {
@@ -40,14 +40,16 @@ export interface CheckpointOperatorAssignment {
     kind: string;
     is_active: boolean;
   };
-  party: {
+  site_admin: {
     id: string;
-    kind: string;
-    display_name: string;
-    email: string | null;
-    is_active: boolean;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      is_active: boolean;
+    };
   };
-  assigned_by_party_id?: string | null;
+  assigned_by_site_admin_id?: string | null;
   assigned_at: string;
   is_active: boolean;
 }
@@ -77,7 +79,7 @@ export interface Passage {
   state_before?: string | null;
   state_after?: string | null;
   policy_version?: number;
-  operator_party_id?: string | null;
+  operator_site_admin_id?: string | null;
   operator_name?: string | null;
   device_id?: string | null;
   manual_override?: boolean;
@@ -187,11 +189,11 @@ export const checkpointsApi = {
         { params: siteId ? { site_id: siteId } : {} },
       )
     ).data,
-  assignOperator: async (gateId: string, partyId: string) =>
+  assignOperator: async (gateId: string, siteAdminId: string) =>
     (
       await apiClient.put<ApiResponse<CheckpointOperatorAssignment>>(
         `/admin/checkpoints/${gateId}/operator`,
-        { party_id: partyId },
+        { site_admin_id: siteAdminId },
       )
     ).data,
   event: async (id: string) =>

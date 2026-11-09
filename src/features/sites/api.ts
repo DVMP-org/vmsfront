@@ -25,14 +25,25 @@ export interface SiteDetail extends Site {
 
 export interface SiteInput {
   name: string;
+  admin_email: string;
+  admin_name?: string | null;
+  admin_phone?: string | null;
   use_case?: UseCase | null;
   parent_site_id?: string | null;
   description?: string | null;
   address?: string;
 }
 
-export interface SitePlaceInput
-  extends Omit<PropertyInput, "site_id" | "parent_id" | "use_case"> {
+export interface SiteCreated extends Site {
+  site_admin: import("@/features/managers/api").SiteManager;
+  onboarding_email: "queued" | "not_required";
+  user_created: boolean;
+}
+
+export interface SitePlaceInput extends Omit<
+  PropertyInput,
+  "site_id" | "parent_id" | "use_case"
+> {
   parent_id?: string | null;
   use_case?: UseCase | null;
 }
@@ -56,7 +67,7 @@ export const sitesApi = {
   get: async (id: string) =>
     (await apiClient.get<ApiResponse<SiteDetail>>(`${base}/${id}`)).data,
   create: async (body: SiteInput) =>
-    (await apiClient.post<ApiResponse<Site>>(base, body)).data,
+    (await apiClient.post<ApiResponse<SiteCreated>>(base, body)).data,
   update: async (
     id: string,
     body: Partial<Pick<SiteInput, "name" | "description" | "address">>,

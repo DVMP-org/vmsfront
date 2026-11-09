@@ -144,7 +144,24 @@ describe("organization Site register", () => {
       child_sites: [childSite],
       places: [place],
     });
-    vi.mocked(sitesApi.create).mockResolvedValue(site);
+    vi.mocked(sitesApi.create).mockResolvedValue({
+      ...site,
+      site_admin: {
+        assignment_id: "site-admin-1",
+        user: {
+          id: "user-1",
+          name: "Site Administrator",
+          email: "manager@example.test",
+          is_active: true,
+        },
+        role: "site_admin",
+        status: "active",
+        roles: [],
+        effective_permissions: ["*"],
+      },
+      onboarding_email: "queued",
+      user_created: true,
+    });
   });
 
   it("shows only the organization Site register in organization context", async () => {
@@ -153,9 +170,9 @@ describe("organization Site register", () => {
     expect(
       await screen.findByRole("heading", { name: "Properties" }),
     ).toBeVisible();
-    expect((await screen.findAllByText("Harbour Estate")).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      (await screen.findAllByText("Harbour Estate")).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText("Organization overview")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New Site" })).toBeVisible();
     expect(sitesApi.list).toHaveBeenCalledWith(
@@ -183,12 +200,16 @@ describe("organization Site register", () => {
     fireEvent.change(await screen.findByLabelText(/Site name/), {
       target: { value: "Riverside Campus" },
     });
+    fireEvent.change(screen.getByLabelText(/Administrator email/), {
+      target: { value: "manager@example.test" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create Site" }));
 
     await waitFor(() =>
       expect(sitesApi.create).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Riverside Campus",
+          admin_email: "manager@example.test",
           parent_site_id: null,
         }),
       ),

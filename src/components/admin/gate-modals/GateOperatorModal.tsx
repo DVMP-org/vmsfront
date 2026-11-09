@@ -22,7 +22,7 @@ export function GateOperatorModal({
   gate: Gate | null;
 }) {
   const queryClient = useQueryClient();
-  const [selectedPartyId, setSelectedPartyId] = useState("");
+  const [selectedSiteAdminId, setSelectedSiteAdminId] = useState("");
   const [submitError, setSubmitError] = useState("");
   const siteId = gate?.site_id;
 
@@ -49,15 +49,16 @@ export function GateOperatorModal({
   const administratorOptions = useMemo(
     () =>
       (managers.data?.managers ?? []).map((manager) => ({
-        value: manager.party.id,
-        label: manager.party.display_name,
+        value: manager.assignment_id,
+        label: manager.user.name,
       })),
     [managers.data?.managers],
   );
-  const effectivePartyId = selectedPartyId || currentAssignment?.party.id || "";
+  const effectiveSiteAdminId =
+    selectedSiteAdminId || currentAssignment?.site_admin.id || "";
   const assign = useMutation({
-    mutationFn: (partyId: string) =>
-      checkpointsApi.assignOperator(gate!.id, partyId),
+    mutationFn: (siteAdminId: string) =>
+      checkpointsApi.assignOperator(gate!.id, siteAdminId),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
@@ -107,9 +108,9 @@ export function GateOperatorModal({
                   ? "Select a site administrator"
                   : "No active site administrators"
               }
-              value={effectivePartyId || undefined}
-              onChange={(partyId: string | undefined) => {
-                setSelectedPartyId(partyId ?? "");
+              value={effectiveSiteAdminId || undefined}
+              onChange={(siteAdminId: string | undefined) => {
+                setSelectedSiteAdminId(siteAdminId ?? "");
                 setSubmitError("");
               }}
             />
@@ -119,7 +120,7 @@ export function GateOperatorModal({
           <p className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3 text-sm text-[var(--vms-ink-muted)]">
             Currently assigned to{" "}
             <strong className="text-[var(--vms-ink)]">
-              {currentAssignment.party.display_name}
+              {currentAssignment.site_admin.user.name}
             </strong>
             . Selecting another administrator reassigns this checkpoint.
           </p>
@@ -146,10 +147,10 @@ export function GateOperatorModal({
             type="button"
             isLoading={assign.isPending}
             disabled={
-              !effectivePartyId ||
-              effectivePartyId === currentAssignment?.party.id
+              !effectiveSiteAdminId ||
+              effectiveSiteAdminId === currentAssignment?.site_admin.id
             }
-            onClick={() => assign.mutate(effectivePartyId)}
+            onClick={() => assign.mutate(effectiveSiteAdminId)}
           >
             {currentAssignment ? "Reassign operator" : "Assign operator"}
           </Button>

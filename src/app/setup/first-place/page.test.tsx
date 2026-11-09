@@ -53,13 +53,14 @@ describe("first-place onboarding", () => {
     render(<FirstPlaceSetupPage />);
 
     expect(
-      screen.getByRole("heading", { name: "Create your first place" }),
+      screen.getByRole("heading", { name: "Create your first Site" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("list", { name: "Organization setup progress" }),
     ).toHaveTextContent("First place");
     expect(screen.getByText("Back to plan")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Place name/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Site name/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Administrator email/)).toBeInTheDocument();
     expect(screen.queryByText("Property directory")).toBeNull();
   });
 });
