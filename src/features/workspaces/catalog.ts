@@ -114,10 +114,10 @@ export function roleLabel(role: string): string {
 }
 
 export function canOpenManagementDashboard(
-  placeId: string | null | undefined,
-  isPlaceAdministrator: boolean | undefined,
+  siteId: string | null | undefined,
+  isSiteAdministrator: boolean | undefined,
 ): boolean {
-  return !!placeId && !!isPlaceAdministrator;
+  return !!siteId && !!isSiteAdministrator;
 }
 
 export function buildWorkspaceCards(

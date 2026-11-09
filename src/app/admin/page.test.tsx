@@ -149,7 +149,7 @@ describe("operating dashboard", () => {
     );
   });
 
-  it("does not render the management dashboard without a place admin", () => {
+  it("does not render the management dashboard without a site admin", () => {
     mocks.managementIsAdministrator = false;
     mocks.query.mockReturnValue({
       data: dashboard,

@@ -18,8 +18,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { sitesApi } from "@/features/sites/api";
-import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
 import { useAppStore } from "@/store/app-store";
 import { useQuery } from "@tanstack/react-query";
 
@@ -29,7 +27,6 @@ export function SiteConfiguration() {
   >("general");
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const workspace = useWorkspaceContext();
-  const profile = useAdminProfile();
   const property = useQuery({
     queryKey: ["site-configuration-site", selectedProperty?.id],
     queryFn: () => sitesApi.get(selectedProperty!.id),
@@ -84,10 +81,8 @@ export function SiteConfiguration() {
     );
   }
   const canManage = workspace.data?.management?.is_administrator === true;
-  const orgCanManage =
-    !!profile.data && hasAdminPermission(profile.data, "places.update");
   const canEditModules =
-    orgCanManage || (canManage && workspace.data?.management?.mode === "local");
+    canManage && workspace.data?.management?.mode === "local";
   const grants = workspace.data?.effective_permissions?.length
     ? workspace.data.effective_permissions
     : canManage
