@@ -4,16 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Archive,
-  Building2,
-  Home,
-  Pencil,
-  Plus,
-  RotateCcw,
-  UsersRound,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Archive, Home, Pencil, Plus, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -327,32 +318,6 @@ export default function ResidentialUnits() {
       description="The residential inventory, its building location, active household and operating status."
       primaryAction={primaryAction}
     >
-      <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
-        <Summary
-          icon={Home}
-          label="Units"
-          value={unitRows.length}
-          detail="Across this property hierarchy"
-        />
-        <Summary
-          icon={UsersRound}
-          label="Occupied"
-          value={
-            unitRows.filter((unit) => unit.occupancy_status === "occupied")
-              .length
-          }
-          detail="At least one active household relationship"
-        />
-        <Summary
-          icon={Building2}
-          label="Vacant"
-          value={
-            unitRows.filter((unit) => unit.occupancy_status === "vacant").length
-          }
-          detail="Ready for a new household"
-        />
-      </section>
-
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <DataTable
           data={unitRows}
@@ -456,29 +421,6 @@ export default function ResidentialUnits() {
         }}
       />
     </ResidentialShell>
-  );
-}
-
-function Summary({
-  icon: Icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: number;
-  detail: string;
-}) {
-  return (
-    <div className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-        <Icon className="h-4 w-4 text-[var(--vms-coral)]" aria-hidden />
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
-    </div>
   );
 }
 

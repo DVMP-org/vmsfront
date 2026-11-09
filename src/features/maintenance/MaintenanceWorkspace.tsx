@@ -2,7 +2,16 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquareText, Plus, Wrench } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDashed,
+  Hourglass,
+  MessageSquareText,
+  Plus,
+  TriangleAlert,
+  Wrench,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +22,7 @@ import {
   type Column,
   type FilterConfig,
 } from "@/components/ui/DataTable";
+import { Drawer } from "@/components/ui/Drawer";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -54,8 +64,9 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [activeRequest, setActiveRequest] =
-    useState<MaintenanceRequest | null>(null);
+  const [activeRequest, setActiveRequest] = useState<MaintenanceRequest | null>(
+    null,
+  );
   const tree = useQuery({
     queryKey: ["maintenance-property-tree"],
     queryFn: () =>
@@ -64,16 +75,13 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         : Promise.resolve([]),
     retry: false,
   });
-  const spaces = useMemo(
-    () => {
-      const roots = tree.data ?? [];
-      const selectedRoot = findProperty(roots, selectedProperty?.id);
-      return selectedRoot
-        ? flatten(selectedRoot)
-        : roots.flatMap((root) => flatten(root));
-    },
-    [tree.data, selectedProperty?.id],
-  );
+  const spaces = useMemo(() => {
+    const roots = tree.data ?? [];
+    const selectedRoot = findProperty(roots, selectedProperty?.id);
+    return selectedRoot
+      ? flatten(selectedRoot)
+      : roots.flatMap((root) => flatten(root));
+  }, [tree.data, selectedProperty?.id]);
   const query = useQuery({
     queryKey: [
       "maintenance",
@@ -94,6 +102,30 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         category: filterValue(filters, "category"),
         place_id: filterValue(filters, "place"),
       }),
+    enabled: !!selectedProperty?.id,
+    retry: false,
+  });
+  const summary = useQuery({
+    queryKey: ["maintenance", selectedProperty?.id, domain, "summary"],
+    queryFn: async () => {
+      const base = {
+        page: 1,
+        page_size: 1,
+        domain,
+      };
+      const [open, inProgress, awaitingApproval, urgent] = await Promise.all([
+        maintenanceApi.list({ ...base, status: "open" }),
+        maintenanceApi.list({ ...base, status: "in_progress" }),
+        maintenanceApi.list({ ...base, status: "pending_approval" }),
+        maintenanceApi.list({ ...base, priority: "urgent" }),
+      ]);
+      return {
+        open: open.total,
+        inProgress: inProgress.total,
+        awaitingApproval: awaitingApproval.total,
+        urgent: urgent.total,
+      };
+    },
     enabled: !!selectedProperty?.id,
     retry: false,
   });
@@ -119,22 +151,37 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
 
   const columns: Column<MaintenanceRequest>[] = [
     {
-      key: "title",
-      header: "Request",
+      key: "ticket",
+      header: "Ticket",
       sortable: true,
       accessor: (item) => (
-        <div className="min-w-44">
+        <span className="whitespace-nowrap font-mono text-xs font-semibold">
+          {ticketReference(item)}
+        </span>
+      ),
+    },
+    {
+      key: "title",
+      header: "Issue / unit",
+      sortable: true,
+      accessor: (item) => (
+        <div className="min-w-48">
           <strong className="block text-sm">{item.title}</strong>
-          <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
-            {item.category.replaceAll("_", " ")}
+          <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
+            {item.place.name} · {item.category.replaceAll("_", " ")}
           </span>
         </div>
       ),
     },
     {
-      key: "place",
-      header: "Space / zone",
-      accessor: (item) => <span className="text-sm">{item.place.name}</span>,
+      key: "reported_by",
+      header: "Requested by",
+      accessor: (item) => (
+        <span className="whitespace-nowrap text-sm">
+          {item.reported_by?.display_name || "—"}
+        </span>
+      ),
+      responsiveHide: "lg",
     },
     {
       key: "priority",
@@ -145,9 +192,11 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     },
     {
       key: "assigned_to",
-      header: "Owner",
+      header: "Assigned to",
       accessor: (item) => (
-        <span className="text-sm">{item.assigned_to?.display_name || "Unassigned"}</span>
+        <span className="whitespace-nowrap text-sm">
+          {item.assigned_to?.display_name || "Unassigned"}
+        </span>
       ),
       responsiveHide: "md",
     },
@@ -161,13 +210,24 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       ),
     },
     {
+      key: "updated_at",
+      header: "Updated",
+      sortable: true,
+      accessor: (item) => (
+        <span className="whitespace-nowrap text-xs text-[var(--vms-ink-muted)]">
+          {formatTimestamp(item.updated_at)}
+        </span>
+      ),
+      responsiveHide: "lg",
+    },
+    {
       key: "actions",
-      header: "",
+      header: "Actions",
       mobileHide: true,
       accessor: (item) => (
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={() => setActiveRequest(item)}
         >
           Review
@@ -188,8 +248,16 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
       <PageHeader
         eyebrow={`${experience.label} operations`}
-        title={experience.terminology.maintenance}
-        description="One shared maintenance lifecycle with domain-specific categories, priorities, assignments and operating rules."
+        title={
+          domain === "residential"
+            ? "Maintenance requests"
+            : experience.terminology.maintenance
+        }
+        description={
+          domain === "residential"
+            ? "Track resident issues and assigned work."
+            : "Track issues, assignments, approvals and completed work."
+        }
         primaryAction={
           <Button onClick={() => setFormOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -197,6 +265,35 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
           </Button>
         }
       />
+      <section
+        className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Maintenance summary"
+      >
+        <MaintenanceMetric
+          icon={Wrench}
+          label="Open"
+          value={summary.data?.open}
+          tone="info"
+        />
+        <MaintenanceMetric
+          icon={CircleDashed}
+          label="In progress"
+          value={summary.data?.inProgress}
+          tone="info"
+        />
+        <MaintenanceMetric
+          icon={Hourglass}
+          label="Awaiting approval"
+          value={summary.data?.awaitingApproval}
+          tone="warning"
+        />
+        <MaintenanceMetric
+          icon={TriangleAlert}
+          label="Urgent"
+          value={summary.data?.urgent}
+          tone="danger"
+        />
+      </section>
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <DataTable
           data={query.data?.items ?? []}
@@ -276,6 +373,13 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
                 {item.priority} priority ·{" "}
                 {item.assigned_to?.display_name || "Unassigned"}
               </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveRequest(item)}
+              >
+                Review
+              </Button>
             </div>
           )}
         />
@@ -297,8 +401,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         pending={update.isPending}
         onClose={() => setActiveRequest(null)}
         onUpdate={(body) =>
-          activeRequest &&
-          update.mutate({ id: activeRequest.id, body })
+          activeRequest && update.mutate({ id: activeRequest.id, body })
         }
       />
     </main>
@@ -427,7 +530,8 @@ function MaintenanceForm({
                 onChange={(event) =>
                   setValues((current) => ({
                     ...current,
-                    priority: event.target.value as MaintenanceRequest["priority"],
+                    priority: event.target
+                      .value as MaintenanceRequest["priority"],
                   }))
                 }
                 className={fieldControlClassName}
@@ -555,6 +659,7 @@ function MaintenanceDetailDialog({
   }, [current?.id, current?.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!request) return null;
+  if (!current) return null;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -567,7 +672,9 @@ function MaintenanceDetailDialog({
       ["resolved", "closed"].includes(status) &&
       resolutionNotes.trim().length < 3
     ) {
-      setError("Record the resolution before resolving or closing the request.");
+      setError(
+        "Record the resolution before resolving or closing the request.",
+      );
       return;
     }
 
@@ -617,174 +724,225 @@ function MaintenanceDetailDialog({
   );
 
   return (
-    <Modal
+    <Drawer
       isOpen
       onClose={onClose}
-      title={request.title}
+      title={`${ticketReference(request)} · ${request.title}`}
       description={`${request.place.name} · ${request.category.replaceAll("_", " ")}`}
-      size="lg"
+      className="max-w-2xl"
     >
-      <form className="space-y-6" onSubmit={submit}>
-        <div className="space-y-4">
-          <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--vms-ink-muted)]">
-            {request.description}
-          </p>
-          {detail.isPending ? (
-            <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
-              Loading assignment and activity…
-            </p>
-          ) : null}
-          {detail.isError ? (
-            <div
-              role="alert"
-              className="rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]"
-            >
-              Activity could not be loaded.{" "}
-              <button
-                type="button"
-                className="font-semibold underline"
-                onClick={() => detail.refetch()}
-              >
-                Retry
-              </button>
-            </div>
-          ) : null}
+      <form className="flex min-h-full flex-col gap-5" onSubmit={submit}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Badge variant={statusTone[current.status]}>
+            {current.status.replaceAll("_", " ")}
+          </Badge>
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            Updated {formatTimestamp(current.updated_at)}
+          </span>
         </div>
 
-        <section className="grid gap-4 sm:grid-cols-2">
-          <Field id="maintenance-status" label="Workflow status">
-            {(control) => (
-              <select
-                {...control}
-                value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as MaintenanceRequest["status"])
-                }
-                className={fieldControlClassName}
-              >
-                {availableStatuses.map((value) => (
-                  <option key={value} value={value}>
-                    {value.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          <Field id="maintenance-priority" label="Priority">
-            {(control) => (
-              <select
-                {...control}
-                value={priority}
-                onChange={(event) =>
-                  setPriority(
-                    event.target.value as MaintenanceRequest["priority"],
-                  )
-                }
-                className={fieldControlClassName}
-              >
-                {["low", "normal", "high", "urgent"].map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          <Field id="maintenance-scheduled" label="Scheduled visit">
-            {(control) => (
-              <input
-                {...control}
-                type="datetime-local"
-                value={scheduledFor}
-                onChange={(event) => setScheduledFor(event.target.value)}
-                className={fieldControlClassName}
-              />
-            )}
-          </Field>
-          <Field id="maintenance-due" label="Respond by">
-            {(control) => (
-              <input
-                {...control}
-                type="datetime-local"
-                value={dueAt}
-                onChange={(event) => setDueAt(event.target.value)}
-                className={fieldControlClassName}
-              />
-            )}
-          </Field>
+        {detail.isPending ? (
+          <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
+            Loading assignment and activity…
+          </p>
+        ) : null}
+        {detail.isError ? (
+          <div
+            role="alert"
+            className="rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]"
+          >
+            Activity could not be loaded.{" "}
+            <button
+              type="button"
+              className="font-semibold underline"
+              onClick={() => detail.refetch()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
+
+        <StatusProgress request={current} />
+
+        <dl className="grid gap-x-5 gap-y-3 border-y border-[var(--vms-line)] py-4 text-sm sm:grid-cols-2">
+          <DetailFact
+            label="Requested by"
+            value={current.reported_by?.display_name || "Not recorded"}
+          />
+          <DetailFact
+            label="Assigned to"
+            value={current.assigned_to?.display_name || "Unassigned"}
+          />
+          <DetailFact
+            label="Priority"
+            value={current.priority.replaceAll("_", " ")}
+          />
+          <DetailFact
+            label="Category"
+            value={current.category.replaceAll("_", " ")}
+          />
+          <DetailFact
+            label="Reported"
+            value={formatTimestamp(current.created_at)}
+          />
+          <DetailFact
+            label="Respond by"
+            value={
+              current.due_at ? formatTimestamp(current.due_at) : "No deadline"
+            }
+          />
+        </dl>
+
+        <section>
+          <h3 className="text-sm font-semibold">Description</h3>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--vms-ink-muted)]">
+            {current.description}
+          </p>
         </section>
 
-        <section className="grid gap-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-4 sm:grid-cols-2">
-          <FacetPicker
-            facet="parties"
-            kind="person"
-            label="Assigned operator"
-            value={assignee}
-            onChange={setAssignee}
-            contextKey={contextKey}
-            description="The staff member accountable for progressing the work."
-          />
-          <FacetPicker
-            facet="parties"
-            kind="person"
-            label="Contractor or vendor"
-            value={contractor}
-            onChange={setContractor}
-            contextKey={contextKey}
-            description="The external Party performing work, when applicable."
-          />
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-3">
-          <Field id="maintenance-estimate" label="Cost estimate">
-            {(control) => (
-              <input
-                {...control}
-                type="number"
-                min="0"
-                step="0.01"
-                value={costEstimate}
-                onChange={(event) => setCostEstimate(event.target.value)}
-                className={fieldControlClassName}
-              />
-            )}
-          </Field>
-          <Field id="maintenance-actual" label="Actual cost">
-            {(control) => (
-              <input
-                {...control}
-                type="number"
-                min="0"
-                step="0.01"
-                value={actualCost}
-                onChange={(event) => setActualCost(event.target.value)}
-                className={fieldControlClassName}
-              />
-            )}
-          </Field>
-          <Field id="maintenance-approval" label="Cost approval">
-            {(control) => (
-              <select
-                {...control}
-                value={approvalStatus}
-                onChange={(event) =>
-                  setApprovalStatus(
-                    event.target
-                      .value as MaintenanceRequest["approval_status"],
-                  )
-                }
-                className={fieldControlClassName}
-              >
-                {["not_required", "pending", "approved", "rejected"].map(
-                  (value) => (
+        <section className="space-y-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Assignment and workflow</h3>
+            <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+              Update the accountable Party and move work through its permitted
+              lifecycle.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FacetPicker
+              facet="parties"
+              kind="person"
+              label="Assigned operator"
+              value={assignee}
+              onChange={setAssignee}
+              contextKey={contextKey}
+              description="The staff member accountable for progressing the work."
+            />
+            <FacetPicker
+              facet="parties"
+              kind="person"
+              label="Contractor or vendor"
+              value={contractor}
+              onChange={setContractor}
+              contextKey={contextKey}
+              description="The external Party performing work, when applicable."
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="maintenance-status" label="Workflow status">
+              {(control) => (
+                <select
+                  {...control}
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(
+                      event.target.value as MaintenanceRequest["status"],
+                    )
+                  }
+                  className={fieldControlClassName}
+                >
+                  {availableStatuses.map((value) => (
                     <option key={value} value={value}>
                       {value.replaceAll("_", " ")}
                     </option>
-                  ),
-                )}
-              </select>
-            )}
-          </Field>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <Field id="maintenance-priority" label="Priority">
+              {(control) => (
+                <select
+                  {...control}
+                  value={priority}
+                  onChange={(event) =>
+                    setPriority(
+                      event.target.value as MaintenanceRequest["priority"],
+                    )
+                  }
+                  className={fieldControlClassName}
+                >
+                  {["low", "normal", "high", "urgent"].map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <Field id="maintenance-scheduled" label="Scheduled visit">
+              {(control) => (
+                <input
+                  {...control}
+                  type="datetime-local"
+                  value={scheduledFor}
+                  onChange={(event) => setScheduledFor(event.target.value)}
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
+            <Field id="maintenance-due" label="Respond by">
+              {(control) => (
+                <input
+                  {...control}
+                  type="datetime-local"
+                  value={dueAt}
+                  onChange={(event) => setDueAt(event.target.value)}
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field id="maintenance-estimate" label="Cost estimate">
+              {(control) => (
+                <input
+                  {...control}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={costEstimate}
+                  onChange={(event) => setCostEstimate(event.target.value)}
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
+            <Field id="maintenance-actual" label="Actual cost">
+              {(control) => (
+                <input
+                  {...control}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={actualCost}
+                  onChange={(event) => setActualCost(event.target.value)}
+                  className={fieldControlClassName}
+                />
+              )}
+            </Field>
+            <Field id="maintenance-approval" label="Cost approval">
+              {(control) => (
+                <select
+                  {...control}
+                  value={approvalStatus}
+                  onChange={(event) =>
+                    setApprovalStatus(
+                      event.target
+                        .value as MaintenanceRequest["approval_status"],
+                    )
+                  }
+                  className={fieldControlClassName}
+                >
+                  {["not_required", "pending", "approved", "rejected"].map(
+                    (value) => (
+                      <option key={value} value={value}>
+                        {value.replaceAll("_", " ")}
+                      </option>
+                    ),
+                  )}
+                </select>
+              )}
+            </Field>
+          </div>
         </section>
 
         <Field id="maintenance-resolution" label="Resolution notes">
@@ -802,34 +960,39 @@ function MaintenanceDetailDialog({
         <section>
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <MessageSquareText className="h-4 w-4" aria-hidden="true" />
-            Activity
+            Comments and activity
+            <span className="font-normal text-[var(--vms-ink-muted)]">
+              ({activities.length})
+            </span>
           </h3>
           {activities.length ? (
-            <ol className="mt-3 space-y-3">
+            <ol className="mt-3 space-y-4">
               {activities.map((activity) => (
-                <li
-                  key={activity.id}
-                  className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <strong className="text-xs uppercase tracking-[0.08em]">
-                      {activity.event_type.replaceAll("_", " ")}
-                    </strong>
-                    <span className="text-xs text-[var(--vms-ink-muted)]">
-                      {formatTimestamp(activity.occurred_at)}
-                    </span>
-                  </div>
-                  {activity.message ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm">
-                      {activity.message}
+                <li key={activity.id} className="flex gap-3">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[10px] font-semibold uppercase">
+                    {initials(
+                      activity.actor_site_admin?.display_name ||
+                        activity.actor?.display_name ||
+                        "System",
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <strong className="text-xs">
+                        {activity.actor_site_admin?.display_name ||
+                          activity.actor_site_admin?.email ||
+                          activity.actor?.display_name ||
+                          "System"}
+                      </strong>
+                      <span className="text-[11px] text-[var(--vms-ink-muted)]">
+                        {formatTimestamp(activity.occurred_at)}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-5">
+                      {activity.message ||
+                        activity.event_type.replaceAll("_", " ")}
                     </p>
-                  ) : null}
-                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    {activity.actor_site_admin?.display_name ||
-                      activity.actor_site_admin?.email ||
-                      activity.actor?.display_name ||
-                      "System"}
-                  </p>
+                  </div>
                 </li>
               ))}
             </ol>
@@ -857,16 +1020,182 @@ function MaintenanceDetailDialog({
             {error}
           </p>
         ) : null}
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+        <div className="mt-auto flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onClose}>
             Close
           </Button>
           <Button type="submit" isLoading={pending}>
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             Save changes
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
+  );
+}
+
+function MaintenanceMetric({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number | undefined;
+  tone: "info" | "warning" | "danger";
+}) {
+  const toneClass = {
+    info: "text-[var(--vms-info)]",
+    warning: "text-[var(--vms-warning)]",
+    danger: "text-[var(--vms-danger)]",
+  }[tone];
+  return (
+    <div className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-r sm:even:border-r-0 sm:last:border-b xl:border-b-0 xl:even:border-r xl:last:border-r-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-2xl font-semibold tracking-[-0.04em] tabular-nums">
+            {value ?? "—"}
+          </p>
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">{label}</p>
+        </div>
+        <Icon
+          className={`h-6 w-6 ${toneClass}`}
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatusProgress({ request }: { request: MaintenanceRequest }) {
+  const steps = [
+    {
+      label: "Reported",
+      detail: formatTimestamp(request.created_at),
+      state: "complete" as const,
+    },
+    {
+      label: "Assigned",
+      detail: request.assigned_to?.display_name || "Not assigned",
+      state:
+        statusRank(request.status) >= 1
+          ? ("complete" as const)
+          : ("upcoming" as const),
+    },
+    {
+      label: "In progress",
+      detail: request.scheduled_for
+        ? formatTimestamp(request.scheduled_for)
+        : "No visit scheduled",
+      state:
+        statusRank(request.status) >= 2
+          ? ("complete" as const)
+          : statusRank(request.status) === 1
+            ? ("current" as const)
+            : ("upcoming" as const),
+    },
+    {
+      label: "Resolved",
+      detail: request.resolved_at
+        ? formatTimestamp(request.resolved_at)
+        : "Awaiting completion",
+      state:
+        statusRank(request.status) >= 3
+          ? ("complete" as const)
+          : statusRank(request.status) === 2
+            ? ("current" as const)
+            : ("upcoming" as const),
+    },
+  ];
+  const currentIndex = statusRank(request.status);
+  return (
+    <section className="rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] px-3 py-4">
+      <ol className="flex w-full">
+        {steps.map((step, index) => {
+          const current =
+            index === currentIndex ||
+            (currentIndex >= 3 && index === steps.length - 1);
+          return (
+            <li
+              key={step.label}
+              className="relative min-w-0 flex-1 text-center"
+            >
+              {index < steps.length - 1 ? (
+                <span
+                  className={[
+                    "absolute left-1/2 top-3 h-0.5 w-full",
+                    index < currentIndex
+                      ? "bg-[var(--vms-success)]"
+                      : "bg-[var(--vms-line-strong)]",
+                  ].join(" ")}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <span
+                className={[
+                  "relative z-10 mx-auto grid h-6 w-6 place-items-center rounded-full border-2 bg-[var(--vms-surface-subtle)]",
+                  current
+                    ? "border-[var(--vms-ink)]"
+                    : step.state === "complete"
+                      ? "border-[var(--vms-success)] bg-[var(--vms-success)] text-white"
+                      : "border-[var(--vms-line-strong)]",
+                ].join(" ")}
+              >
+                {current ? (
+                  <span className="h-2 w-2 rounded-full bg-[var(--vms-ink)]" />
+                ) : step.state === "complete" ? (
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : null}
+              </span>
+              <strong className="mt-2 block truncate text-[11px] sm:text-xs">
+                {step.label}
+              </strong>
+              <span className="mt-0.5 block truncate text-[9px] text-[var(--vms-ink-muted)] sm:text-[10px]">
+                {step.detail}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function DetailFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] px-3 py-2.5">
+      <dt className="text-[var(--vms-ink-muted)]">{label}</dt>
+      <dd className="text-right font-medium">{value}</dd>
+    </div>
+  );
+}
+
+function ticketReference(request: MaintenanceRequest) {
+  const compact = request.id.replaceAll("-", "");
+  const suffix = /^[0-9a-f]{16,}$/i.test(compact)
+    ? compact.slice(0, 8)
+    : request.id.split("-").filter(Boolean).at(-1) || compact;
+  return `MT-${suffix.toUpperCase()}`;
+}
+
+function statusRank(status: MaintenanceRequest["status"]) {
+  if (status === "open" || status === "triaged") return 0;
+  if (status === "assigned" || status === "pending_approval") return 1;
+  if (status === "in_progress") return 2;
+  return 3;
+}
+
+function initials(name: string) {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join("")
+      .toUpperCase() || "S"
   );
 }
 
@@ -882,7 +1211,13 @@ const allowedTransitions: Record<
     "resolved",
     "closed",
   ],
-  triaged: ["assigned", "pending_approval", "in_progress", "resolved", "closed"],
+  triaged: [
+    "assigned",
+    "pending_approval",
+    "in_progress",
+    "resolved",
+    "closed",
+  ],
   assigned: ["pending_approval", "in_progress", "resolved", "closed"],
   pending_approval: ["assigned", "in_progress", "resolved", "closed"],
   in_progress: ["resolved", "closed"],

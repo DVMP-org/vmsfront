@@ -18,7 +18,7 @@ describe("residential module navigation", () => {
       screen.getByRole("link", { name: "Residents & households" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      screen.getByRole("link", { name: "Unit directory" }),
+      screen.getByRole("link", { name: "Residency directory" }),
     ).toHaveAttribute("href", "/admin/residential/units");
     expect(
       screen.getByRole("link", { name: "Visitors & access" }),
