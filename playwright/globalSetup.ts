@@ -1,10 +1,9 @@
 import * as dotenv from "dotenv";
+import { resolve } from "node:path";
 
 async function globalSetup() {
-  dotenv.config();
-  console.log("🎭 Playwright E2E Tests - VMS Front");
-  console.log("Base URL:", process.env.VMS_BASE_URL || "http://localhost:3000");
-  console.log("Running tests...");
+  dotenv.config({ path: resolve(process.cwd(), ".env") });
+  dotenv.config({ path: resolve(process.cwd(), "..", ".env.local") });
 }
 
 export default globalSetup;

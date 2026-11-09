@@ -1,4 +1,5 @@
 import type { Admin, WorkspaceRelationship } from "@/types";
+import { hasAdminPermission } from "@/lib/permissions";
 
 export type WorkspaceArea = "management" | "occupancy" | "staff" | "guest";
 
@@ -189,6 +190,10 @@ export function buildPropertyWorkspaces({
   relationships: WorkspaceRelationship[];
   managedPlaces?: PropertyWorkspacePlace[];
 }): PropertyWorkspace[] {
+  const canManagePlaces = hasAdminPermission(admin, [
+    "places.list",
+    "place_relationships.create",
+  ]);
   const byPlace = new Map<string, PropertyWorkspace>();
   const managedPlaceById = new Map(
     managedPlaces.map((place) => [place.id, place]),
@@ -266,7 +271,7 @@ export function buildPropertyWorkspaces({
     });
   }
 
-  if (admin) {
+  if (canManagePlaces) {
     for (const place of managedPlaces) {
       if (place.parent_id) continue;
       addAccess(ensure(place), managementAccess(managementRole));

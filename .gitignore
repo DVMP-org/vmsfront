@@ -25,6 +25,8 @@
 /playwright/playwright-report/
 /playwright/.cache/
 /playwright/node_modules/
+/playwright/evidence/artifacts/
+/playwright/evidence/**/*.webm
 
 # next.js
 /.next/
@@ -54,6 +56,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright generated artifacts and reports
+/playwright/evidence/
+/playwright-report/
+/playwright/test-results/
 
 SETUP.md
 *.sh

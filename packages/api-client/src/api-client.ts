@@ -126,15 +126,12 @@ export class ApiClient {
       const loginUrl = new URL("/auth/login", location.origin);
       const onAuthRoute = location.pathname.startsWith("/auth");
 
-      if (!onAuthRoute && currentPath) {
+      if (onAuthRoute) {
+        return;
+      }
+
+      if (currentPath) {
         loginUrl.searchParams.set("redirect_to", currentPath);
-      } else if (onAuthRoute) {
-        const existingRedirect = new URL(location.href).searchParams.get(
-          "redirect_to",
-        );
-        if (existingRedirect) {
-          loginUrl.searchParams.set("redirect_to", existingRedirect);
-        }
       }
 
       const loginHref = loginUrl.toString();

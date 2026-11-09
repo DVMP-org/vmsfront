@@ -34,7 +34,7 @@ jobs:
         
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
-    
+
   build-docker-push:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'

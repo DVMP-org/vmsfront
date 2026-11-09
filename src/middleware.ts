@@ -21,7 +21,8 @@ function getBaseDomainUrl(
   const protocol =
     forwardedProtocol ||
     (request ? new URL(request.url).protocol.replace(":", "") : PROTOCOL);
-  const url = new URL(`${protocol}://${BASE_DOMAIN}${pathname}`);
+  const port = request?.nextUrl.port ? `:${request.nextUrl.port}` : "";
+  const url = new URL(`${protocol}://${BASE_DOMAIN}${port}${pathname}`);
   if (search) {
     url.search = search;
   }

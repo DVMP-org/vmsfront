@@ -69,4 +69,19 @@ describe("browser context helpers", () => {
       "http://acme.localhost:3000/select",
     );
   });
+
+  it("keeps the port for a local lvh.me base domain", () => {
+    const local = createSubdomainUtilities({
+      baseDomain: "lvh.me",
+      location: {
+        hostname: "lvh.me",
+        protocol: "http:",
+        port: "3106",
+      },
+    });
+
+    expect(local.buildSubdomainUrl("harbour", "/plans")).toBe(
+      "http://harbour.lvh.me:3106/plans",
+    );
+  });
 });
