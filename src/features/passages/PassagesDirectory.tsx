@@ -65,6 +65,30 @@ export function PassagesDirectory() {
         gate_id: filters.gate_id,
       }),
   });
+  const journeys = useMemo(() => {
+    const grouped = new Map<string, Passage[]>();
+    for (const event of query.data?.items ?? []) {
+      const key =
+        event.visit_authorization_id ||
+        event.party_id ||
+        `${event.person_name || "unknown"}:${event.occurred_at}`;
+      grouped.set(key, [...(grouped.get(key) ?? []), event]);
+    }
+    return Array.from(grouped.entries())
+      .map(([key, events]) => ({
+        key,
+        events: events.sort(
+          (left, right) =>
+            new Date(left.occurred_at).getTime() -
+            new Date(right.occurred_at).getTime(),
+        ),
+      }))
+      .sort(
+        (left, right) =>
+          new Date(right.events.at(-1)!.occurred_at).getTime() -
+          new Date(left.events.at(-1)!.occurred_at).getTime(),
+      );
+  }, [query.data?.items]);
 
   const initialFilters = useMemo<FilterConfig[]>(() => {
     const result: FilterConfig[] = [];
@@ -258,6 +282,74 @@ export function PassagesDirectory() {
             {selectedProperty?.name || "All accessible properties"}
           </p>
         </article>
+      </section>
+
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+        <header className="border-b border-[var(--vms-line)] p-4">
+          <h2 className="text-lg font-semibold">Visitor journeys</h2>
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+            Expand a visitor to trace each gate decision and access-state
+            transition in sequence.
+          </p>
+        </header>
+        <div className="divide-y divide-[var(--vms-line)]">
+          {journeys.length ? (
+            journeys.map((journey) => (
+              <details key={journey.key} className="group">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]">
+                  <span>
+                    <strong className="block text-sm">
+                      {journey.events[0]?.person_name || "Unknown visitor"}
+                    </strong>
+                    <span className="text-xs text-[var(--vms-ink-muted)]">
+                      {journey.events.length} movement
+                      {journey.events.length === 1 ? "" : "s"} ·{" "}
+                      {stateLabel(journey.events[0]?.state_before)} to{" "}
+                      {stateLabel(journey.events.at(-1)?.state_after)}
+                    </span>
+                  </span>
+                  <Badge variant="neutral">{journey.events.length} gates</Badge>
+                </summary>
+                <ol className="space-y-2 border-t border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-4 py-3">
+                  {journey.events.map((event, index) => (
+                    <li
+                      key={event.id}
+                      className="grid gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto]"
+                    >
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--vms-ink)] text-xs font-semibold text-[var(--vms-surface)]">
+                        {index + 1}
+                      </span>
+                      <span>
+                        <strong className="block text-sm">
+                          {event.gate_name || "Unknown checkpoint"}
+                        </strong>
+                        <span className="text-xs text-[var(--vms-ink-muted)]">
+                          {event.direction === "entry"
+                            ? "Check in"
+                            : "Check out"}{" "}
+                          · {stateLabel(event.state_before)} to{" "}
+                          {stateLabel(event.state_after)} ·{" "}
+                          {new Date(event.occurred_at).toLocaleString()}
+                        </span>
+                      </span>
+                      <Badge
+                        variant={
+                          event.outcome === "allowed" ? "success" : "danger"
+                        }
+                      >
+                        {event.outcome}
+                      </Badge>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            ))
+          ) : (
+            <p className="p-4 text-sm text-[var(--vms-ink-muted)]">
+              No visitor journeys match the current filters.
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">

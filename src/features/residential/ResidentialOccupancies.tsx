@@ -163,14 +163,7 @@ export default function ResidentialOccupancies() {
       key: "unit_name",
       header: "Unit",
       sortable: true,
-      accessor: (row) => (
-        <Link
-          href={`/admin/properties/${row.unit_id}`}
-          className="font-medium underline-offset-4 hover:underline"
-        >
-          {row.unit_name}
-        </Link>
-      ),
+      accessor: (row) => <span className="font-medium">{row.unit_name}</span>,
     },
     {
       key: "role",
@@ -300,15 +293,7 @@ export default function ResidentialOccupancies() {
       description="Unit-level residents, owners and tenants with an explicit relationship period. Lease renewal and expiry are derived from these dates."
       primaryAction={
         canManagePeople ? (
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={!units.length}
-            title={
-              units.length
-                ? undefined
-                : "Create a unit before assigning a household"
-            }
-          >
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Assign household
           </Button>
@@ -477,6 +462,17 @@ function AssignHouseholdModal({
       size="md"
     >
       <form className="space-y-4" onSubmit={submit} noValidate>
+        {!units.length ? (
+          <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 text-sm">
+            <p className="font-semibold">Create a unit first.</p>
+            <p className="mt-1 text-[var(--vms-ink-muted)]">
+              A household relationship must be attached to a residential unit.
+            </p>
+            <Button asChild variant="outline" className="mt-3">
+              <Link href="/admin/residential/units">Open units</Link>
+            </Button>
+          </div>
+        ) : null}
         <FormErrorSummary errors={errors} />
         <Field id="household-unit" label="Unit" required error={errors.unit_id}>
           {(control) => (

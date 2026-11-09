@@ -12,13 +12,36 @@ import { invitationApprovalsApi } from "./api";
 import { InvitationApprovals } from "./InvitationApprovals";
 
 const mocks = vi.hoisted(() => ({
-  profile: vi.fn(),
+  profileData: {
+    effective_permissions: [] as string[],
+    management: { is_administrator: true },
+    site_id: "site",
+    organization_id: "org",
+  },
   replace: vi.fn(),
   searchParams: new URLSearchParams(),
 }));
 
-vi.mock("@/services/admin-service", () => ({
-  adminService: { getAdminProfile: mocks.profile },
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: {
+      data: mocks.profileData,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      isFetchedAfterMount: true,
+      site_id: "site",
+      organization_id: "org",
+      refetch: vi.fn(),
+    },
+    contextKey: "org:site:user",
+    allowed: (requirement: string | string[]) => {
+      const checks = Array.isArray(requirement) ? requirement : [requirement];
+      return checks.some((permission) =>
+        mocks.profileData.effective_permissions.includes(permission),
+      );
+    },
+  }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -100,25 +123,28 @@ function renderWithClient(node: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>{node}</QueryClientProvider>,
+  );
 }
 
 describe("invitation approvals", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.searchParams = new URLSearchParams();
-    mocks.profile.mockResolvedValue({
-      data: {
-        effective_permissions: [
-          "visit_authorizations.list",
-          "visit_authorizations.show",
-          "visit_authorizations.approve",
-          "visit_authorizations.decline",
-          "visit_authorizations.revoke",
-          "checkpoint_events.list",
-        ],
-      },
-    });
+    mocks.profileData = {
+      management: { is_administrator: true },
+      site_id: "site",
+      organization_id: "org",
+      effective_permissions: [
+        "visit_authorizations.list",
+        "visit_authorizations.show",
+        "visit_authorizations.approve",
+        "visit_authorizations.decline",
+        "visit_authorizations.revoke",
+        "checkpoint_events.list",
+      ],
+    };
     vi.mocked(invitationApprovalsApi.list).mockResolvedValue({
       items: [invitation],
       total: 1,
@@ -159,7 +185,9 @@ describe("invitation approvals", () => {
   it("shows a canonical responsive invitation register", async () => {
     renderWithClient(<InvitationApprovals />);
 
-    expect((await screen.findAllByText("Ada Visitor")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Ada Visitor")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("VISIT-ABC123").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Alex Morgan").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Apartment A-101").length).toBeGreaterThan(0);
@@ -180,14 +208,15 @@ describe("invitation approvals", () => {
   });
 
   it("shows a read-only queue when approval grants are absent", async () => {
-    mocks.profile.mockResolvedValue({
-      data: {
-        effective_permissions: [
-          "visit_authorizations.list",
-          "visit_authorizations.show",
-        ],
-      },
-    });
+    mocks.profileData = {
+      management: { is_administrator: true },
+      site_id: "site",
+      organization_id: "org",
+      effective_permissions: [
+        "visit_authorizations.list",
+        "visit_authorizations.show",
+      ],
+    };
     renderWithClient(<InvitationDetail invitationId="invite" />);
 
     await screen.findAllByText("Ada Visitor");

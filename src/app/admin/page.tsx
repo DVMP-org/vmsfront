@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
           administer or return to the organization workspace.
         </p>
         <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/admin/properties">Open Properties</Link>
+          <Link href="/organization/workspaces">Choose a workspace</Link>
         </Button>
       </div>
     );
@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
             onOpenProperties={() => {
               window.sessionStorage.removeItem("organization-setup-step");
               setShowFirstWorkspaceSetup(false);
-              router.push("/admin/properties");
+              router.push("/admin/site/configuration");
             }}
             onDismiss={() => {
               window.sessionStorage.removeItem("organization-setup-step");

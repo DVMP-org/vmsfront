@@ -1,11 +1,15 @@
 import { z } from "zod";
 
-const navigationItemSchema = z.object({
+const navigationChildSchema = z.object({
   label: z.string().min(1),
   href: z.string().startsWith("/"),
   icon: z.string().min(1),
   module: z.string().min(1),
   permission: z.string().optional(),
+});
+
+const navigationItemSchema = navigationChildSchema.extend({
+  children: z.array(navigationChildSchema).optional(),
 });
 
 const navigationGroupSchema = z.object({

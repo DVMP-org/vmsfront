@@ -188,12 +188,13 @@ describe("operating dashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Property operations" }),
     ).toBeInTheDocument();
-    const propertyScope = screen.getByRole("region", {
-      name: "Property scope",
+    const placeScope = screen.getByRole("region", {
+      name: "Place scope",
     });
     expect(
-      within(propertyScope).getByRole("link", { name: /Harbour Hotel/ }),
-    ).toHaveAttribute("href", "/admin/properties/place");
+      within(placeScope).queryByRole("link", { name: /Harbour Hotel/ }),
+    ).not.toBeInTheDocument();
+    expect(within(placeScope).getByText("Harbour Hotel")).toBeInTheDocument();
     expect(screen.getByText("Guest arrival")).toBeInTheDocument();
     const activityTable = screen.getByRole("table", {
       name: "Recent checkpoint activity for Harbour Hotel",
@@ -234,7 +235,7 @@ describe("operating dashboard", () => {
       }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Review first site/ }));
-    expect(mocks.push).toHaveBeenCalledWith("/admin/properties");
+    expect(mocks.push).toHaveBeenCalledWith("/admin/site/configuration");
   });
 
   it("routes people work to the canonical property roster", () => {

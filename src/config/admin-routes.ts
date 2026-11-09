@@ -46,14 +46,6 @@ export const adminLinks: AdminRoute[] = [
     group: "Workspace",
   },
   {
-    href: "/admin/properties",
-    label: "Properties",
-    icon: Building2,
-    permission: "places.list",
-    module: "properties",
-    group: "Workspace",
-  },
-  {
     href: "/admin/site/configuration",
     label: "Site configuration",
     icon: Settings2,
@@ -154,6 +146,8 @@ const domainIcons: Record<string, LucideIcon> = {
   calculator: Calculator,
   scan: Scan,
   ticket: TicketCheck,
+  history: History,
+  layers: Blocks,
 };
 
 export function contextualAdminLinks(
@@ -175,17 +169,39 @@ export function contextualAdminLinks(
   };
   const configuredLinks: AdminRoute[] = experience
     ? experience.navigation.flatMap((group) =>
-        group.items.map((item) => ({
-          href: item.href,
-          label: item.label,
-          icon: domainIcons[item.icon] ?? Building2,
-          permission: item.permission,
-          module: item.module,
-          group: group.label,
-        })),
+        group.items.map((item) => {
+          const link = {
+            href: item.href,
+            label: item.label,
+            icon: domainIcons[item.icon] ?? Building2,
+            permission: item.permission,
+            module: item.module,
+            group: group.label,
+          };
+          return {
+            ...link,
+            ...(item.children?.length
+              ? {
+                  children: item.children.map((child) => ({
+                    href: child.href,
+                    label: child.label,
+                    icon: domainIcons[child.icon] ?? Building2,
+                    permission: child.permission,
+                    module: child.module,
+                    group: group.label,
+                  })),
+                }
+              : {}),
+          };
+        }),
       )
     : [];
-  const configuredHrefs = new Set(configuredLinks.map((link) => link.href));
+  const configuredHrefs = new Set(
+    configuredLinks.flatMap((link) => [
+      link.href,
+      ...(link.children?.map((child) => child.href) ?? []),
+    ]),
+  );
   const configuredModules = new Set(
     configuredLinks
       .map((link) => link.module)
@@ -194,10 +210,7 @@ export function contextualAdminLinks(
   const commonLinks = adminLinks.filter(
     (link) =>
       !configuredHrefs.has(link.href) &&
-      !(
-        link.href === "/admin/properties" &&
-        configuredModules.has("properties")
-      ) &&
+      link.href !== "/admin/properties" &&
       !(link.href === "/admin/people" && configuredModules.has("people")),
   );
 

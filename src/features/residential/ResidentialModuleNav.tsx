@@ -34,7 +34,9 @@ const icons: Record<string, LucideIcon> = {
 const sections = Array.from(
   new Map(
     domainExperiences.residential.navigation
-      .flatMap((group) => group.items)
+      .flatMap((group) =>
+        group.items.flatMap((item) => [item, ...(item.children ?? [])]),
+      )
       .map((item) => [item.href, item]),
   ).values(),
 ).map((item) => ({

@@ -11,8 +11,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
-import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { type SiteManager, managersApi, type SiteRole } from "./api";
@@ -20,7 +19,8 @@ import { type SiteManager, managersApi, type SiteRole } from "./api";
 export function ManagersWorkspace() {
   const selectedSite = useAppStore((state) => state.selectedProperty);
   const queryClient = useQueryClient();
-  const profile = useAdminProfile();
+  const access = useSiteAccess();
+  const profile = access.workspace;
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<SiteManager | null>(null);
@@ -38,8 +38,7 @@ export function ManagersWorkspace() {
     enabled: !!siteId,
     retry: false,
   });
-  const canManage =
-    !!profile.data && hasAdminPermission(profile.data, "admins.create");
+  const canManage = access.isAdministrator && access.allowed("admins.create");
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (managers.data?.managers ?? []).filter((manager) =>
@@ -251,7 +250,7 @@ function EmptySite() {
       title="Select a Site workspace"
       action={
         <Button asChild>
-          <Link href="/admin/properties">Open Sites</Link>
+          <Link href="/admin/site/configuration">Open Site configuration</Link>
         </Button>
       }
     >

@@ -22,6 +22,8 @@ export interface Assignment {
   charge_definition: Definition;
   target_site_id?: string;
   target_place: { id: string; name: string };
+  target_place_group_id?: string | null;
+  target_place_group_name?: string | null;
   current_responsibility: {
     id: string;
     created_by_site_admin_id?: string | null;
@@ -33,6 +35,9 @@ export interface Assignment {
     };
   } | null;
   outstanding_amount: string;
+  schedule_count?: number;
+  open_schedule_count?: number;
+  next_due_date?: string | null;
   status?: string;
   effective_from?: string | null;
   created_by_site_admin_id?: string | null;
@@ -86,6 +91,7 @@ export const chargesApi = {
       page_size: pageSize,
     }),
   assign: (body: object) => post<Assignment>("/assignments", body),
+  assignGroup: (body: object) => post<Assignment[]>("/assignments/group", body),
   schedules: (id: string, page = 1) =>
     get<PaginatedResponse<Schedule>>("/schedules", {
       assignment_id: id,

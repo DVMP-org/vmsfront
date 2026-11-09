@@ -6,7 +6,9 @@ import PeopleWorkspace from "./PeopleWorkspace";
 import { peopleApi } from "./api";
 
 const mocks = vi.hoisted(() => ({
-  profile: vi.fn(),
+  profileData: {
+    effective_permissions: [] as string[],
+  },
   setSelectedProperty: vi.fn(),
   selectedSite: { id: "site-1", name: "Harbour Estate" } as {
     id: string;
@@ -27,7 +29,10 @@ vi.mock("@/store/app-store", () => {
     selectedProperty: mocks.selectedSite,
     setSelectedProperty: mocks.setSelectedProperty,
   };
-  return { useAppStore: (selector: (value: typeof state) => unknown) => selector(state) };
+  return {
+    useAppStore: (selector: (value: typeof state) => unknown) =>
+      selector(state),
+  };
 });
 
 vi.mock("@/store/auth-store", () => {
@@ -43,8 +48,24 @@ vi.mock("@/store/auth-store", () => {
   };
 });
 
-vi.mock("@/services/admin-service", () => ({
-  adminService: { getAdminProfile: mocks.profile },
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: {
+      data: mocks.profileData,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    },
+    contextKey: "org-1:site-1:user-1",
+    allowed: (requirement: string | string[]) => {
+      const checks = Array.isArray(requirement) ? requirement : [requirement];
+      return checks.some((permission) =>
+        mocks.profileData.effective_permissions.includes(permission),
+      );
+    },
+  }),
 }));
 
 vi.mock("@/features/access-credentials/AccessCredentialDialog", () => ({
@@ -138,15 +159,13 @@ describe("Site People", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.selectedSite = { id: "site-1", name: "Harbour Estate" };
-    mocks.profile.mockResolvedValue({
-      data: {
-        effective_permissions: [
-          "parties.create",
-          "parties.list",
-          "place_relationships.create",
-        ],
-      },
-    });
+    mocks.profileData = {
+      effective_permissions: [
+        "parties.create",
+        "parties.list",
+        "place_relationships.create",
+      ],
+    };
     vi.mocked(peopleApi.get).mockResolvedValue({
       site: {
         id: "site-1",
@@ -191,7 +210,9 @@ describe("Site People", () => {
   it("lists only Parties in the selected Site and links managers separately", async () => {
     mount();
 
-    expect((await screen.findAllByText("Ada Tenant")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Ada Tenant")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText("Apartment 4B")).toBeVisible();
     expect(screen.getByRole("link", { name: "Managers" })).toHaveAttribute(
       "href",

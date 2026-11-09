@@ -43,6 +43,9 @@ type UnitRow = Property & {
   occupancy_status: string;
   residents: string;
 };
+type ParentChoice = Pick<PropertyTreeNode, "id" | "name" | "site_id"> & {
+  kind: string;
+};
 
 const unitTypes = [
   { value: "apartment", label: "Apartment" },
@@ -84,9 +87,21 @@ export default function ResidentialUnits() {
     () => allPlaces.filter((place) => scopeIds.has(place.id)),
     [allPlaces, scopeIds],
   );
-  const parentPlaces = scopedPlaces.filter((place) =>
-    ["site", "building"].includes(place.kind),
+  const parentPlaces = scopedPlaces.filter(
+    (place) => place.kind === "building",
   );
+  const parentChoices = useMemo<ParentChoice[]>(() => {
+    if (!selectedProperty) return parentPlaces;
+    return [
+      {
+        id: `site:${selectedProperty.id}`,
+        name: selectedProperty.name,
+        site_id: selectedProperty.id,
+        kind: "site",
+      },
+      ...parentPlaces,
+    ];
+  }, [parentPlaces, selectedProperty]);
   const unitRows = useMemo<UnitRow[]>(() => {
     const byId = new Map(allPlaces.map((place) => [place.id, place]));
     const relationshipsByPlace = new Map<
@@ -184,12 +199,14 @@ export default function ResidentialUnits() {
             <Home className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0">
-            <Link
-              href={`/admin/properties/${unit.id}`}
-              className="block truncate font-semibold underline-offset-4 hover:underline"
+            <button
+              type="button"
+              onClick={() => canManageUnits && setEditUnit(unit)}
+              className="block max-w-full truncate text-left font-semibold underline-offset-4 hover:underline disabled:no-underline"
+              disabled={!canManageUnits}
             >
               {unit.name}
-            </Link>
+            </button>
             <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
               {unit.building_name}
             </span>
@@ -291,7 +308,7 @@ export default function ResidentialUnits() {
     : [];
 
   const primaryAction = canManageUnits ? (
-    <Button onClick={() => setCreateOpen(true)} disabled={!parentPlaces.length}>
+    <Button onClick={() => setCreateOpen(true)}>
       <Plus className="h-4 w-4" aria-hidden="true" />
       Add unit
     </Button>
@@ -359,12 +376,13 @@ export default function ResidentialUnits() {
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <Link
-                    href={`/admin/properties/${unit.id}`}
-                    className="font-semibold underline-offset-4 hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => setEditUnit(unit)}
+                    className="text-left font-semibold underline-offset-4 hover:underline"
                   >
                     {unit.name}
-                  </Link>
+                  </button>
                   <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
                     {unit.building_name}
                   </p>
@@ -404,10 +422,10 @@ export default function ResidentialUnits() {
       </section>
 
       <UnitFormModal
-        key={`create:${createOpen}:${parentPlaces[0]?.id || "none"}`}
+        key={`create:${createOpen}:${parentChoices[0]?.id || "none"}`}
         open={createOpen}
         mode="create"
-        parents={parentPlaces}
+        parents={parentChoices}
         onClose={() => setCreateOpen(false)}
         onSaved={() => {
           setCreateOpen(false);
@@ -421,7 +439,7 @@ export default function ResidentialUnits() {
         open={!!editUnit}
         mode="edit"
         unit={editUnit}
-        parents={parentPlaces}
+        parents={parentChoices}
         onClose={() => setEditUnit(null)}
         onSaved={() => {
           setEditUnit(null);
@@ -468,7 +486,7 @@ function UnitFormModal({
   open: boolean;
   mode: "create" | "edit";
   unit?: UnitRow | null;
-  parents: PropertyTreeNode[];
+  parents: ParentChoice[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -492,7 +510,9 @@ function UnitFormModal({
       }
       return propertiesApi.create({
         site_id:
-          parents.find((parent) => parent.id === parentId)?.site_id ||
+          (parentId.startsWith("site:")
+            ? selectedSite?.id
+            : parents.find((parent) => parent.id === parentId)?.site_id) ||
           parents[0]?.site_id ||
           selectedSite?.id ||
           "",
@@ -500,7 +520,7 @@ function UnitFormModal({
         kind: "unit",
         address: address.trim(),
         description: description.trim(),
-        parent_id: parentId,
+        ...(parentId.startsWith("site:") ? {} : { parent_id: parentId }),
         building_type: unitType,
       });
     },

@@ -51,6 +51,24 @@ vi.mock("@/store/app-store", () => ({
     }),
 }));
 
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: {
+      data: {
+        management: { is_administrator: true },
+        effective_permissions: ["*"],
+      },
+      isPending: false,
+      isError: false,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    },
+    contextKey: "org:site:user",
+    allowed: () => true,
+    isAdministrator: true,
+  }),
+}));
+
 vi.mock("@/features/properties/api", () => ({
   propertiesApi: { tree: mocks.tree },
 }));
@@ -129,7 +147,11 @@ describe("shared maintenance workspace", () => {
       ],
     });
     mocks.update.mockImplementation((_id, body) =>
-      Promise.resolve({ ...request, ...body, updated_at: "2026-11-09T10:00:00Z" }),
+      Promise.resolve({
+        ...request,
+        ...body,
+        updated_at: "2026-11-09T10:00:00Z",
+      }),
     );
     mocks.tree.mockResolvedValue([
       {
@@ -154,9 +176,7 @@ describe("shared maintenance workspace", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Review" }));
 
     expect(await screen.findByText("Site Manager")).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Assigned operator" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Assigned operator" }));
     fireEvent.change(screen.getByLabelText("Workflow status"), {
       target: { value: "in_progress" },
     });

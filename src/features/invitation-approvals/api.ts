@@ -36,6 +36,27 @@ export interface VisitSession {
 }
 
 export const invitationApprovalsApi = {
+  create: async (body: {
+    host_party_id: string;
+    site_id: string;
+    destination_place_id: string;
+    valid_from: string;
+    valid_to: string;
+    max_uses: number;
+    status: "requested" | "approved";
+    purpose?: string;
+    guests: Array<{
+      display_name: string;
+      email?: string;
+      suffix?: string;
+    }>;
+  }) =>
+    (
+      await apiClient.post<ApiResponse<VisitAuthorization>>(
+        "/admin/visit-authorizations",
+        body,
+      )
+    ).data,
   list: async (input: ApprovalFilter | InvitationListParams) => {
     const params = typeof input === "string" ? { status: input } : input;
     return (

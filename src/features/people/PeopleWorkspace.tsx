@@ -22,17 +22,12 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
-import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { AccessCredentialDialog } from "@/features/access-credentials/AccessCredentialDialog";
-import {
-  type AddPlacePersonInput,
-  peopleApi,
-  type PlacePerson,
-} from "./api";
+import { type AddPlacePersonInput, peopleApi, type PlacePerson } from "./api";
 import "./people-directory.css";
 
 const OCCUPANCY_ROLES = {
@@ -48,7 +43,8 @@ export default function PeopleWorkspace() {
   const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const profile = useAdminProfile();
+  const access = useSiteAccess();
+  const profile = access.workspace;
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -65,9 +61,8 @@ export default function PeopleWorkspace() {
     retry: false,
   });
   const canManage =
-    !!profile.data &&
-    hasAdminPermission(profile.data, "parties.create") &&
-    hasAdminPermission(profile.data, "place_relationships.create");
+    access.allowed("parties.create") &&
+    access.allowed("place_relationships.create");
   const roles =
     OCCUPANCY_ROLES[
       (people.data?.effective_use_case ||
@@ -256,7 +251,11 @@ export default function PeopleWorkspace() {
           tone="danger"
           title="People could not be loaded"
           action={
-            <Button size="sm" variant="outline" onClick={() => people.refetch()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => people.refetch()}
+            >
               Retry
             </Button>
           }
@@ -342,9 +341,7 @@ function AddPartyModal({
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
-  const [place, setPlace] = useState<{ id: string; name: string } | null>(
-    null,
-  );
+  const [place, setPlace] = useState<{ id: string; name: string } | null>(null);
   const mutation = useMutation({
     mutationFn: () => {
       const body: AddPlacePersonInput = {
@@ -357,9 +354,7 @@ function AddPartyModal({
       return peopleApi.add(siteId!, body);
     },
     onSuccess: () =>
-      onSaved(
-        "Party attached to the selected Place and onboarding prepared.",
-      ),
+      onSaved("Party attached to the selected Place and onboarding prepared."),
   });
   return (
     <Modal

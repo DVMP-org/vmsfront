@@ -34,11 +34,9 @@ import {
   findPluginRouteAndType,
 } from "@/lib/plugin-utils";
 import { useResidentResidency } from "@/hooks/use-resident-data";
-import { useAdminProfile } from "@/hooks/use-admin";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
 import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
-import { hasAdminPermission } from "@/lib/permissions";
 import { contextualAdminLinks } from "@/config/admin-routes";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
@@ -142,8 +140,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const pathname = usePathname();
   const { selectedResidency, selectedProperty } = useAppStore();
   const workspaceContext = useWorkspaceContext();
-  const { data: adminProfile, isPending: isAdminProfilePending } =
-    useAdminProfile();
 
   useEffect(() => {
     setMounted(true);
@@ -290,19 +286,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
               ? undefined
               : workspaceContext.data?.modules,
             workspaceContext.data?.module_groups,
-              workspaceContext.data?.effective_use_case,
+            workspaceContext.data?.effective_use_case,
           );
 
-    // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User
-    const activeRole = actualType === "admin" ? adminProfile : null;
     const managementDashboardAvailable = canOpenManagementDashboard(
       selectedProperty?.id,
       workspaceContext.data?.management?.is_administrator,
     );
 
     if (actualType === "admin") {
-      const workspaceGrants =
-        workspacePermissions(workspaceContext.data);
+      const workspaceGrants = workspacePermissions(workspaceContext.data);
       const workspaceAllows = (permission?: string | string[]) => {
         if (!permission) return true;
         const permissions = Array.isArray(permission)
@@ -321,14 +314,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       baseLinks = baseLinks.filter(
         (link: any) => link.href !== "/admin" || managementDashboardAvailable,
       );
-      // If we are not mounted yet (SSR) or have no role data AND are definitively loading fresh,
-      // only show non-permission links to avoid flickering.
-      if (!mounted || (!activeRole && isAdminProfilePending)) {
+      // Site navigation is derived exclusively from Site RBAC. Organization
+      // grants must not leak into this management shell.
+      if (!mounted || workspaceContext.isPending) {
         return baseLinks.filter((link: any) => !link.permission);
       }
 
-      // If we are mounted but have no activeRole (unauthorized or logged out), restrict strictly.
-      if (!activeRole && !workspaceContext.data?.management?.is_administrator) {
+      if (!workspaceContext.data?.management?.is_administrator) {
         return baseLinks.filter((link: any) => !link.permission);
       }
 
@@ -336,25 +328,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         .filter((link: any) => {
           if (
             link.managementOnly &&
-            !workspaceContext.data?.management?.is_administrator &&
-            !workspaceAllows([
-              "parties.create",
-              "place_relationships.create",
-            ]) &&
-            !(
-              activeRole &&
-              hasAdminPermission(activeRole, [
-                "parties.create",
-                "place_relationships.create",
-              ])
-            )
+            !workspaceContext.data?.management?.is_administrator
           )
             return false;
           if (!link.permission) return true;
-          return (
-            workspaceAllows(link.permission) ||
-            (!!activeRole && hasAdminPermission(activeRole, link.permission))
-          );
+          return workspaceAllows(link.permission);
         })
         .map((link: any) => {
           const l = link as any;
@@ -363,11 +341,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             ...link,
             children: l.children.filter((child: any) => {
               if (!child.permission) return true;
-              return (
-                workspaceAllows(child.permission) ||
-                (!!activeRole &&
-                  hasAdminPermission(activeRole, child.permission))
-              );
+              return workspaceAllows(child.permission);
             }),
           };
         })
@@ -388,12 +362,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     actualType,
     effectiveResidencyId,
     isSuperUser,
-    adminProfile,
-    isAdminProfilePending,
     mounted,
     selectedProperty,
     workspaceContext.data,
     workspaceContext.isError,
+    workspaceContext.isPending,
   ]);
   // Flatten and sort links for precise matching
   const activeLink = useMemo(() => {

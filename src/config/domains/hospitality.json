@@ -57,9 +57,29 @@
       "items": [
         {
           "label": "Guest folios & billing",
-          "href": "/admin/hospitality/billing",
+          "href": "/admin/charges",
           "icon": "receipt",
-          "module": "billing"
+          "module": "charges",
+          "children": [
+            {
+              "label": "Charge definitions",
+              "href": "/admin/charges",
+              "icon": "receipt",
+              "module": "charges"
+            },
+            {
+              "label": "Guest folios & billing",
+              "href": "/admin/hospitality/billing",
+              "icon": "calculator",
+              "module": "charges"
+            },
+            {
+              "label": "Place groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         }
       ]
     },
@@ -68,36 +88,82 @@
       "label": "Access",
       "items": [
         {
-          "label": "Gate & check-in console",
+          "label": "Checkpoints",
           "href": "/admin/checkpoints",
           "icon": "scan",
           "module": "check_in_out"
         },
         {
-          "label": "Invitation console",
+          "label": "Check-in console",
+          "href": "/admin/checkpoints/console",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Movement log",
+          "href": "/admin/passages",
+          "icon": "history",
           "module": "check_in_out"
         }
       ]
     }
   ],
   "dashboard": {
-    "priorities": ["arrivals", "departures", "room_readiness", "maintenance", "folio_balance"]
+    "priorities": [
+      "arrivals",
+      "departures",
+      "room_readiness",
+      "maintenance",
+      "folio_balance"
+    ]
   },
   "views": {
     "stays": {
-      "columns": ["guest", "room", "arrival", "departure", "stay_status", "folio"],
+      "columns": [
+        "guest",
+        "room",
+        "arrival",
+        "departure",
+        "stay_status",
+        "folio"
+      ],
       "filters": ["stay_status", "room_type", "arrival", "departure"]
     },
     "maintenance": {
-      "columns": ["request", "room", "priority", "engineering_owner", "room_status", "status"],
+      "columns": [
+        "request",
+        "room",
+        "priority",
+        "engineering_owner",
+        "room_status",
+        "status"
+      ],
       "filters": ["priority", "room", "room_status", "status"]
     }
   },
   "maintenance": {
-    "categories": ["guest_defect", "housekeeping", "engineering", "safety", "preventive"],
-    "workflow": ["reported", "triaged", "assigned", "in_progress", "room_out_of_service", "verified", "closed"],
+    "categories": [
+      "guest_defect",
+      "housekeeping",
+      "engineering",
+      "safety",
+      "preventive"
+    ],
+    "workflow": [
+      "reported",
+      "triaged",
+      "assigned",
+      "in_progress",
+      "room_out_of_service",
+      "verified",
+      "closed"
+    ],
     "affects_room_availability": true
   }
 }

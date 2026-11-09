@@ -41,9 +41,9 @@ describe("command navigation", () => {
       false,
       "hospitality",
     );
-    expect(commands.find((entry) => entry.label === "Charges")?.group).toBe(
-      "Finance",
-    );
+    expect(
+      commands.find((entry) => entry.label === "Guest folios & billing")?.group,
+    ).toBe("Guest accounting");
     expect(
       commands.find((entry) => entry.label === "Reservations & stays")?.group,
     ).toBe("Front office");
@@ -59,7 +59,7 @@ describe("command navigation", () => {
       permittedCommands(currentAdmin).some(
         (entry) => entry.href === "/admin/properties",
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       permittedCommands(currentAdmin).some(
         (entry) => entry.href === "/admin/charges",

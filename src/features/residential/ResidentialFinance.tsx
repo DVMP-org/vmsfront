@@ -41,6 +41,10 @@ type FinanceRow = {
   balance_state: string;
   status: string;
   currency: string;
+  group: string | null;
+  schedule_count: number;
+  open_schedule_count: number;
+  next_due_date: string | null;
 };
 
 export default function ResidentialFinance() {
@@ -85,6 +89,10 @@ export default function ResidentialFinance() {
             balance_state: outstanding > 0 ? "outstanding" : "clear",
             status: assignment.status || "active",
             currency: assignment.charge_definition.currency,
+            group: assignment.target_place_group_name || null,
+            schedule_count: assignment.schedule_count || 0,
+            open_schedule_count: assignment.open_schedule_count || 0,
+            next_due_date: assignment.next_due_date || null,
           };
         }),
     [assignments.data, scopeIds],
@@ -122,7 +130,29 @@ export default function ResidentialFinance() {
           className="underline-offset-4 hover:underline"
         >
           {row.target}
+          {row.group ? (
+            <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
+              Group · {row.group}
+            </span>
+          ) : null}
         </Link>
+      ),
+    },
+    {
+      key: "schedules",
+      header: "Schedules",
+      sortable: true,
+      accessor: (row) => (
+        <span className="text-sm">
+          <strong className="block tabular-nums">
+            {row.open_schedule_count} open
+          </strong>
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            {row.next_due_date
+              ? `Next ${new Date(row.next_due_date).toLocaleDateString()}`
+              : `${row.schedule_count} total`}
+          </span>
+        </span>
       ),
     },
     {

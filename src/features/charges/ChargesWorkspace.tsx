@@ -25,11 +25,11 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
+import { Drawer } from "@/components/ui/Drawer";
 import { parseApiError } from "@/lib/error-utils";
-import { hasAdminPermission } from "@/lib/permissions";
-import { adminService } from "@/services/admin-service";
+import { useSiteAccess } from "@/features/context/use-site-access";
+import { placeGroupsApi, type PlaceGroup } from "@/features/place-groups/api";
 import { useAppStore } from "@/store/app-store";
-import { useAuthStore } from "@/store/auth-store";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   chargesApi,
@@ -57,20 +57,16 @@ export default function ChargesWorkspace({
   id?: string;
   action?: ChargeAction;
 }) {
-  const organization = useAppStore((state) => state.organization);
+  const router = useRouter();
   const selectedSite = useAppStore((state) => state.selectedProperty);
-  const user = useAuthStore((state) => state.user);
-  const contextKey = `${organization?.id}:${selectedSite?.id}:${user?.id}`;
-  const profile = useQuery({
-    queryKey: ["charges-profile", contextKey],
-    queryFn: async () => (await adminService.getAdminProfile()).data,
-    enabled: !!organization && !!user,
-    staleTime: 0,
-  });
+  const access = useSiteAccess();
+  const [createOpen, setCreateOpen] = useState(action === "new");
+  const contextKey = access.contextKey;
+  const profile = access.workspace;
   const allow = (permission: string) =>
     !profile.isError &&
     profile.isFetchedAfterMount &&
-    hasAdminPermission(profile.data, `charges.${permission}`);
+    access.allowed(`charges.${permission}`);
 
   if (profile.isPending) {
     return <PageSkeleton label="Loading charge permissions" />;
@@ -102,9 +98,14 @@ export default function ChargesWorkspace({
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <ChargeHeader action={action} />
+      <ChargeHeader action={action === "new" ? undefined : action} />
       {action === "new" ? (
-        <NewDefinition siteId={selectedSite?.id} />
+        <Directory
+          contextKey={contextKey}
+          siteId={selectedSite?.id}
+          allow={allow}
+          onCreate={() => setCreateOpen(true)}
+        />
       ) : action === "assign" ? (
         <AssignCharge id={id!} contextKey={contextKey} />
       ) : action === "definition" ? (
@@ -116,8 +117,21 @@ export default function ChargesWorkspace({
           contextKey={contextKey}
           siteId={selectedSite?.id}
           allow={allow}
+          onCreate={() => setCreateOpen(true)}
         />
       )}
+      <NewDefinition
+        open={createOpen}
+        siteId={selectedSite?.id}
+        onClose={() => {
+          setCreateOpen(false);
+          if (action === "new") router.push("/admin/charges");
+        }}
+        onCreated={(definition) => {
+          setCreateOpen(false);
+          router.push(`/admin/charges/definitions/${definition.id}`);
+        }}
+      />
     </main>
   );
 }
@@ -163,10 +177,12 @@ function Directory({
   contextKey,
   siteId,
   allow,
+  onCreate,
 }: {
   contextKey: string;
   siteId?: string;
   allow: (permission: string) => boolean;
+  onCreate: () => void;
 }) {
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -260,11 +276,9 @@ function Directory({
             </p>
           </div>
           {allow("create") ? (
-            <Button asChild>
-              <Link href="/admin/charges/new">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Create charge
-              </Link>
+            <Button onClick={onCreate}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create charge
             </Button>
           ) : null}
         </div>
@@ -353,8 +367,17 @@ function Directory({
   );
 }
 
-function NewDefinition({ siteId }: { siteId?: string }) {
-  const router = useRouter();
+function NewDefinition({
+  open,
+  siteId,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  siteId?: string;
+  onClose: () => void;
+  onCreated: (definition: Definition) => void;
+}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -378,8 +401,7 @@ function NewDefinition({ siteId }: { siteId?: string }) {
         currency,
         recurrence,
       }),
-    onSuccess: (definition) =>
-      router.push(`/admin/charges/definitions/${definition.id}`),
+    onSuccess: onCreated,
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -396,148 +418,131 @@ function NewDefinition({ siteId }: { siteId?: string }) {
     if (!Object.keys(nextErrors).length) mutation.mutate();
   }
 
+  function closeDrawer() {
+    if (canLeave()) onClose();
+  }
+
   return (
-    <div className="grid gap-4 pb-20 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)] xl:pb-0">
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5">
-        <div>
-          <h2 className="text-base font-semibold">Create a charge</h2>
-          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-            Start with the reusable amount and recurrence. Property and payer
-            are selected during assignment.
-          </p>
-        </div>
-        <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
-          <FormErrorSummary errors={errors} />
-          <fieldset className="space-y-4" disabled={mutation.isPending}>
+    <Drawer
+      isOpen={open}
+      onClose={closeDrawer}
+      title="Create a charge"
+      description="Define the reusable amount and recurrence. Assign it to Places or a Place group after creation."
+    >
+      <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
+        <FormErrorSummary errors={errors} />
+        <fieldset className="space-y-4" disabled={mutation.isPending}>
+          <Field
+            id="charge-name"
+            label="Name"
+            description="A short name operators will recognise."
+            error={errors["charge-name"]}
+            required
+          >
+            {(control) => (
+              <input
+                {...control}
+                maxLength={255}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Monthly service charge"
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <Field
+            id="charge-description"
+            label="Description"
+            description="Optional context shown on the definition."
+          >
+            {(control) => (
+              <textarea
+                {...control}
+                maxLength={500}
+                rows={3}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="What this charge covers"
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              id="charge-name"
-              label="Name"
-              description="A short name operators will recognise."
-              error={errors["charge-name"]}
+              id="charge-amount"
+              label="Amount"
+              error={errors["charge-amount"]}
               required
             >
               {(control) => (
                 <input
                   {...control}
-                  maxLength={255}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Monthly service charge"
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="25000.00"
                   className={fieldControlClassName}
                 />
               )}
             </Field>
             <Field
-              id="charge-description"
-              label="Description"
-              description="Optional context shown on the definition."
+              id="charge-currency"
+              label="Currency"
+              error={errors["charge-currency"]}
+              required
             >
               {(control) => (
-                <textarea
+                <input
                   {...control}
-                  maxLength={500}
-                  rows={3}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="What this charge covers"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  pattern="[A-Z]{3}"
+                  minLength={3}
+                  maxLength={3}
+                  value={currency}
+                  onChange={(event) =>
+                    setCurrency(event.target.value.toUpperCase())
+                  }
                   className={fieldControlClassName}
                 />
               )}
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                id="charge-amount"
-                label="Amount"
-                error={errors["charge-amount"]}
-                required
-              >
-                {(control) => (
-                  <input
-                    {...control}
-                    type="number"
-                    inputMode="decimal"
-                    min="0.01"
-                    step="0.01"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    placeholder="25000.00"
-                    className={fieldControlClassName}
-                  />
-                )}
-              </Field>
-              <Field
-                id="charge-currency"
-                label="Currency"
-                error={errors["charge-currency"]}
-                required
-              >
-                {(control) => (
-                  <input
-                    {...control}
-                    inputMode="text"
-                    autoCapitalize="characters"
-                    pattern="[A-Z]{3}"
-                    minLength={3}
-                    maxLength={3}
-                    value={currency}
-                    onChange={(event) =>
-                      setCurrency(event.target.value.toUpperCase())
-                    }
-                    className={fieldControlClassName}
-                  />
-                )}
-              </Field>
-            </div>
-            <Field id="charge-recurrence" label="Recurrence" required>
-              {(control) => (
-                <select
-                  {...control}
-                  value={recurrence}
-                  onChange={(event) => setRecurrence(event.target.value)}
-                  className={fieldControlClassName}
-                >
-                  {Object.entries(recurrenceLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
-          </fieldset>
-          {mutation.isError ? <InlineError error={mutation.error} /> : null}
-          <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-            <Button
-              asChild
-              variant="secondary"
-              onClick={(event) => {
-                if (!canLeave()) event.preventDefault();
-              }}
-            >
-              <Link href="/admin/charges">Cancel</Link>
-            </Button>
-            <Button
-              type="submit"
-              disabled={mutation.isPending}
-              className="min-h-11"
-            >
-              {mutation.isPending ? "Creating charge…" : "Create charge"}
-            </Button>
           </div>
-        </form>
-      </section>
-
-      <GuidePanel
-        icon={CircleDollarSign}
-        title="How charging works"
-        items={[
-          "A definition describes the amount and recurrence.",
-          "An assignment connects it to a property and responsible Party.",
-          "Schedules carry the due date and outstanding balance.",
-          "Changing responsibility affects unpaid schedules after review.",
-        ]}
-      />
-    </div>
+          <Field id="charge-recurrence" label="Recurrence" required>
+            {(control) => (
+              <select
+                {...control}
+                value={recurrence}
+                onChange={(event) => setRecurrence(event.target.value)}
+                className={fieldControlClassName}
+              >
+                {Object.entries(recurrenceLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+        </fieldset>
+        {mutation.isError ? <InlineError error={mutation.error} /> : null}
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={closeDrawer}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={mutation.isPending}
+            className="min-h-11"
+          >
+            {mutation.isPending ? "Creating charge…" : "Create charge"}
+          </Button>
+        </div>
+      </form>
+    </Drawer>
   );
 }
 
@@ -772,7 +777,10 @@ function DefinitionDetail({
 
 function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
   const router = useRouter();
+  const organization = useAppStore((state) => state.organization);
   const [place, setPlace] = useState<FacetItem | null>(null);
+  const [targetMode, setTargetMode] = useState<"place" | "group">("place");
+  const [placeGroup, setPlaceGroup] = useState<PlaceGroup | null>(null);
   const [party, setParty] = useState<FacetItem | null>(null);
   const [scheduleCount, setScheduleCount] = useState(1);
   const [firstDueDate, setFirstDueDate] = useState("");
@@ -782,22 +790,53 @@ function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
     queryKey: ["charges", contextKey, "definition", id],
     queryFn: () => chargesApi.definition(id),
   });
+  const groups = useQuery({
+    queryKey: ["place-groups", contextKey],
+    queryFn: placeGroupsApi.list,
+    enabled: targetMode === "group",
+  });
   const mutation = useMutation({
-    mutationFn: () =>
-      chargesApi.assign({
+    mutationFn: async () => {
+      const common = {
         charge_definition_id: id,
-        target_place_id: place!.value,
         responsible_party_id: party!.value,
         schedule_count: scheduleCount,
         ...(firstDueDate ? { first_due_date: firstDueDate } : {}),
-      }),
-    onSuccess: (assignment) =>
-      router.push(`/admin/charges/assignments/${assignment.id}`),
+      };
+      if (targetMode === "group") {
+        const assignments = await chargesApi.assignGroup({
+          ...common,
+          place_group_id: placeGroup!.id,
+        });
+        return { assignments, isGroup: true };
+      }
+      const assignment = await chargesApi.assign({
+        ...common,
+        target_place_id: place!.value,
+      });
+      return { assignments: [assignment], isGroup: false };
+    },
+    onSuccess: ({ assignments, isGroup }) => {
+      if (isGroup) {
+        router.push(
+          organization?.use_case === "residential"
+            ? "/admin/residential/finance"
+            : "/admin/charges",
+        );
+        return;
+      }
+      router.push(`/admin/charges/assignments/${assignments[0].id}`);
+    },
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
-    if (!place) nextErrors["charge-target"] = "Choose the target property.";
+    if (targetMode === "place" && !place) {
+      nextErrors["charge-target"] = "Choose the target Place.";
+    }
+    if (targetMode === "group" && !placeGroup) {
+      nextErrors["charge-target"] = "Choose the target Place group.";
+    }
     if (!party) {
       nextErrors["charge-responsible"] = "Choose the responsible person.";
     }
@@ -826,14 +865,74 @@ function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
         <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
           <FormErrorSummary errors={errors} />
           <fieldset className="space-y-5" disabled={mutation.isPending}>
-            <FacetPicker
-              facet="places"
-              label="Target property or space"
-              value={place}
-              onChange={setPlace}
-              contextKey={contextKey}
-              error={errors["charge-target"]}
-            />
+            <fieldset>
+              <legend className="text-sm font-semibold">Assign to</legend>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ["place", "One Place"],
+                    ["group", "Place group"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-sm font-medium"
+                  >
+                    <input
+                      type="radio"
+                      name="charge-target-mode"
+                      value={value}
+                      checked={targetMode === value}
+                      onChange={() => {
+                        setTargetMode(value);
+                        setPlace(null);
+                        setPlaceGroup(null);
+                      }}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {targetMode === "place" ? (
+              <FacetPicker
+                facet="places"
+                label="Target Place"
+                value={place}
+                onChange={setPlace}
+                contextKey={contextKey}
+                error={errors["charge-target"]}
+              />
+            ) : (
+              <Field
+                id="charge-place-group"
+                label="Target Place group"
+                error={errors["charge-target"]}
+                required
+              >
+                {(control) => (
+                  <select
+                    {...control}
+                    value={placeGroup?.id || ""}
+                    onChange={(event) =>
+                      setPlaceGroup(
+                        groups.data?.find(
+                          (group) => group.id === event.target.value,
+                        ) || null,
+                      )
+                    }
+                    className={fieldControlClassName}
+                  >
+                    <option value="">Choose a group</option>
+                    {(groups.data ?? []).map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name} · {group.places.length} Places
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+            )}
             <FacetPicker
               facet="parties"
               label="Responsible person or organization"
@@ -895,7 +994,11 @@ function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
             </Button>
             <Button
               type="submit"
-              disabled={mutation.isPending || !place || !party}
+              disabled={
+                mutation.isPending ||
+                !party ||
+                (targetMode === "place" ? !place : !placeGroup)
+              }
               className="min-h-11"
             >
               {mutation.isPending
@@ -921,7 +1024,11 @@ function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
             : "Loading recurrence"}
         </p>
         <dl className="mt-5 space-y-3 text-xs">
-          <ReviewFact icon={Landmark} label="Property" value={place?.label} />
+          <ReviewFact
+            icon={Landmark}
+            label={targetMode === "group" ? "Place group" : "Place"}
+            value={targetMode === "group" ? placeGroup?.name : place?.label}
+          />
           <ReviewFact
             icon={UserRound}
             label="Responsible Party"
