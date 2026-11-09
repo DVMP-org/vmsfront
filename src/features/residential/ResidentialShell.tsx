@@ -37,6 +37,7 @@ export function useResidentialAccess() {
       can("announcements.create") ||
       can("forum_posts.create") ||
       can("places.update"),
+    canManageVisitors: can("visit_authorizations.approve"),
   };
 }
 

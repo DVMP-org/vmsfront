@@ -29,7 +29,7 @@ import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 export function ResidentialVisitors() {
   const property = useAppStore((state) => state.selectedProperty);
   const placeId = property?.id;
-  const { canManagePeople } = useResidentialAccess();
+  const { canManageVisitors } = useResidentialAccess();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const invitations = useQuery({
@@ -162,7 +162,20 @@ export function ResidentialVisitors() {
     {
       label: "Approve",
       icon: CheckCircle2,
-      onClick: (ids) => approve.mutate(ids),
+      onClick: (ids) => {
+        const pending = (invitations.data?.items || [])
+          .filter(
+            (invitation) =>
+              ids.includes(invitation.id) &&
+              invitation.status === "requested",
+          )
+          .map((invitation) => invitation.id);
+        if (!pending.length) {
+          toast.info("Only invitations awaiting approval can be approved.");
+          return;
+        }
+        approve.mutate(pending);
+      },
     },
   ];
 
@@ -192,10 +205,10 @@ export function ResidentialVisitors() {
         tableLabel="Residential visitor invitations"
         searchPlaceholder="Search visitors, hosts or codes"
         availableFilters={filters}
-        selectable
+        selectable={canManageVisitors}
         selectedRows={selected}
         onSelectionChange={setSelected}
-        bulkActions={canManagePeople ? bulkActions : []}
+        bulkActions={canManageVisitors ? bulkActions : []}
         isLoading={invitations.isPending}
         isStale={invitations.isError && !!invitations.data}
         errorMessage={
