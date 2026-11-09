@@ -30,21 +30,27 @@ vi.mock("recharts", () => ({
 }));
 
 const summary = {
-  total_residents: 120,
-  total_residencies: 84,
-  total_gate_passes: 23,
-  total_gate_events: 50,
-  total_gate_events_approved: 45,
-  total_gate_events_denied: 5,
+  total_places: 2,
+  total_parties: 120,
+  total_relationships: 84,
+  total_active_relationships: 80,
+  total_visit_authorizations: 32,
+  total_visit_sessions: 23,
+  total_checkpoint_events: 50,
+  total_checkpoint_events_allowed: 45,
+  total_checkpoint_events_denied: 5,
+  total_active_presences: 12,
   total_admins: 6,
   total_roles: 4,
-  total_visitors: 32,
   time_series: {
-    residencies: [{ date: "2026-11-01", count: 3 }],
-    gate_passes: [{ date: "2026-11-01", count: 4 }],
-    visitors: [{ date: "2026-11-01", count: 2 }],
-    checkins: [{ date: "2026-11-01", count: 8 }],
-    checkouts: [{ date: "2026-11-01", count: 6 }],
+    places: [{ date: "2026-11-01", count: 3 }],
+    parties: [],
+    relationships: [{ date: "2026-11-01", count: 4 }],
+    visit_authorizations: [{ date: "2026-11-01", count: 2 }],
+    visit_sessions: [],
+    checkpoint_events: [{ date: "2026-11-01", count: 14 }],
+    allowed_passages: [{ date: "2026-11-01", count: 8 }],
+    denied_passages: [{ date: "2026-11-01", count: 6 }],
   },
 };
 
@@ -70,12 +76,14 @@ describe("Operations Hub analytics", () => {
     expect(
       screen.getByRole("heading", { name: "Analytics" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Occupancy relationships")).toBeInTheDocument();
+    expect(screen.getByText("Properties")).toBeInTheDocument();
     expect(screen.getByText("120")).toBeInTheDocument();
     expect(screen.getAllByText(/90\.0%/).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByText("View chart data")[0]);
-    expect(screen.getByRole("region", { name: "Daily activity data" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Daily activity data" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Nov 01").length).toBeGreaterThan(0);
   });
 

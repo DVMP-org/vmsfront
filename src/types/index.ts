@@ -3,973 +3,975 @@ import { Subscription } from "./subscription";
 
 // Enums
 export enum GatePassStatus {
-    ACTIVE = "active",
-    PENDING = "pending",
-    CHECKED_IN = "checked_in",
-    CHECKED_OUT = "checked_out",
-    COMPLETED = "completed",
-    REVOKED = "revoked",
-    EXPIRED = "expired",
+  ACTIVE = "active",
+  PENDING = "pending",
+  CHECKED_IN = "checked_in",
+  CHECKED_OUT = "checked_out",
+  COMPLETED = "completed",
+  REVOKED = "revoked",
+  EXPIRED = "expired",
 }
 
 export enum ScanType {
-    ENTRY = "entry",
-    EXIT = "exit",
+  ENTRY = "entry",
+  EXIT = "exit",
 }
 
 export enum UserType {
-    RESIDENT = "resident",
-    ADMIN = "admin",
+  RESIDENT = "resident",
+  ADMIN = "admin",
 }
 
 export enum DueTenureLength {
-    ONE_TIME = "one_time",
-    DAILY = "daily",
-    WEEKLY = "weekly",
-    MONTHLY = "monthly",
-    QUARTERLY = "quarterly",
-    BIANNUALLY = "biannually",
-    YEARLY = "yearly",
+  ONE_TIME = "one_time",
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  MONTHLY = "monthly",
+  QUARTERLY = "quarterly",
+  BIANNUALLY = "biannually",
+  YEARLY = "yearly",
 }
 
 export enum ResidencyDueStatus {
-    UNPAID = "unpaid",
-    PARTIALLY_PAID = "partially_paid",
-    PAID = "paid",
+  UNPAID = "unpaid",
+  PARTIALLY_PAID = "partially_paid",
+  PAID = "paid",
 }
 
 // Base Types
 export interface User {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    email: string;
-    phone: string | null;
-    address: string | null;
-    is_active: boolean;
-    email_verified_at: string | null;
-    avatar_url: string | null;
-    created_at: string;
-    updated_at: string;
-    name?: string | null
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  is_active: boolean;
+  email_verified_at: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+  name?: string | null;
 }
 export interface Organization {
-    use_case?: import("@/features/context/api").UseCase;
-    id: string;
-    name: string;
-    slug: string;
-    logo_url?: string | null;
-    description?: string | null;
-    created_at: string;
-    updated_at: string;
-    residencies?: Residency[] | null;
-    residents?: Resident[] | null;
-    admins?: Admin[] | null;
-    places?: WorkspacePlace[] | null;
-    needs_first_site?: boolean;
-    subscription: Subscription | null;
+  use_case?: import("@/features/context/api").UseCase;
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string | null;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+  residencies?: Residency[] | null;
+  residents?: Resident[] | null;
+  admins?: Admin[] | null;
+  places?: WorkspacePlace[] | null;
+  needs_first_site?: boolean;
+  subscription: Subscription | null;
 }
 
-
 export interface OrganizationMembership {
-    id: string;
-    organization: Organization;
-    role: 'owner' | 'admin' | 'member';
-    joined_at: string;
+  id: string;
+  organization: Organization;
+  role: "owner" | "admin" | "member";
+  joined_at: string;
 }
 
 export interface CreateOrganizationRequest {
-    use_case: import("@/features/context/api").UseCase;
-    name: string;
-    slug: string;
-    description?: string;
+  use_case: import("@/features/context/api").UseCase;
+  name: string;
+  slug: string;
+  description?: string;
 }
 
 export interface OrganizationsResponse {
-    organizations: OrganizationMembership[];
+  organizations: OrganizationMembership[];
 }
-export interface ResidencyType{
-    id: string;
-    name: string;
-    slug: string;
-    is_active : boolean;
-    description: string | null;
-    created_at: string;
-    updated_at: string;
+export interface ResidencyType {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
 }
 export interface Residency {
-    id: string;
-    name: string;
-    description: string | null;
-    address: string;
-    slug?: string | null;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-    residency_groups?: ResidencyGroup[] | null;
-    type?: ResidencyType | null;
-
+  id: string;
+  name: string;
+  description: string | null;
+  address: string;
+  slug?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  residency_groups?: ResidencyGroup[] | null;
+  type?: ResidencyType | null;
 }
 
 export interface ResidencyGroup {
-    id: string;
-    name: string;
-    description: string | null;
-    residency_ids: string[];
-    residencies?: Residency[];
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  name: string;
+  description: string | null;
+  residency_ids: string[];
+  residencies?: Residency[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateResidencyGroupRequest {
-    name: string;
-    description?: string | null;
-    residency_ids: string[];
+  name: string;
+  description?: string | null;
+  residency_ids: string[];
 }
 
 export interface UpdateResidencyGroupRequest {
-    name?: string;
-    description?: string | null;
-    residency_ids?: string[];
+  name?: string;
+  description?: string | null;
+  residency_ids?: string[];
 }
 
 export interface UserResidencyMembership {
-    id: string;
-    residency: Residency;
-    status?: string;
-    is_primary?: boolean;
-    resident_super_user?: boolean;
-    created_at?: string;
-    updated_at?: string;
+  id: string;
+  residency: Residency;
+  status?: string;
+  is_primary?: boolean;
+  resident_super_user?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ResidentProfileUpdatePayload {
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-    address?: string;
-    avatar_url?: string | null;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  address?: string;
+  avatar_url?: string | null;
 }
 
 export interface AdminProfileUpdatePayload {
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-    address?: string;
-    title?: string | null;
-    avatar_url?: string | null;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  address?: string;
+  title?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface Resident {
-    id: string;
-    user_id: string;
-    pass_code: string | null;
-    badge_url: string | null;
-    slug?: string | null;
-    onboarded?: boolean;
-    created_at: string;
-    email?: string;
-    name?: string;
-    updated_at: string;
-    user?: User | null;
-    residencies?: Residency[];
+  id: string;
+  user_id: string;
+  pass_code: string | null;
+  badge_url: string | null;
+  slug?: string | null;
+  onboarded?: boolean;
+  created_at: string;
+  email?: string;
+  name?: string;
+  updated_at: string;
+  user?: User | null;
+  residencies?: Residency[];
 }
 
 export interface ResidentUser {
-    user: User;
-    resident: Resident;
-    residencies?: Residency[] | null;
+  user: User;
+  resident: Resident;
+  residencies?: Residency[] | null;
 }
 
 export interface ResidencyDetail {
-    residency: Residency;
-    residency_groups?: ResidencyGroup[];
-    residents?: ResidentUser[];
+  residency: Residency;
+  residency_groups?: ResidencyGroup[];
+  residents?: ResidentUser[];
 }
 
 export interface ResidentUserCreate {
-    user_id: string;
-    residency_slugs: string[];
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-    address?: string;
-    email?: string;
+  user_id: string;
+  residency_slugs: string[];
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  address?: string;
+  email?: string;
 }
 
-
-
 export interface GateResponseLite {
-    id: string;
-    name: string;
-    slug: string;
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export interface VisitorGateStatus {
-    gate: GateResponseLite;
-    event: GateEvent | null;
-    dependency_gate: GateResponseLite | null;
-    status: "locked" | "pending" | "checked_in" | "checked_out" | "unavailable" | string;
-    message: string | null;
+  gate: GateResponseLite;
+  event: GateEvent | null;
+  dependency_gate: GateResponseLite | null;
+  status:
+    | "locked"
+    | "pending"
+    | "checked_in"
+    | "checked_out"
+    | "unavailable"
+    | string;
+  message: string | null;
 }
 
 export interface Visitor {
-    id: string;
-    email: string;
-    name: string;
-    phone: string | null;
-    pass_code_suffix: string | null;
-    qr_code_url: string | null;
-    pass_code?: string; // Computed: gate_pass_code-pass_code_suffix
-    gate_pass_id?: string | null;
-    gate_pass_code?: string | null;
-    status?: VisitorStatus;
-    gate_pass?: GatePass | null;
-    created_at: string;
-    updated_at: string;
-    gate_events?: GateEvent[];
-    dependency_gate_map?: Record<string, VisitorGateStatus>;
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  pass_code_suffix: string | null;
+  qr_code_url: string | null;
+  pass_code?: string; // Computed: gate_pass_code-pass_code_suffix
+  gate_pass_id?: string | null;
+  gate_pass_code?: string | null;
+  status?: VisitorStatus;
+  gate_pass?: GatePass | null;
+  created_at: string;
+  updated_at: string;
+  gate_events?: GateEvent[];
+  dependency_gate_map?: Record<string, VisitorGateStatus>;
 }
 
 export enum VisitorStatus {
-    CHECKED_IN = "checked_in",
-    CHECKED_OUT = "checked_out",
-    PENDING = "pending",
-    IN_PROGRESS = "in_progress",
-    COMPLETED = "completed",
-    REVOKED = "revoked",
-    EXPIRED = "expired",
+  CHECKED_IN = "checked_in",
+  CHECKED_OUT = "checked_out",
+  PENDING = "pending",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  REVOKED = "revoked",
+  EXPIRED = "expired",
 }
 
 export interface ForumCategory {
-    id: string;
-    residency_id?: string | null;
-    slug: string;
-    name: string;
-    description?: string | null;
-    is_default: boolean;
-    is_locked?: boolean;
-    topics_count?: number;
-    residency?: Residency | null;
-    last_activity_at?: string | null;
-    created_at?: string;
-    updated_at?: string;
+  id: string;
+  residency_id?: string | null;
+  slug: string;
+  name: string;
+  description?: string | null;
+  is_default: boolean;
+  is_locked?: boolean;
+  topics_count?: number;
+  residency?: Residency | null;
+  last_activity_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ForumPostAttachment {
-    url: string;
-    name: string;
-    mime?: string;
+  url: string;
+  name: string;
+  mime?: string;
 }
 
 export interface ForumPost {
-    id: string;
-    topic_id: string;
-    residency_id?: string | null;
-    residency?: Residency | null;
-    author_id?: string | null;
-    content: string;
-    attachments?: ForumPostAttachment[] | null;
-    is_deleted: boolean;
-    edited_at?: string | null;
-    created_at?: string | null;
-    author?: User | null;
-    author_name?: string;
-    deleted_at?: string | null;
-    restored_at?: string | null;
-    posted_by_admin?: boolean;
-    updated_at?: string | null;
+  id: string;
+  topic_id: string;
+  residency_id?: string | null;
+  residency?: Residency | null;
+  author_id?: string | null;
+  content: string;
+  attachments?: ForumPostAttachment[] | null;
+  is_deleted: boolean;
+  edited_at?: string | null;
+  created_at?: string | null;
+  author?: User | null;
+  author_name?: string;
+  deleted_at?: string | null;
+  restored_at?: string | null;
+  posted_by_admin?: boolean;
+  updated_at?: string | null;
 }
 
 export interface ForumTopic {
-    id: string;
-    residency_id?: string | null;
-    category_id: string;
-    title: string;
-    slug: string;
-    author_id?: string | null;
-    is_pinned: boolean;
-    is_locked: boolean;
-    is_deleted: boolean;
-    posts_count: number;
-    last_post_by?: string | null;
-    last_post_at?: string | null;
-    created_at?: string | null;
-    updated_at?: string | null;
-    deleted_at?: string | null;
-    author?: User | null;
-    author_name?: string | null;
-    residency?: Residency | null;
-    category?: ForumCategory | null;
-    initial_post?: ForumPost | null;
-    latest_post?: ForumPost | null;
-    forum_posts?: ForumPost[];
+  id: string;
+  residency_id?: string | null;
+  category_id: string;
+  title: string;
+  slug: string;
+  author_id?: string | null;
+  is_pinned: boolean;
+  is_locked: boolean;
+  is_deleted: boolean;
+  posts_count: number;
+  last_post_by?: string | null;
+  last_post_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+  author?: User | null;
+  author_name?: string | null;
+  residency?: Residency | null;
+  category?: ForumCategory | null;
+  initial_post?: ForumPost | null;
+  latest_post?: ForumPost | null;
+  forum_posts?: ForumPost[];
 }
 
 export interface GatePass {
-    id: string;
-    code: string;
-    qr_code_url: string | null;
-    residency_id: string;
-    resident_id: string;
-    valid_from: string | null;
-    valid_to: string | null;
-    status: GatePassStatus;
-    max_uses: number | null;
-    uses_count: number;
-    created_at: Date;
-    updated_at: Date;
-    visitors: Visitor[];
-    gate_events?: GateEvent[];
-    residency?: Residency
+  id: string;
+  code: string;
+  qr_code_url: string | null;
+  residency_id: string;
+  resident_id: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  status: GatePassStatus;
+  max_uses: number | null;
+  uses_count: number;
+  created_at: Date;
+  updated_at: Date;
+  visitors: Visitor[];
+  gate_events?: GateEvent[];
+  residency?: Residency;
 }
 
 export interface GateEvent {
-    id: string;
-    owner_type: string;
-    owner_id: string;
-    scanned_by_id: string;
-    checkin_time: string;
-    checkout_time: string | null;
-    created_at: string;
-    residency_id?: string | null;
-    gate_id?: string | null;
-    updated_at: string;
-    owner?: Visitor | Resident;
-    gate_pass?: GatePass | null;
-    scanned_by?: Admin | null;
-    residency?: Residency | null;
-    gate?: Gate | null;
-
+  id: string;
+  owner_type: string;
+  owner_id: string;
+  scanned_by_id: string;
+  checkin_time: string;
+  checkout_time: string | null;
+  created_at: string;
+  residency_id?: string | null;
+  gate_id?: string | null;
+  updated_at: string;
+  owner?: Visitor | Resident;
+  gate_pass?: GatePass | null;
+  scanned_by?: Admin | null;
+  residency?: Residency | null;
+  gate?: Gate | null;
 }
 
 export interface AdminRole {
-    id: string;
-    name: string;
-    description: string | null;
-    code: string;
-    permissions: string[] | Record<string, string[]> | string;
-    permissions_parsed: string[];
-    created_at: string;
-    updated_at: string;
+  id: string;
+  name: string;
+  description: string | null;
+  code: string;
+  permissions: string[] | Record<string, string[]> | string;
+  permissions_parsed: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Admin {
-    roles?: AdminRole[];
-    role_ids?: string[];
-    effective_permissions?: string[];
-    id: string;
-    user: User;
-    role_id: string | null;
-    permissions: string | null;
-    created_at: string;
-    updated_at: string;
-    role: AdminRole | null;
-    name: string;
+  roles?: AdminRole[];
+  role_ids?: string[];
+  effective_permissions?: string[];
+  id: string;
+  user: User;
+  role_id: string | null;
+  permissions: string | null;
+  created_at: string;
+  updated_at: string;
+  role: AdminRole | null;
+  name: string;
 }
 
 export interface UserProfile extends User {
-    user_type?: UserType | null;
-    resident?: Resident | null;
-    admin?: Admin | null;
-    residencies?: Residency[];
-    memberships?: UserResidencyMembership[];
-    roles?: AdminRole[];
-    admin_roles?: AdminRole[];
-    is_admin?: boolean;
-    is_resident?: boolean;
-    permissions?: string[] | Record<string, unknown> | null;
+  user_type?: UserType | null;
+  resident?: Resident | null;
+  admin?: Admin | null;
+  residencies?: Residency[];
+  memberships?: UserResidencyMembership[];
+  roles?: AdminRole[];
+  admin_roles?: AdminRole[];
+  is_admin?: boolean;
+  is_resident?: boolean;
+  permissions?: string[] | Record<string, unknown> | null;
 }
 
 export interface AdminSummary {
-    id: string;
-    user_id: string;
-    role_id: string | null;
-    permissions: string | null;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  user_id: string;
+  role_id: string | null;
+  permissions: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WorkspacePlace {
-    id: string;
-    name: string;
-    slug: string;
-    kind: string;
-    is_active: boolean;
-    site_name?: string | null;
-    address?: string;
-    parent_id?: string | null;
-    building_type?: string | null;
-    use_case?: string | null;
+  id: string;
+  name: string;
+  slug: string;
+  kind: string;
+  is_active: boolean;
+  site_name?: string | null;
+  address?: string;
+  parent_id?: string | null;
+  building_type?: string | null;
+  use_case?: string | null;
 }
 
 export interface WorkspaceRelationship {
-    id: string;
-    organization_id: string;
-    role: string;
-    status: string;
-    effective_from: string | null;
-    effective_to: string | null;
-    created_at: string;
-    updated_at: string;
-    party: WorkspaceParty;
-    place: WorkspacePlace;
+  id: string;
+  organization_id: string;
+  role: string;
+  status: string;
+  effective_from: string | null;
+  effective_to: string | null;
+  created_at: string;
+  updated_at: string;
+  party: WorkspaceParty;
+  place: WorkspacePlace;
 }
 
 export interface WorkspaceParty {
-    id: string;
-    kind: string;
-    display_name: string;
-    email: string | null;
-    is_active: boolean;
+  id: string;
+  kind: string;
+  display_name: string;
+  email: string | null;
+  is_active: boolean;
 }
 
 export interface CurrentUserContext {
-    user: User;
-    party: WorkspaceParty | null;
-    admin: AdminSummary | null;
-    workspaces: WorkspaceRelationship[];
+  user: User;
+  party: WorkspaceParty | null;
+  admin: AdminSummary | null;
+  workspaces: WorkspaceRelationship[];
 }
 
 export interface DashboardSelect {
-    user: UserProfile;
-    residencies: Residency[];
-    // admin: AdminSummary | null;
+  user: UserProfile;
+  residencies: Residency[];
+  // admin: AdminSummary | null;
 }
 
 export interface ResidentDashboard {
-    resident: Resident;
-    residency: Residency;
-    gate_passes: GatePass[];
-    gate_events: GateEvent[];
-    gate_events_approved: number;
-    gate_events_denied: number;
+  resident: Resident;
+  residency: Residency;
+  gate_passes: GatePass[];
+  gate_events: GateEvent[];
+  gate_events_approved: number;
+  gate_events_denied: number;
 }
 
 // Request Types
 export interface LoginRequest {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface RegisterRequest {
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone?: string;
-    address?: string;
-    password: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  address?: string;
+  password: string;
 }
 
 export interface ForgotPasswordRequest {
-    email: string;
+  email: string;
 }
 
 export interface ResetPasswordRequest {
-    token: string;
-    password: string;
-    email: string;
+  token: string;
+  password: string;
+  email: string;
 }
 
 export interface CreateGatePassRequest {
-    resident_id: string;
-    residency_id: string;
-    valid_from: string;
-    valid_to: string;
-    max_uses?: number;
-    visitors: {
-        email: string;
-        name: string;
-        phone?: string;
-    }[];
+  resident_id: string;
+  residency_id: string;
+  valid_from: string;
+  valid_to: string;
+  max_uses?: number;
+  visitors: {
+    email: string;
+    name: string;
+    phone?: string;
+  }[];
 }
 
 export interface UpdateResidencyRequest {
-    name: string;
-    description?: string;
-    address: string;
+  name: string;
+  description?: string;
+  address: string;
 }
 
 export interface CreateResidencyRequest {
-    name: string;
-    description?: string;
-    address: string;
+  name: string;
+  description?: string;
+  address: string;
 }
 
 export interface CreateAdminRequest {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone?: string;
-    address?: string;
-    title?: string;
-    role_id?: string;
-    permissions?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  title?: string;
+  role_id?: string;
+  permissions?: string;
 }
 
 export interface UpdateAdminRoleRequest {
-    role_id: string;
+  role_id: string;
 }
 
 export interface GatePassCheckinRequest {
-    code: string;
-    visitor_id?: string;
+  code: string;
+  visitor_id?: string;
 }
 
 export interface ForumCategoryPayload {
-    residency_id?: string | null;
-    name: string;
-    description?: string;
-    is_default?: boolean;
-    is_locked?: boolean;
+  residency_id?: string | null;
+  name: string;
+  description?: string;
+  is_default?: boolean;
+  is_locked?: boolean;
 }
 
 export interface ForumCategoryUpdatePayload {
-    name?: string;
-    description?: string;
-    is_default?: boolean;
-    is_locked?: boolean;
-    residency_id?: string;
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+  is_locked?: boolean;
+  residency_id?: string;
 }
 
 export interface ForumTopicCreatePayload {
-    residency_id?: string | null;
-    residency_group_id?: string | null;
-    category_id: string;
-    title: string;
-    content: string;
+  residency_id?: string | null;
+  residency_group_id?: string | null;
+  category_id: string;
+  title: string;
+  content: string;
 }
 
 export interface ForumTopicUpdatePayload {
-    title?: string;
-    category_id?: string;
-    residency_id?: string;
-    is_pinned?: boolean;
-    is_locked?: boolean;
-    is_deleted?: boolean;
-    hard_delete?: boolean;
+  title?: string;
+  category_id?: string;
+  residency_id?: string;
+  is_pinned?: boolean;
+  is_locked?: boolean;
+  is_deleted?: boolean;
+  hard_delete?: boolean;
 }
 
 export interface ForumPostCreatePayload {
-    topic_id: string;
-    content: string;
-    attachments?: ForumPostAttachment[];
-    residency_id?: string;
+  topic_id: string;
+  content: string;
+  attachments?: ForumPostAttachment[];
+  residency_id?: string;
 }
 
 export interface ForumPostUpdatePayload {
-    content?: string;
-    is_deleted?: boolean;
-    restore?: boolean;
-    attachments?: ForumPostAttachment[] | null;
+  content?: string;
+  is_deleted?: boolean;
+  restore?: boolean;
+  attachments?: ForumPostAttachment[] | null;
 }
 
 // Response Types
 export interface AuthResponse {
-    user: UserProfile;
-    token: string;
+  user: UserProfile;
+  token: string;
 }
 
 export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-    errors?: Record<string, string[]>;
+  success: boolean;
+  message: string;
+  data: T;
+  errors?: Record<string, string[]>;
 }
 
 export interface PaginatedResponse<T> {
-    items: T[];
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-    has_next?: boolean;
-    has_previous?: boolean;
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next?: boolean;
+  has_previous?: boolean;
 }
 
 export interface GatePassCheckinResponse {
-    status: string; // Can be "select_visitor", "checked_in", "checked_out", etc.
-    message: string;
-    gate_pass: GatePass | null;
-    gate_event: GateEvent | null;
-    owner: Visitor | Resident | null;
-    uses_count: number | null;
-    max_uses: number | null;
-    owner_type: string | null;
+  status: string; // Can be "select_visitor", "checked_in", "checked_out", etc.
+  message: string;
+  gate_pass: GatePass | null;
+  gate_event: GateEvent | null;
+  owner: Visitor | Resident | null;
+  uses_count: number | null;
+  max_uses: number | null;
+  owner_type: string | null;
 }
 
 export interface PermissionDictionary {
-    [resource: string]: string[];
+  [resource: string]: string[];
 }
 
 export interface AllPermissionsResponse {
-    permissions: PermissionDictionary;
+  permissions: PermissionDictionary;
 }
 
 // Analytics Types
 export interface AnalyticsTimeSeriesPoint {
-    date: string;
-    count: number;
+  date: string;
+  count: number;
 }
 
 export interface AnalyticsTimeSeries {
-    residencies: AnalyticsTimeSeriesPoint[];
-    gate_passes: AnalyticsTimeSeriesPoint[];
-    visitors: AnalyticsTimeSeriesPoint[];
-    checkins: AnalyticsTimeSeriesPoint[];
-    checkouts: AnalyticsTimeSeriesPoint[];
+  places: AnalyticsTimeSeriesPoint[];
+  parties: AnalyticsTimeSeriesPoint[];
+  relationships: AnalyticsTimeSeriesPoint[];
+  visit_authorizations: AnalyticsTimeSeriesPoint[];
+  visit_sessions: AnalyticsTimeSeriesPoint[];
+  checkpoint_events: AnalyticsTimeSeriesPoint[];
+  allowed_passages: AnalyticsTimeSeriesPoint[];
+  denied_passages: AnalyticsTimeSeriesPoint[];
 }
 
 export interface AnalyticsSummary {
-    total_residents: number;
-    total_residencies: number;
-    total_gate_passes: number;
-    total_gate_events: number;
-    total_gate_events_approved: number;
-    total_gate_events_denied: number;
-    total_admins: number;
-    total_roles: number;
-    total_visitors: number;
-    time_series: AnalyticsTimeSeries;
+  total_places: number;
+  total_parties: number;
+  total_relationships: number;
+  total_active_relationships: number;
+  total_visit_authorizations: number;
+  total_visit_sessions: number;
+  total_checkpoint_events: number;
+  total_checkpoint_events_allowed: number;
+  total_checkpoint_events_denied: number;
+  total_active_presences: number;
+  total_admins: number;
+  total_roles: number;
+  time_series?: AnalyticsTimeSeries | null;
 }
 
 export interface PaginatedResponse<T> {
-    items: T[];
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-    has_next?: boolean;
-    has_previous?: boolean;
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next?: boolean;
+  has_previous?: boolean;
 }
 
 export interface ImportResponse<T = any> {
-    total: number;
-    successful: number;
-    failed: number;
-    results: T[];
+  total: number;
+  successful: number;
+  failed: number;
+  results: T[];
 }
 
 // Branding Types
 export interface BrandingConfig {
-    app_name: string;
-    logo_url: string | null;
-    primary_color: string;
-    secondary_color: string;
-    email_from: string | null;
-    sms_sender_id: string | null;
+  app_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  secondary_color: string;
+  email_from: string | null;
+  sms_sender_id: string | null;
 }
 
 export interface BrandingTheme {
-    id: string;
-    name: string;
-    primary_color: string;
-    secondary_color: string;
-    logo_url: string | null;
-    dark_logo_url: string | null;
-    favicon_url: string | null;
-    custom_css: string | null;
-    custom_js: string | null;
-    active: boolean;
-    created_at?: string;
-    updated_at?: string;
+  id: string;
+  name: string;
+  primary_color: string;
+  secondary_color: string;
+  logo_url: string | null;
+  dark_logo_url: string | null;
+  favicon_url: string | null;
+  custom_css: string | null;
+  custom_js: string | null;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateBrandingThemeRequest {
-    name: string;
-    primary_color: string;
-    secondary_color: string;
-    logo_url?: string;
-    dark_logo_url?: string;
-    favicon_url?: string;
-    custom_css?: string;
-    custom_js?: string;
+  name: string;
+  primary_color: string;
+  secondary_color: string;
+  logo_url?: string;
+  dark_logo_url?: string;
+  favicon_url?: string;
+  custom_css?: string;
+  custom_js?: string;
 }
 
 export interface UpdateBrandingThemeRequest {
-    name?: string;
-    primary_color?: string;
-    secondary_color?: string;
-    logo_url?: string | null;
-    dark_logo_url?: string | null;
-    favicon_url?: string | null;
-    custom_css?: string | null;
-    custom_js?: string | null;
-    active?: boolean;
+  name?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  logo_url?: string | null;
+  dark_logo_url?: string | null;
+  favicon_url?: string | null;
+  custom_css?: string | null;
+  custom_js?: string | null;
+  active?: boolean;
 }
 
 export interface AdminDashboard {
-    metrics: {
-        total_places: number;
-        total_parties: number;
-        active_relationships: number;
-        active_visit_authorizations: number;
-        pending_visit_authorizations: number;
-        active_visit_sessions: number;
-        active_checkpoint_presences: number;
-        checkpoint_events_today: number;
-    };
-    root_places: WorkspacePlace[];
-    recent_visit_authorizations: Array<{
-        id: string;
-        code: string;
-        status: string;
-        purpose: string | null;
-        valid_from: string;
-        valid_to: string;
-        uses_count: number;
-        max_uses: number | null;
-        host_party?: { display_name?: string } | null;
-        destination_place?: { name?: string } | null;
-    }>;
-    recent_checkpoint_events: Array<{
-        id: string;
-        direction: string;
-        outcome: string;
-        reason_code: string;
-        occurred_at: string;
-        place_id: string;
-        gate_id: string;
-    }>;
+  metrics: {
+    total_places: number;
+    total_parties: number;
+    active_relationships: number;
+    active_visit_authorizations: number;
+    pending_visit_authorizations: number;
+    active_visit_sessions: number;
+    active_checkpoint_presences: number;
+    checkpoint_events_today: number;
+  };
+  root_places: WorkspacePlace[];
+  recent_visit_authorizations: Array<{
+    id: string;
+    code: string;
+    status: string;
+    purpose: string | null;
+    valid_from: string;
+    valid_to: string;
+    uses_count: number;
+    max_uses: number | null;
+    host_party?: { display_name?: string } | null;
+    destination_place?: { name?: string } | null;
+  }>;
+  recent_checkpoint_events: Array<{
+    id: string;
+    direction: string;
+    outcome: string;
+    reason_code: string;
+    occurred_at: string;
+    place_id: string;
+    gate_id: string;
+  }>;
 }
 
 // Wallet Types
 export interface Wallet {
-    id: string;
-    resident_id: string;
-    balance: number;
-    status: "active" | "frozen" | "closed";
-    created_at: string;
-    updated_at: string;
+  id: string;
+  resident_id: string;
+  balance: number;
+  status: "active" | "frozen" | "closed";
+  created_at: string;
+  updated_at: string;
 }
 
 export interface FundWalletRequest {
-    amount: number;
-    description: string;
+  amount: number;
+  description: string;
 }
 
 export interface FundWalletResponse {
-    access_code: string;
-    reference: string;
-    authorization_url: string;
-    status: string;
+  access_code: string;
+  reference: string;
+  authorization_url: string;
+  status: string;
 }
 
 export interface WalletTransaction {
-    id: string;
-    wallet_id: string;
-    reference: string;
-    balance_before: number;
-    amount: number;
-    balance_after: number;
-    type: "credit" | "debit";
-    status: "pending" | "success" | "failed";
-    description: string | null;
-    metadata: Record<string, any> | null;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  wallet_id: string;
+  reference: string;
+  balance_before: number;
+  amount: number;
+  balance_after: number;
+  type: "credit" | "debit";
+  status: "pending" | "success" | "failed";
+  description: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export enum TransactionType {
-    WALLET_FUNDING = "wallet_funding",
-    DUE_PAYMENT = "due_payment",
-    PLUGIN_PURCHASE = "plugin_purchase",
-    INTERNAL_DEBIT = "internal_debit",
-    INTERNAL_CREDIT = "internal_credit"
+  WALLET_FUNDING = "wallet_funding",
+  DUE_PAYMENT = "due_payment",
+  PLUGIN_PURCHASE = "plugin_purchase",
+  INTERNAL_DEBIT = "internal_debit",
+  INTERNAL_CREDIT = "internal_credit",
 }
 
 export interface Transaction {
-    id: string;
-    reference: string;
-    amount: number;
-    type: TransactionType;
-    status: "pending" | "success" | "failed";
-    paid_at: string | null;
-    processor: string | null;
-    description: string | null;
-    currency: string;
-    payload: Record<string, any> | null;
-    metadata: Record<string, any> | null;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  reference: string;
+  amount: number;
+  type: TransactionType;
+  status: "pending" | "success" | "failed";
+  paid_at: string | null;
+  processor: string | null;
+  description: string | null;
+  currency: string;
+  payload: Record<string, any> | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
 }
 // Payment Gateway Types
 export interface PaymentGateway {
-    name: string;
-    description?: string | null;
-    api_key?: string | null;
-    secret_key?: string | null;
-    secret_hash?: string | null;
-    contract_code?: string | null;
-    client_id?: string | null;
-    client_secret?: string | null;
-    public_key?: string | null;
-    base_url?: string | null;
-    redirect_url?: string | null;
-    sandbox_mode: boolean;
-    active: boolean;
+  name: string;
+  description?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
+  secret_hash?: string | null;
+  contract_code?: string | null;
+  client_id?: string | null;
+  client_secret?: string | null;
+  public_key?: string | null;
+  base_url?: string | null;
+  redirect_url?: string | null;
+  sandbox_mode: boolean;
+  active: boolean;
 }
 
 export interface UpdatePaymentGatewayRequest {
-    name: string;
-    description?: string | null;
-    api_key?: string | null;
-    secret_key?: string | null;
-    secret_hash?: string | null;
-    contract_code?: string | null;
-    client_id?: string | null;
-    client_secret?: string | null;
-    public_key?: string | null;
-    base_url?: string | null;
-    redirect_url?: string | null;
-    sandbox_mode?: boolean;
-    active?: boolean;
+  name: string;
+  description?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
+  secret_hash?: string | null;
+  contract_code?: string | null;
+  client_id?: string | null;
+  client_secret?: string | null;
+  public_key?: string | null;
+  base_url?: string | null;
+  redirect_url?: string | null;
+  sandbox_mode?: boolean;
+  active?: boolean;
 }
 
 export interface ResidentResidency {
-    resident: Resident;
-    residency: Residency;
-    is_super_user: boolean;
-    is_active: boolean;
+  resident: Resident;
+  residency: Residency;
+  is_super_user: boolean;
+  is_active: boolean;
 }
 
 export interface ResidencyLite {
-    id: string;
-    name: string;
-    address: string;
+  id: string;
+  name: string;
+  address: string;
 }
 
 export interface Due {
-    id: string;
-    name: string;
-    description?: string | null;
-    amount: number;
-    minimum_payment_breakdown: DueTenureLength;
-    tenure_length: DueTenureLength;
-    recurring: boolean;
-    residencies: ResidencyLite[];
-    start_date?: string;
-    created_at?: string;
-    updated_at?: string;
+  id: string;
+  name: string;
+  description?: string | null;
+  amount: number;
+  minimum_payment_breakdown: DueTenureLength;
+  tenure_length: DueTenureLength;
+  recurring: boolean;
+  residencies: ResidencyLite[];
+  start_date?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateDueRequest {
-    name: string;
-    description: string;
-    amount: number;
-    residency_groups_ids: string[];
-    residencies_ids: string[];
-    minimum_payment_breakdown: string; // DueTenureLength
-    tenure_length: string; // DueTenureLength
-    recurring: boolean;
-    start_date?: string;
+  name: string;
+  description: string;
+  amount: number;
+  residency_groups_ids: string[];
+  residencies_ids: string[];
+  minimum_payment_breakdown: string; // DueTenureLength
+  tenure_length: string; // DueTenureLength
+  recurring: boolean;
+  start_date?: string;
 }
 
 export interface ResidentCreate {
-
-    email: string;
-    residency_id: string;
-    first_name: string;
-    last_name: string;
-    phone: string;
-    address: string;
+  email: string;
+  residency_id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  address: string;
 }
 export interface ResidencyDueOption {
-    payment_breakdown: string;
-    amount: string;
-    due_amount: number;
-    currency: {
-        iso_name: string;
-        currency: string;
-    };
+  payment_breakdown: string;
+  amount: string;
+  due_amount: number;
+  currency: {
+    iso_name: string;
+    currency: string;
+  };
 }
 
 export interface ResidencyDue {
-    id: string;
-    due_id: string;
-    residency_id: string;
-    due?: Due;
-    residency?: Residency;
-    amount: number;
-    balance: number;
-    paid_amount: number;
-    status: ResidencyDueStatus;
-    payment_breakdown?: string | null;
-    payment_completed?: boolean;
-    schedules?: DueSchedule[];
-    payments?: DuePayment[];
-    payment_breakdown_options?: ResidencyDueOption[];
-    created_at: string;
-    updated_at: string;
-    next_schedule?: DuePayment | null;
+  id: string;
+  due_id: string;
+  residency_id: string;
+  due?: Due;
+  residency?: Residency;
+  amount: number;
+  balance: number;
+  paid_amount: number;
+  status: ResidencyDueStatus;
+  payment_breakdown?: string | null;
+  payment_completed?: boolean;
+  schedules?: DueSchedule[];
+  payments?: DuePayment[];
+  payment_breakdown_options?: ResidencyDueOption[];
+  created_at: string;
+  updated_at: string;
+  next_schedule?: DuePayment | null;
 }
 
 export interface DueSchedule {
-    id: string;
-    due_id: string;
-    residency_id: string;
-    residency_due_id: string;
-    payment_date: string;
-    balance_before: number;
-    balance_after: number;
-    amount: number;
-    created_at: string;
-    updated_at: string;
-    is_paid: boolean;
-    is_payable: boolean;
-    payment?: DuePayment;
+  id: string;
+  due_id: string;
+  residency_id: string;
+  residency_due_id: string;
+  payment_date: string;
+  balance_before: number;
+  balance_after: number;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+  is_paid: boolean;
+  is_payable: boolean;
+  payment?: DuePayment;
 }
 
 export interface DuePayment {
-    id: string;
-    due_id: string;
-    residency_id: string;
-    residency_due_id: string;
-    due_schedule_id?: string;
-    payment_date: string;
-    amount: number;
-    created_at: string;
-    updated_at: string;
-    due?: Due;
-    schedule?: Partial<DueSchedule>;
+  id: string;
+  due_id: string;
+  residency_id: string;
+  residency_due_id: string;
+  due_schedule_id?: string;
+  payment_date: string;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+  due?: Due;
+  schedule?: Partial<DueSchedule>;
 }
 
 export interface DatabaseNotification {
-    title: string;
-    message: string;
-    intent: string;
+  title: string;
+  message: string;
+  intent: string;
 }
 
 export interface NotificationResponse {
-    id: string;
-    event: string;
-    recipient: string;
-    payload: DatabaseNotification;
-    is_read: boolean;
-    read_at: string | null;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  event: string;
+  recipient: string;
+  payload: DatabaseNotification;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export * from "./gate";
 
-
-
 export interface ImportResultItem {
-    status: string;
-    row: number;
-    error?: string;
+  status: string;
+  row: number;
+  error?: string;
 }
 
 export interface ImportResult {
-    total: number;
-    successful: number;
-    failed: number;
-    results: ImportResultItem[];
+  total: number;
+  successful: number;
+  failed: number;
+  results: ImportResultItem[];
 }
-
-
 
 export interface ApproveVisitResponse {
   id: string;
@@ -990,7 +992,6 @@ export interface ApproveVisitResponse {
     qr_code_url?: string | null;
   };
 }
-
 
 export interface VisitResidency {
   id: string;
@@ -1038,18 +1039,17 @@ export interface CreateGatePassData {
 
 // Mailer Settings
 export interface MailerSettings {
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user?: string | null;
-    smtp_password?: string | null;
-    from_email?: string | null;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user?: string | null;
+  smtp_password?: string | null;
+  from_email?: string | null;
 }
 
 export interface UpdateMailerSettingsRequest {
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user?: string | null;
-    smtp_password?: string | null;
-    from_email?: string | null;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user?: string | null;
+  smtp_password?: string | null;
+  from_email?: string | null;
 }
-
