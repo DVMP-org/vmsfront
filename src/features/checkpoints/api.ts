@@ -3,6 +3,33 @@ import { ApiResponse, PaginatedResponse } from "@/types";
 export interface Gate {
   id: string;
   name: string;
+  place_id?: string | null;
+}
+export interface CheckpointOperatorAssignment {
+  id: string;
+  gate_id: string;
+  gate_name: string;
+  place: {
+    id: string;
+    name: string;
+    slug: string;
+    kind: string;
+    is_active: boolean;
+  };
+  party: {
+    id: string;
+    kind: string;
+    display_name: string;
+    email: string | null;
+    is_active: boolean;
+  };
+  assigned_by_party_id?: string | null;
+  assigned_at: string;
+  is_active: boolean;
+}
+export interface CheckpointOperatorAssignments {
+  place_id?: string | null;
+  assignments: CheckpointOperatorAssignment[];
 }
 export interface Passage {
   id: string;
@@ -41,8 +68,23 @@ export const checkpointsApi = {
   record: async (id: string, body: PassageInput) =>
     (
       await apiClient.post<ApiResponse<Passage>>(
-        `/admin/checkpoints/${id}/passages`,
+        "/admin/checkpoints/passages",
         body,
+        { headers: { "X-Checkpoint": id } },
+      )
+    ).data,
+  operators: async (placeId?: string | null) =>
+    (
+      await apiClient.get<ApiResponse<CheckpointOperatorAssignments>>(
+        "/admin/checkpoints/operators",
+        { params: placeId ? { place_id: placeId } : {} },
+      )
+    ).data,
+  assignOperator: async (gateId: string, partyId: string) =>
+    (
+      await apiClient.put<ApiResponse<CheckpointOperatorAssignment>>(
+        `/admin/checkpoints/${gateId}/operator`,
+        { party_id: partyId },
       )
     ).data,
   event: async (id: string) =>

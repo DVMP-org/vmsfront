@@ -56,4 +56,20 @@ describe("AccessTrendPanel", () => {
       screen.getByText("No checkpoint decisions in this period"),
     ).toBeInTheDocument();
   });
+
+  it("tolerates malformed decision series without crashing", () => {
+    expect(
+      buildDecisionSeries(
+        {
+          ...baseAnalytics,
+          time_series: {
+            ...baseAnalytics.time_series!,
+            allowed_passages: null as never,
+            denied_passages: { unexpected: true } as never,
+          },
+        },
+        14,
+      ),
+    ).toEqual([]);
+  });
 });
