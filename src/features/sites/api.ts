@@ -3,6 +3,14 @@ import type { ApiResponse, PaginatedResponse } from "@/types";
 import type { Property, PropertyInput } from "@/features/properties/api";
 import type { UseCase } from "@/features/context/api";
 
+export interface SiteNotificationSettings {
+  maintenance_updates: boolean;
+  resident_announcements: boolean;
+  emergency_alerts: boolean;
+  visitor_arrivals: boolean;
+  weekly_operations_summary: boolean;
+}
+
 export interface Site {
   id: string;
   organization_id: string;
@@ -13,6 +21,7 @@ export interface Site {
   description: string | null;
   address: string;
   is_active: boolean;
+  notification_settings: SiteNotificationSettings;
   created_at: string;
   updated_at: string;
 }
@@ -70,7 +79,9 @@ export const sitesApi = {
     (await apiClient.post<ApiResponse<SiteCreated>>(base, body)).data,
   update: async (
     id: string,
-    body: Partial<Pick<SiteInput, "name" | "description" | "address">>,
+    body: Partial<Pick<SiteInput, "name" | "description" | "address">> & {
+      notification_settings?: SiteNotificationSettings;
+    },
   ) => (await apiClient.patch<ApiResponse<Site>>(`${base}/${id}`, body)).data,
   move: async (id: string, parent_site_id: string | null) =>
     (

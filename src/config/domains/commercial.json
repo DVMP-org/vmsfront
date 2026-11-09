@@ -35,14 +35,8 @@
     },
     {
       "id": "leasing",
-      "label": "Lease administration",
+      "label": "Finance",
       "items": [
-        {
-          "label": "Active & expiring leases",
-          "href": "/admin/commercial/tenants",
-          "icon": "scale",
-          "module": "leases"
-        },
         {
           "label": "Collections & recoveries",
           "href": "/admin/commercial/finance",

@@ -3,62 +3,45 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
-  ClipboardList,
+  Building2,
   DoorOpen,
   Home,
   Megaphone,
   ReceiptText,
   ScanLine,
+  Shield,
   Ticket,
   UsersRound,
+  Wrench,
+  type LucideIcon,
 } from "lucide-react";
 
+import { domainExperiences } from "@/config/domains";
 import { cn } from "@/lib/utils";
 
-const sections = [
-  { href: "/admin/residential", label: "Overview", icon: Home },
-  {
-    href: "/admin/residential/units",
-    label: "Units",
-    icon: CalendarDays,
-  },
-  {
-    href: "/admin/residential/occupancies",
-    label: "Households & leases",
-    icon: UsersRound,
-  },
-  {
-    href: "/admin/residential/finance",
-    label: "Rent & services",
-    icon: ReceiptText,
-  },
-  {
-    href: "/admin/residential/visitors",
-    label: "Visitors & access",
-    icon: DoorOpen,
-  },
-  {
-    href: "/admin/residential/maintenance",
-    label: "Maintenance",
-    icon: ClipboardList,
-  },
-  {
-    href: "/admin/residential/announcements",
-    label: "Announcements",
-    icon: Megaphone,
-  },
-  {
-    href: "/admin/checkpoints",
-    label: "Gate & check-in",
-    icon: ScanLine,
-  },
-  {
-    href: "/admin/invitations",
-    label: "Invitations",
-    icon: Ticket,
-  },
-];
+const icons: Record<string, LucideIcon> = {
+  home: Home,
+  building: Building2,
+  users: UsersRound,
+  receipt: ReceiptText,
+  wrench: Wrench,
+  shield: DoorOpen,
+  megaphone: Megaphone,
+  scan: ScanLine,
+  ticket: Ticket,
+};
+
+const sections = Array.from(
+  new Map(
+    domainExperiences.residential.navigation
+      .flatMap((group) => group.items)
+      .map((item) => [item.href, item]),
+  ).values(),
+).map((item) => ({
+  href: item.href,
+  label: item.label,
+  icon: icons[item.icon] ?? Shield,
+}));
 
 export function ResidentialModuleNav() {
   const pathname = usePathname();
@@ -72,7 +55,11 @@ export function ResidentialModuleNav() {
           const active =
             section.href === "/admin/residential"
               ? pathname === section.href
-              : pathname?.startsWith(section.href);
+              : section.href === "/admin/checkpoints"
+                ? pathname === section.href ||
+                  pathname?.startsWith(`${section.href}/`)
+                : pathname === section.href ||
+                  pathname?.startsWith(`${section.href}/`);
           const Icon = section.icon;
           return (
             <li key={section.href}>

@@ -27,6 +27,8 @@ export interface MaintenanceRequest {
     | "closed";
   assigned_to?: { id: string; display_name: string } | null;
   reported_by?: { id: string; display_name: string } | null;
+  contractor?: { id: string; display_name: string } | null;
+  approval_status: "not_required" | "pending" | "approved" | "rejected";
   scheduled_for?: string | null;
   due_at?: string | null;
   resolved_at?: string | null;
@@ -45,6 +47,12 @@ export interface MaintenanceRequest {
     event_type: string;
     message?: string | null;
     actor?: { id: string; display_name: string } | null;
+    actor_site_admin?: {
+      id: string;
+      user_id: string;
+      display_name: string;
+      email: string;
+    } | null;
     occurred_at: string;
   }>;
 }
@@ -67,6 +75,25 @@ export interface MaintenanceCreateInput {
   affects_room_availability?: boolean;
   expense_allocation_required?: boolean;
 }
+
+export type MaintenanceUpdateInput = Partial<
+  Pick<
+    MaintenanceRequest,
+    | "status"
+    | "priority"
+    | "category"
+    | "scheduled_for"
+    | "due_at"
+    | "resolution_notes"
+    | "cost_estimate"
+    | "actual_cost"
+  >
+> & {
+  assigned_to_party_id?: string | null;
+  contractor_party_id?: string | null;
+  approval_status?: "not_required" | "pending" | "approved" | "rejected";
+  comment?: string;
+};
 
 export const maintenanceApi = {
   list: async (params: {
@@ -100,22 +127,7 @@ export const maintenanceApi = {
     ).data,
   update: async (
     id: string,
-    body: Partial<
-      Pick<
-        MaintenanceRequest,
-        | "status"
-        | "priority"
-        | "category"
-        | "scheduled_for"
-        | "due_at"
-        | "resolution_notes"
-        | "cost_estimate"
-        | "actual_cost"
-      >
-    > & {
-      assigned_to_party_id?: string | null;
-      comment?: string;
-    },
+    body: MaintenanceUpdateInput,
   ) =>
     (
       await apiClient.patch<ApiResponse<MaintenanceRequest>>(

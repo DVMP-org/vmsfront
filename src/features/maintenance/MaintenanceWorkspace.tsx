@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Wrench } from "lucide-react";
+import { MessageSquareText, Plus, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
+import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import { Button } from "@/components/ui/Button";
 import {
   DataTable,
@@ -26,6 +27,7 @@ import {
   maintenanceApi,
   type MaintenanceCreateInput,
   type MaintenanceRequest,
+  type MaintenanceUpdateInput,
 } from "./api";
 
 const priorityTone = {
@@ -52,9 +54,8 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [statusTarget, setStatusTarget] = useState<MaintenanceRequest | null>(
-    null,
-  );
+  const [activeRequest, setActiveRequest] =
+    useState<MaintenanceRequest | null>(null);
   const tree = useQuery({
     queryKey: ["maintenance-property-tree"],
     queryFn: () =>
@@ -100,17 +101,12 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     onError: (error) => toast.error(parseApiError(error).message),
   });
   const update = useMutation({
-    mutationFn: ({
-      id,
-      status,
-    }: {
-      id: string;
-      status: MaintenanceRequest["status"];
-    }) => maintenanceApi.update(id, { status }),
-    onSuccess: async () => {
-      setStatusTarget(null);
+    mutationFn: ({ id, body }: { id: string; body: MaintenanceUpdateInput }) =>
+      maintenanceApi.update(id, body),
+    onSuccess: async (updated) => {
+      setActiveRequest(updated);
       await client.invalidateQueries({ queryKey: ["maintenance"] });
-      toast.success("Maintenance status updated");
+      toast.success("Maintenance request updated");
     },
     onError: (error) => toast.error(parseApiError(error).message),
   });
@@ -166,10 +162,9 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         <Button
           size="sm"
           variant="outline"
-          disabled={item.status === "closed"}
-          onClick={() => setStatusTarget(item)}
+          onClick={() => setActiveRequest(item)}
         >
-          Update
+          Review
         </Button>
       ),
     },
@@ -289,13 +284,15 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         onClose={() => setFormOpen(false)}
         onSubmit={(body) => create.mutate(body)}
       />
-      <StatusUpdateDialog
-        request={statusTarget}
+      <MaintenanceDetailDialog
+        request={activeRequest}
+        contextKey={selectedProperty.id}
         workflow={experience.maintenance.workflow}
         pending={update.isPending}
-        onClose={() => setStatusTarget(null)}
-        onUpdate={(status) =>
-          statusTarget && update.mutate({ id: statusTarget.id, status })
+        onClose={() => setActiveRequest(null)}
+        onUpdate={(body) =>
+          activeRequest &&
+          update.mutate({ id: activeRequest.id, body })
         }
       />
     </main>
@@ -481,54 +478,437 @@ function MaintenanceForm({
   );
 }
 
-function StatusUpdateDialog({
+function MaintenanceDetailDialog({
   request,
+  contextKey,
   workflow,
   pending,
   onClose,
   onUpdate,
 }: {
   request: MaintenanceRequest | null;
+  contextKey: string;
   workflow: string[];
   pending: boolean;
   onClose: () => void;
-  onUpdate: (status: MaintenanceRequest["status"]) => void;
+  onUpdate: (body: MaintenanceUpdateInput) => void;
 }) {
+  const detail = useQuery({
+    queryKey: ["maintenance", "detail", request?.id],
+    queryFn: () => maintenanceApi.get(request!.id),
+    enabled: !!request,
+  });
+  const current = detail.data ?? request;
   const [status, setStatus] = useState<MaintenanceRequest["status"]>("open");
+  const [priority, setPriority] =
+    useState<MaintenanceRequest["priority"]>("normal");
+  const [approvalStatus, setApprovalStatus] =
+    useState<MaintenanceRequest["approval_status"]>("not_required");
+  const [assignee, setAssignee] = useState<FacetItem | null>(null);
+  const [contractor, setContractor] = useState<FacetItem | null>(null);
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [dueAt, setDueAt] = useState("");
+  const [costEstimate, setCostEstimate] = useState("");
+  const [actualCost, setActualCost] = useState("");
+  const [resolutionNotes, setResolutionNotes] = useState("");
+  const [comment, setComment] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!current) return;
+    setStatus(current.status);
+    setPriority(current.priority);
+    setApprovalStatus(current.approval_status);
+    setAssignee(
+      current.assigned_to
+        ? {
+            value: current.assigned_to.id,
+            label: current.assigned_to.display_name,
+            disabled: false,
+            meta: { kind: "person", user_linked: false },
+          }
+        : null,
+    );
+    setContractor(
+      current.contractor
+        ? {
+            value: current.contractor.id,
+            label: current.contractor.display_name,
+            disabled: false,
+            meta: { kind: "person", user_linked: false },
+          }
+        : null,
+    );
+    setScheduledFor(toDateTimeInput(current.scheduled_for));
+    setDueAt(toDateTimeInput(current.due_at));
+    setCostEstimate(current.cost_estimate ?? "");
+    setActualCost(current.actual_cost ?? "");
+    setResolutionNotes(current.resolution_notes ?? "");
+    setComment("");
+    setError("");
+  }, [current?.id, current?.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!request) return null;
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!current) return;
+    if (status === "assigned" && !assignee) {
+      setError("Assigned work requires an assignee.");
+      return;
+    }
+    if (
+      ["resolved", "closed"].includes(status) &&
+      resolutionNotes.trim().length < 3
+    ) {
+      setError("Record the resolution before resolving or closing the request.");
+      return;
+    }
+
+    const body: MaintenanceUpdateInput = {};
+    if (status !== current.status) body.status = status;
+    if (priority !== current.priority) body.priority = priority;
+    if (approvalStatus !== current.approval_status) {
+      body.approval_status = approvalStatus;
+    }
+    if ((assignee?.value || null) !== (current.assigned_to?.id || null)) {
+      body.assigned_to_party_id = assignee?.value || null;
+    }
+    if ((contractor?.value || null) !== (current.contractor?.id || null)) {
+      body.contractor_party_id = contractor?.value || null;
+    }
+    if (scheduledFor !== toDateTimeInput(current.scheduled_for)) {
+      body.scheduled_for = scheduledFor
+        ? new Date(scheduledFor).toISOString()
+        : null;
+    }
+    if (dueAt !== toDateTimeInput(current.due_at)) {
+      body.due_at = dueAt ? new Date(dueAt).toISOString() : null;
+    }
+    if (costEstimate !== (current.cost_estimate ?? "")) {
+      body.cost_estimate = costEstimate || null;
+    }
+    if (actualCost !== (current.actual_cost ?? "")) {
+      body.actual_cost = actualCost || null;
+    }
+    if (resolutionNotes.trim() !== (current.resolution_notes ?? "")) {
+      body.resolution_notes = resolutionNotes.trim() || null;
+    }
+    if (comment.trim()) body.comment = comment.trim();
+    if (!Object.keys(body).length) {
+      setError("Change a field or add a comment before saving.");
+      return;
+    }
+    setError("");
+    onUpdate(body);
+  }
+
+  const activities = current?.activities ?? [];
+  const availableStatuses = workflow.filter(
+    (candidate) =>
+      candidate === current?.status ||
+      (current ? transitionAllows(current.status, candidate) : true),
+  );
+
   return (
-    <Modal isOpen onClose={onClose} title={`Update ${request.title}`}>
-      <div className="space-y-4 p-5">
-        <Field id="maintenance-status" label="Workflow status">
-          {(control) => (
-            <select
-              {...control}
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as MaintenanceRequest["status"])
-              }
-              className={fieldControlClassName}
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={request.title}
+      description={`${request.place.name} · ${request.category.replaceAll("_", " ")}`}
+      size="lg"
+    >
+      <form className="space-y-6" onSubmit={submit}>
+        <div className="space-y-4">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--vms-ink-muted)]">
+            {request.description}
+          </p>
+          {detail.isPending ? (
+            <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
+              Loading assignment and activity…
+            </p>
+          ) : null}
+          {detail.isError ? (
+            <div
+              role="alert"
+              className="rounded-[var(--vms-radius-control)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]"
             >
-              {workflow.map((value) => (
-                <option key={value} value={value}>
-                  {value.replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
+              Activity could not be loaded.{" "}
+              <button
+                type="button"
+                className="font-semibold underline"
+                onClick={() => detail.refetch()}
+              >
+                Retry
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <section className="grid gap-4 sm:grid-cols-2">
+          <Field id="maintenance-status" label="Workflow status">
+            {(control) => (
+              <select
+                {...control}
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as MaintenanceRequest["status"])
+                }
+                className={fieldControlClassName}
+              >
+                {availableStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {value.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <Field id="maintenance-priority" label="Priority">
+            {(control) => (
+              <select
+                {...control}
+                value={priority}
+                onChange={(event) =>
+                  setPriority(
+                    event.target.value as MaintenanceRequest["priority"],
+                  )
+                }
+                className={fieldControlClassName}
+              >
+                {["low", "normal", "high", "urgent"].map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <Field id="maintenance-scheduled" label="Scheduled visit">
+            {(control) => (
+              <input
+                {...control}
+                type="datetime-local"
+                value={scheduledFor}
+                onChange={(event) => setScheduledFor(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <Field id="maintenance-due" label="Respond by">
+            {(control) => (
+              <input
+                {...control}
+                type="datetime-local"
+                value={dueAt}
+                onChange={(event) => setDueAt(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+        </section>
+
+        <section className="grid gap-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-4 sm:grid-cols-2">
+          <FacetPicker
+            facet="parties"
+            kind="person"
+            label="Assigned operator"
+            value={assignee}
+            onChange={setAssignee}
+            contextKey={contextKey}
+            description="The staff member accountable for progressing the work."
+          />
+          <FacetPicker
+            facet="parties"
+            kind="person"
+            label="Contractor or vendor"
+            value={contractor}
+            onChange={setContractor}
+            contextKey={contextKey}
+            description="The external Party performing work, when applicable."
+          />
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-3">
+          <Field id="maintenance-estimate" label="Cost estimate">
+            {(control) => (
+              <input
+                {...control}
+                type="number"
+                min="0"
+                step="0.01"
+                value={costEstimate}
+                onChange={(event) => setCostEstimate(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <Field id="maintenance-actual" label="Actual cost">
+            {(control) => (
+              <input
+                {...control}
+                type="number"
+                min="0"
+                step="0.01"
+                value={actualCost}
+                onChange={(event) => setActualCost(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <Field id="maintenance-approval" label="Cost approval">
+            {(control) => (
+              <select
+                {...control}
+                value={approvalStatus}
+                onChange={(event) =>
+                  setApprovalStatus(
+                    event.target
+                      .value as MaintenanceRequest["approval_status"],
+                  )
+                }
+                className={fieldControlClassName}
+              >
+                {["not_required", "pending", "approved", "rejected"].map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {value.replaceAll("_", " ")}
+                    </option>
+                  ),
+                )}
+              </select>
+            )}
+          </Field>
+        </section>
+
+        <Field id="maintenance-resolution" label="Resolution notes">
+          {(control) => (
+            <textarea
+              {...control}
+              value={resolutionNotes}
+              onChange={(event) => setResolutionNotes(event.target.value)}
+              className={`${fieldControlClassName} min-h-24 py-2`}
+              placeholder="Record the completed work, parts used and resident confirmation."
+            />
           )}
         </Field>
-        <div className="flex justify-end">
-          <Button
-            isLoading={pending}
-            disabled={status === request.status}
-            onClick={() => onUpdate(status)}
-          >
-            Save status
+
+        <section>
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+            Activity
+          </h3>
+          {activities.length ? (
+            <ol className="mt-3 space-y-3">
+              {activities.map((activity) => (
+                <li
+                  key={activity.id}
+                  className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <strong className="text-xs uppercase tracking-[0.08em]">
+                      {activity.event_type.replaceAll("_", " ")}
+                    </strong>
+                    <span className="text-xs text-[var(--vms-ink-muted)]">
+                      {formatTimestamp(activity.occurred_at)}
+                    </span>
+                  </div>
+                  {activity.message ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm">
+                      {activity.message}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                    {activity.actor_site_admin?.display_name ||
+                      activity.actor_site_admin?.email ||
+                      activity.actor?.display_name ||
+                      "System"}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : detail.isSuccess ? (
+            <p className="mt-2 text-sm text-[var(--vms-ink-muted)]">
+              No activity has been recorded yet.
+            </p>
+          ) : null}
+        </section>
+
+        <Field id="maintenance-comment" label="Add a comment">
+          {(control) => (
+            <textarea
+              {...control}
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              className={`${fieldControlClassName} min-h-20 py-2`}
+              placeholder="Share an update with the operations team."
+            />
+          )}
+        </Field>
+
+        {error ? (
+          <p role="alert" className="text-sm text-[var(--vms-danger)]">
+            {error}
+          </p>
+        ) : null}
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button type="submit" isLoading={pending}>
+            Save changes
           </Button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
+}
+
+const allowedTransitions: Record<
+  MaintenanceRequest["status"],
+  MaintenanceRequest["status"][]
+> = {
+  open: [
+    "triaged",
+    "assigned",
+    "pending_approval",
+    "in_progress",
+    "resolved",
+    "closed",
+  ],
+  triaged: ["assigned", "pending_approval", "in_progress", "resolved", "closed"],
+  assigned: ["pending_approval", "in_progress", "resolved", "closed"],
+  pending_approval: ["assigned", "in_progress", "resolved", "closed"],
+  in_progress: ["resolved", "closed"],
+  resolved: ["closed"],
+  closed: [],
+};
+
+function transitionAllows(
+  current: MaintenanceRequest["status"],
+  candidate: string,
+) {
+  return allowedTransitions[current].includes(
+    candidate as MaintenanceRequest["status"],
+  );
+}
+
+function toDateTimeInput(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function formatTimestamp(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
 }
 
 function findProperty(

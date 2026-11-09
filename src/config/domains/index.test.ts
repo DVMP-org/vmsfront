@@ -12,7 +12,7 @@ describe("domain experience configuration", () => {
     ]);
     for (const experience of Object.values(domainExperiences)) {
       const routes = experience.navigation.flatMap((group) =>
-        group.items.map((item) => `${item.href}:${item.label}`),
+        group.items.map((item) => item.href),
       );
       expect(new Set(routes).size).toBe(routes.length);
       expect(experience.maintenance.workflow.length).toBeGreaterThan(4);

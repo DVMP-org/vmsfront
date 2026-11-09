@@ -21,14 +21,14 @@ import { ActionCard } from "@/components/ui/ActionCard";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
+import {
+  maintenanceApi,
+  type MaintenanceRequest,
+} from "@/features/maintenance/api";
 import { parseApiError } from "@/lib/error-utils";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
-import {
-  maintenanceStatuses,
-  titleCase,
-  type MaintenanceRequest,
-} from "./contracts";
+import { titleCase } from "./contracts";
 
 export default function ResidentialOverview() {
   const { selectedProperty, contextKey } = useResidentialAccess();
@@ -53,7 +53,8 @@ export default function ResidentialOverview() {
   });
   const maintenance = useQuery({
     queryKey: ["residential", contextKey, "maintenance", placeId, "overview"],
-    queryFn: () => residentialApi.maintenance({}),
+    queryFn: () =>
+      maintenanceApi.list({ page_size: 100, domain: "residential" }),
     enabled: !!placeId,
     retry: false,
   });
@@ -371,7 +372,7 @@ export function maintenanceTone(status: string): StatusTone {
   if (status === "resolved" || status === "closed") return "success";
   if (status === "in_progress" || status === "assigned") return "info";
   if (status === "triaged") return "warning";
-  return maintenanceStatuses.includes(status as never) ? "danger" : "neutral";
+  return ["open", "pending_approval"].includes(status) ? "danger" : "neutral";
 }
 
 export function priorityTone(priority: string): StatusTone {

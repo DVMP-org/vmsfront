@@ -15,7 +15,7 @@ describe("residential module navigation", () => {
       screen.getByRole("navigation", { name: "Residential operations" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Households & leases" }),
+      screen.getByRole("link", { name: "Residents & households" }),
     ).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Units" })).toHaveAttribute(
       "href",
@@ -29,11 +29,14 @@ describe("residential module navigation", () => {
       "/admin/residential/announcements",
     );
     expect(
-      screen.getByRole("link", { name: "Gate & check-in" }),
+      screen.getByRole("link", { name: "Gate & check-in console" }),
     ).toHaveAttribute("href", "/admin/checkpoints");
-    expect(screen.getByRole("link", { name: "Invitations" })).toHaveAttribute(
-      "href",
-      "/admin/invitations",
-    );
+    expect(
+      screen.getByRole("link", { name: "Invitation console" }),
+    ).toHaveAttribute("href", "/admin/invitations");
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 });
