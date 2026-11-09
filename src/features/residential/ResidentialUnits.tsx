@@ -121,16 +121,23 @@ export default function ResidentialUnits() {
       .map((place) => {
         const parent = place.parent_id ? byId.get(place.parent_id) : undefined;
         const residents = relationshipsByPlace.get(place.id) || [];
+        const rootParentId = selectedProperty
+          ? `site:${selectedProperty.id}`
+          : "";
         return {
           ...place,
-          building_id: parent?.id || "",
-          building_name: parent?.name || "Unassigned",
+          building_id: parent?.id || (place.parent_id ? "" : rootParentId),
+          building_name:
+            parent?.name ||
+            (place.parent_id
+              ? "Unknown building"
+              : selectedProperty?.name || "Site root"),
           status: place.is_active ? "active" : "archived",
           occupancy_status: residents.length ? "occupied" : "vacant",
           residents: residents.map((row) => row.display_name).join(", "),
         };
       });
-  }, [allPlaces, relationships.data?.items, scopedPlaces]);
+  }, [allPlaces, relationships.data?.items, scopedPlaces, selectedProperty]);
 
   const toggle = useMutation({
     mutationFn: async (ids: string[]) => {

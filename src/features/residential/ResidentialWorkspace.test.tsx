@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import ResidentialOverview from "./ResidentialOverview";
+import ResidentialOccupancies from "./ResidentialOccupancies";
 import ResidentialUnits from "./ResidentialUnits";
 
 const mocks = vi.hoisted(() => ({
@@ -20,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
   toggle: vi.fn(),
+  createRelationship: vi.fn(),
+  addPerson: vi.fn(),
   profile: {
     effective_permissions: [
       "places.list",
@@ -139,6 +142,10 @@ vi.mock("@/features/properties/api", () => ({
     update: mocks.update,
     toggle: mocks.toggle,
   },
+}));
+
+vi.mock("@/features/people/api", () => ({
+  peopleApi: { add: mocks.addPerson },
 }));
 
 type TreeNode = {
@@ -279,6 +286,12 @@ describe("residential operations", () => {
       total: 1,
     });
     mocks.create.mockResolvedValue(unit());
+    mocks.createRelationship.mockResolvedValue(relationship);
+    mocks.addPerson.mockResolvedValue({
+      assignment_id: "new-relationship",
+      role: "resident",
+      status: "active",
+    });
   });
 
   it("derives the residential summary from units, relationships and requests", async () => {
@@ -329,6 +342,74 @@ describe("residential operations", () => {
         parent_id: "building-a",
         building_type: "apartment",
       }),
+    );
+  });
+
+  it("creates a unit directly under the selected Site when no building exists", async () => {
+    mocks.tree.mockResolvedValue([
+      unit({ id: "unit-a", name: "Unit A", parent_id: null }),
+    ]);
+    mount(<ResidentialUnits />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add unit" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add a residential unit",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Unit name/), {
+      target: { value: "Garden Unit" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Create unit" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.create).toHaveBeenCalledWith({
+        site_id: "site",
+        name: "Garden Unit",
+        kind: "unit",
+        address: "",
+        description: "",
+        building_type: "apartment",
+      }),
+    );
+  });
+
+  it("onboards a new resident directly from Assign household", async () => {
+    mount(<ResidentialOccupancies />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Assign household" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Assign a household relationship",
+    });
+    fireEvent.click(
+      within(dialog).getByRole("radio", { name: "New resident" }),
+    );
+    fireEvent.change(within(dialog).getByLabelText(/^Full name/), {
+      target: { value: "Tunde Resident" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Email address/), {
+      target: { value: "Tunde@Example.test" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Phone number/), {
+      target: { value: "08012345678" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Assign relationship" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.addPerson).toHaveBeenCalledWith(
+        "site",
+        expect.objectContaining({
+          place_id: "unit-4b",
+          display_name: "Tunde Resident",
+          email: "tunde@example.test",
+          phone: "08012345678",
+          kind: "person",
+          role: "resident",
+        }),
+      ),
     );
   });
 
