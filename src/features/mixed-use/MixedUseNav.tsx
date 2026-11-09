@@ -2,11 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Scale, Share2 } from "lucide-react";
+import { Building2, Scale, Share2, Wrench } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const sections = [
+  {
+    href: "/admin/mixed-use",
+    label: "Property overview",
+    icon: Building2,
+  },
+  {
+    href: "/admin/mixed-use/maintenance",
+    label: "Maintenance",
+    icon: Wrench,
+  },
   {
     href: "/admin/mixed-use/facilities",
     label: "Shared facilities",
@@ -28,7 +38,10 @@ export function MixedUseNav() {
     >
       <ul className="flex min-w-max gap-1 px-1">
         {sections.map((section) => {
-          const active = pathname?.startsWith(section.href);
+          const active =
+            section.href === "/admin/mixed-use"
+              ? pathname === section.href
+              : pathname?.startsWith(section.href);
           const Icon = section.icon;
           return (
             <li key={section.href}>

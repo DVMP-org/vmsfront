@@ -1,0 +1,115 @@
+{
+  "domain": "residential",
+  "label": "Residential",
+  "terminology": {
+    "occupants": "Residents & households",
+    "spaces": "Units",
+    "tenancies": "Occupancies",
+    "billing": "Rent & service charges",
+    "maintenance": "Resident maintenance"
+  },
+  "navigation": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "items": [
+        {
+          "label": "Residential overview",
+          "href": "/admin/residential",
+          "icon": "home",
+          "module": "residential"
+        },
+        {
+          "label": "Units",
+          "href": "/admin/residential/units",
+          "icon": "building",
+          "module": "properties"
+        },
+        {
+          "label": "Residents & households",
+          "href": "/admin/residential/occupancies",
+          "icon": "users",
+          "module": "people"
+        }
+      ]
+    },
+    {
+      "id": "leasing",
+      "label": "Leasing & finance",
+      "items": [
+        {
+          "label": "Leases & occupancy",
+          "href": "/admin/residential/occupancies",
+          "icon": "scale",
+          "module": "leases"
+        },
+        {
+          "label": "Rent & service charges",
+          "href": "/admin/residential/finance",
+          "icon": "receipt",
+          "module": "billing"
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "label": "Operations",
+      "items": [
+        {
+          "label": "Resident maintenance",
+          "href": "/admin/residential/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        },
+        {
+          "label": "Visitors & access",
+          "href": "/admin/residential/visitors",
+          "icon": "shield",
+          "module": "access_control"
+        },
+        {
+          "label": "Announcements",
+          "href": "/admin/residential/announcements",
+          "icon": "megaphone",
+          "module": "communication"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Access",
+      "items": [
+        {
+          "label": "Gate & check-in console",
+          "href": "/admin/checkpoints",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitation console",
+          "href": "/admin/invitations",
+          "icon": "ticket",
+          "module": "check_in_out"
+        }
+      ]
+    }
+  ],
+  "dashboard": {
+    "priorities": ["maintenance", "collections", "arrivals", "occupancy"]
+  },
+  "views": {
+    "maintenance": {
+      "columns": ["request", "unit", "priority", "assignee", "status", "updated"],
+      "filters": ["status", "priority", "category", "unit"]
+    },
+    "residents": {
+      "columns": ["person", "unit", "role", "lease", "status", "balance"],
+      "filters": ["role", "unit", "status"]
+    }
+  },
+  "maintenance": {
+    "categories": ["plumbing", "electrical", "appliance", "structural", "common_area"],
+    "workflow": ["reported", "triaged", "assigned", "scheduled", "in_progress", "resolved", "closed"],
+    "requires_access_authorization": true
+  }
+}

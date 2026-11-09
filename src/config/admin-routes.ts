@@ -1,24 +1,32 @@
 import {
   Blocks,
   BriefcaseBusiness,
+  BedDouble,
+  Calculator,
+  CalendarDays,
   DoorOpen,
   History,
   Home,
   MessageSquare,
+  Megaphone,
   Puzzle,
   RadioTower,
   Receipt,
   Scan,
+  TicketCheck,
   Scale,
   Settings2,
   Share2,
+  Sparkles,
   Shield,
   UserCog,
   Users,
+  Wrench,
   Building2,
   type LucideIcon,
 } from "lucide-react";
 import type { ModuleGroup } from "@/features/context/api";
+import { domainExperience } from "@/config/domains";
 export interface AdminRoute {
   href: string;
   label: string;
@@ -117,66 +125,34 @@ export const adminLinks: AdminRoute[] = [
     module: "gates",
     group: "Access",
   },
-  {
-    href: "/admin/hospitality",
-    label: "Guest stays",
-    icon: Building2,
-    permission: "hospitality_stays.list",
-    module: "hospitality",
-    group: "Workflows",
-  },
-  {
-    href: "/admin/residential",
-    label: "Residential operations",
-    icon: Home,
-    permission: "places.list",
-    module: "residential",
-    group: "Workflows",
-  },
-  {
-    href: "/admin/commercial",
-    label: "Commercial operations",
-    icon: BriefcaseBusiness,
-    permission: "places.list",
-    module: "commercial",
-    group: "Workflows",
-  },
-  {
-    href: "/admin/mixed-use/facilities",
-    label: "Shared facilities",
-    icon: Share2,
-    permission: "places.list",
-    module: "shared_facilities",
-    group: "Mixed-use",
-  },
-  {
-    href: "/admin/mixed-use/expenses",
-    label: "Expense allocation",
-    icon: Scale,
-    permission: "charges.show",
-    module: "expense_allocation",
-    group: "Mixed-use",
-  },
-  {
-    href: "/admin/integrations",
-    label: "Integrations",
-    icon: Blocks,
-    permission: "admins.list",
-    group: "Administration",
-  },
-  {
-    href: "/admin/plugins",
-    label: "Plugins",
-    icon: Puzzle,
-    permission: "admins.list",
-    group: "Administration",
-  },
   { href: "/admin/profile", label: "Profile", icon: UserCog, group: "Account" },
 ];
+
+const domainIcons: Record<string, LucideIcon> = {
+  home: Home,
+  building: Building2,
+  users: Users,
+  scale: Scale,
+  receipt: Receipt,
+  wrench: Wrench,
+  shield: Shield,
+  megaphone: Megaphone,
+  briefcase: BriefcaseBusiness,
+  bed: BedDouble,
+  calendar: CalendarDays,
+  sparkles: Sparkles,
+  share: Share2,
+  calculator: Calculator,
+  scan: Scan,
+  ticket: TicketCheck,
+};
+
 export function contextualAdminLinks(
   modules: readonly string[] | undefined,
   moduleGroups: readonly ModuleGroup[] = [],
+  useCase?: string,
 ): AdminRoute[] {
+  const experience = domainExperience(useCase);
   const groupByModule = new Map(
     moduleGroups.flatMap((group, index) =>
       group.modules.map((module) => [module, { ...group, index }] as const),
@@ -188,17 +164,43 @@ export function contextualAdminLinks(
       ? (groupByModule.get(link.module)?.index ?? moduleGroups.length)
       : moduleGroups.length + 1;
   };
-  return adminLinks
+  const configuredLinks: AdminRoute[] = experience
+    ? experience.navigation.flatMap((group) =>
+        group.items.map((item) => ({
+          href: item.href,
+          label: item.label,
+          icon: domainIcons[item.icon] ?? Building2,
+          permission: item.permission,
+          module: item.module,
+          group: group.label,
+        })),
+      )
+    : [];
+  const configuredHrefs = new Set(configuredLinks.map((link) => link.href));
+  const commonLinks = adminLinks.filter(
+    (link) => !configuredHrefs.has(link.href),
+  );
+
+  return [...configuredLinks, ...commonLinks]
     .filter((link) => !link.module || !!modules?.includes(link.module))
     .map((link, index) => ({
       ...link,
-      group: link.module
-        ? ((groupByModule.get(link.module)?.label === "Administration"
-            ? "Settings"
-            : groupByModule.get(link.module)?.label) ?? link.group)
-        : link.group,
+      group: configuredHrefs.has(link.href)
+        ? link.group
+        : link.module
+          ? ((groupByModule.get(link.module)?.label === "Administration"
+              ? "Settings"
+              : groupByModule.get(link.module)?.label) ?? link.group)
+          : link.group,
       index,
     }))
-    .sort((left, right) => rank(left) - rank(right) || left.index - right.index)
+    .sort((left, right) => {
+      if (configuredHrefs.has(left.href) && configuredHrefs.has(right.href)) {
+        return left.index - right.index;
+      }
+      if (configuredHrefs.has(left.href)) return -1;
+      if (configuredHrefs.has(right.href)) return 1;
+      return rank(left) - rank(right) || left.index - right.index;
+    })
     .map(({ index: _index, ...link }) => link);
 }

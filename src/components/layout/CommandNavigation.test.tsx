@@ -36,15 +36,17 @@ describe("command navigation", () => {
     ];
     const commands = permittedCommands(
       role(["*"]),
-      ["charges", "hospitality"],
+      ["charges", "hospitality", "reservations"],
       moduleGroups,
+      false,
+      "hospitality",
     );
     expect(commands.find((entry) => entry.label === "Charges")?.group).toBe(
       "Finance",
     );
-    expect(commands.find((entry) => entry.label === "Guest stays")?.group).toBe(
-      "Hospitality operations",
-    );
+    expect(
+      commands.find((entry) => entry.label === "Reservations & stays")?.group,
+    ).toBe("Front office");
   });
   it("supports the current single-role payload until RBAC union grants land", () => {
     const currentAdmin = {
