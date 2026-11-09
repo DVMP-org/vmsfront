@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   BriefcaseBusiness,
   Building2,
@@ -22,12 +21,9 @@ import {
   type PropertyWorkspace,
   type WorkspaceArea,
 } from "@/features/workspaces/catalog";
-import { propertiesApi } from "@/features/properties/api";
-import { useAdminProfile } from "@/hooks/use-admin";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { parseApiError } from "@/lib/error-utils";
-import { hasAdminPermission } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { ActionCard } from "@/components/ui/ActionCard";
@@ -55,7 +51,6 @@ export function WorkspaceDirectoryPage() {
   const organization = useAppStore((state) => state.organization);
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
   const context = useVerifyToken();
-  const admin = useAdminProfile();
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     null,
   );
@@ -71,32 +66,10 @@ export function WorkspaceDirectoryPage() {
     }
   }, []);
 
-  const adminProfile = admin.isError ? null : admin.data;
-  const canManagePlaces = hasAdminPermission(adminProfile, [
-    "places.list",
-    "place_relationships.create",
-  ]);
-  const managedPlaces = useQuery({
-    queryKey: ["workspace-managed-places", organization?.id],
-    queryFn: () =>
-      propertiesApi.list({
-        page: 1,
-        page_size: 100,
-        is_active: true,
-      }),
-    enabled: !!organization?.id && canManagePlaces,
-    retry: false,
-  });
-
-  const loading =
-    context.isPending ||
-    admin.isPending ||
-    (!!adminProfile && managedPlaces.isPending);
+  const loading = context.isPending;
   const workspaces = buildPropertyWorkspaces({
-    admin: canManagePlaces ? adminProfile : null,
     relationships: context.data?.workspaces || [],
-    managedPlaces: managedPlaces.data?.items || [],
-    managementRole: adminProfile?.role?.name,
+    managedSites: context.data?.managed_sites || [],
   });
   const selectedWorkspace =
     workspaces.find((workspace) => workspace.key === selectedPropertyId) ||
@@ -153,9 +126,7 @@ export function WorkspaceDirectoryPage() {
           <span>
             Role:{" "}
             <span className="font-medium text-[var(--vms-ink)]">
-              {managementRole ||
-                adminProfile?.role?.name ||
-                "Organization member"}
+              {managementRole || "Organization member"}
             </span>
           </span>
           <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />

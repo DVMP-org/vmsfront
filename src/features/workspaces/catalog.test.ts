@@ -42,13 +42,17 @@ describe("workspace catalog", () => {
     const admin = {
       role: { name: "Super Admin", permissions_parsed: ["*"] },
     } as Admin;
-    const cards = buildWorkspaceCards(admin, [
-      relationship("admin", "organization"),
-      relationship("resident", "home"),
-      relationship("tenant", "office"),
-      relationship("employee", "hotel"),
-      relationship("guest_of", "hotel"),
-    ], relationship("admin", "organization").place);
+    const cards = buildWorkspaceCards(
+      admin,
+      [
+        relationship("admin", "organization"),
+        relationship("resident", "home"),
+        relationship("tenant", "office"),
+        relationship("employee", "hotel"),
+        relationship("guest_of", "hotel"),
+      ],
+      relationship("admin", "organization").place,
+    );
 
     expect(cards.map((card) => card.area)).toEqual([
       "management",
@@ -73,17 +77,9 @@ describe("workspace catalog", () => {
     expect(buildWorkspaceCards(admin, [])).toEqual([]);
   });
 
-  it("does not infer management from an admin profile with no grants", () => {
-    const profile = {
-      role: null,
-      roles: [],
-      effective_permissions: ["profile.show"],
-    } as unknown as Admin;
-
+  it("does not infer Site management from organization administration", () => {
     const [workspace] = buildPropertyWorkspaces({
-      admin: profile,
       relationships: [relationship("resident", "home")],
-      managedPlaces: [relationship("admin", "organization").place],
     });
 
     expect(workspace.accesses.map((access) => access.area)).toEqual([
@@ -113,13 +109,13 @@ describe("workspace catalog", () => {
       role: { name: "Super Admin", permissions_parsed: ["*"] },
     } as Admin;
     const workspaces = buildPropertyWorkspaces({
-      admin,
       relationships: [
         relationship("admin", "organization"),
         relationship("resident", "home"),
         relationship("guest_of", "hotel"),
       ],
-      managedPlaces: [relationship("admin", "organization").place],
+      managedSites: [relationship("admin", "organization").place],
+      managementRole: admin.role?.name,
     });
 
     expect(workspaces).toHaveLength(3);
@@ -150,9 +146,9 @@ describe("workspace catalog", () => {
       id: "tenancy",
     };
     const [workspace] = buildPropertyWorkspaces({
-      admin,
       relationships: [main, tenancy],
-      managedPlaces: [main.place],
+      managedSites: [main.place],
+      managementRole: admin.role?.name,
     });
 
     expect(workspace.accesses.map((access) => access.area)).toEqual([
@@ -169,7 +165,6 @@ describe("workspace catalog", () => {
     occupant.place.site_name = "Harbour Court";
 
     const [workspace] = buildPropertyWorkspaces({
-      admin: null,
       relationships: [occupant],
     });
 
