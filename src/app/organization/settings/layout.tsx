@@ -45,6 +45,16 @@ const headings: Record<
     description:
       "Review the organization's plan, invoices and billing configuration.",
   },
+  plugins: {
+    title: "Organization plugins",
+    description:
+      "Install, enable and configure plugins once for every property in this organization.",
+  },
+  integrations: {
+    title: "Organization integrations",
+    description:
+      "Configure organization-wide providers, credentials and shared integration availability.",
+  },
 };
 
 export default function OrganizationSettingsLayout({

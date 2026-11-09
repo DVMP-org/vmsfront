@@ -1,5 +1,5 @@
-import CommercialMaintenance from "@/features/commercial/CommercialMaintenance";
+import { MaintenanceWorkspace } from "@/features/maintenance/MaintenanceWorkspace";
 
 export default function CommercialMaintenancePage() {
-  return <CommercialMaintenance />;
+  return <MaintenanceWorkspace domain="commercial" />;
 }

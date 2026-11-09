@@ -22,7 +22,6 @@ import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
-import { hasAdminPermission } from "@/lib/permissions";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 
 interface HeaderProps {
@@ -113,12 +112,9 @@ export const Header = memo(function Header({
               <CommandNavigation
                 modules={workspaceContext.data?.modules || []}
                 moduleGroups={workspaceContext.data?.module_groups || []}
+                useCase={workspaceContext.data?.effective_use_case}
                 canManage={
-                  !!workspaceContext.data?.management?.is_administrator ||
-                  hasAdminPermission(commandProfile.data, [
-                    "parties.create",
-                    "place_relationships.create",
-                  ])
+                  !!workspaceContext.data?.management?.is_administrator
                 }
                 role={
                   commandProfile.isFetchedAfterMount && !commandProfile.isError

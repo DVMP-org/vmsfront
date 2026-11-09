@@ -22,8 +22,14 @@ describe("OrganizationSettingsTabs", () => {
       "href",
       "/organization/settings/payment",
     );
-    expect(screen.queryByRole("link", { name: "Plugins" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Integrations" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Plugins" })).toHaveAttribute(
+      "href",
+      "/organization/settings/plugins",
+    );
+    expect(screen.getByRole("link", { name: "Integrations" })).toHaveAttribute(
+      "href",
+      "/organization/settings/integrations",
+    );
   });
 
   it("derives the active section from settings paths", () => {

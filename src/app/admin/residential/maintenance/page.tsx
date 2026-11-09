@@ -1,5 +1,5 @@
-import ResidentialMaintenance from "@/features/residential/ResidentialMaintenance";
+import { MaintenanceWorkspace } from "@/features/maintenance/MaintenanceWorkspace";
 
 export default function ResidentialMaintenancePage() {
-  return <ResidentialMaintenance />;
+  return <MaintenanceWorkspace domain="residential" />;
 }

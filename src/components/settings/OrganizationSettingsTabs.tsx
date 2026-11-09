@@ -32,6 +32,16 @@ const sections = [
     label: "Subscription",
     href: "/organization/settings/subscription",
   },
+  {
+    id: "plugins",
+    label: "Plugins",
+    href: "/organization/settings/plugins",
+  },
+  {
+    id: "integrations",
+    label: "Integrations",
+    href: "/organization/settings/integrations",
+  },
 ] as const;
 
 export type OrganizationSettingsSection = (typeof sections)[number]["id"];
@@ -84,6 +94,10 @@ export function organizationSettingsSectionFromPath(
   if (pathname?.startsWith("/organization/settings/mailer")) return "mailer";
   if (pathname?.startsWith("/organization/settings/subscription")) {
     return "subscription";
+  }
+  if (pathname?.startsWith("/organization/settings/plugins")) return "plugins";
+  if (pathname?.startsWith("/organization/settings/integrations")) {
+    return "integrations";
   }
   return "general";
 }

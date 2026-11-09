@@ -1,5 +1,4 @@
 import type { Admin, WorkspaceRelationship } from "@/types";
-import { hasAdminPermission } from "@/lib/permissions";
 
 export type WorkspaceArea = "management" | "occupancy" | "staff" | "guest";
 
@@ -182,23 +181,17 @@ export const workspaceAreaMeta: Record<
 };
 
 export function buildPropertyWorkspaces({
-  admin,
   relationships,
-  managedPlaces = [],
+  managedSites = [],
   managementRole: managementRoleOverride,
 }: {
-  admin: Admin | null | undefined;
   relationships: WorkspaceRelationship[];
-  managedPlaces?: PropertyWorkspacePlace[];
+  managedSites?: PropertyWorkspacePlace[];
   managementRole?: string | null;
 }): PropertyWorkspace[] {
-  const canManagePlaces = hasAdminPermission(admin, [
-    "places.list",
-    "place_relationships.create",
-  ]);
   const byPlace = new Map<string, PropertyWorkspace>();
   const managedPlaceById = new Map(
-    managedPlaces.map((place) => [place.id, place]),
+    managedSites.map((place) => [place.id, place]),
   );
   const hierarchyFor = (place: PropertyWorkspacePlace) => {
     const path: PropertyWorkspacePlace[] = [];
@@ -228,8 +221,7 @@ export function buildPropertyWorkspaces({
     byPlace.set(place.id, workspace);
     return workspace;
   };
-  const managementRole =
-    managementRoleOverride?.trim() || admin?.role?.name || "Administrator";
+  const managementRole = managementRoleOverride?.trim() || "Site administrator";
   const managementAccess = (label: string): PropertyAccess => ({
     area: "management",
     title: "Management console",
@@ -274,11 +266,8 @@ export function buildPropertyWorkspaces({
     });
   }
 
-  if (canManagePlaces) {
-    for (const place of managedPlaces) {
-      if (place.parent_id) continue;
-      addAccess(ensure(place), managementAccess(managementRole));
-    }
+  for (const site of managedSites) {
+    addAccess(ensure(site), managementAccess(managementRole));
   }
 
   const areaOrder: WorkspaceArea[] = [

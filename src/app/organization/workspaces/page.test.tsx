@@ -5,25 +5,6 @@ import { WorkspaceDirectoryPage } from "@/features/workspaces/WorkspaceDirectory
 vi.mock("@/hooks/use-email-verification-guard", () => ({
   useRequireEmailVerification: vi.fn(),
 }));
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({
-    data: {
-      items: [
-        {
-          id: "organization",
-          parent_id: null,
-          name: "Harbour Estate",
-          slug: "harbour-estate",
-          kind: "site",
-          address: "1 Harbour Way",
-          use_case: "mixed_use",
-          is_active: true,
-        },
-      ],
-    },
-    isPending: false,
-  }),
-}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
@@ -38,43 +19,24 @@ vi.mock("@/store/app-store", () => ({
       setSelectedProperty: vi.fn(),
     }),
 }));
-vi.mock("@/hooks/use-admin", () => ({
-  useAdminProfile: () => ({
-    data: { role: { name: "Super Admin" }, effective_permissions: ["*"] },
-    isPending: false,
-    isError: false,
-  }),
-}));
 vi.mock("@/hooks/use-auth", () => ({
   useVerifyToken: () => ({
     data: {
       user: { email: "alex@example.com", name: "Alex Morgan" },
       party: { display_name: "Alex Morgan", email: "alex@example.com" },
-      workspaces: [
+      managed_sites: [
         {
-          id: "admin",
-          organization_id: "org",
-          role: "admin",
-          status: "active",
-          effective_from: null,
-          effective_to: null,
-          created_at: "2026-01-01",
-          updated_at: "2026-01-01",
-          party: {
-            id: "party",
-            kind: "person",
-            display_name: "Alex Morgan",
-            email: "alex@example.com",
-            is_active: true,
-          },
-          place: {
-            id: "organization",
-            name: "Harbour Estate",
-            slug: "harbour-estate",
-            kind: "site",
-            is_active: true,
-          },
+          id: "organization",
+          parent_id: null,
+          name: "Harbour Estate",
+          slug: "harbour-estate",
+          kind: "site",
+          address: "1 Harbour Way",
+          use_case: "mixed_use",
+          is_active: true,
         },
+      ],
+      workspaces: [
         {
           id: "resident",
           organization_id: "org",
@@ -154,7 +116,7 @@ describe("workspaces page", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Management console/ }),
-    ).toHaveTextContent("Super administrator");
+    ).toHaveTextContent("Site Administrator");
     expect(screen.getAllByText("1 Harbour Way").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Apartment A-101/ }));
