@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -84,9 +84,13 @@ describe("SiteConfiguration", () => {
     expect(
       await screen.findByRole("heading", { name: "Harbour Campus" }),
     ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Operational settings" }),
+    );
     expect(screen.getByTestId("site-modules")).toHaveTextContent("site-1:true");
-    expect(screen.getByText("Automatic rotation")).toBeVisible();
-    expect(screen.getByText("Planned")).toBeVisible();
+    expect(
+      screen.getByText(/Plugins and integrations are configured once/),
+    ).toBeVisible();
   });
 
   it("asks the user to select a site instead of guessing a workspace", () => {

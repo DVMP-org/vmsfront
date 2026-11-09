@@ -13,6 +13,7 @@ describe("residential administration routing", () => {
           modules: ["residential"],
         },
       ],
+      "residential",
     );
     expect(enabled.map((link) => link.href)).toContain("/admin/residential");
 
@@ -25,6 +26,7 @@ describe("residential administration routing", () => {
           modules: ["commercial"],
         },
       ],
+      "commercial",
     );
     expect(disabled.map((link) => link.href)).not.toContain(
       "/admin/residential",
@@ -32,10 +34,11 @@ describe("residential administration routing", () => {
   });
 
   it("shows mixed-use facilities and expense allocation only when enabled", () => {
-    const links = contextualAdminLinks([
-      "shared_facilities",
-      "expense_allocation",
-    ]);
+    const links = contextualAdminLinks(
+      ["shared_facilities", "expense_allocation"],
+      [],
+      "mixed_use",
+    );
     expect(links.map((link) => link.href)).toEqual(
       expect.arrayContaining([
         "/admin/mixed-use/facilities",
@@ -43,7 +46,11 @@ describe("residential administration routing", () => {
       ]),
     );
 
-    const disabled = contextualAdminLinks(["residential", "commercial"]);
+    const disabled = contextualAdminLinks(
+      ["residential", "commercial"],
+      [],
+      "residential",
+    );
     expect(disabled.map((link) => link.href)).not.toContain(
       "/admin/mixed-use/facilities",
     );

@@ -113,6 +113,7 @@ export const Header = memo(function Header({
               <CommandNavigation
                 modules={workspaceContext.data?.modules || []}
                 moduleGroups={workspaceContext.data?.module_groups || []}
+                useCase={workspaceContext.data?.effective_use_case}
                 canManage={
                   !!workspaceContext.data?.management?.is_administrator ||
                   hasAdminPermission(commandProfile.data, [

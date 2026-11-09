@@ -13,6 +13,7 @@ import {
 import {
   ArrowUpRight,
   Eye,
+  GitBranch,
   GitGraph,
   Plus,
   Settings,
@@ -25,6 +26,7 @@ import { useAdminGates, useDeleteGate } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { GateFormModal } from "@/components/admin/gate-modals/GateFormModal";
 import { GateOperatorModal } from "@/components/admin/gate-modals/GateOperatorModal";
+import { GateDependencyEditorModal } from "@/components/admin/gate-modals/GateDependencyEditorModal";
 import { GateViewModal } from "@/components/admin/gate-modals/GateViewModal";
 import { GateDependencyModal } from "@/components/admin/gate-modals/GateDependencyModal";
 import { formatFiltersForAPI } from "@/lib/table-utils";
@@ -69,6 +71,7 @@ export default function AdminGatesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
+  const [isDependencyEditorOpen, setIsDependencyEditorOpen] = useState(false);
   const [isDependencyModalOpen, setIsDependencyModalOpen] = useState(false);
   const [gatePendingDelete, setGatePendingDelete] = useState<Gate | null>(null);
 
@@ -172,6 +175,11 @@ export default function AdminGatesPage() {
   const handleToggleAdmin = (gate: Gate) => {
     setSelectedGate(gate);
     setIsOperatorModalOpen(true);
+  };
+
+  const handleDependency = (gate: Gate) => {
+    setSelectedGate(gate);
+    setIsDependencyEditorOpen(true);
   };
 
   const handleDelete = async (gate: Gate) => {
@@ -287,6 +295,14 @@ export default function AdminGatesPage() {
             aria-label={`Assign operator for ${row.name}`}
           >
             <UserPlus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => handleDependency(row)}
+            aria-label={`Configure dependencies for ${row.name}`}
+          >
+            <GitBranch className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -408,6 +424,16 @@ export default function AdminGatesPage() {
           setSelectedGate(null);
         }}
         gate={selectedGate}
+      />
+
+      <GateDependencyEditorModal
+        open={isDependencyEditorOpen}
+        gates={filterOptionsData?.items ?? gates}
+        gate={selectedGate}
+        onClose={() => {
+          setIsDependencyEditorOpen(false);
+          setSelectedGate(null);
+        }}
       />
 
       <GateDependencyModal

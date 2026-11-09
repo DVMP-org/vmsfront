@@ -289,6 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
               ? undefined
               : workspaceContext.data?.modules,
             workspaceContext.data?.module_groups,
+              workspaceContext.data?.effective_use_case,
           );
 
     // Priority for role data: Fresh API Profile > Local Storage Fallback > Auth Store User

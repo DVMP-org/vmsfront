@@ -17,6 +17,7 @@ export function permittedCommands(
   modules?: readonly string[],
   moduleGroups?: readonly ModuleGroup[],
   canManage = false,
+  useCase?: string,
 ): AdminRoute[] {
   const result: AdminRoute[] = [];
   const visit = (routes: AdminRoute[]) =>
@@ -31,7 +32,11 @@ export function permittedCommands(
         result.push(route);
       if (route.children) visit(route.children);
     });
-  visit(modules ? contextualAdminLinks(modules, moduleGroups) : adminLinks);
+  visit(
+    modules
+      ? contextualAdminLinks(modules, moduleGroups, useCase)
+      : adminLinks,
+  );
   return result;
 }
 
@@ -43,6 +48,7 @@ export function CommandNavigation({
   modules,
   moduleGroups = [],
   canManage = false,
+  useCase,
 }: {
   role?: Admin | null;
   modules?: readonly string[];
@@ -50,6 +56,7 @@ export function CommandNavigation({
   contextKey: string;
   navigate: (href: string) => void;
   canManage?: boolean;
+  useCase?: string;
 }) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -58,8 +65,8 @@ export function CommandNavigation({
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const commands = useMemo(
-    () => permittedCommands(role, modules, moduleGroups, canManage),
-    [role, modules, moduleGroups, canManage],
+    () => permittedCommands(role, modules, moduleGroups, canManage, useCase),
+    [role, modules, moduleGroups, canManage, useCase],
   );
   const matches = commands.filter((entry) =>
     entry.label.toLowerCase().includes(query.trim().toLowerCase()),

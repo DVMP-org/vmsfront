@@ -12,11 +12,10 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { useAppStore } from "@/store/app-store";
 import { Gate, CreateGateRequest, UpdateGateRequest } from "@/types";
-import { useCreateGate, useUpdateGate, useAdminGates } from "@/hooks/use-admin";
+import { useCreateGate, useUpdateGate } from "@/hooks/use-admin";
 
 const gateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  dependency_id: z.string().nullable().optional(),
   is_default: z.boolean().optional(),
   slug: z.string().optional(),
   allowed_entry: z.boolean(),
@@ -72,7 +71,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
     resolver: zodResolver(gateSchema),
     defaultValues: {
       name: "",
-      dependency_id: null,
       is_default: false,
       slug: "",
       allowed_entry: true,
@@ -93,7 +91,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
     },
   });
 
-  const watchDependencyId = watch("dependency_id");
   const watchIsDefault = watch("is_default");
   const watchAllowedEntry = watch("allowed_entry");
   const watchAllowedExit = watch("allowed_exit");
@@ -106,7 +103,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
     if (gate) {
       reset({
         name: gate.name,
-        dependency_id: gate.dependency_id,
         is_default: gate.is_default,
         slug: gate.slug,
         allowed_entry: gate.allowed_entry ?? true,
@@ -125,7 +121,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
     } else {
       reset({
         name: "",
-        dependency_id: null,
         is_default: false,
         slug: "",
         allowed_entry: true,
@@ -149,15 +144,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
 
   const createGate = useCreateGate();
   const updateGate = useUpdateGate();
-
-  const { data: gatesData } = useAdminGates({ page: 1, pageSize: 100 });
-
-  const gateOptions = (gatesData?.items || [])
-    .filter((g) => g.id !== gate?.id)
-    .map((g) => ({
-      value: g.id,
-      label: g.name,
-    }));
 
   const onSubmit = async (data: GateFormValues) => {
     setSubmitError(null);
@@ -188,7 +174,7 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
         await createGate.mutateAsync({
           ...gateData,
           place_id: placeId,
-          dependency_id: data.dependency_id ?? null,
+          dependency_id: null,
           is_default: data.is_default,
           access_schedule,
         } as CreateGateRequest);
@@ -211,7 +197,7 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? "Edit gate" : "Create gate"}
-      description="Name the checkpoint and optionally declare a dependency. Operator assignment can be completed now or later."
+      description="Name the checkpoint and configure movement. Dependencies and operator assignment are managed from the Gates register."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-5">
         <FormErrorSummary errors={fieldErrors} />
@@ -244,25 +230,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
             )}
           </Field>
         )}
-
-        <Field
-          id="gate-dependency"
-          label="Dependency gate (optional)"
-          description="Use this when another gate must exist before this one is available."
-        >
-          {() => (
-            <SearchableSelect
-              inputId="gate-dependency"
-              options={gateOptions}
-              isClearable
-              placeholder="Select dependency gate"
-              value={watchDependencyId || undefined}
-              onChange={(value: string | undefined) => {
-                setValue("dependency_id", value || null);
-              }}
-            />
-          )}
-        </Field>
 
         <div className="flex items-center space-x-2">
           <Checkbox

@@ -1,0 +1,103 @@
+{
+  "domain": "hospitality",
+  "label": "Hospitality",
+  "terminology": {
+    "occupants": "Guests",
+    "spaces": "Rooms",
+    "tenancies": "Stays",
+    "billing": "Guest folios",
+    "maintenance": "Room & engineering maintenance"
+  },
+  "navigation": [
+    {
+      "id": "overview",
+      "label": "Front office",
+      "items": [
+        {
+          "label": "Hospitality overview",
+          "href": "/admin/hospitality",
+          "icon": "bed",
+          "module": "hospitality"
+        },
+        {
+          "label": "Reservations & stays",
+          "href": "/admin/hospitality/calendar",
+          "icon": "calendar",
+          "module": "reservations"
+        },
+        {
+          "label": "Rooms",
+          "href": "/admin/hospitality/rooms",
+          "icon": "building",
+          "module": "properties"
+        }
+      ]
+    },
+    {
+      "id": "rooms",
+      "label": "Room operations",
+      "items": [
+        {
+          "label": "Housekeeping & readiness",
+          "href": "/admin/hospitality/housekeeping",
+          "icon": "sparkles",
+          "module": "housekeeping"
+        },
+        {
+          "label": "Room & engineering maintenance",
+          "href": "/admin/hospitality/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "label": "Guest accounting",
+      "items": [
+        {
+          "label": "Guest folios & billing",
+          "href": "/admin/hospitality/billing",
+          "icon": "receipt",
+          "module": "billing"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Access",
+      "items": [
+        {
+          "label": "Gate & check-in console",
+          "href": "/admin/checkpoints",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitation console",
+          "href": "/admin/invitations",
+          "icon": "ticket",
+          "module": "check_in_out"
+        }
+      ]
+    }
+  ],
+  "dashboard": {
+    "priorities": ["arrivals", "departures", "room_readiness", "maintenance", "folio_balance"]
+  },
+  "views": {
+    "stays": {
+      "columns": ["guest", "room", "arrival", "departure", "stay_status", "folio"],
+      "filters": ["stay_status", "room_type", "arrival", "departure"]
+    },
+    "maintenance": {
+      "columns": ["request", "room", "priority", "engineering_owner", "room_status", "status"],
+      "filters": ["priority", "room", "room_status", "status"]
+    }
+  },
+  "maintenance": {
+    "categories": ["guest_defect", "housekeeping", "engineering", "safety", "preventive"],
+    "workflow": ["reported", "triaged", "assigned", "in_progress", "room_out_of_service", "verified", "closed"],
+    "affects_room_availability": true
+  }
+}

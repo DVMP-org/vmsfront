@@ -1,0 +1,109 @@
+{
+  "domain": "mixed_use",
+  "label": "Mixed-use",
+  "terminology": {
+    "occupants": "Occupants & tenancies",
+    "spaces": "Buildings & spaces",
+    "tenancies": "Leases & agreements",
+    "billing": "Consolidated revenue & charges",
+    "maintenance": "Facilities & maintenance"
+  },
+  "navigation": [
+    {
+      "id": "property",
+      "label": "Property",
+      "items": [
+        {
+          "label": "Property overview",
+          "href": "/admin/mixed-use",
+          "icon": "building",
+          "module": "mixed_use"
+        },
+        {
+          "label": "Buildings & spaces",
+          "href": "/admin/properties",
+          "icon": "building",
+          "module": "properties"
+        },
+        {
+          "label": "Occupancy & tenancies",
+          "href": "/admin/people",
+          "icon": "users",
+          "module": "people"
+        }
+      ]
+    },
+    {
+      "id": "leases",
+      "label": "Leasing & revenue",
+      "items": [
+        {
+          "label": "Leases & agreements",
+          "href": "/admin/commercial/tenants",
+          "icon": "scale",
+          "module": "leases"
+        },
+        {
+          "label": "Revenue & charges",
+          "href": "/admin/charges",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Shared expense allocation",
+          "href": "/admin/mixed-use/expenses",
+          "icon": "calculator",
+          "module": "expense_allocation"
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "label": "Operations",
+      "items": [
+        {
+          "label": "Facilities & maintenance",
+          "href": "/admin/mixed-use/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        },
+        {
+          "label": "Shared facilities",
+          "href": "/admin/mixed-use/facilities",
+          "icon": "share",
+          "module": "shared_facilities"
+        },
+        {
+          "label": "Gate & check-in console",
+          "href": "/admin/checkpoints",
+          "icon": "scan",
+          "module": "access_control"
+        },
+        {
+          "label": "Invitation console",
+          "href": "/admin/invitations",
+          "icon": "ticket",
+          "module": "access_control"
+        }
+      ]
+    }
+  ],
+  "dashboard": {
+    "priorities": ["mixed_occupancy", "collections", "maintenance", "shared_facilities", "access"]
+  },
+  "views": {
+    "spaces": {
+      "columns": ["space", "zone", "domain", "occupant", "agreement", "status", "balance"],
+      "filters": ["zone", "domain", "occupancy", "status"]
+    },
+    "maintenance": {
+      "columns": ["request", "space_or_zone", "domain", "priority", "owner", "allocation", "status"],
+      "filters": ["zone", "domain", "priority", "owner", "status"]
+    }
+  },
+  "maintenance": {
+    "categories": ["shared_infrastructure", "building_system", "residential", "commercial", "hospitality", "common_area"],
+    "workflow": ["reported", "triage", "domain_classification", "assigned", "scheduled", "in_progress", "verified", "closed"],
+    "requires_expense_allocation": true
+  }
+}

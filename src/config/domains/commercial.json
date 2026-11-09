@@ -1,0 +1,109 @@
+{
+  "domain": "commercial",
+  "label": "Commercial",
+  "terminology": {
+    "occupants": "Business tenants & members",
+    "spaces": "Spaces",
+    "tenancies": "Leases",
+    "billing": "Rent, recoveries & collections",
+    "maintenance": "Facilities & work orders"
+  },
+  "navigation": [
+    {
+      "id": "overview",
+      "label": "Portfolio",
+      "items": [
+        {
+          "label": "Commercial overview",
+          "href": "/admin/commercial",
+          "icon": "briefcase",
+          "module": "commercial"
+        },
+        {
+          "label": "Spaces & inventory",
+          "href": "/admin/commercial/inventory",
+          "icon": "building",
+          "module": "properties"
+        },
+        {
+          "label": "Business tenants",
+          "href": "/admin/commercial/tenants",
+          "icon": "users",
+          "module": "people"
+        }
+      ]
+    },
+    {
+      "id": "leasing",
+      "label": "Lease administration",
+      "items": [
+        {
+          "label": "Active & expiring leases",
+          "href": "/admin/commercial/tenants",
+          "icon": "scale",
+          "module": "leases"
+        },
+        {
+          "label": "Collections & recoveries",
+          "href": "/admin/commercial/finance",
+          "icon": "receipt",
+          "module": "billing"
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "label": "Building operations",
+      "items": [
+        {
+          "label": "Facilities & maintenance",
+          "href": "/admin/commercial/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        },
+        {
+          "label": "Staff & contractor access",
+          "href": "/admin/commercial/access",
+          "icon": "shield",
+          "module": "access_control"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Access",
+      "items": [
+        {
+          "label": "Gate & check-in console",
+          "href": "/admin/checkpoints",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitation console",
+          "href": "/admin/invitations",
+          "icon": "ticket",
+          "module": "check_in_out"
+        }
+      ]
+    }
+  ],
+  "dashboard": {
+    "priorities": ["lease_expiry", "collections", "maintenance_sla", "occupancy"]
+  },
+  "views": {
+    "spaces": {
+      "columns": ["space", "type", "tenant", "lease_end", "occupancy", "balance"],
+      "filters": ["type", "occupancy", "lease_end", "status"]
+    },
+    "maintenance": {
+      "columns": ["work_order", "space", "system", "priority", "contractor", "sla", "status"],
+      "filters": ["priority", "system", "assignment", "sla", "status"]
+    }
+  },
+  "maintenance": {
+    "categories": ["hvac", "electrical", "plumbing", "fit_out", "equipment", "common_area"],
+    "workflow": ["reported", "triage", "approval", "assigned", "scheduled", "in_progress", "verified", "closed"],
+    "requires_contractor_permit": true
+  }
+}
