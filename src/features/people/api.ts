@@ -37,7 +37,11 @@ export interface PlacePeople {
     created_at: string;
     updated_at: string;
   };
-  effective_use_case: "residential" | "commercial" | "hospitality" | "mixed_use";
+  effective_use_case:
+    | "residential"
+    | "commercial"
+    | "hospitality"
+    | "mixed_use";
   people: PlacePerson[];
 }
 
@@ -48,6 +52,8 @@ export interface AddPlacePersonInput {
   phone?: string;
   kind: "person";
   role?: string;
+  effective_from?: string | null;
+  effective_to?: string | null;
 }
 
 export interface AddPlacePersonResponse {
@@ -55,7 +61,10 @@ export interface AddPlacePersonResponse {
   role: string;
   is_super_admin: boolean;
   status: string;
-  party: PlacePerson["party"] & { organization_id: string; user_id: string | null };
+  party: PlacePerson["party"] & {
+    organization_id: string;
+    user_id: string | null;
+  };
   place: PlacePerson["place"];
   onboarding_email: "queued" | "not_required";
   user_created: boolean;
@@ -75,11 +84,7 @@ export const peopleApi = {
         body,
       )
     ).data,
-  remove: async (
-    siteId: string,
-    source: "occupancy",
-    assignmentId: string,
-  ) =>
+  remove: async (siteId: string, source: "occupancy", assignmentId: string) =>
     (
       await apiClient.delete<
         ApiResponse<{

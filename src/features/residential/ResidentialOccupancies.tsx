@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   CircleSlash2,
   Plus,
-  UserRoundPlus,
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -29,6 +28,7 @@ import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
 import type { WorkspaceRelationship } from "@/types";
+import { peopleApi } from "@/features/people/api";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
 import { occupancyRoles, titleCase } from "./contracts";
@@ -332,12 +332,6 @@ export default function ResidentialOccupancies() {
               access can follow the same Party and unit.
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/people">
-              <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
-              Add a new person
-            </Link>
-          </Button>
         </div>
         <DataTable
           data={rows}
@@ -388,6 +382,7 @@ export default function ResidentialOccupancies() {
       <AssignHouseholdModal
         key={`${createOpen}:${units[0]?.id || "none"}`}
         open={createOpen}
+        siteId={placeId}
         units={units}
         contextKey={contextKey}
         onClose={() => setCreateOpen(false)}
@@ -404,35 +399,56 @@ export default function ResidentialOccupancies() {
 
 function AssignHouseholdModal({
   open,
+  siteId,
   units,
   contextKey,
   onClose,
   onSaved,
 }: {
   open: boolean;
+  siteId: string;
   units: Array<{ id: string; name: string }>;
   contextKey: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [unitId, setUnitId] = useState(units[0]?.id || "");
+  const [personMode, setPersonMode] = useState<"existing" | "new">("existing");
   const [party, setParty] = useState<FacetItem | null>(null);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState("resident");
   const [effectiveFrom, setEffectiveFrom] = useState("");
   const [effectiveTo, setEffectiveTo] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () =>
-      residentialApi.createRelationship({
-        party_id: party!.value,
-        place_id: unitId,
-        role,
-        status: "active",
+    mutationFn: async () => {
+      const effective = {
         effective_from: effectiveFrom
           ? new Date(effectiveFrom).toISOString()
           : null,
         effective_to: effectiveTo ? new Date(effectiveTo).toISOString() : null,
-      }),
+      };
+      if (personMode === "new") {
+        return peopleApi.add(siteId, {
+          place_id: unitId,
+          display_name: displayName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim() || undefined,
+          kind: "person",
+          role,
+          ...effective,
+        });
+      }
+      return residentialApi.createRelationship({
+        party_id: party!.value,
+        place_id: unitId,
+        role,
+        status: "active",
+        ...effective,
+      });
+    },
     onSuccess: () => {
       toast.success("Household relationship created.");
       onSaved();
@@ -443,8 +459,19 @@ function AssignHouseholdModal({
   function submit(event: FormEvent) {
     event.preventDefault();
     const next: Record<string, string> = {};
-    if (!unitId) next.unit_id = "Choose a unit.";
-    if (!party) next.party = "Choose the person joining this unit.";
+    if (!unitId) next["household-unit"] = "Choose a unit.";
+    if (personMode === "existing" && !party) {
+      next.party = "Choose the person joining this unit.";
+    }
+    if (personMode === "new" && !displayName.trim()) {
+      next["resident-name"] = "Enter the resident's full name.";
+    }
+    if (
+      personMode === "new" &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    ) {
+      next["resident-email"] = "Enter a valid email address.";
+    }
     if (effectiveFrom && effectiveTo && effectiveTo <= effectiveFrom) {
       next.effective_to = "The end date must be after the start date.";
     }
@@ -458,7 +485,7 @@ function AssignHouseholdModal({
       isOpen={open}
       onClose={onClose}
       title="Assign a household relationship"
-      description="Add an existing Party to a unit. Create a new person from the People directory first if they do not appear here."
+      description="Attach an existing Party or onboard a new resident directly to this unit."
       size="md"
     >
       <form className="space-y-4" onSubmit={submit} noValidate>
@@ -474,7 +501,12 @@ function AssignHouseholdModal({
           </div>
         ) : null}
         <FormErrorSummary errors={errors} />
-        <Field id="household-unit" label="Unit" required error={errors.unit_id}>
+        <Field
+          id="household-unit"
+          label="Unit"
+          required
+          error={errors["household-unit"]}
+        >
           {(control) => (
             <select
               {...control}
@@ -490,7 +522,35 @@ function AssignHouseholdModal({
             </select>
           )}
         </Field>
-        <div>
+        <fieldset>
+          <legend className="text-sm font-semibold">Resident</legend>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {(
+              [
+                ["existing", "Existing Party"],
+                ["new", "New resident"],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-sm font-medium"
+              >
+                <input
+                  type="radio"
+                  name="resident-mode"
+                  value={value}
+                  checked={personMode === value}
+                  onChange={() => {
+                    setPersonMode(value);
+                    setErrors({});
+                  }}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {personMode === "existing" ? (
           <FacetPicker
             facet="parties"
             kind="person"
@@ -500,7 +560,57 @@ function AssignHouseholdModal({
             contextKey={contextKey}
             error={errors.party}
           />
-        </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              id="resident-name"
+              label="Full name"
+              required
+              error={errors["resident-name"]}
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  className={fieldControlClassName}
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  autoComplete="name"
+                />
+              )}
+            </Field>
+            <Field
+              id="resident-email"
+              label="Email address"
+              required
+              error={errors["resident-email"]}
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  type="email"
+                  inputMode="email"
+                  className={fieldControlClassName}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                />
+              )}
+            </Field>
+            <Field id="resident-phone" label="Phone number">
+              {(control) => (
+                <input
+                  {...control}
+                  type="tel"
+                  inputMode="tel"
+                  className={fieldControlClassName}
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  autoComplete="tel"
+                />
+              )}
+            </Field>
+          </div>
+        )}
         <Field id="household-role" label="Relationship" required>
           {(control) => (
             <select
