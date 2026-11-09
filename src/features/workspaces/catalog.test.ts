@@ -73,6 +73,24 @@ describe("workspace catalog", () => {
     expect(buildWorkspaceCards(admin, [])).toEqual([]);
   });
 
+  it("does not infer management from an admin profile with no grants", () => {
+    const profile = {
+      role: null,
+      roles: [],
+      effective_permissions: ["profile.show"],
+    } as unknown as Admin;
+
+    const [workspace] = buildPropertyWorkspaces({
+      admin: profile,
+      relationships: [relationship("resident", "home")],
+      managedPlaces: [relationship("admin", "organization").place],
+    });
+
+    expect(workspace.accesses.map((access) => access.area)).toEqual([
+      "occupancy",
+    ]);
+  });
+
   it("requires a selected place and place-admin authority for the dashboard", () => {
     expect(canOpenManagementDashboard(null, true)).toBe(false);
     expect(canOpenManagementDashboard("place", false)).toBe(false);

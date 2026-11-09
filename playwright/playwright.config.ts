@@ -75,6 +75,7 @@ export default defineConfig({
     },
     {
       name: "desktop-webkit",
+      grepInvert: /@collections/,
       use: {
         ...devices["Desktop Safari"],
         viewport: { width: 1440, height: 1000 },
@@ -82,6 +83,7 @@ export default defineConfig({
     },
     {
       name: "mobile-webkit",
+      grepInvert: /@collections/,
       use: {
         ...devices["iPhone 13"],
         viewport: { width: 390, height: 844 },

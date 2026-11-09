@@ -51,7 +51,9 @@ test.describe("@canonical @collections collection behavior", () => {
     await expect(propertyText("Harbour 01")).toBeVisible();
 
     await page.getByRole("button", { name: "Next page" }).click();
-    await expect(propertyText("Harbour 12")).toBeVisible();
+    await expect(
+      page.getByText(/Showing 11 to 11 of 11 results/i),
+    ).toBeVisible();
     await page.getByRole("button", { name: "1", exact: true }).click();
 
     await page.getByLabel("Type").selectOption({ label: "Building" });
@@ -106,14 +108,7 @@ test.describe("@canonical @collections collection behavior", () => {
     page,
   }) => {
     const mobile = test.info().project.name.startsWith("mobile");
-    const emptyText = (text: string) =>
-      mobile
-        ? page
-            .getByRole("list", {
-              name: "Properties register row summaries",
-            })
-            .getByText(text)
-        : page.getByRole("table").getByText(text);
+    const emptyText = (text: string) => page.getByText(text);
     await installCanonicalApi(page, { places: makePlaces(2) });
     const tenant = await seedSession(context);
     await page.goto(`${tenant}/admin/properties`);

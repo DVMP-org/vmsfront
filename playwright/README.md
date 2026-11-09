@@ -55,16 +55,15 @@ or deactivate it.
 - desktop WebKit, 1440×1000
 - mobile WebKit, 390×844
 
-## Evidence
+## Generated artifacts
 
-Tests attach screenshots and write reviewable captures to
-`playwright/evidence/canonical/`. Failed runs retain traces, screenshots and
-videos in `playwright/test-results/`. CI uploads all evidence and the HTML
-report.
+Successful E2E runs do not commit screenshots. Failed runs retain traces,
+screenshots and videos in ignored Playwright artifact directories. CI uploads
+the HTML report and failure artifacts.
 
-The initial collection slice is captured in
-`evidence/canonical/summary.json`: 20/20 tests passed across desktop/mobile
-Chromium and WebKit.
+Playwright is intentionally not part of repository CI. Run the suite directly
+when working on browser behavior; the application CI remains based on lint,
+typecheck, unit tests and production build.
 
 ## Authoring rules
 

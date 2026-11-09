@@ -151,9 +151,14 @@ function paginated(items: Json[], page = 1, pageSize = 25) {
 }
 
 async function fulfill(route: Route, data: unknown, status = 200) {
+  const origin = route.request().headers().origin;
   await route.fulfill({
     status,
     contentType: "application/json",
+    headers: {
+      ...(origin ? { "access-control-allow-origin": origin } : {}),
+      "access-control-allow-credentials": "true",
+    },
     body: body(data),
   });
 }

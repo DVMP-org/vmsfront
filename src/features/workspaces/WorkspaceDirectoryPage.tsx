@@ -27,6 +27,7 @@ import { useAdminProfile } from "@/hooks/use-admin";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { parseApiError } from "@/lib/error-utils";
+import { hasAdminPermission } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { ActionCard } from "@/components/ui/ActionCard";
@@ -71,6 +72,10 @@ export function WorkspaceDirectoryPage() {
   }, []);
 
   const adminProfile = admin.isError ? null : admin.data;
+  const canManagePlaces = hasAdminPermission(adminProfile, [
+    "places.list",
+    "place_relationships.create",
+  ]);
   const managedPlaces = useQuery({
     queryKey: ["workspace-managed-places", organization?.id],
     queryFn: () =>
@@ -79,7 +84,7 @@ export function WorkspaceDirectoryPage() {
         page_size: 100,
         is_active: true,
       }),
-    enabled: !!organization?.id && !!adminProfile,
+    enabled: !!organization?.id && canManagePlaces,
     retry: false,
   });
 
@@ -88,7 +93,7 @@ export function WorkspaceDirectoryPage() {
     admin.isPending ||
     (!!adminProfile && managedPlaces.isPending);
   const workspaces = buildPropertyWorkspaces({
-    admin: adminProfile,
+    admin: canManagePlaces ? adminProfile : null,
     relationships: context.data?.workspaces || [],
     managedPlaces: managedPlaces.data?.items || [],
   });
