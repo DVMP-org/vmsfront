@@ -153,10 +153,16 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           </Link>
         }
         eyebrow={`Invitation / ${item.code}`}
-        title={guestNames(item)}
+        title={
+          item.guests.length > 1
+            ? `Group invitation · ${item.guests.length} visitors`
+            : guestNames(item)
+        }
         description={
           item.purpose ||
-          "Review the host, destination, validity and checkpoint trail for this invitation."
+          (item.guests.length > 1
+            ? item.guests.map((guest) => guest.display_name_snapshot).join(", ")
+            : "Review the host, destination, validity and checkpoint trail for this invitation.")
         }
         metadata={
           <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--vms-ink-muted)]">

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,10 +56,41 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mocks.searchParams,
 }));
 
+vi.mock("@/components/facets/FacetPicker", () => ({
+  FacetPicker: ({
+    label,
+    onChange,
+  }: {
+    label: string;
+    onChange: (item: {
+      value: string;
+      label: string;
+      disabled: boolean;
+      meta: { kind: string; user_linked: boolean };
+    }) => void;
+  }) => (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={() =>
+        onChange({
+          value: label.startsWith("Host") ? "host" : "unit",
+          label: label.startsWith("Host") ? "Alex Morgan" : "Apartment A-101",
+          disabled: false,
+          meta: { kind: "person", user_linked: true },
+        })
+      }
+    >
+      {label}
+    </button>
+  ),
+}));
+
 vi.mock("./api", () => ({
   invitationApprovalsApi: {
     list: vi.fn(),
     get: vi.fn(),
+    create: vi.fn(),
     approve: vi.fn(),
     decline: vi.fn(),
     revoke: vi.fn(),
@@ -139,6 +176,7 @@ describe("invitation approvals", () => {
       effective_permissions: [
         "visit_authorizations.list",
         "visit_authorizations.show",
+        "visit_authorizations.create",
         "visit_authorizations.approve",
         "visit_authorizations.decline",
         "visit_authorizations.revoke",
@@ -171,6 +209,7 @@ describe("invitation approvals", () => {
       ...invitation,
       status: "approved",
     });
+    vi.mocked(invitationApprovalsApi.create).mockResolvedValue(invitation);
     vi.mocked(invitationApprovalsApi.decline).mockResolvedValue({
       ...invitation,
       status: "declined",
@@ -200,7 +239,7 @@ describe("invitation approvals", () => {
     renderWithClient(<InvitationApprovals />);
     await screen.findAllByText("Ada Visitor");
 
-    fireEvent.click(screen.getByRole("button", { name: "Approved" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Approved/ }));
     expect(mocks.replace).toHaveBeenCalledWith(
       "/admin/invitations?status=approved",
       { scroll: false },
@@ -259,5 +298,92 @@ describe("invitation approvals", () => {
 
     expect(await screen.findByText("entry allowed")).toBeInTheDocument();
     expect(screen.getByText(/valid_authorization/)).toBeInTheDocument();
+  });
+
+  it("renders a group authorization as one row and lists every visitor in detail", async () => {
+    const group = {
+      ...invitation,
+      id: "group-invite",
+      code: "VISIT-GROUP",
+      guests: [
+        invitation.guests[0],
+        {
+          ...invitation.guests[0],
+          id: "guest-2",
+          display_name_snapshot: "Bola Visitor",
+          suffix: "002",
+        },
+        {
+          ...invitation.guests[0],
+          id: "guest-3",
+          display_name_snapshot: "Chidi Visitor",
+          suffix: "003",
+        },
+      ],
+    };
+    vi.mocked(invitationApprovalsApi.list).mockResolvedValue({
+      items: [group],
+      total: 1,
+      page: 1,
+      page_size: 25,
+      total_pages: 1,
+    });
+    vi.mocked(invitationApprovalsApi.get).mockResolvedValue(group);
+
+    const register = renderWithClient(<InvitationApprovals />);
+    expect(await screen.findByText("Group · 3 visitors")).toBeInTheDocument();
+    expect(screen.getAllByText("VISIT-GROUP")).toHaveLength(2);
+    expect(
+      screen.getByText("Ada Visitor, Bola Visitor, Chidi Visitor"),
+    ).toBeInTheDocument();
+    register.unmount();
+
+    renderWithClient(<InvitationDetail invitationId="group-invite" />);
+    expect(await screen.findByText("Bola Visitor")).toBeInTheDocument();
+    expect(screen.getByText("Chidi Visitor")).toBeInTheDocument();
+    expect(screen.getByText("Group suffix 003")).toBeInTheDocument();
+  });
+
+  it("creates one invitation containing every visitor in a group drawer", async () => {
+    renderWithClient(<InvitationApprovals />);
+    await screen.findAllByText("Ada Visitor");
+
+    fireEvent.click(screen.getByRole("button", { name: "Create invitation" }));
+    const drawer = await screen.findByRole("dialog", {
+      name: "New invitation",
+    });
+    fireEvent.click(within(drawer).getByRole("radio", { name: "Group" }));
+    fireEvent.click(within(drawer).getByRole("button", { name: "Host Party" }));
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Destination Place" }),
+    );
+    fireEvent.change(within(drawer).getByLabelText(/^Visitor full name/), {
+      target: { value: "Ada Visitor" },
+    });
+    fireEvent.change(within(drawer).getByLabelText(/^Visitor 2/), {
+      target: { value: "Bola Visitor" },
+    });
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: /Create group pass/ }),
+    );
+
+    await waitFor(() =>
+      expect(invitationApprovalsApi.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host_party_id: "host",
+          destination_place_id: "unit",
+          guests: [
+            expect.objectContaining({
+              display_name: "Ada Visitor",
+              suffix: "001",
+            }),
+            expect.objectContaining({
+              display_name: "Bola Visitor",
+              suffix: "002",
+            }),
+          ],
+        }),
+      ),
+    );
   });
 });

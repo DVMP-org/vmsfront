@@ -20,19 +20,19 @@
           "module": "residential"
         },
         {
-          "label": "Units",
+          "label": "Residencies",
           "href": "/admin/residential/units",
           "icon": "building",
           "module": "properties",
           "children": [
             {
-              "label": "Unit directory",
+              "label": "Residency directory",
               "href": "/admin/residential/units",
               "icon": "building",
               "module": "properties"
             },
             {
-              "label": "Place groups",
+              "label": "Residency group",
               "href": "/admin/place-groups",
               "icon": "layers",
               "module": "properties"
@@ -52,7 +52,7 @@
       "label": "Finance",
       "items": [
         {
-          "label": "Rent & service charges",
+          "label": "Bills & collections",
           "href": "/admin/charges",
           "icon": "receipt",
           "module": "charges",
@@ -68,12 +68,6 @@
               "href": "/admin/residential/finance",
               "icon": "calculator",
               "module": "charges"
-            },
-            {
-              "label": "Place groups",
-              "href": "/admin/place-groups",
-              "icon": "layers",
-              "module": "properties"
             }
           ]
         }
@@ -84,7 +78,7 @@
       "label": "Operations",
       "items": [
         {
-          "label": "Resident maintenance",
+          "label": "Maintenance",
           "href": "/admin/residential/maintenance",
           "icon": "wrench",
           "module": "maintenance"
