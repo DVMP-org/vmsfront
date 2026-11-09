@@ -1,5 +1,6 @@
 import {
   Blocks,
+  BriefcaseBusiness,
   DoorOpen,
   Home,
   MessageSquare,
@@ -112,6 +113,14 @@ export const adminLinks: AdminRoute[] = [
     icon: Home,
     permission: "places.list",
     module: "residential",
+    group: "Workflows",
+  },
+  {
+    href: "/admin/commercial",
+    label: "Commercial operations",
+    icon: BriefcaseBusiness,
+    permission: "places.list",
+    module: "commercial",
     group: "Workflows",
   },
   {
