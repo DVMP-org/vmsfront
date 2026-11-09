@@ -50,6 +50,26 @@ vi.mock("@/hooks/use-auth", () => ({
     data: {
       user: { email: "alex@example.com", name: "Alex Morgan" },
       party: { display_name: "Alex Morgan", email: "alex@example.com" },
+      site_workspaces: [
+        {
+          assignment_id: "site-admin",
+          role: "site_admin",
+          site: {
+            id: "organization",
+            organization_id: "org",
+            parent_site_id: null,
+            name: "Harbour Estate",
+            slug: "harbour-estate",
+            use_case: "mixed_use",
+            description: null,
+            address: "1 Harbour Way",
+            is_active: true,
+            created_at: "2026-01-01",
+            updated_at: "2026-01-01",
+          },
+          effective_permissions: ["*"],
+        },
+      ],
       workspaces: [
         {
           id: "admin",
@@ -155,12 +175,12 @@ describe("workspaces page", () => {
     expect(
       screen.getByRole("button", { name: /Management console/ }),
     ).toHaveTextContent("Super administrator");
-    expect(screen.getAllByText("1 Harbour Way").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Harbour Estate").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Apartment A-101/ }));
     expect(
       screen.getByRole("heading", {
-        name: "Harbour Estate - Apartment A-101",
+        name: "Apartment A-101",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Resident workspace")).toBeInTheDocument();

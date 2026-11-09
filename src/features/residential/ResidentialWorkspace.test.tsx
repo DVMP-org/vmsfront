@@ -304,6 +304,7 @@ describe("residential operations", () => {
 
     await waitFor(() =>
       expect(mocks.create).toHaveBeenCalledWith({
+        site_id: "site",
         name: "Apartment 5C",
         kind: "unit",
         address: "14 Harbour Road",

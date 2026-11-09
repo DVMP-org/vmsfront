@@ -115,11 +115,24 @@ describe("workspace catalog", () => {
     const workspaces = buildPropertyWorkspaces({
       admin,
       relationships: [
-        relationship("admin", "organization"),
         relationship("resident", "home"),
         relationship("guest_of", "hotel"),
       ],
-      managedPlaces: [relationship("admin", "organization").place],
+      managedSites: [
+        {
+          assignment_id: "site-admin",
+          role: "site_admin",
+          site: {
+            id: "organization",
+            name: "Harbour Estate",
+            slug: "harbour-estate",
+            parent_site_id: null,
+            is_active: true,
+            use_case: "mixed_use",
+          },
+          effective_permissions: ["*"],
+        },
+      ],
     });
 
     expect(workspaces).toHaveLength(3);
@@ -144,15 +157,28 @@ describe("workspace catalog", () => {
     const admin = {
       role: { name: "Estate Manager", permissions_parsed: [] },
     } as Admin;
-    const main = relationship("admin", "office");
     const tenancy = {
       ...relationship("tenant", "office"),
       id: "tenancy",
     };
     const [workspace] = buildPropertyWorkspaces({
       admin,
-      relationships: [main, tenancy],
-      managedPlaces: [main.place],
+      relationships: [tenancy],
+      managedSites: [
+        {
+          assignment_id: "site-admin",
+          role: "site_admin",
+          site: {
+            id: "office",
+            name: "Harbour Offices",
+            slug: "harbour-offices",
+            parent_site_id: null,
+            is_active: true,
+            use_case: "commercial",
+          },
+          effective_permissions: ["*"],
+        },
+      ],
     });
 
     expect(workspace.accesses.map((access) => access.area)).toEqual([

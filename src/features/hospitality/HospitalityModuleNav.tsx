@@ -8,6 +8,8 @@ import {
   ClipboardCheck,
   ConciergeBell,
   ReceiptText,
+  ScanLine,
+  Ticket,
   Wrench,
 } from "lucide-react";
 
@@ -41,6 +43,8 @@ const links = [
     label: "Maintenance",
     icon: Wrench,
   },
+  { href: "/admin/checkpoints", label: "Gate & check-in", icon: ScanLine },
+  { href: "/admin/invitations", label: "Invitations", icon: Ticket },
 ] as const;
 
 export function HospitalityModuleNav() {

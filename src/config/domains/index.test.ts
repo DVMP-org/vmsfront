@@ -25,9 +25,23 @@ describe("domain experience configuration", () => {
       "Property",
       "Leasing & revenue",
       "Operations",
+      "Access",
     ]);
     expect(mixedUse.navigation.flatMap((group) => group.label)).not.toContain(
       "Residential operations",
     );
+  });
+
+  it("keeps gate and invitation consoles as first-level Access workflows", () => {
+    for (const experience of Object.values(domainExperiences)) {
+      const access = experience.navigation.find(
+        (group) => group.id === "access",
+      );
+      expect(access?.label).toBe("Access");
+      expect(access?.items.map((item) => item.href)).toEqual([
+        "/admin/checkpoints",
+        "/admin/invitations",
+      ]);
+    }
   });
 });

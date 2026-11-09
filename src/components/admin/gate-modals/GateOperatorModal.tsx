@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/form/Field";
 import { Modal } from "@/components/ui/Modal";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { checkpointsApi } from "@/features/checkpoints/api";
-import { peopleApi } from "@/features/people/api";
+import { managersApi } from "@/features/managers/api";
 import { parseApiError } from "@/lib/error-utils";
 import type { Gate } from "@/types";
 
@@ -24,18 +24,18 @@ export function GateOperatorModal({
   const queryClient = useQueryClient();
   const [selectedPartyId, setSelectedPartyId] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const placeId = gate?.place_id;
+  const siteId = gate?.site_id;
 
-  const people = useQuery({
-    queryKey: ["place-people", placeId],
-    queryFn: () => peopleApi.get(placeId!),
-    enabled: open && !!placeId,
+  const managers = useQuery({
+    queryKey: ["site-managers", siteId],
+    queryFn: () => managersApi.list(siteId!),
+    enabled: open && !!siteId,
     retry: false,
   });
   const assignments = useQuery({
-    queryKey: ["checkpoint-operators", placeId],
-    queryFn: () => checkpointsApi.operators(placeId),
-    enabled: open && !!placeId,
+    queryKey: ["checkpoint-operators", siteId],
+    queryFn: () => checkpointsApi.operators(siteId),
+    enabled: open && !!siteId,
     retry: false,
   });
 
@@ -48,11 +48,11 @@ export function GateOperatorModal({
   );
   const administratorOptions = useMemo(
     () =>
-      (people.data?.administrators ?? []).map((administrator) => ({
-        value: administrator.party.id,
-        label: administrator.party.display_name,
+      (managers.data?.managers ?? []).map((manager) => ({
+        value: manager.party.id,
+        label: manager.party.display_name,
       })),
-    [people.data?.administrators],
+    [managers.data?.managers],
   );
   const effectivePartyId = selectedPartyId || currentAssignment?.party.id || "";
   const assign = useMutation({
@@ -61,7 +61,7 @@ export function GateOperatorModal({
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["checkpoint-operators", placeId],
+          queryKey: ["checkpoint-operators", siteId],
         }),
         queryClient.invalidateQueries({ queryKey: ["admin", "gates"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "gate"] }),
@@ -88,7 +88,7 @@ export function GateOperatorModal({
           description="Only active administrators of this site can be assigned."
           required
           error={
-            people.isError ? parseApiError(people.error).message : undefined
+            managers.isError ? parseApiError(managers.error).message : undefined
           }
         >
           {() => (
@@ -96,11 +96,11 @@ export function GateOperatorModal({
               inputId="checkpoint-operator"
               isClearable={false}
               isDisabled={
-                people.isPending ||
+                managers.isPending ||
                 assignments.isPending ||
                 !administratorOptions.length
               }
-              isLoading={people.isPending || assignments.isPending}
+              isLoading={managers.isPending || assignments.isPending}
               options={administratorOptions}
               placeholder={
                 administratorOptions.length

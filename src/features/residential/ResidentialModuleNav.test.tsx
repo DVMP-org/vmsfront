@@ -28,5 +28,12 @@ describe("residential module navigation", () => {
       "href",
       "/admin/residential/announcements",
     );
+    expect(
+      screen.getByRole("link", { name: "Gate & check-in" }),
+    ).toHaveAttribute("href", "/admin/checkpoints");
+    expect(screen.getByRole("link", { name: "Invitations" })).toHaveAttribute(
+      "href",
+      "/admin/invitations",
+    );
   });
 });

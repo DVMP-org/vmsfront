@@ -50,7 +50,7 @@ export function WorkspaceSwitcher({
 
   const adminProfile = admin.isError ? null : admin.data;
   const managementPlace = workspaceContext.data?.management?.is_administrator
-    ? workspaceContext.data.management.authoritative_place
+    ? workspaceContext.data.management.authoritative_site
     : null;
   const cards = buildWorkspaceCards(
     adminProfile,

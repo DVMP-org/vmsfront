@@ -102,7 +102,7 @@ export default function AdminGatesPage() {
     }
     if (selectedProperty?.id) {
       filters.push({
-        field: "place_id",
+        field: "site_id",
         value: selectedProperty.id,
         operator: "eq",
       });

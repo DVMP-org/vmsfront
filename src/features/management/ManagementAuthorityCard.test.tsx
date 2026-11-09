@@ -6,11 +6,20 @@ const management = {
   mode: "inherited" as const,
   management_required: false,
   is_administrator: true,
-  authoritative_place: {
+  site_admin_id: "site-admin",
+  selected_site: {
     id: "complex",
     name: "Harbour Complex",
     slug: "harbour-complex",
-    kind: "site",
+    use_case: "residential" as const,
+    parent_site_id: null,
+  },
+  authoritative_site: {
+    id: "complex",
+    name: "Harbour Complex",
+    slug: "harbour-complex",
+    use_case: "residential" as const,
+    parent_site_id: null,
   },
   administrators: [
     {

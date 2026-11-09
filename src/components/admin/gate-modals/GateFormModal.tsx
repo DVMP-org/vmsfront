@@ -156,8 +156,8 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
             ...(access_end ? { end: access_end } : {}),
           }
         : null;
-    const placeId = selectedProperty?.id;
-    if (!isEditing && !placeId) {
+    const siteId = selectedProperty?.id;
+    if (!isEditing && !siteId) {
       setSubmitError("Select a site workspace before creating a checkpoint.");
       return;
     }
@@ -173,7 +173,8 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
       } else {
         await createGate.mutateAsync({
           ...gateData,
-          place_id: placeId,
+          site_id: siteId,
+          place_id: null,
           dependency_id: null,
           is_default: data.is_default,
           access_schedule,

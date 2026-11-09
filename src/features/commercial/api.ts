@@ -14,6 +14,7 @@ import type {
   CommercialMaintenanceInput,
   CommercialMaintenanceRequest,
 } from "./contracts";
+import { useAppStore } from "@/store/app-store";
 
 export interface RelationshipInput {
   party_id: string;
@@ -30,7 +31,10 @@ const unwrap = async <T>(request: Promise<ApiResponse<T>>) =>
   (await request).data;
 
 export const commercialApi = {
-  tree: (): Promise<PropertyTreeNode[]> => propertiesApi.tree(),
+  tree: (): Promise<PropertyTreeNode[]> => {
+    const siteId = useAppStore.getState().selectedProperty?.id;
+    return siteId ? propertiesApi.tree(siteId) : Promise.resolve([]);
+  },
   relationships: async (
     params: {
       place_id?: string;

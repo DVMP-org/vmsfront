@@ -70,6 +70,15 @@ export const adminLinks: AdminRoute[] = [
     managementOnly: true,
   },
   {
+    href: "/admin/managers",
+    label: "Managers",
+    icon: UserCog,
+    permission: "admins.list",
+    module: "people",
+    group: "Workspace",
+    managementOnly: true,
+  },
+  {
     href: "/admin/checkpoints",
     label: "Check-in / check-out",
     icon: Scan,

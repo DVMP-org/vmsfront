@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { propertiesApi } from "@/features/properties/api";
+import { sitesApi } from "@/features/sites/api";
 import { SiteConfiguration } from "./SiteConfiguration";
 
 const mocks = vi.hoisted(() => ({
@@ -28,21 +28,21 @@ vi.mock("@/store/app-store", () => ({
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => mocks.workspace,
 }));
-vi.mock("@/features/modules/PlaceModulesPanel", () => ({
-  PlaceModulesPanel: ({
-    placeId,
+vi.mock("@/features/modules/SiteModulesPanel", () => ({
+  SiteModulesPanel: ({
+    siteId,
     canEdit,
   }: {
-    placeId: string;
+    siteId: string;
     canEdit: boolean;
   }) => (
     <div data-testid="site-modules">
-      {placeId}:{String(canEdit)}
+      {siteId}:{String(canEdit)}
     </div>
   ),
 }));
-vi.mock("@/features/properties/api", () => ({
-  propertiesApi: { get: vi.fn() },
+vi.mock("@/features/sites/api", () => ({
+  sitesApi: { get: vi.fn() },
 }));
 
 function mount() {
@@ -62,19 +62,21 @@ function mount() {
 describe("SiteConfiguration", () => {
   beforeEach(() => {
     mocks.selectedProperty = { id: "site-1", name: "Harbour Campus" };
-    vi.mocked(propertiesApi.get).mockResolvedValue({
+    vi.mocked(sitesApi.get).mockResolvedValue({
       id: "site-1",
+      organization_id: "org-1",
+      parent_site_id: null,
       name: "Harbour Campus",
-      kind: "site",
       use_case: "hospitality",
-      parent_id: null,
-      building_type: null,
       description: null,
       address: "1 Harbour Road",
       is_active: true,
       updated_at: "2026-11-09T00:00:00Z",
+      created_at: "2026-11-09T00:00:00Z",
+      slug: "harbour-campus",
       ancestors: [],
-      children: [],
+      child_sites: [],
+      places: [],
     });
   });
 

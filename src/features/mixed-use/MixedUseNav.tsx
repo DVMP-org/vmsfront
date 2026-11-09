@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Scale, Share2, Wrench } from "lucide-react";
+import {
+  Building2,
+  Scale,
+  ScanLine,
+  Share2,
+  Ticket,
+  Wrench,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,6 +33,16 @@ const sections = [
     href: "/admin/mixed-use/expenses",
     label: "Expense allocation",
     icon: Scale,
+  },
+  {
+    href: "/admin/checkpoints",
+    label: "Gate & check-in",
+    icon: ScanLine,
+  },
+  {
+    href: "/admin/invitations",
+    label: "Invitations",
+    icon: Ticket,
   },
 ];
 

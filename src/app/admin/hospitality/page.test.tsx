@@ -84,11 +84,20 @@ beforeEach(() => {
       mode: "local",
       management_required: true,
       is_administrator: true,
-      authoritative_place: {
+      site_admin_id: "site-admin",
+      selected_site: {
         id: "hotel",
         name: "Harbour Hotel",
         slug: "harbour-hotel",
-        kind: "site",
+        use_case: "hospitality",
+        parent_site_id: null,
+      },
+      authoritative_site: {
+        id: "hotel",
+        name: "Harbour Hotel",
+        slug: "harbour-hotel",
+        use_case: "hospitality",
+        parent_site_id: null,
       },
       administrators: [
         {
@@ -150,11 +159,20 @@ it("shows inherited site administration provenance", async () => {
       mode: "inherited",
       management_required: false,
       is_administrator: true,
-      authoritative_place: {
+      site_admin_id: "parent-site-admin",
+      selected_site: {
+        id: "hotel",
+        name: "Harbour Hotel",
+        slug: "harbour-hotel",
+        use_case: "hospitality",
+        parent_site_id: "parent",
+      },
+      authoritative_site: {
         id: "parent",
         name: "Harbour Group",
         slug: "harbour-group",
-        kind: "site",
+        use_case: "mixed_use",
+        parent_site_id: null,
       },
       administrators: [
         {

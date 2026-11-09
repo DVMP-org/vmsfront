@@ -4,11 +4,8 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
-  ArrowRight,
   Building2,
   CheckCircle2,
-  Download,
   KeyRound,
   Mail,
   Plus,
@@ -17,16 +14,14 @@ import {
   Users,
 } from "lucide-react";
 
-import { FacetItem, FacetPicker } from "@/components/facets/FacetPicker";
+import { PlacePicker } from "@/components/sites/PlacePicker";
+import { SitePicker } from "@/components/sites/SitePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import {
-  DataTable,
-  type BulkAction,
-  type Column,
-} from "@/components/ui/DataTable";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
-import { SlideOver } from "@/components/ui/SlideOver";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasAdminPermission } from "@/lib/permissions";
 import { parseApiError } from "@/lib/error-utils";
@@ -34,10 +29,9 @@ import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { AccessCredentialDialog } from "@/features/access-credentials/AccessCredentialDialog";
 import {
-  AddPlacePersonInput,
+  type AddPlacePersonInput,
   peopleApi,
-  PlacePeople,
-  PlacePerson,
+  type PlacePerson,
 } from "./api";
 import "./people-directory.css";
 
@@ -48,1082 +42,415 @@ const OCCUPANCY_ROLES = {
   mixed_use: ["resident", "owner", "tenant", "employee", "member", "guest"],
 } as const;
 
-type PeopleScope = "all" | "administrators" | "relationships";
-type PeopleRow = {
-  person: PlacePerson;
-  scope: "administrators" | "relationships";
-  scopeLabel: string;
-};
-
 export default function PeopleWorkspace() {
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedProperty);
+  const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const profile = useAdminProfile();
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [credentialPerson, setCredentialPerson] = useState<PlacePerson | null>(
+    null,
+  );
   const [notice, setNotice] = useState("");
-
   const contextKey = `${organization?.id}:${user?.id}`;
-  const placeId = selectedProperty?.id || null;
+  const siteId = selectedSite?.id || null;
   const people = useQuery({
-    queryKey: ["people", contextKey, placeId],
-    queryFn: () => peopleApi.get(placeId!),
-    enabled: !!placeId,
+    queryKey: ["site-people", contextKey, siteId],
+    queryFn: () => peopleApi.get(siteId!),
+    enabled: !!siteId,
     retry: false,
   });
-
   const canManage =
     !!profile.data &&
     hasAdminPermission(profile.data, "parties.create") &&
     hasAdminPermission(profile.data, "place_relationships.create");
-
-  const selectedFacet: FacetItem | null = selectedProperty
-    ? {
-        value: selectedProperty.id,
-        label: selectedProperty.name,
-        disabled: false,
-        meta: { kind: "site", slug: "", parent_id: null },
-      }
-    : null;
-
-  function chooseProperty(item: FacetItem | null) {
-    setNotice("");
-    setSelectedProperty(item ? { id: item.value, name: item.label } : null);
-  }
-
-  async function invalidatePeople() {
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ["people", contextKey, placeId],
-      }),
-      queryClient.invalidateQueries({ queryKey: ["workspace-context"] }),
-    ]);
-  }
-
-  return (
-    <main className="mx-auto w-full max-w-[1360px] space-y-5 pb-10 text-[var(--vms-ink)]">
-      <PageHeader
-        organizationName={organization?.name || "Organization"}
-        propertyName={selectedProperty?.name}
-        canManage={canManage}
-        permissionPending={profile.isPending}
-        onAdd={() => setAddOpen(true)}
-      />
-
-      <ContextControl
-        contextKey={contextKey}
-        property={selectedProperty}
-        value={selectedFacet}
-        onChange={chooseProperty}
-      />
-
-      {notice ? (
-        <p
-          role="status"
-          className="flex items-start gap-3 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-success)_30%,white)] bg-[var(--vms-success-subtle)] px-4 py-3 text-sm text-[var(--vms-success)]"
-        >
-          <CheckCircle2
-            className="mt-0.5 h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
-          {notice}
-        </p>
-      ) : null}
-
-      {!placeId ? (
-        <EmptyProperty />
-      ) : people.isPending ? (
-        <PeopleSkeleton />
-      ) : people.isError && !people.data ? (
-        <PeopleFailure error={people.error} retry={() => people.refetch()} />
-      ) : people.data ? (
-        <PeopleContent
-          people={people.data}
-          canManage={canManage}
-          permissionPending={profile.isPending}
-          stale={people.isError}
-          onRetry={() => people.refetch()}
-          onChanged={invalidatePeople}
-          onNotice={setNotice}
-        />
-      ) : null}
-
-      {people.data && canManage ? (
-        <AddPersonDrawer
-          open={addOpen}
-          people={people.data}
-          onClose={() => setAddOpen(false)}
-          onChanged={invalidatePeople}
-          onSuccess={(message) => {
-            setNotice(message);
-            setAddOpen(false);
-          }}
-        />
-      ) : null}
-    </main>
-  );
-}
-
-function PageHeader({
-  organizationName,
-  propertyName,
-  canManage,
-  permissionPending,
-  onAdd,
-}: {
-  organizationName: string;
-  propertyName?: string;
-  canManage: boolean;
-  permissionPending: boolean;
-  onAdd: () => void;
-}) {
-  return (
-    <header className="border-b border-[var(--vms-line)] pb-5">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-        <Users className="h-3.5 w-3.5 text-[var(--vms-active-accent)]" />
-        <span>{organizationName}</span>
-        <span aria-hidden="true">/</span>
-        <span className="font-semibold text-[var(--vms-ink)]">People</span>
-        {propertyName ? (
-          <>
-            <span aria-hidden="true">/</span>
-            <span>{propertyName}</span>
-          </>
-        ) : null}
-      </div>
-      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold leading-tight tracking-[-0.035em] sm:text-4xl">
-            People
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Manage site administration and property relationships without
-            confusing an account, a person and a place assignment.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="secondary">
-            <Link href="/admin/properties">
-              <Building2 className="h-4 w-4" aria-hidden="true" />
-              Manage properties
-            </Link>
-          </Button>
-          {canManage ? (
-            <Button onClick={onAdd}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Add person
-            </Button>
-          ) : permissionPending ? (
-            <Button disabled aria-busy="true">
-              Checking permissions…
-            </Button>
-          ) : (
-            <Badge variant="neutral">Read-only</Badge>
-          )}
-          <Button asChild variant="ghost">
-            <Link href="/admin">
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Dashboard
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function ContextControl({
-  contextKey,
-  property,
-  value,
-  onChange,
-}: {
-  contextKey: string;
-  property: { id: string; name: string } | null;
-  value: FacetItem | null;
-  onChange: (item: FacetItem | null) => void;
-}) {
-  return (
-    <section className="flex flex-col gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-          Property context
-        </p>
-        <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-          The selected property determines the available relationship roles,
-          permissions and people.
-        </p>
-      </div>
-      <div className="w-full lg:max-w-xl">
-        {property ? (
-          <div className="flex min-h-12 items-center justify-between gap-4 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3 py-2">
-            <span className="flex min-w-0 items-center gap-3">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface)]">
-                <Building2 className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <small className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-                  Selected property
-                </small>
-                <strong className="block truncate text-sm">
-                  {property.name}
-                </strong>
-              </span>
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onChange(null)}
-            >
-              Change
-            </Button>
-          </div>
-        ) : (
-          <FacetPicker
-            facet="places"
-            label="Choose a property or space"
-            value={value}
-            onChange={onChange}
-            contextKey={contextKey}
-          />
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PeopleContent({
-  people,
-  canManage,
-  permissionPending,
-  stale,
-  onRetry,
-  onChanged,
-  onNotice,
-}: {
-  people: PlacePeople;
-  canManage: boolean;
-  permissionPending: boolean;
-  stale: boolean;
-  onRetry: () => void;
-  onChanged: () => Promise<unknown>;
-  onNotice: (message: string) => void;
-}) {
-  const [scope, setScope] = useState<PeopleScope>("all");
-  const [removeTarget, setRemoveTarget] = useState<PlacePerson | null>(null);
-  const [removeError, setRemoveError] = useState("");
-  const remove = useMutation({
-    mutationFn: (person: PlacePerson) =>
-      peopleApi.remove(people.place.id, person.source, person.assignment_id),
-    onMutate: () => setRemoveError(""),
-    onSuccess: async (result, person) => {
-      onNotice(
-        result.source === "administration"
-          ? `${person.party.display_name} no longer administers this property.`
-          : `${person.party.display_name}'s property access has ended.`,
-      );
-      setRemoveTarget(null);
-      await onChanged();
-    },
-    onError: (error) => setRemoveError(parseApiError(error).message),
-  });
-
-  const rows = useMemo<PeopleRow[]>(() => {
-    const all = [
-      ...people.administrators.map((person) => ({
-        person,
-        scope: "administrators" as const,
-        scopeLabel: "Administration",
-      })),
-      ...people.occupants.map((person) => ({
-        person,
-        scope: "relationships" as const,
-        scopeLabel: occupantLabel(people.effective_use_case),
-      })),
+  const roles =
+    OCCUPANCY_ROLES[
+      (people.data?.effective_use_case ||
+        "mixed_use") as keyof typeof OCCUPANCY_ROLES
     ];
-    return all.filter(({ scope: rowScope }) => {
-      if (scope !== "all" && scope !== rowScope) return false;
-      return true;
+  const rows = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (people.data?.people ?? []).filter((person) => {
+      const matchesSearch = [
+        person.party.display_name,
+        person.party.email || "",
+        person.place.name,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
+      return matchesSearch && (!role || person.role === role);
     });
-  }, [people, scope]);
-
-  const total = people.administrators.length + people.occupants.length;
-
-  return (
-    <>
-      {stale ? (
-        <div
-          role="alert"
-          className="flex flex-col justify-between gap-3 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-warning)_35%,white)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)] sm:flex-row sm:items-center"
-        >
-          <span>
-            Showing the last successful roster. A refresh failed, so newer
-            assignments may be missing.
-          </span>
-          <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
-            Retry
-          </Button>
-        </div>
-      ) : null}
-
-      {!canManage && !permissionPending ? (
-        <p
-          role="status"
-          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-4 py-3 text-sm text-[var(--vms-ink-muted)]"
-        >
-          You can review this roster, but adding people and changing access
-          require party and place-relationship management permissions.
-        </p>
-      ) : null}
-
-      <section
-        className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3"
-        aria-label="People summary"
-      >
-        <PersonMetric
-          label="Administrators"
-          value={people.administrators.length}
-          detail="Property management authority"
-        />
-        <PersonMetric
-          label={occupantLabel(people.effective_use_case)}
-          value={people.occupants.length}
-          detail={`${roleLabel(people.effective_use_case)} operating context`}
-        />
-        <PersonMetric
-          label="Total relationships"
-          value={total}
-          detail="Administration and property access"
-        />
-      </section>
-
-      <section
-        className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
-        aria-labelledby="people-register-heading"
-      >
-        <div className="border-b border-[var(--vms-line)] p-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <h2
-                id="people-register-heading"
-                className="text-lg font-semibold"
-              >
-                Property people
-              </h2>
-              <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                Administration stays separate from occupancy, tenancy, staff and
-                guest relationships.
-              </p>
-            </div>
-            <div
-              className="flex flex-wrap gap-1 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-1"
-              role="group"
-              aria-label="Filter people by scope"
-            >
-              {[
-                ["all", "All"],
-                ["administrators", "Administrators"],
-                ["relationships", occupantLabel(people.effective_use_case)],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={scope === value}
-                  onClick={() => setScope(value as PeopleScope)}
-                  className="min-h-10 rounded-[var(--vms-radius-control)] px-3 text-xs font-semibold text-[var(--vms-ink-muted)] transition-colors aria-pressed:bg-[var(--vms-surface)] aria-pressed:text-[var(--vms-ink)] aria-pressed:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <PeopleRegister
-          rows={rows}
-          canManage={canManage}
-          permissionPending={permissionPending}
-          onRemove={setRemoveTarget}
-          effectiveUseCase={people.effective_use_case}
-        />
-      </section>
-
-      <RemovePersonDialog
-        person={removeTarget}
-        pending={remove.isPending}
-        error={removeError}
-        onClose={() => {
-          if (!remove.isPending) {
-            setRemoveTarget(null);
-            setRemoveError("");
-          }
-        }}
-        onConfirm={() => {
-          if (removeTarget) remove.mutate(removeTarget);
-        }}
-      />
-    </>
-  );
-}
-
-function PeopleRegister({
-  rows,
-  canManage,
-  permissionPending,
-  onRemove,
-  effectiveUseCase,
-}: {
-  rows: Array<{
-    person: PlacePerson;
-    scope: "administrators" | "relationships";
-    scopeLabel: string;
-  }>;
-  canManage: boolean;
-  permissionPending: boolean;
-  onRemove: (person: PlacePerson) => void;
-  effectiveUseCase: PlacePeople["effective_use_case"];
-}) {
-  const [credentialPerson, setCredentialPerson] = useState<PlacePerson | null>(
-    null,
-  );
-  const rowId = (row: PeopleRow) =>
-    `${row.person.source}:${row.person.party.id}:${row.person.assignment_id}`;
-  const columns: Column<PeopleRow>[] = [
+  }, [people.data?.people, role, search]);
+  const columns: Column<PlacePerson>[] = [
     {
       key: "person",
       header: "Person",
       sortable: true,
-      accessor: ({ person }) => (
-        <span className="flex min-w-0 items-center gap-3">
-          <span
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-xs font-semibold"
-            aria-hidden="true"
-          >
-            {initials(person.party.display_name)}
+      accessor: (person) => (
+        <span className="flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--vms-surface-subtle)]">
+            <UserRound className="h-4 w-4" aria-hidden="true" />
           </span>
-          <span className="min-w-0">
-            <strong className="block truncate text-sm font-semibold">
-              {person.party.display_name}
-            </strong>
-            <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
-              {person.party.is_active ? "Active account" : "Inactive account"}
+          <span>
+            <strong className="block">{person.party.display_name}</strong>
+            <span className="block text-xs text-[var(--vms-ink-muted)]">
+              {person.party.email || "No email"}
             </span>
           </span>
         </span>
       ),
     },
     {
-      key: "contact",
-      header: "Contact",
+      key: "role",
+      header: "Party role",
       sortable: true,
-      accessor: ({ person }) => (
-        <span className="break-all">{person.party.email || "No email"}</span>
-      ),
+      accessor: (person) => <Badge variant="default">{person.role}</Badge>,
     },
     {
-      key: "relationship",
-      header: "Relationship",
-      sortable: true,
-      accessor: ({ person }) => (
-        <span className="flex flex-wrap items-center gap-2">
-          {roleLabel(person.role)}
-          {person.is_super_admin ? <Badge variant="info">Primary</Badge> : null}
+      key: "place",
+      header: "Place",
+      accessor: (person) => (
+        <span>
+          <strong className="block text-sm">{person.place.name}</strong>
+          <span className="block text-xs capitalize text-[var(--vms-ink-muted)]">
+            {person.place.kind}
+          </span>
         </span>
-      ),
-    },
-    {
-      key: "scope",
-      header: "Scope",
-      sortable: true,
-      accessor: ({ scope, scopeLabel }) => (
-        <Badge variant={scope === "administrators" ? "neutral" : "default"}>
-          {scope === "administrators" ? (
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          ) : (
-            <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
-          )}
-          {scopeLabel}
-        </Badge>
       ),
     },
     {
       key: "status",
       header: "Status",
-      sortable: true,
-      accessor: ({ person }) => (
-        <Badge variant={person.status === "active" ? "success" : "neutral"}>
-          {roleLabel(person.status)}
+      accessor: (person) => (
+        <Badge variant={person.party.is_active ? "success" : "neutral"}>
+          {person.party.is_active ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
       key: "actions",
-      header: "Action",
+      header: "Actions",
       mobileHide: true,
-      accessor: ({ person }) =>
-        canManage ? (
-          <div className="flex flex-wrap gap-2">
+      accessor: (person) => (
+        <span className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCredentialPerson(person)}
+          >
+            <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+            Credential
+          </Button>
+          {canManage ? (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
-              aria-label={`Manage access credentials for ${person.party.display_name}`}
-              onClick={() => setCredentialPerson(person)}
+              onClick={() => {
+                void peopleApi
+                  .remove(siteId!, "occupancy", person.assignment_id)
+                  .then(async () => {
+                    setNotice("Party relationship ended.");
+                    await queryClient.invalidateQueries({
+                      queryKey: ["site-people", contextKey, siteId],
+                    });
+                  });
+              }}
             >
-              <KeyRound className="h-3.5 w-3.5" />
-              Credentials
+              Remove
             </Button>
+          ) : null}
+        </span>
+      ),
+    },
+  ];
+  return (
+    <main className="mx-auto w-full max-w-[1360px] space-y-5 pb-10 text-[var(--vms-ink)]">
+      <header className="border-b border-[var(--vms-line)] pb-5">
+        <p className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+          <Users className="h-3.5 w-3.5 text-[var(--vms-active-accent)]" />
+          {organization?.name}
+          <span>/</span>
+          <span className="font-semibold text-[var(--vms-ink)]">People</span>
+          {selectedSite ? (
+            <>
+              <span>/</span>
+              <span>{selectedSite.name}</span>
+            </>
+          ) : null}
+        </p>
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-[-0.035em]">
+              People
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+              Every person here is a Party attached to a non-Site Place in the
+              selected Site. Site managers are administered separately and may
+              also hold a Place relationship.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/managers">
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                Managers
+              </Link>
+            </Button>
+            {canManage ? (
+              <Button onClick={() => setAddOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add party
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </header>
+      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+        {selectedSite ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              <Building2 className="h-5 w-5" aria-hidden="true" />
+              <span>
+                <small className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
+                  Site context
+                </small>
+                <strong>{selectedSite.name}</strong>
+              </span>
+            </span>
             <Button
-              type="button"
-              variant="destructive-outlined"
+              variant="ghost"
               size="sm"
-              aria-label={`Review access change for ${person.party.display_name}`}
-              onClick={() => onRemove(person)}
+              onClick={() => setSelectedSite(null)}
             >
-              Review access
+              Change Site
             </Button>
           </div>
         ) : (
-          <span className="text-xs text-[var(--vms-ink-muted)]">
-            {permissionPending ? "Checking access…" : "Read-only"}
-          </span>
-        ),
-    },
-  ];
-  const bulkActions: BulkAction[] = [
-    {
-      label: "Export selected",
-      icon: Download,
-      onClick: (ids) => {
-        const selected = rows.filter((row) => ids.includes(rowId(row)));
-        const values = [
-          ["Name", "Email", "Relationship", "Scope", "Status"],
-          ...selected.map(({ person, scopeLabel }) => [
-            person.party.display_name,
-            person.party.email || "",
-            roleLabel(person.role),
-            scopeLabel,
-            roleLabel(person.status),
-          ]),
-        ];
-        const csv = values
-          .map((row) =>
-            row
-              .map((value) => `"${String(value).replaceAll('"', '""')}"`)
-              .join(","),
-          )
-          .join("\n");
-        const url = URL.createObjectURL(
-          new Blob([csv], { type: "text/csv;charset=utf-8" }),
-        );
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = "property-people.csv";
-        anchor.click();
-        URL.revokeObjectURL(url);
-      },
-    },
-  ];
-
-  return (
-    <>
-      <DataTable
-        data={rows}
-        columns={columns}
-        tableLabel="Property people"
-        searchPlaceholder="Find a person, role or email"
-        selectable
-        getRowId={rowId}
-        bulkActions={bulkActions}
-        showPagination={rows.length > 10}
-        pageSize={10}
-        emptyMessage={`No people match. New administration and ${occupantLabel(
-          effectiveUseCase,
-        ).toLowerCase()} relationships will appear here.`}
-        mobileSummary={({ person, scopeLabel }) => (
-          <div className="flex items-start gap-3">
-            <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-xs font-semibold"
-              aria-hidden="true"
-            >
-              {initials(person.party.display_name)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <strong className="block truncate text-sm">
-                {person.party.display_name}
-              </strong>
-              <span className="block truncate text-xs text-[var(--vms-ink-muted)]">
-                {person.party.email || "No email"}
-              </span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge variant="neutral">{scopeLabel}</Badge>
-                <Badge
-                  variant={person.status === "active" ? "success" : "neutral"}
-                >
-                  {roleLabel(person.status)}
-                </Badge>
-              </div>
-              {canManage ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCredentialPerson(person)}
-                  >
-                    <KeyRound className="h-3.5 w-3.5" />
-                    Credentials
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive-outlined"
-                    size="sm"
-                    onClick={() => onRemove(person)}
-                  >
-                    Review access
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          </div>
+          <SitePicker
+            label="Choose a Site workspace"
+            value={selectedSite}
+            onChange={setSelectedSite}
+          />
         )}
+      </section>
+      {notice ? (
+        <InlineAlert tone="success" title="People updated">
+          <CheckCircle2 className="mr-1 inline h-4 w-4" aria-hidden="true" />
+          {notice}
+        </InlineAlert>
+      ) : null}
+      {!siteId ? (
+        <InlineAlert tone="warning" title="Select a Site workspace">
+          People are listed in the context of one Site.
+        </InlineAlert>
+      ) : people.isError ? (
+        <InlineAlert
+          tone="danger"
+          title="People could not be loaded"
+          action={
+            <Button size="sm" variant="outline" onClick={() => people.refetch()}>
+              Retry
+            </Button>
+          }
+        >
+          {parseApiError(people.error).message}
+        </InlineAlert>
+      ) : (
+        <section className="space-y-3">
+          <label className="flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3">
+            <span className="text-xs font-semibold text-[var(--vms-ink-muted)]">
+              Party role
+            </span>
+            <select
+              value={role}
+              onChange={(event) => setRole(event.target.value)}
+              className="min-h-9 flex-1 bg-transparent text-sm"
+            >
+              <option value="">All roles</option>
+              {roles.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <DataTable
+            data={rows}
+            columns={columns}
+            tableLabel="Site Parties"
+            searchable
+            initialSearch={search}
+            onSearchChange={setSearch}
+            isLoading={people.isPending}
+            emptyMessage="No Parties match these filters"
+            mobileSummary={(person) => (
+              <span className="flex items-center gap-3">
+                <UserRound className="h-5 w-5" aria-hidden="true" />
+                <span>
+                  <strong className="block">{person.party.display_name}</strong>
+                  <span className="text-xs text-[var(--vms-ink-muted)]">
+                    {person.role} at {person.place.name}
+                  </span>
+                </span>
+              </span>
+            )}
+          />
+        </section>
+      )}
+      <AddPartyModal
+        open={addOpen}
+        siteId={siteId}
+        roles={roles}
+        onClose={() => setAddOpen(false)}
+        onSaved={async (message) => {
+          setAddOpen(false);
+          setNotice(message);
+          await queryClient.invalidateQueries({
+            queryKey: ["site-people", contextKey, siteId],
+          });
+        }}
       />
       <AccessCredentialDialog
         person={credentialPerson}
         onClose={() => setCredentialPerson(null)}
       />
-    </>
+    </main>
   );
 }
 
-function AddPersonDrawer({
+function AddPartyModal({
   open,
-  people,
+  siteId,
+  roles,
   onClose,
-  onChanged,
-  onSuccess,
+  onSaved,
 }: {
   open: boolean;
-  people: PlacePeople;
+  siteId: string | null;
+  roles: readonly string[];
   onClose: () => void;
-  onChanged: () => Promise<unknown>;
-  onSuccess: (message: string) => void;
+  onSaved: (message: string) => Promise<void>;
 }) {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [role, setRole] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const isSite = people.place.kind === "site";
-  const roles = OCCUPANCY_ROLES[people.effective_use_case];
+  const [place, setPlace] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const mutation = useMutation({
     mutationFn: () => {
       const body: AddPlacePersonInput = {
         display_name: displayName.trim(),
         email: email.trim(),
+        place_id: place!.id,
         kind: "person",
+        ...(role ? { role } : {}),
       };
-      if (phone.trim()) body.phone = phone.trim();
-      if (!isSite && role) body.role = role;
-      return peopleApi.add(people.place.id, body);
+      return peopleApi.add(siteId!, body);
     },
-    onSuccess: async (result) => {
-      const onboarding =
-        result.onboarding_email === "queued"
-          ? " An onboarding email has been queued."
-          : " This person already has an active account.";
-      onSuccess(
-        `${result.party.display_name} was added as ${roleLabel(result.role)}.${onboarding}`,
-      );
-      setDisplayName("");
-      setEmail("");
-      setPhone("");
-      setRole("");
-      setErrors({});
-      await onChanged();
-    },
+    onSuccess: () =>
+      onSaved(
+        "Party attached to the selected Place and onboarding prepared.",
+      ),
   });
-
-  function validate() {
-    const next: Record<string, string> = {};
-    if (!displayName.trim()) next.displayName = "Enter the person’s full name.";
-    if (!email.trim()) next.email = "Enter an email address.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      next.email = "Enter a valid email address.";
-    }
-    setErrors(next);
-    if (Object.keys(next).length) {
-      requestAnimationFrame(() =>
-        document.getElementById("add-person-errors")?.focus(),
-      );
-      return false;
-    }
-    return true;
-  }
-
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    if (validate()) mutation.mutate();
-  }
-
   return (
-    <SlideOver
+    <Modal
       isOpen={open}
       onClose={onClose}
-      title={isSite ? "Add a property administrator" : "Add a person"}
-      description={
-        isSite
-          ? `Grant ${people.place.name} management authority. This does not create occupancy.`
-          : `Assign a relationship at ${people.place.name} and prepare onboarding when required.`
-      }
-      size="md"
+      title="Add a Party to a Place"
+      description="This creates a person membership at one non-Site Place."
+      size="lg"
     >
-      <form className="flex min-h-full flex-col" onSubmit={submit} noValidate>
-        <div className="space-y-5">
-          {Object.keys(errors).length || mutation.isError ? (
-            <div
-              id="add-person-errors"
-              role="alert"
-              tabIndex={-1}
-              className="rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] px-4 py-3 text-sm text-[var(--vms-danger)]"
-            >
-              <strong className="block">Please correct the following</strong>
-              <ul className="mt-1 list-disc pl-5">
-                {Object.values(errors).map((message) => (
-                  <li key={message}>{message}</li>
-                ))}
-                {mutation.isError ? (
-                  <li>{parseApiError(mutation.error).message}</li>
-                ) : null}
-              </ul>
-            </div>
-          ) : null}
-
-          <FormField
-            id="person-display-name"
-            label="Full name"
-            description="The name used on assignments, approvals and access history."
-            error={errors.displayName}
-          >
+      <form
+        onSubmit={(event: FormEvent) => {
+          event.preventDefault();
+          if (displayName.trim() && email.trim() && place) mutation.mutate();
+        }}
+        className="space-y-4"
+      >
+        <Field id="person-name" label="Full name" required>
+          {(control) => (
             <input
-              id="person-display-name"
-              required
-              maxLength={255}
-              autoComplete="name"
+              {...control}
+              className={fieldControlClassName}
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              aria-invalid={!!errors.displayName}
-              aria-describedby={
-                errors.displayName
-                  ? "person-display-name-error person-display-name-help"
-                  : "person-display-name-help"
-              }
-              className={fieldClass}
-              placeholder="Ada Okafor"
-            />
-          </FormField>
-
-          <FormField
-            id="person-email"
-            label="Email"
-            description="Invitation and onboarding messages are sent here."
-            error={errors.email}
-          >
-            <input
-              id="person-email"
+              autoComplete="name"
               required
+            />
+          )}
+        </Field>
+        <Field id="person-email" label="Email address" required>
+          {(control) => (
+            <input
+              {...control}
+              className={fieldControlClassName}
               type="email"
-              maxLength={255}
-              autoComplete="email"
               inputMode="email"
+              autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              aria-invalid={!!errors.email}
-              aria-describedby={
-                errors.email
-                  ? "person-email-error person-email-help"
-                  : "person-email-help"
-              }
-              className={fieldClass}
-              placeholder="ada@example.com"
+              required
             />
-          </FormField>
-
-          <FormField
-            id="person-phone"
-            label="Phone"
-            optional
-            description="Optional contact number for the property team."
-          >
-            <input
-              id="person-phone"
-              type="tel"
-              maxLength={32}
-              autoComplete="tel"
-              inputMode="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              className={fieldClass}
-              placeholder="+234 800 000 0000"
-            />
-          </FormField>
-
-          {isSite ? (
-            <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-3 py-3 text-sm">
-              <strong className="block">
-                Relationship: Property administrator
-              </strong>
-              <span className="mt-1 block text-[var(--vms-ink-muted)]">
-                Site administration is applied by the server and never becomes
-                an occupancy role.
-              </span>
-            </div>
-          ) : (
-            <FormField
-              id="person-role"
-              label="Property relationship"
-              description={`Available roles follow the ${roleLabel(people.effective_use_case)} context.`}
-            >
-              <select
-                id="person-role"
-                value={role}
-                onChange={(event) => setRole(event.target.value)}
-                className={fieldClass}
-              >
-                <option value="">Use the property default</option>
-                {roles.map((item) => (
-                  <option key={item} value={item}>
-                    {roleLabel(item)}
-                  </option>
-                ))}
-              </select>
-            </FormField>
           )}
+        </Field>
+        <div className="space-y-2">
+          <p className="text-[13px] font-semibold">Place</p>
+          <PlacePicker
+            siteId={siteId!}
+            label="Choose a Place in this Site"
+            value={place}
+            onChange={setPlace}
+          />
         </div>
-
-        <div className="mt-auto flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-5 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={mutation.isPending}
-          >
+        <Field id="person-role" label="Party role">
+          {(control) => (
+            <select
+              {...control}
+              className={fieldControlClassName}
+              value={role}
+              onChange={(event) => setRole(event.target.value)}
+            >
+              <option value="">Use the Place default</option>
+              {roles.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        {mutation.isError ? (
+          <InlineAlert tone="danger" title="Party could not be added">
+            {parseApiError(mutation.error).message}
+          </InlineAlert>
+        ) : null}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={mutation.isPending}>
+          <Button
+            type="submit"
+            disabled={
+              mutation.isPending ||
+              !displayName.trim() ||
+              !email.trim() ||
+              !place
+            }
+          >
             <Mail className="h-4 w-4" aria-hidden="true" />
-            {mutation.isPending ? "Adding person…" : "Add person"}
+            {mutation.isPending ? "Adding…" : "Add and invite"}
           </Button>
         </div>
       </form>
-    </SlideOver>
-  );
-}
-
-function RemovePersonDialog({
-  person,
-  pending,
-  error,
-  onClose,
-  onConfirm,
-}: {
-  person: PlacePerson | null;
-  pending: boolean;
-  error: string;
-  onClose: () => void;
-  onConfirm: () => void;
-}) {
-  const administrator = person?.source === "administration";
-  return (
-    <Modal
-      isOpen={!!person}
-      onClose={onClose}
-      title={administrator ? "Remove administrator?" : "End property access?"}
-      description={
-        person
-          ? `${person.party.display_name} will no longer have this assignment at the selected property.`
-          : undefined
-      }
-      size="sm"
-    >
-      <div className="space-y-4 text-sm">
-        <p className="leading-6 text-[var(--vms-ink-muted)]">
-          {administrator
-            ? "This removes property management authority. The account and other organization relationships are not deleted."
-            : "This ends the occupancy or personal access relationship. The account and its history remain available."}
-        </p>
-        {error ? (
-          <p
-            role="alert"
-            className="rounded-[var(--vms-radius-control)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] px-3 py-2 text-[var(--vms-danger)]"
-          >
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onClose} disabled={pending}>
-            Keep access
-          </Button>
-          <Button variant="destructive" onClick={onConfirm} isLoading={pending}>
-            {administrator ? "Remove administrator" : "End access"}
-          </Button>
-        </div>
-      </div>
     </Modal>
   );
-}
-
-function PersonMetric({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: number;
-  detail: string;
-}) {
-  return (
-    <div className="border-b border-[var(--vms-line)] px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="text-xs font-medium text-[var(--vms-ink-muted)]">{label}</p>
-      <p className="mt-1.5 text-2xl font-semibold leading-none tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1.5 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
-    </div>
-  );
-}
-
-function FormField({
-  id,
-  label,
-  description,
-  optional,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  description?: string;
-  optional?: boolean;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="text-sm font-semibold">
-        {label}
-        {optional ? (
-          <span className="ml-1 font-normal text-[var(--vms-ink-muted)]">
-            (optional)
-          </span>
-        ) : null}
-      </label>
-      {description ? (
-        <p
-          id={`${id}-help`}
-          className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]"
-        >
-          {description}
-        </p>
-      ) : null}
-      <div className="mt-2">{children}</div>
-      {error ? (
-        <p
-          id={`${id}-error`}
-          className="mt-1.5 text-xs font-medium text-[var(--vms-danger)]"
-        >
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function EmptyProperty() {
-  return (
-    <section className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] p-8 text-center sm:p-10">
-      <Building2 className="mx-auto h-8 w-8 text-[var(--vms-ink-muted)]" />
-      <h2 className="mt-3 text-lg font-semibold">
-        Choose a property to manage people
-      </h2>
-      <p className="mx-auto mt-1.5 max-w-xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-        Select a property or space above. Its operating context determines
-        whether relationships are residents, employees, members or guests.
-      </p>
-      <Button asChild variant="secondary" className="mt-4">
-        <Link href="/admin/properties">
-          Review properties
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      </Button>
-    </section>
-  );
-}
-
-function PeopleFailure({
-  error,
-  retry,
-}: {
-  error: unknown;
-  retry: () => void;
-}) {
-  return (
-    <section
-      className="rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_35%,white)] bg-[var(--vms-danger-subtle)] p-5"
-      role="alert"
-    >
-      <h2 className="text-base font-semibold text-[var(--vms-danger)]">
-        People unavailable
-      </h2>
-      <p className="mt-1 text-sm text-[var(--vms-danger)]">
-        {parseApiError(error).message}
-      </p>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="mt-4"
-        onClick={retry}
-      >
-        Retry
-      </Button>
-    </section>
-  );
-}
-
-function PeopleSkeleton() {
-  return (
-    <div className="space-y-4" role="status">
-      <span className="sr-only">Loading property people</span>
-      <div className="h-24 animate-pulse rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)]" />
-      <div className="h-80 animate-pulse rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)]" />
-    </div>
-  );
-}
-
-const fieldClass =
-  "h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base text-[var(--vms-ink)] outline-none transition-[border-color,box-shadow] focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[var(--vms-focus)] disabled:cursor-not-allowed disabled:opacity-55 sm:text-sm";
-
-function occupantLabel(useCase: PlacePeople["effective_use_case"]) {
-  if (useCase === "hospitality") return "Guests";
-  if (useCase === "commercial") return "Occupants & members";
-  return "Occupants";
-}
-
-function roleLabel(role: string) {
-  return role
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }

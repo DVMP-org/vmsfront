@@ -9,6 +9,8 @@ import {
   DoorOpen,
   LayoutDashboard,
   ReceiptText,
+  ScanLine,
+  Ticket,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -43,6 +45,16 @@ const sections = [
     href: "/admin/commercial/maintenance",
     label: "Maintenance",
     icon: ClipboardList,
+  },
+  {
+    href: "/admin/checkpoints",
+    label: "Gate & check-in",
+    icon: ScanLine,
+  },
+  {
+    href: "/admin/invitations",
+    label: "Invitations",
+    icon: Ticket,
   },
 ];
 

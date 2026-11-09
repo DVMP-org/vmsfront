@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   BriefcaseBusiness,
   Building2,
@@ -22,12 +21,10 @@ import {
   type PropertyWorkspace,
   type WorkspaceArea,
 } from "@/features/workspaces/catalog";
-import { propertiesApi } from "@/features/properties/api";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { parseApiError } from "@/lib/error-utils";
-import { hasAdminPermission } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { ActionCard } from "@/components/ui/ActionCard";
@@ -72,30 +69,11 @@ export function WorkspaceDirectoryPage() {
   }, []);
 
   const adminProfile = admin.isError ? null : admin.data;
-  const canManagePlaces = hasAdminPermission(adminProfile, [
-    "places.list",
-    "place_relationships.create",
-  ]);
-  const managedPlaces = useQuery({
-    queryKey: ["workspace-managed-places", organization?.id],
-    queryFn: () =>
-      propertiesApi.list({
-        page: 1,
-        page_size: 100,
-        is_active: true,
-      }),
-    enabled: !!organization?.id && canManagePlaces,
-    retry: false,
-  });
-
-  const loading =
-    context.isPending ||
-    admin.isPending ||
-    (!!adminProfile && managedPlaces.isPending);
+  const loading = context.isPending || admin.isPending;
   const workspaces = buildPropertyWorkspaces({
-    admin: canManagePlaces ? adminProfile : null,
+    admin: adminProfile,
     relationships: context.data?.workspaces || [],
-    managedPlaces: managedPlaces.data?.items || [],
+    managedSites: context.data?.site_workspaces || [],
     managementRole: adminProfile?.role?.name,
   });
   const selectedWorkspace =

@@ -34,10 +34,10 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { parseApiError } from "@/lib/error-utils";
 import {
-  placeModulesApi,
+  siteModulesApi,
   type DomainModuleKey,
-  type PlaceModule,
-  type PlaceModuleList,
+  type SiteModule,
+  type SiteModuleList,
 } from "./api";
 
 const moduleIcons: Record<DomainModuleKey, LucideIcon> = {
@@ -58,21 +58,21 @@ const moduleIcons: Record<DomainModuleKey, LucideIcon> = {
   expense_allocation: Calculator,
 };
 
-type ModuleRow = PlaceModule & { stagedEnabled: boolean };
+type ModuleRow = SiteModule & { stagedEnabled: boolean };
 
-export function PlaceModulesPanel({
-  placeId,
-  placeName,
+export function SiteModulesPanel({
+  siteId,
+  siteName,
   canEdit,
 }: {
-  placeId: string;
-  placeName: string;
+  siteId: string;
+  siteName: string;
   canEdit: boolean;
 }) {
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: ["place-modules", placeId],
-    queryFn: () => placeModulesApi.get(placeId),
+    queryKey: ["site-modules", siteId],
+    queryFn: () => siteModulesApi.get(siteId),
     retry: false,
   });
   const [draft, setDraft] = useState<Record<string, boolean>>({});
@@ -101,8 +101,8 @@ export function PlaceModulesPanel({
   );
   const save = useMutation({
     mutationFn: () =>
-      placeModulesApi.update(
-        placeId,
+      siteModulesApi.update(
+        siteId,
         rows.map((module) => ({
           key: module.key,
           enabled: module.stagedEnabled,
@@ -110,9 +110,9 @@ export function PlaceModulesPanel({
         })),
       ),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["place-modules", placeId], updated);
+      queryClient.setQueryData(["site-modules", siteId], updated);
       void queryClient.invalidateQueries({ queryKey: ["workspace-context"] });
-      toast.success("Property modules updated.");
+      toast.success("Site modules updated.");
     },
     onError: (error) => {
       toast.error(parseApiError(error).message);
@@ -181,7 +181,7 @@ export function PlaceModulesPanel({
       sortable: true,
       accessor: () => (
         <span className="text-xs font-medium text-[var(--vms-ink-muted)]">
-          This property
+          this Site
         </span>
       ),
       responsiveHide: "md",
@@ -240,7 +240,7 @@ export function PlaceModulesPanel({
   if (query.isPending) {
     return (
       <section
-        aria-label="Property modules"
+        aria-label="Site modules"
         className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5"
       >
         <Skeleton className="h-6 w-48" />
@@ -254,7 +254,7 @@ export function PlaceModulesPanel({
     return (
       <InlineAlert
         tone="danger"
-        title="Property modules could not be loaded"
+        title="Site modules could not be loaded"
         action={
           <Button variant="outline" size="sm" onClick={() => query.refetch()}>
             Retry
@@ -280,7 +280,7 @@ export function PlaceModulesPanel({
             id="property-modules-heading"
             className="mt-1 text-lg font-semibold tracking-[-0.02em]"
           >
-            Modules for {placeName}
+            Modules for {siteName}
           </h3>
           <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
             Choose the workflows this property offers. The organization&apos;s{" "}
@@ -353,8 +353,8 @@ export function PlaceModulesPanel({
           />
         ) : (
           <EmptyState
-            title="No property modules available"
-            description="This property's operating use case does not currently expose configurable modules."
+            title="No Site modules available"
+            description="this Site's operating use case does not currently expose configurable modules."
           />
         )}
       </div>

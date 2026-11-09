@@ -1,5 +1,4 @@
 import type { Admin, WorkspaceRelationship } from "@/types";
-import { hasAdminPermission } from "@/lib/permissions";
 
 export type WorkspaceArea = "management" | "occupancy" | "staff" | "guest";
 
@@ -30,6 +29,20 @@ export interface PropertyWorkspace {
   place: PropertyWorkspacePlace;
   placePath: PropertyWorkspacePlace[];
   accesses: PropertyAccess[];
+}
+
+export interface ManagedSiteWorkspace {
+  assignment_id: string;
+  role: "site_admin";
+  site: {
+    id: string;
+    name: string;
+    slug: string;
+    parent_site_id: string | null;
+    is_active: boolean;
+    use_case?: string | null;
+  };
+  effective_permissions: string[];
 }
 
 export type PropertyWorkspacePlace = Omit<
@@ -185,17 +198,15 @@ export function buildPropertyWorkspaces({
   admin,
   relationships,
   managedPlaces = [],
+  managedSites = [],
   managementRole: managementRoleOverride,
 }: {
   admin: Admin | null | undefined;
   relationships: WorkspaceRelationship[];
   managedPlaces?: PropertyWorkspacePlace[];
+  managedSites?: ManagedSiteWorkspace[];
   managementRole?: string | null;
 }): PropertyWorkspace[] {
-  const canManagePlaces = hasAdminPermission(admin, [
-    "places.list",
-    "place_relationships.create",
-  ]);
   const byPlace = new Map<string, PropertyWorkspace>();
   const managedPlaceById = new Map(
     managedPlaces.map((place) => [place.id, place]),
@@ -243,10 +254,7 @@ export function buildPropertyWorkspaces({
   for (const relationship of relationships) {
     const role = relationship.role.toLowerCase();
     const workspace = ensure(relationship.place);
-    if (ADMIN_RELATIONSHIP_ROLES.has(role)) {
-      addAccess(workspace, managementAccess(managementRole));
-      continue;
-    }
+    if (ADMIN_RELATIONSHIP_ROLES.has(role)) continue;
     const area = areaForRelationship(relationship);
     const roleText = roleLabel(relationship.role);
     const title =
@@ -274,11 +282,20 @@ export function buildPropertyWorkspaces({
     });
   }
 
-  if (canManagePlaces) {
-    for (const place of managedPlaces) {
-      if (place.parent_id) continue;
-      addAccess(ensure(place), managementAccess(managementRole));
-    }
+  for (const managed of managedSites) {
+    const sitePlace: PropertyWorkspacePlace = {
+      id: managed.site.id,
+      name: managed.site.name,
+      slug: managed.site.slug,
+      kind: "site",
+      is_active: managed.site.is_active,
+      site_name: null,
+      parent_id: managed.site.parent_site_id,
+    };
+    addAccess(
+      ensure(sitePlace),
+      managementAccess(managementRole),
+    );
   }
 
   const areaOrder: WorkspaceArea[] = [

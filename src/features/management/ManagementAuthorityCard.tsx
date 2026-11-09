@@ -7,7 +7,7 @@ export function ManagementAuthorityCard({
 }: {
   management: WorkspaceContext["management"];
 }) {
-  if (!management?.is_administrator || !management.authoritative_place) {
+  if (!management?.is_administrator || !management.authoritative_site) {
     return null;
   }
 
@@ -25,8 +25,8 @@ export function ManagementAuthorityCard({
             </p>
             <h2 className="mt-1 text-base font-semibold">
               {inherited
-                ? `Managed by ${management.authoritative_place.name}`
-                : `${management.authoritative_place.name} management`}
+                ? `Managed by ${management.authoritative_site.name}`
+                : `${management.authoritative_site.name} management`}
             </h2>
             <p className="mt-1 text-sm text-zinc-600 ">
               {inherited
@@ -46,7 +46,7 @@ export function ManagementAuthorityCard({
       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--vms-line)] pt-3 text-xs text-[var(--vms-ink-muted)]">
         <span className="inline-flex items-center gap-1.5">
           <Building2 className="h-3.5 w-3.5" />
-          {management.authoritative_place.kind.replaceAll("_", " ")}
+          Site
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" />

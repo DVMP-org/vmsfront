@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Building2, ShieldCheck } from "lucide-react";
 
-import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
+import { SitePicker } from "@/components/sites/SitePicker";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -129,18 +129,9 @@ export function ResidentialShell({
   );
 }
 
-function PropertyContext({ contextKey }: { contextKey: string }) {
+function PropertyContext({ contextKey: _contextKey }: { contextKey: string }) {
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
-  const value: FacetItem | null = selectedProperty
-    ? {
-        value: selectedProperty.id,
-        label: selectedProperty.name,
-        disabled: false,
-        meta: { kind: "site", slug: "", parent_id: null },
-      }
-    : null;
-
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-7">
       <h2 className="text-lg font-semibold">Choose a residential property</h2>
@@ -149,16 +140,10 @@ function PropertyContext({ contextKey }: { contextKey: string }) {
         scoped to the property selected in the workspace.
       </p>
       <div className="mt-5 max-w-xl">
-        <FacetPicker
-          facet="places"
+        <SitePicker
           label="Residential property"
-          value={value}
-          contextKey={contextKey}
-          onChange={(item) =>
-            setSelectedProperty(
-              item ? { id: item.value, name: item.label } : null,
-            )
-          }
+          value={selectedProperty}
+          onChange={setSelectedProperty}
         />
       </div>
     </section>

@@ -15,9 +15,11 @@ import {
 import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PlaceModulesPanel } from "@/features/modules/PlaceModulesPanel";
+import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import { propertiesApi } from "@/features/properties/api";
+import { sitesApi } from "@/features/sites/api";
+import { useAdminProfile } from "@/hooks/use-admin";
+import { hasAdminPermission } from "@/lib/permissions";
 import { useAppStore } from "@/store/app-store";
 import { useQuery } from "@tanstack/react-query";
 
@@ -27,9 +29,10 @@ export function SiteConfiguration() {
   >("general");
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const workspace = useWorkspaceContext();
+  const profile = useAdminProfile();
   const property = useQuery({
-    queryKey: ["site-configuration-place", selectedProperty?.id],
-    queryFn: () => propertiesApi.get(selectedProperty!.id),
+    queryKey: ["site-configuration-site", selectedProperty?.id],
+    queryFn: () => sitesApi.get(selectedProperty!.id),
     enabled: !!selectedProperty?.id,
     retry: false,
   });
@@ -80,26 +83,12 @@ export function SiteConfiguration() {
       </InlineAlert>
     );
   }
-  if (property.data.kind !== "site") {
-    return (
-      <InlineAlert
-        tone="warning"
-        title="This workspace is not a site"
-        action={
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/admin/properties/${property.data.id}`}>
-              Open property
-            </Link>
-          </Button>
-        }
-      >
-        Operating modules are configured on the site. Child buildings, units,
-        rooms and spaces inherit the site capability set.
-      </InlineAlert>
-    );
-  }
-
   const canManage = workspace.data?.management?.is_administrator === true;
+  const orgCanManage =
+    !!profile.data && hasAdminPermission(profile.data, "places.update");
+  const canEditModules =
+    orgCanManage ||
+    (canManage && workspace.data?.management?.mode === "local");
   const grants =
     workspace.data?.effective_permissions?.length
       ? workspace.data.effective_permissions
@@ -246,8 +235,10 @@ export function SiteConfiguration() {
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">Structure</dt>
-              <dd className="mt-1 font-semibold">Site / property</dd>
+              <dt className="text-xs text-[var(--vms-ink-muted)]">Hierarchy</dt>
+              <dd className="mt-1 font-semibold">
+                {property.data.parent_site_id ? "Child Site" : "Root Site"}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-[var(--vms-ink-muted)]">
@@ -296,17 +287,17 @@ export function SiteConfiguration() {
         <ConfigurationLinkCard
           icon={Users}
           title="Roles & permissions"
-          description="Manage property administrators and their effective role grants. Wildcard place authority remains scoped to this site."
-          href="/admin/people"
+          description="Manage the Site managers and their effective role grants. Manager authority remains scoped to this Site."
+          href="/admin/managers"
           action="Manage site administrators"
         />
       ) : null}
 
       {activeTab === "operations" ? (
-        <PlaceModulesPanel
-          placeId={property.data.id}
-          placeName={property.data.name}
-          canEdit={canManage}
+        <SiteModulesPanel
+          siteId={property.data.id}
+          siteName={property.data.name}
+          canEdit={canEditModules}
         />
       ) : null}
     </main>

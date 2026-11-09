@@ -22,11 +22,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import {
-  propertiesApi,
-  type Property,
-  type PropertyInput,
-} from "@/features/properties/api";
+import { type Site, type SiteInput, sitesApi } from "@/features/sites/api";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
@@ -52,8 +48,8 @@ export default function FirstPlaceSetupPage() {
   }, [isPending, needsFirstPlace, organization, router]);
 
   const mutation = useMutation({
-    mutationFn: (body: PropertyInput) => propertiesApi.create(body),
-    onSuccess: (saved: Property) => {
+    mutationFn: (body: SiteInput) => sitesApi.create(body),
+    onSuccess: (saved: Site) => {
       setSelectedProperty(saved);
       if (currentSlug) {
         queryClient.setQueryData(
@@ -93,11 +89,9 @@ export default function FirstPlaceSetupPage() {
 
     mutation.mutate({
       name: name.trim(),
-      kind: "site",
       address: address.trim(),
       description: description.trim(),
-      parent_id: null,
-      building_type: null,
+      parent_site_id: null,
       use_case: organization?.use_case || null,
     });
   }

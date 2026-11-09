@@ -72,18 +72,24 @@
           "href": "/admin/mixed-use/facilities",
           "icon": "share",
           "module": "shared_facilities"
-        },
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Access",
+      "items": [
         {
           "label": "Gate & check-in console",
           "href": "/admin/checkpoints",
           "icon": "scan",
-          "module": "access_control"
+          "module": "check_in_out"
         },
         {
           "label": "Invitation console",
           "href": "/admin/invitations",
           "icon": "ticket",
-          "module": "access_control"
+          "module": "check_in_out"
         }
       ]
     }
