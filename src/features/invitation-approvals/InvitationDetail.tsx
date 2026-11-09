@@ -24,12 +24,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { CheckpointEvent } from "@/features/access-journey/api";
 import { parseApiError } from "@/lib/error-utils";
-import { hasAdminPermission } from "@/lib/permissions";
-import { adminService } from "@/services/admin-service";
-import {
-  invitationApprovalsApi,
-  type VisitSession,
-} from "./api";
+import { useSiteAccess } from "@/features/context/use-site-access";
+import { invitationApprovalsApi, type VisitSession } from "./api";
 import { formatDate, guestNames, StatusBadge } from "./InvitationApprovals";
 
 export function InvitationDetail({ invitationId }: { invitationId: string }) {
@@ -38,12 +34,8 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const [declineReason, setDeclineReason] = useState("");
   const [success, setSuccess] = useState("");
   const [actionError, setActionError] = useState("");
-  const profile = useQuery({
-    queryKey: ["invitation-approvals-profile"],
-    queryFn: async () => (await adminService.getAdminProfile()).data,
-    retry: false,
-    staleTime: 0,
-  });
+  const access = useSiteAccess();
+  const profile = access.workspace;
   const invitation = useQuery({
     queryKey: ["admin-invitation-detail", invitationId],
     queryFn: () => invitationApprovalsApi.get(invitationId),
@@ -65,7 +57,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const can = (permission: string) =>
     !profile.isError &&
     profile.isFetchedAfterMount &&
-    hasAdminPermission(profile.data, `visit_authorizations.${permission}`);
+    access.allowed(`visit_authorizations.${permission}`);
 
   async function refreshAfterAction(message: string) {
     setSuccess(message);
@@ -145,7 +137,8 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const item = invitation.data;
   const requested = item.status === "requested";
   const approved = item.status === "approved";
-  const actionPending = approve.isPending || decline.isPending || revoke.isPending;
+  const actionPending =
+    approve.isPending || decline.isPending || revoke.isPending;
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
@@ -169,7 +162,10 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--vms-ink-muted)]">
             <StatusBadge status={item.status} />
             <span>
-              Requested <time dateTime={item.requested_at}>{formatDate(item.requested_at)}</time>
+              Requested{" "}
+              <time dateTime={item.requested_at}>
+                {formatDate(item.requested_at)}
+              </time>
             </span>
           </div>
         }
@@ -235,8 +231,17 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
         <div className="space-y-4">
           <DetailPanel title="Invitation facts">
             <dl className="grid gap-4 sm:grid-cols-2">
-              <Fact icon={UserRound} label="Host" value={item.host_party.display_name} />
-              <Fact icon={MapPin} label="Destination" value={item.destination_place.name} address={item.destination_place.address} />
+              <Fact
+                icon={UserRound}
+                label="Host"
+                value={item.host_party.display_name}
+              />
+              <Fact
+                icon={MapPin}
+                label="Destination"
+                value={item.destination_place.name}
+                address={item.destination_place.address}
+              />
               <Fact
                 icon={CalendarClock}
                 label="Valid from"
@@ -260,7 +265,10 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           <DetailPanel title={`Guests (${item.guests.length})`}>
             <ul className="divide-y divide-[var(--vms-line)]">
               {item.guests.map((guest) => (
-                <li key={guest.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                <li
+                  key={guest.id}
+                  className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                >
                   <div>
                     <strong className="block text-sm font-semibold">
                       {guest.display_name_snapshot}
@@ -300,7 +308,11 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
         <aside className="space-y-4">
           <DetailPanel title="Access history" icon={History}>
             {events.isPending ? (
-              <div className="space-y-2" role="status" aria-label="Loading checkpoint history">
+              <div
+                className="space-y-2"
+                role="status"
+                aria-label="Loading checkpoint history"
+              >
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
@@ -412,7 +424,12 @@ function DetailPanel({
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
       <div className="flex items-center gap-2 border-b border-[var(--vms-line)] px-4 py-3">
-        {Icon ? <Icon className="h-4 w-4 text-[var(--vms-ink-muted)]" aria-hidden="true" /> : null}
+        {Icon ? (
+          <Icon
+            className="h-4 w-4 text-[var(--vms-ink-muted)]"
+            aria-hidden="true"
+          />
+        ) : null}
         <h2 className="text-sm font-semibold">{title}</h2>
       </div>
       <div className="p-4">{children}</div>
@@ -441,11 +458,15 @@ function Fact({
         {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
         {label}
       </dt>
-      <dd className={mono ? "mt-1 break-all font-mono text-sm" : "mt-1 text-sm"}>
+      <dd
+        className={mono ? "mt-1 break-all font-mono text-sm" : "mt-1 text-sm"}
+      >
         {machineTime ? <time dateTime={machineTime}>{value}</time> : value}
       </dd>
       {address ? (
-        <dd className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">{address}</dd>
+        <dd className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
+          {address}
+        </dd>
       ) : null}
     </div>
   );
@@ -497,7 +518,13 @@ function PartialError({
   return (
     <div className="text-sm text-[var(--vms-danger)]" role="alert">
       <p>{message}</p>
-      <Button type="button" variant="outline" size="sm" className="mt-3" onClick={retry}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-3"
+        onClick={retry}
+      >
         Retry
       </Button>
     </div>
@@ -506,7 +533,11 @@ function PartialError({
 
 function DetailSkeleton() {
   return (
-    <main className="space-y-5" role="status" aria-label="Loading invitation detail">
+    <main
+      className="space-y-5"
+      role="status"
+      aria-label="Loading invitation detail"
+    >
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-4 w-40" />
       <Skeleton className="h-8 w-72" />
@@ -535,7 +566,13 @@ function DetailError({
     >
       <strong>{title}</strong>
       <p className="mt-1">{detail}</p>
-      <Button type="button" variant="outline" size="sm" className="mt-4" onClick={retry}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-4"
+        onClick={retry}
+      >
         Retry
       </Button>
     </div>

@@ -15,6 +15,7 @@ export function useDialogFocus(
   isOpen: boolean,
   onClose: () => void,
   panelRef: React.RefObject<HTMLElement | null>,
+  initialFocusSelector?: string,
 ) {
   const onCloseRef = React.useRef(onClose);
   onCloseRef.current = onClose;
@@ -28,7 +29,8 @@ export function useDialogFocus(
 
     const getFocusable = () =>
       Array.from(
-        panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
+        panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ??
+          [],
       ).filter(
         (element) =>
           element.getAttribute("aria-hidden") !== "true" &&
@@ -38,7 +40,9 @@ export function useDialogFocus(
       );
 
     const focusFrame = window.requestAnimationFrame(() => {
-      const first = getFocusable()[0];
+      const first = initialFocusSelector
+        ? panelRef.current?.querySelector<HTMLElement>(initialFocusSelector)
+        : getFocusable()[0];
       (first || panelRef.current)?.focus();
     });
 
@@ -76,5 +80,5 @@ export function useDialogFocus(
       document.body.style.overflow = previousOverflow;
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
-  }, [isOpen, panelRef]);
+  }, [initialFocusSelector, isOpen, panelRef]);
 }

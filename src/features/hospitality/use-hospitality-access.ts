@@ -1,9 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-
-import { adminService } from "@/services/admin-service";
-import { hasAdminPermission } from "@/lib/permissions";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -11,14 +8,9 @@ export function useHospitalityAccess() {
   const organization = useAppStore((state) => state.organization);
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const user = useAuthStore((state) => state.user);
-  const contextKey = `${organization?.id}:${user?.id}`;
-  const profile = useQuery({
-    queryKey: ["hospitality-profile", contextKey],
-    queryFn: async () => (await adminService.getAdminProfile()).data,
-    enabled: !!organization?.id && !!user?.id,
-    staleTime: 0,
-    refetchOnMount: "always",
-  });
+  const access = useSiteAccess();
+  const contextKey = access.contextKey;
+  const profile = access.workspace;
 
   return {
     organization,
@@ -34,6 +26,6 @@ export function useHospitalityAccess() {
     allowed: (action: string) =>
       profile.isFetchedAfterMount &&
       !profile.isError &&
-      hasAdminPermission(profile.data, `hospitality_stays.${action}`),
+      access.allowed(`hospitality_stays.${action}`),
   };
 }

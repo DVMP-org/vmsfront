@@ -106,6 +106,11 @@ function SitesWorkspace({
   const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
   const selectedId = route.id;
   const creating = route.action === "new";
+  useEffect(() => {
+    if (basePath === "/admin/properties") {
+      router.replace("/admin");
+    }
+  }, [basePath, router]);
   const allowed = (action: string) =>
     profile.isSuccess &&
     !profile.isError &&
@@ -192,12 +197,7 @@ function SitesWorkspace({
       mobileHide: true,
       accessor: (site) => (
         <div className="flex justify-end gap-1">
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            disabled={!allowed("show")}
-          >
+          <Button asChild size="sm" variant="ghost" disabled={!allowed("show")}>
             <Link href={`${basePath}/${site.id}`}>Details</Link>
           </Button>
           <Button
@@ -257,6 +257,17 @@ function SitesWorkspace({
       },
     },
   ];
+  if (basePath === "/admin/properties") {
+    return (
+      <InlineAlert
+        tone="warning"
+        title="Organization property management moved"
+      >
+        Site administrators manage their Site here. Organization Sites are
+        managed from Organization → Properties.
+      </InlineAlert>
+    );
+  }
   if (profile.isPending) return <p role="status">Loading Site permissions…</p>;
   if (profile.isError) {
     return (

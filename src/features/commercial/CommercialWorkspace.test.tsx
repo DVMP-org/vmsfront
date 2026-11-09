@@ -52,12 +52,23 @@ vi.mock("@/store/auth-store", () => ({
   useAuthStore: (selector: (state: unknown) => unknown) =>
     selector({ user: { id: "user" } }),
 }));
-vi.mock("@/hooks/use-admin", () => ({
-  useAdminProfile: () => ({
-    data: mocks.profile,
-    isPending: false,
-    isError: false,
-    refetch: vi.fn(),
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: {
+      data: mocks.profile,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    },
+    contextKey: "org:site:user",
+    allowed: (requirement: string | string[]) => {
+      const checks = Array.isArray(requirement) ? requirement : [requirement];
+      return checks.some((permission) =>
+        mocks.profile.effective_permissions.includes(permission),
+      );
+    },
   }),
 }));
 vi.mock("@/components/facets/FacetPicker", () => ({

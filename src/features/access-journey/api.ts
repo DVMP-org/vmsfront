@@ -14,6 +14,8 @@ export interface VisitGuest {
 
 export interface VisitAuthorization {
   id: string;
+  created_by_user_id?: string | null;
+  created_by_site_admin_id?: string | null;
   host_party_id: string;
   destination_place_id: string;
   code: string;

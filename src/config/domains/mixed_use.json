@@ -20,12 +20,6 @@
           "module": "mixed_use"
         },
         {
-          "label": "Buildings & spaces",
-          "href": "/admin/properties",
-          "icon": "building",
-          "module": "properties"
-        },
-        {
           "label": "Occupancy & tenancies",
           "href": "/admin/people",
           "icon": "users",
@@ -47,7 +41,21 @@
           "label": "Revenue & charges",
           "href": "/admin/charges",
           "icon": "receipt",
-          "module": "billing"
+          "module": "charges",
+          "children": [
+            {
+              "label": "Charge definitions",
+              "href": "/admin/charges",
+              "icon": "receipt",
+              "module": "charges"
+            },
+            {
+              "label": "Place groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         },
         {
           "label": "Shared expense allocation",
@@ -80,36 +88,86 @@
       "label": "Access",
       "items": [
         {
-          "label": "Gate & check-in console",
+          "label": "Checkpoints",
           "href": "/admin/checkpoints",
           "icon": "scan",
           "module": "check_in_out"
         },
         {
-          "label": "Invitation console",
+          "label": "Check-in console",
+          "href": "/admin/checkpoints/console",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Movement log",
+          "href": "/admin/passages",
+          "icon": "history",
           "module": "check_in_out"
         }
       ]
     }
   ],
   "dashboard": {
-    "priorities": ["mixed_occupancy", "collections", "maintenance", "shared_facilities", "access"]
+    "priorities": [
+      "mixed_occupancy",
+      "collections",
+      "maintenance",
+      "shared_facilities",
+      "access"
+    ]
   },
   "views": {
     "spaces": {
-      "columns": ["space", "zone", "domain", "occupant", "agreement", "status", "balance"],
+      "columns": [
+        "space",
+        "zone",
+        "domain",
+        "occupant",
+        "agreement",
+        "status",
+        "balance"
+      ],
       "filters": ["zone", "domain", "occupancy", "status"]
     },
     "maintenance": {
-      "columns": ["request", "space_or_zone", "domain", "priority", "owner", "allocation", "status"],
+      "columns": [
+        "request",
+        "space_or_zone",
+        "domain",
+        "priority",
+        "owner",
+        "allocation",
+        "status"
+      ],
       "filters": ["zone", "domain", "priority", "owner", "status"]
     }
   },
   "maintenance": {
-    "categories": ["shared_infrastructure", "building_system", "residential", "commercial", "hospitality", "common_area"],
-    "workflow": ["reported", "triage", "domain_classification", "assigned", "scheduled", "in_progress", "verified", "closed"],
+    "categories": [
+      "shared_infrastructure",
+      "building_system",
+      "residential",
+      "commercial",
+      "hospitality",
+      "common_area"
+    ],
+    "workflow": [
+      "reported",
+      "triage",
+      "domain_classification",
+      "assigned",
+      "scheduled",
+      "in_progress",
+      "verified",
+      "closed"
+    ],
     "requires_expense_allocation": true
   }
 }

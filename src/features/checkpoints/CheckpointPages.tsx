@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -232,9 +233,9 @@ function HardwareState({
 }
 export function CheckpointDirectory() {
   const access = useAccess();
-  const assignments = useQuery({
-    queryKey: ["my-checkpoint-assignments", access.context],
-    queryFn: checkpointsApi.myAssignments,
+  const gates = useQuery({
+    queryKey: ["checkpoint-directory", access.context],
+    queryFn: () => checkpointsApi.gates(1, ""),
     enabled:
       !access.workspace.isPending &&
       !access.workspace.isError &&
@@ -252,72 +253,78 @@ export function CheckpointDirectory() {
     return <p role="status">Loading checkpoint authority…</p>;
   if (!access.workspace.data?.management?.is_administrator)
     return <p role="alert">An active site administrator is required.</p>;
-  if (assignments.isPending)
-    return <p role="status">Loading assigned checkpoint…</p>;
-  if (assignments.isError)
-    return (
-      <Failure error={assignments.error} retry={() => assignments.refetch()} />
-    );
-  const assigned = assignments.data?.assignments ?? [];
-  if (assigned.length === 1) {
-    return (
-      <Console
-        key={`${access.context}:${assigned[0].gate_id}`}
-        gateId={assigned[0].gate_id}
-        access={access}
-        showBack={false}
-      />
-    );
-  }
+  if (gates.isPending) return <p role="status">Loading checkpoints…</p>;
+  if (gates.isError)
+    return <Failure error={gates.error} retry={() => gates.refetch()} />;
+  const items = gates.data?.items ?? [];
   return (
     <main className="checkpoint-page">
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-          Access operations
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-          Access Console
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-          Your operator account has multiple active checkpoint assignments.
-          Choose the physical checkpoint you are stationed at.
-        </p>
+      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
+            Access operations
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+            Checkpoints
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+            Every gate in this Site. Open the console to check visitors in or
+            out, review dependencies, or inspect the movement log.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href="/admin/checkpoints/console">Open check-in console</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/passages">Movement log</Link>
+          </Button>
+        </div>
       </header>
-      {assigned.length ? (
+      {items.length ? (
         <section className="grid gap-3 sm:grid-cols-2">
-          {assigned.map((assignment) => (
-            <Link
-              key={assignment.id}
-              href={`/admin/checkpoints/${assignment.gate_id}`}
-              className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 transition-colors hover:bg-[var(--vms-surface-subtle)]"
+          {items.map((gate) => (
+            <article
+              key={gate.id}
+              className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5"
             >
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-                {assignment.place.name}
+                {gate.allowed_entry ? "Entry" : "No entry"}
+                {gate.allowed_exit ? " · Exit" : ""}
               </span>
-              <strong className="mt-2 block text-lg">
-                {assignment.gate_name}
-              </strong>
+              <strong className="mt-2 block text-lg">{gate.name}</strong>
               <span className="mt-1 block text-sm text-[var(--vms-ink-muted)]">
-                Assigned to {assignment.site_admin.user.name}
+                Policy version {gate.policy_version ?? 1}
               </span>
-            </Link>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link href={`/admin/checkpoints/console?gate=${gate.id}`}>
+                    Open console
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/admin/checkpoints/${gate.id}`}>
+                    Gate actions
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href={`/admin/passages?gate_id=${gate.id}`}>
+                    Movement log
+                  </Link>
+                </Button>
+              </div>
+            </article>
           ))}
         </section>
       ) : (
-        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] p-5 text-sm text-[var(--vms-warning)]">
-          <p className="font-semibold">No checkpoint is assigned to you.</p>
+        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-dashed)] bg-[var(--vms-surface-subtle)] p-5 text-sm">
+          <p className="font-semibold">No checkpoints are configured.</p>
           <p className="mt-1">
-            A site administrator must assign an active checkpoint operator
-            before check-in or checkout can begin.
+            A permitted Site administrator can create the first gate in Site
+            configuration.
           </p>
         </section>
       )}
-      <Link
-        href="/admin/passages"
-        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
-      >
-        Open passage history
-      </Link>
     </main>
   );
 }
@@ -329,6 +336,64 @@ export function CheckpointConsole({ gateId }: { gateId: string }) {
       gateId={gateId}
       access={access}
       showBack
+    />
+  );
+}
+
+export function CheckpointConsoleHub() {
+  const access = useAccess();
+  const searchParams = useSearchParams();
+  const requestedGate = searchParams?.get("gate") || "";
+  const [gateId, setGateId] = useState(requestedGate);
+  const gates = useQuery({
+    queryKey: ["checkpoint-console-gates", access.context],
+    queryFn: () => checkpointsApi.gates(1, ""),
+    enabled:
+      !access.workspace.isPending &&
+      !access.workspace.isError &&
+      access.workspace.data?.management?.is_administrator === true,
+    retry: false,
+  });
+  const items = useMemo(() => gates.data?.items ?? [], [gates.data?.items]);
+  useEffect(() => {
+    if (!gateId && items.length) {
+      setGateId(
+        items.find((item) => item.id === requestedGate)?.id ?? items[0].id,
+      );
+    }
+  }, [gateId, items, requestedGate]);
+  if (access.workspace.isPending || gates.isPending) {
+    return <p role="status">Loading checkpoint console…</p>;
+  }
+  if (access.workspace.isError || gates.isError) {
+    return (
+      <Failure
+        error={access.workspace.error || gates.error}
+        retry={() => {
+          void access.workspace.refetch();
+          void gates.refetch();
+        }}
+      />
+    );
+  }
+  if (!items.length) {
+    return (
+      <main className="checkpoint-page">
+        <h1 className="text-3xl font-semibold">Check-in console</h1>
+        <p className="mt-3 text-sm text-[var(--vms-ink-muted)]">
+          No checkpoints are configured for this Site.
+        </p>
+      </main>
+    );
+  }
+  return (
+    <Console
+      key={`${access.context}:${gateId}`}
+      gateId={gateId}
+      access={access}
+      showBack
+      gateOptions={items}
+      onGateChange={setGateId}
     />
   );
 }
@@ -384,10 +449,14 @@ function Console({
   gateId,
   access,
   showBack,
+  gateOptions = [],
+  onGateChange,
 }: {
   gateId: string;
   access: ReturnType<typeof useAccess>;
   showBack: boolean;
+  gateOptions?: Awaited<ReturnType<typeof checkpointsApi.gates>>["items"];
+  onGateChange?: (gateId: string) => void;
 }) {
   const { context, workspace, allowed } = access;
   const client = useQueryClient();
@@ -498,6 +567,45 @@ function Console({
   if (gate.isPending) return <p role="status">Loading checkpoint…</p>;
   if (gate.isError)
     return <Failure error={gate.error} retry={() => gate.refetch()} />;
+
+  function recordPassage(nextDirection?: "entry" | "exit") {
+    if (intent || mutation.isPending) return;
+    const resolvedDirection = nextDirection || direction || undefined;
+    const body: PassageInput = {
+      credential: code.trim(),
+      ...(resolvedDirection ? { direction: resolvedDirection } : {}),
+      ...(suffix ? { guest_suffix: suffix } : {}),
+      ...(selectedLane ? { lane_id: selectedLane.id } : {}),
+      ...(manualOverride
+        ? {
+            manual_override: true,
+            override_reason: overrideReason.trim(),
+          }
+        : {}),
+      idempotency_key: createIdempotencyKey(),
+    };
+    if (!online) {
+      if (gate.data?.offline_policy === "deny") {
+        setQueueNotice(
+          "This checkpoint requires a server connection before any access transition can be recorded.",
+        );
+        return;
+      }
+      setQueued((current) => [
+        ...current,
+        { input: body, queued_at: new Date().toISOString() },
+      ]);
+      setQueueNotice(
+        "Queued locally. It remains provisional until reconnect and server confirmation.",
+      );
+      setCode("");
+      setSuffix("");
+      return;
+    }
+    setIntent(body);
+    mutation.mutate(body);
+  }
+
   return (
     <main className="checkpoint-page">
       {showBack ? (
@@ -526,6 +634,24 @@ function Console({
           Open passage history
         </Link>
       </header>
+      {gateOptions.length > 1 && onGateChange ? (
+        <Field id="checkpoint-console-gate" label="Checkpoint">
+          {(control) => (
+            <select
+              {...control}
+              value={gateId}
+              onChange={(event) => onGateChange(event.target.value)}
+              className={fieldControlClassName}
+            >
+              {gateOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+      ) : null}
       <section className="checkpoint-status-strip" aria-label="Access status">
         <div className={online ? "online" : "offline"}>
           <strong>{online ? "Network online" : "Network offline"}</strong>
@@ -588,40 +714,7 @@ function Console({
           className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5"
           onSubmit={(e) => {
             e.preventDefault();
-            if (intent || mutation.isPending) return;
-            const body: PassageInput = {
-              credential: code.trim(),
-              ...(direction ? { direction } : {}),
-              ...(suffix ? { guest_suffix: suffix } : {}),
-              ...(selectedLane ? { lane_id: selectedLane.id } : {}),
-              ...(manualOverride
-                ? {
-                    manual_override: true,
-                    override_reason: overrideReason.trim(),
-                  }
-                : {}),
-              idempotency_key: createIdempotencyKey(),
-            };
-            if (!online) {
-              if (gate.data?.offline_policy === "deny") {
-                setQueueNotice(
-                  "This checkpoint requires a server connection before any access transition can be recorded.",
-                );
-                return;
-              }
-              setQueued((current) => [
-                ...current,
-                { input: body, queued_at: new Date().toISOString() },
-              ]);
-              setQueueNotice(
-                "Queued locally. It remains provisional until reconnect and server confirmation.",
-              );
-              setCode("");
-              setSuffix("");
-              return;
-            }
-            setIntent(body);
-            mutation.mutate(body);
+            recordPassage();
           }}
         >
           <fieldset
@@ -671,23 +764,6 @@ function Console({
                     inputMode="numeric"
                     className={fieldControlClassName}
                   />
-                )}
-              </Field>
-              <Field id="checkpoint-direction" label="Movement">
-                {(control) => (
-                  <select
-                    {...control}
-                    aria-label="Movement"
-                    value={direction}
-                    onChange={(e) =>
-                      setDirection(e.target.value as "" | "entry" | "exit")
-                    }
-                    className={fieldControlClassName}
-                  >
-                    <option value="">Automatic (server resolves)</option>
-                    <option value="entry">Check in</option>
-                    <option value="exit">Check out</option>
-                  </select>
                 )}
               </Field>
               <Field id="checkpoint-lane" label="Door or barrier">
@@ -747,22 +823,41 @@ function Console({
                 )}
               </Field>
             ) : null}
-            <Button
-              type="submit"
-              size="lg"
-              disabled={
-                !code.trim() || (manualOverride && !overrideReason.trim())
-              }
-              isLoading={mutation.isPending}
-            >
-              {mutation.isPending
-                ? "Verifying…"
-                : online
-                  ? "Record and verify passage"
-                  : gate.data?.offline_policy === "deny"
-                    ? "Connection required by checkpoint policy"
-                    : "Queue provisional offline check"}
-            </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button
+                type="button"
+                size="lg"
+                disabled={
+                  !code.trim() ||
+                  (manualOverride && !overrideReason.trim()) ||
+                  mutation.isPending
+                }
+                isLoading={mutation.isPending && direction === "entry"}
+                onClick={() => {
+                  setDirection("entry");
+                  recordPassage("entry");
+                }}
+              >
+                Check in
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={
+                  !code.trim() ||
+                  (manualOverride && !overrideReason.trim()) ||
+                  mutation.isPending
+                }
+                isLoading={mutation.isPending && direction === "exit"}
+                onClick={() => {
+                  setDirection("exit");
+                  recordPassage("exit");
+                }}
+              >
+                Check out
+              </Button>
+            </div>
           </fieldset>
         </form>
       ) : (

@@ -197,12 +197,20 @@ it("creates idempotency keys without crypto.randomUUID on local HTTP", () => {
     vi.unstubAllGlobals();
   }
 });
-it("opens the assigned checkpoint directly in the access console", async () => {
+it("lists every Site checkpoint with a direct console action", async () => {
   mount(<CheckpointDirectory />);
+  expect(await screen.findByText("Main entrance")).toBeVisible();
+  expect(screen.getByRole("link", { name: "Open console" })).toHaveAttribute(
+    "href",
+    "/admin/checkpoints/console?gate=gate",
+  );
   expect(
-    await screen.findByRole("heading", { name: "Main entrance" }),
-  ).toBeVisible();
-  expect(screen.getByLabelText("Credential")).toBeVisible();
+    screen
+      .getAllByRole("link", { name: "Movement log" })
+      .find(
+        (link) => link.getAttribute("href") === "/admin/passages?gate_id=gate",
+      ),
+  ).toHaveAttribute("href", "/admin/passages?gate_id=gate");
 });
 it("retries the same immutable passage after unknown failure then offers next person", async () => {
   m.record
@@ -213,9 +221,7 @@ it("retries the same immutable passage after unknown failure then offers next pe
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Record and verify passage" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
   await screen.findByRole("button", { name: "Retry same passage" });
   expect(screen.getByLabelText("Credential")).toBeDisabled();
   const first = m.record.mock.calls[0][1];
@@ -261,12 +267,7 @@ it("distinguishes denied result and checkout direction", async () => {
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
-  fireEvent.change(screen.getByLabelText("Movement"), {
-    target: { value: "exit" },
-  });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Record and verify passage" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Check out" }));
   await screen.findByRole("heading", { name: "Guest · Checkout" });
   expect(screen.getByText("not present")).toBeInTheDocument();
   expect(screen.getByText("2. Device command")).toBeInTheDocument();
@@ -284,9 +285,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT-OFFLINE" },
   });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Queue provisional offline check" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
 
   expect(screen.getByText("1 provisional passage queued")).toBeInTheDocument();
   expect(

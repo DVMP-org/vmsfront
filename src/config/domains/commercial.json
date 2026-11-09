@@ -39,9 +39,29 @@
       "items": [
         {
           "label": "Collections & recoveries",
-          "href": "/admin/commercial/finance",
+          "href": "/admin/charges",
           "icon": "receipt",
-          "module": "billing"
+          "module": "charges",
+          "children": [
+            {
+              "label": "Charge definitions",
+              "href": "/admin/charges",
+              "icon": "receipt",
+              "module": "charges"
+            },
+            {
+              "label": "Charge register",
+              "href": "/admin/commercial/finance",
+              "icon": "calculator",
+              "module": "charges"
+            },
+            {
+              "label": "Place groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         }
       ]
     },
@@ -68,36 +88,84 @@
       "label": "Access",
       "items": [
         {
-          "label": "Gate & check-in console",
+          "label": "Checkpoints",
           "href": "/admin/checkpoints",
           "icon": "scan",
           "module": "check_in_out"
         },
         {
-          "label": "Invitation console",
+          "label": "Check-in console",
+          "href": "/admin/checkpoints/console",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Movement log",
+          "href": "/admin/passages",
+          "icon": "history",
           "module": "check_in_out"
         }
       ]
     }
   ],
   "dashboard": {
-    "priorities": ["lease_expiry", "collections", "maintenance_sla", "occupancy"]
+    "priorities": [
+      "lease_expiry",
+      "collections",
+      "maintenance_sla",
+      "occupancy"
+    ]
   },
   "views": {
     "spaces": {
-      "columns": ["space", "type", "tenant", "lease_end", "occupancy", "balance"],
+      "columns": [
+        "space",
+        "type",
+        "tenant",
+        "lease_end",
+        "occupancy",
+        "balance"
+      ],
       "filters": ["type", "occupancy", "lease_end", "status"]
     },
     "maintenance": {
-      "columns": ["work_order", "space", "system", "priority", "contractor", "sla", "status"],
+      "columns": [
+        "work_order",
+        "space",
+        "system",
+        "priority",
+        "contractor",
+        "sla",
+        "status"
+      ],
       "filters": ["priority", "system", "assignment", "sla", "status"]
     }
   },
   "maintenance": {
-    "categories": ["hvac", "electrical", "plumbing", "fit_out", "equipment", "common_area"],
-    "workflow": ["reported", "triage", "approval", "assigned", "scheduled", "in_progress", "verified", "closed"],
+    "categories": [
+      "hvac",
+      "electrical",
+      "plumbing",
+      "fit_out",
+      "equipment",
+      "common_area"
+    ],
+    "workflow": [
+      "reported",
+      "triage",
+      "approval",
+      "assigned",
+      "scheduled",
+      "in_progress",
+      "verified",
+      "closed"
+    ],
     "requires_contractor_permit": true
   }
 }

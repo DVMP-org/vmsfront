@@ -1,32 +1,28 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { Building2, ShieldCheck } from "lucide-react";
 
 import { SitePicker } from "@/components/sites/SitePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
-import { useAuthStore } from "@/store/auth-store";
 import { MixedUseNav } from "./MixedUseNav";
 
 export function useMixedUseAccess() {
-  const profile = useAdminProfile();
+  const access = useSiteAccess();
+  const profile = access.workspace;
   const organization = useAppStore((state) => state.organization);
   const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const user = useAuthStore((state) => state.user);
-
   return {
     profile,
     organization,
     selectedProperty,
-    contextKey: `${organization?.id || "organization"}:${user?.id || "user"}`,
-    canManageFacilities: hasAdminPermission(profile.data, "places.update"),
-    canManageExpenses: hasAdminPermission(profile.data, "charges.create"),
+    contextKey: access.contextKey,
+    canManageFacilities: access.allowed("places.update"),
+    canManageExpenses: access.allowed("charges.create"),
   };
 }
 
@@ -82,11 +78,6 @@ export function MixedUseShell({
           </div>
         }
         primaryAction={selectedProperty ? primaryAction : undefined}
-        secondaryActions={
-          <Button asChild variant="outline">
-            <Link href="/admin/properties">Property directory</Link>
-          </Button>
-        }
       />
 
       <MixedUseNav />

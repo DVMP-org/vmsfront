@@ -1,11 +1,19 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ChargesWorkspace from "./ChargesWorkspace";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
-  profile: vi.fn(),
+  profileData: {
+    effective_permissions: [] as string[],
+  },
   definitions: vi.fn(),
   definition: vi.fn(),
   create: vi.fn(),
@@ -13,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   assignments: vi.fn(),
   assignment: vi.fn(),
   assign: vi.fn(),
+  assignGroup: vi.fn(),
+  groups: vi.fn(),
   schedules: vi.fn(),
   generate: vi.fn(),
   transfer: vi.fn(),
@@ -40,8 +50,28 @@ vi.mock("@/store/auth-store", () => ({
     selector({ user: { id: "user" } }),
 }));
 
-vi.mock("@/services/admin-service", () => ({
-  adminService: { getAdminProfile: mocks.profile },
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: {
+      data: mocks.profileData,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    },
+    contextKey: "org:site:user",
+    allowed: (requirement: string | string[]) => {
+      const checks = Array.isArray(requirement) ? requirement : [requirement];
+      return checks.some((permission) => {
+        const resource = permission.split(".")[0];
+        return (
+          mocks.profileData.effective_permissions.includes(permission) ||
+          mocks.profileData.effective_permissions.includes(`${resource}.*`)
+        );
+      });
+    },
+  }),
 }));
 
 vi.mock("@/components/facets/FacetPicker", () => ({
@@ -62,6 +92,9 @@ vi.mock("@/components/facets/FacetPicker", () => ({
 }));
 
 vi.mock("./api", () => ({ chargesApi: mocks }));
+vi.mock("@/features/place-groups/api", () => ({
+  placeGroupsApi: { list: mocks.groups },
+}));
 
 const definition = {
   id: "charge",
@@ -103,9 +136,7 @@ function mount(
 describe("charge routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.profile.mockResolvedValue({
-      data: { effective_permissions: ["charges.*"] },
-    });
+    mocks.profileData = { effective_permissions: ["charges.*"] };
     mocks.definitions.mockResolvedValue({
       items: [definition],
       total_pages: 1,
@@ -117,6 +148,22 @@ describe("charge routes", () => {
     });
     mocks.assignment.mockResolvedValue(assignment);
     mocks.schedules.mockResolvedValue({ items: [], total_pages: 0 });
+    mocks.groups.mockResolvedValue([
+      {
+        id: "group",
+        name: "West wing",
+        description: null,
+        site_id: "site",
+        organization_id: "org",
+        created_by_site_admin_id: null,
+        places: [
+          { id: "place-1", name: "Unit 1" },
+          { id: "place-2", name: "Unit 2" },
+        ],
+        created_at: "2026-11-09T00:00:00Z",
+        updated_at: "2026-11-09T00:00:00Z",
+      },
+    ]);
   });
 
   it("renders charge definitions as stable detail links", async () => {
@@ -128,10 +175,9 @@ describe("charge routes", () => {
       "href",
       "/admin/charges/definitions/charge",
     );
-    expect(screen.getByRole("link", { name: "Create charge" })).toHaveAttribute(
-      "href",
-      "/admin/charges/new",
-    );
+    expect(
+      screen.getByRole("button", { name: "Create charge" }),
+    ).toBeInTheDocument();
   });
 
   it("shows an explicit empty state without inventing balances", async () => {
@@ -144,9 +190,7 @@ describe("charge routes", () => {
   });
 
   it("fails closed without charge-list permission", async () => {
-    mocks.profile.mockResolvedValue({
-      data: { effective_permissions: ["places.list"] },
-    });
+    mocks.profileData = { effective_permissions: ["places.list"] };
     mount();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "do not have permission",
@@ -155,15 +199,13 @@ describe("charge routes", () => {
   });
 
   it("hides mutating controls for read-only finance access", async () => {
-    mocks.profile.mockResolvedValue({
-      data: { effective_permissions: ["charges.list"] },
-    });
+    mocks.profileData = { effective_permissions: ["charges.list"] };
     mount();
     expect(
       (await screen.findAllByText("Service charge")).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryByRole("link", { name: "Create charge" }),
+      screen.queryByRole("button", { name: "Create charge" }),
     ).not.toBeInTheDocument();
   });
 
@@ -179,8 +221,14 @@ describe("charge routes", () => {
 
   it("validates a new charge with a linked error summary", async () => {
     mount("new");
+    const drawer = await screen.findByRole("dialog", {
+      name: "Create a charge",
+    });
+    await waitFor(() =>
+      expect(within(drawer).getByLabelText(/^Name/)).toHaveFocus(),
+    );
     fireEvent.click(
-      await screen.findByRole("button", { name: "Create charge" }),
+      within(drawer).getByRole("button", { name: "Create charge" }),
     );
     expect(
       (await screen.findAllByText("Enter a charge name.")).length,
@@ -188,7 +236,7 @@ describe("charge routes", () => {
     expect(
       screen.getAllByText("Enter an amount greater than zero.").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByRole("alert")).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
@@ -201,7 +249,12 @@ describe("charge routes", () => {
     fireEvent.change(screen.getByLabelText(/^Amount/), {
       target: { value: "15000" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Create charge" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Create a charge" })).getByRole(
+        "button",
+        { name: "Create charge" },
+      ),
+    );
     await waitFor(() =>
       expect(mocks.push).toHaveBeenCalledWith(
         "/admin/charges/definitions/charge",
@@ -231,7 +284,7 @@ describe("charge routes", () => {
     ).toBeDisabled();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Choose Target property or space",
+        name: "Choose Target Place",
       }),
     );
     fireEvent.click(
@@ -245,6 +298,38 @@ describe("charge routes", () => {
         "/admin/charges/assignments/assignment",
       ),
     );
+  });
+
+  it("assigns one charge definition across a Place group", async () => {
+    mocks.assignGroup.mockResolvedValue([
+      assignment,
+      { ...assignment, id: "two" },
+    ]);
+    mount("assign");
+    await screen.findByRole("heading", { name: "Assign charge" });
+    fireEvent.click(screen.getByRole("radio", { name: "Place group" }));
+    await screen.findByRole("option", { name: /West wing/ });
+    fireEvent.change(await screen.findByLabelText(/Target Place group/i), {
+      target: { value: "group" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Choose Responsible person or organization",
+      }),
+    );
+    const submit = screen.getByRole("button", { name: "Create assignment" });
+    await waitFor(() => expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+
+    await waitFor(() =>
+      expect(mocks.assignGroup).toHaveBeenCalledWith({
+        charge_definition_id: "charge",
+        place_group_id: "group",
+        responsible_party_id: "selected-party",
+        schedule_count: 1,
+      }),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/admin/charges");
   });
 
   it("shows the responsible payer and schedule balances on an assignment", async () => {

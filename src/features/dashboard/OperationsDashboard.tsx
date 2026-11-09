@@ -151,9 +151,9 @@ export function OperationsDashboard({
               </Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/admin/properties/new">
+              <Link href="/admin/checkpoints/console">
                 <Building2 className="h-4 w-4" aria-hidden />
-                Add property
+                Open check-in console
               </Link>
             </Button>
           </div>
@@ -216,7 +216,6 @@ export function OperationsDashboard({
             detail: `${data.root_places.length} portfolio roots`,
             icon: Building2,
             tone: "coral",
-            href: "/admin/properties",
           },
           {
             label: "People",
@@ -323,16 +322,14 @@ export function OperationsDashboard({
         </ReportPanel>
 
         <ReportPanel
-          title="Property scope"
-          description="Current roots in this place workspace."
-          action={<SeeAllLink href="/admin/properties">Properties</SeeAllLink>}
+          title="Place scope"
+          description="Current root Places in this Site workspace."
         >
           {data.root_places.length ? (
             <div className="divide-y divide-[var(--vms-line)]">
               {data.root_places.slice(0, 5).map((place) => (
-                <Link
+                <div
                   key={place.id}
-                  href={`/admin/properties/${place.id}`}
                   className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] sm:px-5"
                 >
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
@@ -353,7 +350,7 @@ export function OperationsDashboard({
                   <Badge variant={place.is_active ? "success" : "neutral"}>
                     {place.is_active ? "Active" : "Archived"}
                   </Badge>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (

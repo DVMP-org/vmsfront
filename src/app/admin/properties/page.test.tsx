@@ -120,7 +120,7 @@ function mount(route = {}) {
         })
       }
     >
-      <PropertiesWorkspace route={route} />
+      <PropertiesWorkspace route={route} basePath="/organization/properties" />
     </QueryClientProvider>,
   );
 }
@@ -182,9 +182,9 @@ describe("organization Site register", () => {
     expect(
       screen.getAllByRole("link", { name: /Details/ }).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /Edit/ }).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      screen.getAllByRole("link", { name: /Edit/ }).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getAllByRole("link", { name: /Child/ }).length,
     ).toBeGreaterThan(0);
@@ -225,7 +225,9 @@ describe("organization Site register", () => {
       ),
     );
     await waitFor(() =>
-      expect(mocks.push).toHaveBeenCalledWith("/admin/properties/site-1"),
+      expect(mocks.push).toHaveBeenCalledWith(
+        "/organization/properties/site-1",
+      ),
     );
   });
 

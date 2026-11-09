@@ -56,7 +56,7 @@ export function SiteConfiguration() {
           description="Site modules and operating configuration are managed inside a site workspace."
           action={
             <Button asChild>
-              <Link href="/admin/properties">Open properties</Link>
+              <Link href="/admin">Open workspace</Link>
             </Button>
           }
         />
@@ -90,11 +90,7 @@ export function SiteConfiguration() {
   const canEditModules =
     canManage && workspace.data?.management?.mode === "local";
   const permissions = workspacePermissions(workspace.data);
-  const grants = permissions.length
-    ? permissions
-    : canManage
-      ? ["*"]
-      : [];
+  const grants = permissions.length ? permissions : canManage ? ["*"] : [];
   const allowed = (permission: string) =>
     grants.some((grant) => {
       if (grant === "*") return true;
@@ -118,12 +114,7 @@ export function SiteConfiguration() {
     return true;
   }) as Array<
     [
-      | "general"
-      | "gates"
-      | "access"
-      | "roles"
-      | "operations"
-      | "notifications",
+      "general" | "gates" | "access" | "roles" | "operations" | "notifications",
       string,
     ]
   >;
@@ -144,7 +135,7 @@ export function SiteConfiguration() {
           </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href={`/admin/properties/${property.data.id}`}>
+          <Link href="/admin">
             <Settings2 className="h-4 w-4" aria-hidden="true" />
             General details
           </Link>
@@ -264,9 +255,7 @@ export function SiteConfiguration() {
             </div>
           </dl>
           <Button className="mt-5" variant="outline" asChild>
-            <Link href={`/admin/properties/${property.data.id}/edit`}>
-              Edit property details
-            </Link>
+            <Link href="/admin/site/configuration">Edit property details</Link>
           </Button>
         </section>
       ) : null}

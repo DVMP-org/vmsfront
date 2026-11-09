@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   keepPreviousData,
+  useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -14,20 +15,23 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import {
   DataTable,
   type BulkAction,
   type Column,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type {
   VisitAuthorization,
   VisitAuthorizationStatus,
 } from "@/features/access-journey/api";
 import { parseApiError } from "@/lib/error-utils";
-import { hasAdminPermission } from "@/lib/permissions";
-import { adminService } from "@/services/admin-service";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { invitationApprovalsApi, type ApprovalFilter } from "./api";
 
 const PAGE_SIZE = 25;
@@ -62,19 +66,17 @@ export function InvitationApprovals() {
   const status = validStatus(initial.get("status"));
   const page = validPage(initial.get("page"));
   const search = (initial.get("search") || "").slice(0, 100);
-
-  const profile = useQuery({
-    queryKey: ["invitation-approvals-profile"],
-    queryFn: async () => (await adminService.getAdminProfile()).data,
-    retry: false,
-    staleTime: 0,
-  });
+  const access = useSiteAccess();
+  const profile = access.workspace;
+  const [createOpen, setCreateOpen] = useState(false);
   const allowed = (permission: string) =>
-    profile.isFetchedAfterMount &&
+    profile.isSuccess &&
     !profile.isError &&
-    hasAdminPermission(profile.data, `visit_authorizations.${permission}`);
-  const canList = allowed("list");
+    access.allowed(`visit_authorizations.${permission}`);
+  const canList =
+    profile.data?.management?.is_administrator === true || allowed("list");
   const canApprove = allowed("approve");
+  const canCreate = allowed("create");
 
   const invitations = useQuery({
     queryKey: ["admin-invitation-approvals", status, page, search],
@@ -112,10 +114,7 @@ export function InvitationApprovals() {
     router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
   }
 
-  if (
-    profile.isPending ||
-    (profile.isFetched && !profile.isFetchedAfterMount)
-  ) {
+  if (profile.isPending) {
     return <InvitationQueueSkeleton title="Checking invitation permissions" />;
   }
   if (profile.isError) {
@@ -276,6 +275,11 @@ export function InvitationApprovals() {
             <span>Canonical visit authorizations</span>
           </div>
         }
+        primaryAction={
+          canCreate ? (
+            <Button onClick={() => setCreateOpen(true)}>New invitation</Button>
+          ) : undefined
+        }
         secondaryActions={
           <Button
             type="button"
@@ -391,6 +395,18 @@ export function InvitationApprovals() {
           </Link>
         )}
       />
+      <CreateInvitationModal
+        open={createOpen}
+        siteId={profile.data?.site_id || ""}
+        contextKey={profile.data?.organization_id || ""}
+        onClose={() => setCreateOpen(false)}
+        onSaved={async () => {
+          setCreateOpen(false);
+          await queryClient.invalidateQueries({
+            queryKey: ["admin-invitation-approvals"],
+          });
+        }}
+      />
     </main>
   );
 }
@@ -399,6 +415,174 @@ export function guestNames(invitation: VisitAuthorization) {
   const names = invitation.guests.map((guest) => guest.display_name_snapshot);
   if (names.length <= 2) return names.join(", ") || "Unnamed guest";
   return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+}
+
+function CreateInvitationModal({
+  open,
+  siteId,
+  contextKey,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  siteId: string;
+  contextKey: string;
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+}) {
+  const [host, setHost] = useState<FacetItem | null>(null);
+  const [destination, setDestination] = useState<FacetItem | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [maxUses, setMaxUses] = useState(1);
+  const [validTo, setValidTo] = useState(() => {
+    const value = new Date();
+    value.setDate(value.getDate() + 1);
+    value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
+    return value.toISOString().slice(0, 16);
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const create = useMutation({
+    mutationFn: () => {
+      const now = new Date();
+      return invitationApprovalsApi.create({
+        host_party_id: host!.value,
+        site_id: siteId,
+        destination_place_id: destination!.value,
+        valid_from: now.toISOString(),
+        valid_to: new Date(validTo).toISOString(),
+        max_uses: maxUses,
+        status: "approved",
+        purpose: purpose.trim() || undefined,
+        guests: [
+          {
+            display_name: guestName.trim(),
+            email: guestEmail.trim() || undefined,
+            suffix: "001",
+          },
+        ],
+      });
+    },
+    onSuccess: onSaved,
+    onError: (error) => setErrors({ form: parseApiError(error).message }),
+  });
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const next: Record<string, string> = {};
+    if (!host) next.host = "Choose the responsible Party.";
+    if (!destination) next.destination = "Choose the destination Place.";
+    if (guestName.trim().length < 2) next.guest = "Enter the visitor name.";
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    create.mutate();
+  }
+  return (
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Create visitor invitation"
+      description="Create an approved invitation for a Party host and destination Place."
+      size="lg"
+      className="sm:ml-auto sm:mr-0 sm:h-[calc(100dvh-3rem)] sm:max-h-none sm:rounded-r-none"
+    >
+      <form className="space-y-4" onSubmit={submit}>
+        <FormErrorSummary errors={errors} />
+        <FacetPicker
+          facet="parties"
+          kind="person"
+          label="Host Party"
+          value={host}
+          onChange={setHost}
+          contextKey={contextKey}
+          error={errors.host}
+          description="The resident, tenant, employee or other Party hosting the visit."
+        />
+        <FacetPicker
+          facet="places"
+          label="Destination Place"
+          value={destination}
+          onChange={setDestination}
+          contextKey={contextKey}
+          error={errors.destination}
+          description="The unit, room, office or shared Place the guest may access."
+        />
+        <Field
+          id="invite-guest-name"
+          label="Visitor name"
+          required
+          error={errors.guest}
+        >
+          {(control) => (
+            <input
+              {...control}
+              value={guestName}
+              onChange={(event) => setGuestName(event.target.value)}
+              className={fieldControlClassName}
+              autoComplete="name"
+            />
+          )}
+        </Field>
+        <Field id="invite-guest-email" label="Visitor email">
+          {(control) => (
+            <input
+              {...control}
+              type="email"
+              value={guestEmail}
+              onChange={(event) => setGuestEmail(event.target.value)}
+              className={fieldControlClassName}
+              autoComplete="email"
+            />
+          )}
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="invite-valid-to" label="Valid until" required>
+            {(control) => (
+              <input
+                {...control}
+                type="datetime-local"
+                value={validTo}
+                onChange={(event) => setValidTo(event.target.value)}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+          <Field id="invite-max-uses" label="Allowed entries">
+            {(control) => (
+              <input
+                {...control}
+                type="number"
+                min={1}
+                max={100}
+                value={maxUses}
+                onChange={(event) => setMaxUses(Number(event.target.value))}
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+        </div>
+        <Field id="invite-purpose" label="Purpose">
+          {(control) => (
+            <input
+              {...control}
+              value={purpose}
+              onChange={(event) => setPurpose(event.target.value)}
+              className={fieldControlClassName}
+              placeholder="Guest, family visit, delivery, appointment"
+            />
+          )}
+        </Field>
+        <div className="flex justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" isLoading={create.isPending}>
+            Create invitation
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
 export function StatusBadge({ status }: { status: VisitAuthorizationStatus }) {

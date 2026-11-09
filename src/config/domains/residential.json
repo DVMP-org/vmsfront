@@ -23,7 +23,21 @@
           "label": "Units",
           "href": "/admin/residential/units",
           "icon": "building",
-          "module": "properties"
+          "module": "properties",
+          "children": [
+            {
+              "label": "Unit directory",
+              "href": "/admin/residential/units",
+              "icon": "building",
+              "module": "properties"
+            },
+            {
+              "label": "Place groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         },
         {
           "label": "Residents & households",
@@ -39,9 +53,29 @@
       "items": [
         {
           "label": "Rent & service charges",
-          "href": "/admin/residential/finance",
+          "href": "/admin/charges",
           "icon": "receipt",
-          "module": "billing"
+          "module": "charges",
+          "children": [
+            {
+              "label": "Charge definitions",
+              "href": "/admin/charges",
+              "icon": "receipt",
+              "module": "charges"
+            },
+            {
+              "label": "Charge register",
+              "href": "/admin/residential/finance",
+              "icon": "calculator",
+              "module": "charges"
+            },
+            {
+              "label": "Place groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         }
       ]
     },
@@ -74,15 +108,27 @@
       "label": "Access",
       "items": [
         {
-          "label": "Gate & check-in console",
+          "label": "Checkpoints",
           "href": "/admin/checkpoints",
           "icon": "scan",
           "module": "check_in_out"
         },
         {
-          "label": "Invitation console",
+          "label": "Check-in console",
+          "href": "/admin/checkpoints/console",
+          "icon": "scan",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
+          "module": "check_in_out"
+        },
+        {
+          "label": "Movement log",
+          "href": "/admin/passages",
+          "icon": "history",
           "module": "check_in_out"
         }
       ]
@@ -93,7 +139,14 @@
   },
   "views": {
     "maintenance": {
-      "columns": ["request", "unit", "priority", "assignee", "status", "updated"],
+      "columns": [
+        "request",
+        "unit",
+        "priority",
+        "assignee",
+        "status",
+        "updated"
+      ],
       "filters": ["status", "priority", "category", "unit"]
     },
     "residents": {
@@ -102,8 +155,22 @@
     }
   },
   "maintenance": {
-    "categories": ["plumbing", "electrical", "appliance", "structural", "common_area"],
-    "workflow": ["reported", "triaged", "assigned", "scheduled", "in_progress", "resolved", "closed"],
+    "categories": [
+      "plumbing",
+      "electrical",
+      "appliance",
+      "structural",
+      "common_area"
+    ],
+    "workflow": [
+      "reported",
+      "triaged",
+      "assigned",
+      "scheduled",
+      "in_progress",
+      "resolved",
+      "closed"
+    ],
     "requires_access_authorization": true
   }
 }

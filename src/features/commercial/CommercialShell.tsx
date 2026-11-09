@@ -1,32 +1,28 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { Building2, ShieldCheck } from "lucide-react";
 
 import { SitePicker } from "@/components/sites/SitePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useAdminProfile } from "@/hooks/use-admin";
-import { hasAdminPermission } from "@/lib/permissions";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
-import { useAuthStore } from "@/store/auth-store";
 import { CommercialModuleNav } from "./CommercialModuleNav";
 
 export function useCommercialAccess() {
-  const profile = useAdminProfile();
+  const access = useSiteAccess();
+  const profile = access.workspace;
   const organization = useAppStore((state) => state.organization);
   const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const user = useAuthStore((state) => state.user);
-  const can = (permission: string) =>
-    hasAdminPermission(profile.data, permission);
+  const can = access.allowed;
 
   return {
     profile,
     organization,
     selectedProperty,
-    contextKey: `${organization?.id || "organization"}:${user?.id || "user"}`,
+    contextKey: access.contextKey,
     canManageInventory: can("places.create") || can("places.update"),
     canManagePeople: can("place_relationships.create") || can("parties.create"),
     canManageFinance: can("charges.create") || can("charges.update"),
@@ -87,11 +83,6 @@ export function CommercialShell({
           </div>
         }
         primaryAction={primaryAction}
-        secondaryActions={
-          <Button asChild variant="outline">
-            <Link href="/admin/properties">Property directory</Link>
-          </Button>
-        }
       />
 
       <CommercialModuleNav />

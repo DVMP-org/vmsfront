@@ -11,10 +11,16 @@ describe("domain experience configuration", () => {
       "residential",
     ]);
     for (const experience of Object.values(domainExperiences)) {
-      const routes = experience.navigation.flatMap((group) =>
+      const parentRoutes = experience.navigation.flatMap((group) =>
         group.items.map((item) => item.href),
       );
-      expect(new Set(routes).size).toBe(routes.length);
+      expect(new Set(parentRoutes).size).toBe(parentRoutes.length);
+      for (const item of experience.navigation.flatMap(
+        (group) => group.items,
+      )) {
+        const childRoutes = item.children?.map((child) => child.href) ?? [];
+        expect(new Set(childRoutes).size).toBe(childRoutes.length);
+      }
       expect(experience.maintenance.workflow.length).toBeGreaterThan(4);
     }
   });
@@ -40,7 +46,9 @@ describe("domain experience configuration", () => {
       expect(access?.label).toBe("Access");
       expect(access?.items.map((item) => item.href)).toEqual([
         "/admin/checkpoints",
+        "/admin/checkpoints/console",
         "/admin/invitations",
+        "/admin/passages",
       ]);
     }
   });
