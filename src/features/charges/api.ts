@@ -74,6 +74,11 @@ export const chargesApi = {
       page_size: 20,
     }),
   assignment: (id: string) => get<Assignment>(`/assignments/${id}`),
+  allAssignments: async (page = 1, pageSize = 100) =>
+    get<PaginatedResponse<Assignment>>("/assignments", {
+      page,
+      page_size: pageSize,
+    }),
   assign: (body: object) => post<Assignment>("/assignments", body),
   schedules: (id: string, page = 1) =>
     get<PaginatedResponse<Schedule>>("/schedules", {

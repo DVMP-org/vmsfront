@@ -105,6 +105,14 @@ export const adminLinks: AdminRoute[] = [
     group: "Workflows",
   },
   {
+    href: "/admin/residential",
+    label: "Residential operations",
+    icon: Home,
+    permission: "places.list",
+    module: "residential",
+    group: "Workflows",
+  },
+  {
     href: "/admin/integrations",
     label: "Integrations",
     icon: Blocks,
