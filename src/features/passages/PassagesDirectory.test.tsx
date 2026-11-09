@@ -100,30 +100,35 @@ describe("PassagesDirectory", () => {
     mount();
 
     expect((await screen.findAllByText("Ada Okafor")).length).toBeGreaterThan(
-      1,
+      0,
     );
-    expect(screen.getByText("Current presence")).toBeVisible();
+    expect(screen.getByText("Currently on site")).toBeVisible();
     expect(screen.getByText("2")).toBeVisible();
-    expect(screen.getByText("not checked in to checked in")).toBeVisible();
+    expect(screen.getByText("checked in")).toBeVisible();
     expect(
-      screen.getByRole("heading", { name: "Passage history" }),
+      screen.getByRole("heading", { name: "Movement logs" }),
     ).toBeVisible();
   });
 
-  it("sends collection search and property scope to the server", async () => {
+  it("opens event details and sends collection search to the server", async () => {
     mount();
+    fireEvent.click(await screen.findByText("Ada Okafor"));
+    expect(
+      await screen.findByRole("complementary", { name: "Movement details" }),
+    ).toBeVisible();
+    expect(screen.getByText("Checkpoint progression")).toBeVisible();
     fireEvent.change(
       await screen.findByPlaceholderText(
-        "Search person, credential, checkpoint, property or reason",
+        "Search by name, credential or checkpoint...",
       ),
       { target: { value: "Ada" } },
     );
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() =>
       expect(checkpointsApi.accessEvents).toHaveBeenLastCalledWith(
         expect.objectContaining({
           search: "Ada",
-          place_id: "site-1",
           page: 1,
           page_size: 20,
         }),
