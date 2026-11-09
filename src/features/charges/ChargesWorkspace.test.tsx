@@ -24,8 +24,15 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/store/app-store", () => ({
   useAppStore: (
-    selector: (state: { organization: { id: string } }) => unknown,
-  ) => selector({ organization: { id: "org" } }),
+    selector: (state: {
+      organization: { id: string };
+      selectedProperty: { id: string; name: string };
+    }) => unknown,
+  ) =>
+    selector({
+      organization: { id: "org" },
+      selectedProperty: { id: "site", name: "Harbour Campus" },
+    }),
 }));
 
 vi.mock("@/store/auth-store", () => ({
@@ -58,6 +65,7 @@ vi.mock("./api", () => ({ chargesApi: mocks }));
 
 const definition = {
   id: "charge",
+  site_id: "site",
   name: "Service charge",
   description: "Monthly property service",
   amount: "15000.00",
@@ -83,7 +91,9 @@ function mount(
 ) {
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <ChargesWorkspace action={action} id={id} />
     </QueryClientProvider>,
@@ -101,7 +111,10 @@ describe("charge routes", () => {
       total_pages: 1,
     });
     mocks.definition.mockResolvedValue(definition);
-    mocks.assignments.mockResolvedValue({ items: [assignment], total_pages: 1 });
+    mocks.assignments.mockResolvedValue({
+      items: [assignment],
+      total_pages: 1,
+    });
     mocks.assignment.mockResolvedValue(assignment);
     mocks.schedules.mockResolvedValue({ items: [], total_pages: 0 });
   });
@@ -115,15 +128,18 @@ describe("charge routes", () => {
       "href",
       "/admin/charges/definitions/charge",
     );
-    expect(
-      screen.getByRole("link", { name: "Create charge" }),
-    ).toHaveAttribute("href", "/admin/charges/new");
+    expect(screen.getByRole("link", { name: "Create charge" })).toHaveAttribute(
+      "href",
+      "/admin/charges/new",
+    );
   });
 
   it("shows an explicit empty state without inventing balances", async () => {
     mocks.definitions.mockResolvedValue({ items: [], total_pages: 0 });
     mount();
-    expect((await screen.findAllByText("No charges yet.")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("No charges yet.")).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText(/NGN 15000/)).toBeNull();
   });
 
@@ -143,7 +159,9 @@ describe("charge routes", () => {
       data: { effective_permissions: ["charges.list"] },
     });
     mount();
-    expect((await screen.findAllByText("Service charge")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("Service charge")).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.queryByRole("link", { name: "Create charge" }),
     ).not.toBeInTheDocument();
@@ -293,9 +311,7 @@ describe("charge routes", () => {
     fireEvent.change(await screen.findByLabelText(/^Schedules/), {
       target: { value: "3" },
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Generate schedules" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Generate schedules" }));
 
     await waitFor(() =>
       expect(mocks.generate).toHaveBeenCalledWith("assignment", {

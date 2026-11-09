@@ -3,6 +3,7 @@ import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export interface Definition {
   id: string;
+  site_id: string;
   name: string;
   description: string | null;
   amount: string;
@@ -53,10 +54,11 @@ const post = async <T>(path: string, body: object) =>
   (await apiClient.post<ApiResponse<T>>(base + path, body)).data;
 
 export const chargesApi = {
-  definitions: (page: number) =>
+  definitions: (page: number, siteId?: string | null) =>
     get<PaginatedResponse<Definition>>("/definitions", {
       page,
       page_size: 20,
+      ...(siteId ? { site_id: siteId } : {}),
     }),
   definition: (id: string) => get<Definition>(`/definitions/${id}`),
   create: (body: object) => post<Definition>("/definitions", body),

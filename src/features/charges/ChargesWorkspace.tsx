@@ -58,8 +58,9 @@ export default function ChargesWorkspace({
   action?: ChargeAction;
 }) {
   const organization = useAppStore((state) => state.organization);
+  const selectedSite = useAppStore((state) => state.selectedProperty);
   const user = useAuthStore((state) => state.user);
-  const contextKey = `${organization?.id}:${user?.id}`;
+  const contextKey = `${organization?.id}:${selectedSite?.id}:${user?.id}`;
   const profile = useQuery({
     queryKey: ["charges-profile", contextKey],
     queryFn: async () => (await adminService.getAdminProfile()).data,
@@ -85,7 +86,11 @@ export default function ChargesWorkspace({
   }
 
   const required =
-    action === "new" || action === "assign" ? "create" : action ? "show" : "list";
+    action === "new" || action === "assign"
+      ? "create"
+      : action
+        ? "show"
+        : "list";
   if (!allow(required)) {
     return (
       <PageState
@@ -99,23 +104,19 @@ export default function ChargesWorkspace({
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
       <ChargeHeader action={action} />
       {action === "new" ? (
-        <NewDefinition />
+        <NewDefinition siteId={selectedSite?.id} />
       ) : action === "assign" ? (
         <AssignCharge id={id!} contextKey={contextKey} />
       ) : action === "definition" ? (
-        <DefinitionDetail
-          id={id!}
-          contextKey={contextKey}
-          allow={allow}
-        />
+        <DefinitionDetail id={id!} contextKey={contextKey} allow={allow} />
       ) : action === "assignment" ? (
-        <AssignmentDetail
-          id={id!}
+        <AssignmentDetail id={id!} contextKey={contextKey} allow={allow} />
+      ) : (
+        <Directory
           contextKey={contextKey}
+          siteId={selectedSite?.id}
           allow={allow}
         />
-      ) : (
-        <Directory contextKey={contextKey} allow={allow} />
       )}
     </main>
   );
@@ -160,15 +161,18 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
 
 function Directory({
   contextKey,
+  siteId,
   allow,
 }: {
   contextKey: string;
+  siteId?: string;
   allow: (permission: string) => boolean;
 }) {
   const [page, setPage] = useState(1);
   const query = useQuery({
-    queryKey: ["charges", contextKey, "definitions", page],
-    queryFn: () => chargesApi.definitions(page),
+    queryKey: ["charges", contextKey, "definitions", page, siteId],
+    queryFn: () => chargesApi.definitions(page, siteId),
+    enabled: !!siteId,
     placeholderData: (previous) => previous,
   });
   const activeOnPage =
@@ -209,9 +213,7 @@ function Directory({
     {
       key: "is_active",
       header: "Status",
-      accessor: (definition) => (
-        <StatusBadge active={definition.is_active} />
-      ),
+      accessor: (definition) => <StatusBadge active={definition.is_active} />,
     },
     {
       key: "open",
@@ -219,9 +221,7 @@ function Directory({
       className: "text-right",
       accessor: (definition) => (
         <Button asChild variant="ghost" size="sm">
-          <Link href={`/admin/charges/definitions/${definition.id}`}>
-            Open
-          </Link>
+          <Link href={`/admin/charges/definitions/${definition.id}`}>Open</Link>
         </Button>
       ),
     },
@@ -353,7 +353,7 @@ function Directory({
   );
 }
 
-function NewDefinition() {
+function NewDefinition({ siteId }: { siteId?: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -362,11 +362,16 @@ function NewDefinition() {
   const [recurrence, setRecurrence] = useState("one_time");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isDirty =
-    !!name || !!description || !!amount || currency !== "NGN" || recurrence !== "one_time";
+    !!name ||
+    !!description ||
+    !!amount ||
+    currency !== "NGN" ||
+    recurrence !== "one_time";
   const canLeave = useUnsavedChanges(isDirty);
   const mutation = useMutation({
     mutationFn: () =>
       chargesApi.create({
+        site_id: siteId!,
         name: name.trim(),
         description: description.trim() || null,
         amount,
@@ -386,6 +391,7 @@ function NewDefinition() {
     if (!/^[A-Z]{3}$/.test(currency)) {
       nextErrors["charge-currency"] = "Use a three-letter currency code.";
     }
+    if (!siteId) nextErrors["charge-site"] = "Select a Site first.";
     setErrors(nextErrors);
     if (!Object.keys(nextErrors).length) mutation.mutate();
   }
@@ -499,9 +505,7 @@ function NewDefinition() {
               )}
             </Field>
           </fieldset>
-          {mutation.isError ? (
-            <InlineError error={mutation.error} />
-          ) : null}
+          {mutation.isError ? <InlineError error={mutation.error} /> : null}
           <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
             <Button
               asChild
@@ -664,8 +668,14 @@ function DefinitionDetail({
           </div>
         </div>
         <div className="grid border-t border-[var(--vms-line)] sm:grid-cols-3">
-          <Fact label="Amount" value={formatMoney(definition.amount, definition.currency)} />
-          <Fact label="Recurrence" value={recurrenceLabel(definition.recurrence)} />
+          <Fact
+            label="Amount"
+            value={formatMoney(definition.amount, definition.currency)}
+          />
+          <Fact
+            label="Recurrence"
+            value={recurrenceLabel(definition.recurrence)}
+          />
           <Fact
             label="Assignments"
             value={
@@ -742,9 +752,7 @@ function DefinitionDetail({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-[var(--vms-ink-muted)]">
-                      Outstanding
-                    </dt>
+                    <dt className="text-[var(--vms-ink-muted)]">Outstanding</dt>
                     <dd className="mt-1 font-semibold tabular-nums">
                       {formatMoney(
                         assignment.outstanding_amount,
@@ -762,13 +770,7 @@ function DefinitionDetail({
   );
 }
 
-function AssignCharge({
-  id,
-  contextKey,
-}: {
-  id: string;
-  contextKey: string;
-}) {
+function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
   const router = useRouter();
   const [place, setPlace] = useState<FacetItem | null>(null);
   const [party, setParty] = useState<FacetItem | null>(null);
@@ -896,7 +898,9 @@ function AssignCharge({
               disabled={mutation.isPending || !place || !party}
               className="min-h-11"
             >
-              {mutation.isPending ? "Creating assignment…" : "Create assignment"}
+              {mutation.isPending
+                ? "Creating assignment…"
+                : "Create assignment"}
             </Button>
           </div>
         </form>
@@ -918,7 +922,11 @@ function AssignCharge({
         </p>
         <dl className="mt-5 space-y-3 text-xs">
           <ReviewFact icon={Landmark} label="Property" value={place?.label} />
-          <ReviewFact icon={UserRound} label="Responsible Party" value={party?.label} />
+          <ReviewFact
+            icon={UserRound}
+            label="Responsible Party"
+            value={party?.label}
+          />
           <ReviewFact
             icon={CalendarDays}
             label="Schedules"
@@ -967,8 +975,7 @@ function AssignmentDetail({
       operation === "transfer"
         ? chargesApi.transfer(id, {
             responsible_party_id: newParty!.value,
-            expected_responsibility_id:
-              query.data!.current_responsibility!.id,
+            expected_responsibility_id: query.data!.current_responsibility!.id,
             reason: reason.trim(),
           })
         : chargesApi.generate(id, { schedule_count: scheduleCount }),
@@ -1269,9 +1276,7 @@ function AssignmentDetail({
                 </Field>
                 <Button
                   type="submit"
-                  disabled={
-                    !newParty || !reason.trim() || mutation.isPending
-                  }
+                  disabled={!newParty || !reason.trim() || mutation.isPending}
                   className="min-h-11 w-full"
                 >
                   Review and transfer
@@ -1345,7 +1350,9 @@ function ActionPanel({
   return (
     <section className="rounded-lg border border-[var(--vms-line)] bg-white p-4 shadow-[0_1px_2px_rgba(15,27,49,0.04)]">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">{description}</p>
+      <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
+        {description}
+      </p>
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -1366,7 +1373,9 @@ function SummaryMetric({
     <div className="border-b border-[var(--vms-line)] px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div className="flex items-start justify-between gap-3">
         <span>
-          <span className="block text-xs text-[var(--vms-ink-muted)]">{label}</span>
+          <span className="block text-xs text-[var(--vms-ink-muted)]">
+            {label}
+          </span>
           <strong className="mt-2 block text-[24px] font-semibold leading-none tracking-[-0.035em]">
             {value}
           </strong>
@@ -1375,7 +1384,9 @@ function SummaryMetric({
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="mt-2 text-[11px] leading-4 text-[var(--vms-ink-muted)]">{detail}</p>
+      <p className="mt-2 text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+        {detail}
+      </p>
     </div>
   );
 }
@@ -1408,7 +1419,10 @@ function GuidePanel({
       <h2 className="mt-4 text-sm font-semibold">{title}</h2>
       <ol className="mt-3 space-y-3">
         {items.map((item, index) => (
-          <li key={item} className="flex gap-3 text-xs leading-5 text-[var(--vms-ink)]">
+          <li
+            key={item}
+            className="flex gap-3 text-xs leading-5 text-[var(--vms-ink)]"
+          >
             <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--vms-action)] ring-1 ring-[var(--vms-line)]">
               {index + 1}
             </span>
@@ -1563,7 +1577,10 @@ function PageSkeleton({ label }: { label: string }) {
       <div className="h-24 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
       <div className="grid gap-3 sm:grid-cols-3">
         {[0, 1, 2].map((item) => (
-          <div key={item} className="h-24 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
+          <div
+            key={item}
+            className="h-24 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]"
+          />
         ))}
       </div>
       <div className="h-72 animate-pulse rounded-lg bg-[var(--vms-surface-subtle)]" />
