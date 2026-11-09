@@ -86,24 +86,33 @@ const dashboard = {
 };
 
 const analytics = {
-  total_residents: 3,
-  total_residencies: 2,
-  total_gate_passes: 6,
-  total_gate_events: 12,
-  total_gate_events_approved: 10,
-  total_gate_events_denied: 2,
+  total_places: 2,
+  total_parties: 3,
+  total_relationships: 4,
+  total_active_relationships: 3,
+  total_visit_authorizations: 6,
+  total_visit_sessions: 3,
+  total_checkpoint_events: 12,
+  total_checkpoint_events_allowed: 10,
+  total_checkpoint_events_denied: 2,
+  total_active_presences: 1,
   total_admins: 2,
   total_roles: 3,
-  total_visitors: 5,
   time_series: {
-    residencies: [],
-    gate_passes: [],
-    visitors: [],
-    checkins: [
+    places: [{ date: "2026-01-01", count: 1 }],
+    parties: [],
+    relationships: [],
+    visit_authorizations: [{ date: "2026-01-01", count: 5 }],
+    visit_sessions: [],
+    checkpoint_events: [
       { date: "2026-01-01", count: 2 },
       { date: "2026-01-02", count: 4 },
     ],
-    checkouts: [
+    allowed_passages: [
+      { date: "2026-01-01", count: 2 },
+      { date: "2026-01-02", count: 4 },
+    ],
+    denied_passages: [
       { date: "2026-01-01", count: 1 },
       { date: "2026-01-02", count: 3 },
     ],
@@ -191,8 +200,8 @@ describe("operating dashboard", () => {
     });
     expect(within(activityTable).getByText("Entry")).toBeInTheDocument();
     expect(within(activityTable).getByText("allowed")).toBeInTheDocument();
-    expect(screen.getByText(/6 check-ins/)).toBeInTheDocument();
-    expect(screen.getByText(/4 check-outs/)).toBeInTheDocument();
+    expect(screen.getByText(/6 allowed/)).toBeInTheDocument();
+    expect(screen.getByText(/4 denied/)).toBeInTheDocument();
   });
 
   it("warns when refresh fails but cached data remains", () => {

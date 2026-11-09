@@ -183,7 +183,9 @@ function Section({
         <h2 className="text-xl font-semibold tracking-[-0.02em] text-[var(--vms-ink)]">
           {title}
         </h2>
-        <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">{description}</p>
+        <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+          {description}
+        </p>
       </div>
       {children}
     </section>
@@ -228,95 +230,109 @@ export default function AnalyticsPage() {
   } = useAdminAnalyticsSummary();
 
   const approvalRate = useMemo(() => {
-    if (!analytics || analytics.total_gate_events === 0) return 0;
+    if (!analytics || analytics.total_checkpoint_events === 0) return 0;
     return (
-      (analytics.total_gate_events_approved / analytics.total_gate_events) * 100
+      (analytics.total_checkpoint_events_allowed /
+        analytics.total_checkpoint_events) *
+      100
     );
   }, [analytics]);
 
   const denialRate = useMemo(() => {
-    if (!analytics || analytics.total_gate_events === 0) return 0;
+    if (!analytics || analytics.total_checkpoint_events === 0) return 0;
     return (
-      (analytics.total_gate_events_denied / analytics.total_gate_events) * 100
+      (analytics.total_checkpoint_events_denied /
+        analytics.total_checkpoint_events) *
+      100
     );
   }, [analytics]);
 
   const trendSeries = useMemo(() => {
-    if (!analytics) return [];
+    if (!analytics?.time_series) return [];
     const entries = new Map<
       string,
-      { date: string; residencies: number; gatePasses: number; visitors: number }
+      {
+        date: string;
+        places: number;
+        relationships: number;
+        visitAuthorizations: number;
+      }
     >();
     const ingest = (
-      key: "residencies" | "gatePasses" | "visitors",
-      data: AnalyticsTimeSeriesPoint[],
+      key: "places" | "relationships" | "visitAuthorizations",
+      data: AnalyticsTimeSeriesPoint[] | undefined,
     ) => {
-      data.forEach((point) => {
-        const current = entries.get(point.date) ?? {
-          date: point.date,
-          residencies: 0,
-          gatePasses: 0,
-          visitors: 0,
+      (data ?? []).forEach((point) => {
+        const date = point.date.slice(0, 10);
+        const current = entries.get(date) ?? {
+          date,
+          places: 0,
+          relationships: 0,
+          visitAuthorizations: 0,
         };
         current[key] = point.count;
-        entries.set(point.date, current);
+        entries.set(date, current);
       });
     };
-    ingest("residencies", analytics.time_series.residencies);
-    ingest("gatePasses", analytics.time_series.gate_passes);
-    ingest("visitors", analytics.time_series.visitors);
+    ingest("places", analytics.time_series.places);
+    ingest("relationships", analytics.time_series.relationships);
+    ingest("visitAuthorizations", analytics.time_series.visit_authorizations);
     return Array.from(entries.values())
       .sort((left, right) => left.date.localeCompare(right.date))
       .map((point) => ({ ...point, label: formatDateLabel(point.date) }));
   }, [analytics]);
 
-  const gateFlowSeries = useMemo(() => {
-    if (!analytics) return [];
+  const decisionSeries = useMemo(() => {
+    if (!analytics?.time_series) return [];
     const dates = new Set<string>();
-    analytics.time_series.checkins.forEach((item) => dates.add(item.date));
-    analytics.time_series.checkouts.forEach((item) => dates.add(item.date));
+    analytics.time_series.allowed_passages.forEach((item) =>
+      dates.add(item.date.slice(0, 10)),
+    );
+    analytics.time_series.denied_passages.forEach((item) =>
+      dates.add(item.date.slice(0, 10)),
+    );
     return Array.from(dates)
       .sort()
       .map((date) => ({
         date,
         label: formatDateLabel(date),
-        checkins:
-          analytics.time_series.checkins.find((item) => item.date === date)
-            ?.count ?? 0,
-        checkouts:
-          analytics.time_series.checkouts.find((item) => item.date === date)
-            ?.count ?? 0,
+        allowed:
+          analytics.time_series?.allowed_passages.find(
+            (item) => item.date.slice(0, 10) === date,
+          )?.count ?? 0,
+        denied:
+          analytics.time_series?.denied_passages.find(
+            (item) => item.date.slice(0, 10) === date,
+          )?.count ?? 0,
       }));
   }, [analytics]);
 
-  const topGateDays = useMemo(
+  const topDecisionDays = useMemo(
     () =>
-      analytics
-        ? [...analytics.time_series.gate_passes]
+      analytics?.time_series
+        ? [...analytics.time_series.checkpoint_events]
             .sort((left, right) => right.count - left.count)
             .slice(0, 5)
         : [],
     [analytics],
   );
 
-  const movement = useMemo(() => {
-    const checkins = analytics?.time_series.checkins ?? [];
-    const checkouts = analytics?.time_series.checkouts ?? [];
-    const totalCheckins = checkins.reduce((sum, item) => sum + item.count, 0);
-    const totalCheckouts = checkouts.reduce((sum, item) => sum + item.count, 0);
+  const decisions = useMemo(() => {
+    const allowed = analytics?.time_series?.allowed_passages ?? [];
+    const denied = analytics?.time_series?.denied_passages ?? [];
+    const totalAllowed = allowed.reduce((sum, item) => sum + item.count, 0);
+    const totalDenied = denied.reduce((sum, item) => sum + item.count, 0);
     return {
-      totalCheckins,
-      totalCheckouts,
-      averageCheckins: checkins.length ? totalCheckins / checkins.length : 0,
-      averageCheckouts: checkouts.length
-        ? totalCheckouts / checkouts.length
-        : 0,
+      totalAllowed,
+      totalDenied,
+      averageAllowed: allowed.length ? totalAllowed / allowed.length : 0,
+      averageDenied: denied.length ? totalDenied / denied.length : 0,
     };
   }, [analytics]);
 
-  const visitorSpike = useMemo(
+  const authorizationPeak = useMemo(
     () =>
-      analytics?.time_series.visitors.reduce<AnalyticsTimeSeriesPoint | null>(
+      analytics?.time_series?.visit_authorizations.reduce<AnalyticsTimeSeriesPoint | null>(
         (highest, point) =>
           !highest || point.count > highest.count ? point : highest,
         null,
@@ -335,9 +351,7 @@ export default function AnalyticsPage() {
           onClick={() => refetch()}
           isLoading={isFetching}
         >
-          {!isFetching ? (
-            <RefreshCcw className="h-4 w-4" aria-hidden />
-          ) : null}
+          {!isFetching ? <RefreshCcw className="h-4 w-4" aria-hidden /> : null}
           Refresh data
         </Button>
       }
@@ -388,9 +402,10 @@ export default function AnalyticsPage() {
   }
 
   const observationDays =
-    analytics.time_series.gate_passes.length ||
-    analytics.time_series.checkins.length;
-  const netFlow = movement.totalCheckins - movement.totalCheckouts;
+    analytics.time_series?.checkpoint_events.length ||
+    analytics.time_series?.allowed_passages.length ||
+    0;
+  const decisionDifference = decisions.totalAllowed - decisions.totalDenied;
 
   return (
     <div className="space-y-4 pb-10 text-[var(--vms-ink)]">
@@ -408,34 +423,34 @@ export default function AnalyticsPage() {
         metrics={[
           {
             label: "People",
-            value: formatNumber(analytics.total_residents),
-            detail: "Active person records",
+            value: formatNumber(analytics.total_parties),
+            detail: "Party records in this organization",
             icon: Users,
           },
           {
-            label: "Occupancy relationships",
-            value: formatNumber(analytics.total_residencies),
-            detail: `${formatNumber(analytics.total_visitors)} visitor records`,
+            label: "Properties",
+            value: formatNumber(analytics.total_places),
+            detail: `${formatNumber(analytics.total_active_relationships)} active relationships`,
             icon: Building2,
           },
           {
-            label: "Gate passes",
-            value: formatNumber(analytics.total_gate_passes),
-            detail: "Issued access passes",
+            label: "Visit authorizations",
+            value: formatNumber(analytics.total_visit_authorizations),
+            detail: `${formatNumber(analytics.total_visit_sessions)} visit sessions`,
             icon: Ticket,
           },
           {
-            label: "Gate events",
-            value: formatNumber(analytics.total_gate_events),
-            detail: `${approvalRate.toFixed(1)}% approved`,
+            label: "Checkpoint events",
+            value: formatNumber(analytics.total_checkpoint_events),
+            detail: `${approvalRate.toFixed(1)}% allowed`,
             icon: Activity,
           },
           {
             label: "Denied",
-            value: formatNumber(analytics.total_gate_events_denied),
+            value: formatNumber(analytics.total_checkpoint_events_denied),
             detail: `${denialRate.toFixed(1)}% of decisions`,
             icon: UserCheck,
-            attention: analytics.total_gate_events_denied > 0,
+            attention: analytics.total_checkpoint_events_denied > 0,
           },
           {
             label: "Administrators",
@@ -448,19 +463,19 @@ export default function AnalyticsPage() {
 
       <Section
         title="Activity"
-        description="Relationship and visitor activity across the available observation window."
+        description="Property, relationship and visit-authorization activity across the available observation window."
       >
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.7fr)]">
           <ReportPanel
             title="Activity trend"
-            description="Gate passes, visitors and occupancy relationships by day."
+            description="Properties, relationships and visit authorizations by day."
           >
             {trendSeries.length ? (
               <>
                 <div
                   className="h-80 p-3 sm:p-5"
                   role="img"
-                  aria-label="Line chart comparing daily gate passes, visitors and occupancy relationships"
+                  aria-label="Line chart comparing daily properties, relationships and visit authorizations"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendSeries}>
@@ -474,23 +489,23 @@ export default function AnalyticsPage() {
                       <Legend />
                       <Line
                         type="monotone"
-                        dataKey="gatePasses"
-                        name="Gate passes"
+                        dataKey="visitAuthorizations"
+                        name="Visit authorizations"
                         stroke="var(--vms-data-primary)"
                         strokeWidth={2.5}
                         dot={false}
                       />
                       <Line
                         type="monotone"
-                        dataKey="visitors"
-                        name="Visitors"
+                        dataKey="places"
+                        name="Places"
                         stroke="var(--vms-data-secondary)"
                         strokeWidth={1.75}
                         dot={false}
                       />
                       <Line
                         type="monotone"
-                        dataKey="residencies"
+                        dataKey="relationships"
                         name="Relationships"
                         stroke="var(--vms-data-tertiary)"
                         strokeWidth={1.75}
@@ -503,9 +518,12 @@ export default function AnalyticsPage() {
                   label="Daily activity"
                   columns={[
                     { key: "label", label: "Day" },
-                    { key: "gatePasses", label: "Gate passes" },
-                    { key: "visitors", label: "Visitors" },
-                    { key: "residencies", label: "Relationships" },
+                    {
+                      key: "visitAuthorizations",
+                      label: "Visit authorizations",
+                    },
+                    { key: "places", label: "Places" },
+                    { key: "relationships", label: "Relationships" },
                   ]}
                   rows={trendSeries}
                 />
@@ -515,7 +533,7 @@ export default function AnalyticsPage() {
                 kind="empty"
                 compact
                 title="No activity points"
-                description="No daily gate-pass, visitor or relationship series was returned."
+                description="No daily property, relationship or visit-authorization series was returned."
               />
             )}
           </ReportPanel>
@@ -526,39 +544,41 @@ export default function AnalyticsPage() {
           >
             <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-1">
               <Highlight
-                label="Busiest visitor day"
+                label="Busiest authorization day"
                 value={
-                  visitorSpike
-                    ? `${formatNumber(visitorSpike.count)} visitors`
+                  authorizationPeak
+                    ? `${formatNumber(authorizationPeak.count)} authorizations`
                     : "No activity"
                 }
                 helper={
-                  visitorSpike ? formatDate(visitorSpike.date) : "No dates available"
-                }
-              />
-              <Highlight
-                label="Busiest gate-pass day"
-                value={
-                  topGateDays[0]
-                    ? `${formatNumber(topGateDays[0].count)} passes`
-                    : "No activity"
-                }
-                helper={
-                  topGateDays[0]
-                    ? formatDate(topGateDays[0].date)
+                  authorizationPeak
+                    ? formatDate(authorizationPeak.date)
                     : "No dates available"
                 }
               />
               <Highlight
-                label="Average check-ins"
-                value={movement.averageCheckins.toFixed(1)}
+                label="Busiest checkpoint day"
+                value={
+                  topDecisionDays[0]
+                    ? `${formatNumber(topDecisionDays[0].count)} events`
+                    : "No activity"
+                }
+                helper={
+                  topDecisionDays[0]
+                    ? formatDate(topDecisionDays[0].date)
+                    : "No dates available"
+                }
+              />
+              <Highlight
+                label="Average allowed"
+                value={decisions.averageAllowed.toFixed(1)}
                 helper={`Across ${observationDays || 0} observed days`}
               />
               <Highlight
-                label="Net flow"
-                value={formatSignedNumber(netFlow)}
-                helper="Entries minus exits"
-                attention={netFlow < 0}
+                label="Allowed minus denied"
+                value={formatSignedNumber(decisionDifference)}
+                helper="Decision balance"
+                attention={decisionDifference < 0}
               />
             </div>
           </ReportPanel>
@@ -579,10 +599,10 @@ export default function AnalyticsPage() {
                 <div className="mb-2 flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
                     <ShieldCheck className="h-4 w-4 text-[var(--vms-success)]" />
-                    Approved
+                    Allowed
                   </span>
                   <span className="font-semibold tabular-nums">
-                    {formatNumber(analytics.total_gate_events_approved)} ·{" "}
+                    {formatNumber(analytics.total_checkpoint_events_allowed)} ·{" "}
                     {approvalRate.toFixed(1)}%
                   </span>
                 </div>
@@ -600,7 +620,7 @@ export default function AnalyticsPage() {
                     Denied
                   </span>
                   <span className="font-semibold tabular-nums">
-                    {formatNumber(analytics.total_gate_events_denied)} ·{" "}
+                    {formatNumber(analytics.total_checkpoint_events_denied)} ·{" "}
                     {denialRate.toFixed(1)}%
                   </span>
                 </div>
@@ -614,15 +634,15 @@ export default function AnalyticsPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <Highlight
                   label="Decision total"
-                  value={formatNumber(analytics.total_gate_events)}
+                  value={formatNumber(analytics.total_checkpoint_events)}
                   helper="Recorded checkpoint events"
                 />
                 <Highlight
-                  label="Gate events per admin"
+                  label="Checkpoint events per admin"
                   value={
                     analytics.total_admins
                       ? (
-                          analytics.total_gate_events /
+                          analytics.total_checkpoint_events /
                           analytics.total_admins
                         ).toFixed(1)
                       : "—"
@@ -634,18 +654,18 @@ export default function AnalyticsPage() {
           </ReportPanel>
 
           <ReportPanel
-            title="Gate flow"
-            description="Daily check-in and check-out balance."
+            title="Decision flow"
+            description="Daily allowed and denied checkpoint decisions."
           >
-            {gateFlowSeries.length ? (
+            {decisionSeries.length ? (
               <>
                 <div
                   className="h-64 p-3 sm:p-5"
                   role="img"
-                  aria-label="Bar chart comparing daily check-ins and check-outs"
+                  aria-label="Bar chart comparing daily allowed and denied checkpoint decisions"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={gateFlowSeries}>
+                    <BarChart data={decisionSeries}>
                       <CartesianGrid
                         strokeDasharray="3 3"
                         stroke="var(--vms-line)"
@@ -655,14 +675,14 @@ export default function AnalyticsPage() {
                       <Tooltip content={<ChartTooltip />} />
                       <Legend />
                       <Bar
-                        dataKey="checkins"
-                        name="Check-ins"
+                        dataKey="allowed"
+                        name="Allowed"
                         fill="var(--vms-data-primary)"
                         radius={[3, 3, 0, 0]}
                       />
                       <Bar
-                        dataKey="checkouts"
-                        name="Check-outs"
+                        dataKey="denied"
+                        name="Denied"
                         fill="var(--vms-data-secondary)"
                         radius={[3, 3, 0, 0]}
                       />
@@ -670,24 +690,24 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 </div>
                 <ChartDataTable
-                  label="Daily gate flow"
+                  label="Daily access decisions"
                   columns={[
                     { key: "label", label: "Day" },
-                    { key: "checkins", label: "Check-ins" },
-                    { key: "checkouts", label: "Check-outs" },
+                    { key: "allowed", label: "Allowed" },
+                    { key: "denied", label: "Denied" },
                   ]}
-                  rows={gateFlowSeries}
+                  rows={decisionSeries}
                 />
                 <div className="grid grid-cols-2 gap-3 border-t border-[var(--vms-line)] p-4">
                   <Highlight
-                    label="Total check-ins"
-                    value={formatNumber(movement.totalCheckins)}
-                    helper={`${movement.averageCheckins.toFixed(1)} average/day`}
+                    label="Total allowed"
+                    value={formatNumber(decisions.totalAllowed)}
+                    helper={`${decisions.averageAllowed.toFixed(1)} average/day`}
                   />
                   <Highlight
-                    label="Total check-outs"
-                    value={formatNumber(movement.totalCheckouts)}
-                    helper={`${movement.averageCheckouts.toFixed(1)} average/day`}
+                    label="Total denied"
+                    value={formatNumber(decisions.totalDenied)}
+                    helper={`${decisions.averageDenied.toFixed(1)} average/day`}
                   />
                 </div>
               </>
@@ -695,8 +715,8 @@ export default function AnalyticsPage() {
               <PanelState
                 kind="empty"
                 compact
-                title="No gate-flow points"
-                description="No check-in or check-out series was returned."
+                title="No decision-flow points"
+                description="No allowed or denied checkpoint series was returned."
               />
             )}
           </ReportPanel>
@@ -705,15 +725,15 @@ export default function AnalyticsPage() {
 
       <Section
         title="High-velocity days"
-        description="Days with the highest recorded pass creation volume."
+        description="Days with the highest recorded checkpoint-event volume."
       >
         <ReportPanel
-          title="Top gate-pass days"
-          description="Ordered by daily pass volume; this is not a performance score."
+          title="Top checkpoint-event days"
+          description="Ordered by daily event volume; this is not a performance score."
         >
-          {topGateDays.length ? (
+          {topDecisionDays.length ? (
             <ol className="divide-y divide-[var(--vms-line)]">
-              {topGateDays.map((day, index) => (
+              {topDecisionDays.map((day, index) => (
                 <li
                   key={day.date}
                   className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-5"
@@ -726,7 +746,9 @@ export default function AnalyticsPage() {
                       {formatDate(day.date)}
                     </strong>
                     <span className="text-xs text-[var(--vms-ink-muted)]">
-                      {index === 0 ? "Highest observed day" : `Rank ${index + 1}`}
+                      {index === 0
+                        ? "Highest observed day"
+                        : `Rank ${index + 1}`}
                     </span>
                   </span>
                   <span className="flex items-center gap-1 text-lg font-semibold tabular-nums">
@@ -740,8 +762,8 @@ export default function AnalyticsPage() {
             <PanelState
               kind="empty"
               compact
-              title="No pass-volume data"
-              description="Daily gate-pass counts will appear after passes are issued."
+              title="No checkpoint-volume data"
+              description="Daily checkpoint-event counts will appear after decisions are recorded."
             />
           )}
         </ReportPanel>

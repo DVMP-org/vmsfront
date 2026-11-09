@@ -2,16 +2,16 @@
 
 import { useId, useMemo } from "react";
 
-import type { AnalyticsSummary } from "@/types";
+import type { AnalyticsSummary, AnalyticsTimeSeriesPoint } from "@/types";
 import { PanelState, ReportPanel } from "./DashboardPrimitives";
 
 export type DashboardRange = 7 | 14 | 30;
 
-interface MovementPoint {
+export interface AccessDecisionPoint {
   date: string;
   label: string;
-  checkins: number;
-  checkouts: number;
+  allowed: number;
+  denied: number;
 }
 
 const dateLabel = new Intl.DateTimeFormat(undefined, {
@@ -19,32 +19,41 @@ const dateLabel = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
 });
 
-function buildMovementSeries(
+function normalizeDate(value: string) {
+  return value.slice(0, 10);
+}
+
+export function buildDecisionSeries(
   analytics: AnalyticsSummary | undefined,
   range: DashboardRange,
-): MovementPoint[] {
-  if (!analytics) return [];
+): AccessDecisionPoint[] {
+  const timeSeries = analytics?.time_series;
+  if (!timeSeries) return [];
 
-  const byDate = new Map<string, MovementPoint>();
-  const ingest = (kind: "checkins" | "checkouts") => {
-    analytics.time_series[kind].forEach((point) => {
-      const parsed = new Date(`${point.date}T00:00:00`);
+  const byDate = new Map<string, AccessDecisionPoint>();
+  const ingest = (
+    kind: "allowed" | "denied",
+    points: AnalyticsTimeSeriesPoint[] | undefined,
+  ) => {
+    (points ?? []).forEach((point) => {
+      const date = normalizeDate(point.date);
+      const parsed = new Date(`${date}T00:00:00`);
       const label = Number.isNaN(parsed.getTime())
-        ? point.date
+        ? date
         : dateLabel.format(parsed);
-      const current = byDate.get(point.date) ?? {
-        date: point.date,
+      const current = byDate.get(date) ?? {
+        date,
         label,
-        checkins: 0,
-        checkouts: 0,
+        allowed: 0,
+        denied: 0,
       };
       current[kind] = point.count;
-      byDate.set(point.date, current);
+      byDate.set(date, current);
     });
   };
 
-  ingest("checkins");
-  ingest("checkouts");
+  ingest("allowed", timeSeries.allowed_passages);
+  ingest("denied", timeSeries.denied_passages);
 
   return Array.from(byDate.values())
     .sort((left, right) => left.date.localeCompare(right.date))
@@ -52,8 +61,8 @@ function buildMovementSeries(
 }
 
 function linePoints(
-  series: MovementPoint[],
-  field: "checkins" | "checkouts",
+  series: AccessDecisionPoint[],
+  field: "allowed" | "denied",
   max: number,
 ) {
   const width = 720;
@@ -96,66 +105,61 @@ export function AccessTrendPanel({
 }) {
   const titleId = useId().replaceAll(":", "");
   const series = useMemo(
-    () => buildMovementSeries(analytics, range),
+    () => buildDecisionSeries(analytics, range),
     [analytics, range],
   );
-  const totalCheckins = series.reduce(
-    (total, point) => total + point.checkins,
+  const totalAllowed = series.reduce(
+    (total, point) => total + point.allowed,
     0,
   );
-  const totalCheckouts = series.reduce(
-    (total, point) => total + point.checkouts,
-    0,
-  );
+  const totalDenied = series.reduce((total, point) => total + point.denied, 0);
   const max = Math.max(
     1,
-    ...series.flatMap((point) => [point.checkins, point.checkouts]),
+    ...series.flatMap((point) => [point.allowed, point.denied]),
   );
-  const checkinPoints = linePoints(series, "checkins", max);
-  const checkoutPoints = linePoints(series, "checkouts", max);
+  const allowedPoints = linePoints(series, "allowed", max);
+  const deniedPoints = linePoints(series, "denied", max);
   const tickIndices = Array.from(
     new Set([0, Math.floor((series.length - 1) / 2), series.length - 1]),
   ).filter((index) => index >= 0);
 
   return (
     <ReportPanel
-      title="Access movement"
-      description={`Check-ins and check-outs across the last ${range} reporting days.`}
+      title="Access decisions"
+      description={`Allowed and denied checkpoint passages across the last ${range} reporting days.`}
     >
       {isLoading ? (
         <PanelState
           kind="loading"
-          title="Loading access movement"
+          title="Loading access decisions"
           description="Preparing the latest checkpoint activity."
         />
       ) : isError ? (
         <PanelState
           kind="error"
           title="Access trend unavailable"
-          description="The dashboard totals remain available. Retry the movement report without leaving this page."
+          description="The dashboard totals remain available. Retry the decision report without leaving this page."
           onRetry={onRetry}
           isRetrying={isFetching}
         />
-      ) : !series.some(
-          (point) => point.checkins > 0 || point.checkouts > 0,
-        ) ? (
+      ) : !series.some((point) => point.allowed > 0 || point.denied > 0) ? (
         <PanelState
           kind="empty"
-          title="No access movement in this period"
-          description="Checkpoint activity will appear here after the next recorded entry or exit."
+          title="No checkpoint decisions in this period"
+          description="Allowed and denied checkpoint decisions will appear after the next recorded passage."
         />
       ) : (
         <>
           <div className="px-4 pt-4 sm:px-5">
             <p className="text-sm text-[var(--vms-ink-muted)]">
               <strong className="font-semibold text-[var(--vms-ink)]">
-                {formatNumber(totalCheckins)} check-ins
+                {formatNumber(totalAllowed)} allowed
               </strong>{" "}
               and{" "}
               <strong className="font-semibold text-[var(--vms-ink)]">
-                {formatNumber(totalCheckouts)} check-outs
+                {formatNumber(totalDenied)} denied
               </strong>{" "}
-              were recorded in the selected period.
+              checkpoint decisions were recorded in the selected period.
             </p>
           </div>
 
@@ -166,11 +170,11 @@ export function AccessTrendPanel({
               aria-labelledby={`${titleId}-chart-title ${titleId}-chart-description`}
               className="h-auto w-full"
             >
-              <title id={`${titleId}-chart-title`}>Access movement chart</title>
+              <title id={`${titleId}-chart-title`}>Access decision chart</title>
               <desc id={`${titleId}-chart-description`}>
-                Check-ins use the dark primary data line and check-outs use the
-                slate comparison line. Exact values are available in the data
-                table below.
+                Allowed passages use the dark primary data line and denied
+                passages use the slate comparison line. Exact values are
+                available in the data table below.
               </desc>
               {[0, 0.5, 1].map((position) => {
                 const y = 18 + 204 - position * 204;
@@ -196,7 +200,7 @@ export function AccessTrendPanel({
                 );
               })}
               <polyline
-                points={checkinPoints}
+                points={allowedPoints}
                 fill="none"
                 className="stroke-[var(--vms-data-primary)]"
                 strokeWidth="2.5"
@@ -205,7 +209,7 @@ export function AccessTrendPanel({
                 vectorEffect="non-scaling-stroke"
               />
               <polyline
-                points={checkoutPoints}
+                points={deniedPoints}
                 fill="none"
                 className="stroke-[var(--vms-data-secondary)]"
                 strokeWidth="2"
@@ -242,11 +246,11 @@ export function AccessTrendPanel({
           <div className="flex flex-wrap gap-4 px-4 pb-4 text-xs text-[var(--vms-ink-muted)] sm:px-5">
             <span className="flex items-center gap-2">
               <span className="h-0.5 w-5 bg-[var(--vms-data-primary)]" />
-              Check-ins
+              Allowed
             </span>
             <span className="flex items-center gap-2">
               <span className="h-0.5 w-5 border-t-2 border-dashed border-[var(--vms-data-secondary)]" />
-              Check-outs
+              Denied
             </span>
           </div>
 
@@ -257,18 +261,24 @@ export function AccessTrendPanel({
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[440px] text-left text-xs">
                 <caption className="sr-only">
-                  Check-ins and check-outs by date
+                  Allowed and denied checkpoint decisions by date
                 </caption>
                 <thead className="bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
                   <tr>
                     <th scope="col" className="px-3 py-2 font-semibold">
                       Date
                     </th>
-                    <th scope="col" className="px-3 py-2 text-right font-semibold">
-                      Check-ins
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-right font-semibold"
+                    >
+                      Allowed
                     </th>
-                    <th scope="col" className="px-3 py-2 text-right font-semibold">
-                      Check-outs
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-right font-semibold"
+                    >
+                      Denied
                     </th>
                   </tr>
                 </thead>
@@ -282,10 +292,10 @@ export function AccessTrendPanel({
                         <time dateTime={point.date}>{point.label}</time>
                       </th>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {formatNumber(point.checkins)}
+                        {formatNumber(point.allowed)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {formatNumber(point.checkouts)}
+                        {formatNumber(point.denied)}
                       </td>
                     </tr>
                   ))}
