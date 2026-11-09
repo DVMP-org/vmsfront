@@ -27,6 +27,7 @@ import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
+import { useAppStore } from "@/store/app-store";
 import {
   propertiesApi,
   type Property,
@@ -431,6 +432,7 @@ function CommercialSpaceModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const selectedSite = useAppStore((state) => state.selectedProperty);
   const [name, setName] = useState(space?.name || "");
   const [parentId, setParentId] = useState(
     space?.parent_id || parents[0]?.id || "",
@@ -450,6 +452,11 @@ function CommercialSpaceModal({
             description: description.trim(),
           })
         : propertiesApi.create({
+            site_id:
+              parents.find((parent) => parent.id === parentId)?.site_id ||
+              parents[0]?.site_id ||
+              selectedSite?.id ||
+              "",
             name: name.trim(),
             kind: "unit",
             building_type: buildingType,

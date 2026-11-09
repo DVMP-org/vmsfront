@@ -15,7 +15,8 @@ export interface Gate {
   name: string;
   slug: string;
   is_default: boolean;
-  place_id: string;
+  site_id: string;
+  place_id: string | null;
   admin_ids?: string[];
   dependency_id: string | null;
   created_at: string;
@@ -46,7 +47,8 @@ export interface GateNode extends Gate {
 
 export interface CreateGateRequest {
   name: string;
-  place_id: string;
+  site_id: string;
+  place_id?: string | null;
   dependency_id: string | null;
   allowed_entry?: boolean;
   allowed_exit?: boolean;

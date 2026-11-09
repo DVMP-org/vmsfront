@@ -65,7 +65,19 @@ export interface Organization {
   residencies?: Residency[] | null;
   residents?: Resident[] | null;
   admins?: Admin[] | null;
-  places?: WorkspacePlace[] | null;
+  sites?: Array<{
+    id: string;
+    organization_id: string;
+    parent_site_id: string | null;
+    name: string;
+    slug: string;
+    use_case?: import("@/features/context/api").UseCase | null;
+    description: string | null;
+    address: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  }> | null;
   needs_first_site?: boolean;
   subscription: Subscription | null;
 }
@@ -431,7 +443,24 @@ export interface CurrentUserContext {
   party: WorkspaceParty | null;
   admin: AdminSummary | null;
   workspaces: WorkspaceRelationship[];
-  managed_sites: WorkspacePlace[];
+  site_workspaces?: Array<{
+    assignment_id: string;
+    role: "site_admin";
+    site: {
+      id: string;
+      organization_id: string;
+      parent_site_id: string | null;
+      name: string;
+      slug: string;
+      use_case?: import("@/features/context/api").UseCase | null;
+      description: string | null;
+      address: string;
+      is_active: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+    effective_permissions: string[];
+  }>;
 }
 
 export interface DashboardSelect {

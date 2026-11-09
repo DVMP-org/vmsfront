@@ -31,6 +31,20 @@ export interface PropertyWorkspace {
   accesses: PropertyAccess[];
 }
 
+export interface ManagedSiteWorkspace {
+  assignment_id: string;
+  role: "site_admin";
+  site: {
+    id: string;
+    name: string;
+    slug: string;
+    parent_site_id: string | null;
+    is_active: boolean;
+    use_case?: string | null;
+  };
+  effective_permissions: string[];
+}
+
 export type PropertyWorkspacePlace = Omit<
   WorkspaceRelationship["place"],
   "slug"
@@ -100,10 +114,10 @@ export function roleLabel(role: string): string {
 }
 
 export function canOpenManagementDashboard(
-  placeId: string | null | undefined,
-  isPlaceAdministrator: boolean | undefined,
+  siteId: string | null | undefined,
+  isSiteAdministrator: boolean | undefined,
 ): boolean {
-  return !!placeId && !!isPlaceAdministrator;
+  return !!siteId && !!isSiteAdministrator;
 }
 
 export function buildWorkspaceCards(
@@ -186,13 +200,11 @@ export function buildPropertyWorkspaces({
   managementRole: managementRoleOverride,
 }: {
   relationships: WorkspaceRelationship[];
-  managedSites?: PropertyWorkspacePlace[];
+  managedSites?: ManagedSiteWorkspace[];
   managementRole?: string | null;
 }): PropertyWorkspace[] {
   const byPlace = new Map<string, PropertyWorkspace>();
-  const managedPlaceById = new Map(
-    managedSites.map((place) => [place.id, place]),
-  );
+  const managedPlaceById = new Map<string, PropertyWorkspacePlace>();
   const hierarchyFor = (place: PropertyWorkspacePlace) => {
     const path: PropertyWorkspacePlace[] = [];
     const seen = new Set<string>();
@@ -265,8 +277,17 @@ export function buildPropertyWorkspaces({
     });
   }
 
-  for (const site of managedSites) {
-    addAccess(ensure(site), managementAccess(managementRole));
+  for (const managed of managedSites) {
+    const sitePlace: PropertyWorkspacePlace = {
+      id: managed.site.id,
+      name: managed.site.name,
+      slug: managed.site.slug,
+      kind: "site",
+      is_active: managed.site.is_active,
+      site_name: null,
+      parent_id: managed.site.parent_site_id,
+    };
+    addAccess(ensure(sitePlace), managementAccess(managementRole));
   }
 
   const areaOrder: WorkspaceArea[] = [

@@ -11,7 +11,7 @@ export interface ModuleGroup {
 }
 
 export interface ContextCatalog {
-  contract_version: "vmscore.context/v1";
+  contract_version: "vmscore.context/v2";
   module_groups: ModuleGroup[];
   specialist_groups: { value: UseCase; label: string; modules: string[] }[];
   use_cases: {
@@ -26,10 +26,11 @@ export interface ContextCatalog {
 }
 
 export interface WorkspaceContext {
-  contract_version: "vmscore.context/v1";
+  contract_version: "vmscore.context/v2";
   organization_id: string;
   organization_use_case: UseCase;
   effective_use_case: UseCase;
+  site_id: string | null;
   place_id: string | null;
   context_scope: "organization" | "administration" | "membership";
   modules: string[];
@@ -38,11 +39,20 @@ export interface WorkspaceContext {
     mode: "local" | "inherited" | "none";
     management_required: boolean;
     is_administrator: boolean;
-    authoritative_place: {
+    site_admin_id: string | null;
+    selected_site: {
       id: string;
       name: string;
       slug: string;
-      kind: string;
+      use_case: UseCase | null;
+      parent_site_id: string | null;
+    } | null;
+    authoritative_site: {
+      id: string;
+      name: string;
+      slug: string;
+      use_case: UseCase | null;
+      parent_site_id: string | null;
     } | null;
     administrators: Array<{
       party_id: string;
@@ -64,10 +74,10 @@ export const contextApi = {
   catalog: async () =>
     (await apiClient.get<ApiResponse<ContextCatalog>>("/catalog/use-cases"))
       .data,
-  workspace: async (placeId?: string | null) =>
+  workspace: async (siteId?: string | null) =>
     (
       await apiClient.get<ApiResponse<WorkspaceContext>>("/workspace/context", {
-        params: placeId ? { place_id: placeId } : {},
+        params: siteId ? { site_id: siteId } : {},
       })
     ).data,
   organization: async () =>

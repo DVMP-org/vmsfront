@@ -13,23 +13,36 @@ export interface PlacePerson {
   role: string;
   is_super_admin: boolean;
   status: string;
-  source: "administration" | "occupancy";
-}
-
-export interface PlacePeople {
   place: {
     id: string;
     name: string;
     slug: string;
     kind: string;
     is_active: boolean;
+    site_name?: string | null;
+  };
+}
+
+export interface PlacePeople {
+  site: {
+    id: string;
+    organization_id: string;
+    parent_site_id: string | null;
+    name: string;
+    slug: string;
+    use_case: string | null;
+    description: string | null;
+    address: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
   };
   effective_use_case: "residential" | "commercial" | "hospitality" | "mixed_use";
-  administrators: PlacePerson[];
-  occupants: PlacePerson[];
+  people: PlacePerson[];
 }
 
 export interface AddPlacePersonInput {
+  place_id: string;
   display_name: string;
   email: string;
   phone?: string;
@@ -43,37 +56,37 @@ export interface AddPlacePersonResponse {
   is_super_admin: boolean;
   status: string;
   party: PlacePerson["party"] & { organization_id: string; user_id: string | null };
-  place: PlacePeople["place"];
+  place: PlacePerson["place"];
   onboarding_email: "queued" | "not_required";
   user_created: boolean;
 }
 
 export const peopleApi = {
-  get: async (placeId: string) =>
+  get: async (siteId: string) =>
     (
       await apiClient.get<ApiResponse<PlacePeople>>(
-        `/admin/places/${placeId}/people`,
+        `/admin/sites/${siteId}/people`,
       )
     ).data,
-  add: async (placeId: string, body: AddPlacePersonInput) =>
+  add: async (siteId: string, body: AddPlacePersonInput) =>
     (
       await apiClient.post<ApiResponse<AddPlacePersonResponse>>(
-        `/admin/places/${placeId}/parties`,
+        `/admin/sites/${siteId}/people`,
         body,
       )
     ).data,
   remove: async (
-    placeId: string,
-    source: PlacePerson["source"],
+    siteId: string,
+    source: "occupancy",
     assignmentId: string,
   ) =>
     (
       await apiClient.delete<
         ApiResponse<{
           assignment_id: string;
-          source: PlacePerson["source"];
+          source: "occupancy";
           status: string;
         }>
-      >(`/admin/places/${placeId}/people/${source}/${assignmentId}`)
+      >(`/admin/sites/${siteId}/people/${source}/${assignmentId}`)
     ).data,
 };

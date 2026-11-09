@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { placeModulesApi, type PlaceModuleList } from "@/features/modules/api";
-import { PlaceModulesPanel } from "@/features/modules/PlaceModulesPanel";
+import { siteModulesApi, type SiteModuleList } from "@/features/modules/api";
+import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
 
 vi.mock("@/features/modules/api", async () => {
   const actual = await vi.importActual<typeof import("@/features/modules/api")>(
@@ -11,15 +11,15 @@ vi.mock("@/features/modules/api", async () => {
   );
   return {
     ...actual,
-    placeModulesApi: {
+    siteModulesApi: {
       get: vi.fn(),
       update: vi.fn(),
     },
   };
 });
 
-const initial: PlaceModuleList = {
-  place_id: "place-1",
+const initial: SiteModuleList = {
+  site_id: "place-1",
   effective_use_case: "mixed_use",
   modules: [
     {
@@ -55,19 +55,19 @@ function renderPanel(canEdit = true) {
   });
   return render(
     <QueryClientProvider client={client}>
-      <PlaceModulesPanel
-        placeId="place-1"
-        placeName="Harbour Complex"
+      <SiteModulesPanel
+        siteId="place-1"
+        siteName="Harbour Complex"
         canEdit={canEdit}
       />
     </QueryClientProvider>,
   );
 }
 
-describe("PlaceModulesPanel", () => {
+describe("SiteModulesPanel", () => {
   beforeEach(() => {
-    vi.mocked(placeModulesApi.get).mockResolvedValue(initial);
-    vi.mocked(placeModulesApi.update).mockResolvedValue(initial);
+    vi.mocked(siteModulesApi.get).mockResolvedValue(initial);
+    vi.mocked(siteModulesApi.update).mockResolvedValue(initial);
   });
 
   it("stages module changes and saves the property configuration", async () => {
@@ -85,7 +85,7 @@ describe("PlaceModulesPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save 1 change/ }));
 
     await waitFor(() =>
-      expect(placeModulesApi.update).toHaveBeenCalledWith(
+      expect(siteModulesApi.update).toHaveBeenCalledWith(
         "place-1",
         expect.arrayContaining([
           expect.objectContaining({ key: "hospitality", enabled: false }),

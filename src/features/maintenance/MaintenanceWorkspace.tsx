@@ -57,7 +57,10 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   );
   const tree = useQuery({
     queryKey: ["maintenance-property-tree"],
-    queryFn: () => propertiesApi.tree(),
+    queryFn: () =>
+      selectedProperty?.id
+        ? propertiesApi.tree(selectedProperty.id)
+        : Promise.resolve([]),
     retry: false,
   });
   const spaces = useMemo(

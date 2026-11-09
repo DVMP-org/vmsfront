@@ -85,7 +85,10 @@ export function MixedUseOverview() {
   });
   const tree = useQuery({
     queryKey: ["mixed-use-overview-tree"],
-    queryFn: () => propertiesApi.tree(),
+    queryFn: () =>
+      selectedProperty?.id
+        ? propertiesApi.tree(selectedProperty.id)
+        : Promise.resolve([]),
     retry: false,
   });
   const selectedTree = findNode(tree.data ?? [], selectedProperty?.id);

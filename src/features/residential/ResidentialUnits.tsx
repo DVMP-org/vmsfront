@@ -27,6 +27,7 @@ import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
+import { useAppStore } from "@/store/app-store";
 import {
   propertiesApi,
   type Property,
@@ -471,6 +472,7 @@ function UnitFormModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const selectedSite = useAppStore((state) => state.selectedProperty);
   const [name, setName] = useState(unit?.name || "");
   const [parentId, setParentId] = useState(
     unit?.building_id || parents[0]?.id || "",
@@ -489,6 +491,11 @@ function UnitFormModal({
         });
       }
       return propertiesApi.create({
+        site_id:
+          parents.find((parent) => parent.id === parentId)?.site_id ||
+          parents[0]?.site_id ||
+          selectedSite?.id ||
+          "",
         name: name.trim(),
         kind: "unit",
         address: address.trim(),

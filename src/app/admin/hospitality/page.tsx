@@ -264,7 +264,7 @@ function HospitalityWorkspace({
           }
           authorityMode={workspaceContext.data?.management?.mode}
           authoritativePlaceName={
-            workspaceContext.data?.management?.authoritative_place?.name
+            workspaceContext.data?.management?.authoritative_site?.name
           }
           relationships={people.data?.items || []}
           stays={list.data?.items || []}

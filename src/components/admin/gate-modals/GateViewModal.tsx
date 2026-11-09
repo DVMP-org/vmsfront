@@ -16,9 +16,9 @@ interface GateViewModalProps {
 
 export function GateViewModal({ isOpen, onClose, gate }: GateViewModalProps) {
   const operators = useQuery({
-    queryKey: ["checkpoint-operators", gate?.place_id],
-    queryFn: () => checkpointsApi.operators(gate?.place_id),
-    enabled: isOpen && !!gate?.place_id,
+    queryKey: ["checkpoint-operators", gate?.site_id],
+    queryFn: () => checkpointsApi.operators(gate?.site_id),
+    enabled: isOpen && !!gate?.site_id,
   });
   if (!gate) return null;
   const assignment = operators.data?.assignments.find(

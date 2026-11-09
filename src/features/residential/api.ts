@@ -16,6 +16,7 @@ import type {
   MaintenanceInput,
   MaintenanceRequest,
 } from "./contracts";
+import { useAppStore } from "@/store/app-store";
 
 type ListParams = {
   page?: number;
@@ -59,11 +60,15 @@ export const residentialApi = {
             is_active: params.is_active,
             parent_id: params.parent_id,
             search: params.search,
+            site_id: useAppStore.getState().selectedProperty?.id,
           },
         },
       )
     ).data,
-  tree: (): Promise<PropertyTreeNode[]> => propertiesApi.tree(),
+  tree: (): Promise<PropertyTreeNode[]> => {
+    const siteId = useAppStore.getState().selectedProperty?.id;
+    return siteId ? propertiesApi.tree(siteId) : Promise.resolve([]);
+  },
   relationships: async (
     params: {
       place_id?: string;

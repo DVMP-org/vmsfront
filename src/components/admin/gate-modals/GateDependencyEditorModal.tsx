@@ -36,7 +36,7 @@ export function GateDependencyEditorModal({
   const options = gates
     .filter(
       (candidate) =>
-        candidate.id !== gate.id && candidate.place_id === gate.place_id,
+        candidate.id !== gate.id && candidate.site_id === gate.site_id,
     )
     .map((candidate) => ({ value: candidate.id, label: candidate.name }));
 

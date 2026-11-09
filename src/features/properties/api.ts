@@ -1,7 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
 export const propertyKinds = {
-  site: "Site / property",
   building: "Building",
   unit: "Unit",
   room: "Room",
@@ -11,6 +10,7 @@ export type PropertyKind = keyof typeof propertyKinds;
 export type StructureKind = PropertyKind;
 export interface Property {
   id: string;
+  site_id: string;
   parent_id: string | null;
   name: string;
   kind: PropertyKind;
@@ -30,6 +30,7 @@ export interface PropertyTreeNode extends Property {
   children: PropertyTreeNode[];
 }
 export type PropertyInput = {
+  site_id: string;
   name: string;
   kind: StructureKind;
   description: string;
@@ -48,16 +49,17 @@ export const propertiesApi = {
     is_active?: boolean;
     root_only?: boolean;
     parent_id?: string;
+    site_id?: string;
   }) =>
     (
       await apiClient.get<ApiResponse<PaginatedResponse<Property>>>(base, {
         params,
       })
     ).data,
-  tree: async (includeInactive = false) =>
+  tree: async (siteId: string, includeInactive = false) =>
     (
       await apiClient.get<ApiResponse<PropertyTreeNode[]>>(`${base}/tree`, {
-        params: { include_inactive: includeInactive },
+        params: { include_inactive: includeInactive, site_id: siteId },
       })
     ).data,
   get: async (id: string) =>
@@ -68,7 +70,7 @@ export const propertiesApi = {
     id: string,
     body: Omit<
       PropertyInput,
-      "parent_id" | "kind" | "building_type" | "use_case"
+      "site_id" | "parent_id" | "kind" | "building_type" | "use_case"
     >,
   ) =>
     (await apiClient.patch<ApiResponse<Property>>(`${base}/${id}`, body)).data,

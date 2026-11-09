@@ -9,6 +9,8 @@ import {
   Home,
   Megaphone,
   ReceiptText,
+  ScanLine,
+  Ticket,
   UsersRound,
 } from "lucide-react";
 
@@ -45,6 +47,16 @@ const sections = [
     href: "/admin/residential/announcements",
     label: "Announcements",
     icon: Megaphone,
+  },
+  {
+    href: "/admin/checkpoints",
+    label: "Gate & check-in",
+    icon: ScanLine,
+  },
+  {
+    href: "/admin/invitations",
+    label: "Invitations",
+    icon: Ticket,
   },
 ];
 

@@ -69,7 +69,7 @@ export function WorkspaceDirectoryPage() {
   const loading = context.isPending;
   const workspaces = buildPropertyWorkspaces({
     relationships: context.data?.workspaces || [],
-    managedSites: context.data?.managed_sites || [],
+    managedSites: context.data?.site_workspaces || [],
   });
   const selectedWorkspace =
     workspaces.find((workspace) => workspace.key === selectedPropertyId) ||

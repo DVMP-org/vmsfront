@@ -137,7 +137,10 @@ export function ExpenseAllocations() {
   });
   const tree = useQuery({
     queryKey: ["property-tree", "mixed-use-expenses"],
-    queryFn: () => propertiesApi.tree(),
+    queryFn: () =>
+      selectedProperty?.id
+        ? propertiesApi.tree(selectedProperty.id)
+        : Promise.resolve([]),
     enabled: !!selectedProperty?.id,
     retry: false,
   });

@@ -180,11 +180,11 @@ export const checkpointsApi = {
         { headers: { "X-Checkpoint": id } },
       )
     ).data,
-  operators: async (placeId?: string | null) =>
+  operators: async (siteId?: string | null) =>
     (
       await apiClient.get<ApiResponse<CheckpointOperatorAssignments>>(
         "/admin/checkpoints/operators",
-        { params: placeId ? { place_id: placeId } : {} },
+        { params: siteId ? { site_id: siteId } : {} },
       )
     ).data,
   assignOperator: async (gateId: string, partyId: string) =>

@@ -69,7 +69,7 @@ describe("workspace catalog", () => {
     );
   });
 
-  it("does not create a management dashboard before a place admin exists", () => {
+  it("does not create a management dashboard before a site admin exists", () => {
     const admin = {
       role: { name: "Super Admin", permissions_parsed: ["*"] },
     } as Admin;
@@ -78,11 +78,11 @@ describe("workspace catalog", () => {
   });
 
   it("does not infer Site management from organization administration", () => {
-    const [workspace] = buildPropertyWorkspaces({
+    const workspaces = buildPropertyWorkspaces({
       relationships: [relationship("resident", "home")],
     });
 
-    expect(workspace.accesses.map((access) => access.area)).toEqual([
+    expect(workspaces[0].accesses.map((access) => access.area)).toEqual([
       "occupancy",
     ]);
   });
@@ -95,7 +95,7 @@ describe("workspace catalog", () => {
     expect(workspaces).toEqual([]);
   });
 
-  it("requires a selected place and place-admin authority for the dashboard", () => {
+  it("requires a selected site and site-admin authority for the dashboard", () => {
     expect(canOpenManagementDashboard(null, true)).toBe(false);
     expect(canOpenManagementDashboard("place", false)).toBe(false);
     expect(canOpenManagementDashboard("place", true)).toBe(true);
@@ -113,17 +113,26 @@ describe("workspace catalog", () => {
   });
 
   it("only attaches management to the place that grants administration", () => {
-    const admin = {
-      role: { name: "Super Admin", permissions_parsed: ["*"] },
-    } as Admin;
     const workspaces = buildPropertyWorkspaces({
       relationships: [
-        relationship("admin", "organization"),
         relationship("resident", "home"),
         relationship("guest_of", "hotel"),
       ],
-      managedSites: [relationship("admin", "organization").place],
-      managementRole: admin.role?.name,
+      managedSites: [
+        {
+          assignment_id: "site-admin",
+          role: "site_admin",
+          site: {
+            id: "organization",
+            name: "Harbour Estate",
+            slug: "harbour-estate",
+            parent_site_id: null,
+            is_active: true,
+            use_case: "mixed_use",
+          },
+          effective_permissions: ["*"],
+        },
+      ],
     });
 
     expect(workspaces).toHaveLength(3);
@@ -144,27 +153,41 @@ describe("workspace catalog", () => {
     ).toEqual(["guest"]);
   });
 
-  it("keeps independent management and tenancy access on one property", () => {
-    const admin = {
-      role: { name: "Estate Manager", permissions_parsed: [] },
-    } as Admin;
-    const main = relationship("admin", "office");
+  it("keeps site management separate from place tenancy access", () => {
     const tenancy = {
       ...relationship("tenant", "office"),
       id: "tenancy",
     };
-    const [workspace] = buildPropertyWorkspaces({
-      relationships: [main, tenancy],
-      managedSites: [main.place],
-      managementRole: admin.role?.name,
+    const workspaces = buildPropertyWorkspaces({
+      relationships: [tenancy],
+      managedSites: [
+        {
+          assignment_id: "site-admin",
+          role: "site_admin",
+          site: {
+            id: "office-site",
+            name: "Harbour Offices",
+            slug: "harbour-offices",
+            parent_site_id: null,
+            is_active: true,
+            use_case: "commercial",
+          },
+          effective_permissions: ["*"],
+        },
+      ],
     });
 
-    expect(workspace.accesses.map((access) => access.area)).toEqual([
-      "management",
+    const occupancy = workspaces.find((item) => item.place.id === "office");
+    expect(occupancy?.accesses.map((access) => access.area)).toEqual([
       "occupancy",
     ]);
-    expect(workspace.accesses[0].roleLabel).toBe("Estate Manager");
-    expect(workspace.accesses[1].roleLabel).toBe("Tenant");
+    const management = workspaces.find(
+      (item) => item.place.id === "office-site",
+    );
+    expect(management?.accesses.map((access) => access.area)).toEqual([
+      "management",
+    ]);
+    expect(management?.accesses[0].roleLabel).toBe("Site Administrator");
   });
 
   it("qualifies non-site workspace titles with the API-provided site", () => {

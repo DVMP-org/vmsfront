@@ -3,11 +3,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { checkpointsApi } from "@/features/checkpoints/api";
-import { peopleApi } from "@/features/people/api";
+import { managersApi } from "@/features/managers/api";
 import { GateOperatorModal } from "./GateOperatorModal";
 
-vi.mock("@/features/people/api", () => ({
-  peopleApi: { get: vi.fn() },
+vi.mock("@/features/managers/api", () => ({
+  managersApi: { list: vi.fn() },
 }));
 vi.mock("@/features/checkpoints/api", () => ({
   checkpointsApi: {
@@ -21,7 +21,8 @@ const gate = {
   name: "Main entrance",
   slug: "main-entrance",
   is_default: true,
-  place_id: "site-1",
+  site_id: "site-1",
+  place_id: null,
   dependency_id: null,
   created_at: "2026-11-09T00:00:00Z",
   updated_at: "2026-11-09T00:00:00Z",
@@ -47,16 +48,22 @@ function mount(onClose = vi.fn()) {
 describe("GateOperatorModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(peopleApi.get).mockResolvedValue({
-      place: {
+    vi.mocked(managersApi.list).mockResolvedValue({
+      site: {
         id: "site-1",
+        organization_id: "org-1",
+        parent_site_id: null,
         name: "Harbour Campus",
         slug: "harbour-campus",
-        kind: "site",
+        use_case: "hospitality",
+        description: null,
+        address: "",
         is_active: true,
+        created_at: "2026-01-01",
+        updated_at: "2026-01-01",
       },
       effective_use_case: "hospitality",
-      administrators: [
+      managers: [
         {
           assignment_id: "admin-1",
           party: {
@@ -66,16 +73,15 @@ describe("GateOperatorModal", () => {
             email: "amina@example.test",
             is_active: true,
           },
-          role: "place_admin",
-          is_super_admin: false,
+          role: "site_admin",
           status: "active",
-          source: "administration",
+          roles: [],
+          effective_permissions: ["*"],
         },
       ],
-      occupants: [],
     });
     vi.mocked(checkpointsApi.operators).mockResolvedValue({
-      place_id: "site-1",
+      site_id: "site-1",
       assignments: [],
     });
     vi.mocked(checkpointsApi.assignOperator).mockResolvedValue({

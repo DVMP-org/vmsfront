@@ -278,6 +278,7 @@ describe("commercial operations", () => {
 
     await waitFor(() =>
       expect(mocks.createProperty).toHaveBeenCalledWith({
+        site_id: "site",
         name: "Suite 5B",
         kind: "unit",
         building_type: "office",
