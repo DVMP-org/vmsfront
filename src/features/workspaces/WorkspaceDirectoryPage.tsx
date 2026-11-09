@@ -25,6 +25,7 @@ import { useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
+import { domainExperience } from "@/config/domains";
 import { useAppStore } from "@/store/app-store";
 import { ActionCard } from "@/components/ui/ActionCard";
 
@@ -102,7 +103,14 @@ export function WorkspaceDirectoryPage() {
       id: workspace.place.id,
       name: workspaceDisplayName(workspace),
     });
-    router.push(access.href);
+    const experience = domainExperience(
+      workspace.place.use_case ?? organization?.use_case,
+    );
+    const destination =
+      access.area === "management"
+        ? (experience?.navigation[0]?.items[0]?.href ?? access.href)
+        : access.href;
+    router.push(destination);
   }
 
   return (

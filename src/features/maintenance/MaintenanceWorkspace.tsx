@@ -65,7 +65,13 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     retry: false,
   });
   const spaces = useMemo(
-    () => flatten(findProperty(tree.data ?? [], selectedProperty?.id)),
+    () => {
+      const roots = tree.data ?? [];
+      const selectedRoot = findProperty(roots, selectedProperty?.id);
+      return selectedRoot
+        ? flatten(selectedRoot)
+        : roots.flatMap((root) => flatten(root));
+    },
     [tree.data, selectedProperty?.id],
   );
   const query = useQuery({

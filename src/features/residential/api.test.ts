@@ -57,6 +57,10 @@ describe("residential place scope", () => {
       "building",
       "unit",
     ]);
-    expect([...descendantIds([...tree], "missing")]).toEqual([]);
+    expect([...descendantIds([...tree], "missing")]).toEqual([
+      "site",
+      "building",
+      "unit",
+    ]);
   });
 });

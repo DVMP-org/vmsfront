@@ -186,8 +186,19 @@ export function contextualAdminLinks(
       )
     : [];
   const configuredHrefs = new Set(configuredLinks.map((link) => link.href));
+  const configuredModules = new Set(
+    configuredLinks
+      .map((link) => link.module)
+      .filter((module): module is string => !!module),
+  );
   const commonLinks = adminLinks.filter(
-    (link) => !configuredHrefs.has(link.href),
+    (link) =>
+      !configuredHrefs.has(link.href) &&
+      !(
+        link.href === "/admin/properties" &&
+        configuredModules.has("properties")
+      ) &&
+      !(link.href === "/admin/people" && configuredModules.has("people")),
   );
 
   return [...configuredLinks, ...commonLinks]
