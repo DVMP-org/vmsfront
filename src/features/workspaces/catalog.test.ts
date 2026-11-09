@@ -87,6 +87,14 @@ describe("workspace catalog", () => {
     ]);
   });
 
+  it("ignores legacy admin relationships without a canonical managed Site", () => {
+    const workspaces = buildPropertyWorkspaces({
+      relationships: [relationship("admin", "legacy-site")],
+    });
+
+    expect(workspaces).toEqual([]);
+  });
+
   it("requires a selected site and site-admin authority for the dashboard", () => {
     expect(canOpenManagementDashboard(null, true)).toBe(false);
     expect(canOpenManagementDashboard("place", false)).toBe(false);

@@ -247,7 +247,9 @@ export function buildPropertyWorkspaces({
   for (const relationship of relationships) {
     const role = relationship.role.toLowerCase();
     const workspace = ensure(relationship.place);
-    if (ADMIN_RELATIONSHIP_ROLES.has(role)) continue;
+    if (ADMIN_RELATIONSHIP_ROLES.has(role)) {
+      continue;
+    }
     const area = areaForRelationship(relationship);
     const roleText = roleLabel(relationship.role);
     const title =
