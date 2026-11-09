@@ -108,6 +108,7 @@ export interface AccessEventFilters {
   gate_id?: string;
   party_id?: string;
   subject_type?: string;
+  credential_type?: string;
   direction?: string;
   outcome?: string;
   occurred_from?: string;

@@ -21,6 +21,7 @@ const m = vi.hoisted(() => ({
   gate: vi.fn(),
   console: vi.fn(),
   history: vi.fn(),
+  accessEvents: vi.fn(),
   record: vi.fn(),
   event: vi.fn(),
   topology: vi.fn(),
@@ -133,6 +134,11 @@ beforeEach(() => {
     ],
   });
   m.history.mockResolvedValue({ items: [], total_pages: 0 });
+  m.accessEvents.mockResolvedValue({
+    items: [],
+    total: 0,
+    total_pages: 0,
+  });
   m.event.mockResolvedValue(event);
   m.topology.mockResolvedValue({
     places: [
@@ -217,7 +223,7 @@ it("retries the same immutable passage after unknown failure then offers next pe
     .mockRejectedValueOnce(new Error("network interrupted"))
     .mockResolvedValue({ ...event, replayed: true });
   mount(<CheckpointConsole gateId="gate" />);
-  await screen.findByRole("heading", { name: "Main entrance" });
+  await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
@@ -226,7 +232,7 @@ it("retries the same immutable passage after unknown failure then offers next pe
   expect(screen.getByLabelText("Credential")).toBeDisabled();
   const first = m.record.mock.calls[0][1];
   fireEvent.click(screen.getByRole("button", { name: "Retry same passage" }));
-  await screen.findByRole("heading", { name: "Guest · Check-in" });
+  await screen.findByText("Entry permitted");
   expect(m.record.mock.calls[1][1]).toEqual(first);
   expect(first.idempotency_key).toBeTruthy();
   expect(screen.getByText(/Previously recorded/)).toBeInTheDocument();
@@ -263,12 +269,12 @@ it("distinguishes denied result and checkout direction", async () => {
     lane: { observed_state: "closed" },
   });
   mount(<CheckpointConsole gateId="gate" />);
-  await screen.findByRole("heading", { name: "Main entrance" });
+  await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Check out" }));
-  await screen.findByRole("heading", { name: "Guest · Checkout" });
+  await screen.findByText("Access denied");
   expect(screen.getByText("not present")).toBeInTheDocument();
   expect(screen.getByText("2. Device command")).toBeInTheDocument();
   expect(screen.getByText("No command")).toBeInTheDocument();
@@ -281,7 +287,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   });
   m.record.mockResolvedValue(event);
   mount(<CheckpointConsole gateId="gate" />);
-  await screen.findByRole("heading", { name: "Main entrance" });
+  await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT-OFFLINE" },
   });
@@ -302,7 +308,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   await act(async () => {
     window.dispatchEvent(new Event("online"));
   });
-  await screen.findByRole("heading", { name: "Guest · Check-in" });
+  await screen.findByText("Entry permitted");
   await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
   expect(screen.queryByText(/provisional passage queued/i)).toBeNull();
 });
