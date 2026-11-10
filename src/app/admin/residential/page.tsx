@@ -1,5 +1,5 @@
-import ResidentialOverview from "@/features/residential/ResidentialOverview";
+import { redirect } from "next/navigation";
 
-export default function ResidentialPage() {
-  return <ResidentialOverview />;
+export default function Page() {
+  redirect("/admin");
 }

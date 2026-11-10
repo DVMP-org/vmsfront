@@ -38,11 +38,11 @@ export function PageHeader({
               {eyebrow}
             </div>
           ) : null}
-          <h1 className="text-2xl font-semibold leading-8 tracking-[-0.03em] sm:text-[28px] sm:leading-9">
+          <h1 className="text-[26px] font-semibold leading-8 tracking-[-0.04em] text-[var(--vms-ink)] sm:text-[28px] sm:leading-9">
             {title}
           </h1>
           {description ? (
-            <div className="mt-1 max-w-3xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+            <div className="mt-1 max-w-3xl text-[14px] leading-5 text-[var(--vms-ink-muted)]">
               {description}
             </div>
           ) : null}

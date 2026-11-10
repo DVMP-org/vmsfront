@@ -27,6 +27,7 @@ vi.mock("./api", async () => {
 const relationship: WorkspaceRelationship = {
   id: "relationship",
   organization_id: "org",
+  site_id: "site",
   role: "resident",
   status: "active",
   effective_from: null,
@@ -56,8 +57,8 @@ const invitation: VisitAuthorization = {
   code: "VISIT-ABC123",
   qr_code_url: null,
   status: "approved",
-  valid_from: new Date(Date.now() - 60_000).toISOString(),
-  valid_to: new Date(Date.now() + 3_600_000).toISOString(),
+  valid_from: new Date(Date.now() + 3_600_000).toISOString(),
+  valid_to: new Date(Date.now() + 3 * 3_600_000).toISOString(),
   max_uses: 2,
   uses_count: 0,
   purpose: "Family visit",
@@ -83,14 +84,14 @@ const invitation: VisitAuthorization = {
   ],
 };
 
-function renderWorkspace() {
+function renderWorkspace({ siteId = "site" }: { siteId?: string | null } = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
       <AccessWorkspace
-        relationship={relationship}
+        relationship={{ ...relationship, site_id: siteId ?? undefined }}
         partyName="Alex Morgan"
         partyEmail="alex@example.com"
       />
@@ -137,13 +138,40 @@ describe("AccessWorkspace", () => {
     expect(screen.getAllByText("VISIT-ABC123").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Approved").length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("button", { name: /create invitation/i }),
+      screen.getByRole("button", { name: /invite visitor/i }),
     ).toBeInTheDocument();
+  });
+
+  it("opens the create form in a side drawer", async () => {
+    renderWorkspace();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /invite visitor/i }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: /create invitation/i }),
+    ).toBeVisible();
+  });
+
+  it("blocks submission when the workspace has no Site reference", async () => {
+    renderWorkspace({ siteId: null });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /invite visitor/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/visitor name/i), {
+      target: { value: "New Guest" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /submit invitation/i }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /missing its Site reference/i,
+    );
+    expect(accessJourneyApi.create).not.toHaveBeenCalled();
   });
 
   it("creates an invitation for the selected workspace", async () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /create invitation/i }));
+    fireEvent.click(screen.getByRole("button", { name: /invite visitor/i }));
     fireEvent.change(screen.getByLabelText(/visitor name/i), {
       target: { value: "New Guest" },
     });
@@ -155,6 +183,7 @@ describe("AccessWorkspace", () => {
     await waitFor(() => expect(accessJourneyApi.create).toHaveBeenCalled());
     expect(vi.mocked(accessJourneyApi.create).mock.calls[0][0]).toEqual(
       expect.objectContaining({
+        site_id: "site",
         destination_place_id: "place",
         purpose: "Meeting",
         guests: [
@@ -166,9 +195,25 @@ describe("AccessWorkspace", () => {
     );
   });
 
+  it("sends the maximum entries the operator typed", async () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: /invite visitor/i }));
+    fireEvent.change(screen.getByLabelText(/visitor name/i), {
+      target: { value: "New Guest" },
+    });
+    const maxEntries = screen.getByLabelText(/maximum entries/i);
+    fireEvent.change(maxEntries, { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
+
+    await waitFor(() => expect(accessJourneyApi.create).toHaveBeenCalled());
+    expect(
+      vi.mocked(accessJourneyApi.create).mock.calls[0][0].max_uses,
+    ).toBe(7);
+  });
+
   it("creates one invitation for a group of guests", async () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /create invitation/i }));
+    fireEvent.click(screen.getByRole("button", { name: /invite visitor/i }));
     fireEvent.change(screen.getByLabelText(/visitor name/i), {
       target: { value: "Primary Guest" },
     });
@@ -193,7 +238,7 @@ describe("AccessWorkspace", () => {
 
   it("requires a name for every added guest", async () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /create invitation/i }));
+    fireEvent.click(screen.getByRole("button", { name: /invite visitor/i }));
     fireEvent.change(screen.getByLabelText(/visitor name/i), {
       target: { value: "Primary Guest" },
     });
@@ -219,7 +264,7 @@ describe("AccessWorkspace", () => {
     renderWorkspace();
 
     fireEvent.click(
-      await screen.findByRole("button", { name: /view details/i }),
+      await screen.findByRole("button", { name: /open invitation/i }),
     );
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
@@ -230,7 +275,7 @@ describe("AccessWorkspace", () => {
     expect(
       screen.getByText("Human-readable invitation reference"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
+    expect(screen.getAllByText("Alex Morgan").length).toBeGreaterThan(0);
     expect(
       await screen.findByText("No checkpoint events yet."),
     ).toBeInTheDocument();
@@ -239,7 +284,7 @@ describe("AccessWorkspace", () => {
   it("keeps invitation details keyboard-contained and restores focus", async () => {
     renderWorkspace();
     const openButton = await screen.findByRole("button", {
-      name: /view details/i,
+      name: /open invitation/i,
     });
     openButton.focus();
     fireEvent.click(openButton);
@@ -285,7 +330,7 @@ describe("AccessWorkspace", () => {
     renderWorkspace();
 
     fireEvent.click(
-      await screen.findByRole("button", { name: /view details/i }),
+      await screen.findByRole("button", { name: /open invitation/i }),
     );
 
     expect(await screen.findByText("entry · allowed")).toBeInTheDocument();

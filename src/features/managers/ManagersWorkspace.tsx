@@ -153,12 +153,7 @@ export function ManagersWorkspace() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/people">
-              <Users className="h-4 w-4" aria-hidden="true" />
-              View parties
-            </Link>
-          </Button>
+
           {canManage ? (
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />

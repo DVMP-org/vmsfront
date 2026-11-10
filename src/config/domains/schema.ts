@@ -23,7 +23,42 @@ export const domainExperienceSchema = z.object({
   label: z.string().min(1),
   terminology: z.record(z.string()),
   navigation: z.array(navigationGroupSchema).min(1),
+  workspace_navigation: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        items: z
+          .array(
+            navigationChildSchema.extend({
+              place_admin_only: z.boolean().optional(),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+  workspace_dashboard: z
+    .array(
+      z.object({
+        section: z.enum([
+          "announcements",
+          "charges",
+          "maintenance",
+          "invitations",
+          "stay",
+        ]),
+        module: z.string().min(1),
+      }),
+    )
+    .min(1),
   dashboard: z.object({
+    component: z.enum([
+      "residential",
+      "commercial",
+      "hospitality",
+      "mixed_use",
+    ]),
     priorities: z.array(z.string()).min(1),
   }),
   views: z.record(

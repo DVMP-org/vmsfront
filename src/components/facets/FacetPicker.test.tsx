@@ -29,6 +29,8 @@ it("handles option failure, pagination, search reset and selection", async () =>
       />
     </QueryClientProvider>,
   );
+  expect(screen.queryByLabelText("Search guest")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Guest Select guest/ }));
   await screen.findByRole("button", { name: "Retry options" });
   vi.mocked(loadFacets).mockResolvedValue({
     facet: "parties",
@@ -82,4 +84,32 @@ it("invalidates a selected option that no longer exists or is permitted", async 
     </QueryClientProvider>,
   );
   await waitFor(() => expect(change).toHaveBeenCalledWith(null));
+});
+it("keeps the current selection when the menu is dismissed", async () => {
+  vi.mocked(loadFacets).mockResolvedValue({
+    facet: "parties",
+    contract_version: "vmscore.facets/v1",
+    items: [item],
+    has_more: false,
+    next_cursor: null,
+    revision: "r",
+  });
+  const change = vi.fn();
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <FacetPicker
+        facet="parties"
+        kind="person"
+        contextKey="org"
+        label="Operator"
+        value={item}
+        onChange={change}
+      />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Operator Ada/ }));
+  expect(await screen.findByLabelText("Search operator")).toBeInTheDocument();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByLabelText("Search operator")).not.toBeInTheDocument();
+  expect(change).not.toHaveBeenCalled();
 });

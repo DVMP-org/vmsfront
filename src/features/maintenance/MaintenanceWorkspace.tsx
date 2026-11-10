@@ -15,6 +15,7 @@ import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import { Button } from "@/components/ui/Button";
 import {
@@ -176,11 +177,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     {
       key: "reported_by",
       header: "Requested by",
-      accessor: (item) => (
-        <span className="whitespace-nowrap text-sm">
-          {item.reported_by?.display_name || "—"}
-        </span>
-      ),
+      accessor: (item) => <Requester request={item} />,
       responsiveHide: "lg",
     },
     {
@@ -369,6 +366,9 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
                 </Badge>
               </div>
               <p className="text-sm">{item.place.name}</p>
+              <div className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+                Requested by <Requester request={item} />
+              </div>
               <p className="text-xs text-[var(--vms-ink-muted)]">
                 {item.priority} priority ·{" "}
                 {item.assigned_to?.display_name || "Unassigned"}
@@ -388,7 +388,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       <MaintenanceForm
         open={formOpen}
         domain={domain}
-        propertyPlaceId={selectedProperty.id}
+        siteId={selectedProperty.id}
         spaces={spaces}
         pending={create.isPending}
         onClose={() => setFormOpen(false)}
@@ -408,10 +408,32 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   );
 }
 
+function Requester({ request }: { request: MaintenanceRequest }) {
+  const name =
+    request.reported_by?.display_name ||
+    request.created_by_site_admin?.display_name;
+  if (!name) return <span>—</span>;
+  return (
+    <span className="flex items-center gap-2 whitespace-nowrap text-sm">
+      <Avatar
+        name={name}
+        src={
+          request.reported_by
+            ? undefined
+            : request.created_by_site_admin?.avatar_url
+        }
+        size="sm"
+        decorative
+      />
+      <span>{name}</span>
+    </span>
+  );
+}
+
 function MaintenanceForm({
   open,
   domain,
-  propertyPlaceId,
+  siteId,
   spaces,
   pending,
   onClose,
@@ -419,7 +441,7 @@ function MaintenanceForm({
 }: {
   open: boolean;
   domain: DomainUseCase;
-  propertyPlaceId: string;
+  siteId: string;
   spaces: PropertyTreeNode[];
   pending: boolean;
   onClose: () => void;
@@ -448,7 +470,7 @@ function MaintenanceForm({
     }
     setError("");
     onSubmit({
-      property_place_id: propertyPlaceId,
+      site_id: siteId,
       place_id: values.place_id,
       domain,
       request_type: values.request_type,
@@ -470,7 +492,7 @@ function MaintenanceForm({
       isOpen={open}
       onClose={onClose}
       title={`New ${experience.terminology.maintenance.toLowerCase()}`}
-      description="This creates a record in the shared maintenance service."
+      description="This creates a maintenance record."
     >
       <form onSubmit={submit} className="space-y-4 p-5">
         {error ? (
@@ -767,7 +789,11 @@ function MaintenanceDetailDialog({
         <dl className="grid gap-x-5 gap-y-3 border-y border-[var(--vms-line)] py-4 text-sm sm:grid-cols-2">
           <DetailFact
             label="Requested by"
-            value={current.reported_by?.display_name || "Not recorded"}
+            value={
+              current.reported_by?.display_name ||
+              current.created_by_site_admin?.display_name ||
+              "Not recorded"
+            }
           />
           <DetailFact
             label="Assigned to"
@@ -1272,6 +1298,5 @@ function flatten(node: PropertyTreeNode | null): PropertyTreeNode[] {
 
 function filterValue(filters: FilterConfig[], field: string) {
   return filters.find((filter) => filter.field === field)?.value as
-    | string
-    | undefined;
+    string | undefined;
 }

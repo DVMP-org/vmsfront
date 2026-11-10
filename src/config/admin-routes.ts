@@ -150,6 +150,33 @@ const domainIcons: Record<string, LucideIcon> = {
   layers: Blocks,
 };
 
+/**
+ * Navigation config predates the Site module catalogue, so some entries still
+ * reference the feature keys the sidebar used before modules were introduced
+ * (`charges`, `gates`, …). Site modules now report the owning module
+ * (`billing`, `access_control`, …). Without this mapping those links silently
+ * disappear from the sidebar.
+ */
+const moduleKeyAliases: Record<string, string[]> = {
+  charges: ["billing"],
+  gates: ["access_control"],
+  check_in_out: ["access_control"],
+  forums: ["communication"],
+  dashboard: ["properties", "residential", "commercial", "hospitality", "mixed_use"],
+};
+
+export function isModuleEnabled(
+  module: string | undefined,
+  modules: readonly string[] | undefined,
+): boolean {
+  if (!module) return true;
+  if (!modules) return false;
+  if (modules.includes(module)) return true;
+  return (moduleKeyAliases[module] ?? []).some((alias) =>
+    modules.includes(alias),
+  );
+}
+
 export function contextualAdminLinks(
   modules: readonly string[] | undefined,
   moduleGroups: readonly ModuleGroup[] = [],
@@ -210,12 +237,11 @@ export function contextualAdminLinks(
   const commonLinks = adminLinks.filter(
     (link) =>
       !configuredHrefs.has(link.href) &&
-      link.href !== "/admin/properties" &&
       !(link.href === "/admin/people" && configuredModules.has("people")),
   );
 
   return [...configuredLinks, ...commonLinks]
-    .filter((link) => !link.module || !!modules?.includes(link.module))
+    .filter((link) => isModuleEnabled(link.module, modules))
     .map((link, index) => ({
       ...link,
       group: configuredHrefs.has(link.href)

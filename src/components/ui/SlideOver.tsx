@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "./useDialogFocus";
+import styles from "./DrawerMotion.module.css";
 
 export interface SlideOverProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export interface SlideOverProps {
   size?: "sm" | "md" | "lg" | "xl" | "full";
   className?: string;
   ariaLabel?: string;
+  /** Sticky action bar pinned below the scrolling body. */
+  footer?: React.ReactNode;
+  bodyClassName?: string;
 }
 
 const sizes: Record<NonNullable<SlideOverProps["size"]>, string> = {
@@ -35,6 +39,8 @@ export function SlideOver({
   size = "md",
   className,
   ariaLabel = "Panel",
+  footer,
+  bodyClassName,
 }: SlideOverProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const generatedId = React.useId();
@@ -45,9 +51,9 @@ export function SlideOver({
   if (!isOpen || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end overflow-hidden">
       <div
-        className="absolute inset-0 bg-black/40"
+        className={cn("absolute inset-0 bg-black/40", styles.backdrop)}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -60,6 +66,7 @@ export function SlideOver({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
+          styles.panel,
           "relative flex h-full w-full flex-col border-l border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
           sizes[size],
           className,
@@ -90,9 +97,20 @@ export function SlideOver({
             <X aria-hidden="true" className="h-5 w-5" />
           </button>
         </header>
-        <div className="flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6">
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6",
+            footer && "pb-5",
+            bodyClassName,
+          )}
+        >
           {children}
         </div>
+        {footer ? (
+          <footer className="shrink-0 border-t border-[var(--vms-line)] bg-[var(--vms-surface)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+            {footer}
+          </footer>
+        ) : null}
       </section>
     </div>,
     document.body,

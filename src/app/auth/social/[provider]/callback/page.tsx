@@ -46,7 +46,13 @@ export default function SocialCallbackPage() {
                 </h1>
 
                 <p className="text-muted-foreground">
-                    Please wait while we complete your sign-in with {titleCase(params?.provider)}.
+                    Please wait while we complete your sign-in with{" "}
+                    {titleCase(
+                        Array.isArray(params?.provider)
+                            ? params.provider[0]
+                            : params?.provider,
+                    )}
+                    .
                 </p>
 
                 {isError && (

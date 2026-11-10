@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, it, expect, beforeEach } from "vitest";
-import Page from "./page";
+import Page from "./HospitalityOverview";
 const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
   list: vi.fn(),

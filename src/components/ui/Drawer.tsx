@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "./useDialogFocus";
+import styles from "./DrawerMotion.module.css";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ interface DrawerProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
+  /** Edge the panel slides in from. Navigation drawers use "left". */
+  side?: "left" | "right";
 }
 
 export function Drawer({
@@ -23,6 +27,8 @@ export function Drawer({
   description,
   children,
   className,
+  contentClassName,
+  side = "right",
 }: DrawerProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const generatedId = React.useId();
@@ -38,9 +44,14 @@ export function Drawer({
   if (!isOpen || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex overflow-hidden",
+        side === "left" ? "justify-start" : "justify-end",
+      )}
+    >
       <div
-        className="absolute inset-0 bg-black/40"
+        className={cn("absolute inset-0 bg-black/40", styles.backdrop)}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -51,8 +62,12 @@ export function Drawer({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
+        data-side={side}
         className={cn(
-          "relative flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
+          side === "left" ? styles.panelLeft : styles.panel,
+          "relative flex h-full w-full max-w-xl flex-col overflow-hidden bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
+          side === "left" ? "border-r" : "border-l",
+          "border-[var(--vms-line)]",
           className,
         )}
       >
@@ -79,7 +94,12 @@ export function Drawer({
             <X aria-hidden="true" className="h-5 w-5" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto p-4 sm:p-5",
+            contentClassName,
+          )}
+        >
           {children}
         </div>
       </section>

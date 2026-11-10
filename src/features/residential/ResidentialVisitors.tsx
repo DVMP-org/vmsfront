@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   ExternalLink,
-  RefreshCcw,
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,31 +26,23 @@ import { useAppStore } from "@/store/app-store";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 
 export function ResidentialVisitors() {
-  const property = useAppStore((state) => state.selectedProperty);
-  const placeId = property?.id;
+  const site = useAppStore((state) => state.selectedProperty);
+  const siteId = site?.id;
   const { canManageVisitors } = useResidentialAccess();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const invitations = useQuery({
-    queryKey: ["residential", placeId, "visitors", "all"],
+    queryKey: ["residential", siteId, "visitors", "all"],
     queryFn: () =>
       invitationApprovalsApi.list({
         status: "all",
         page: 1,
         pageSize: 100,
-        destinationPlaceId: placeId,
+        site_id: siteId,
       }),
-    enabled: !!placeId,
+    enabled: !!siteId,
     retry: false,
   });
-  const pendingCount = useMemo(
-    () =>
-      (invitations.data?.items || []).filter(
-        (invitation) => invitation.status === "requested",
-      ).length,
-    [invitations.data?.items],
-  );
-
   const approve = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(ids.map((id) => invitationApprovalsApi.approve(id)));
@@ -61,7 +52,7 @@ export function ResidentialVisitors() {
         `${ids.length} ${ids.length === 1 ? "invitation" : "invitations"} approved`,
       );
       await queryClient.invalidateQueries({
-        queryKey: ["residential", placeId, "visitors"],
+        queryKey: ["residential", siteId, "visitors"],
       });
       setSelected(new Set());
     },
@@ -183,21 +174,6 @@ export function ResidentialVisitors() {
     <ResidentialShell
       title="Visitors & access"
       description="Review visitor invitations addressed to this property and follow their access status without leaving the residential workspace."
-      primaryAction={
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={pendingCount ? "warning" : "success"}>
-            {pendingCount} awaiting approval
-          </Badge>
-          <Button
-            variant="secondary"
-            onClick={() => invitations.refetch()}
-            isLoading={invitations.isFetching}
-          >
-            <RefreshCcw className="h-4 w-4" aria-hidden />
-            Refresh
-          </Button>
-        </div>
-      }
     >
       <DataTable
         data={invitations.data?.items || []}
@@ -248,19 +224,7 @@ export function ResidentialVisitors() {
           </div>
         )}
       />
-      <div className="flex flex-wrap items-center gap-2 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-        <ShieldCheck
-          className="h-5 w-5 text-[var(--vms-ink-muted)]"
-          aria-hidden
-        />
-        <p className="min-w-0 flex-1 text-sm text-[var(--vms-ink-muted)]">
-          Declines require a reason. Open an invitation for the complete guest,
-          host and checkpoint history.
-        </p>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/admin/invitations">Open invitation queue</Link>
-        </Button>
-      </div>
+
     </ResidentialShell>
   );
 }

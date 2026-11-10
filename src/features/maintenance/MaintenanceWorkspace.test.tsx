@@ -7,7 +7,7 @@ import { MaintenanceWorkspace } from "./MaintenanceWorkspace";
 
 const request = {
   id: "request-1",
-  property_place_id: "site-1",
+  site_id: "site-1",
   place: { id: "unit-1", name: "Unit A1" },
   domain: "residential" as const,
   request_type: "request" as const,
@@ -168,6 +168,57 @@ describe("shared maintenance workspace", () => {
         ],
       },
     ]);
+  });
+
+  it("shows the site admin creator when no reporter was specified", async () => {
+    mocks.list.mockResolvedValue({
+      items: [
+        {
+          ...request,
+          reported_by: null,
+          created_by_site_admin: {
+            id: "admin-1",
+            user_id: "user-1",
+            display_name: "Site Manager",
+            avatar_url: "https://example.test/avatar.png",
+          },
+        },
+      ],
+      total: 1,
+    });
+    mount(<MaintenanceWorkspace domain="residential" />);
+    expect((await screen.findAllByText("Site Manager")).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen
+        .getAllByRole("img", { hidden: true })
+        .some((image) => image.getAttribute("src")?.includes("avatar.png")),
+    ).toBe(true);
+  });
+
+  it("creates a request for the selected site", async () => {
+    mocks.create.mockResolvedValue(request);
+    mount(<MaintenanceWorkspace domain="residential" />);
+    fireEvent.click(await screen.findByRole("button", { name: "New request" }));
+    fireEvent.change(await screen.findByLabelText(/Space \/ zone/), {
+      target: { value: "unit-1" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Title/), {
+      target: { value: "Leaking tap" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Description/), {
+      target: { value: "The tap is leaking continuously." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create request" }));
+    await waitFor(() =>
+      expect(mocks.create.mock.calls.at(-1)?.[0]).toEqual(
+        expect.objectContaining({ site_id: "site-1", place_id: "unit-1" }),
+      ),
+    );
+    expect(mocks.create.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+      "property_place_id",
+    );
   });
 
   it("loads SiteAdmin activity and updates assignment, schedule and workflow", async () => {

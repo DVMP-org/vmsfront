@@ -15,7 +15,7 @@
       "items": [
         {
           "label": "Commercial overview",
-          "href": "/admin/commercial",
+          "href": "/admin",
           "icon": "briefcase",
           "module": "commercial"
         },
@@ -120,7 +120,8 @@
       "collections",
       "maintenance_sla",
       "occupancy"
-    ]
+    ],
+    "component": "commercial"
   },
   "views": {
     "spaces": {
@@ -132,7 +133,12 @@
         "occupancy",
         "balance"
       ],
-      "filters": ["type", "occupancy", "lease_end", "status"]
+      "filters": [
+        "type",
+        "occupancy",
+        "lease_end",
+        "status"
+      ]
     },
     "maintenance": {
       "columns": [
@@ -144,7 +150,13 @@
         "sla",
         "status"
       ],
-      "filters": ["priority", "system", "assignment", "sla", "status"]
+      "filters": [
+        "priority",
+        "system",
+        "assignment",
+        "sla",
+        "status"
+      ]
     }
   },
   "maintenance": {
@@ -167,5 +179,104 @@
       "closed"
     ],
     "requires_contractor_permit": true
-  }
+  },
+  "workspace_navigation": [
+    {
+      "id": "place",
+      "label": "My place",
+      "items": [
+        {
+          "label": "Tenancy overview",
+          "href": "/workspace/{placeId}",
+          "icon": "home",
+          "module": "core"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Visitors & access",
+      "items": [
+        {
+          "label": "Invitations",
+          "href": "/workspace/{placeId}/invitations",
+          "icon": "ticket",
+          "module": "access_control"
+        },
+        {
+          "label": "Visitors",
+          "href": "/workspace/{placeId}/visitors",
+          "icon": "users",
+          "module": "access_control"
+        },
+        {
+          "label": "Movement log",
+          "href": "/workspace/{placeId}/movements",
+          "icon": "history",
+          "module": "access_control"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "items": [
+        {
+          "label": "Announcements",
+          "href": "/workspace/{placeId}/announcements",
+          "icon": "megaphone",
+          "module": "communication"
+        },
+        {
+          "label": "My charges",
+          "href": "/workspace/{placeId}/charges",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Maintenance requests",
+          "href": "/workspace/{placeId}/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "label": "Account",
+      "items": [
+        {
+          "label": "My profile",
+          "href": "/workspace/{placeId}/profile",
+          "icon": "user",
+          "module": "core"
+        },
+        {
+          "label": "Place settings",
+          "href": "/workspace/{placeId}/settings",
+          "icon": "settings",
+          "module": "people",
+          "place_admin_only": true
+        }
+      ]
+    }
+  ],
+  "workspace_dashboard": [
+    {
+      "section": "charges",
+      "module": "billing"
+    },
+    {
+      "section": "maintenance",
+      "module": "maintenance"
+    },
+    {
+      "section": "announcements",
+      "module": "communication"
+    },
+    {
+      "section": "invitations",
+      "module": "access_control"
+    }
+  ]
 }

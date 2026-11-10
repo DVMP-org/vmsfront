@@ -5,8 +5,9 @@ import { WorkspaceDirectoryPage } from "@/features/workspaces/WorkspaceDirectory
 vi.mock("@/hooks/use-email-verification-guard", () => ({
   useRequireEmailVerification: vi.fn(),
 }));
+const navigation = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => navigation,
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
@@ -128,18 +129,9 @@ describe("workspaces page", () => {
     expect(screen.getAllByText("Harbour Estate").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Apartment A-101/ }));
-    expect(
-      screen.getByRole("heading", {
-        name: "Apartment A-101",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Resident workspace")).toBeInTheDocument();
-
+    expect(navigation.push).toHaveBeenCalledWith("/workspace/home");
     fireEvent.click(screen.getByRole("button", { name: /Harbour Hotel/ }));
-    expect(screen.getByText("Guest stay")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Harbour Hotel" }),
-    ).toBeInTheDocument();
+    expect(navigation.push).toHaveBeenCalledWith("/workspace/hotel");
     expect(screen.queryByRole("button", { name: /^Book stay/i })).toBeNull();
   });
 });

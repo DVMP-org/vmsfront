@@ -7,23 +7,27 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowLeft,
-  CalendarDays,
+  Check,
   CheckCircle2,
-  CircleDollarSign,
   FileText,
   Landmark,
+  MapPin,
   Plus,
   ReceiptText,
   RefreshCw,
+  Search,
   UserRound,
+  X,
 } from "lucide-react";
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
+import { loadFacets } from "@/components/facets/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
+import { FormDrawer } from "@/components/ui/form/FormDrawer";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { FormSection } from "@/components/ui/form/FormSection";
 import { Modal } from "@/components/ui/Modal";
 import { Drawer } from "@/components/ui/Drawer";
 import { parseApiError } from "@/lib/error-utils";
@@ -33,12 +37,13 @@ import { useAppStore } from "@/store/app-store";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   chargesApi,
+  type AssignTargetsResult,
   type Assignment,
   type Definition,
   type Schedule,
 } from "./api";
 
-type ChargeAction = "new" | "definition" | "assign" | "assignment";
+type ChargeAction = "new" | "definition" | "assignment";
 
 const recurrenceLabels: Record<string, string> = {
   one_time: "One time",
@@ -49,6 +54,24 @@ const recurrenceLabels: Record<string, string> = {
   biannual: "Twice yearly",
   yearly: "Yearly",
 };
+
+/** Cadences ordered from finest to coarsest, matching the server allow-list. */
+const cadenceOrder = [
+  "one_time",
+  "daily",
+  "weekly",
+  "monthly",
+  "quarterly",
+  "biannual",
+  "yearly",
+];
+
+/** A payer may only acknowledge the same cadence or a coarser one. */
+function allowedCadences(baseline?: string | null) {
+  const index = cadenceOrder.indexOf(baseline ?? "");
+  if (index < 0 || baseline === "one_time") return ["one_time"];
+  return cadenceOrder.slice(index).filter((item) => item !== "one_time");
+}
 
 export default function ChargesWorkspace({
   id,
@@ -64,9 +87,7 @@ export default function ChargesWorkspace({
   const contextKey = access.contextKey;
   const profile = access.workspace;
   const allow = (permission: string) =>
-    !profile.isError &&
-    profile.isFetchedAfterMount &&
-    access.allowed(`charges.${permission}`);
+    !profile.isError && access.allowed(`charges.${permission}`);
 
   if (profile.isPending) {
     return <PageSkeleton label="Loading charge permissions" />;
@@ -82,11 +103,7 @@ export default function ChargesWorkspace({
   }
 
   const required =
-    action === "new" || action === "assign"
-      ? "create"
-      : action
-        ? "show"
-        : "list";
+    action === "new" ? "create" : action ? "show" : "list";
   if (!allow(required)) {
     return (
       <PageState
@@ -106,8 +123,6 @@ export default function ChargesWorkspace({
           allow={allow}
           onCreate={() => setCreateOpen(true)}
         />
-      ) : action === "assign" ? (
-        <AssignCharge id={id!} contextKey={contextKey} />
       ) : action === "definition" ? (
         <DefinitionDetail id={id!} contextKey={contextKey} allow={allow} />
       ) : action === "assignment" ? (
@@ -161,13 +176,7 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
             responsible Party and every schedule visible.
           </p>
         </div>
-        <Link
-          href="/admin/charges"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--vms-action)] hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Charge directory
-        </Link>
+
       </div>
     </header>
   );
@@ -383,13 +392,20 @@ function NewDefinition({
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [recurrence, setRecurrence] = useState("one_time");
+  const [showDates, setShowDates] = useState(false);
+  const [startDate, setStartDate] = useState(todayInputValue);
+  const [endDate, setEndDate] = useState("");
+  const [isFlexible, setIsFlexible] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isDirty =
     !!name ||
     !!description ||
     !!amount ||
     currency !== "NGN" ||
-    recurrence !== "one_time";
+    recurrence !== "one_time" ||
+    isFlexible ||
+    showDates ||
+    !!endDate;
   const canLeave = useUnsavedChanges(isDirty);
   const mutation = useMutation({
     mutationFn: () =>
@@ -400,6 +416,13 @@ function NewDefinition({
         amount,
         currency,
         recurrence,
+        ...(showDates
+          ? {
+              start_date: isoFromDateInput(startDate),
+              end_date: isoFromDateInput(endDate),
+            }
+          : {}),
+        is_flexible: isFlexible,
       }),
     onSuccess: onCreated,
   });
@@ -412,6 +435,10 @@ function NewDefinition({
     }
     if (!/^[A-Z]{3}$/.test(currency)) {
       nextErrors["charge-currency"] = "Use a three-letter currency code.";
+    }
+    if (showDates && startDate && endDate && endDate < startDate) {
+      nextErrors["charge-end-date"] =
+        "End date must be after the start date.";
     }
     if (!siteId) nextErrors["charge-site"] = "Select a Site first.";
     setErrors(nextErrors);
@@ -527,6 +554,74 @@ function NewDefinition({
               </select>
             )}
           </Field>
+          <label className="flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3">
+            <input
+              type="checkbox"
+              checked={showDates}
+              onChange={(event) => setShowDates(event.target.checked)}
+              className="mt-0.5 h-4 w-4"
+            />
+            <span className="min-w-0 text-sm">
+              <span className="block font-medium">Set a schedule window</span>
+              <span className="mt-0.5 block text-xs leading-5 text-[var(--vms-ink-muted)]">
+                Off by default: the charge starts today and runs until it is
+                deactivated.
+              </span>
+            </span>
+          </label>
+          {showDates ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                id="charge-start-date"
+                label="Start date"
+                description="First day a schedule may fall on."
+              >
+                {(control) => (
+                  <input
+                    {...control}
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+              <Field
+                id="charge-end-date"
+                label="End date"
+                description="No schedules are generated after this date."
+                error={errors["charge-end-date"]}
+              >
+                {(control) => (
+                  <input
+                    {...control}
+                    type="date"
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={(event) => setEndDate(event.target.value)}
+                    className={fieldControlClassName}
+                  />
+                )}
+              </Field>
+            </div>
+          ) : null}
+          <label className="flex items-start gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3">
+            <input
+              type="checkbox"
+              checked={isFlexible}
+              onChange={(event) => setIsFlexible(event.target.checked)}
+              className="mt-0.5 h-4 w-4"
+            />
+            <span className="min-w-0 text-sm">
+              <span className="block font-medium">
+                Flexible frequency
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-[var(--vms-ink-muted)]">
+                Let the payer acknowledge the same or a longer cycle than the
+                recurrence above.
+              </span>
+            </span>
+          </label>
         </fieldset>
         {mutation.isError ? <InlineError error={mutation.error} /> : null}
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
@@ -556,6 +651,8 @@ function DefinitionDetail({
   allow: (permission: string) => boolean;
 }) {
   const [page, setPage] = useState(1);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["charges", contextKey, "definition", id],
@@ -652,11 +749,9 @@ function DefinitionDetail({
           </div>
           <div className="flex flex-wrap gap-2">
             {allow("create") && definition.is_active ? (
-              <Button asChild>
-                <Link href={`/admin/charges/definitions/${id}/assign`}>
-                  <UserRound className="h-4 w-4" aria-hidden="true" />
-                  Assign to a property
-                </Link>
+              <Button onClick={() => setAssignOpen(true)}>
+                <UserRound className="h-4 w-4" aria-hidden="true" />
+                Assign charge
               </Button>
             ) : null}
             {allow("update") ? (
@@ -672,14 +767,24 @@ function DefinitionDetail({
             ) : null}
           </div>
         </div>
-        <div className="grid border-t border-[var(--vms-line)] sm:grid-cols-3">
+        <div
+          className={
+            definition.end_date
+              ? "grid border-t border-[var(--vms-line)] sm:grid-cols-2 lg:grid-cols-4"
+              : "grid border-t border-[var(--vms-line)] sm:grid-cols-3"
+          }
+        >
           <Fact
             label="Amount"
             value={formatMoney(definition.amount, definition.currency)}
           />
           <Fact
             label="Recurrence"
-            value={recurrenceLabel(definition.recurrence)}
+            value={
+              definition.is_flexible
+                ? `${recurrenceLabel(definition.recurrence)} · flexible`
+                : recurrenceLabel(definition.recurrence)
+            }
           />
           <Fact
             label="Assignments"
@@ -691,6 +796,12 @@ function DefinitionDetail({
                   : "Restricted"
             }
           />
+          {definition.end_date ? (
+            <Fact
+              label="Runs until"
+              value={formatDate(definition.end_date)}
+            />
+          ) : null}
         </div>
         {toggle.isError ? (
           <div className="border-t border-[var(--vms-line)] p-4">
@@ -771,281 +882,290 @@ function DefinitionDetail({
           />
         )}
       </section>
+
+      {assignOpen ? (
+        <AssignCharge
+          id={id}
+          contextKey={contextKey}
+          open={assignOpen}
+          onClose={() => setAssignOpen(false)}
+          onAssigned={(result) => {
+            setAssignOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["charges", contextKey] });
+            if (result.created.length === 1) {
+              router.push(`/admin/charges/assignments/${result.created[0].id}`);
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }
 
-function AssignCharge({ id, contextKey }: { id: string; contextKey: string }) {
-  const router = useRouter();
-  const organization = useAppStore((state) => state.organization);
-  const [place, setPlace] = useState<FacetItem | null>(null);
-  const [targetMode, setTargetMode] = useState<"place" | "group">("place");
+function AssignCharge({
+  id,
+  contextKey,
+  open,
+  onClose,
+  onAssigned,
+}: {
+  id: string;
+  contextKey: string;
+  open: boolean;
+  onClose: () => void;
+  onAssigned: (result: AssignTargetsResult) => void;
+}) {
+  const [places, setPlaces] = useState<FacetItem[]>([]);
   const [placeGroup, setPlaceGroup] = useState<PlaceGroup | null>(null);
   const [party, setParty] = useState<FacetItem | null>(null);
-  const [scheduleCount, setScheduleCount] = useState(1);
-  const [firstDueDate, setFirstDueDate] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const canLeave = useUnsavedChanges(!!place || !!party || !!firstDueDate);
   const definition = useQuery({
     queryKey: ["charges", contextKey, "definition", id],
     queryFn: () => chargesApi.definition(id),
+    enabled: open,
   });
   const groups = useQuery({
     queryKey: ["place-groups", contextKey],
     queryFn: placeGroupsApi.list,
-    enabled: targetMode === "group",
+    enabled: open,
   });
   const mutation = useMutation({
-    mutationFn: async () => {
-      const common = {
+    mutationFn: () =>
+      chargesApi.assignTargets({
         charge_definition_id: id,
-        responsible_party_id: party!.value,
-        schedule_count: scheduleCount,
-        ...(firstDueDate ? { first_due_date: firstDueDate } : {}),
-      };
-      if (targetMode === "group") {
-        const assignments = await chargesApi.assignGroup({
-          ...common,
-          place_group_id: placeGroup!.id,
-        });
-        return { assignments, isGroup: true };
-      }
-      const assignment = await chargesApi.assign({
-        ...common,
-        target_place_id: place!.value,
-      });
-      return { assignments: [assignment], isGroup: false };
-    },
-    onSuccess: ({ assignments, isGroup }) => {
-      if (isGroup) {
-        router.push(
-          organization?.use_case === "residential"
-            ? "/admin/residential/finance"
-            : "/admin/charges",
-        );
-        return;
-      }
-      router.push(`/admin/charges/assignments/${assignments[0].id}`);
-    },
+        target_place_ids: places.map((item) => item.value),
+        ...(placeGroup ? { place_group_id: placeGroup.id } : {}),
+        ...(party ? { responsible_party_id: party.value } : {}),
+      }),
+    onSuccess: onAssigned,
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
-    if (targetMode === "place" && !place) {
-      nextErrors["charge-target"] = "Choose the target Place.";
-    }
-    if (targetMode === "group" && !placeGroup) {
-      nextErrors["charge-target"] = "Choose the target Place group.";
-    }
-    if (!party) {
-      nextErrors["charge-responsible"] = "Choose the responsible person.";
-    }
-    if (
-      !Number.isFinite(scheduleCount) ||
-      scheduleCount < 1 ||
-      scheduleCount > 120
-    ) {
-      nextErrors["charge-schedule-count"] =
-        "Enter between 1 and 120 schedules.";
+    if (!places.length && !placeGroup) {
+      nextErrors["charge-target"] =
+        "Choose at least one Place or a Place group.";
     }
     setErrors(nextErrors);
     if (!Object.keys(nextErrors).length) mutation.mutate();
   }
 
   return (
-    <div className="grid gap-4 pb-20 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)] xl:pb-0">
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:p-5">
-        <h2 className="text-base font-semibold">
-          Assign {definition.data?.name || "charge"}
-        </h2>
-        <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-          Choose where the charge applies and who is currently responsible for
-          paying it.
-        </p>
-        <form className="mt-5 space-y-5" onSubmit={submit} noValidate>
-          <FormErrorSummary errors={errors} />
-          <fieldset className="space-y-5" disabled={mutation.isPending}>
-            <fieldset>
-              <legend className="text-sm font-semibold">Assign to</legend>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {(
-                  [
-                    ["place", "One Place"],
-                    ["group", "Place group"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label
-                    key={value}
-                    className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-sm font-medium"
-                  >
-                    <input
-                      type="radio"
-                      name="charge-target-mode"
-                      value={value}
-                      checked={targetMode === value}
-                      onChange={() => {
-                        setTargetMode(value);
-                        setPlace(null);
-                        setPlaceGroup(null);
-                      }}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            {targetMode === "place" ? (
-              <FacetPicker
-                facet="places"
-                label="Target Place"
-                value={place}
-                onChange={setPlace}
-                contextKey={contextKey}
-                error={errors["charge-target"]}
-              />
-            ) : (
-              <Field
-                id="charge-place-group"
-                label="Target Place group"
-                error={errors["charge-target"]}
-                required
-              >
-                {(control) => (
-                  <select
-                    {...control}
-                    value={placeGroup?.id || ""}
-                    onChange={(event) =>
-                      setPlaceGroup(
-                        groups.data?.find(
-                          (group) => group.id === event.target.value,
-                        ) || null,
-                      )
-                    }
-                    className={fieldControlClassName}
-                  >
-                    <option value="">Choose a group</option>
-                    {(groups.data ?? []).map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name} · {group.places.length} Places
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </Field>
-            )}
-            <FacetPicker
-              facet="parties"
-              label="Responsible person or organization"
-              value={party}
-              onChange={setParty}
-              contextKey={contextKey}
-              error={errors["charge-responsible"]}
-            />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                id="charge-schedule-count"
-                label="Initial schedules"
-                description="Between 1 and 120 schedules."
-                error={errors["charge-schedule-count"]}
-                required
-              >
-                {(control) => (
-                  <input
-                    {...control}
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={120}
-                    value={scheduleCount}
-                    onChange={(event) =>
-                      setScheduleCount(Number(event.target.value))
-                    }
-                    className={fieldControlClassName}
-                  />
-                )}
-              </Field>
-              <Field
-                id="charge-first-due-date"
-                label="First due date"
-                description="Optional; the server supplies its normal schedule date."
-              >
-                {(control) => (
-                  <input
-                    {...control}
-                    type="date"
-                    value={firstDueDate}
-                    onChange={(event) => setFirstDueDate(event.target.value)}
-                    className={fieldControlClassName}
-                  />
-                )}
-              </Field>
-            </div>
-          </fieldset>
-          {mutation.isError ? <InlineError error={mutation.error} /> : null}
-          <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-            <Button
-              asChild
-              variant="secondary"
-              onClick={(event) => {
-                if (!canLeave()) event.preventDefault();
-              }}
-            >
-              <Link href={`/admin/charges/definitions/${id}`}>Cancel</Link>
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                mutation.isPending ||
-                !party ||
-                (targetMode === "place" ? !place : !placeGroup)
+    <FormDrawer
+      isOpen={open}
+      onClose={onClose}
+      size="lg"
+      title={`Assign ${definition.data?.name || "charge"}`}
+      description="Pick every Place that should start carrying this charge. A Place group is added to the same selection."
+      onSubmit={submit}
+      submitLabel="Assign charge"
+      isSubmitting={mutation.isPending}
+      canSubmit={places.length > 0 || !!placeGroup}
+      error={mutation.isError ? parseApiError(mutation.error).message : null}
+      footerNote={
+        definition.data
+          ? `${formatMoney(definition.data.amount, definition.data.currency)} · ${recurrenceLabel(definition.data.recurrence)} · schedules open automatically`
+          : "Schedules open automatically for every target Place."
+      }
+    >
+      <FormErrorSummary errors={errors} />
+      <FormSection
+        title="Places"
+        description="Search and add as many Places as you need. Selected Places are charged individually."
+      >
+        <PlaceTargetPicker
+          contextKey={contextKey}
+          selected={places}
+          onChange={setPlaces}
+          error={errors["charge-target"]}
+        />
+      </FormSection>
+      <FormSection
+        title="Place group"
+        description="Optional. Every Place in the group joins the selection when you assign."
+      >
+        <Field id="charge-place-group" label="Place group">
+          {(control) => (
+            <select
+              {...control}
+              value={placeGroup?.id || ""}
+              onChange={(event) =>
+                setPlaceGroup(
+                  groups.data?.find(
+                    (group) => group.id === event.target.value,
+                  ) || null,
+                )
               }
-              className="min-h-11"
+              className={fieldControlClassName}
             >
-              {mutation.isPending
-                ? "Creating assignment…"
-                : "Create assignment"}
-            </Button>
-          </div>
-        </form>
-      </section>
+              <option value="">No group</option>
+              {(groups.data ?? []).map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name} · {group.places.length} Places
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+      </FormSection>
+      <FormSection
+        title="Responsibility"
+        description="Leave this empty to let any Party at the Place pay the fee."
+      >
+        <FacetPicker
+          facet="parties"
+          label="Responsible person or organization (optional)"
+          value={party}
+          onChange={setParty}
+          contextKey={contextKey}
+          placeId={places.length === 1 ? places[0].value : undefined}
+          description={
+            places.length === 1
+              ? "Scoped to Parties linked to the selected Place."
+              : "Nobody named means every Party at each Place can pay."
+          }
+          error={errors["charge-responsible"]}
+        />
+      </FormSection>
+    </FormDrawer>
+  );
+}
 
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 sm:p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-action)]">
-          Review before commit
+function PlaceTargetPicker({
+  contextKey,
+  selected,
+  onChange,
+  error,
+}: {
+  contextKey: string;
+  selected: FacetItem[];
+  onChange: (items: FacetItem[]) => void;
+  error?: string;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(true);
+  const query = useQuery({
+    queryKey: ["facets", contextKey, "places", "assign", search],
+    queryFn: ({ signal }) =>
+      loadFacets("places", { filters: { is_active: true }, search, signal }),
+    staleTime: 0,
+  });
+  const selectedIds = new Set(selected.map((item) => item.value));
+  function toggle(item: FacetItem) {
+    onChange(
+      selectedIds.has(item.value)
+        ? selected.filter((entry) => entry.value !== item.value)
+        : [...selected, item],
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {selected.length ? (
+        <ul className="flex flex-wrap gap-2">
+          {selected.map((item) => (
+            <li key={item.value}>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] py-1 pl-2.5 pr-1.5 text-xs font-medium">
+                <MapPin
+                  className="h-3.5 w-3.5 text-[var(--vms-action)]"
+                  aria-hidden="true"
+                />
+                {item.label}
+                <button
+                  type="button"
+                  onClick={() => toggle(item)}
+                  aria-label={`Remove ${item.label}`}
+                  className="grid h-5 w-5 place-items-center rounded-full text-[var(--vms-ink-muted)] hover:bg-[var(--vms-line)] hover:text-[var(--vms-ink)]"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-[var(--vms-ink-muted)]">
+          No Places selected yet.
         </p>
-        <h2 className="mt-1 text-base font-semibold">
-          {definition.data
-            ? formatMoney(definition.data.amount, definition.data.currency)
-            : "Charge amount"}
-        </h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
-          {definition.data
-            ? recurrenceLabel(definition.data.recurrence)
-            : "Loading recurrence"}
-        </p>
-        <dl className="mt-5 space-y-3 text-xs">
-          <ReviewFact
-            icon={Landmark}
-            label={targetMode === "group" ? "Place group" : "Place"}
-            value={targetMode === "group" ? placeGroup?.name : place?.label}
-          />
-          <ReviewFact
-            icon={UserRound}
-            label="Responsible Party"
-            value={party?.label}
-          />
-          <ReviewFact
-            icon={CalendarDays}
-            label="Schedules"
-            value={`${scheduleCount} scheduled charge${scheduleCount === 1 ? "" : "s"}`}
-          />
-        </dl>
-        <div className="mt-5 flex gap-2 rounded-md bg-white p-3 text-xs leading-5 text-[var(--vms-ink)] ring-1 ring-[var(--vms-line)]">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--vms-action)]" />
-          The assignment creates schedules in one operation. Confirm the place
-          and payer; a later change must use responsibility transfer.
+      )}
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          value={search}
+          aria-label="Search Places"
+          placeholder="Search Places"
+          onFocus={() => setOpen(true)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setOpen(true);
+          }}
+          className={`${fieldControlClassName} pl-9`}
+        />
+      </div>
+      {open ? (
+        <div className="max-h-64 overflow-y-auto rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          {query.isPending ? (
+            <p className="px-3 py-3 text-xs text-[var(--vms-ink-muted)]">
+              Loading Places…
+            </p>
+          ) : query.isError ? (
+            <p className="px-3 py-3 text-xs text-[var(--vms-danger)]">
+              {parseApiError(query.error).message}
+            </p>
+          ) : !query.data.items.length ? (
+            <p className="px-3 py-3 text-xs text-[var(--vms-ink-muted)]">
+              No Places match that search.
+            </p>
+          ) : (
+            <ul
+              role="listbox"
+              aria-multiselectable="true"
+              aria-label="Places"
+              className="divide-y divide-[var(--vms-line)]"
+            >
+              {query.data.items.map((item) => {
+                const isSelected = selectedIds.has(item.value);
+                return (
+                  <li key={item.value}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      disabled={item.disabled}
+                      onClick={() => toggle(item)}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm hover:bg-[var(--vms-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">
+                          {item.label}
+                        </span>
+                        {item.description ? (
+                          <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
+                            {item.description}
+                          </span>
+                        ) : null}
+                      </span>
+                      {isSelected ? (
+                        <Check
+                          className="h-4 w-4 shrink-0 text-[var(--vms-action)]"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-      </section>
+      ) : null}
+      {error ? (
+        <p className="text-xs font-medium text-[var(--vms-danger)]">{error}</p>
+      ) : null}
     </div>
   );
 }
@@ -1064,6 +1184,8 @@ function AssignmentDetail({
   const [newParty, setNewParty] = useState<FacetItem | null>(null);
   const [reason, setReason] = useState("");
   const [scheduleCount, setScheduleCount] = useState(1);
+  const [scheduleCadence, setScheduleCadence] = useState<string | null>(null);
+  const [cadenceOpen, setCadenceOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmTransfer, setConfirmTransfer] = useState(false);
   const canLeave = useUnsavedChanges(!!newParty || !!reason);
@@ -1078,17 +1200,35 @@ function AssignmentDetail({
     placeholderData: (previous) => previous,
   });
   const mutation = useMutation({
-    mutationFn: (operation: "transfer" | "schedule") =>
-      operation === "transfer"
+    mutationFn: (operation: "transfer" | "schedule" | "assign") => {
+      if (operation === "assign") {
+        return chargesApi.assignResponsibility(id, {
+          responsible_party_id: newParty!.value,
+        });
+      }
+      return operation === "transfer"
         ? chargesApi.transfer(id, {
             responsible_party_id: newParty!.value,
             expected_responsibility_id: query.data!.current_responsibility!.id,
             reason: reason.trim(),
           })
-        : chargesApi.generate(id, { schedule_count: scheduleCount }),
+        : chargesApi.generate(id, {
+            schedule_count: scheduleCount,
+            ...(query.data?.charge_definition.is_flexible
+              ? {
+                  cadence:
+                    scheduleCadence ??
+                    query.data.acknowledged_cadence ??
+                    query.data.charge_definition.recurrence,
+                }
+              : {}),
+          });
+    },
     onSuccess: () => {
       setNewParty(null);
       setReason("");
+      setScheduleCadence(null);
+      setCadenceOpen(false);
       void queryClient.invalidateQueries({
         queryKey: ["charges", contextKey],
       });
@@ -1107,6 +1247,14 @@ function AssignmentDetail({
   }
 
   const assignment = query.data;
+  const definition = assignment.charge_definition;
+  const isFlexible = Boolean(definition.is_flexible);
+  const acknowledgedCadence = assignment.acknowledged_cadence ?? null;
+  const billingCadence =
+    scheduleCadence ?? acknowledgedCadence ?? definition.recurrence;
+  const cadenceOptions = allowedCadences(definition.recurrence);
+  const awaitingCadence =
+    isFlexible && (schedules.data?.total ?? 0) === 0;
   const scheduleColumns: Column<Schedule>[] = [
     {
       key: "due_date",
@@ -1224,6 +1372,32 @@ function AssignmentDetail({
               error={schedules.error}
               onRetry={() => schedules.refetch()}
             />
+          ) : awaitingCadence ? (
+            <div className="space-y-4 px-4 py-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--vms-surface-muted)] text-[var(--vms-ink-muted)]">
+                  <ReceiptText className="h-5 w-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">No schedule yet</p>
+                  <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                    This fee is acknowledged rather than billed on a fixed
+                    rhythm, so nothing is scheduled when it is assigned. The
+                    payer chooses how often to pay when they acknowledge it, and
+                    the schedule is created at that point.
+                  </p>
+                </div>
+              </div>
+              {allow("schedule") ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setCadenceOpen(true)}
+                  className="min-h-11"
+                >
+                  Schedule cadence
+                </Button>
+              ) : null}
+            </div>
           ) : (
             <DataTable
               data={schedules.data?.items || []}
@@ -1289,8 +1463,12 @@ function AssignmentDetail({
         <section className="space-y-4">
           {allow("schedule") ? (
             <ActionPanel
-              title="Generate schedules"
-              description="Add more due dates for this assignment."
+              title={isFlexible ? "Schedule this fee" : "Generate schedules"}
+              description={
+                isFlexible
+                  ? "Nothing is billed until a cadence is set. Use the cadence the payer acknowledged, or the definition cadence."
+                  : "Add more due dates for this assignment."
+              }
             >
               <form
                 className="space-y-3"
@@ -1299,6 +1477,26 @@ function AssignmentDetail({
                   mutation.mutate("schedule");
                 }}
               >
+                {isFlexible ? (
+                  <Field id="charge-generate-cadence" label="Cadence" required>
+                    {(control) => (
+                      <select
+                        {...control}
+                        value={billingCadence}
+                        onChange={(event) =>
+                          setScheduleCadence(event.target.value)
+                        }
+                        className={fieldControlClassName}
+                      >
+                        {cadenceOptions.map((value) => (
+                          <option key={value} value={value}>
+                            {recurrenceLabel(value)}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </Field>
+                ) : null}
                 <Field
                   id="charge-generate-count"
                   label="Schedules"
@@ -1325,7 +1523,50 @@ function AssignmentDetail({
                   isLoading={mutation.isPending}
                   className="min-h-11 w-full"
                 >
-                  Generate schedules
+                  {isFlexible ? "Create schedule" : "Generate schedules"}
+                </Button>
+              </form>
+            </ActionPanel>
+          ) : null}
+
+          {allow("transfer") && !assignment.current_responsibility ? (
+            <ActionPanel
+              title="Responsible party"
+              description="Nobody is named, so any Party living at this Place can pay. Add a Party to make one payer accountable."
+            >
+              <form
+                className="space-y-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const nextErrors: Record<string, string> = {};
+                  if (!newParty) {
+                    nextErrors["charge-new-responsible"] =
+                      "Choose the responsible Party.";
+                  }
+                  setErrors(nextErrors);
+                  if (!Object.keys(nextErrors).length) mutation.mutate("assign");
+                }}
+              >
+                <FormErrorSummary errors={errors} />
+                <FacetPicker
+                  facet="parties"
+                  label="Responsible person or organization (optional)"
+                  value={newParty}
+                  onChange={setNewParty}
+                  contextKey={contextKey}
+                  placeId={assignment.target_place.id}
+                  error={errors["charge-new-responsible"]}
+                />
+                <p className="text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+                  Leaving this empty keeps the charge payable by everyone at{" "}
+                  {assignment.target_place.name}.
+                </p>
+                <Button
+                  type="submit"
+                  disabled={!newParty || mutation.isPending}
+                  className="min-h-11 w-full"
+                >
+                  {mutation.isPending ? "Assigning…" : "Assign responsible party"}
                 </Button>
               </form>
             </ActionPanel>
@@ -1333,7 +1574,7 @@ function AssignmentDetail({
 
           {allow("transfer") && assignment.current_responsibility ? (
             <ActionPanel
-              title="Transfer responsibility"
+              title="Responsibility"
               description="Unpaid schedules follow the new responsible Party. Paid schedules retain their existing payer."
             >
               <form
@@ -1441,6 +1682,80 @@ function AssignmentDetail({
           </Button>
         </div>
       </Modal>
+      <Modal
+        isOpen={cadenceOpen}
+        onClose={() => setCadenceOpen(false)}
+        title="Schedule this fee"
+        description="This fee is billed against an acknowledged cadence. Creating the schedule here bills the payer on the rhythm you choose."
+        size="sm"
+      >
+        <div className="space-y-3">
+          <div className="rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface-muted)] px-3 py-2 text-sm">
+            <p className="text-[var(--vms-ink-muted)]">
+              Definition cadence:{" "}
+              <span className="font-semibold text-[var(--vms-ink)]">
+                {recurrenceLabel(definition.recurrence)}
+              </span>
+            </p>
+            <p className="mt-1 text-[var(--vms-ink-muted)]">
+              Acknowledged:{" "}
+              <span className="font-semibold text-[var(--vms-ink)]">
+                {acknowledgedCadence
+                  ? recurrenceLabel(acknowledgedCadence)
+                  : "Not yet"}
+              </span>
+            </p>
+          </div>
+          <Field id="charge-modal-cadence" label="Billing cadence" required>
+            {(control) => (
+              <select
+                {...control}
+                value={billingCadence}
+                onChange={(event) => setScheduleCadence(event.target.value)}
+                className={fieldControlClassName}
+              >
+                {cadenceOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {recurrenceLabel(value)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <Field
+            id="charge-modal-count"
+            label="Schedules"
+            description="Add between 1 and 120 due dates."
+            required
+          >
+            {(control) => (
+              <input
+                {...control}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={120}
+                value={scheduleCount}
+                onChange={(event) =>
+                  setScheduleCount(Number(event.target.value))
+                }
+                className={fieldControlClassName}
+              />
+            )}
+          </Field>
+        </div>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="secondary" onClick={() => setCadenceOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            isLoading={mutation.isPending}
+            onClick={() => mutation.mutate("schedule")}
+          >
+            Create schedule
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 }
@@ -1509,38 +1824,6 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function GuidePanel({
-  icon: Icon,
-  title,
-  items,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  items: string[];
-}) {
-  return (
-    <section className="rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 sm:p-5">
-      <span className="grid h-9 w-9 place-items-center rounded-md bg-white text-[var(--vms-action)] ring-1 ring-[var(--vms-line)]">
-        <Icon className="h-4 w-4" />
-      </span>
-      <h2 className="mt-4 text-sm font-semibold">{title}</h2>
-      <ol className="mt-3 space-y-3">
-        {items.map((item, index) => (
-          <li
-            key={item}
-            className="flex gap-3 text-xs leading-5 text-[var(--vms-ink)]"
-          >
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--vms-action)] ring-1 ring-[var(--vms-line)]">
-              {index + 1}
-            </span>
-            {item}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 function ReviewFact({
   icon: Icon,
   label,
@@ -1576,31 +1859,6 @@ function StatusBadge({ active }: { active: boolean }) {
     >
       {active ? "Active" : "Inactive"}
     </span>
-  );
-}
-
-function EmptyState({
-  icon: Icon,
-  title,
-  detail,
-  action,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  detail: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="px-5 py-10 text-center">
-      <span className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-[var(--vms-surface-subtle)] text-[var(--vms-action)]">
-        <Icon className="h-5 w-5" />
-      </span>
-      <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-[var(--vms-ink-muted)]">
-        {detail}
-      </p>
-      {action ? <div className="mt-4">{action}</div> : null}
-    </div>
   );
 }
 
@@ -1738,3 +1996,23 @@ function formatDate(value: string) {
 function recurrenceLabel(value: string) {
   return recurrenceLabels[value] || value.replaceAll("_", " ");
 }
+
+/** Today as a `YYYY-MM-DD` value for `<input type="date">` in the local zone. */
+function todayInputValue() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+/**
+ * Convert a date-only input to an offset-aware timestamp.
+ *
+ * The API stores timestamps and rejects nothing now, but an anchor at local noon
+ * keeps the calendar day stable for every client offset.
+ */
+function isoFromDateInput(value: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
+}
+

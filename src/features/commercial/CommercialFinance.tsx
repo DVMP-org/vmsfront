@@ -120,7 +120,7 @@ export default function CommercialFinance() {
       sortable: true,
       accessor: (row) => (
         <Link
-          href={`/admin/properties/${row.target_id}`}
+          href={`/admin/places/${row.target_id}`}
           className="underline-offset-4 hover:underline"
         >
           {row.target}

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const sections = [
   {
-    href: "/admin/mixed-use",
+    href: "/admin",
     label: "Property overview",
     icon: Building2,
   },
@@ -56,7 +56,7 @@ export function MixedUseNav() {
       <ul className="flex min-w-max gap-1 px-1">
         {sections.map((section) => {
           const active =
-            section.href === "/admin/mixed-use"
+            section.href === "/admin"
               ? pathname === section.href
               : pathname?.startsWith(section.href);
           const Icon = section.icon;

@@ -1,12 +1,25 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Archive, Home, Pencil, Plus, RotateCcw } from "lucide-react";
+import {
+  Archive,
+  Database,
+  ExternalLink,
+  Pencil,
+  Plus,
+  RotateCcw,
+  UserPlus,
+  Users,
+  Zap,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/ui/Avatar";
+import { Drawer } from "@/components/ui/Drawer";
+import { PropertyImage } from "@/components/ui/PropertyImage";
 import {
   DataTable,
   type BulkAction,
@@ -17,6 +30,8 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { useSiteAccess } from "@/features/context/use-site-access";
+import { formatCurrency } from "@/lib/utils";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import {
@@ -24,6 +39,7 @@ import {
   type Property,
   type PropertyTreeNode,
 } from "@/features/properties/api";
+import { PlaceAssignmentModal } from "@/features/places/PlaceAssignmentModal";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
 
@@ -48,18 +64,33 @@ const unitTypes = [
 ];
 
 export default function ResidentialUnits() {
-  const { contextKey, selectedProperty, canManageUnits } =
+  const { contextKey, selectedProperty, canManageUnits, canManagePeople } =
     useResidentialAccess();
+  const { allowed } = useSiteAccess();
   const queryClient = useQueryClient();
   const placeId = selectedProperty?.id || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<UnitRow | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignPlaceId, setAssignPlaceId] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") === "1" && canManageUnits) setCreateOpen(true);
+    if (params.get("unit")) setDetailId(params.get("unit"));
+  }, [canManageUnits]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const tree = useQuery({
     queryKey: ["residential", contextKey, "tree"],
     queryFn: residentialApi.tree,
     enabled: !!placeId,
+  });
+  const charges = useQuery({
+    queryKey: ["residential", contextKey, "charge-assignments", placeId],
+    queryFn: residentialApi.chargeAssignments,
+    enabled: !!detailId && !!placeId && allowed("charges.list"),
+    retry: false,
   });
   const relationships = useQuery({
     queryKey: ["residential", contextKey, "relationships", placeId],
@@ -193,34 +224,40 @@ export default function ResidentialUnits() {
       sortable: true,
       accessor: (unit) => (
         <span className="flex min-w-0 items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
-            <Home className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <PropertyImage name={unit.name} className="h-10 w-10" />
           <span className="min-w-0">
             <button
               type="button"
-              onClick={() => canManageUnits && setEditUnit(unit)}
+              onClick={() => setDetailId(unit.id)}
               className="block max-w-full truncate text-left font-semibold underline-offset-4 hover:underline disabled:no-underline"
-              disabled={!canManageUnits}
             >
               {unit.name}
             </button>
             <span className="mt-0.5 block truncate text-xs text-[var(--vms-ink-muted)]">
-              {unit.building_name}
+              {unitTypes.find((type) => type.value === unit.building_type)
+                ?.label || "Unit"}
             </span>
           </span>
         </span>
       ),
     },
     {
-      key: "building_type",
-      header: "Type",
+      key: "building_name",
+      header: "Building / floor",
       sortable: true,
-      accessor: (unit) =>
-        unit.building_type
-          ? unitTypes.find((type) => type.value === unit.building_type)
-              ?.label || unit.building_type
-          : "Unit",
+      accessor: (unit) => unit.building_name,
+    },
+    {
+      key: "residents",
+      header: "Resident",
+      accessor: (unit) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <Avatar name={unit.residents} size="md" tone="info" decorative />
+          <span className="block max-w-48 truncate text-sm">
+            {unit.residents || "No resident"}
+          </span>
+        </span>
+      ),
     },
     {
       key: "occupancy_status",
@@ -232,15 +269,6 @@ export default function ResidentialUnits() {
         >
           {unit.occupancy_status === "occupied" ? "Occupied" : "Vacant"}
         </StatusBadge>
-      ),
-    },
-    {
-      key: "residents",
-      header: "Household",
-      accessor: (unit) => (
-        <span className="block max-w-64 truncate text-sm">
-          {unit.residents || "No active relationship"}
-        </span>
       ),
     },
     {
@@ -258,31 +286,42 @@ export default function ResidentialUnits() {
       header: "Actions",
       className: "text-right",
       mobileHide: true,
-      accessor: (unit) =>
-        canManageUnits ? (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setEditUnit(unit)}
-              aria-label={`Edit ${unit.name}`}
-            >
-              <Pencil className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggle.mutate([unit.id])}
-              aria-label={`${unit.is_active ? "Archive" : "Activate"} ${unit.name}`}
-            >
-              {unit.is_active ? (
-                <Archive className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-        ) : null,
+      accessor: (unit) => (
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDetailId(unit.id)}
+            aria-label={`Open ${unit.name}`}
+          >
+            Open
+          </Button>
+          {canManageUnits && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditUnit(unit)}
+                aria-label={`Edit ${unit.name}`}
+              >
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggle.mutate([unit.id])}
+                aria-label={`${unit.is_active ? "Archive" : "Activate"} ${unit.name}`}
+              >
+                {unit.is_active ? (
+                  <Archive className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                )}
+              </Button>
+            </>
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -314,85 +353,238 @@ export default function ResidentialUnits() {
 
   return (
     <ResidentialShell
+      showWorkspace
       title="Units"
-      description="The residential inventory, its building location, active household and operating status."
+      description={`Unit directory for ${selectedProperty?.name || "the selected"} residential property.`}
       primaryAction={primaryAction}
     >
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
-        <DataTable
-          data={unitRows}
-          columns={columns}
-          availableFilters={filters}
-          searchPlaceholder="Search units, buildings or residents"
-          selectable={canManageUnits}
-          selectedRows={selected}
-          onSelectionChange={setSelected}
-          bulkActions={bulkActions}
-          isLoading={tree.isPending || relationships.isPending}
-          errorMessage={
-            tree.isError || relationships.isError
-              ? parseApiError(tree.error || relationships.error).message
-              : null
-          }
-          isStale={
-            (tree.isError || relationships.isError) && unitRows.length > 0
-          }
-          onRetry={() => {
-            void tree.refetch();
-            void relationships.refetch();
-          }}
-          emptyMessage="No units match this view. Add a unit to begin the residential inventory."
-          tableLabel="Residential unit inventory"
-          scrollHint="Scroll horizontally to compare unit type, occupancy and status."
-          mobileSummary={(unit) => (
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setEditUnit(unit)}
-                    className="text-left font-semibold underline-offset-4 hover:underline"
+      <div>
+        <section className="min-w-0">
+          <DataTable
+            data={unitRows}
+            columns={columns}
+            availableFilters={filters}
+            searchPlaceholder="Search units, buildings or residents"
+            selectable={canManageUnits}
+            selectedRows={selected}
+            onSelectionChange={setSelected}
+            bulkActions={bulkActions}
+            isLoading={tree.isPending || relationships.isPending}
+            errorMessage={
+              tree.isError || relationships.isError
+                ? parseApiError(tree.error || relationships.error).message
+                : null
+            }
+            isStale={
+              (tree.isError || relationships.isError) && unitRows.length > 0
+            }
+            onRetry={() => {
+              void tree.refetch();
+              void relationships.refetch();
+            }}
+            emptyMessage="No units match this view. Add a unit to begin the residential inventory."
+            tableLabel="Residential unit inventory"
+            rowClassName={(unit) =>
+              detailId === unit.id ? "bg-[var(--vms-coral-soft)]" : ""
+            }
+            scrollHint="Scroll horizontally to compare unit type, occupancy and status."
+            mobileSummary={(unit) => (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailId(unit.id)}
+                      className="text-left font-semibold underline-offset-4 hover:underline"
+                    >
+                      {unit.name}
+                    </button>
+                    <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                      {unit.building_name}
+                    </p>
+                  </div>
+                  <StatusBadge
+                    tone={
+                      unit.occupancy_status === "occupied"
+                        ? "success"
+                        : "neutral"
+                    }
                   >
-                    {unit.name}
-                  </button>
-                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    {unit.building_name}
-                  </p>
+                    {unit.occupancy_status === "occupied"
+                      ? "Occupied"
+                      : "Vacant"}
+                  </StatusBadge>
                 </div>
-                <StatusBadge
-                  tone={
-                    unit.occupancy_status === "occupied" ? "success" : "neutral"
-                  }
-                >
-                  {unit.occupancy_status === "occupied" ? "Occupied" : "Vacant"}
-                </StatusBadge>
-              </div>
-              <p className="text-xs text-[var(--vms-ink-muted)]">
-                {unit.residents || "No active household"}
-              </p>
-              {canManageUnits ? (
+                <p className="text-xs text-[var(--vms-ink-muted)]">
+                  {unit.residents || "No active household"}
+                </p>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditUnit(unit)}
+                    onClick={() => setDetailId(unit.id)}
                   >
-                    Edit unit
+                    Open
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => toggle.mutate([unit.id])}
-                  >
-                    {unit.is_active ? "Archive" : "Activate"}
-                  </Button>
+                  {canManageUnits ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditUnit(unit)}
+                      >
+                        Edit unit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggle.mutate([unit.id])}
+                      >
+                        {unit.is_active ? "Archive" : "Activate"}
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-          )}
-        />
-      </section>
+              </div>
+            )}
+          />
+        </section>
+        {unitRows.find((unit) => unit.id === detailId) &&
+          (() => {
+            const unit = unitRows.find((item) => item.id === detailId)!;
+            return (
+              <Drawer
+                isOpen={true}
+                className="max-w-[390px]"
+                contentClassName="p-0 sm:p-0"
+                title={unit.name}
+                description={unit.building_name}
+                onClose={() => setDetailId(null)}
+              >
+                <div className="space-y-4 border-b border-[var(--vms-line)] p-4">
+                  <StatusBadge
+                    tone={
+                      unit.occupancy_status === "occupied"
+                        ? "success"
+                        : "neutral"
+                    }
+                  >
+                    {unit.occupancy_status === "occupied"
+                      ? "Occupied"
+                      : "Vacant"}
+                  </StatusBadge>
+                  <div className="flex gap-4">
+                    <PropertyImage name={unit.name} className="h-20 w-20" />
+                    <dl className="min-w-0 flex-1 text-sm">
+                      <div className="flex justify-between gap-3 border-b border-[var(--vms-line)] py-2">
+                        <dt className="text-[var(--vms-ink-muted)]">
+                          Unit type
+                        </dt>
+                        <dd className="text-right font-medium">
+                          {unitTypes.find(
+                            (type) => type.value === unit.building_type,
+                          )?.label || "Unit"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 py-2">
+                        <dt className="text-[var(--vms-ink-muted)]">
+                          Building
+                        </dt>
+                        <dd className="text-right font-medium">
+                          {unit.building_name}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+                <div className="space-y-3 border-b border-[var(--vms-line)] p-4">
+                  <h3 className="flex items-center gap-2 font-semibold">
+                    <Users className="h-4 w-4" aria-hidden /> Occupant
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={unit.residents} decorative tone="info" />
+                    <p className="text-sm">
+                      {unit.residents || "No active household"}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3 border-b border-[var(--vms-line)] p-4">
+                  <h3 className="flex items-center gap-2 font-semibold">
+                    <Database className="h-4 w-4" aria-hidden /> Charges &amp;
+                    balance
+                  </h3>
+                  {!allowed("charges.list") ? (
+                    <p className="text-sm text-[var(--vms-ink-muted)]">
+                      Charge information is not available with your access.
+                    </p>
+                  ) : charges.isPending ? (
+                    <p className="text-sm text-[var(--vms-ink-muted)]">
+                      Loading charges…
+                    </p>
+                  ) : charges.isError ? (
+                    <div className="text-sm text-[var(--vms-danger)]">
+                      Could not load charges.{" "}
+                      <button
+                        className="underline"
+                        onClick={() => charges.refetch()}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    <UnitCharges
+                      assignments={(charges.data || []).filter(
+                        (item) => item.target_place.id === unit.id,
+                      )}
+                    />
+                  )}
+                </div>
+                <div className="space-y-2 p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                    <Zap className="h-4 w-4" aria-hidden /> Quick actions
+                  </h3>
+                  <Button asChild className="w-full">
+                    <Link href={`/admin/places/${unit.id}`}>
+                      <ExternalLink className="h-4 w-4" aria-hidden /> View unit
+                    </Link>
+                  </Button>
+                  {canManagePeople && (
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => {
+                        setAssignPlaceId(unit.id);
+                        setDetailId(null);
+                        setAssignOpen(true);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4" aria-hidden /> Assign
+                      resident
+                    </Button>
+                  )}
+                </div>
+              </Drawer>
+            );
+          })()}
+      </div>
 
+      <PlaceAssignmentModal
+        title="Assign a household relationship"
+        placeLabel="Unit"
+        key={`assign:${assignOpen}:${assignPlaceId || "none"}`}
+        open={assignOpen}
+        defaultPlaceId={assignPlaceId || undefined}
+        siteId={placeId}
+        places={unitRows}
+        contextKey={contextKey}
+        onClose={() => setAssignOpen(false)}
+        onSaved={() => {
+          setAssignOpen(false);
+          void queryClient.invalidateQueries({
+            queryKey: ["residential", contextKey],
+          });
+        }}
+      />
       <UnitFormModal
         key={`create:${createOpen}:${parentChoices[0]?.id || "none"}`}
         open={createOpen}
@@ -421,6 +613,67 @@ export default function ResidentialUnits() {
         }}
       />
     </ResidentialShell>
+  );
+}
+
+function UnitCharges({
+  assignments,
+}: {
+  assignments: import("@/features/charges/api").Assignment[];
+}) {
+  if (!assignments.length)
+    return (
+      <p className="text-sm text-[var(--vms-ink-muted)]">
+        No charges assigned to this unit.
+      </p>
+    );
+  const currencies = new Set(
+    assignments.map((item) => item.charge_definition.currency),
+  );
+  if (currencies.size > 1 || !currencies.has("NGN"))
+    return (
+      <p className="text-sm text-[var(--vms-ink-muted)]">
+        View charges in the finance register for currency details.
+      </p>
+    );
+  const monthly = assignments
+    .filter((item) => item.charge_definition.recurrence === "monthly")
+    .reduce((sum, item) => sum + Number(item.charge_definition.amount || 0), 0);
+  const balance = assignments.reduce(
+    (sum, item) => sum + Number(item.outstanding_amount || 0),
+    0,
+  );
+  const nextDue = assignments
+    .map((item) => item.next_due_date)
+    .filter((date): date is string => !!date)
+    .sort()[0];
+  return (
+    <dl className="text-sm">
+      {[
+        ["Monthly charge", formatCurrency(monthly)],
+        ["Current balance", formatCurrency(balance)],
+        [
+          "Next due date",
+          nextDue ? new Date(nextDue).toLocaleDateString() : "—",
+        ],
+      ].map(([label, value]) => (
+        <div
+          key={label}
+          className="flex justify-between gap-3 border-b border-[var(--vms-line)] py-2 last:border-0"
+        >
+          <dt className="text-[var(--vms-ink-muted)]">{label}</dt>
+          <dd
+            className={
+              label === "Current balance" && balance > 0
+                ? "font-semibold text-[var(--vms-danger)]"
+                : "font-medium"
+            }
+          >
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

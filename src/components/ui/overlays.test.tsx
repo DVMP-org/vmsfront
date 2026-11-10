@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { Button } from "./Button";
 import { Modal } from "./Modal";
+import { Drawer } from "./Drawer";
 import { SlideOver } from "./SlideOver";
 
 function ModalHarness() {
@@ -48,7 +49,35 @@ describe("accessible overlays", () => {
     expect(close).toHaveFocus();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(trigger).toHaveFocus();
+    expect(document.body.style.overflow).not.toBe("hidden");
+  });
+
+  it("portals the shared drawer, focuses it and restores its trigger on Escape", async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <Button onClick={() => setOpen(true)}>Open unit</Button>
+          <Drawer isOpen={open} onClose={() => setOpen(false)} title="Unit A">
+            <Button>Assign resident</Button>
+          </Drawer>
+        </>
+      );
+    }
+    const { container } = render(<Harness />);
+    const trigger = screen.getByRole("button", { name: "Open unit" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const panel = screen.getByRole("dialog", { name: "Unit A" });
+    expect(container).not.toContainElement(panel);
+    expect(panel.parentElement).toHaveClass("fixed", "inset-0");
+    await waitFor(() => expect(panel).toHaveFocus());
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
     expect(document.body.style.overflow).not.toBe("hidden");
   });
@@ -73,9 +102,10 @@ describe("accessible overlays", () => {
 
     render(<DrawerHarness />);
     fireEvent.click(screen.getByRole("button", { name: "Open drawer" }));
-    expect(
-      screen.getByRole("dialog", { name: "Cedar Court" }),
-    ).toHaveAttribute("aria-modal", "true");
+    expect(screen.getByRole("dialog", { name: "Cedar Court" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
     expect(document.body.style.overflow).toBe("hidden");
   });
 });

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminProfile } from "@/hooks/use-admin";
-import { contextualAdminLinks } from "@/config/admin-routes";
+import { contextualAdminLinks, isModuleEnabled } from "@/config/admin-routes";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
 import { hasAdminPermission } from "@/lib/permissions";
@@ -47,7 +47,8 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     return sorted.find(
       (link) =>
         link.href !== "#" &&
-        (pathname === link.href || pathname?.startsWith(link.href + "/")),
+        (pathname === link.href ||
+          (link.href !== "/admin" && pathname?.startsWith(link.href + "/"))),
     );
   }, [
     pathname,
@@ -156,7 +157,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   if (
     !hasAccess ||
     (moduleRoute?.module &&
-      !workspace.data?.modules?.includes(moduleRoute.module))
+      !isModuleEnabled(moduleRoute.module, workspace.data?.modules))
   ) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">

@@ -61,7 +61,12 @@ export const Header = memo(function Header({
     enabled: isAdminRoute && !!organization?.id && !!currentUser?.id,
     staleTime: 0,
   });
-  const profileHref = isAdminRoute ? "/admin/profile" : "/resident/profile";
+  const placeWorkspaceRoot = pathname?.match(/^\/workspace\/[^/]+/)?.[0];
+  const profileHref = isAdminRoute
+    ? "/admin/profile"
+    : placeWorkspaceRoot
+      ? `${placeWorkspaceRoot}/profile`
+      : "/resident/profile";
   const roleLabel = isAdminRoute ? "Administrator" : "Workspace member";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);

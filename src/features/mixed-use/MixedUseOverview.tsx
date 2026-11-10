@@ -23,7 +23,7 @@ import { MixedUseShell } from "./MixedUseShell";
 
 const modules = [
   {
-    href: "/admin/properties",
+    href: "/admin/places",
     label: "Buildings & spaces",
     description: "Unified building, unit, room and common-space inventory.",
     icon: Building2,

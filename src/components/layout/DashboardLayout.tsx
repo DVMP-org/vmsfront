@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "./Header";
-import { RecentContextBar } from "./RecentContextBar";
+
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
@@ -174,7 +174,7 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
                 "gap-4 xs:gap-5 sm:gap-5 md:gap-6",
               )}
             >
-              {type === "admin" ? <RecentContextBar /> : null}
+
               {children}
             </div>
           </main>

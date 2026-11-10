@@ -1,5 +1,5 @@
-import { MixedUseOverview } from "@/features/mixed-use/MixedUseOverview";
+import { redirect } from "next/navigation";
 
-export default function MixedUseOverviewPage() {
-  return <MixedUseOverview />;
+export default function Page() {
+  redirect("/admin");
 }

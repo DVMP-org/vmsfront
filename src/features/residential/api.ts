@@ -10,10 +10,7 @@ import {
   type Property,
   type PropertyTreeNode,
 } from "@/features/properties/api";
-import type {
-  Announcement,
-  AnnouncementInput,
-} from "./contracts";
+import type { Announcement, AnnouncementInput } from "./contracts";
 import { useAppStore } from "@/store/app-store";
 
 type ListParams = {
@@ -69,6 +66,7 @@ export const residentialApi = {
   relationships: async (
     params: {
       place_id?: string;
+      party_id?: string;
       status?: string;
       role?: string;
     } = {},
@@ -80,6 +78,12 @@ export const residentialApi = {
         params: { page: 1, page_size: 100, ...params },
       })
     ).data,
+  relationship: (id: string) =>
+    unwrap(
+      apiClient.get<ApiResponse<WorkspaceRelationship>>(
+        `/admin/place-relationships/${encodeURIComponent(id)}`,
+      ),
+    ),
   createRelationship: (body: RelationshipInput) =>
     unwrap(
       apiClient.post<ApiResponse<WorkspaceRelationship>>(

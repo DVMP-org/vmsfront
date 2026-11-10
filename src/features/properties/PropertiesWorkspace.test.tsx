@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
   useSearchParams: () => mocks.searchParams,
-  usePathname: () => "/admin/properties",
+  usePathname: () => "/organization/properties",
 }));
 
 vi.mock("@/store/app-store", () => {

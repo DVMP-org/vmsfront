@@ -55,7 +55,7 @@ export function ResidentialModuleNav() {
       <ul className="flex min-w-max gap-1 px-1">
         {sections.map((section) => {
           const active =
-            section.href === "/admin/residential"
+            section.href === "/admin"
               ? pathname === section.href
               : section.href === "/admin/checkpoints"
                 ? pathname === section.href ||

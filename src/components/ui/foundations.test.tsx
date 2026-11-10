@@ -19,7 +19,21 @@ describe("Operations Hub foundations", () => {
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
     expect(ref.current).toBeDisabled();
     expect(ref.current).toHaveAttribute("aria-busy", "true");
-    expect(screen.getByRole("button", { name: /save decision/i })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /save decision/i }),
+    ).toBeVisible();
+  });
+
+  it("applies button styling directly to a linked action", () => {
+    render(
+      <Button asChild className="w-full">
+        <a href="/admin/places/unit-1">View unit</a>
+      </Button>,
+    );
+    expect(screen.getByRole("link", { name: "View unit" })).toHaveClass(
+      "inline-flex",
+      "w-full",
+    );
   });
 
   it("associates persistent input labels, help and errors", () => {

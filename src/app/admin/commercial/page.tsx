@@ -1,5 +1,5 @@
-import CommercialOverview from "@/features/commercial/CommercialOverview";
+import { redirect } from "next/navigation";
 
-export default function CommercialPage() {
-  return <CommercialOverview />;
+export default function Page() {
+  redirect("/admin");
 }

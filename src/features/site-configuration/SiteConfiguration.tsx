@@ -134,66 +134,8 @@ export function SiteConfiguration() {
             throughout this workspace.
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/admin">
-            <Settings2 className="h-4 w-4" aria-hidden="true" />
-            General details
-          </Link>
-        </Button>
       </header>
 
-      <section
-        className="grid gap-3 sm:grid-cols-3"
-        aria-label="Site configuration summary"
-      >
-        <article className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-          <Building2
-            className="h-5 w-5 text-[var(--vms-ink-muted)]"
-            aria-hidden="true"
-          />
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-            Operating context
-          </p>
-          <p className="mt-1 text-lg font-semibold capitalize">
-            {(
-              property.data.use_case ??
-              workspace.data?.effective_use_case ??
-              ""
-            )
-              .toString()
-              .replaceAll("_", " ")}
-          </p>
-        </article>
-        <article className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-          <ShieldCheck
-            className="h-5 w-5 text-[var(--vms-ink-muted)]"
-            aria-hidden="true"
-          />
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-            Management
-          </p>
-          <p className="mt-1 text-lg font-semibold">
-            {workspace.data?.management?.mode === "local"
-              ? "Local site"
-              : workspace.data?.management?.mode === "inherited"
-                ? "Inherited"
-                : "Unavailable"}
-          </p>
-        </article>
-        <article className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-          <Cable
-            className="h-5 w-5 text-[var(--vms-ink-muted)]"
-            aria-hidden="true"
-          />
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-            Shared services
-          </p>
-          <p className="mt-1 text-lg font-semibold">Organization-wide</p>
-          <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
-            Plugins and integrations are configured once for every place.
-          </p>
-        </article>
-      </section>
 
       <nav
         aria-label="Site configuration sections"

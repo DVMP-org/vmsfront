@@ -69,6 +69,8 @@ export interface VisitGuestCredential {
 }
 
 export interface CreateVisitAuthorizationInput {
+  /** Site that owns the destination Place. Derived server-side when omitted. */
+  site_id: string;
   destination_place_id: string;
   valid_from: string;
   valid_to: string;
@@ -82,13 +84,13 @@ export interface CreateVisitAuthorizationInput {
 }
 
 export const accessJourneyApi = {
-  list: async (destinationPlaceId: string) =>
+  list: async (destinationPlaceId: string, page = 1) =>
     (
       await apiClient.get<ApiResponse<PaginatedResponse<VisitAuthorization>>>(
         "/workspace/visit-authorizations",
         {
           params: {
-            page: 1,
+            page,
             page_size: 100,
             destination_place_id: destinationPlaceId,
           },

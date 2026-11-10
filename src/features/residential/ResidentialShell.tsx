@@ -1,12 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Building2, ShieldCheck } from "lucide-react";
+import { WorkspaceContext } from "@/components/ui/WorkspaceContext";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { SitePicker } from "@/components/sites/SitePicker";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Badge } from "@/components/ui/Badge";
 import { useAppStore } from "@/store/app-store";
 import { useSiteAccess } from "@/features/context/use-site-access";
 
@@ -40,54 +40,43 @@ export function ResidentialShell({
   description,
   primaryAction,
   children,
+  showWorkspace = false,
 }: {
   title: string;
   description: string;
   primaryAction?: ReactNode;
   children: ReactNode;
+  showWorkspace?: boolean;
 }) {
-  const {
-    profile,
-    organization,
-    selectedProperty,
-    contextKey,
-    canManageUnits,
-  } = useResidentialAccess();
+  const { profile, selectedProperty, contextKey } = useResidentialAccess();
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
+      {showWorkspace && selectedProperty && (
+        <WorkspaceContext
+          name={selectedProperty.name}
+          description="Residential"
+        />
+      )}
       <PageHeader
-        eyebrow={
-          <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--vms-coral)]" />
-            Residential operations
-          </span>
+        breadcrumbs={
+          selectedProperty && !showWorkspace ? (
+            <Breadcrumbs
+              className="mb-5"
+              items={[
+                {
+                  label: "Property workspace",
+                  href: "/organization/workspaces",
+                },
+                { label: selectedProperty.name },
+                { label: title },
+              ]}
+            />
+          ) : undefined
         }
         title={title}
         description={description}
-        metadata={
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-            <Badge variant="neutral">
-              {organization?.name || "Organization"}
-            </Badge>
-            {selectedProperty ? (
-              <Badge variant="neutral">
-                <Building2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                {selectedProperty.name}
-              </Badge>
-            ) : (
-              <Badge variant="warning">No property selected</Badge>
-            )}
-            {profile.isPending ? (
-              <Badge variant="neutral">Checking permissions</Badge>
-            ) : (
-              <Badge variant="neutral">
-                <ShieldCheck className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                {canManageUnits ? "Management access" : "Read-only access"}
-              </Badge>
-            )}
-          </div>
-        }
+        className="border-0 pb-0"
         primaryAction={primaryAction}
       />
 

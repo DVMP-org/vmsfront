@@ -110,8 +110,9 @@
   }
 }
 
-/* React Datepicker Custom Styles */
-@import "react-datepicker/dist/react-datepicker.css";
+/* React Datepicker Custom Styles.
+ * The vendor stylesheet is imported from `src/app/layout.tsx`; a CSS `@import`
+ * here would be invalid because it follows other rules. */
 
 .react-datepicker-wrapper {
   width: auto;

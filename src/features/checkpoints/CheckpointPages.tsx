@@ -1,13 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import {
   Camera,
   CheckCircle2,
   Clock3,
-  Keyboard,
   LogIn,
   LogOut,
   QrCode,
@@ -16,6 +19,7 @@ import {
   UserRound,
   Wifi,
   WifiOff,
+  X,
   XCircle,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
@@ -31,14 +35,27 @@ import {
   AccessSimulationResponse,
   accessControlService,
 } from "@/services/access-control-service";
-import { checkpointsApi, Passage, PassageInput } from "./api";
+import {
+  checkpointsApi,
+  Passage,
+  PassageInput,
+  type CheckpointConsoleContext,
+  type CredentialPreview,
+} from "./api";
+import { reasonLabel, reasonMessage } from "./reasons";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
+import { ResidentialCheckpoints } from "@/features/residential/ResidentialCheckpoints";
+import { CheckpointAssignmentsModal } from "./CheckpointAssignmentsModal";
 import "./styles.css";
-function useAccess() {
+function useCheckpointContext() {
   const org = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
-  const context = `${org?.id}:${user?.id}`;
+  const site = useAppStore((s) => s.selectedProperty);
+  return `${org?.id}:${user?.id}:${site?.id}`;
+}
+function useAccess() {
+  const context = useCheckpointContext();
   const workspace = useWorkspaceContext();
   return {
     context,
@@ -89,8 +106,8 @@ function Outcome({ event }: { event: Passage }) {
           {allowed ? "Allowed" : "Denied"}
         </Badge>
       </div>
-      <p className="mt-3 text-sm capitalize text-[var(--vms-ink-muted)]">
-        {event.reason_code.replaceAll("_", " ")}
+      <p className="mt-3 text-sm text-[var(--vms-ink-muted)]">
+        {reasonMessage(event.reason_code)}
       </p>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div>
@@ -171,6 +188,32 @@ function consoleInitials(value?: string | null) {
   );
 }
 
+/** Compact visit-window date, e.g. "10 Nov, 09:00". */
+function shortDate(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Visitor state in gate language rather than server vocabulary. */
+function guestStateLabel(state?: string | null) {
+  switch (state) {
+    case "checked_in":
+    case "entry_in_progress":
+      return "inside";
+    case "exit_in_progress":
+      return "leaving";
+    case "checked_out":
+      return "checked out";
+    default:
+      return "expected";
+  }
+}
+
 function HardwareState({
   lane,
   simulation,
@@ -189,8 +232,8 @@ function HardwareState({
       : command?.status === "acknowledged" || command?.status === "pending"
         ? "warning"
         : command?.status === "rejected" ||
-            command?.status === "offline" ||
-            command?.status === "timed_out"
+          command?.status === "offline" ||
+          command?.status === "timed_out"
           ? "danger"
           : "neutral";
   return (
@@ -268,6 +311,20 @@ function HardwareState({
 }
 export function CheckpointDirectory() {
   const access = useAccess();
+  const siteId = useAppStore((state) => state.selectedProperty?.id);
+  if (siteId && access.workspace.data?.effective_use_case === "residential") {
+    return <ResidentialCheckpoints key={siteId} />;
+  }
+  return <DefaultCheckpointDirectory />;
+}
+
+function DefaultCheckpointDirectory() {
+  const access = useAccess();
+  const siteId = useAppStore((state) => state.selectedProperty?.id);
+  const [assigning, setAssigning] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const gates = useQuery({
     queryKey: ["checkpoint-directory", access.context],
     queryFn: () => checkpointsApi.gates(1, ""),
@@ -333,10 +390,19 @@ export function CheckpointDirectory() {
               </span>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild size="sm">
-                  <Link href={`/admin/checkpoints/console?gate=${gate.id}`}>
-                    Open console
-                  </Link>
+                  <Link href={"/admin/checkpoints/console"}>Open console</Link>
                 </Button>
+                {siteId &&
+                  (access.allowed("gates.update") ||
+                    access.allowed("places.update")) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAssigning(gate)}
+                    >
+                      Assign managers
+                    </Button>
+                  )}
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/admin/checkpoints/${gate.id}`}>
                     Gate actions
@@ -360,77 +426,35 @@ export function CheckpointDirectory() {
           </p>
         </section>
       )}
+      {assigning && siteId && (
+        <CheckpointAssignmentsModal
+          gate={assigning}
+          siteId={siteId}
+          onClose={() => setAssigning(null)}
+        />
+      )}
     </main>
   );
 }
-export function CheckpointConsole({ gateId }: { gateId: string }) {
-  const access = useAccess();
+export function CheckpointConsole() {
+  const context = useCheckpointContext();
+  const checkpoint = useQuery({
+    queryKey: ["checkpoint-console", context],
+    queryFn: () => checkpointsApi.console(),
+    retry: false,
+  });
   return (
     <Console
-      key={`${access.context}:${gateId}`}
-      gateId={gateId}
-      access={access}
+      key={`${context}:${checkpoint.data?.id ?? "unassigned"}`}
+      gate={checkpoint}
+      context={context}
       showBack
     />
   );
 }
 
 export function CheckpointConsoleHub() {
-  const access = useAccess();
-  const searchParams = useSearchParams();
-  const requestedGate = searchParams?.get("gate") || "";
-  const [gateId, setGateId] = useState(requestedGate);
-  const gates = useQuery({
-    queryKey: ["checkpoint-console-gates", access.context],
-    queryFn: () => checkpointsApi.gates(1, ""),
-    enabled:
-      !access.workspace.isPending &&
-      !access.workspace.isError &&
-      access.workspace.data?.management?.is_administrator === true,
-    retry: false,
-  });
-  const items = useMemo(() => gates.data?.items ?? [], [gates.data?.items]);
-  useEffect(() => {
-    if (!gateId && items.length) {
-      setGateId(
-        items.find((item) => item.id === requestedGate)?.id ?? items[0].id,
-      );
-    }
-  }, [gateId, items, requestedGate]);
-  if (access.workspace.isPending || gates.isPending) {
-    return <p role="status">Loading checkpoint console…</p>;
-  }
-  if (access.workspace.isError || gates.isError) {
-    return (
-      <Failure
-        error={access.workspace.error || gates.error}
-        retry={() => {
-          void access.workspace.refetch();
-          void gates.refetch();
-        }}
-      />
-    );
-  }
-  if (!items.length) {
-    return (
-      <main className="checkpoint-page">
-        <h1 className="text-3xl font-semibold">Check-in console</h1>
-        <p className="mt-3 text-sm text-[var(--vms-ink-muted)]">
-          No checkpoints are configured for this Site.
-        </p>
-      </main>
-    );
-  }
-  return (
-    <Console
-      key={`${access.context}:${gateId}`}
-      gateId={gateId}
-      access={access}
-      showBack
-      gateOptions={items}
-      onGateChange={setGateId}
-    />
-  );
+  return <CheckpointConsole />;
 }
 
 export function createIdempotencyKey(): string {
@@ -569,25 +593,20 @@ function QrCameraScanner({ onCode }: { onCode: (value: string) => void }) {
 }
 
 function Console({
-  gateId,
-  access,
+  gate,
+  context,
   showBack,
-  gateOptions = [],
-  onGateChange,
 }: {
-  gateId: string;
-  access: ReturnType<typeof useAccess>;
+  gate: UseQueryResult<CheckpointConsoleContext, Error>;
+  context: string;
   showBack: boolean;
-  gateOptions?: Awaited<ReturnType<typeof checkpointsApi.gates>>["items"];
-  onGateChange?: (gateId: string) => void;
 }) {
-  const { context, workspace, allowed } = access;
+  const gateId = gate.data?.id ?? "unassigned";
   const client = useQueryClient();
   const [code, setCode] = useState("");
-  const [credentialMode, setCredentialMode] = useState<
-    "invitation" | "badge" | "qr"
-  >("invitation");
-  const [suffix, setSuffix] = useState("");
+  const [lookupCode, setLookupCode] = useState("");
+  const [pickedGuest, setPickedGuest] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [direction, setDirection] = useState<"" | "entry" | "exit">("");
   const [intent, setIntent] = useState<PassageInput | null>(null);
   const [result, setResult] = useState<Passage | null>(null);
@@ -603,43 +622,33 @@ function Console({
   const [queueNotice, setQueueNotice] = useState("");
   const [manualOverride, setManualOverride] = useState(false);
   const [overrideReason, setOverrideReason] = useState("");
-  const gate = useQuery({
-    queryKey: ["checkpoint-console", context, gateId],
-    queryFn: () => checkpointsApi.console(gateId),
-    enabled:
-      allowed("checkpoint_events.record") &&
-      workspace.data?.management?.is_administrator === true,
-  });
   const lanes = useMemo<AccessLane[]>(
     () => gate.data?.lanes ?? [],
     [gate.data?.lanes],
   );
   const selectedLane =
     lanes.find((lane) => lane.id === selectedLaneId) || lanes[0];
-  const canRecord = allowed("checkpoint_events.record");
   const recentScans = useQuery({
     queryKey: ["checkpoint-recent-scans", context, gateId],
     queryFn: () =>
       checkpointsApi.accessEvents({
-        gate_id: gateId,
         page: 1,
         page_size: 5,
         sort: "occurred_at:desc",
       }),
-    enabled: canRecord,
   });
   const mutation = useMutation({
     mutationFn: async (body: PassageInput) => {
-      const event = await checkpointsApi.record(gateId, body);
+      const event = await checkpointsApi.record(body);
       const access = selectedLane
         ? await accessControlService.simulateDecision(selectedLane.id, {
-            idempotency_key: `${body.idempotency_key}:access`,
-            checkpoint_event_id: event.id,
-            outcome: event.outcome === "allowed" ? "allowed" : "denied",
-            reason_code: event.reason_code,
-            command_action: "open",
-            timeout_seconds: 15,
-          })
+          idempotency_key: `${body.idempotency_key}:access`,
+          checkpoint_event_id: event.id,
+          outcome: event.outcome === "allowed" ? "allowed" : "denied",
+          reason_code: event.reason_code,
+          command_action: "open",
+          timeout_seconds: 15,
+        })
         : null;
       return { event, access };
     },
@@ -658,7 +667,7 @@ function Console({
         queryKey: ["checkpoint-recent-scans", context, gateId],
       });
       client.invalidateQueries({
-        queryKey: ["checkpoint-console", context, gateId],
+        queryKey: ["checkpoint-console", context],
       });
     },
   });
@@ -683,49 +692,82 @@ function Console({
     }
   }, [lanes, selectedLaneId]);
   useEffect(() => {
+    const timer = window.setTimeout(() => setLookupCode(code.trim()), 350);
+    return () => window.clearTimeout(timer);
+  }, [code]);
+  const preview = useQuery({
+    queryKey: ["checkpoint-preview", context, gateId, lookupCode, pickedGuest],
+    queryFn: () =>
+      checkpointsApi.preview({
+        credential: lookupCode,
+        ...(pickedGuest ? { guest_suffix: pickedGuest } : {}),
+      }),
+    enabled:
+      lookupCode.length >= 4 &&
+      !intent &&
+      !result &&
+      !mutation.isPending &&
+      online,
+    retry: false,
+    staleTime: 15_000,
+    // Keep the last answer visible while the chosen visitor is re-checked.
+    placeholderData: (previous) => previous,
+  });
+  const candidate: CredentialPreview | undefined = preview.data;
+  const guests = candidate?.guests ?? [];
+  const selectedGuest = pickedGuest ?? candidate?.selected_guest_suffix ?? null;
+  const activeGuest =
+    guests.find((guest) => guest.suffix === selectedGuest) ??
+    (guests.length === 1 ? guests[0] : undefined);
+  useEffect(() => {
+    setPickedGuest(null);
+  }, [lookupCode]);
+  const needsGuest =
+    Boolean(candidate?.requires_guest_selection) && !selectedGuest;
+  // Without a preview (offline queueing or a pending lookup) the server stays
+  // the authority, so the actions are only blocked by an explicit decision.
+  const canCheckIn =
+    !needsGuest && (candidate ? candidate.can_check_in || manualOverride : true);
+  const canCheckOut =
+    !needsGuest && (candidate ? candidate.can_check_out || manualOverride : true);
+  useEffect(() => {
     if (
       !online ||
       mutation.isPending ||
       intent ||
       !queued.length ||
-      !canRecord
+      !gate.data
     ) {
       return;
     }
     const next = queued[0];
     setIntent(next.input);
     mutation.mutate(next.input);
-  }, [canRecord, intent, mutation, online, queued]);
-  if (workspace.isError)
-    return (
-      <Failure error={workspace.error} retry={() => workspace.refetch()} />
-    );
-  if (workspace.isPending)
-    return <p role="status">Loading checkpoint permissions…</p>;
-  if (!allowed("checkpoint_events.record"))
-    return <p role="alert">You do not have checkpoint recording permission.</p>;
-  if (gate.isPending) return <p role="status">Loading checkpoint…</p>;
-  if (gate.isError)
-    return <Failure error={gate.error} retry={() => gate.refetch()} />;
-
+  }, [gate.data, intent, mutation, online, queued]);
   function recordPassage(nextDirection?: "entry" | "exit") {
     if (intent || mutation.isPending) return;
+    if (needsGuest) {
+      setQueueNotice(
+        "Choose which visitor is passing before you check in or out.",
+      );
+      return;
+    }
     const resolvedDirection = nextDirection || direction || undefined;
     const body: PassageInput = {
       credential: code.trim(),
+      ...(selectedGuest ? { guest_suffix: selectedGuest } : {}),
       ...(resolvedDirection ? { direction: resolvedDirection } : {}),
-      ...(suffix ? { guest_suffix: suffix } : {}),
       ...(selectedLane ? { lane_id: selectedLane.id } : {}),
       ...(manualOverride
         ? {
-            manual_override: true,
-            override_reason: overrideReason.trim(),
-          }
+          manual_override: true,
+          override_reason: overrideReason.trim(),
+        }
         : {}),
       idempotency_key: createIdempotencyKey(),
     };
     if (!online) {
-      if (gate.data?.offline_policy === "deny") {
+      if (!gate.data || gate.data.offline_policy === "deny") {
         setQueueNotice(
           "This checkpoint requires a server connection before any access transition can be recorded.",
         );
@@ -739,7 +781,6 @@ function Console({
         "Queued locally. It remains provisional until reconnect and server confirmation.",
       );
       setCode("");
-      setSuffix("");
       return;
     }
     setIntent(body);
@@ -758,20 +799,9 @@ function Console({
         <h1>Check-in console</h1>
         <span>Validate access at the assigned checkpoint.</span>
       </header>
-      {gateOptions.length > 1 && onGateChange ? (
-        <label className="checkpoint-console-switcher">
-          <span>Checkpoint</span>
-          <select
-            value={gateId}
-            onChange={(event) => onGateChange(event.target.value)}
-          >
-            {gateOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </label>
+
+      {gate.isError ? (
+        <Failure error={gate.error} retry={() => gate.refetch()} />
       ) : null}
       <section
         className="checkpoint-console-status"
@@ -781,7 +811,12 @@ function Console({
           <ScanLine aria-hidden="true" />
           <span>
             <small>Active checkpoint</small>
-            <strong>{gate.data?.name || "Checkpoint"}</strong>
+            <strong>
+              {gate.data?.name ||
+                (gate.isPending
+                  ? "Loading checkpoint…"
+                  : "No checkpoint assigned")}
+            </strong>
           </span>
         </div>
         <div>
@@ -815,9 +850,9 @@ function Console({
             <strong>
               {gate.dataUpdatedAt
                 ? new Date(gate.dataUpdatedAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "Just now"}
             </strong>
           </span>
@@ -851,345 +886,429 @@ function Console({
           </Button>
         </section>
       ) : null}
-      {canRecord ? (
-        <form
-          className="checkpoint-console-grid"
-          onSubmit={(e) => {
-            e.preventDefault();
-            recordPassage();
-          }}
+      <form
+        className="checkpoint-console-grid"
+        onSubmit={(e) => {
+          e.preventDefault();
+          recordPassage();
+        }}
+      >
+        <fieldset
+          disabled={!!intent || mutation.isPending || !!result}
+          className="checkpoint-console-fields"
         >
-          <fieldset
-            disabled={!!intent || mutation.isPending || !!result}
-            className="checkpoint-console-fields"
-          >
-            <section className="checkpoint-scan-panel">
-              <header>
-                <span>
-                  <ScanLine aria-hidden="true" />
-                </span>
-                <div>
-                  <h2>Scan or enter credential</h2>
-                  <p>
-                    Invitation, badge, permanent code or signed QR credential.
-                  </p>
-                </div>
-              </header>
-              <div className="checkpoint-credential-tabs" role="tablist">
-                {(
-                  [
-                    ["invitation", "Invitation ID", ScanLine],
-                    ["badge", "Badge or permanent code", Keyboard],
-                    ["qr", "QR scanner", QrCode],
-                  ] as const
-                ).map(([value, label, Icon]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="tab"
-                    aria-selected={credentialMode === value}
-                    onClick={() => setCredentialMode(value)}
-                  >
-                    <Icon aria-hidden="true" />
-                    {label}
-                  </button>
-                ))}
+          <section className="checkpoint-scan-panel">
+            <header>
+              <span>
+                <ScanLine aria-hidden="true" />
+              </span>
+              <div>
+                <h2>Scan or enter credential</h2>
+                <p>
+                  Invitation ID, group invitation ID or badge code. The suffix
+                  is derived automatically.
+                </p>
               </div>
-              <div className="checkpoint-credential-entry">
-                {credentialMode === "qr" ? (
-                  <QrCameraScanner
-                    onCode={(value) => {
-                      setCode(value);
-                      setCredentialMode("invitation");
-                    }}
-                  />
-                ) : (
-                  <Field
-                    id="checkpoint-credential"
-                    label={
-                      credentialMode === "invitation"
-                        ? "Invitation ID"
-                        : "Badge or permanent code"
-                    }
-                    description={
-                      credentialMode === "invitation"
-                        ? "Enter the invitation ID or scan its QR code."
-                        : "Enter a badge QR value or permanent access code."
-                    }
-                    required
-                  >
-                    {(control) => (
-                      <input
-                        {...control}
-                        aria-label="Credential"
-                        value={code}
-                        maxLength={2048}
-                        onChange={(e) => setCode(e.target.value)}
-                        autoComplete="off"
-                        autoCapitalize="none"
-                        placeholder={
-                          credentialMode === "invitation"
-                            ? "INV-123456-001"
-                            : "BDG-778934"
-                        }
-                        className={fieldControlClassName}
-                      />
-                    )}
-                  </Field>
-                )}
-              </div>
-              <div className="checkpoint-scan-options">
-                <Field
-                  id="checkpoint-guest-suffix"
-                  label="Guest suffix"
-                  description="Only when the parent group invitation has no appended suffix."
-                >
-                  {(control) => (
+            </header>
+            <div className="checkpoint-credential-entry">
+              <Field
+                id="checkpoint-credential"
+                label="Credential"
+                description="INV-123456 for one visitor, INV-123456-001 for a group member, BDG-… for a party badge."
+                required
+              >
+                {(control) => (
+                  <div className="flex items-center gap-2">
                     <input
                       {...control}
-                      aria-label="Guest suffix"
-                      value={suffix}
-                      pattern="[0-9]{2,10}"
-                      maxLength={10}
-                      onChange={(e) => setSuffix(e.target.value)}
-                      inputMode="numeric"
-                      placeholder="001"
+                      aria-label="Credential"
+                      value={code}
+                      maxLength={2048}
+                      onChange={(e) => setCode(e.target.value)}
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      placeholder="INV-123456"
+                      className={fieldControlClassName}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setScannerOpen(true)}
+                      aria-label="Scan QR code"
+                      title="Scan QR code"
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)] transition hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                    >
+                      <QrCode aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </Field>
+            </div>
+            <div className="checkpoint-scan-options">
+              <Field id="checkpoint-lane" label="Door or barrier">
+                {(control) => (
+                  <select
+                    {...control}
+                    aria-label="Door or barrier"
+                    value={selectedLane?.id || ""}
+                    onChange={(e) => setSelectedLaneId(e.target.value)}
+                    disabled={gate.isPending || lanes.length === 0}
+                    className={fieldControlClassName}
+                  >
+                    {lanes.length ? (
+                      lanes.map((lane) => (
+                        <option key={lane.id} value={lane.id}>
+                          {lane.name} · {lane.availability} ·{" "}
+                          {lane.observed_state}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No hardware lane configured</option>
+                    )}
+                  </select>
+                )}
+              </Field>
+            </div>
+            <details className="checkpoint-override">
+              <summary>
+                Authorized exception
+                <span>Requires override permission and an audit reason.</span>
+              </summary>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={manualOverride}
+                  onChange={(event) => setManualOverride(event.target.checked)}
+                />
+                Apply a manual checkpoint override
+              </label>
+              {manualOverride ? (
+                <Field
+                  id="checkpoint-override-reason"
+                  label="Override reason"
+                  required
+                >
+                  {(control) => (
+                    <textarea
+                      {...control}
+                      aria-label="Override reason"
+                      value={overrideReason}
+                      maxLength={255}
+                      onChange={(event) =>
+                        setOverrideReason(event.target.value)
+                      }
                       className={fieldControlClassName}
                     />
                   )}
                 </Field>
-                <Field id="checkpoint-lane" label="Door or barrier">
-                  {(control) => (
-                    <select
-                      {...control}
-                      aria-label="Door or barrier"
-                      value={selectedLane?.id || ""}
-                      onChange={(e) => setSelectedLaneId(e.target.value)}
-                      disabled={gate.isPending || lanes.length === 0}
-                      className={fieldControlClassName}
-                    >
-                      {lanes.length ? (
-                        lanes.map((lane) => (
-                          <option key={lane.id} value={lane.id}>
-                            {lane.name} · {lane.availability} ·{" "}
-                            {lane.observed_state}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">No hardware lane configured</option>
-                      )}
-                    </select>
-                  )}
-                </Field>
-              </div>
-              <details className="checkpoint-override">
-                <summary>
-                  Authorized exception
-                  <span>Requires override permission and an audit reason.</span>
-                </summary>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={manualOverride}
-                    onChange={(event) =>
-                      setManualOverride(event.target.checked)
-                    }
-                  />
-                  Apply a manual checkpoint override
-                </label>
-                {manualOverride ? (
-                  <Field
-                    id="checkpoint-override-reason"
-                    label="Override reason"
-                    required
-                  >
-                    {(control) => (
-                      <textarea
-                        {...control}
-                        aria-label="Override reason"
-                        value={overrideReason}
-                        maxLength={255}
-                        onChange={(event) =>
-                          setOverrideReason(event.target.value)
-                        }
-                        className={fieldControlClassName}
-                      />
-                    )}
-                  </Field>
-                ) : null}
-              </details>
-              <p className="checkpoint-validation-note">
-                The credential is validated by the server when you choose check
-                in or check out.
-              </p>
-            </section>
-
-            <section
-              className={cn(
-                "checkpoint-result-panel",
-                result?.outcome === "allowed" && "allowed",
-                result?.outcome === "denied" && "denied",
-              )}
-              aria-label="Checkpoint result"
-            >
-              <div
-                className={cn(
-                  "checkpoint-result-banner",
-                  result ? result.outcome : "waiting",
-                )}
-              >
-                {result ? (
-                  result.outcome === "allowed" ? (
-                    <CheckCircle2 aria-hidden="true" />
-                  ) : (
-                    <XCircle aria-hidden="true" />
-                  )
-                ) : (
-                  <ScanLine aria-hidden="true" />
-                )}
-                <div>
-                  <strong>
-                    {result
-                      ? result.outcome === "allowed"
-                        ? result.direction === "entry"
-                          ? "Entry permitted"
-                          : "Exit permitted"
-                        : "Access denied"
-                      : "Awaiting credential"}
-                  </strong>
-                  <span>
-                    {result
-                      ? result.reason_code.replaceAll("_", " ")
-                      : "Enter or scan a credential to continue."}
-                  </span>
-                </div>
-              </div>
-              {result?.replayed ? (
-                <p className="checkpoint-result-replayed">
-                  Previously recorded passage recovered. No duplicate event was
-                  created.
-                </p>
               ) : null}
-              <div className="checkpoint-result-person">
-                <span className="checkpoint-result-avatar">
-                  {consoleInitials(result?.person_name)}
-                </span>
-                <div>
-                  <h2>{result?.person_name || "No credential selected"}</h2>
-                  <p>
-                    {result
-                      ? `${result.subject_type || "credential"} · ${
-                          result.credential_reference || "reference redacted"
-                        }`
-                      : "Identity and invitation details appear after the server records the passage."}
-                  </p>
-                </div>
-              </div>
-              <dl className="checkpoint-result-facts">
-                <div>
-                  <dt>
-                    <UserRound aria-hidden="true" />
-                    Checkpoint
-                  </dt>
-                  <dd>{result?.gate_name || gate.data?.name || "—"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <ScanLine aria-hidden="true" />
-                    Destination
-                  </dt>
-                  <dd>
-                    {result?.place_name || gate.data?.place_name || "Site"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>
-                    <Clock3 aria-hidden="true" />
-                    Direction
-                  </dt>
-                  <dd>
-                    {result
+            </details>
+            <p className="checkpoint-validation-note">
+              The credential is validated by the server when you choose check in
+              or check out.
+            </p>
+          </section>
+
+          <section
+            className={cn(
+              "checkpoint-result-panel",
+              result?.outcome === "allowed" && "allowed",
+              result?.outcome === "denied" && "denied",
+            )}
+            aria-label="Checkpoint result"
+          >
+            <div
+              className={cn(
+                "checkpoint-result-banner",
+                result ? result.outcome : "waiting",
+              )}
+            >
+              {result ? (
+                result.outcome === "allowed" ? (
+                  <CheckCircle2 aria-hidden="true" />
+                ) : (
+                  <XCircle aria-hidden="true" />
+                )
+              ) : (
+                <ScanLine aria-hidden="true" />
+              )}
+              <div>
+                <strong>
+                  {result
+                    ? result.outcome === "allowed"
                       ? result.direction === "entry"
+                        ? "Entry permitted"
+                        : "Exit permitted"
+                      : "Access denied"
+                    : candidate?.invitation
+                      ? "Invitation recognised"
+                      : candidate?.subject_type === "party"
+                        ? "Badge recognised"
+                        : candidate?.blocking_reason
+                          ? "Credential not usable"
+                          : "Awaiting credential"}
+                </strong>
+                <span>
+                  {result
+                    ? reasonMessage(result.reason_code)
+                    : candidate
+                      ? candidate.blocking_reason
+                        ? reasonMessage(candidate.blocking_reason)
+                        : `${candidate.invitation?.code || candidate.credential_reference} is ready to scan.`
+                      : preview.isFetching
+                        ? "Checking the credential…"
+                        : "Enter or scan a credential to continue."}
+                </span>
+              </div>
+            </div>
+            {result?.replayed ? (
+              <p className="checkpoint-result-replayed">
+                Previously recorded passage recovered. No duplicate event was
+                created.
+              </p>
+            ) : null}
+            <div className="checkpoint-result-person">
+              <span className="checkpoint-result-avatar">
+                {consoleInitials(
+                  result?.person_name ||
+                    activeGuest?.display_name ||
+                    candidate?.person_name,
+                )}
+              </span>
+              <div>
+                <h2>
+                  {result?.person_name ||
+                    activeGuest?.display_name ||
+                    candidate?.person_name ||
+                    "No credential selected"}
+                </h2>
+                <p>
+                  {result
+                    ? `${result.subject_type || "credential"} · ${result.credential_reference || "reference redacted"
+                    }`
+                    : candidate?.invitation
+                      ? `${candidate.invitation.host_name || "Host"} invited this visitor to ${candidate.invitation.place_name || "this site"}`
+                      : candidate
+                        ? `${candidate.subject_type} · ${candidate.credential_reference}`
+                        : "Identity and invitation details appear once the credential is recognised."}
+                </p>
+              </div>
+            </div>
+            {!result && candidate?.invitation ? (
+              <div className="checkpoint-invitation">
+                <dl className="checkpoint-result-facts">
+                  <div>
+                    <dt>
+                      <Clock3 aria-hidden="true" />
+                      Visit window
+                    </dt>
+                    <dd>
+                      {shortDate(candidate.invitation.valid_from)} –{" "}
+                      {shortDate(candidate.invitation.valid_to)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <CheckCircle2 aria-hidden="true" />
+                      Invitation status
+                    </dt>
+                    <dd>
+                      <Badge
+                        variant={
+                          candidate.invitation.status === "approved"
+                            ? "success"
+                            : candidate.invitation.status === "requested"
+                              ? "neutral"
+                              : "danger"
+                        }
+                      >
+                        {candidate.invitation.status}
+                      </Badge>
+                    </dd>
+                  </div>
+                </dl>
+                {guests.length > 1 ? (
+                  <fieldset className="checkpoint-guest-picker">
+                    <legend>
+                      Visitors on this invitation ({guests.length}) — choose
+                      the one who is passing
+                    </legend>
+                    <ul>
+                      {guests.map((guest) => {
+                        const active = guest.suffix === selectedGuest;
+                        return (
+                          <li key={guest.suffix}>
+                            <button
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => setPickedGuest(guest.suffix)}
+                              className={cn(
+                                "checkpoint-guest-option",
+                                active && "is-active",
+                              )}
+                            >
+                              <span className="checkpoint-result-avatar">
+                                {consoleInitials(guest.display_name)}
+                              </span>
+                              <span>
+                                <strong>{guest.display_name}</strong>
+                                <small>
+                                  {guest.suffix} · {guestStateLabel(guest.state)}
+                                </small>
+                              </span>
+                              {active ? (
+                                <CheckCircle2 aria-hidden="true" />
+                              ) : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </fieldset>
+                ) : guests.length === 1 ? (
+                  <p className="checkpoint-single-guest">
+                    Single visitor invited — {guests[0].display_name} (
+                    {guestStateLabel(guests[0].state)}). No guest suffix needed.
+                  </p>
+                ) : null}
+                {candidate.blocking_reason && !needsGuest ? (
+                  <p className="checkpoint-blocking" role="status">
+                    {reasonMessage(candidate.blocking_reason)}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            <dl className="checkpoint-result-facts">
+              <div>
+                <dt>
+                  <UserRound aria-hidden="true" />
+                  Checkpoint
+                </dt>
+                <dd>{result?.gate_name || gate.data?.name || "—"}</dd>
+              </div>
+              <div>
+                <dt>
+                  <ScanLine aria-hidden="true" />
+                  Destination
+                </dt>
+                <dd>{result?.place_name || gate.data?.place_name || "Site"}</dd>
+              </div>
+              <div>
+                <dt>
+                  <Clock3 aria-hidden="true" />
+                  Direction
+                </dt>
+                <dd>
+                  {result
+                    ? result.direction === "entry"
+                      ? "Check in"
+                      : "Check out"
+                    : candidate?.suggested_direction
+                      ? candidate.suggested_direction === "entry"
                         ? "Check in"
                         : "Check out"
                       : "Inferred by server"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>
-                    <CheckCircle2 aria-hidden="true" />
-                    Access state
-                  </dt>
-                  <dd>
-                    {result
-                      ? (result.state_after || "recorded").replaceAll("_", " ")
-                      : "Not yet recorded"}
-                  </dd>
-                </div>
-              </dl>
-              <div className="checkpoint-result-actions">
-                <Button
-                  type="button"
-                  size="lg"
-                  disabled={
-                    !code.trim() ||
-                    (manualOverride && !overrideReason.trim()) ||
-                    mutation.isPending
-                  }
-                  isLoading={mutation.isPending && direction === "entry"}
-                  onClick={() => {
-                    setDirection("entry");
-                    recordPassage("entry");
-                  }}
-                >
-                  <LogIn aria-hidden="true" />
-                  Check in
-                </Button>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="outline"
-                  disabled={
-                    !code.trim() ||
-                    (manualOverride && !overrideReason.trim()) ||
-                    mutation.isPending
-                  }
-                  isLoading={mutation.isPending && direction === "exit"}
-                  onClick={() => {
-                    setDirection("exit");
-                    recordPassage("exit");
-                  }}
-                >
-                  <LogOut aria-hidden="true" />
-                  Check out
-                </Button>
+                </dd>
               </div>
-              <p className="checkpoint-direction-note">
-                Direction is inferred from the latest checkpoint event, but the
-                selected action remains explicit.
-              </p>
-            </section>
-          </fieldset>
-        </form>
-      ) : (
-        <p
-          className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4 text-sm text-[var(--vms-ink-muted)]"
-          role="status"
-        >
-          You can view this checkpoint but cannot record passages.
-        </p>
-      )}
+              <div>
+                <dt>
+                  <CheckCircle2 aria-hidden="true" />
+                  Access state
+                </dt>
+                <dd>
+                  {result
+                    ? (result.state_after || "recorded").replaceAll("_", " ")
+                    : activeGuest
+                      ? guestStateLabel(activeGuest.state)
+                      : "Not yet recorded"}
+                </dd>
+              </div>
+            </dl>
+            <div className="checkpoint-result-actions">
+              <Button
+                type="button"
+                size="lg"
+                disabled={
+                  !code.trim() ||
+                  !canCheckIn ||
+                  (manualOverride && !overrideReason.trim()) ||
+                  mutation.isPending
+                }
+                isLoading={mutation.isPending && direction === "entry"}
+                onClick={() => {
+                  setDirection("entry");
+                  recordPassage("entry");
+                }}
+              >
+                <LogIn aria-hidden="true" />
+                Check in
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={
+                  !code.trim() ||
+                  !canCheckOut ||
+                  (manualOverride && !overrideReason.trim()) ||
+                  mutation.isPending
+                }
+                isLoading={mutation.isPending && direction === "exit"}
+                onClick={() => {
+                  setDirection("exit");
+                  recordPassage("exit");
+                }}
+              >
+                <LogOut aria-hidden="true" />
+                Check out
+              </Button>
+            </div>
+            <p className="checkpoint-direction-note">
+              {needsGuest
+                ? "Choose a visitor from the list to continue."
+                : candidate && !manualOverride
+                  ? canCheckIn && canCheckOut
+                    ? "Both directions are available for this credential."
+                    : canCheckIn
+                      ? "This visitor is outside, so check in is available."
+                      : canCheckOut
+                        ? "This visitor is inside, so check out is available."
+                        : "No transition is available for this credential."
+                  : "Direction is inferred from the latest checkpoint event, but the selected action remains explicit."}
+            </p>
+          </section>
+        </fieldset>
+      </form>
+      {result ? (
+        <div className="mt-3 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setIntent(null);
+              setResult(null);
+              setSimulation(null);
+              mutation.reset();
+              setCode("");
+              setDirection("");
+            }}
+          >
+            <UserRound aria-hidden="true" />
+            Next person
+          </Button>
+        </div>
+      ) : null}
       {mutation.isError && (
         <div
           role="alert"
           className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm text-[var(--vms-danger)]"
         >
           <p className="font-semibold">
-            {parseApiError(mutation.error).message}
+            The passage was not recorded. Nothing changed at the gate.
           </p>
-          <p>
-            The outcome may be unknown. Retry uses the same request to avoid a
-            duplicate passage.
+          <p className="mt-1">{parseApiError(mutation.error).message}</p>
+          <p className="mt-1">
+            If the connection dropped mid-request, retrying reuses the same
+            request so you cannot create a duplicate passage.
           </p>
           <Button
             variant="outline"
@@ -1208,7 +1327,6 @@ function Console({
               setIntent(null);
               mutation.reset();
               setCode("");
-              setSuffix("");
             }}
           >
             Start a different passage
@@ -1225,19 +1343,7 @@ function Console({
               gate.refetch();
             }}
           />
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => {
-              setResult(null);
-              setSimulation(null);
-              setCode("");
-              setSuffix("");
-              mutation.reset();
-            }}
-          >
-            Next person
-          </Button>
+
         </>
       )}
       <section className="checkpoint-recent">
@@ -1331,7 +1437,77 @@ function Console({
           </table>
         </div>
       </section>
+      {scannerOpen ? (
+        <ScannerOverlay
+          onClose={() => setScannerOpen(false)}
+          onCode={(value) => {
+            setCode(value);
+            setScannerOpen(false);
+          }}
+        />
+      ) : null}
     </main>
+  );
+}
+
+/**
+ * Full-screen scanner with a moving beam so the operator can tell at a glance
+ * that the camera is live. Any decoded value lands in the credential field.
+ */
+function ScannerOverlay({
+  onClose,
+  onCode,
+}: {
+  onClose: () => void;
+  onCode: (value: string) => void;
+}) {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Scan access credential"
+        className="w-full max-w-sm rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 shadow-[var(--vms-shadow-overlay)]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--vms-ink)]">
+              Scan QR code
+            </h2>
+            <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
+              Point the camera at the invitation or badge code.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close scanner"
+            className="grid h-8 w-8 place-items-center rounded-md text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="checkpoint-scan-frame mt-3">
+          <QrCameraScanner onCode={onCode} />
+          <span aria-hidden="true" className="checkpoint-scan-corner tl" />
+          <span aria-hidden="true" className="checkpoint-scan-corner tr" />
+          <span aria-hidden="true" className="checkpoint-scan-corner bl" />
+          <span aria-hidden="true" className="checkpoint-scan-corner br" />
+          <span aria-hidden="true" className="checkpoint-scan-beam" />
+        </div>
+        <p className="mt-3 text-center text-[11px] text-[var(--vms-ink-muted)]">
+          Codes are read automatically — no need to press anything.
+        </p>
+      </div>
+    </div>
   );
 }
 export function CheckpointRecord({

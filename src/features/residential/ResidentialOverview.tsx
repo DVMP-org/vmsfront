@@ -25,6 +25,7 @@ import {
   formatDistanceToNowStrict,
 } from "date-fns";
 
+import { MetricCard } from "@/components/ui/MetricCard";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
@@ -197,7 +198,7 @@ export default function ResidentialOverview() {
       primaryAction={
         canManageUnits ? (
           <Link
-            href="/admin/residential/units"
+            href="/admin/residential/units?create=1"
             className={buttonVariants({ variant: "primary" })}
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -210,17 +211,17 @@ export default function ResidentialOverview() {
         aria-label="Residential operating summary"
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
       >
-        <Metric
+        <MetricCard
           icon={Building2}
           label="Units"
           value={loading ? "—" : String(units.length)}
         />
-        <Metric
+        <MetricCard
           icon={UsersRound}
           label="Occupied"
           value={loading ? "—" : String(occupiedUnitIds.size)}
         />
-        <Metric
+        <MetricCard
           icon={WalletCards}
           label="Charges due"
           value={
@@ -231,7 +232,7 @@ export default function ResidentialOverview() {
                 : formatCompactMoney(totalChargesDue)
           }
         />
-        <Metric
+        <MetricCard
           icon={Wrench}
           label="Open requests"
           value={maintenance.isPending ? "—" : String(openMaintenance.length)}
@@ -266,8 +267,8 @@ export default function ResidentialOverview() {
         </section>
       ) : null}
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
-        <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+      <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(20rem,1fr)]">
+        <section className="flex h-full flex-col overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
           <div className="flex items-start justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-4">
             <div>
               <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -278,14 +279,18 @@ export default function ResidentialOverview() {
                 Requires attention
               </h2>
               <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                Items that need a SiteAdmin decision to keep operations moving.
+                Items that need your action to keep operations running smoothly.
               </p>
             </div>
-            <span className="rounded-full bg-[var(--vms-surface-subtle)] px-2.5 py-1 text-xs font-semibold tabular-nums">
-              {attentionTotal}
-            </span>
+            <Link
+              href="/admin/residential/maintenance"
+              className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold underline-offset-4 hover:underline"
+            >
+              View all ({attentionTotal}){" "}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
           </div>
-          <div className="divide-y divide-[var(--vms-line)]">
+          <div className="grid flex-1 divide-y divide-[var(--vms-line)]">
             <AttentionRow
               icon={ReceiptText}
               tone="danger"
@@ -351,7 +356,7 @@ export default function ResidentialOverview() {
           </div>
         </section>
 
-        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+        <section className="flex h-full flex-col rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -359,20 +364,21 @@ export default function ResidentialOverview() {
                 Occupancy breakdown
               </h2>
               <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                Current unit occupancy at this Site.
+                Current unit occupancy at{" "}
+                {selectedProperty?.name || "this property"}.
               </p>
             </div>
           </div>
-          <div className="mt-5 grid items-center gap-5 sm:grid-cols-[140px_minmax(0,1fr)]">
+          <div className="my-4 grid flex-1 grid-cols-[112px_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
             <div
-              className="relative mx-auto grid h-36 w-36 place-items-center rounded-full"
+              className="relative mx-auto grid aspect-square h-28 w-28 shrink-0 place-items-center rounded-full sm:h-32 sm:w-32"
               style={{
                 background: `conic-gradient(var(--vms-success) ${occupancyPercent}%, var(--vms-surface-subtle) ${occupancyPercent}% 100%)`,
               }}
               aria-label={`${occupancyPercent}% of units occupied`}
               role="img"
             >
-              <div className="grid h-24 w-24 place-items-center rounded-full bg-[var(--vms-surface)] text-center">
+              <div className="grid h-20 w-20 place-items-center sm:h-24 sm:w-24 rounded-full bg-[var(--vms-surface)] text-center">
                 <div>
                   <strong className="block text-2xl font-semibold tracking-[-0.04em]">
                     {occupancyPercent}%
@@ -416,7 +422,7 @@ export default function ResidentialOverview() {
           </div>
           <Link
             href="/admin/residential/units"
-            className="mt-4 inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+            className="inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
           >
             View units
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -449,28 +455,6 @@ export default function ResidentialOverview() {
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-      <span className="grid h-10 w-10 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <p className="mt-4 text-3xl font-semibold tracking-[-0.045em] tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">{label}</p>
-    </div>
-  );
-}
-
 function AttentionRow({
   icon: Icon,
   tone,
@@ -492,24 +476,24 @@ function AttentionRow({
     info: "bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] text-[var(--vms-info)]",
   }[tone];
   return (
-    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+    <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap">
       <span
-        className={`grid h-10 w-10 place-items-center rounded-[var(--vms-radius-control)] ${toneClass}`}
+        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass}`}
       >
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-semibold">{title}</h3>
           <span className="rounded-full bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[11px] font-semibold tabular-nums">
             {count}
           </span>
         </div>
-        <p className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]">
+        <p className="mt-0.5 text-sm leading-5 text-[var(--vms-ink-muted)]">
           {detail}
         </p>
       </div>
-      <div className="justify-self-start sm:justify-self-end">{action}</div>
+      <div className="ml-auto flex shrink-0 items-center gap-2">{action}</div>
     </div>
   );
 }
@@ -593,6 +577,7 @@ function UnitActivity({
           {relativeTime(row.updatedAt)}
         </span>
       ),
+      responsiveHide: "xl",
     },
     {
       key: "actions",
@@ -636,7 +621,7 @@ function UnitActivity({
       ) : (
         <div className="p-3 sm:p-4">
           <DataTable
-            data={rows.slice(0, 8)}
+            data={rows.slice(0, 5)}
             columns={columns}
             tableLabel="Residential unit activity"
             searchable={false}

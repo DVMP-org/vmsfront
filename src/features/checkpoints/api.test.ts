@@ -20,21 +20,37 @@ const passage: PassageInput = {
 describe("checkpoint API", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("records through the assigned-checkpoint endpoint with the checkpoint header", async () => {
+  it("records through the assigned-checkpoint endpoint without a checkpoint header", async () => {
     vi.mocked(apiClient.post).mockResolvedValue({
       data: { id: "event" },
     });
 
-    await checkpointsApi.record("checkpoint-1", passage);
+    await checkpointsApi.record(passage);
 
     expect(apiClient.post).toHaveBeenCalledWith(
       "/admin/checkpoints/passages",
       passage,
-      { headers: { "X-Checkpoint": "checkpoint-1" } },
     );
   });
 
-  it("lists and reassigns the one active operator for a checkpoint", async () => {
+  it("saves several managers through the checkpoint assignment endpoint", async () => {
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { assignments: [] } });
+    await checkpointsApi.setOperators("checkpoint-1", ["admin-1", "admin-2"]);
+    expect(apiClient.put).toHaveBeenCalledWith(
+      "/admin/checkpoints/checkpoint-1/operators",
+      {
+        site_admin_ids: ["admin-1", "admin-2"],
+      },
+    );
+  });
+
+  it("loads the assigned console without a gate ID", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { id: "checkpoint" } });
+    await checkpointsApi.console();
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/checkpoints/console");
+  });
+
+  it("lists and adds a Site manager to a checkpoint", async () => {
     vi.mocked(apiClient.get).mockResolvedValue({
       data: { assignments: [] },
     });
