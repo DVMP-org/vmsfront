@@ -1,5 +1,11 @@
-# Design system foundations
+# Frontend design references
 
-The `/design-system` gallery demonstrates scoped light and dark semantic tokens, density, keyboard focus, typography, actions, field help and status. It preserves existing application styling by applying the tokens only within a `data-vms-theme` container. Reduced-motion preferences remove token-driven transitions.
+The current product direction is the light Operations Hub. Canonical visual
+rules live in [DESIGN-SYSTEM.md](../../vmscore/project-plans/vms-audit/DESIGN-SYSTEM.md),
+interaction in [COMPONENT-SPECIFICATIONS.md](../../vmscore/project-plans/vms-audit/COMPONENT-SPECIFICATIONS.md),
+and frontend implementation inventory in [component-kit.md](component-kit.md).
 
-`@vms/ui` exports the brand kit validator and CSS variables generator. Inputs are six-digit colors only. Both palettes must pass text and primary-to-surface contrast checks before variables can be used. This foundation does not yet implement brand publication, marks, typography selection, or the complete component library.
+The `/design-system` gallery demonstrates implemented primitives. Token or
+brand-kit support does not authorize a separate dark product theme. Read
+[UI_REVAMP.md](../../vmscore/project-plans/UI_REVAMP.md) for the task-specific map
+and [ACTIONS.md](../../vmscore/project-plans/ACTIONS.md) for actual status.

@@ -14,6 +14,7 @@ const toneClasses: Record<StatusTone, string> = {
     "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)] ring-[color-mix(in_srgb,var(--vms-warning)_25%,transparent)]",
   danger:
     "bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)] ring-[color-mix(in_srgb,var(--vms-danger)_25%,transparent)]",
+
 };
 
 export function StatusBadge({

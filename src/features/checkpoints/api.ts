@@ -3,6 +3,9 @@ import { ApiResponse, PaginatedResponse } from "@/types";
 export interface Gate {
   id: string;
   name: string;
+  slug?: string;
+  site_id?: string;
+  dependency_id?: string | null;
   place_id?: string | null;
   allowed_entry?: boolean;
   allowed_exit?: boolean;
@@ -71,6 +74,8 @@ export interface Passage {
   subject_type?: "visitor" | "party" | "unknown";
   gate_id: string;
   gate_name?: string | null;
+  next_gate_id?: string | null;
+  next_gate_name?: string | null;
   place_id?: string;
   place_name?: string | null;
   lane_id?: string | null;
@@ -108,6 +113,10 @@ export interface CredentialPreviewGuest {
   display_name: string;
   phone?: string | null;
   state: string;
+  /** Checkpoint holding the guest's active presence, when checked in. */
+  checked_in_at?: string | null;
+  /** Checkpoint the guest must still pass in their current direction. */
+  next_checkpoint?: string | null;
 }
 export interface CredentialPreviewInvitation {
   code: string;
@@ -133,6 +142,10 @@ export interface CredentialPreview {
   can_check_in: boolean;
   can_check_out: boolean;
   blocking_reason?: string | null;
+  /** The visitor passed this checkpoint but still owes a dependent one. */
+  onward_required?: boolean;
+  next_gate_id?: string | null;
+  next_checkpoint?: string | null;
 }
 export interface AccessEventFilters {
   page?: number;

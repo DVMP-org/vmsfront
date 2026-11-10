@@ -102,10 +102,9 @@
       "label": "Access",
       "items": [
         {
-          "label": "Checkpoints",
-          "href": "/admin/checkpoints",
+          "label": "Gates",
+          "href": "/admin/gates",
           "icon": "scan",
-          "permission": "gates.list",
           "module": "access_control"
         },
         {

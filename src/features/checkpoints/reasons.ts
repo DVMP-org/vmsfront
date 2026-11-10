@@ -99,3 +99,32 @@ export function reasonLabel(code?: string | null): string {
     if (known) return known;
     return code.replaceAll("_", " ");
 }
+
+/**
+ * Sentence for a completed passage, derived from the action and the
+ * checkpoint graph.
+ *
+ * A Site with a single checkpoint reports plain success; a multi-checkpoint
+ * Site also names the next gate the visitor must pass, so the operator knows
+ * the visit is not finished yet.
+ */
+export function passageMessage(passage: {
+    person_name?: string | null;
+    direction: "entry" | "exit";
+    outcome: string;
+    reason_code?: string | null;
+    gate_name?: string | null;
+    next_gate_name?: string | null;
+}): string {
+    if (passage.outcome !== "allowed") {
+        return reasonMessage(passage.reason_code);
+    }
+    const person = passage.person_name?.trim() || "The visitor";
+    const action = passage.direction === "entry" ? "checked in" : "checked out";
+    const next = passage.next_gate_name?.trim();
+    if (next) {
+        const nextAction = passage.direction === "entry" ? "check in" : "check out";
+        return `${person} ${action} at ${passage.gate_name || "the checkpoint"}. Next: ${nextAction} at ${next}.`;
+    }
+    return `${person} ${action} successfully.`;
+}

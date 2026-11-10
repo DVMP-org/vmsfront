@@ -75,7 +75,7 @@ export function CheckpointAssignmentsModal({
         className="space-y-4 p-5"
         onSubmit={(event) => {
           event.preventDefault();
-          if (selected?.length && !loading && !failed) save.mutate();
+          if (!loading && !failed) save.mutate();
         }}
       >
         {loading && <p role="status">Loading Site managers…</p>}
@@ -130,8 +130,8 @@ export function CheckpointAssignmentsModal({
             ))}
             {selected?.length === 0 && (
               <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
-                Select at least one manager. A checkpoint assignment cannot be
-                empty.
+                No manager selected. Saving leaves this checkpoint unassigned;
+                passages cannot be recorded until a manager is assigned.
               </p>
             )}
           </fieldset>
@@ -150,11 +150,7 @@ export function CheckpointAssignmentsModal({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={!selected?.length || loading || failed}
-            isLoading={save.isPending}
-          >
+          <Button type="submit" disabled={loading || failed} isLoading={save.isPending}>
             Save assignments
           </Button>
         </div>

@@ -265,15 +265,15 @@ describe("invitation approvals", () => {
     expect(screen.queryByRole("button", { name: "Decline" })).toBeNull();
   });
 
-  it("approves from the canonical detail route", async () => {
+  it("offers revocation instead of approval from the detail route", async () => {
     renderWithClient(<InvitationDetail invitationId="invite" />);
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: /Approve invitation/i }),
-    );
-    await waitFor(() =>
-      expect(invitationApprovalsApi.approve).toHaveBeenCalledWith("invite"),
-    );
+    expect(
+      await screen.findByRole("button", { name: /Revoke access/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Approve invitation/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("requires a reason before declining an invitation", async () => {
@@ -297,7 +297,7 @@ describe("invitation approvals", () => {
     renderWithClient(<InvitationDetail invitationId="invite" />);
 
     expect(await screen.findByText("entry allowed")).toBeInTheDocument();
-    expect(screen.getByText(/valid_authorization/)).toBeInTheDocument();
+    expect(screen.getAllByText(/valid_authorization/).length).toBeGreaterThan(0);
   });
 
   it("renders a group authorization as one row and lists every visitor in detail", async () => {

@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev",
     "dev:workspace": "turbo run dev --parallel",
     "build": "next build",
     "build:apps": "turbo run build --filter='./apps/*'",

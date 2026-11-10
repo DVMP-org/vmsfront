@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
+  ArrowUpRight,
   CalendarClock,
   ChevronRight,
   Clock3,
   MapPin,
   Search,
   ShieldCheck,
-  UserRound,
+  Route,
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
@@ -25,6 +27,19 @@ import { EmptyRow } from "./ui";
 
 type Audience = "my_access" | "my_visitors";
 type RangeFilter = "all" | "today" | "week" | "month";
+
+interface VisitorJourney {
+  key: string;
+  personName: string;
+  credential: string;
+  credentialReference: string;
+  gatePath: string[];
+  movements: Movement[];
+  latest: Movement;
+  lastAt: string;
+  minutes: number;
+  scans: number;
+}
 
 const day = (value: string) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -72,6 +87,85 @@ function withinRange(movement: Movement, range: RangeFilter) {
   return occurred >= Date.now() - days * 86_400_000;
 }
 
+/** Search the visitor as a whole: name, every checkpoint, credential and ID. */
+function searchable(movement: Movement) {
+  return [
+    movement.person_name ?? "",
+    movement.gate_name,
+    movement.credential_reference ?? "",
+    movement.credential_type ?? "",
+    movement.invitation_code ?? "",
+    movement.guest_suffix ?? "",
+    movement.invitation_code && movement.guest_suffix
+      ? `${movement.invitation_code}-${movement.guest_suffix}`
+      : "",
+    movement.reason_code,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+export function buildVisitorJourneys(
+  items: Movement[],
+  {
+    audience,
+    range,
+    needle,
+  }: { audience: Audience; range: RangeFilter; needle: string },
+): VisitorJourney[] {
+  const groups = new Map<string, Movement[]>();
+  for (const movement of items) {
+    const isVisitor = movement.subject_type === "visitor";
+    if (audience === "my_visitors" ? !isVisitor : isVisitor) continue;
+    if (!withinRange(movement, range)) continue;
+    if (needle && !searchable(movement).includes(needle)) continue;
+    const key = movement.subject_key ?? movement.id;
+    groups.set(key, [...(groups.get(key) ?? []), movement]);
+  }
+
+  return Array.from(groups.entries())
+    .map(([key, movements]) => {
+      const ordered = movements
+        .slice()
+        .sort(
+          (left, right) =>
+            new Date(left.occurred_at).getTime() -
+            new Date(right.occurred_at).getTime(),
+        );
+      const latest = ordered[ordered.length - 1];
+      const first = ordered[0];
+      const reference =
+        latest.invitation_code && latest.guest_suffix
+          ? `${latest.invitation_code}-${latest.guest_suffix}`
+          : latest.credential_reference ?? "";
+      return {
+        key,
+        personName: latest.person_name || "Visitor",
+        credential: credentialLabel(latest),
+        credentialReference: reference,
+        gatePath: Array.from(
+          new Set(ordered.map((movement) => movement.gate_name)),
+        ),
+        movements: ordered,
+        latest,
+        lastAt: latest.occurred_at,
+        minutes: Math.max(
+          0,
+          Math.round(
+            (new Date(latest.occurred_at).getTime() -
+              new Date(first.occurred_at).getTime()) /
+              60_000,
+          ),
+        ),
+        scans: ordered.length,
+      };
+    })
+    .sort(
+      (left, right) =>
+        new Date(right.lastAt).getTime() - new Date(left.lastAt).getTime(),
+    );
+}
+
 export function MovementsSection() {
   const { place, party } = usePlaceWorkspace();
   const [audience, setAudience] = useState<Audience>("my_visitors");
@@ -79,7 +173,7 @@ export function MovementsSection() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   // The details sidebar is only visible from xl up, so the drawer must not
   // mount on those screens or the same record appears twice.
@@ -90,70 +184,18 @@ export function MovementsSection() {
     queryFn: () => placeWorkspaceApi.movements(place.id, page),
     retry: false,
   });
-  const items = useMemo(() => query.data?.items ?? [], [query.data?.items]);
-
-  const journeys = useMemo(() => {
-    const groups = new Map<string, Movement[]>();
-    for (const movement of items) {
-      const key = movement.subject_key ?? movement.id;
-      groups.set(key, [...(groups.get(key) ?? []), movement]);
-    }
-    for (const [key, events] of Array.from(groups.entries())) {
-      groups.set(
-        key,
-        events.sort(
-          (left, right) =>
-            new Date(left.occurred_at).getTime() -
-            new Date(right.occurred_at).getTime(),
-        ),
-      );
-    }
-    return groups;
-  }, [items]);
-
   const needle = search.trim().toLowerCase();
-  const rows = items
-    .filter((movement) =>
-      audience === "my_visitors"
-        ? movement.subject_type === "visitor"
-        : movement.subject_type !== "visitor",
-    )
-    .filter((movement) => withinRange(movement, range))
-    .filter((movement) =>
-      needle
-        ? [
-            movement.person_name ?? "",
-            movement.gate_name,
-            movement.credential_reference ?? "",
-            movement.reason_code,
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(needle)
-        : true,
-    );
-
-  const selected =
-    rows.find((movement) => movement.id === selectedId) ?? rows[0];
-  const selectedJourney = selected
-    ? journeys.get(selected.subject_key ?? selected.id) ?? [selected]
-    : [];
-  const journeyStart = selectedJourney[0];
-  const journeyEnd = selectedJourney[selectedJourney.length - 1];
-  const journeyMinutes =
-    journeyStart && journeyEnd
-      ? Math.max(
-          0,
-          Math.round(
-            (new Date(journeyEnd.occurred_at).getTime() -
-              new Date(journeyStart.occurred_at).getTime()) /
-              60_000,
-          ),
-        )
-      : 0;
-  const checkpoints = Array.from(
-    new Set(selectedJourney.map((movement) => movement.gate_name)),
+  const rows = useMemo(
+    () =>
+      buildVisitorJourneys(query.data?.items ?? [], {
+        audience,
+        range,
+        needle,
+      }),
+    [query.data?.items, audience, range, needle],
   );
+
+  const selected = rows.find((row) => row.key === selectedKey) ?? rows[0];
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start">
@@ -176,7 +218,8 @@ export function MovementsSection() {
                 aria-pressed={audience === value}
                 onClick={() => {
                   setAudience(value);
-                  setSelectedId(null);
+                  setSelectedKey(null);
+                  setExpanded(null);
                 }}
                 className={cn(
                   "min-h-9 rounded-md px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
@@ -204,7 +247,7 @@ export function MovementsSection() {
             </select>
           </label>
           <label className="relative flex min-h-10 flex-1 items-center sm:max-w-xs">
-            <span className="sr-only">Search movements</span>
+            <span className="sr-only">Search visitors</span>
             <Search
               aria-hidden
               className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-[var(--vms-ink-muted)]"
@@ -213,7 +256,7 @@ export function MovementsSection() {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name"
+              placeholder="Search by name, checkpoint or ID"
               className="min-h-10 w-full rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] pl-9 pr-3 text-sm text-[var(--vms-ink)] transition hover:border-[var(--vms-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
             />
           </label>
@@ -254,26 +297,23 @@ export function MovementsSection() {
               <thead>
                 <tr className="border-b border-[var(--vms-line)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
                   <th scope="col" className="w-8 py-2.5" />
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Person</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Credential</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Checkpoint</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Direction</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Status</th>
-                  <th scope="col" className="py-2.5 font-semibold">Timestamp</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">Visitor</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">Journey</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">Scans</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">Latest</th>
+                  <th scope="col" className="py-2.5 font-semibold">Last scan</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((movement) => {
-                  const status = movementStatus(movement);
-                  const journey = journeys.get(movement.subject_key ?? movement.id) ?? [];
-                  const canExpand = journey.length > 1;
-                  const open = expanded === movement.id;
-                  const active = selected?.id === movement.id;
+                {rows.map((row) => {
+                  const status = movementStatus(row.latest);
+                  const open = expanded === row.key;
+                  const active = selected?.key === row.key;
                   return [
                     <tr
-                      key={movement.id}
+                      key={row.key}
                       onClick={() => {
-                        setSelectedId(movement.id);
+                        setSelectedKey(row.key);
                         if (!hasSidebar) setDetailsOpen(true);
                       }}
                       className={cn(
@@ -284,80 +324,86 @@ export function MovementsSection() {
                       )}
                     >
                       <td className="py-3 pl-1">
-                        {canExpand ? (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setExpanded(open ? null : movement.id);
-                            }}
-                            aria-expanded={open}
-                            aria-label={`${open ? "Collapse" : "Expand"} visitor journey`}
-                            className="grid h-6 w-6 place-items-center rounded text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)]"
-                          >
-                            <ChevronRight
-                              aria-hidden
-                              className={cn(
-                                "h-3.5 w-3.5 transition-transform",
-                                open && "rotate-90",
-                              )}
-                            />
-                          </button>
-                        ) : (
-                          <span aria-hidden className="block w-6" />
-                        )}
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedKey(row.key);
+                            setExpanded(open ? null : row.key);
+                          }}
+                          aria-expanded={open}
+                          aria-label={`${open ? "Collapse" : "Expand"} visitor journey`}
+                          className="grid h-6 w-6 place-items-center rounded text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)]"
+                        >
+                          <ChevronRight
+                            aria-hidden
+                            className={cn(
+                              "h-3.5 w-3.5 transition-transform",
+                              open && "rotate-90",
+                            )}
+                          />
+                        </button>
                       </td>
                       <td className="py-3 pr-3">
                         <div className="flex items-center gap-2.5">
                           <Avatar
-                            name={movement.person_name || "Visitor"}
+                            name={row.personName}
                             size="sm"
                             tone="ink"
                             decorative
                           />
-                          <span className="truncate text-sm font-semibold text-[var(--vms-ink)]">
-                            {movement.person_name || "Visitor"}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-[var(--vms-ink)]">
+                              {row.personName}
+                            </span>
+                            <span className="block truncate font-mono text-[10px] text-[var(--vms-ink-muted)]">
+                              {row.credentialReference || row.credential}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="py-3 pr-3">
-                        <span className="rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[11px] font-semibold text-[var(--vms-ink)]">
-                          {credentialLabel(movement)}
+                        <span className="flex items-center gap-1.5 text-xs text-[var(--vms-ink)]">
+                          <Route
+                            aria-hidden
+                            className="h-3.5 w-3.5 shrink-0 text-[var(--vms-ink-muted)]"
+                          />
+                          <span className="truncate">
+                            {row.gatePath.join(" → ")}
+                          </span>
                         </span>
                       </td>
-                      <td className="py-3 pr-3 text-sm text-[var(--vms-ink)]">
-                        {movement.gate_name}
+                      <td className="py-3 pr-3 text-sm tabular-nums text-[var(--vms-ink)]">
+                        {row.scans}
                       </td>
                       <td className="py-3 pr-3">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 text-sm",
-                            movement.direction === "entry"
-                              ? "text-[var(--vms-success)]"
-                              : "text-[var(--vms-danger)]",
-                          )}
-                        >
-                          <ArrowLeftRight aria-hidden className="h-3.5 w-3.5" />
-                          {movement.direction === "entry" ? "Entry" : "Exit"}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3">
-                        <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge tone={status.tone}>
+                            {status.label}
+                          </StatusBadge>
+                          <span className="text-xs text-[var(--vms-ink-muted)]">
+                            {row.latest.gate_name}
+                          </span>
+                        </div>
                       </td>
                       <td className="whitespace-nowrap py-3 text-xs text-[var(--vms-ink-muted)]">
-                        {dayTime(movement.occurred_at)}
+                        {dayTime(row.lastAt)}
                       </td>
                     </tr>,
-                    canExpand && open ? (
-                      <tr key={`${movement.id}-journey`} className="border-b border-[var(--vms-line)]">
+                    open ? (
+                      <tr
+                        key={`${row.key}-journey`}
+                        className="border-b border-[var(--vms-line)]"
+                      >
                         <td />
-                        <td colSpan={6} className="py-3 pr-3">
+                        <td colSpan={5} className="py-3 pr-3">
                           <div className="rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3">
                             <p className="mb-2 text-xs font-semibold text-[var(--vms-ink)]">
-                              Visitor journey
+                              Visitor journey · {row.scans} scan
+                              {row.scans === 1 ? "" : "s"}
                             </p>
                             <ol className="space-y-2">
-                              {journey.map((event) => {
+                              {row.movements.map((event) => {
                                 const eventStatus = movementStatus(event);
                                 return (
                                   <li
@@ -375,7 +421,9 @@ export function MovementsSection() {
                                     />
                                     <span className="truncate text-xs text-[var(--vms-ink)]">
                                       {event.gate_name} —{" "}
-                                      {event.direction === "entry" ? "Entry" : "Exit"}
+                                      {event.direction === "entry"
+                                        ? "Entry"
+                                        : "Exit"}
                                     </span>
                                     <span className="text-xs text-[var(--vms-ink-muted)]">
                                       {clock(event.occurred_at)}
@@ -401,7 +449,7 @@ export function MovementsSection() {
         <div className="flex items-center justify-between gap-3 border-t border-[var(--vms-line)] px-4 py-3">
           <p className="text-xs text-[var(--vms-ink-muted)]">
             {rows.length
-              ? `${rows.length} movement${rows.length === 1 ? "" : "s"} on this page`
+              ? `${rows.length} visitor${rows.length === 1 ? "" : "s"} on this page`
               : "No movements"}
           </p>
           <div className="flex items-center gap-1">
@@ -429,12 +477,10 @@ export function MovementsSection() {
       </div>
 
       <aside className="hidden rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)] xl:sticky xl:top-20 xl:block">
-        <MovementDetails
+        <JourneyDetails
           selected={selected}
-          journey={selectedJourney}
-          checkpoints={checkpoints}
-          journeyMinutes={journeyMinutes}
           placeName={place.name}
+          placeId={place.id}
         />
       </aside>
       {hasSidebar ? null : (
@@ -443,16 +489,14 @@ export function MovementsSection() {
           onClose={() => setDetailsOpen(false)}
           side="right"
           className="sm:max-w-md"
-          title="Movement details"
-          description="Entry and exit activity for this movement."
+          title="Visitor journey"
+          description="Every checkpoint scan recorded for this visitor."
           contentClassName="p-0"
         >
-          <MovementDetails
+          <JourneyDetails
             selected={selected}
-            journey={selectedJourney}
-            checkpoints={checkpoints}
-            journeyMinutes={journeyMinutes}
             placeName={place.name}
+            placeId={place.id}
           />
         </Drawer>
       )}
@@ -460,54 +504,46 @@ export function MovementsSection() {
   );
 }
 
-function MovementDetails({
+function JourneyDetails({
   selected,
-  journey,
-  checkpoints,
-  journeyMinutes,
   placeName,
+  placeId,
 }: {
-  selected: Movement | undefined;
-  journey: Movement[];
-  checkpoints: string[];
-  journeyMinutes: number;
+  selected: VisitorJourney | undefined;
   placeName: string;
+  placeId: string;
 }) {
   if (!selected) {
     return (
       <div className="p-4">
         <EmptyRow
           icon={Clock3}
-          title="No movement selected"
-          description="Choose a movement to see its details and journey."
+          title="No visitor selected"
+          description="Choose a visitor to see their journey and every scan."
         />
       </div>
     );
   }
+  const status = movementStatus(selected.latest);
   return (
     <div className="divide-y divide-[var(--vms-line)]">
       <div className="p-4">
         <h2 className="text-lg font-semibold tracking-[-0.01em] text-[var(--vms-ink)]">
-          Movement details
+          Visitor journey
         </h2>
         <div className="mt-3 flex items-center gap-3">
-          <Avatar
-            name={selected.person_name || "Visitor"}
-            size="lg"
-            tone="ink"
-            decorative
-          />
+          <Avatar name={selected.personName} size="lg" tone="ink" decorative />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--vms-ink)]">
-              {selected.person_name || "Visitor"}
+              {selected.personName}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-ink-muted)]">
-                {credentialLabel(selected)}
+                {selected.credential}
               </span>
-              {selected.credential_reference ? (
+              {selected.credentialReference ? (
                 <span className="font-mono text-[10px] text-[var(--vms-ink-muted)]">
-                  {selected.credential_reference}
+                  {selected.credentialReference}
                 </span>
               ) : null}
             </div>
@@ -519,21 +555,29 @@ function MovementDetails({
         <div className="flex items-start justify-between gap-3">
           <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
             <ArrowLeftRight aria-hidden className="h-4 w-4" />
-            Entry / Exit
+            Latest
           </dt>
           <dd className="text-right font-medium text-[var(--vms-ink)]">
-            {selected.direction === "entry" ? "Entry" : "Exit"}
+            {selected.latest.direction === "entry" ? "Entry" : "Exit"} ·{" "}
+            {selected.latest.gate_name}
           </dd>
         </div>
         <div className="flex items-start justify-between gap-3">
           <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
             <MapPin aria-hidden className="h-4 w-4" />
-            Checkpoint
+            Destination
           </dt>
           <dd className="max-w-[10rem] text-right text-[var(--vms-ink)]">
-            {checkpoints.length > 1
-              ? `Multiple (${checkpoints.join(", ")})`
-              : selected.gate_name}
+            {selected.latest.place_name || placeName}
+          </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+            <Route aria-hidden className="h-4 w-4" />
+            Checkpoints
+          </dt>
+          <dd className="max-w-[10rem] text-right text-[var(--vms-ink)]">
+            {selected.gatePath.join(", ")}
           </dd>
         </div>
         <div className="flex items-start justify-between gap-3">
@@ -542,47 +586,52 @@ function MovementDetails({
             Result
           </dt>
           <dd className="text-right">
-            <StatusBadge tone={movementStatus(selected).tone}>
-              {movementStatus(selected).label}
-            </StatusBadge>
+            <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
           </dd>
         </div>
         <div className="flex items-start justify-between gap-3">
           <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
             <CalendarClock aria-hidden className="h-4 w-4" />
-            Date
+            Last scan
           </dt>
           <dd className="text-right text-[var(--vms-ink)]">
-            {day(selected.occurred_at)}
+            {day(selected.lastAt)}
           </dd>
         </div>
         <div className="flex items-start justify-between gap-3">
           <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
             <Clock3 aria-hidden className="h-4 w-4" />
-            Total duration
+            Journey duration
           </dt>
           <dd className="text-right text-[var(--vms-ink)]">
-            {journeyMinutes > 0
-              ? `${Math.floor(journeyMinutes / 60)} h ${journeyMinutes % 60} min`
+            {selected.minutes > 0
+              ? `${Math.floor(selected.minutes / 60)} h ${selected.minutes % 60} min`
               : "—"}
           </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+            <Route aria-hidden className="h-4 w-4" />
+            Scans
+          </dt>
+          <dd className="text-right text-[var(--vms-ink)]">{selected.scans}</dd>
         </div>
       </dl>
 
       <div className="p-4">
         <h3 className="mb-3 text-sm font-semibold text-[var(--vms-ink)]">
-          Event timeline
+          Scan timeline
         </h3>
         <ol className="space-y-3">
-          {journey.map((event) => {
-            const status = movementStatus(event);
+          {selected.movements.map((event) => {
+            const eventStatus = movementStatus(event);
             return (
               <li key={event.id} className="flex items-start gap-2.5">
                 <span
                   aria-hidden
                   className={cn(
                     "mt-1 h-2.5 w-2.5 shrink-0 rounded-full ring-2",
-                    status.tone === "success"
+                    eventStatus.tone === "success"
                       ? "bg-[var(--vms-success)] ring-[var(--vms-success-subtle)]"
                       : "bg-[var(--vms-danger)] ring-[var(--vms-danger-subtle)]",
                   )}
@@ -596,7 +645,9 @@ function MovementDetails({
                     <span className="text-[11px] text-[var(--vms-ink-muted)]">
                       {clock(event.occurred_at)}
                     </span>
-                    <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                    <StatusBadge tone={eventStatus.tone}>
+                      {eventStatus.label}
+                    </StatusBadge>
                   </div>
                 </div>
               </li>
@@ -605,12 +656,21 @@ function MovementDetails({
         </ol>
       </div>
 
-      {selected.subject_type !== "visitor" ? (
-        <div className="flex items-center gap-2 p-4 text-xs text-[var(--vms-ink-muted)]">
-          <UserRound aria-hidden className="h-4 w-4" />
+      {selected.latest.subject_type !== "visitor" ? (
+        <div className="p-4 text-xs text-[var(--vms-ink-muted)]">
           Your own access record at {placeName}
         </div>
       ) : null}
+
+      <div className="p-4">
+        <Link
+          href={`/workspace/${placeId}/movements/${encodeURIComponent(selected.key)}`}
+          className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 text-sm font-semibold text-[var(--vms-on-action)] transition hover:bg-[var(--vms-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+        >
+          More details
+          <ArrowUpRight className="h-4 w-4" aria-hidden />
+        </Link>
+      </div>
     </div>
   );
 }

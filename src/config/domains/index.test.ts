@@ -46,7 +46,7 @@ describe("domain experience configuration", () => {
       expect(access?.label).toBe("Access");
       expect(access?.items.map((item) => item.href)).toEqual(
         expect.arrayContaining([
-          "/admin/checkpoints",
+          "/admin/gates",
           "/admin/checkpoints/console",
           "/admin/invitations",
           "/admin/passages",

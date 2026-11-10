@@ -277,7 +277,9 @@ describe("AccessWorkspace", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("Alex Morgan").length).toBeGreaterThan(0);
     expect(
-      await screen.findByText("No checkpoint events yet."),
+      await screen.findByText(
+        "No checkpoint scans have been recorded for this visitor.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -333,7 +335,7 @@ describe("AccessWorkspace", () => {
       await screen.findByRole("button", { name: /open invitation/i }),
     );
 
-    expect(await screen.findByText("entry · allowed")).toBeInTheDocument();
+    expect((await screen.findAllByText(/Checked in/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/Gate gate-123/)).toBeInTheDocument();
     expect(screen.getByText(/active_authorization/)).toBeInTheDocument();
   });

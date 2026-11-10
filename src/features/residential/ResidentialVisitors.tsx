@@ -1,36 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-  ExternalLink,
-  ShieldCheck,
-} from "lucide-react";
-import { toast } from "sonner";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
   DataTable,
-  type BulkAction,
   type Column,
   type FilterDefinition,
 } from "@/components/ui/DataTable";
 import type { VisitAuthorization } from "@/features/access-journey/api";
 import { invitationApprovalsApi } from "@/features/invitation-approvals/api";
+import { VisitorDetailDrawer } from "@/features/invitation-approvals/VisitorDetailDrawer";
 import { parseApiError } from "@/lib/error-utils";
 import { formatDateTime } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
-import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
+import { ResidentialShell } from "./ResidentialShell";
+
+/** One row per visitor, not per invitation. */
+interface VisitorRow {
+  key: string;
+  /** Hidden column the table searches: name, invitation ID and suffix. */
+  search_text: string;
+  guestName: string;
+  visitorId: string;
+  guestId: string;
+  invitationId: string;
+  host: string;
+  destination: string;
+  validTo: string;
+  guestState: string;
+  status: string;
+}
 
 export function ResidentialVisitors() {
   const site = useAppStore((state) => state.selectedProperty);
   const siteId = site?.id;
-  const { canManageVisitors } = useResidentialAccess();
-  const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [active, setActive] = useState<{
+    invitationId: string;
+    guestId: string;
+  } | null>(null);
   const invitations = useQuery({
     queryKey: ["residential", siteId, "visitors", "all"],
     queryFn: () =>
@@ -43,21 +54,11 @@ export function ResidentialVisitors() {
     enabled: !!siteId,
     retry: false,
   });
-  const approve = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => invitationApprovalsApi.approve(id)));
-    },
-    onSuccess: async (_, ids) => {
-      toast.success(
-        `${ids.length} ${ids.length === 1 ? "invitation" : "invitations"} approved`,
-      );
-      await queryClient.invalidateQueries({
-        queryKey: ["residential", siteId, "visitors"],
-      });
-      setSelected(new Set());
-    },
-    onError: (error) => toast.error(parseApiError(error).message),
-  });
+
+  const rows = useMemo(
+    () => buildVisitorRows(invitations.data?.items ?? []),
+    [invitations.data?.items],
+  );
 
   const filters: FilterDefinition[] = [
     {
@@ -65,8 +66,10 @@ export function ResidentialVisitors() {
       label: "Status",
       type: "select",
       options: [
+        { value: "checked_in", label: "Checked in" },
+        { value: "active", label: "Active" },
         { value: "requested", label: "Awaiting approval" },
-        { value: "approved", label: "Approved" },
+        { value: "approved", label: "Expected" },
         { value: "declined", label: "Declined" },
         { value: "expired", label: "Expired" },
         { value: "cancelled", label: "Cancelled" },
@@ -75,116 +78,80 @@ export function ResidentialVisitors() {
       operator: "eq",
     },
   ];
-  const columns: Column<VisitAuthorization>[] = [
+  const columns: Column<VisitorRow>[] = [
     {
-      key: "guest",
+      key: "guestName",
       header: "Visitor",
       sortable: true,
-      accessor: (invitation) => (
+      accessor: (row) => (
         <div>
-          <span className="block font-semibold">{guestNames(invitation)}</span>
+          <span className="block font-semibold">{row.guestName}</span>
           <span className="block font-mono text-xs text-[var(--vms-ink-muted)]">
-            {invitation.code}
+            {row.visitorId}
           </span>
         </div>
       ),
     },
     {
-      key: "host_party.display_name",
+      key: "search_text",
+      header: "Search",
+      hiddenByDefault: true,
+    },
+    {
+      key: "host",
       header: "Host",
       sortable: true,
-      accessor: (invitation) => invitation.host_party.display_name,
     },
     {
-      key: "destination_place.name",
+      key: "destination",
       header: "Destination",
       sortable: true,
-      accessor: (invitation) => invitation.destination_place.name,
     },
     {
-      key: "valid_to",
+      key: "validTo",
       header: "Valid until",
       sortable: true,
-      accessor: (invitation) => formatDateTime(invitation.valid_to),
-    },
-    {
-      key: "uses",
-      header: "Uses",
-      sortable: true,
-      accessor: (invitation) =>
-        `${invitation.uses_count}${invitation.max_uses ? ` / ${invitation.max_uses}` : " / unlimited"}`,
+      accessor: (row) => formatDateTime(row.validTo),
     },
     {
       key: "status",
       header: "Status",
       sortable: true,
-      accessor: (invitation) => (
-        <Badge
-          variant={
-            invitation.status === "approved"
-              ? "success"
-              : invitation.status === "requested"
-                ? "warning"
-                : invitation.status === "declined" ||
-                    invitation.status === "revoked"
-                  ? "danger"
-                  : "neutral"
-          }
-        >
-          {invitation.status.replaceAll("_", " ")}
-        </Badge>
+      accessor: (row) => (
+        <Badge variant={statusVariant(row.status)}>{statusLabel(row)}</Badge>
       ),
     },
     {
       key: "actions",
       header: "",
       mobileHide: true,
-      accessor: (invitation) => (
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/admin/invitations/${invitation.id}`}>
-            Open
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          </Link>
+      accessor: (row) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            setActive({ invitationId: row.invitationId, guestId: row.guestId })
+          }
+        >
+          Open
+          <Eye className="h-3.5 w-3.5" aria-hidden />
         </Button>
       ),
-    },
-  ];
-  const bulkActions: BulkAction[] = [
-    {
-      label: "Approve",
-      icon: CheckCircle2,
-      onClick: (ids) => {
-        const pending = (invitations.data?.items || [])
-          .filter(
-            (invitation) =>
-              ids.includes(invitation.id) &&
-              invitation.status === "requested",
-          )
-          .map((invitation) => invitation.id);
-        if (!pending.length) {
-          toast.info("Only invitations awaiting approval can be approved.");
-          return;
-        }
-        approve.mutate(pending);
-      },
     },
   ];
 
   return (
     <ResidentialShell
       title="Visitors & access"
-      description="Review visitor invitations addressed to this property and follow their access status without leaving the residential workspace."
+      description="Every visitor at this property, one row each. Search by their invitation ID or suffix, then open the visitor to follow their journey and scans."
     >
       <DataTable
-        data={invitations.data?.items || []}
+        data={rows}
         columns={columns}
-        tableLabel="Residential visitor invitations"
-        searchPlaceholder="Search visitors, hosts or codes"
+        tableLabel="Residential visitor register"
+        searchPlaceholder="Search by name, invitation ID or suffix"
         availableFilters={filters}
-        selectable={canManageVisitors}
-        selectedRows={selected}
-        onSelectionChange={setSelected}
-        bulkActions={canManageVisitors ? bulkActions : []}
         isLoading={invitations.isPending}
         isStale={invitations.isError && !!invitations.data}
         errorMessage={
@@ -193,44 +160,98 @@ export function ResidentialVisitors() {
             : null
         }
         onRetry={() => invitations.refetch()}
-        emptyMessage="No visitor invitations have been created for this property."
-        mobileSummary={(invitation) => (
-          <div className="space-y-2">
+        emptyMessage="No visitors have been invited to this property."
+        mobileSummary={(row) => (
+          <button
+            type="button"
+            className="w-full space-y-2 text-left"
+            onClick={() =>
+              setActive({
+                invitationId: row.invitationId,
+                guestId: row.guestId,
+              })
+            }
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-semibold">{guestNames(invitation)}</p>
+                <p className="font-semibold">{row.guestName}</p>
                 <p className="font-mono text-xs text-[var(--vms-ink-muted)]">
-                  {invitation.code}
+                  {row.visitorId}
                 </p>
               </div>
-              <Badge
-                variant={
-                  invitation.status === "approved"
-                    ? "success"
-                    : invitation.status === "requested"
-                      ? "warning"
-                      : "neutral"
-                }
-              >
-                {invitation.status}
+              <Badge variant={statusVariant(row.status)}>
+                {statusLabel(row)}
               </Badge>
             </div>
-            <p className="text-sm">
-              Host: {invitation.host_party.display_name}
-            </p>
+            <p className="text-sm">Host: {row.host}</p>
             <p className="text-xs text-[var(--vms-ink-muted)]">
-              Valid until {formatDateTime(invitation.valid_to)}
+              Valid until {formatDateTime(row.validTo)}
             </p>
-          </div>
+          </button>
         )}
       />
 
+      <VisitorDetailDrawer
+        invitationId={active?.invitationId ?? null}
+        focusGuestId={active?.guestId ?? null}
+        onClose={() => setActive(null)}
+      />
     </ResidentialShell>
   );
 }
 
-function guestNames(invitation: VisitAuthorization) {
-  return invitation.guests
-    .map((guest) => guest.display_name_snapshot)
-    .join(", ");
+export function buildVisitorRows(
+  invitations: VisitAuthorization[],
+): VisitorRow[] {
+  return invitations.flatMap((invitation) =>
+    invitation.guests.map((guest) => {
+      const visitorId = `${invitation.code}-${guest.suffix}`;
+      const status =
+        guest.state === "checked_in"
+          ? "checked_in"
+          : (invitation.display_status ?? invitation.status);
+      return {
+        key: `${invitation.id}:${guest.id}`,
+        search_text: [
+          guest.display_name_snapshot,
+          guest.email_snapshot ?? "",
+          guest.phone_snapshot ?? "",
+          invitation.code,
+          guest.suffix,
+          visitorId,
+          invitation.host_party.display_name,
+          invitation.destination_place.name,
+        ]
+          .join(" ")
+          .toLowerCase(),
+        guestName: guest.display_name_snapshot,
+        visitorId,
+        guestId: guest.id,
+        invitationId: invitation.id,
+        host: invitation.host_party.display_name,
+        destination: invitation.destination_place.name,
+        validTo: invitation.valid_to,
+        guestState: guest.state,
+        status,
+      };
+    }),
+  );
+}
+
+function statusLabel(row: VisitorRow) {
+  if (row.status === "checked_in") return "Checked in";
+  if (row.status === "active") return "Active";
+  if (row.status === "requested") return "Awaiting approval";
+  if (row.status === "approved") return "Expected";
+  return row.status.replaceAll("_", " ");
+}
+
+function statusVariant(status: string) {
+  if (status === "checked_in" || status === "active") return "info" as const;
+  if (status === "approved") return "success" as const;
+  if (status === "requested") return "warning" as const;
+  if (status === "declined" || status === "revoked" || status === "expired") {
+    return "danger" as const;
+  }
+  return "neutral" as const;
 }

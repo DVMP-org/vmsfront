@@ -45,6 +45,7 @@ const infoStatuses = new Set([
     "triaged",
     "assigned",
     "scheduled_for_payment",
+    "open"
 ]);
 const warningStatuses = new Set([
     "expiring",
@@ -66,6 +67,7 @@ const dangerStatuses = new Set([
     "rejected",
     "ended",
     "suspended",
+    "closed"
 ]);
 
 function normaliseStatus(status: string) {
@@ -88,6 +90,8 @@ export function titleCaseStatus(status: string) {
 }
 
 export function StatusPill({ status }: { status?: string | null }) {
+
+
     if (!status?.trim()) {
         return <StatusBadge tone="neutral">Unknown</StatusBadge>;
     }

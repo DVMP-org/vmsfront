@@ -87,6 +87,8 @@ export interface ChargeAcknowledgement {
 export interface Movement {
   id: string;
   gate_name: string;
+  /** Destination Place for the movement (invitation destination fallback). */
+  place_name?: string | null;
   direction: string;
   outcome: string;
   reason_code: string;
@@ -136,11 +138,22 @@ export const placeWorkspaceApi = {
         body,
       )
     ).data,
-  movements: async (id: string, page = 1) =>
+  movements: async (
+    id: string,
+    page = 1,
+    subjectKey?: string,
+    pageSize = 20,
+  ) =>
     (
       await apiClient.get<
         ApiResponse<{ items: Movement[]; has_more: boolean }>
-      >(`${path(id)}/movements`, { params: { page, page_size: 20 } })
+      >(`${path(id)}/movements`, {
+        params: {
+          page,
+          page_size: pageSize,
+          ...(subjectKey ? { subject_key: subjectKey } : {}),
+        },
+      })
     ).data,
   charges: async (id: string, page = 1, definitionId?: string) =>
     (

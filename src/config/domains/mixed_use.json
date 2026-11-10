@@ -88,8 +88,8 @@
       "label": "Access",
       "items": [
         {
-          "label": "Checkpoints",
-          "href": "/admin/checkpoints",
+          "label": "Gates",
+          "href": "/admin/gates",
           "icon": "scan",
           "module": "check_in_out"
         },

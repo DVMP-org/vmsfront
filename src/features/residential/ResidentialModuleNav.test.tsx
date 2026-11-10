@@ -28,9 +28,9 @@ describe("residential module navigation", () => {
       "href",
       "/admin/residential/announcements",
     );
-    expect(screen.getByRole("link", { name: "Checkpoints" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Gates" })).toHaveAttribute(
       "href",
-      "/admin/checkpoints",
+      "/admin/gates",
     );
     expect(screen.getByRole("link", { name: "Invitations" })).toHaveAttribute(
       "href",

@@ -11,8 +11,6 @@ import {
   FilterDefinition,
 } from "@/components/ui/DataTable";
 import {
-  ArrowUpRight,
-  Eye,
   GitBranch,
   GitGraph,
   Plus,
@@ -25,9 +23,9 @@ import { Gate } from "@/types";
 import { useAdminGates, useDeleteGate } from "@/hooks/use-admin";
 import { useUrlQuerySync } from "@/hooks/use-url-query-sync";
 import { GateFormModal } from "@/components/admin/gate-modals/GateFormModal";
-import { GateOperatorModal } from "@/components/admin/gate-modals/GateOperatorModal";
+import { GateConfigureDrawer } from "@/components/admin/gate-modals/GateConfigureDrawer";
+import { CheckpointAssignmentsModal } from "@/features/checkpoints/CheckpointAssignmentsModal";
 import { GateDependencyEditorModal } from "@/components/admin/gate-modals/GateDependencyEditorModal";
-import { GateViewModal } from "@/components/admin/gate-modals/GateViewModal";
 import { GateDependencyModal } from "@/components/admin/gate-modals/GateDependencyModal";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { useAppStore } from "@/store/app-store";
@@ -69,10 +67,10 @@ export default function AdminGatesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedGate, setSelectedGate] = useState<Gate | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
+  const [isConfigureOpen, setIsConfigureOpen] = useState(false);
   const [isDependencyEditorOpen, setIsDependencyEditorOpen] = useState(false);
   const [isDependencyModalOpen, setIsDependencyModalOpen] = useState(false);
+  const [assigningGate, setAssigningGate] = useState<Gate | null>(null)
   const [gatePendingDelete, setGatePendingDelete] = useState<Gate | null>(null);
 
   useEffect(() => {
@@ -128,16 +126,16 @@ export default function AdminGatesPage() {
     queryFn: () => checkpointsApi.operators(selectedProperty?.id),
     retry: false,
   });
-  const operatorsByGate = useMemo(
-    () =>
-      new Map(
-        (operators.data?.assignments ?? []).map((assignment) => [
-          assignment.gate_id,
-          assignment,
-        ]),
-      ),
-    [operators.data?.assignments],
-  );
+  const operatorsByGate = useMemo(() => {
+    const assignments = operators.data?.assignments ?? [];
+    const grouped = new Map<string, typeof assignments>();
+    for (const assignment of assignments) {
+      const current = grouped.get(assignment.gate_id) ?? [];
+      current.push(assignment);
+      grouped.set(assignment.gate_id, current);
+    }
+    return grouped;
+  }, [operators.data?.assignments]);
 
   const deleteGateMutation = useDeleteGate();
 
@@ -164,21 +162,18 @@ export default function AdminGatesPage() {
   }, [filterOptionsData]);
   const handleEdit = (gate: Gate) => {
     setSelectedGate(gate);
+    setIsConfigureOpen(false);
     setIsEditModalOpen(true);
   };
 
-  const handleView = (gate: Gate) => {
+  const handleConfigure = (gate: Gate) => {
     setSelectedGate(gate);
-    setIsViewModalOpen(true);
-  };
-
-  const handleToggleAdmin = (gate: Gate) => {
-    setSelectedGate(gate);
-    setIsOperatorModalOpen(true);
+    setIsConfigureOpen(true);
   };
 
   const handleDependency = (gate: Gate) => {
     setSelectedGate(gate);
+    setIsConfigureOpen(false);
     setIsDependencyEditorOpen(true);
   };
 
@@ -221,21 +216,26 @@ export default function AdminGatesPage() {
       key: "operator",
       header: "Checkpoint operator",
       sortable: false,
-      accessor: (row) =>
-        operatorsByGate.get(row.id) ? (
+      accessor: (row) => {
+        const assigned = operatorsByGate.get(row.id) ?? [];
+        if (!assigned.length) {
+          return (
+            <span className="text-xs italic text-[var(--vms-warning)]">
+              Unassigned
+            </span>
+          );
+        }
+        return (
           <div>
             <span className="block text-sm font-semibold text-[var(--vms-ink)]">
-              {operatorsByGate.get(row.id)?.site_admin.user.name}
+              {assigned.map((item) => item.site_admin.user.name).join(", ")}
             </span>
             <span className="text-xs text-[var(--vms-ink-muted)]">
-              {operatorsByGate.get(row.id)?.site_admin.user.email || "Assigned"}
+              {assigned.length} manager{assigned.length === 1 ? "" : "s"}
             </span>
           </div>
-        ) : (
-          <span className="text-xs italic text-[var(--vms-warning)]">
-            Unassigned
-          </span>
-        ),
+        );
+      },
     },
     {
       key: "dependency",
@@ -263,36 +263,18 @@ export default function AdminGatesPage() {
       accessor: (row) => (
         <div className="flex items-center gap-2">
           <Button
-            asChild
             variant="ghost"
             size="icon-sm"
-            aria-label={`Open checkpoint for ${row.name}`}
-          >
-            <a href={`/admin/checkpoints/${row.id}`}>
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => handleView(row)}
-            aria-label={`View ${row.name}`}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => handleEdit(row)}
-            aria-label={`Edit ${row.name}`}
+            onClick={() => handleConfigure(row)}
+            aria-label={`Configure ${row.name}`}
           >
             <Settings className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => handleToggleAdmin(row)}
-            aria-label={`Assign operator for ${row.name}`}
+            onClick={() => setAssigningGate(row)}
+            aria-label={`Assign checkpoint operators to ${row.name}`}
           >
             <UserPlus className="h-4 w-4" />
           </Button>
@@ -408,23 +390,24 @@ export default function AdminGatesPage() {
         gate={selectedGate || undefined}
       />
 
-      <GateViewModal
-        isOpen={isViewModalOpen}
+      <GateConfigureDrawer
+        open={isConfigureOpen}
+        gate={selectedGate}
         onClose={() => {
-          setIsViewModalOpen(false);
+          setIsConfigureOpen(false);
           setSelectedGate(null);
         }}
-        gate={selectedGate || undefined}
+        onEdit={handleEdit}
+        onEditDependency={handleDependency}
       />
 
-      <GateOperatorModal
-        open={isOperatorModalOpen}
-        onClose={() => {
-          setIsOperatorModalOpen(false);
-          setSelectedGate(null);
-        }}
-        gate={selectedGate}
-      />
+      {assigningGate ? (
+        <CheckpointAssignmentsModal
+          gate={assigningGate}
+          siteId={assigningGate.site_id}
+          onClose={() => setAssigningGate(null)}
+        />
+      ) : null}
 
       <GateDependencyEditorModal
         open={isDependencyEditorOpen}

@@ -87,6 +87,41 @@ export function useCancelInvitation(): UseMutationResult<
     });
 }
 
+export function useRevokeInvitation(): UseMutationResult<
+    VisitAuthorization,
+    Error,
+    string
+> {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: accessJourneyApi.revoke,
+        onSuccess: async () => {
+            toast.success("Invitation revoked");
+            await client.invalidateQueries({ queryKey: accessJourneyKeys.all });
+        },
+        onError: (error) => toast.error(parseApiError(error).message),
+    });
+}
+
+export function useUpdateInvitation(
+    invitationId: string,
+): UseMutationResult<
+    VisitAuthorization,
+    Error,
+    Parameters<typeof accessJourneyApi.update>[1]
+> {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (body: Parameters<typeof accessJourneyApi.update>[1]) =>
+            accessJourneyApi.update(invitationId, body),
+        onSuccess: async () => {
+            toast.success("Invitation updated");
+            await client.invalidateQueries({ queryKey: accessJourneyKeys.all });
+        },
+        onError: (error) => toast.error(parseApiError(error).message),
+    });
+}
+
 export function useInvitation(
     invitationId: string | null,
 ): UseQueryResult<VisitAuthorization> {

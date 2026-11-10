@@ -462,7 +462,7 @@ export function PassagesDirectory() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<AccessEventFilters>({});
-  const [expandedJourney, setExpandedJourney] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const dayStart = useMemo(() => {
     const start = new Date();
@@ -788,9 +788,10 @@ export function PassagesDirectory() {
                 ))
               ) : events.length ? (
                 events.flatMap((event) => {
-                  const key = journeyKey(event);
-                  const journey = journeys.get(key) || [event];
-                  const expanded = expandedJourney === key;
+                  const journey = journeys.get(journeyKey(event)) || [event];
+                  // Expand the clicked row only; never every scan that shares
+                  // the same invitation or visitor group.
+                  const expanded = expandedEventId === event.id;
                   return [
                     <tr
                       key={event.id}
@@ -805,7 +806,7 @@ export function PassagesDirectory() {
                           aria-expanded={expanded}
                           onClick={(click) => {
                             click.stopPropagation();
-                            setExpandedJourney(expanded ? null : key);
+                            setExpandedEventId(expanded ? null : event.id);
                           }}
                         >
                           <ChevronDown
@@ -875,6 +876,7 @@ export function PassagesDirectory() {
                         <Link
                           href={`/admin/passages/${event.id}`}
                           aria-label={`Open movement ${event.id}`}
+                          onClick={(click) => click.stopPropagation()}
                         >
                           <ArrowLeftRight aria-hidden="true" />
                         </Link>

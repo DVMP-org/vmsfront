@@ -42,17 +42,29 @@ export const timeLabel = (value: Date) =>
         minute: "2-digit",
     });
 
+const TERMINAL_INVITATION_STATUSES = new Set([
+    "declined",
+    "cancelled",
+    "revoked",
+    "expired",
+]);
+
+/**
+ * A visitor is on site as soon as they pass any checkpoint, even while another
+ * dependent checkpoint is still owed (``entry_in_progress``).
+ */
+export function isGuestOnSite(guest: { state: string }) {
+    return guest.state === "checked_in" || guest.state === "entry_in_progress";
+}
+
 export function invitationBucket(
     invitation: VisitAuthorization,
     now: number,
 ): InvitationTab {
-    const start = new Date(invitation.valid_from).getTime();
-    const end = new Date(invitation.valid_to).getTime();
-    const open =
-        invitation.status === "approved" || invitation.status === "requested";
-    if (open && start <= now && end >= now) return "on_site";
-    if (open && end >= now) return "upcoming";
-    return "past";
+    if (TERMINAL_INVITATION_STATUSES.has(invitation.status)) return "past";
+    if (invitation.guests.some(isGuestOnSite)) return "on_site";
+    if (new Date(invitation.valid_to).getTime() < now) return "past";
+    return "upcoming";
 }
 
 export function bucketInvitations(items: VisitAuthorization[]) {

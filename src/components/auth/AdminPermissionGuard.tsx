@@ -75,9 +75,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   }, [requiredPermission, workspace.data]);
 
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
-  const requiresManagementContext =
-    normalizedPathname.startsWith("/admin") &&
-    normalizedPathname !== "/admin/profile";
+  const requiresManagementContext = normalizedPathname.startsWith("/admin");
 
   const hasAccess = useMemo(() => {
     if (!requiredPermission) return true;

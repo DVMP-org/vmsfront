@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/Button";
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import {
   DataTable,
-  type BulkAction,
   type Column,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -85,7 +84,6 @@ export function InvitationApprovals() {
     access.allowed(`visit_authorizations.${permission}`);
   const canList =
     profile.data?.management?.is_administrator === true || allowed("list");
-  const canApprove = allowed("approve");
   const canCreate = allowed("create");
 
   const invitations = useQuery({
@@ -241,7 +239,10 @@ export function InvitationApprovals() {
       key: "status",
       header: "Status",
       sortable: true,
-      accessor: (invitation) => <StatusBadge status={invitation.status} />,
+      accessor: (invitation) => <StatusBadge
+        status={invitation.status}
+        displayStatus={invitation.display_status}
+      />,
     },
     {
       key: "actions",
@@ -258,49 +259,6 @@ export function InvitationApprovals() {
       ),
     },
   ];
-
-  const approveSelected = async (ids: string[]) => {
-    const eligible = items.filter(
-      (invitation) =>
-        ids.includes(invitation.id) && invitation.status === "requested",
-    );
-    if (!eligible.length) {
-      toast.info("Only invitations awaiting approval can be approved.");
-      return;
-    }
-    const results = await Promise.allSettled(
-      eligible.map((invitation) =>
-        invitationApprovalsApi.approve(invitation.id),
-      ),
-    );
-    const approved = results.filter(
-      (result) => result.status === "fulfilled",
-    ).length;
-    await queryClient.invalidateQueries({
-      queryKey: ["admin-invitation-approvals"],
-    });
-    if (approved === eligible.length) {
-      toast.success(
-        `${approved} invitation${approved === 1 ? "" : "s"} approved.`,
-      );
-    } else {
-      toast.error(
-        `${approved} of ${eligible.length} invitations were approved. Retry the remaining records.`,
-      );
-    }
-  };
-
-  const bulkActions: BulkAction[] = canApprove
-    ? [
-        {
-          label: "Approve selected",
-          onClick: approveSelected,
-          requiresConfirmation: true,
-          confirmationMessage:
-            "Approve the selected invitations that are awaiting approval?",
-        },
-      ]
-    : [];
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
@@ -448,7 +406,6 @@ export function InvitationApprovals() {
         }
         selectable
         getRowId={(invitation) => invitation.id}
-        bulkActions={bulkActions}
         mobileSummary={(invitation) => (
           <Link href={`/admin/invitations/${invitation.id}`} className="block">
             <div className="flex items-start justify-between gap-3">
@@ -462,7 +419,10 @@ export function InvitationApprovals() {
                   {invitation.code}
                 </span>
               </div>
-              <StatusBadge status={invitation.status} />
+              <StatusBadge
+        status={invitation.status}
+        displayStatus={invitation.display_status}
+      />
             </div>
             <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
               <dt className="text-[var(--vms-ink-muted)]">Host</dt>
@@ -907,16 +867,31 @@ function toLocalDateTime(value: Date) {
   return local.toISOString().slice(0, 16);
 }
 
-export function StatusBadge({ status }: { status: VisitAuthorizationStatus }) {
+export function StatusBadge({
+  status,
+  displayStatus,
+}: {
+  status: VisitAuthorizationStatus;
+  displayStatus?: string | null;
+}) {
+  const effective = displayStatus ?? status;
   const variant =
-    status === "approved"
-      ? "success"
-      : status === "requested"
-        ? "warning"
-        : status === "declined" || status === "revoked"
-          ? "danger"
-          : "neutral";
-  return <Badge variant={variant}>{statusLabel(status)}</Badge>;
+    effective === "active"
+      ? "info"
+      : effective === "approved"
+        ? "success"
+        : effective === "requested"
+          ? "warning"
+          : effective === "declined" ||
+              effective === "revoked" ||
+              effective === "expired"
+            ? "danger"
+            : "neutral";
+  return (
+    <Badge variant={variant}>
+      {effective === "active" ? "Active" : statusLabel(effective)}
+    </Badge>
+  );
 }
 
 export function formatDate(value: string | null | undefined) {
@@ -927,7 +902,7 @@ export function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-function statusLabel(status: VisitAuthorizationStatus) {
+function statusLabel(status: string) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 

@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CalendarClock,
-  Check,
   Clock3,
   History,
   Mail,
@@ -23,6 +22,8 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { CheckpointEvent } from "@/features/access-journey/api";
+import { VisitorJourneyPanel } from "@/features/access-journey/VisitorJourneyPanel";
+import { checkpointsApi } from "@/features/checkpoints/api";
 import { parseApiError } from "@/lib/error-utils";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { invitationApprovalsApi, type VisitSession } from "./api";
@@ -53,6 +54,12 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
     enabled: !!invitation.data,
     retry: false,
   });
+  const gates = useQuery({
+    queryKey: ["journey-gates", invitation.data?.site_id],
+    queryFn: () => checkpointsApi.gates(1, ""),
+    enabled: Boolean(invitation.data?.site_id),
+    retry: false,
+  });
 
   const can = (permission: string) =>
     !profile.isError &&
@@ -78,12 +85,6 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
     ]);
   }
 
-  const approve = useMutation({
-    mutationFn: () => invitationApprovalsApi.approve(invitationId),
-    onSuccess: () => refreshAfterAction("Invitation approved."),
-    onError: (error) =>
-      setActionError(parseApiError(error).message || "Approval failed."),
-  });
   const decline = useMutation({
     mutationFn: (reason: string) =>
       invitationApprovalsApi.decline(invitationId, reason),
@@ -137,8 +138,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const item = invitation.data;
   const requested = item.status === "requested";
   const approved = item.status === "approved";
-  const actionPending =
-    approve.isPending || decline.isPending || revoke.isPending;
+  const actionPending = decline.isPending || revoke.isPending;
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
@@ -166,7 +166,10 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
         }
         metadata={
           <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--vms-ink-muted)]">
-            <StatusBadge status={item.status} />
+            <StatusBadge
+              status={item.status}
+              displayStatus={item.display_status}
+            />
             <span>
               Requested{" "}
               <time dateTime={item.requested_at}>
@@ -176,17 +179,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           </div>
         }
         primaryAction={
-          requested && can("approve") ? (
-            <Button
-              type="button"
-              onClick={() => approve.mutate()}
-              isLoading={approve.isPending}
-              loadingLabel="Approving"
-            >
-              <Check className="h-4 w-4" aria-hidden="true" />
-              Approve invitation
-            </Button>
-          ) : approved && can("revoke") ? (
+          (requested || approved) && can("revoke") ? (
             <Button
               type="button"
               variant="destructive-outlined"
@@ -362,6 +355,25 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           </DetailPanel>
         </aside>
       </section>
+
+      <DetailPanel title="Visitor journey">
+        <p className="mb-4 text-xs text-[var(--vms-ink-muted)]">
+          Follow one visitor at a time: the checkpoint route with unreached
+          gates greyed out, then every scan recorded for that visitor.
+        </p>
+        <VisitorJourneyPanel
+          guests={item.guests}
+          events={events.data?.items ?? []}
+          gates={(gates.data?.items ?? []).filter(
+            (gate) => !item.site_id || !gate.site_id || gate.site_id === item.site_id,
+          )}
+          loading={events.isPending}
+          error={
+            events.isError ? parseApiError(events.error).message : null
+          }
+          onRetry={() => void events.refetch()}
+        />
+      </DetailPanel>
 
       <Modal
         isOpen={declineOpen}

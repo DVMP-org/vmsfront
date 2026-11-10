@@ -10,6 +10,8 @@ export interface VisitGuest {
   email_snapshot: string | null;
   phone_snapshot: string | null;
   suffix: string;
+  /** Server-derived check-in state: "checked_in" | "not_checked_in" | … */
+  state: string;
 }
 
 export interface VisitAuthorization {
@@ -17,10 +19,13 @@ export interface VisitAuthorization {
   created_by_user_id?: string | null;
   created_by_site_admin_id?: string | null;
   host_party_id: string;
+  site_id?: string;
   destination_place_id: string;
   code: string;
   qr_code_url: string | null;
   status: VisitAuthorizationStatus;
+  /** Derived truth: "active" once a visitor has passed a checkpoint. */
+  display_status?: string | null;
   valid_from: string;
   valid_to: string;
   max_uses: number | null;
@@ -50,6 +55,10 @@ export interface CheckpointEvent {
   visit_guest_id: string;
   checkpoint_presence_id: string | null;
   place_id: string;
+  /** Human-readable context enriched by the API. */
+  person_name?: string | null;
+  place_name?: string | null;
+  gate_name?: string | null;
   gate_id: string;
   lane_id: string | null;
   direction: "entry" | "exit";
@@ -114,6 +123,27 @@ export const accessJourneyApi = {
     (
       await apiClient.post<ApiResponse<VisitAuthorization>>(
         `/workspace/visit-authorizations/${authorizationId}/cancel`,
+      )
+    ).data,
+  revoke: async (authorizationId: string) =>
+    (
+      await apiClient.post<ApiResponse<VisitAuthorization>>(
+        `/workspace/visit-authorizations/${authorizationId}/revoke`,
+      )
+    ).data,
+  update: async (
+    authorizationId: string,
+    body: {
+      valid_from?: string;
+      valid_to?: string;
+      max_uses?: number;
+      purpose?: string | null;
+    },
+  ) =>
+    (
+      await apiClient.patch<ApiResponse<VisitAuthorization>>(
+        `/workspace/visit-authorizations/${authorizationId}`,
+        body,
       )
     ).data,
   checkpointEvents: async (authorizationId: string) =>

@@ -51,7 +51,7 @@ function buildResidentLinks(
 ) {
   const links = [
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-    { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
+    { href: "/profile?context=resident", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
 
   if (isSuperUser) {
@@ -149,9 +149,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const isLinkActive = useCallback(
     (href: string) => {
       if (!pathname || !href) return false;
+      const target = href.split("?")[0];
       return (
-        pathname === href ||
-        (href !== "/admin" && pathname.startsWith(href + "/"))
+        pathname === target ||
+        (target !== "/admin" && pathname.startsWith(target + "/"))
       );
     },
     [pathname],
@@ -388,10 +389,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     );
     return (
       sorted.find(
-        (l) =>
-          l.href &&
-          (pathname === l.href ||
-            (l.href !== "/admin" && pathname.startsWith(l.href + "/"))),
+        (l) => {
+          if (!l.href) return false;
+          const target = l.href.split("?")[0];
+          return (
+            pathname === target ||
+            (target !== "/admin" && pathname.startsWith(target + "/"))
+          );
+        },
       ) || null
     );
   }, [links, pathname]);

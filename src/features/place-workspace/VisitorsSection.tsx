@@ -22,6 +22,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { accessJourneyApi, type VisitAuthorization } from "@/features/access-journey/api";
+import { isGuestOnSite } from "@/features/access-journey/lib";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,8 @@ interface VisitorVisit {
     from: string;
     to: string;
     purpose: string | null;
+    /** Whether this visitor is currently checked in on this invitation. */
+    onSite: boolean;
 }
 
 interface VisitorRecord {
@@ -72,18 +75,29 @@ const time = (value: string) =>
         minute: "2-digit",
     });
 
+function bucketFrom(
+    status: string,
+    validTo: string,
+    onSite: boolean,
+): VisitorBucket {
+    if (["declined", "cancelled", "revoked", "expired"].includes(status)) {
+        return "history";
+    }
+    if (onSite) return "visiting";
+    if (new Date(validTo).getTime() < Date.now()) return "history";
+    return "expected";
+}
+
 function bucketFor(invitation: VisitAuthorization): VisitorBucket {
-    const start = new Date(invitation.valid_from).getTime();
-    const end = new Date(invitation.valid_to).getTime();
-    const now = Date.now();
-    const open = invitation.status === "approved" || invitation.status === "requested";
-    if (open && start <= now && end >= now) return "visiting";
-    if (open && end >= now) return "expected";
-    return "history";
+    return bucketFrom(
+        invitation.status,
+        invitation.valid_to,
+        invitation.guests.some(isGuestOnSite),
+    );
 }
 
 function accessStatus(bucket: VisitorBucket, status: string) {
-    if (bucket === "visiting") return { label: "Accessed", tone: "success" as StatusTone };
+    if (bucket === "visiting") return { label: "Checked in", tone: "success" as StatusTone };
     if (bucket === "expected")
         return status === "requested"
             ? { label: "Awaiting approval", tone: "warning" as StatusTone }
@@ -116,6 +130,7 @@ export function buildVisitorRecords(
                 from: invitation.valid_from,
                 to: invitation.valid_to,
                 purpose: invitation.purpose,
+                onSite: isGuestOnSite(guest),
             };
             const existing = records.get(key);
             if (!existing) {
@@ -198,10 +213,16 @@ export function VisitorsSection() {
         .filter((record) => record.bucket === tab)
         .filter((record) =>
             needle
-                ? [record.name, record.phone ?? "", record.email ?? "", record.inviteId]
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(needle)
+                ? [
+                      record.name,
+                      record.phone ?? "",
+                      record.email ?? "",
+                      record.inviteId,
+                      ...record.history.map((visit) => visit.inviteId),
+                  ]
+                      .join(" ")
+                      .toLowerCase()
+                      .includes(needle)
                 : true,
         )
         .sort(
@@ -232,7 +253,7 @@ export function VisitorsSection() {
                                 setSearch(event.target.value);
                                 setPage(1);
                             }}
-                            placeholder="Search visitors by name, phone, or email…"
+                            placeholder="Search by name, phone, email, invitation ID or suffix…"
                             className="min-h-10 w-full rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] pl-9 pr-3 text-sm text-[var(--vms-ink)] transition hover:border-[var(--vms-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                         />
                     </label>
@@ -288,7 +309,7 @@ export function VisitorsSection() {
                             title={search ? "No visitors match your search" : "No visitors yet"}
                             description={
                                 search
-                                    ? "Try a different name, phone number or invitation."
+                                    ? "Try a different name, phone number, invitation ID or suffix."
                                     : "Invite a visitor and they will appear here."
                             }
                         />
@@ -476,11 +497,7 @@ export function VisitorsSection() {
                             <ol className="space-y-3">
                                 {selected.history.slice(0, 6).map((visit) => {
                                     const status = accessStatus(
-                                        bucketFor({
-                                            valid_from: visit.from,
-                                            valid_to: visit.to,
-                                            status: visit.status,
-                                        } as VisitAuthorization),
+                                        bucketFrom(visit.status, visit.to, visit.onSite),
                                         visit.status,
                                     );
                                     const open = ["approved", "requested"].includes(visit.status);
@@ -624,11 +641,7 @@ export function VisitorsSection() {
                                 <ol className="space-y-3">
                                     {selected.history.slice(0, 6).map((visit) => {
                                         const status = accessStatus(
-                                            bucketFor({
-                                                valid_from: visit.from,
-                                                valid_to: visit.to,
-                                                status: visit.status,
-                                            } as VisitAuthorization),
+                                            bucketFrom(visit.status, visit.to, visit.onSite),
                                             visit.status,
                                         );
                                         const open = ["approved", "requested"].includes(

@@ -41,6 +41,11 @@ vi.mock("@/features/access-journey/AccessWorkspace", () => ({
 vi.mock("@/features/access-journey/api", () => ({
   accessJourneyApi: { list: m.invitations, cancel: vi.fn() },
 }));
+vi.mock("@/features/profile/ProfilePage", () => ({
+  ProfilePage: ({ audience }: { audience: string }) => (
+    <section>Shared profile ({audience})</section>
+  ),
+}));
 vi.mock("@/features/guest-stay/GuestStayDashboard", () => ({
   GuestStayDashboard: () => <section>Stay details</section>,
 }));
@@ -51,6 +56,7 @@ vi.mock("@/hooks/use-auth", () => ({
 }));
 beforeEach(() => {
   vi.resetAllMocks();
+  window.localStorage.clear();
   m.context = {
     place: { id: "unit", name: "APT 01", kind: "unit", is_active: true },
     party: {
@@ -87,7 +93,7 @@ beforeEach(() => {
   m.request.mockResolvedValue({ id: "request" });
 });
 function mount(section: string) {
-  render(
+  return render(
     <QueryClientProvider
       client={
         new QueryClient({
@@ -109,6 +115,83 @@ it("renders the configured resident dashboard with live empty states", async () 
   expect(screen.getByText("Upcoming visits")).toBeVisible();
   expect(m.members).not.toHaveBeenCalled();
 });
+it("lists only visits that are still upcoming and not yet active", async () => {
+  const future = new Date(Date.now() + 5 * 86_400_000).toISOString();
+  const past = new Date(Date.now() - 3_600_000).toISOString();
+  const base = {
+    code: "INV-000001",
+    qr_code_url: null,
+    valid_from: future,
+    valid_to: future,
+    max_uses: 1,
+    uses_count: 0,
+    purpose: null,
+    additional_information: null,
+    decline_reason: null,
+    requested_at: past,
+    decided_at: null,
+    host_party: { display_name: "Resident" },
+    destination_place: { id: "unit", name: "APT 01", kind: "unit", address: "" },
+  };
+  m.invitations.mockResolvedValue({
+    items: [
+      {
+        ...base,
+        id: "active",
+        status: "approved",
+        display_status: "active",
+        guests: [
+          {
+            id: "g-active",
+            display_name_snapshot: "Active Visitor",
+            suffix: "001",
+          },
+        ],
+      },
+      {
+        ...base,
+        id: "upcoming",
+        status: "approved",
+        display_status: "approved",
+        guests: [
+          {
+            id: "g-upcoming",
+            display_name_snapshot: "Upcoming Visitor",
+            suffix: "002",
+          },
+        ],
+      },
+      {
+        ...base,
+        id: "requested",
+        status: "requested",
+        display_status: "requested",
+        guests: [
+          {
+            id: "g-requested",
+            display_name_snapshot: "Requested Visitor",
+            suffix: "003",
+          },
+        ],
+      },
+    ],
+    total: 3,
+  });
+
+  mount("overview");
+
+  const card = (await screen.findByText("Upcoming visits")).closest("section");
+  expect(card).not.toBeNull();
+  expect(
+    await within(card as HTMLElement).findByText("Upcoming Visitor"),
+  ).toBeVisible();
+  expect(within(card as HTMLElement).getByText("Requested Visitor")).toBeVisible();
+  expect(
+    within(card as HTMLElement).getAllByText(/in \d+ days/),
+  ).toHaveLength(2);
+  expect(within(card as HTMLElement).queryByText("Active Visitor")).toBeNull();
+});
+
 it("shows announcements as priority alerts above the dashboard", async () => {
   m.announcements.mockResolvedValue([
     {
@@ -144,6 +227,68 @@ it("shows announcements as priority alerts above the dashboard", async () => {
   expect(alerts[0]).toContainElement(
     urgentRow!.querySelector('[data-priority="urgent"]') as HTMLElement,
   );
+  // Foreground card is widest and on top; the next layer is narrower and
+  // tucked underneath with a small offset.
+  expect((alerts[0] as HTMLElement).style.width).toBe("100%");
+  expect((alerts[0] as HTMLElement).style.marginTop).toBe("");
+  expect((alerts[1] as HTMLElement).style.width).toBe("calc(100% - 20px)");
+  expect((alerts[1] as HTMLElement).style.marginTop).toBe("-10px");
+  expect((alerts[1] as HTMLElement).style.transform).toBe("translateY(2px)");
+  expect(Number((alerts[0] as HTMLElement).style.zIndex)).toBeGreaterThan(
+    Number((alerts[1] as HTMLElement).style.zIndex),
+  );
+});
+
+it("renders a single announcement without layering", async () => {
+  m.announcements.mockResolvedValue([
+    {
+      id: "announcement-single",
+      title: "Lift service",
+      body: "The lift will be serviced on Friday.",
+      priority: "high",
+      published_at: "2026-11-18T09:00:00Z",
+      is_pinned: false,
+    },
+  ]);
+
+  mount("overview");
+  const item = await screen.findByText("Lift service");
+  const row = item.closest("li") as HTMLElement;
+  expect(row.style.width).toBe("100%");
+  expect(row.style.marginTop).toBe("");
+  expect(row.style.transform).toBe("");
+});
+
+it("keeps a dismissed announcement off the dashboard after a reload", async () => {
+  m.announcements.mockResolvedValue([
+    {
+      id: "announcement-dismiss",
+      title: "Water shutdown",
+      body: "Water off between 10:00 and 12:00.",
+      priority: "urgent",
+      published_at: "2026-11-18T09:00:00Z",
+      is_pinned: false,
+    },
+  ]);
+
+  const view = mount("overview");
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Dismiss Water shutdown" }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByText("Water shutdown")).not.toBeInTheDocument(),
+  );
+  expect(
+    JSON.parse(
+      window.localStorage.getItem("vms.announcements.dismissed.party.unit") ??
+        "[]",
+    ),
+  ).toContain("announcement-dismiss");
+
+  view.unmount();
+  mount("overview");
+  expect(await screen.findByText("Upcoming visits")).toBeVisible();
+  expect(screen.queryByText("Water shutdown")).not.toBeInTheDocument();
 });
 
 it("denies direct settings navigation for an ordinary resident", () => {
@@ -392,11 +537,9 @@ it("renders published announcements", async () => {
   ).toBeInTheDocument();
 });
 
-it("renders the resident profile and relationships", async () => {
+it("renders the shared profile inside the workspace shell", async () => {
   mount("profile");
-  expect(await screen.findByText("My places")).toBeVisible();
-  expect(screen.getAllByText("Place relationships").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Resident").length).toBeGreaterThan(0);
+  expect(await screen.findByText("Shared profile (resident)")).toBeVisible();
 });
 
 it("shows Place settings to a Place administrator", async () => {

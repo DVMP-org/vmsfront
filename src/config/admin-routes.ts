@@ -126,7 +126,7 @@ export const adminLinks: AdminRoute[] = [
     module: "gates",
     group: "Access",
   },
-  { href: "/admin/profile", label: "Profile", icon: UserCog, group: "Account" },
+  { href: "/profile?context=admin", label: "Profile", icon: UserCog, group: "Account" },
 ];
 
 const domainIcons: Record<string, LucideIcon> = {

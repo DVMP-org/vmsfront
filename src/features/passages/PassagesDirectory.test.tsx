@@ -110,6 +110,42 @@ describe("PassagesDirectory", () => {
     ).toBeVisible();
   });
 
+  it("expands only the clicked movement row, not every scan in the group", async () => {
+    vi.mocked(checkpointsApi.accessEvents).mockResolvedValue({
+      items: [
+        {
+          ...event,
+          id: "event-1",
+          visit_authorization_id: "invite-1",
+          visit_guest_id: "guest-1",
+          person_name: "Ada Okafor",
+          occurred_at: "2026-11-09T08:00:00Z",
+        },
+        {
+          ...event,
+          id: "event-2",
+          visit_authorization_id: "invite-1",
+          visit_guest_id: "guest-1",
+          person_name: "Ada Okafor",
+          gate_name: "Gate 2",
+          occurred_at: "2026-11-09T09:00:00Z",
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 2,
+      total_pages: 1,
+    });
+    mount();
+
+    const expanders = await screen.findAllByRole("button", {
+      name: /Expand movement progress/i,
+    });
+    fireEvent.click(expanders[0]);
+
+    expect(screen.getAllByText(/Movement progress/)).toHaveLength(1);
+  });
+
   it("opens event details and sends collection search to the server", async () => {
     mount();
     fireEvent.click(await screen.findByText("Ada Okafor"));

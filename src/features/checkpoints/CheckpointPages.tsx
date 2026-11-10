@@ -2,12 +2,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
   type UseQueryResult,
 } from "@tanstack/react-query";
 import {
+  ArrowRight,
   Camera,
   CheckCircle2,
   Clock3,
@@ -16,6 +18,7 @@ import {
   QrCode,
   RefreshCcw,
   ScanLine,
+  TriangleAlert,
   UserRound,
   Wifi,
   WifiOff,
@@ -42,10 +45,9 @@ import {
   type CheckpointConsoleContext,
   type CredentialPreview,
 } from "./api";
-import { reasonLabel, reasonMessage } from "./reasons";
+import { passageMessage, reasonMessage } from "./reasons";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
-import { ResidentialCheckpoints } from "@/features/residential/ResidentialCheckpoints";
 import { CheckpointAssignmentsModal } from "./CheckpointAssignmentsModal";
 import "./styles.css";
 function useCheckpointContext() {
@@ -203,14 +205,33 @@ function shortDate(value?: string | null) {
 function guestStateLabel(state?: string | null) {
   switch (state) {
     case "checked_in":
+      return "checked in";
     case "entry_in_progress":
-      return "inside";
+      return "in progress";
     case "exit_in_progress":
       return "leaving";
     case "checked_out":
       return "checked out";
     default:
       return "expected";
+  }
+}
+
+/** Semantic badge tone for a visitor's current state. */
+function guestStateVariant(
+  state?: string | null,
+): "success" | "warning" | "neutral" | "info" {
+  switch (state) {
+    case "checked_in":
+      return "success";
+    case "entry_in_progress":
+      return "info";
+    case "exit_in_progress":
+      return "warning";
+    case "checked_out":
+      return "neutral";
+    default:
+      return "neutral";
   }
 }
 
@@ -310,11 +331,6 @@ function HardwareState({
   );
 }
 export function CheckpointDirectory() {
-  const access = useAccess();
-  const siteId = useAppStore((state) => state.selectedProperty?.id);
-  if (siteId && access.workspace.data?.effective_use_case === "residential") {
-    return <ResidentialCheckpoints key={siteId} />;
-  }
   return <DefaultCheckpointDirectory />;
 }
 
@@ -710,8 +726,9 @@ function Console({
       online,
     retry: false,
     staleTime: 15_000,
-    // Keep the last answer visible while the chosen visitor is re-checked.
-    placeholderData: (previous) => previous,
+    // Keep the last answer visible while the chosen visitor is re-checked so
+    // the panel does not blank and flash a stale blocking reason.
+    placeholderData: keepPreviousData,
   });
   const candidate: CredentialPreview | undefined = preview.data;
   const guests = candidate?.guests ?? [];
@@ -730,6 +747,8 @@ function Console({
     !needsGuest && (candidate ? candidate.can_check_in || manualOverride : true);
   const canCheckOut =
     !needsGuest && (candidate ? candidate.can_check_out || manualOverride : true);
+  const currentCheckpointName =
+    result?.gate_name || gate.data?.name || undefined;
   useEffect(() => {
     if (
       !online ||
@@ -790,8 +809,8 @@ function Console({
   return (
     <main className="checkpoint-page checkpoint-console-page">
       {showBack ? (
-        <Link href="/admin/checkpoints" className="checkpoint-console-back">
-          Back to access console
+        <Link href="/admin/gates" className="checkpoint-console-back">
+          Back to gates
         </Link>
       ) : null}
       <header className="checkpoint-console-heading">
@@ -1049,9 +1068,9 @@ function Console({
                 </strong>
                 <span>
                   {result
-                    ? reasonMessage(result.reason_code)
+                    ? passageMessage(result)
                     : candidate
-                      ? candidate.blocking_reason
+                      ? candidate.blocking_reason && !preview.isFetching
                         ? reasonMessage(candidate.blocking_reason)
                         : `${candidate.invitation?.code || candidate.credential_reference} is ready to scan.`
                       : preview.isFetching
@@ -1106,25 +1125,6 @@ function Console({
                       {shortDate(candidate.invitation.valid_to)}
                     </dd>
                   </div>
-                  <div>
-                    <dt>
-                      <CheckCircle2 aria-hidden="true" />
-                      Invitation status
-                    </dt>
-                    <dd>
-                      <Badge
-                        variant={
-                          candidate.invitation.status === "approved"
-                            ? "success"
-                            : candidate.invitation.status === "requested"
-                              ? "neutral"
-                              : "danger"
-                        }
-                      >
-                        {candidate.invitation.status}
-                      </Badge>
-                    </dd>
-                  </div>
                 </dl>
                 {guests.length > 1 ? (
                   <fieldset className="checkpoint-guest-picker">
@@ -1152,9 +1152,18 @@ function Console({
                               <span>
                                 <strong>{guest.display_name}</strong>
                                 <small>
-                                  {guest.suffix} · {guestStateLabel(guest.state)}
+                                  {guest.suffix}
+                                  {guest.checked_in_at
+                                    ? ` · in at ${guest.checked_in_at}`
+                                    : ""}
+                                  {guest.next_checkpoint
+                                    ? ` · next ${guest.next_checkpoint}`
+                                    : ""}
                                 </small>
                               </span>
+                              <Badge variant={guestStateVariant(guest.state)}>
+                                {guestStateLabel(guest.state)}
+                              </Badge>
                               {active ? (
                                 <CheckCircle2 aria-hidden="true" />
                               ) : null}
@@ -1167,10 +1176,19 @@ function Console({
                 ) : guests.length === 1 ? (
                   <p className="checkpoint-single-guest">
                     Single visitor invited — {guests[0].display_name} (
-                    {guestStateLabel(guests[0].state)}). No guest suffix needed.
+                    {guestStateLabel(guests[0].state)}
+                    {guests[0].checked_in_at
+                      ? ` at ${guests[0].checked_in_at}`
+                      : ""}
+                    ).{" "}
+                    {guests[0].next_checkpoint
+                      ? `They must still pass ${guests[0].next_checkpoint}.`
+                      : "No guest suffix needed."}
                   </p>
                 ) : null}
-                {candidate.blocking_reason && !needsGuest ? (
+                {candidate.blocking_reason &&
+                !needsGuest &&
+                !preview.isFetching ? (
                   <p className="checkpoint-blocking" role="status">
                     {reasonMessage(candidate.blocking_reason)}
                   </p>
@@ -1190,7 +1208,12 @@ function Console({
                   <ScanLine aria-hidden="true" />
                   Destination
                 </dt>
-                <dd>{result?.place_name || gate.data?.place_name || "Site"}</dd>
+                <dd>
+                  {result?.place_name ||
+                    candidate?.invitation?.place_name ||
+                    gate.data?.place_name ||
+                    "—"}
+                </dd>
               </div>
               <div>
                 <dt>
@@ -1202,11 +1225,13 @@ function Console({
                     ? result.direction === "entry"
                       ? "Check in"
                       : "Check out"
-                    : candidate?.suggested_direction
-                      ? candidate.suggested_direction === "entry"
-                        ? "Check in"
-                        : "Check out"
-                      : "Inferred by server"}
+                    : candidate?.onward_required
+                      ? `Proceed to ${candidate.next_checkpoint || "the next checkpoint"}`
+                      : candidate?.suggested_direction
+                        ? candidate.suggested_direction === "entry"
+                          ? "Check in"
+                          : "Check out"
+                        : "Inferred by server"}
                 </dd>
               </div>
               <div>
@@ -1215,11 +1240,17 @@ function Console({
                   Access state
                 </dt>
                 <dd>
-                  {result
-                    ? (result.state_after || "recorded").replaceAll("_", " ")
-                    : activeGuest
-                      ? guestStateLabel(activeGuest.state)
-                      : "Not yet recorded"}
+                  {result ? (
+                    <Badge variant={guestStateVariant(result.state_after)}>
+                      {guestStateLabel(result.state_after)}
+                    </Badge>
+                  ) : activeGuest ? (
+                    <Badge variant={guestStateVariant(activeGuest.state)}>
+                      {guestStateLabel(activeGuest.state)}
+                    </Badge>
+                  ) : (
+                    "Not yet recorded"
+                  )}
                 </dd>
               </div>
             </dl>
@@ -1262,19 +1293,64 @@ function Console({
                 Check out
               </Button>
             </div>
-            <p className="checkpoint-direction-note">
-              {needsGuest
-                ? "Choose a visitor from the list to continue."
-                : candidate && !manualOverride
-                  ? canCheckIn && canCheckOut
-                    ? "Both directions are available for this credential."
-                    : canCheckIn
-                      ? "This visitor is outside, so check in is available."
-                      : canCheckOut
-                        ? "This visitor is inside, so check out is available."
-                        : "No transition is available for this credential."
-                  : "Direction is inferred from the latest checkpoint event, but the selected action remains explicit."}
-            </p>
+            {candidate?.onward_required && candidate.next_checkpoint ? (
+              <div className="checkpoint-proceed" role="status">
+                <ArrowRight aria-hidden="true" />
+                <div>
+                  <strong>Proceed to {candidate.next_checkpoint}</strong>
+                  <span>
+                    {activeGuest?.display_name || "This visitor"} has checked in
+                    {activeGuest?.checked_in_at
+                      ? ` at ${activeGuest.checked_in_at}`
+                      : ""}{" "}
+                    and must check in at {candidate.next_checkpoint}. Nothing is
+                    recorded at this checkpoint.
+                  </span>
+                </div>
+              </div>
+            ) : needsGuest ? (
+              <p className="checkpoint-direction-note">
+                Choose a visitor from the list to continue.
+              </p>
+            ) : candidate && !manualOverride ? (
+              canCheckIn && canCheckOut ? (
+                <p className="checkpoint-direction-note">
+                  Both directions are available for this credential.
+                </p>
+              ) : canCheckIn || canCheckOut ? (
+                <div className="checkpoint-direction-warning" role="status">
+                  <TriangleAlert aria-hidden="true" />
+                  <div>
+                    <strong>
+                      {canCheckIn
+                        ? "This visitor is not checked in at this checkpoint yet — check in is available."
+                        : `This visitor is checked in${
+                            activeGuest?.checked_in_at
+                              ? ` at ${activeGuest.checked_in_at}`
+                              : ""
+                          } — check out is available.`}
+                    </strong>
+                    <span>
+                      {activeGuest?.next_checkpoint &&
+                      activeGuest.next_checkpoint !== currentCheckpointName
+                        ? `Next required checkpoint: ${activeGuest.next_checkpoint}.`
+                        : canCheckIn && activeGuest?.checked_in_at
+                          ? `They have already passed ${activeGuest.checked_in_at}.`
+                          : "This is the only checkpoint for their visit."}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="checkpoint-direction-note">
+                  No transition is available for this credential.
+                </p>
+              )
+            ) : (
+              <p className="checkpoint-direction-note">
+                Direction is inferred from the latest checkpoint event, but the
+                selected action remains explicit.
+              </p>
+            )}
           </section>
         </fieldset>
       </form>

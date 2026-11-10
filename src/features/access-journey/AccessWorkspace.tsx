@@ -33,14 +33,20 @@ import {
   type VisitAuthorization,
   type VisitAuthorizationStatus,
 } from "./api";
-import { MAX_INVITATION_GUESTS, clampMaxUses } from "./lib";
 import {
-  useCancelInvitation,
+  MAX_INVITATION_GUESTS,
+  bucketInvitations,
+  clampMaxUses,
+} from "./lib";
+import { VisitorJourneyPanel } from "./VisitorJourneyPanel";
+import {
   useCreateInvitation,
   useInvitation,
   useInvitationCheckpoints,
   useInvitationCredentials,
   usePlaceInvitations,
+  useRevokeInvitation,
+  useUpdateInvitation,
 } from "./queries";
 
 const statusMeta: Record<
@@ -77,6 +83,26 @@ const statusMeta: Record<
   },
 };
 
+const activeStatusMeta = {
+  label: "Active",
+  className:
+    "border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+};
+
+/**
+ * The status to show a person. The server derives ``display_status`` so an
+ * invitation somebody has already used reads "Active", and an elapsed window
+ * reads "Expired", instead of the raw stored status.
+ */
+function statusPresentation(
+  status: VisitAuthorizationStatus,
+  displayStatus?: string | null,
+) {
+  const effective = displayStatus ?? status;
+  if (effective === "active") return activeStatusMeta;
+  return statusMeta[effective as VisitAuthorizationStatus] ?? statusMeta[status];
+}
+
 const PAGE_SIZE = 8;
 type InvitationTab = "upcoming" | "on_site" | "past";
 type VisitDateFilter = "all" | "today" | "week" | "month";
@@ -94,39 +120,6 @@ const timeLabel = (value: Date) =>
     hour: "numeric",
     minute: "2-digit",
   });
-
-function invitationBucket(
-  invitation: VisitAuthorization,
-  now: number,
-): InvitationTab {
-  const start = new Date(invitation.valid_from).getTime();
-  const end = new Date(invitation.valid_to).getTime();
-  const open =
-    invitation.status === "approved" || invitation.status === "requested";
-  if (open && start <= now && end >= now) return "on_site";
-  if (open && end >= now) return "upcoming";
-  return "past";
-}
-
-function bucketInvitations(items: VisitAuthorization[]) {
-  const now = Date.now();
-  const buckets: Record<InvitationTab, VisitAuthorization[]> = {
-    upcoming: [],
-    on_site: [],
-    past: [],
-  };
-  for (const invitation of items) {
-    buckets[invitationBucket(invitation, now)].push(invitation);
-  }
-  const byStart = (left: VisitAuthorization, right: VisitAuthorization) =>
-    new Date(left.valid_from).getTime() - new Date(right.valid_from).getTime();
-  buckets.upcoming.sort(byStart);
-  buckets.on_site.sort(byStart);
-  buckets.past.sort(
-    (left, right) => new Date(right.valid_from).getTime() - new Date(left.valid_from).getTime(),
-  );
-  return buckets;
-}
 
 function filterInvitations(
   items: VisitAuthorization[],
@@ -158,7 +151,7 @@ function filterInvitations(
       invitation.host_party?.display_name ?? "",
       ...invitation.guests.map(
         (guest) =>
-          `${guest.display_name_snapshot} ${guest.phone_snapshot ?? ""} ${guest.email_snapshot ?? ""}`,
+          `${guest.display_name_snapshot} ${guest.phone_snapshot ?? ""} ${guest.email_snapshot ?? ""} ${invitation.code}-${guest.suffix} ${guest.suffix}`,
       ),
     ]
       .join(" ")
@@ -167,8 +160,14 @@ function filterInvitations(
   });
 }
 
-function InvitationStatus({ status }: { status: VisitAuthorizationStatus }) {
-  const meta = statusMeta[status];
+function InvitationStatus({
+  status,
+  displayStatus,
+}: {
+  status: VisitAuthorizationStatus;
+  displayStatus?: string | null;
+}) {
+  const meta = statusPresentation(status, displayStatus);
   return (
     <span
       className={cn(
@@ -203,10 +202,12 @@ function VisitorCell({
   invitation,
   guestName,
   guestPhone,
+  state,
 }: {
   invitation?: VisitAuthorization;
   guestName?: string;
   guestPhone?: string | null;
+  state?: string;
 }) {
   const guests = invitation?.guests ?? [];
   const grouped = guests.length > 1;
@@ -238,6 +239,11 @@ function VisitorCell({
           <p className="truncate text-xs text-[var(--vms-ink-muted)]">
             {detail}
           </p>
+        ) : null}
+        {state === "checked_in" ? (
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-success)]">
+            Checked in
+          </span>
         ) : null}
       </div>
     </div>
@@ -312,7 +318,7 @@ export function AccessWorkspace({
     relationship.place.id,
     relationship.party.id,
   );
-  const cancelInvitation = useCancelInvitation();
+  const revokeInvitation = useRevokeInvitation();
   const items = useMemo(
     () => invitations.data?.items || [],
     [invitations.data?.items],
@@ -593,7 +599,10 @@ export function AccessWorkspace({
                             {invitation.host_party?.display_name || partyName}
                           </td>
                           <td className="py-3 pr-3">
-                            <InvitationStatus status={invitation.status} />
+                            <InvitationStatus
+                              status={invitation.status}
+                              displayStatus={invitation.display_status}
+                            />
                           </td>
                           <td className="py-3 text-right">
                             <div className="inline-flex items-center gap-1">
@@ -636,6 +645,7 @@ export function AccessWorkspace({
                                 <VisitorCell
                                   guestName={guest.display_name_snapshot}
                                   guestPhone={guest.phone_snapshot}
+                                  state={guest.state}
                                 />
                               </td>
                               <td className="py-2.5 pr-3">
@@ -651,6 +661,7 @@ export function AccessWorkspace({
                               <td className="py-2.5 pr-3">
                                 <InvitationStatus
                                   status={invitation.status}
+                                  displayStatus={invitation.display_status}
                                 />
                               </td>
                               <td />
@@ -715,10 +726,10 @@ export function AccessWorkspace({
         <InvitationDetail
           invitationId={selectedInvitationId}
           onClose={closeInvitation}
-          onCancel={() => cancelInvitation.mutate(selectedInvitationId)}
-          cancelling={
-            cancelInvitation.isPending &&
-            cancelInvitation.variables === selectedInvitationId
+          onRevoke={() => revokeInvitation.mutate(selectedInvitationId)}
+          revoking={
+            revokeInvitation.isPending &&
+            revokeInvitation.variables === selectedInvitationId
           }
         />
       ) : null}
@@ -781,7 +792,7 @@ function InvitationComposer({
     base.setDate(base.getDate() + dayOffset);
     base.setSeconds(0, 0);
     if (dayOffset > 0) base.setHours(9, 0, 0, 0);
-    else base.setMinutes(Math.ceil(base.getMinutes() / 15) * 15, 0, 0);
+    else base.setMinutes(Math.floor(base.getMinutes() / 15) * 15, 0, 0);
     setValidFrom(toLocalInput(base));
     setValidTo(toLocalInput(new Date(base.getTime() + hours * 3_600_000)));
   }
@@ -1198,21 +1209,30 @@ function InvitationRow({
 function InvitationDetail({
   invitationId,
   onClose,
-  onCancel,
-  cancelling,
+  onRevoke,
+  revoking,
 }: {
   invitationId: string;
   onClose: () => void;
-  onCancel: () => void;
-  cancelling: boolean;
+  onRevoke: () => void;
+  revoking: boolean;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const invitation = useInvitation(invitationId);
   const checkpointEvents = useInvitationCheckpoints(invitationId);
   const guestCredentials = useInvitationCredentials(invitationId);
+  const update = useUpdateInvitation(invitationId);
   const data = invitation.data;
-  const status = data ? statusMeta[data.status] : null;
+  const status = data
+    ? statusPresentation(data.status, data.display_status)
+    : null;
+  // Owners may change an invitation until a visitor has used it.
+  const canEdit =
+    !!data &&
+    (data.status === "requested" || data.status === "approved") &&
+    data.uses_count === 0 &&
+    (data.display_status ?? data.status) !== "active";
 
   useEffect(() => {
     const previousFocus =
@@ -1436,16 +1456,29 @@ function InvitationDetail({
               </div>
             </div>
 
-            <ArrivalHistory
-              events={checkpointEvents.data?.items || []}
-              loading={checkpointEvents.isPending}
-              error={
-                checkpointEvents.isError
-                  ? parseApiError(checkpointEvents.error).message
-                  : null
-              }
-              onRetry={() => checkpointEvents.refetch()}
-            />
+            <section aria-labelledby="visitor-journey-title">
+              <h3 id="visitor-journey-title" className="text-sm font-semibold">
+                Visitor journey
+              </h3>
+              <p className="mt-0.5 text-xs text-zinc-500 ">
+                Every scan recorded for each visitor. Pick a visitor to follow
+                their check-ins and check-outs.
+              </p>
+              <div className="mt-3">
+                <VisitorJourneyPanel
+                  guests={data.guests}
+                  events={checkpointEvents.data?.items || []}
+                  loading={checkpointEvents.isPending}
+                  error={
+                    checkpointEvents.isError
+                      ? parseApiError(checkpointEvents.error).message
+                      : null
+                  }
+                  onRetry={() => checkpointEvents.refetch()}
+                  showRoute={false}
+                />
+              </div>
+            </section>
 
             {data.decline_reason ? (
               <div className="rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
@@ -1454,17 +1487,25 @@ function InvitationDetail({
               </div>
             ) : null}
 
+            {canEdit ? (
+              <InvitationEditForm
+                invitation={data}
+                saving={update.isPending}
+                onSave={(body) => update.mutate(body)}
+              />
+            ) : null}
+
             <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4  sm:flex-row sm:justify-end">
-              {(data.status === "requested" || data.status === "approved") && (
+              {canEdit ? (
                 <button
                   type="button"
-                  onClick={onCancel}
-                  disabled={cancelling}
+                  onClick={onRevoke}
+                  disabled={revoking}
                   className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-sm font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
                 >
-                  {cancelling ? "Cancelling…" : "Cancel invitation"}
+                  {revoking ? "Revoking…" : "Revoke invitation"}
                 </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 onClick={shareInvitation}
@@ -1481,79 +1522,139 @@ function InvitationDetail({
   );
 }
 
-function ArrivalHistory({
-  events,
-  loading,
-  error,
-  onRetry,
+function InvitationEditForm({
+  invitation,
+  saving,
+  onSave,
 }: {
-  events: Array<{
-    id: string;
-    direction: "entry" | "exit";
-    outcome: "allowed" | "denied";
-    reason_code: string;
-    occurred_at: string;
-    gate_id: string;
-  }>;
-  loading: boolean;
-  error: string | null;
-  onRetry: () => void;
+  invitation: VisitAuthorization;
+  saving: boolean;
+  onSave: (body: {
+    valid_from: string;
+    valid_to: string;
+    max_uses: number;
+    purpose: string | null;
+  }) => void;
 }) {
-  return (
-    <section aria-labelledby="arrival-history-title">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 id="arrival-history-title" className="text-sm font-semibold">
-            Arrival history
-          </h3>
-          <p className="mt-0.5 text-xs text-zinc-500 ">
-            Checkpoint decisions recorded for this invitation.
-          </p>
-        </div>
-        <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600  ">
-          {events.length} {events.length === 1 ? "event" : "events"}
-        </span>
-      </div>
+  const [open, setOpen] = useState(false);
+  const [validFrom, setValidFrom] = useState(() =>
+    toLocalInput(new Date(invitation.valid_from)),
+  );
+  const [validTo, setValidTo] = useState(() =>
+    toLocalInput(new Date(invitation.valid_to)),
+  );
+  const [maxUses, setMaxUses] = useState(
+    String(invitation.max_uses ?? 1),
+  );
+  const [purpose, setPurpose] = useState(invitation.purpose ?? "");
+  const [error, setError] = useState<string | null>(null);
 
-      {loading ? (
-        <p className="mt-3 text-sm text-zinc-500 ">Loading arrival history…</p>
-      ) : error ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
-          <span>{error}</span>
-          <button type="button" onClick={onRetry} className="font-semibold">
-            Retry
-          </button>
-        </div>
-      ) : events.length === 0 ? (
-        <p className="mt-3 rounded-lg border border-dashed border-zinc-200 p-3 text-sm text-zinc-500  ">
-          No checkpoint events yet.
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const start = new Date(validFrom);
+    const end = new Date(validTo);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+      setError("Choose a valid access window.");
+      return;
+    }
+    if (end <= start) {
+      setError("The access window must end after it starts.");
+      return;
+    }
+    setError(null);
+    onSave({
+      valid_from: start.toISOString(),
+      valid_to: end.toISOString(),
+      max_uses: clampMaxUses(maxUses),
+      purpose: purpose.trim() || null,
+    });
+  }
+
+  if (!open) {
+    return (
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-lg border border-[var(--vms-line-strong)] px-3 py-2 text-sm font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)]"
+        >
+          Edit invitation
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="space-y-4 rounded-xl border border-[var(--vms-line)] p-4"
+    >
+      <h3 className="text-sm font-semibold">Edit invitation</h3>
+      <p className="text-xs text-[var(--vms-ink-muted)]">
+        An invitation can be changed until a visitor checks in.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Access starts" required>
+          <input
+            type="datetime-local"
+            value={validFrom}
+            onChange={(event) => setValidFrom(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Access ends" required>
+          <input
+            type="datetime-local"
+            value={validTo}
+            onChange={(event) => setValidTo(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Maximum entries">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={100}
+            value={maxUses}
+            onChange={(event) => setMaxUses(event.target.value)}
+            onBlur={() => setMaxUses(String(clampMaxUses(maxUses)))}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Purpose">
+          <input
+            value={purpose}
+            onChange={(event) => setPurpose(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      {error ? (
+        <p role="alert" className="text-sm text-[var(--vms-danger)]">
+          {error}
         </p>
-      ) : (
-        <ol className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200  ">
-          {events.map((event) => (
-            <li
-              key={event.id}
-              className="flex items-center justify-between gap-3 px-3 py-2.5"
-            >
-              <div>
-                <p className="text-sm font-medium capitalize">
-                  {event.direction} · {event.outcome}
-                </p>
-                <p className="mt-0.5 text-xs text-zinc-500 ">
-                  Gate {event.gate_id.slice(0, 8)} · {event.reason_code}
-                </p>
-              </div>
-              <time
-                dateTime={event.occurred_at}
-                className="text-right text-xs text-zinc-500 "
-              >
-                {formatDateTime(event.occurred_at)}
-              </time>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          disabled={saving}
+          className="rounded-lg border border-[var(--vms-line)] px-3 py-2 text-sm font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-[var(--vms-action)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+      </div>
+    </form>
   );
 }
 

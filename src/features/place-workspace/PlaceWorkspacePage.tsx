@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -36,12 +36,13 @@ import { accessJourneyApi } from "@/features/access-journey/api";
 import { myChargesApi } from "@/features/charges/my-charges/api";
 import { GuestStayDashboard } from "@/features/guest-stay/GuestStayDashboard";
 import { PlaceSettingsPage } from "@/features/place-settings/PlaceSettingsPage";
+import { ProfilePage } from "@/features/profile/ProfilePage";
 import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useVerifyToken } from "@/hooks/use-auth";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import { MovementsSection } from "./MovementsSection";
+import { PartyBadgeStrip } from "./PartyBadgeStrip";
 import { VisitorsSection } from "./VisitorsSection";
 import {
   placeWorkspaceApi,
@@ -211,17 +212,26 @@ const announcementStyles: Record<
   },
 };
 
+const announcementShadows = [
+  "shadow-[0_12px_28px_-16px_rgba(15,27,49,0.32)]",
+  "shadow-[0_7px_18px_-13px_rgba(15,27,49,0.24)]",
+  "shadow-[0_4px_12px_-10px_rgba(15,27,49,0.18)]",
+] as const;
+
 function AnnouncementAlert({
   tone,
   title,
   meta,
   href,
+  depth = 0,
   onDismiss,
 }: {
   tone: AnnouncementPriority;
   title: string;
   meta: string;
   href: string;
+    /** 0 = foreground card; higher values are recessed layers. */
+    depth?: number;
   onDismiss?: () => void;
 }) {
   const style = announcementStyles[tone];
@@ -232,7 +242,7 @@ function AnnouncementAlert({
       className={cn(
     "relative flex min-h-12 items-center gap-2.5",
     "rounded-[10px] border px-3 py-2",
-    "shadow-[0_2px_5px_rgba(15,27,49,0.06)]",
+        announcementShadows[Math.min(depth, announcementShadows.length - 1)],
     "transition-all duration-200",
     style.row,
     style.border,
@@ -282,6 +292,20 @@ const relative = (value: string) => {
   if (days < 7) return `${days} d ago`;
   return day(value);
 };
+/** Dismissed announcement ids survive reloads for this Party + Place. */
+function readDismissedAnnouncements(key: string): string[] {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 const initials = (value: string) =>
   value
     .split(/\s+/)
@@ -308,6 +332,17 @@ const dayBucket = (value: string) => {
     month: "short",
   });
 };
+/** `Starting now`, `in 3 h`, `in 2 days` for the upcoming visits card. */
+function visitCountdown(value: string) {
+  const diff = new Date(value).getTime() - Date.now();
+  if (diff <= 0) return "Starting now";
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) return `in ${Math.max(1, minutes)} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `in ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `in ${days} day${days === 1 ? "" : "s"}`;
+}
 function State({
   query,
   children,
@@ -390,7 +425,7 @@ const sectionDescription: Record<string, (placeName: string) => string> = {
   charges: (placeName) =>
     `Charges and payment records for ${placeName}.`,
   maintenance: () => "Requests you raised and their current progress.",
-  profile: () => "Personal details and Place memberships.",
+  profile: () => "Your shared identity, contact details and profile photo.",
   settings: (placeName) => `Preferences for ${placeName}.`,
 };
 
@@ -448,7 +483,7 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
       {section === "announcements" && <Announcements />}
       {section === "charges" && <Charges />}
       {section === "maintenance" && <Maintenance />}
-      {section === "profile" && <Profile />}
+      {section === "profile" && <ProfilePage audience="resident" />}
       {section === "settings" && <PlaceSettingsPage />}
     </div>
   );
@@ -456,7 +491,24 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
 function Overview() {
   const context = usePlaceWorkspace();
   const { place, party } = context;
+  const dismissedKey = `vms.announcements.dismissed.${party.id}.${place.id}`;
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+  // Load after hydration so the server and first client render agree.
+  useEffect(() => {
+    setDismissedAlerts(readDismissedAnnouncements(dismissedKey));
+  }, [dismissedKey]);
+  function dismissAnnouncement(id: string) {
+    setDismissedAlerts((current) => {
+      if (current.includes(id)) return current;
+      const next = [...current, id];
+      try {
+        window.localStorage.setItem(dismissedKey, JSON.stringify(next));
+      } catch {
+        // Storage can be unavailable; the in-memory dismissal still applies.
+      }
+      return next;
+    });
+  }
   const definition = domainExperience(context.effective_use_case);
   const announcements = useQuery({
     queryKey: ["place-announcements", place.id, party.id],
@@ -514,12 +566,21 @@ function Overview() {
   );
   const upcoming = useMemo(() => {
     const now = Date.now();
+    const terminal = new Set([
+      "declined",
+      "cancelled",
+      "revoked",
+      "expired",
+    ]);
     return (invitations.data?.items ?? [])
-      .filter(
-        (item) =>
-          ["approved", "requested"].includes(item.status) &&
-          new Date(item.valid_to).getTime() >= now,
-      )
+      .filter((item) => {
+        // Approval status is not the signal: a visitor who is already on site
+        // is excluded, and only visits with time left are "upcoming".
+        const effective = item.display_status ?? item.status;
+        if (terminal.has(item.status) || effective === "expired") return false;
+        if (effective === "active") return false;
+        return new Date(item.valid_to).getTime() >= now;
+      })
       .sort(
         (left, right) =>
           new Date(left.valid_from).getTime() -
@@ -527,7 +588,10 @@ function Overview() {
       )
       .slice(0, 3);
   }, [invitations.data]);
-  const requests = (maintenance.data?.items ?? []).slice(0, 2);
+  // A request the party has closed stays out of the dashboard for good.
+  const requests = (maintenance.data?.items ?? [])
+    .filter((item) => item.status !== "closed")
+    .slice(0, 2);
   const openCharges = useMemo(
     () =>
       (charges.data?.items ?? [])
@@ -617,25 +681,39 @@ function Overview() {
   return (
     <div className="space-y-4">
       {alerts.length ? (
-        <ul aria-label="Announcements" className="space-y-0">
-          {alerts.map((item, index) => (
-            <li
-              key={item.id}
-              style={{ zIndex: alerts.length - index }}
-              className={cn("relative", index > 0 && "-mt-1.5")}
-            >
-              <AnnouncementAlert
-                tone={announcementTone(item.priority)}
-                title={item.title}
-                meta={relative(item.published_at)}
-                href={`/workspace/${place.id}/announcements`}
-                onDismiss={() =>
-                  setDismissedAlerts((current) => [...current, item.id])
-                }
-              />
-            </li>
-          ))}
-        </ul>
+        <ol
+          aria-label="Announcements"
+          className="isolate flex flex-col items-center pb-1"
+        >
+          {alerts.map((item, index) => {
+            const layered = alerts.length > 1;
+            // Foreground card is widest; each layer behind is narrower,
+            // tucked under the previous one, and carries a softer shadow.
+            const depth = layered ? index : 0;
+            const inset = Math.min(depth, 2) * 20;
+            return (
+              <li
+                key={item.id}
+                style={{
+                  width: inset ? `calc(100% - ${inset}px)` : "100%",
+                  zIndex: alerts.length - index,
+                  marginTop: depth > 0 ? "-38px" : undefined,
+                  transform: depth > 0 ? `translateY(${depth * 2}px)` : undefined,
+                }}
+                className="relative"
+              >
+                <AnnouncementAlert
+                  tone={announcementTone(item.priority)}
+                  title={item.title}
+                  meta={relative(item.published_at)}
+                  href={`/workspace/${place.id}/announcements`}
+                  depth={depth}
+                  onDismiss={() => dismissAnnouncement(item.id)}
+                />
+              </li>
+            );
+          })}
+        </ol>
       ) : null}
 
       <section className={cn(surfaceClass, "overflow-hidden")}>
@@ -669,6 +747,7 @@ function Overview() {
                     qualifiedPlaceName(context.place)}
                 </span>
               </p>
+              <PartyBadgeStrip />
             </div>
           </div>
 
@@ -885,7 +964,10 @@ function Overview() {
                           ) : null}
                         </p>
                         <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                          {day(invitation.valid_from)} ·{" "}
+                          <span className="font-semibold text-[var(--vms-ink)]">
+                            {visitCountdown(invitation.valid_from)}
+                          </span>{" "}
+                          · {day(invitation.valid_from)} ·{" "}
                           {time(invitation.valid_from)}
                         </p>
                       </div>
@@ -979,7 +1061,7 @@ function Overview() {
                       tone={
                         item.status === "resolved" || item.status === "closed"
                           ? "success"
-                          : "neutral"
+                          : "primary"
                       }
                     />
                     <div className="min-w-0 flex-1">
@@ -2398,127 +2480,6 @@ function MaintenanceDetails({
             </div>
           </li>
         </ol>
-      </div>
-    </div>
-  );
-}
-function Profile() {
-  const context = usePlaceWorkspace();
-  const identity = useVerifyToken();
-  const email = context.party.email || identity.data?.user.email || "—";
-  const phone = identity.data?.user.phone || "—";
-  const roles = Array.from(
-    new Set(context.relationships.map((item) => roleLabel(item.role))),
-  );
-  return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
-      <div className="space-y-4">
-        <div className={cn(surfaceClass, "p-4 sm:p-5")}>
-          <div className="flex flex-wrap items-center gap-4">
-            <Avatar
-              name={context.party.display_name}
-              size="lg"
-              tone="coral"
-              decorative
-            />
-            <div className="min-w-0">
-              <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-[var(--vms-ink)]">
-                {context.party.display_name}
-              </h2>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {roles.map((role) => (
-                  <Badge key={role} variant="neutral">
-                    {role}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--vms-line)] pt-4 text-sm text-[var(--vms-ink)]">
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <FileText aria-hidden className="h-4 w-4 text-[var(--vms-ink-muted)]" />
-              <span className="truncate">{email}</span>
-            </span>
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <UserRound aria-hidden className="h-4 w-4 text-[var(--vms-ink-muted)]" />
-              <span className="truncate">{phone}</span>
-            </span>
-          </div>
-        </div>
-
-        <SectionCard
-          title="Contact information"
-          description="How property management reaches you about this Place."
-        >
-          <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-            {[
-              ["Full name", context.party.display_name],
-              ["Email address", email],
-              ["Mobile number", phone],
-              ["Preferred contact method", email !== "—" ? "Email" : "Not set"],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                  {label}
-                </dt>
-                <dd className="mt-1 break-words text-sm font-medium text-[var(--vms-ink)]">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-4 border-t border-[var(--vms-line)] pt-3 text-xs leading-5 text-[var(--vms-ink-muted)]">
-            Name, email and phone edits are managed by the account owner or the
-            property manager.
-          </p>
-        </SectionCard>
-      </div>
-
-      <div className="space-y-4">
-        <SectionCard
-          title="My places"
-          description="Where you hold an active relationship."
-        >
-          <ul className="divide-y divide-[var(--vms-line)]">
-            <li className="flex items-center gap-3 py-3">
-              <IconTile icon={Building2} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[var(--vms-ink)]">
-                  {qualifiedPlaceName(context.place)}
-                </p>
-                <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                  {roles.join(" · ") || "Member"}
-                </p>
-              </div>
-              <Badge variant="success">Active</Badge>
-            </li>
-          </ul>
-        </SectionCard>
-
-        <SectionCard
-          title="Place relationships"
-          description="Every relationship you hold and when it applies."
-        >
-          <ul className="divide-y divide-[var(--vms-line)]">
-            {context.relationships.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center gap-3 py-3">
-                <IconTile icon={FileText} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--vms-ink)]">
-                    {roleLabel(item.role)}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                    {item.effective_from
-                      ? day(item.effective_from)
-                      : "No start date recorded"}{" "}
-                    — {item.effective_to ? day(item.effective_to) : "Open-ended"}
-                  </p>
-                </div>
-                <StatusPill status={item.status} />
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
       </div>
     </div>
   );

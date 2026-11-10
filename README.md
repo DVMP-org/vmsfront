@@ -1,5 +1,8 @@
 # VMSCORE Frontend
 
+Current product contracts and task loading: [project reference index](../vmscore/project-plans/README.md).
+Read the current ledger there before treating this setup overview as delivery status.
+
 A modern, responsive dashboard application for the VMSCORE visitor and resident access management system. Built with Next.js, TypeScript, Tailwind CSS, and React Query.
 
 ## Features

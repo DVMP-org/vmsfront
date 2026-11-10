@@ -62,11 +62,10 @@ export const Header = memo(function Header({
     staleTime: 0,
   });
   const placeWorkspaceRoot = pathname?.match(/^\/workspace\/[^/]+/)?.[0];
-  const profileHref = isAdminRoute
-    ? "/admin/profile"
-    : placeWorkspaceRoot
-      ? `${placeWorkspaceRoot}/profile`
-      : "/resident/profile";
+  // One shared profile route; the shell follows where it was opened from.
+  const profileHref = placeWorkspaceRoot
+    ? `${placeWorkspaceRoot}/profile`
+    : `/profile?context=${isAdminRoute ? "admin" : "resident"}`;
   const roleLabel = isAdminRoute ? "Administrator" : "Workspace member";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);

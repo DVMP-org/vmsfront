@@ -69,16 +69,17 @@ it("loads current assignments and saves several Site managers", async () => {
   );
   await waitFor(() => expect(close).toHaveBeenCalled());
 });
-it("prevents saving an empty manager selection", async () => {
-  mount();
+it("allows saving an empty selection to leave the checkpoint unassigned", async () => {
+  const { close } = mount();
   const first = await screen.findByRole("checkbox", { name: /First manager/ });
   await waitFor(() => expect(first).toBeChecked());
   fireEvent.click(first);
   expect(
-    screen.getByRole("button", { name: "Save assignments" }),
-  ).toBeDisabled();
-  expect(screen.getByText(/assignment cannot be empty/)).toBeVisible();
-  expect(m.save).not.toHaveBeenCalled();
+    screen.getByText(/leaves this checkpoint unassigned/),
+  ).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Save assignments" }));
+  await waitFor(() => expect(m.save).toHaveBeenCalledWith("gate", []));
+  await waitFor(() => expect(close).toHaveBeenCalled());
 });
 it("keeps the form open when the API rejects the selection", async () => {
   m.save.mockRejectedValue(
