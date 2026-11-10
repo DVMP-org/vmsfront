@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Home, LayoutGrid, Settings } from "lucide-react";
+import { Building2, Home, LayoutGrid, Settings, Puzzle } from "lucide-react";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 import { useAdminProfile } from "@/hooks/use-admin";
@@ -13,6 +13,7 @@ const links = [
   { href: "/organization", label: "Home", icon: Home },
   { href: "/organization/properties", label: "Properties", icon: Building2 },
   { href: "/organization/workspaces", label: "Workspaces", icon: LayoutGrid },
+  { href: "/organization/plugins", label: "Plugins", icon: Puzzle },
   {
     href: "/organization/settings",
     label: "Settings",
@@ -26,8 +27,10 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
   const profile = useAdminProfile();
   const visibleLinks = links.filter(
     (link) =>
-      link.href !== "/organization/properties" ||
-      hasAdminPermission(profile.data, "places.list"),
+      (link.href !== "/organization/plugins" ||
+        hasAdminPermission(profile.data, "admins.list")) &&
+      (link.href !== "/organization/properties" ||
+        hasAdminPermission(profile.data, "places.list")),
   );
 
   return (

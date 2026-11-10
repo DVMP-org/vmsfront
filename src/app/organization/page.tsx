@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   UserCog,
   Users,
+  Puzzle,
 } from "lucide-react";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { useAuthStore } from "@/store/auth-store";
@@ -150,6 +151,14 @@ export default function OrganizationHomePage() {
             Organization administration
           </h2>
           <div className="mt-4 grid gap-2">
+            <ActionCard
+              href="/organization/plugins"
+              icon={Puzzle}
+              title="Plugins"
+              description="Install business tools and manage organization availability."
+              eyebrow="Business tools"
+              tone="ink"
+            />
             <ActionCard
               href="/organization/settings/administrators"
               icon={UserCog}

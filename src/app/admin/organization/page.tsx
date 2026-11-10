@@ -215,15 +215,6 @@ function OrganizationEditor({
         </p>
       ) : null}
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--vms-line)] px-5 py-4">
-        <p className="text-xs text-[var(--vms-ink-muted)]">
-          Need to manage access?{" "}
-          <Link
-            href="/admin/admins"
-            className="font-semibold text-[var(--vms-ink)] underline-offset-4 hover:underline"
-          >
-            Review administrators
-          </Link>
-        </p>
         {editable ? (
           <Button
             type="submit"

@@ -1,5 +1,5 @@
-import AdminPluginsPage from "@/app/admin/plugins/page";
+import { redirect } from "next/navigation";
 
 export default function OrganizationPluginsPage() {
-  return <AdminPluginsPage />;
+  redirect("/organization/plugins");
 }
