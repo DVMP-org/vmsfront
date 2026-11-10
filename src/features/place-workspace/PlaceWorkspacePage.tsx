@@ -1061,7 +1061,7 @@ function Overview() {
                       tone={
                         item.status === "resolved" || item.status === "closed"
                           ? "success"
-                          : "primary"
+                          : "coral"
                       }
                     />
                     <div className="min-w-0 flex-1">
