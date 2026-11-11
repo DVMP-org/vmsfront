@@ -21,7 +21,7 @@ const navigationGroupSchema = z.object({
 export const domainExperienceSchema = z.object({
   domain: z.enum(["residential", "commercial", "hospitality", "mixed_use"]),
   label: z.string().min(1),
-  terminology: z.record(z.string()),
+  terminology: z.record(z.string(), z.string()),
   navigation: z.array(navigationGroupSchema).min(1),
   workspace_navigation: z
     .array(
@@ -62,6 +62,7 @@ export const domainExperienceSchema = z.object({
     priorities: z.array(z.string()).min(1),
   }),
   views: z.record(
+    z.string(),
     z.object({
       columns: z.array(z.string()).min(1),
       filters: z.array(z.string()).min(1),

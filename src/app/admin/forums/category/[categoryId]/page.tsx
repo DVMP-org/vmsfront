@@ -1,8 +1,9 @@
 import { SiteForum } from "@/features/forum/ForumEntry";
-export default function ForumCategoryPage({
+export default async function ForumCategoryPage({
   params,
 }: {
-  params: { categoryId: string };
+  params: Promise<{ categoryId: string }>;
 }) {
-  return <SiteForum categoryId={params.categoryId} />;
+  const routeParams = await params;
+  return <SiteForum categoryId={routeParams.categoryId} />;
 }

@@ -1,8 +1,9 @@
 import { MemberSiteForum } from "@/features/forum/ForumEntry";
-export default function CommunityPage({
+export default async function CommunityPage({
   params,
 }: {
-  params: { siteId: string };
+  params: Promise<{ siteId: string }>;
 }) {
-  return <MemberSiteForum siteId={params.siteId} />;
+  const routeParams = await params;
+  return <MemberSiteForum siteId={routeParams.siteId} />;
 }

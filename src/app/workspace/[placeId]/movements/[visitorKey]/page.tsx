@@ -1,11 +1,14 @@
 import { MovementJourneyPage } from "@/features/place-workspace/MovementJourneyPage";
 
-export default function WorkspaceMovementVisitor({
+export default async function WorkspaceMovementVisitor({
   params,
 }: {
-  params: { visitorKey: string };
+  params: Promise<{ visitorKey: string }>;
 }) {
+  const routeParams = await params;
   return (
-    <MovementJourneyPage visitorKey={decodeURIComponent(params.visitorKey)} />
+    <MovementJourneyPage
+      visitorKey={decodeURIComponent(routeParams.visitorKey)}
+    />
   );
 }

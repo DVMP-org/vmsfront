@@ -6,7 +6,7 @@ import { ManagersWorkspace } from "./ManagersWorkspace";
 import { managersApi } from "./api";
 
 const mocks = vi.hoisted(() => ({
-  profile: vi.fn(),
+  canManage: true,
   selectedSite: { id: "site-1", name: "Harbour Estate" } as {
     id: string;
     name: string;
@@ -46,8 +46,12 @@ vi.mock("@/store/auth-store", () => {
   };
 });
 
-vi.mock("@/services/admin-service", () => ({
-  adminService: { getAdminProfile: mocks.profile },
+vi.mock("@/features/context/use-site-access", () => ({
+  useSiteAccess: () => ({
+    workspace: { isPending: false, isError: false },
+    isAdministrator: mocks.canManage,
+    allowed: () => mocks.canManage,
+  }),
 }));
 
 vi.mock("./api", async () => {
@@ -82,9 +86,7 @@ describe("Site managers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.selectedSite = { id: "site-1", name: "Harbour Estate" };
-    mocks.profile.mockResolvedValue({
-      data: { effective_permissions: ["*"] },
-    });
+    mocks.canManage = true;
     vi.mocked(managersApi.list).mockResolvedValue({
       site: {
         id: "site-1",
@@ -147,11 +149,21 @@ describe("Site managers", () => {
       0,
     );
     expect(screen.getByText("Full Site authority")).toBeVisible();
-    expect(screen.getByRole("link", { name: "View parties" })).toHaveAttribute(
-      "href",
-      "/admin/people",
-    );
+    expect(screen.getByText(/separate from Place parties/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Add manager" })).toBeVisible();
     expect(screen.queryByText("Party role")).not.toBeInTheDocument();
+  });
+
+  it("keeps manager actions unavailable without Site authority", async () => {
+    mocks.canManage = false;
+    mount();
+    await screen.findAllByText("Dana Manager");
+    expect(
+      screen.queryByRole("button", { name: "Add manager" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not render the manager list without a Site context", () => {
