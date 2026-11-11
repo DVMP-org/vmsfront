@@ -1,8 +1,9 @@
 import { PlaceForum } from "@/features/forum/ForumEntry";
-export default function ForumTopicPage({
+export default async function ForumTopicPage({
   params,
 }: {
-  params: { topicId: string };
+  params: Promise<{ topicId: string }>;
 }) {
-  return <PlaceForum topicId={params.topicId} />;
+  const routeParams = await params;
+  return <PlaceForum topicId={routeParams.topicId} />;
 }

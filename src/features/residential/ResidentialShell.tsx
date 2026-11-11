@@ -52,12 +52,12 @@ export function ResidentialShell({
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      {showWorkspace && selectedProperty && (
+      {/* {showWorkspace && selectedProperty && (
         <WorkspaceContext
           name={selectedProperty.name}
           description="Residential"
         />
-      )}
+      )} */}
       <PageHeader
         breadcrumbs={
           selectedProperty && !showWorkspace ? (

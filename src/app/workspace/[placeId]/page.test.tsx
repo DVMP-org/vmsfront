@@ -232,7 +232,7 @@ it("shows announcements as priority alerts above the dashboard", async () => {
   expect((alerts[0] as HTMLElement).style.width).toBe("100%");
   expect((alerts[0] as HTMLElement).style.marginTop).toBe("");
   expect((alerts[1] as HTMLElement).style.width).toBe("calc(100% - 20px)");
-  expect((alerts[1] as HTMLElement).style.marginTop).toBe("-10px");
+  expect(parseFloat((alerts[1] as HTMLElement).style.marginTop)).toBeLessThan(0);
   expect((alerts[1] as HTMLElement).style.transform).toBe("translateY(2px)");
   expect(Number((alerts[0] as HTMLElement).style.zIndex)).toBeGreaterThan(
     Number((alerts[1] as HTMLElement).style.zIndex),

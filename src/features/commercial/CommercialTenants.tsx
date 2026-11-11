@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +56,7 @@ type TenantRow = {
 };
 
 export default function CommercialTenants() {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const { selectedProperty, contextKey, canManagePeople } =
     useCommercialAccess();
   const client = useQueryClient();
@@ -216,15 +219,7 @@ export default function CommercialTenants() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              if (
-                window.confirm(
-                  `End ${row.tenant}'s relationship with ${row.space}?`,
-                )
-              ) {
-                update.mutate({ ids: [row.id], action: "end" });
-              }
-            }}
+            onClick={() => confirmAction({title: "End tenancy?", description: `End ${row.tenant}'s relationship with ${row.space}? Their access through this relationship will end.`, confirmLabel: "End tenancy", onConfirm: () => update.mutateAsync({ ids: [row.id], action: "end" })})}
           >
             End
           </Button>
@@ -409,6 +404,7 @@ export default function CommercialTenants() {
           });
         }}
       />
+      {confirmationDialog}
     </CommercialShell>
   );
 }

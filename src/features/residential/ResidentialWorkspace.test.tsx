@@ -326,7 +326,35 @@ describe("residential operations", () => {
       await screen.findByRole("button", { name: "Open Apartment 4B" }),
     );
     const panel = screen.getByRole("dialog", { name: "Apartment 4B" });
-    expect(within(panel).getByText("Occupant")).toBeInTheDocument();
+    const overview = within(panel).getByRole("tab", { name: "Overview" });
+    expect(overview).toHaveAttribute("aria-selected", "true");
+    expect(
+      within(panel).getByRole("tabpanel", { name: "Overview" }),
+    ).toBeVisible();
+    expect(within(panel).getByText("12 Harbour Road")).toBeVisible();
+    expect(within(panel).getByText("Recorded activity")).toBeVisible();
+    const residentsTab = within(panel).getByRole("tab", { name: "Residents" });
+    fireEvent.click(residentsTab);
+    expect(
+      within(panel).getByRole("tabpanel", { name: "Residents" }),
+    ).toBeVisible();
+    expect(
+      within(panel).getByRole("link", { name: "Ada Resident" }),
+    ).toHaveAttribute("href", "/admin/residential/occupancies/relationship");
+    expect(within(panel).getByText("ada@example.test")).toBeVisible();
+    expect(
+      within(panel).queryByRole("tabpanel", { name: "Overview" }),
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(residentsTab, { key: "ArrowRight" });
+    expect(within(panel).getByRole("tab", { name: "Charges" })).toHaveFocus();
+    expect(
+      within(panel).getByRole("tabpanel", { name: "Charges" }),
+    ).toBeVisible();
+    fireEvent.keyDown(within(panel).getByRole("tab", { name: "Charges" }), {
+      key: "Home",
+    });
+    expect(overview).toHaveFocus();
+    expect(overview).toHaveAttribute("aria-selected", "true");
     expect(
       within(panel).getByRole("link", { name: "View unit" }),
     ).toHaveAttribute("href", "/admin/places/unit-4b");
@@ -338,9 +366,162 @@ describe("residential operations", () => {
     });
     expect(within(dialog).getByLabelText(/^Unit/)).toHaveValue("unit-4b");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(dialog).toHaveAttribute("data-state", "closed");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Apartment 4B" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("keeps charge currencies separate and only shows the selected unit's assignments", async () => {
+    const assignment = {
+      id: "charge-ngn",
+      target_place: { id: "unit-4b", name: "Apartment 4B" },
+      charge_definition: {
+        name: "Service charge",
+        amount: "1500",
+        currency: "NGN",
+        recurrence: "monthly",
+      },
+      outstanding_amount: "500",
+      next_due_date: "2026-12-01",
+      current_responsibility: null,
+    };
+    mocks.chargeAssignments.mockResolvedValue([
+      assignment,
+      {
+        ...assignment,
+        id: "charge-usd",
+        charge_definition: {
+          ...assignment.charge_definition,
+          name: "Insurance",
+          currency: "USD",
+        },
+        outstanding_amount: "20",
+      },
+      {
+        ...assignment,
+        id: "other-unit",
+        target_place: { id: "unit-other", name: "Other unit" },
+        charge_definition: {
+          ...assignment.charge_definition,
+          name: "Other unit charge",
+        },
+      },
+    ]);
+    mount(<ResidentialUnits />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open Apartment 4B" }),
+    );
+    const panel = screen.getByRole("dialog", { name: "Apartment 4B" });
+    fireEvent.click(within(panel).getByRole("tab", { name: "Charges" }));
     expect(
-      screen.queryByRole("dialog", { name: "Apartment 4B" }),
+      await within(panel).findByText("Service charge"),
+    ).toBeInTheDocument();
+    expect(within(panel).getByText("Insurance")).toBeInTheDocument();
+    expect(
+      within(panel).queryByText("Other unit charge"),
     ).not.toBeInTheDocument();
+    expect(within(panel).getAllByText(/500.00/).length).toBeGreaterThan(0);
+    expect(within(panel).getAllByText(/\$20.00/).length).toBeGreaterThan(0);
+    expect(within(panel).queryByText(/520.00/)).not.toBeInTheDocument();
+  });
+
+  it("retries failed detail charges and keeps restricted charges out of read-only views", async () => {
+    mocks.chargeAssignments
+      .mockRejectedValueOnce(new Error("Unavailable"))
+      .mockResolvedValue([]);
+    const { unmount } = mount(<ResidentialUnits />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open Apartment 4B" }),
+    );
+    const panel = screen.getByRole("dialog", { name: "Apartment 4B" });
+    fireEvent.click(within(panel).getByRole("tab", { name: "Charges" }));
+    fireEvent.click(
+      await within(panel).findByRole("button", { name: "Retry charges" }),
+    );
+    expect(
+      await within(panel).findByText("No charges assigned to this unit."),
+    ).toBeInTheDocument();
+    unmount();
+    mocks.chargeAssignments.mockClear();
+    mocks.profile.effective_permissions = ["places.list"];
+    mount(<ResidentialUnits />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open Apartment 4B" }),
+    );
+    const readOnly = screen.getByRole("dialog", { name: "Apartment 4B" });
+    fireEvent.click(within(readOnly).getByRole("tab", { name: "Charges" }));
+    expect(
+      within(readOnly).getByText(
+        "Charge information is not available with your access.",
+      ),
+    ).toBeInTheDocument();
+    expect(mocks.chargeAssignments).not.toHaveBeenCalled();
+    expect(
+      within(readOnly).queryByRole("button", { name: "Edit unit" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(readOnly).queryByRole("button", { name: "Assign resident" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("edits the selected unit from its detail drawer", async () => {
+    mocks.update.mockResolvedValue(unit({ name: "Apartment 4C" }));
+    mount(<ResidentialUnits />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open Apartment 4B" }),
+    );
+    const panel = screen.getByRole("dialog", { name: "Apartment 4B" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Edit unit" }));
+    const edit = screen.getByRole("dialog", { name: "Edit Apartment 4B" });
+    expect(within(edit).getByLabelText(/^Address/)).toHaveValue(
+      "12 Harbour Road",
+    );
+    fireEvent.change(within(edit).getByLabelText(/^Unit name/), {
+      target: { value: "Apartment 4C" },
+    });
+    fireEvent.click(within(edit).getByRole("button", { name: "Save changes" }));
+    await waitFor(() =>
+      expect(mocks.update).toHaveBeenCalledWith("unit-4b", {
+        name: "Apartment 4C",
+        address: "12 Harbour Road",
+        description: "",
+      }),
+    );
+  });
+
+  it("links unit validation to its control and resets an abandoned create session", async () => {
+    mount(<ResidentialUnits />);
+    const add = await screen.findByRole("button", { name: "Add unit" });
+    fireEvent.click(add);
+    const dialog = screen.getByRole("dialog", {
+      name: "Add a residential unit",
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Create unit" }),
+    );
+    fireEvent.click(
+      within(dialog).getByRole("link", {
+        name: "Enter a unit name or number.",
+      }),
+    );
+    expect(within(dialog).getByLabelText(/^Unit name/)).toHaveFocus();
+    expect(mocks.create).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/^Unit name/), {
+      target: { value: "Draft unit" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    fireEvent.click(add);
+    const reopened = screen.getByRole("dialog", {
+      name: "Add a residential unit",
+    });
+    expect(within(reopened).getByLabelText(/^Unit name/)).toHaveValue("");
+    expect(within(reopened).queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("creates a canonical unit from the unit register", async () => {
@@ -423,18 +604,33 @@ describe("residential operations", () => {
   it("opens resident details from the row action and links to the profile", async () => {
     mount(<ResidentialOccupancies />);
     expect(screen.queryByLabelText("Resident details")).not.toBeInTheDocument();
-    fireEvent.click(
-      await screen.findByRole("button", { name: "View Ada Resident details" }),
-    );
-    const panel = screen.getByLabelText("Resident details");
+    const trigger = await screen.findByRole("button", {
+      name: "View Ada Resident details",
+    });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const panel = screen.getByRole("dialog", { name: "Resident details" });
+    expect(panel).toHaveAttribute("aria-modal", "true");
     expect(within(panel).getByText("ada@example.test")).toBeInTheDocument();
     expect(
       within(panel).getByRole("link", { name: "View full profile" }),
     ).toHaveAttribute("href", "/admin/residential/occupancies/relationship");
     fireEvent.click(
-      within(panel).getByRole("button", { name: "Close resident details" }),
+      within(panel).getByRole("button", { name: "Close drawer" }),
     );
-    expect(screen.queryByLabelText("Resident details")).not.toBeInTheDocument();
+    expect(panel).toHaveAttribute("data-state", "closed");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Resident details" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(trigger).toHaveFocus();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Ada Resident details" }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Resident details" }),
+    ).toBeInTheDocument();
   });
 
   it("onboards a new resident directly from Assign household", async () => {

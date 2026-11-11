@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminDeleteRole, useAdminRoles } from "@/hooks/use-admin";
@@ -23,6 +25,7 @@ const PAGE_SIZE = 20;
 
 export default function RolesPage() {
 
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const router = useRouter();
 
   // URL query sync
@@ -106,7 +109,7 @@ export default function RolesPage() {
   const handleDelete = (roleId: string) => {
     setDeletingRoleId(roleId);
     toast.info(`Deleting role "${roleId}"...`);
-    deletRole.mutate(roleId, {
+    return deletRole.mutateAsync(roleId, {
       onSettled: () => {
         setDeletingRoleId(null);
       },
@@ -202,12 +205,7 @@ export default function RolesPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              if (confirm(`Are you sure you want to delete the role "${row.name}"?`)) {
-                toast.info(`Deleting role "${row.name}"...`);
-                handleDelete(row.id);
-              }
-            }}
+            onClick={() => confirmAction({title: "Delete role?", description: `Delete ${row.name}? This removes the role record.`, confirmLabel: "Delete role", onConfirm: () => handleDelete(row.id)})}
             disabled={deletingRoleId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -302,6 +300,7 @@ export default function RolesPage() {
           />
         )}
       </SlideOver>
+      {confirmationDialog}
     </>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Phone, UserRound, X } from "lucide-react";
@@ -34,6 +36,7 @@ export function VisitorDetailDrawer({
   focusGuestId?: string | null;
   onClose: () => void;
 }) {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const client = useQueryClient();
   const access = useSiteAccess();
   const profile = access.workspace;
@@ -277,7 +280,7 @@ export function VisitorDetailDrawer({
                 variant="destructive-outlined"
                 isLoading={revoke.isPending}
                 disabled={pending}
-                onClick={() => revoke.mutate()}
+                onClick={() => confirmAction({title: "Revoke visitor access?", description: "This invitation will no longer grant access to its visitors.", confirmLabel: "Revoke access", onConfirm: () => revoke.mutateAsync()})}
               >
                 <UserRound className="h-4 w-4" aria-hidden="true" />
                 Revoke access
@@ -286,6 +289,7 @@ export function VisitorDetailDrawer({
           </div>
         </div>
       ) : null}
+      {confirmationDialog}
     </Drawer>
   );
 }

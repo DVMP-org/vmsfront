@@ -99,6 +99,9 @@ export const Header = memo(function Header({
             href="/organizations"
             aria-label="VMSCore organizations"
             className="shrink-0 items-center"
+            // Keep these stable when a host editor annotates navigation links.
+            contentEditable={false}
+            style={{ cursor: "pointer" }}
           >
             <VmsWordmark compact size="md" className="sm:hidden" />
             <VmsWordmark size="md" className="hidden sm:inline-flex" />
