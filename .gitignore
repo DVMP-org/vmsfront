@@ -66,4 +66,3 @@ SETUP.md
 *.sh
 certificates
 # Sentry Config File
-.env.sentry-build-plugin

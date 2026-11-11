@@ -20,7 +20,8 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { format, formatDistanceStrict } from "date-fns";
+import { format } from "date-fns/format";
+import { formatDistanceStrict } from "date-fns/formatDistanceStrict";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
