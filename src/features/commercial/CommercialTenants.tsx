@@ -12,7 +12,8 @@ import {
   UserRoundPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
+import { format } from "date-fns/format";
 import { toast } from "sonner";
 
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";

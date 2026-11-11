@@ -192,7 +192,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-busy={isLoading || undefined}
             className={cn(
               Icon && !leftNode ? "pl-7" : "",
-              isContentSensitive ? "sentry-mask" : "",
             )}
           />
 

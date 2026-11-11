@@ -21,7 +21,18 @@ function getBaseDomainUrl(
   const protocol =
     forwardedProtocol ||
     (request ? new URL(request.url).protocol.replace(":", "") : PROTOCOL);
-  const port = request?.nextUrl.port ? `:${request.nextUrl.port}` : "";
+  // Never leak the container's internal port into a public redirect. A
+  // forwarded port is authoritative; the request port is only trusted for
+  // plain-http local development.
+  const forwardedPort = request?.headers
+    .get("x-forwarded-port")
+    ?.split(",")[0]
+    .trim();
+  const requestPort =
+    forwardedPort || (protocol === "http" ? request?.nextUrl.port || "" : "");
+  const defaultPort = protocol === "https" ? "443" : "80";
+  const port =
+    requestPort && requestPort !== defaultPort ? `:${requestPort}` : "";
   const url = new URL(`${protocol}://${BASE_DOMAIN}${port}${pathname}`);
   if (search) {
     url.search = search;
@@ -85,7 +96,7 @@ export function middleware(request: NextRequest) {
   const isOrganizationsPath = pathname.startsWith("/organizations");
   const isDashboardPath = pathname.startsWith("/admin");
   const isWorkspacePath = pathname === "/workspace" || pathname.startsWith("/workspace/");
-  const isSelectPath = pathname.startsWith("/select");
+  const isLobbyPath = pathname === "/";
   const isProfilePath = pathname === "/profile" || pathname.startsWith("/profile/");
   const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
@@ -112,13 +123,25 @@ export function middleware(request: NextRequest) {
     });
   }
 
+  // RULE 0b: The workspace lobby is the organization subdomain root. On the
+  // base domain the root is an account entry point, not a tenant surface.
+  if (isLobbyPath && !isOnSubdomain) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(
+        getBaseDomainUrl("/organizations", "", request),
+      );
+    }
+    const loginUrl = getBaseDomainUrl("/auth/login", "", request);
+    loginUrl.searchParams.set("redirect_to", "/organizations");
+    return NextResponse.redirect(loginUrl);
+  }
+
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard and organization routes require tenant context from a subdomain.
   if (
     !isOnSubdomain &&
     (isDashboardPath ||
       isWorkspacePath ||
-      isSelectPath ||
       isSetupPath ||
       isOrganizationPath ||
       isProfilePath)
@@ -145,7 +168,7 @@ export function middleware(request: NextRequest) {
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
     const destinationUrl = isOnSubdomain
-      ? new URL("/organization", request.url)
+      ? new URL("/", request.url)
       : getBaseDomainUrl("/organizations", "", request);
     return NextResponse.redirect(destinationUrl);
   }
@@ -161,7 +184,7 @@ export function middleware(request: NextRequest) {
     !isAuthenticated &&
     (isDashboardPath ||
       isWorkspacePath ||
-      isSelectPath ||
+      isLobbyPath ||
       isSetupPath ||
       isOrganizationPath ||
       isProfilePath)
@@ -187,10 +210,10 @@ export function middleware(request: NextRequest) {
 // Run middleware for these routes
 export const config = {
   matcher: [
+    "/",
     "/admin",
     "/admin/:path*",
     "/workspace/:path*",
-    "/select",
     "/profile",
     "/profile/:path*",
     "/setup",

@@ -5,6 +5,5 @@ packages:
   - "playwright"
 
 onlyBuiltDependencies:
-  - "@sentry/cli"
   - "esbuild"
   - "unrs-resolver"

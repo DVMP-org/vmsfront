@@ -343,8 +343,7 @@ export function OperationsDashboard({
                       {place.name}
                     </strong>
                     <span className="block truncate text-xs text-[var(--vms-ink-muted)]">
-                      {humanize(place.kind)} ·{" "}
-                      {humanize(place.use_case || useCase)}
+                      {humanize(place.kind)} · {humanize(useCase)}
                     </span>
                   </span>
                   <Badge variant={place.is_active ? "success" : "neutral"}>

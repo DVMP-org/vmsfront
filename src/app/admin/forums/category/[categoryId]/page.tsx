@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import {
   ArrowLeft,
   CheckSquare,

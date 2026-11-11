@@ -152,7 +152,7 @@ function SitesWorkspace({
           <span>
             <strong className="block">{site.name}</strong>
             <span className="block text-xs capitalize text-[var(--vms-ink-muted)]">
-              {site.use_case?.replaceAll("_", " ") || "Inherited context"}
+              {site.use_case.replaceAll("_", " ")}
             </span>
           </span>
         </span>
@@ -230,7 +230,7 @@ function SitesWorkspace({
           ["Site", "Use case", "Address", "Status"],
           ...rows.map((site) => [
             site.name,
-            site.use_case || "",
+            site.use_case,
             site.address,
             site.is_active ? "Active" : "Archived",
           ]),
@@ -485,7 +485,7 @@ function SiteForm({
         admin_name: adminName.trim() || null,
         admin_phone: adminPhone.trim() || null,
         parent_site_id: parent?.id || null,
-        ...(useCase ? { use_case: useCase as SiteInput["use_case"] } : {}),
+        use_case: useCase as SiteInput["use_case"],
       }),
     onSuccess: onSaved,
   });
@@ -493,7 +493,7 @@ function SiteForm({
     <form
       onSubmit={(event: FormEvent) => {
         event.preventDefault();
-        if (name.trim() && adminEmail.trim()) mutation.mutate();
+        if (name.trim() && adminEmail.trim() && useCase) mutation.mutate();
       }}
       className="space-y-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5"
     >
@@ -544,8 +544,9 @@ function SiteForm({
       </Field>
       <Field
         id="site-use-case"
-        label="Operating context"
-        description="Only mixed-use organizations may override the Site context."
+        label="Operating type"
+        required
+        description="The Site owns its operating type. Its Places and child Sites inherit it."
       >
         {(control) => (
           <select
@@ -553,8 +554,9 @@ function SiteForm({
             className={fieldControlClassName}
             value={useCase}
             onChange={(event) => setUseCase(event.target.value)}
+            required
           >
-            <option value="">Inherit organization context</option>
+            <option value="">Choose an operating type</option>
             {catalog.data?.use_cases.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -617,7 +619,9 @@ function SiteForm({
         </Button>
         <Button
           type="submit"
-          disabled={mutation.isPending || !name.trim() || !adminEmail.trim()}
+          disabled={
+            mutation.isPending || !name.trim() || !adminEmail.trim() || !useCase
+          }
         >
           {mutation.isPending ? "Creating…" : "Create Site"}
         </Button>
@@ -690,7 +694,7 @@ function SiteDetails({
               </p>
               <h2 className="mt-1 text-2xl font-semibold">{site.name}</h2>
               <p className="mt-1 text-sm capitalize text-[var(--vms-ink-muted)]">
-                {site.use_case?.replaceAll("_", " ") || "Inherited context"} ·{" "}
+                {site.use_case.replaceAll("_", " ")} ·{" "}
                 {site.address || "No address"}
               </p>
             </div>
@@ -963,7 +967,7 @@ function ChildSites({
               <span>
                 <strong className="block text-sm">{site.name}</strong>
                 <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
-                  {site.use_case?.replaceAll("_", " ") || "Inherited"}
+                  {site.use_case.replaceAll("_", " ")}
                 </span>
               </span>
               <ChevronRight className="h-4 w-4" aria-hidden="true" />

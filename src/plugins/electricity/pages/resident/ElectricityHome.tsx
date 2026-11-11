@@ -118,7 +118,7 @@ export default function ResidentElectricityDashboard() {
                     description="Please select a residency from the dashboard to view electricity information"
                     action={{
                         label: "Go to Dashboard",
-                        onClick: () => router.push("/select"),
+                        onClick: () => router.push("/?lobby=1"),
                     }}
                 />
             </div>

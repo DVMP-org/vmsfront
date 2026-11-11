@@ -88,7 +88,7 @@ export function useAuth() {
           clearRedirectQueryParam();
         }
         router.refresh();
-        router.replace(redirectTarget || "/organization");
+        router.replace(redirectTarget || "/");
         return;
       }
 
@@ -269,7 +269,7 @@ export function useOnboard() {
       queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
 
       toast.success("Onboarding complete! Welcome.");
-      router.push("/organization/workspaces");
+      router.push("/");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
@@ -309,7 +309,7 @@ export function useSocialCallback() {
       queryClient.invalidateQueries({ queryKey: ["auth", "profile"] });
 
       toast.success("Login successful!");
-      router.replace("/organization/workspaces");
+      router.replace("/");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);

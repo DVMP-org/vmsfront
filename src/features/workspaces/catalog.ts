@@ -40,7 +40,7 @@ export interface ManagedSiteWorkspace {
     slug: string;
     parent_site_id: string | null;
     is_active: boolean;
-    use_case?: string | null;
+    use_case: string;
   };
   effective_permissions: string[];
 }

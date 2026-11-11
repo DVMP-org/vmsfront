@@ -16,7 +16,8 @@ import {
   WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
+import { format } from "date-fns/format";
 
 import { ActionCard } from "@/components/ui/ActionCard";
 import { Button } from "@/components/ui/Button";

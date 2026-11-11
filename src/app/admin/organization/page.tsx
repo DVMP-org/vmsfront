@@ -36,11 +36,6 @@ export default function OrganizationPage() {
     queryFn: contextApi.organization,
     enabled: canView,
   });
-  const catalog = useQuery({
-    queryKey: ["context-catalog", key],
-    queryFn: contextApi.catalog,
-    enabled: canView,
-  });
 
   if (profile.isError || details.isError) {
     return (
@@ -77,18 +72,13 @@ export default function OrganizationPage() {
   }
   if (!details.data) return null;
 
-  const useCase =
-    catalog.data?.use_cases.find(
-      (item) => item.value === details.data.use_case,
-    )?.label || details.data.use_case?.replaceAll("_", " ");
-
   return (
     <div className="space-y-4">
       <div className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2">
         <Summary
-          label="Operating use case"
-          value={useCase || "Not configured"}
-          detail="Fixed when the organization is created"
+          label="Sites"
+          value={String(details.data.sites?.length ?? 0)}
+          detail="Each Site owns its operating type"
         />
         <Summary
           label="Organization URL"

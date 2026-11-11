@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     private handleReset = () => {
         this.setState({ hasError: false, error: null });
-        window.location.href = "/organization/workspaces";
+        window.location.href = "/";
     };
 
     public render() {

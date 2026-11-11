@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Home, LayoutGrid, Settings, Puzzle } from "lucide-react";
+import { Building2, Home, Settings, Puzzle } from "lucide-react";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 import { useAdminProfile } from "@/hooks/use-admin";
@@ -12,7 +12,6 @@ import { useAppStore } from "@/store/app-store";
 const links = [
   { href: "/organization", label: "Home", icon: Home },
   { href: "/organization/properties", label: "Properties", icon: Building2 },
-  { href: "/organization/workspaces", label: "Workspaces", icon: LayoutGrid },
   { href: "/organization/plugins", label: "Plugins", icon: Puzzle },
   {
     href: "/organization/settings",
