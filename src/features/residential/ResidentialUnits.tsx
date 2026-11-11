@@ -786,7 +786,7 @@ function UnitFormModal({
                 >
                   {parents.map((parent) => (
                     <option key={parent.id} value={parent.id}>
-                      {parent.name} · {parent.kind}
+                      {parent.name} 
                     </option>
                   ))}
                 </select>
