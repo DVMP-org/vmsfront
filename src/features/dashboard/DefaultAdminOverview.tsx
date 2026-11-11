@@ -55,7 +55,7 @@ export default function DefaultAdminOverview() {
     if (!data) return;
     if (!data.root_places.length) return;
     if (!selectedProperty) {
-      router.replace("/organization/workspaces");
+      router.replace("/?lobby=1");
     }
   }, [data, router, selectedProperty]);
 
@@ -100,7 +100,7 @@ export default function DefaultAdminOverview() {
           administer or return to the organization workspace.
         </p>
         <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/organization/workspaces">Choose a workspace</Link>
+          <Link href="/?lobby=1">Choose a workspace</Link>
         </Button>
       </div>
     );

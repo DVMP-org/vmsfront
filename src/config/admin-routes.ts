@@ -189,7 +189,6 @@ export function contextualAdminLinks(
     ),
   );
   const rank = (link: AdminRoute) => {
-    if (link.href === "/organization/workspaces") return -1;
     return link.module
       ? (groupByModule.get(link.module)?.index ?? moduleGroups.length)
       : moduleGroups.length + 1;

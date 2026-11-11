@@ -92,7 +92,7 @@ describe("plan activation setup", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith("/organization/workspaces"),
+      expect(mocks.replace).toHaveBeenCalledWith("/"),
     );
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });

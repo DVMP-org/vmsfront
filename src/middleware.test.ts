@@ -62,6 +62,46 @@ describe("organization routing", () => {
     expect(location.pathname).toBe("/setup/first-place");
   });
 
+  it("sends an authenticated subdomain root to the workspace lobby", () => {
+    const request = new NextRequest("https://harbour.vmsfront.to/", {
+      headers: {
+        host: "harbour.vmsfront.to",
+        cookie: "auth-token=valid-token",
+      },
+    });
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("sends anonymous subdomain root visitors to login with the lobby as their destination", () => {
+    const request = new NextRequest("https://harbour.vmsfront.to/", {
+      headers: { host: "harbour.vmsfront.to" },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("redirect_to")).toBe("/");
+  });
+
+  it("keeps the base-domain root in the account space", () => {
+    const request = new NextRequest("https://vmsfront.to/", {
+      headers: {
+        host: "vmsfront.to",
+        cookie: "auth-token=valid-token",
+      },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.pathname).toBe("/organizations");
+  });
+
   it("preserves the local port when authenticated auth routes leave the base domain", () => {
     const request = new NextRequest("http://lvh.me:3116/auth/login", {
       headers: {

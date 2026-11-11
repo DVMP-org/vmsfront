@@ -85,7 +85,7 @@ export function middleware(request: NextRequest) {
   const isOrganizationsPath = pathname.startsWith("/organizations");
   const isDashboardPath = pathname.startsWith("/admin");
   const isWorkspacePath = pathname === "/workspace" || pathname.startsWith("/workspace/");
-  const isSelectPath = pathname.startsWith("/select");
+  const isLobbyPath = pathname === "/";
   const isProfilePath = pathname === "/profile" || pathname.startsWith("/profile/");
   const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
@@ -112,13 +112,25 @@ export function middleware(request: NextRequest) {
     });
   }
 
+  // RULE 0b: The workspace lobby is the organization subdomain root. On the
+  // base domain the root is an account entry point, not a tenant surface.
+  if (isLobbyPath && !isOnSubdomain) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(
+        getBaseDomainUrl("/organizations", "", request),
+      );
+    }
+    const loginUrl = getBaseDomainUrl("/auth/login", "", request);
+    loginUrl.searchParams.set("redirect_to", "/organizations");
+    return NextResponse.redirect(loginUrl);
+  }
+
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
   // Dashboard and organization routes require tenant context from a subdomain.
   if (
     !isOnSubdomain &&
     (isDashboardPath ||
       isWorkspacePath ||
-      isSelectPath ||
       isSetupPath ||
       isOrganizationPath ||
       isProfilePath)
@@ -145,7 +157,7 @@ export function middleware(request: NextRequest) {
   // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
   if (isAuthenticated && isAuthPath) {
     const destinationUrl = isOnSubdomain
-      ? new URL("/organization", request.url)
+      ? new URL("/", request.url)
       : getBaseDomainUrl("/organizations", "", request);
     return NextResponse.redirect(destinationUrl);
   }
@@ -161,7 +173,7 @@ export function middleware(request: NextRequest) {
     !isAuthenticated &&
     (isDashboardPath ||
       isWorkspacePath ||
-      isSelectPath ||
+      isLobbyPath ||
       isSetupPath ||
       isOrganizationPath ||
       isProfilePath)
@@ -187,10 +199,10 @@ export function middleware(request: NextRequest) {
 // Run middleware for these routes
 export const config = {
   matcher: [
+    "/",
     "/admin",
     "/admin/:path*",
     "/workspace/:path*",
-    "/select",
     "/profile",
     "/profile/:path*",
     "/setup",

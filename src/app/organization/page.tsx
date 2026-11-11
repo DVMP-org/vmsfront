@@ -77,7 +77,7 @@ export default function OrganizationHomePage() {
             </p>
           </div>
           <Link
-            href="/organization/workspaces"
+            href="/"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#1F2933] px-4 text-sm font-semibold text-white transition hover:bg-[#111820] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A] focus-visible:ring-offset-2"
           >
             Open Workspaces
@@ -132,7 +132,7 @@ export default function OrganizationHomePage() {
             not create a workspace.
           </p>
           <Link
-            href="/organization/workspaces"
+            href="/"
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-[#C7CDD3] bg-white px-3 text-xs font-semibold text-[#1F2933] transition hover:bg-[#F5F7F8]"
           >
             Review permitted workspaces

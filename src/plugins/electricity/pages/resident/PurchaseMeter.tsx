@@ -160,7 +160,7 @@ export default function ResidentPurchaseMeter() {
                     description="Please select a residency from the dashboard to purchase electricity"
                     action={{
                         label: "Go to Dashboard",
-                        onClick: () => router.push("/select"),
+                        onClick: () => router.push("/?lobby=1"),
                     }}
                 />
             </div>

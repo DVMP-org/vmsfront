@@ -4,8 +4,8 @@ import { buildSubdomainUrl, getSubdomain } from "@/lib/subdomain-utils";
 
 describe("subdomain URLs", () => {
   it("builds a portless HTTPS tenant URL through the Valet proxy", () => {
-    expect(buildSubdomainUrl("acme", "/select")).toBe(
-      "https://acme.vmsfront.to/select",
+    expect(buildSubdomainUrl("acme", "/workspace/harbour")).toBe(
+      "https://acme.vmsfront.to/workspace/harbour",
     );
   });
 

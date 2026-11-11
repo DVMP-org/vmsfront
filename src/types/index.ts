@@ -399,7 +399,11 @@ export interface AdminSummary {
   id: string;
   user_id: string;
   role_id: string | null;
+  role_ids?: string[];
   permissions: string | null;
+  role?: AdminRole | null;
+  roles?: AdminRole[];
+  effective_permissions?: string[];
   created_at: string;
   updated_at: string;
 }

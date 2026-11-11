@@ -531,7 +531,7 @@ export default function PlansPage() {
       router.replace("/admin");
       return;
     }
-    router.replace("/organization/workspaces");
+    router.replace("/");
   }, [firstWorkspaceSetup, organization?.needs_first_site, router]);
 
   const activePlans =

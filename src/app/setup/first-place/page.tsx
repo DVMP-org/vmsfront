@@ -46,7 +46,7 @@ export default function FirstPlaceSetupPage() {
 
   useEffect(() => {
     if (!isPending && organization && !needsFirstPlace) {
-      router.replace("/organization/workspaces");
+      router.replace("/?lobby=1");
     }
   }, [isPending, needsFirstPlace, organization, router]);
 
@@ -67,7 +67,7 @@ export default function FirstPlaceSetupPage() {
       }
       void queryClient.invalidateQueries({ queryKey: ["organizations"] });
       toast.success(`${saved.name} is ready.`);
-      router.replace("/organization/workspaces?setup=complete");
+      router.replace("/?lobby=1&setup=complete");
     },
   });
 
@@ -156,7 +156,7 @@ export default function FirstPlaceSetupPage() {
             title="Your organization already has a Site"
             action={
               <Button asChild size="sm">
-                <Link href="/organization/workspaces">Open Workspaces</Link>
+                <Link href="/?lobby=1">Open Workspaces</Link>
               </Button>
             }
           >
