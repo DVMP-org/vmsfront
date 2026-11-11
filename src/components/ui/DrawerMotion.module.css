@@ -1,47 +1,37 @@
-/* Animate only composited properties; no layout work on animation frames. */
-.panel {
-  animation: drawer-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+/* Transform/opacity only. Portals stay mounted until the exit has finished. */
+.panel, .panelLeft {
+  animation: drawer-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --drawer-offset: 100%;
 }
-
-.panelLeft {
-  animation: drawer-enter-left 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.panelLeft { --drawer-offset: -100%; }
+.panel[data-state="closed"], .panelLeft[data-state="closed"] {
+  animation: drawer-exit 200ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
 }
-
-.backdrop {
-  animation: backdrop-enter 180ms ease-out both;
-}
-
+.backdrop { animation: backdrop-enter 180ms ease-out both; }
+.backdrop[data-state="closed"] { animation: backdrop-enter 200ms ease-in reverse both; }
+.modal { animation: modal-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.modal[data-state="closed"] { animation: modal-exit 180ms ease-in both; pointer-events: none; }
 @keyframes drawer-enter {
-  from {
-    transform: translate3d(100%, 0, 0);
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-  }
+  from { transform: translate3d(var(--drawer-offset), 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
-
-@keyframes drawer-enter-left {
-  from {
-    transform: translate3d(-100%, 0, 0);
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-  }
+@keyframes drawer-exit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--drawer-offset), 0, 0); }
 }
-
 @keyframes backdrop-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
+@keyframes modal-enter {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.99); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes modal-exit {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.99); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .panel,
-  .panelLeft,
-  .backdrop {
-    animation: none;
-  }
+  .panel, .panelLeft, .backdrop, .modal { animation: none; }
 }
