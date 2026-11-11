@@ -9,6 +9,13 @@ import { useAdminProfile } from "@/hooks/use-admin";
 import { hasAdminPermission } from "@/lib/permissions";
 import { useAppStore } from "@/store/app-store";
 
+// Keep anchor attributes stable when the surrounding host editor annotates
+// navigation before React hydrates, as it does for the shared header link.
+const navigationAnchorProps = {
+  contentEditable: false,
+  style: { cursor: "pointer" },
+} as const;
+
 const links = [
   { href: "/organization", label: "Home", icon: Home },
   { href: "/organization/properties", label: "Properties", icon: Building2 },
@@ -56,6 +63,7 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  {...navigationAnchorProps}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex min-h-11 items-center gap-3 rounded-[var(--vms-radius-control)] px-3 text-sm font-medium transition-colors duration-[var(--vms-motion)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
@@ -73,6 +81,7 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
           <div className="mx-3 mt-4 border-t border-[var(--vms-line)] pt-3">
             <Link
               href="/organizations"
+              {...navigationAnchorProps}
               className="flex min-h-11 items-center gap-3 rounded-[var(--vms-radius-control)] px-3 text-sm font-medium text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
             >
               <Building2 className="h-4 w-4" />
@@ -96,6 +105,7 @@ export function OrganizationShell({ children }: { children: React.ReactNode }) {
                   <Link
                     key={link.href}
                     href={link.href}
+                    {...navigationAnchorProps}
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "inline-flex min-h-11 shrink-0 items-center rounded-[var(--vms-radius-control)] px-3 text-xs font-semibold",
