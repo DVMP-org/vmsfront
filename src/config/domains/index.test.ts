@@ -32,6 +32,7 @@ describe("domain experience configuration", () => {
       "Leasing & revenue",
       "Operations",
       "Access",
+      "Community",
     ]);
     expect(mixedUse.navigation.flatMap((group) => group.label)).not.toContain(
       "Residential operations",

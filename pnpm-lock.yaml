@@ -44,6 +44,9 @@ importers:
       '@vms/api-client':
         specifier: workspace:*
         version: link:packages/api-client
+      '@vms/ui':
+        specifier: workspace:*
+        version: link:packages/ui
       axios:
         specifier: ^1.6.8
         version: 1.13.5

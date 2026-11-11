@@ -95,9 +95,13 @@ export function middleware(request: NextRequest) {
   const isVerifyEmailPath = pathname.startsWith("/auth/verify-email");
   const isOrganizationsPath = pathname.startsWith("/organizations");
   const isDashboardPath = pathname.startsWith("/admin");
-  const isWorkspacePath = pathname === "/workspace" || pathname.startsWith("/workspace/");
+  const isWorkspacePath =
+    pathname === "/workspace" || pathname.startsWith("/workspace/");
   const isLobbyPath = pathname === "/";
-  const isProfilePath = pathname === "/profile" || pathname.startsWith("/profile/");
+  const isCommunityPath =
+    pathname === "/community" || pathname.startsWith("/community/");
+  const isProfilePath =
+    pathname === "/profile" || pathname.startsWith("/profile/");
   const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
     pathname === "/organization" || pathname.startsWith("/organization/");
@@ -187,7 +191,8 @@ export function middleware(request: NextRequest) {
       isLobbyPath ||
       isSetupPath ||
       isOrganizationPath ||
-      isProfilePath)
+      isProfilePath ||
+      isCommunityPath)
   ) {
     const loginUrl = isOnSubdomain
       ? new URL("/auth/login", request.url)
@@ -214,6 +219,7 @@ export const config = {
     "/admin",
     "/admin/:path*",
     "/workspace/:path*",
+    "/community/:path*",
     "/profile",
     "/profile/:path*",
     "/setup",
