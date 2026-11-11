@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { loadPlugins } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
 import { findPluginRouteAndType } from "@/lib/plugin-utils";
@@ -12,11 +12,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FileQuestion } from "lucide-react";
 
-interface Props {
-    params: { slug: string[] };
-}
-
-function PluginContent({ params }: Props) {
+function PluginContent() {
+    const params = useParams<{ slug?: string[] }>();
     const slugPath = params.slug?.join("/") ?? "";
     const fullPath = slugPath ? `/${slugPath}` : "/";
     const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
@@ -153,6 +150,6 @@ function PluginContent({ params }: Props) {
     );
 }
 
-export default function PluginPage({ params }: Props) {
-    return <PluginContent params={params} />;
+export default function PluginPage() {
+    return <PluginContent />;
 }

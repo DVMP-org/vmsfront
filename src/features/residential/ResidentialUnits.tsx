@@ -452,7 +452,7 @@ export default function ResidentialUnits() {
           />
         </section>
         <ResidentialUnitDetail
-          key={contextKey}
+          key={JSON.stringify(contextKey)}
           unit={unitRows.find((unit) => unit.id === detailId)}
           relationships={relationships.data?.items || []}
           contextKey={contextKey}

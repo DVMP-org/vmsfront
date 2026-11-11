@@ -1,8 +1,9 @@
 import { PlaceWorkspacePage } from "@/features/place-workspace/PlaceWorkspacePage";
-export default function WorkspaceSection({
+export default async function WorkspaceSection({
   params,
 }: {
-  params: { section: string };
+  params: Promise<{ section: string }>;
 }) {
-  return <PlaceWorkspacePage section={params.section} />;
+  const routeParams = await params;
+  return <PlaceWorkspacePage section={routeParams.section} />;
 }

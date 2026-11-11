@@ -1,2 +1,4 @@
 import ChargesWorkspace from "@/features/charges/ChargesWorkspace";
-export default function Page({params}:{params:{id:string}}){return <ChargesWorkspace action="new"/>;}
+export default function Page() {
+  return <ChargesWorkspace action="new" />;
+}

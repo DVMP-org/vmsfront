@@ -532,6 +532,7 @@ export function useExtendGatePass(residencyId: string | null) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["resident", "dashboard"] });
         queryClient.invalidateQueries({ queryKey: ["resident", "visitors"] });
+        queryClient.invalidateQueries({ queryKey: ["resident", "gate-passes"] });
         toast.success("Visit request approved and gate pass created successfully!");
       },
       onError: (error: any) => {

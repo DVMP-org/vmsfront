@@ -389,7 +389,10 @@ export function DataTable<T extends Record<string, any>>({
 
   // Build filters from internal filterValues
   const currentFilters = useMemo(() => {
-    const filters: FilterConfig[] = [];
+    // Keep mandatory server scope filters even when they have no editable control.
+    const filters: FilterConfig[] = effectiveInitialFilters.filter(
+      (filter) => !availableFilters.some((definition) => definition.field === filter.field),
+    );
 
     availableFilters.forEach((filterDef) => {
       if (filterDef.type === "date-range") {
@@ -424,7 +427,7 @@ export function DataTable<T extends Record<string, any>>({
     });
 
     return filters;
-  }, [availableFilters, filterValues]);
+  }, [availableFilters, filterValues, effectiveInitialFilters]);
 
   // Use ref to store the latest onFiltersChange callback to avoid re-renders
   const onFiltersChangeRef = useRef(onFiltersChange);

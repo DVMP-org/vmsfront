@@ -1,8 +1,9 @@
 import { SiteForum } from "@/features/forum/ForumEntry";
-export default function ForumTopicPage({
+export default async function ForumTopicPage({
   params,
 }: {
-  params: { topicId: string };
+  params: Promise<{ topicId: string }>;
 }) {
-  return <SiteForum topicId={params.topicId} />;
+  const routeParams = await params;
+  return <SiteForum topicId={routeParams.topicId} />;
 }

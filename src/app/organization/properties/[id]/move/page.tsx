@@ -1,14 +1,15 @@
 import PropertiesWorkspace from "@/features/properties/PropertiesWorkspace";
 
-export default function MoveOrganizationPropertyPage({
+export default async function MoveOrganizationPropertyPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const routeParams = await params;
   return (
     <PropertiesWorkspace
       basePath="/organization/properties"
-      route={{ id: params.id, action: "move" }}
+      route={{ id: routeParams.id, action: "move" }}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import type { ReactNode } from "react";
 import { Building2, ShieldCheck } from "lucide-react";
 
@@ -112,7 +113,7 @@ export function CommercialShell({
   );
 }
 
-function PropertyContext({ contextKey: _contextKey }: { contextKey: string }) {
+function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
   return (

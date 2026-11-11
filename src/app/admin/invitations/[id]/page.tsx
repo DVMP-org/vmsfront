@@ -1,9 +1,10 @@
 import { InvitationDetail } from "@/features/invitation-approvals/InvitationDetail";
 
-export default function InvitationDetailPage({
+export default async function InvitationDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <InvitationDetail invitationId={params.id} />;
+  const routeParams = await params;
+  return <InvitationDetail invitationId={routeParams.id} />;
 }

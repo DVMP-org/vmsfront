@@ -55,7 +55,9 @@ export default function OrganizationHomePage() {
   }
 
   const displayName =
-    user?.first_name || user?.email || "Organization administrator";
+    user ? user.first_name || user.email : (
+      <span role="status" aria-label="Loading your name" className="inline-block h-4 w-32 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
+    );
   const subscription = organization.subscription?.status || "Not active";
 
   return (
@@ -198,7 +200,7 @@ function Fact({
   detail,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   detail?: string | null;
 }) {
   return (

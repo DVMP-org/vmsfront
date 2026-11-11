@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
-import { getApiErrorStatus } from "@/lib/error-utils";
+import { storedSiteId } from "@/lib/site-context";
+import { getSubdomain } from "@/lib/subdomain-utils";
+import { useSearchParams } from "next/navigation";
 import { contextApi } from "./api";
 
 export function useWorkspaceContext() {
@@ -11,21 +13,42 @@ export function useWorkspaceContext() {
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
   const user = useAuthStore((state) => state.user);
   const property = useAppStore((state) => state.selectedProperty);
+
+  const searchParams = useSearchParams();
+  const urlSiteId = searchParams?.get("site_id") || searchParams?.get("site");
+  const effectiveSiteId =
+    urlSiteId || property?.id || storedSiteId(organization?.slug || null);
+  const tenantSlug = getSubdomain();
+
   const query = useQuery({
-    queryKey: ["workspace-context", organization?.id, user?.id, property?.id],
-    queryFn: () => contextApi.workspace(property?.id),
-    enabled: !!organization?.id && !!user?.id,
+    queryKey: [
+      "workspace-context",
+      organization?.id,
+      user?.id,
+      effectiveSiteId,
+    ],
+    queryFn: () => contextApi.workspace(effectiveSiteId),
+    enabled:
+      !!organization?.id &&
+      !!user?.id &&
+      (!tenantSlug || tenantSlug === organization.slug),
     staleTime: 0,
     refetchOnMount: "always",
     retry: false,
   });
 
   useEffect(() => {
-    const status = getApiErrorStatus(query.error);
-    if (property && (status === 403 || status === 404)) {
-      setSelectedProperty(null);
+    const site =
+      query.data?.management?.selected_site ||
+      query.data?.management?.authoritative_site;
+    if (
+      site &&
+      (!effectiveSiteId || site.id === effectiveSiteId) &&
+      (!property || property.id !== site.id || property.name !== site.name)
+    ) {
+      setSelectedProperty({ id: site.id, name: site.name });
     }
-  }, [property, query.error, setSelectedProperty]);
+  }, [query.data, property, effectiveSiteId, setSelectedProperty]);
 
   return query;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { useConfirmAction } from "@/components/ui/useConfirmAction";
 
 import { FormEvent, useMemo, useState } from "react";
@@ -418,7 +419,7 @@ function AssignTenantModal({
 }: {
   open: boolean;
   spaces: Array<{ id: string; name: string }>;
-  contextKey: string;
+  contextKey: QueryContext;
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {

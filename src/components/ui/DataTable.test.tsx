@@ -157,7 +157,23 @@ describe("DataTable register foundation", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Select row" }));
     fireEvent.click(screen.getByRole("button", { name: "Archive" }));
-    expect(archive).toHaveBeenCalledWith(["one"]);
+    expect(archive).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog", { name: "Archive?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(archive).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Archive?" })).getByRole(
+        "button",
+        { name: "Archive" },
+      ),
+    );
+    await waitFor(() =>
+      expect(archive).toHaveBeenCalledExactlyOnceWith(["one"]),
+    );
   });
 
   it("applies searchable select filters to client-side collections", async () => {

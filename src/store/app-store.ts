@@ -17,24 +17,46 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             selectedProperty: null,
-            setSelectedProperty: (selectedProperty) => set({selectedProperty}),
+            setSelectedProperty: (selectedProperty) => {
+                if (selectedProperty?.id) {
+                    setCookie("selected-site", selectedProperty.id, 30);
+                    const slug = get().organization?.slug;
+                    if (slug) setCookie("selected-site-organization", slug, 30);
+                } else {
+                    deleteCookie("selected-site");
+                    deleteCookie("selected-site-organization");
+                }
+                set({ selectedProperty });
+            },
             organization: null,
             selectedResidency: null,
             branding: null,
             setSelectedResidency: (residency) => set({ selectedResidency: residency }),
             setSelectedOrganization: (organization) => {
+                const currentOrg = get().organization;
+                const isDifferentOrg =
+                    !organization || (!!currentOrg && currentOrg.id !== organization.id);
                 if (organization?.slug) {
                     setCookie("selected-organization", organization.slug, 30);
                 } else {
                     deleteCookie("selected-organization");
                 }
-                set({ organization, selectedProperty: null });
+                if (isDifferentOrg) {
+                    deleteCookie("selected-site");
+                    deleteCookie("selected-site-organization");
+                }
+                set((state) => ({
+                    organization,
+                    selectedProperty: isDifferentOrg ? null : state.selectedProperty,
+                }));
             },
             setBranding: (branding) => set({ branding }),
             resetTenantContext: () => {
                 deleteCookie("selected-organization");
+                deleteCookie("selected-site");
+                deleteCookie("selected-site-organization");
                 if (typeof window !== "undefined") {
                     localStorage.removeItem("app-storage");
                 }

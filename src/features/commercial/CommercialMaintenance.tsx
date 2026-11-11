@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -580,7 +581,7 @@ function MaintenanceDetail({
   saving,
 }: {
   request: CommercialMaintenanceRequest | null;
-  contextKey: string;
+  contextKey: QueryContext;
   canManage: boolean;
   onClose: () => void;
   onUpdate: (

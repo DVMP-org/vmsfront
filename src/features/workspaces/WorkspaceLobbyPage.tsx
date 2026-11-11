@@ -131,7 +131,7 @@ export function WorkspaceLobbyPage() {
   const canSwitchOrganization = organizations.length > 1;
   const credential = context.data?.user;
   const signedInName =
-    getFullName(credential?.first_name, credential?.last_name, credential?.email) ||
+    getFullName(credential?.first_name, credential?.last_name, credential?.email || "") ||
     context.data?.party?.display_name ||
     "your account";
   const organizationName = organization?.name || "your organization";

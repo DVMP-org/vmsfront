@@ -1,14 +1,15 @@
 import PropertiesWorkspace from "@/features/properties/PropertiesWorkspace";
 
-export default function EditOrganizationPropertyPage({
+export default async function EditOrganizationPropertyPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const routeParams = await params;
   return (
     <PropertiesWorkspace
       basePath="/organization/properties"
-      route={{ id: params.id, action: "edit" }}
+      route={{ id: routeParams.id, action: "edit" }}
     />
   );
 }

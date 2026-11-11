@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import type { ReactNode } from "react";
 import { WorkspaceContext } from "@/components/ui/WorkspaceContext";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -105,7 +106,7 @@ export function ResidentialShell({
   );
 }
 
-function PropertyContext({ contextKey: _contextKey }: { contextKey: string }) {
+function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
   const selectedProperty = useAppStore((state) => state.selectedProperty);
   const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
   return (

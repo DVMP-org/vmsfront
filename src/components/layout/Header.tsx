@@ -22,6 +22,7 @@ import { adminService } from "@/services/admin-service";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { withSite } from "@/lib/site-context";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 
 interface HeaderProps {
@@ -40,7 +41,7 @@ export const Header = memo(function Header({
   const { data: profileData } = useProfile();
   const currentUser = user || profileData;
 
-  const { organization } = useAppStore();
+  const { organization, selectedProperty } = useAppStore();
   const pathname = usePathname();
   const workspaceContext = useWorkspaceContext();
   const router = useRouter();
@@ -129,7 +130,7 @@ export const Header = memo(function Header({
                     : null
                 }
                 contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`}
-                navigate={(href) => router.push(href)}
+                navigate={(href) => router.push(withSite(href, selectedProperty?.id))}
               />
             </div>
           </div>
@@ -137,7 +138,7 @@ export const Header = memo(function Header({
           <div className="flex-1" aria-hidden="true" />
         )}
 
-        {currentUser && (
+        {currentUser ? (
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <div className="[&_button]:text-white/80 [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
               <NotificationDropdown />
@@ -235,6 +236,12 @@ export const Header = memo(function Header({
                 </div>
               )}
             </div>
+          </div>
+        ) : (
+          <div role="status" aria-label="Loading account" className="flex h-10 w-24 shrink-0 items-center justify-end gap-2">
+            <span className="h-5 w-5 animate-pulse rounded bg-white/20" />
+            <span className="h-8 w-8 animate-pulse rounded-full bg-white/20" />
+            <span className="h-3 w-3 rounded bg-white/20" />
           </div>
         )}
       </div>
