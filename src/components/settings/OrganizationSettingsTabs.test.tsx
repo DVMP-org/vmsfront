@@ -24,7 +24,7 @@ describe("OrganizationSettingsTabs", () => {
     );
     expect(screen.getByRole("link", { name: "Plugins" })).toHaveAttribute(
       "href",
-      "/organization/settings/plugins",
+      "/organization/plugins",
     );
     expect(screen.getByRole("link", { name: "Integrations" })).toHaveAttribute(
       "href",

@@ -230,8 +230,8 @@ function AnnouncementAlert({
   title: string;
   meta: string;
   href: string;
-    /** 0 = foreground card; higher values are recessed layers. */
-    depth?: number;
+  /** 0 = foreground card; higher values are recessed layers. */
+  depth?: number;
   onDismiss?: () => void;
 }) {
   const style = announcementStyles[tone];
@@ -240,13 +240,13 @@ function AnnouncementAlert({
     <div
       data-priority={tone}
       className={cn(
-    "relative flex min-h-12 items-center gap-2.5",
-    "rounded-[10px] border px-3 py-2",
+        "relative flex min-h-12 items-center gap-2.5",
+        "rounded-[10px] border px-3 py-2",
         announcementShadows[Math.min(depth, announcementShadows.length - 1)],
-    "transition-all duration-200",
-    style.row,
-    style.border,
-  )}
+        "transition-all duration-200",
+        style.row,
+        style.border,
+      )}
     >
       <Icon
         aria-hidden
@@ -355,7 +355,7 @@ function State({
     refetch: () => unknown;
   };
   children: React.ReactNode;
-    rows?: number;
+  rows?: number;
 }) {
   if (query.isPending) return <PlaceRowSkeleton rows={rows} />;
   if (query.isError)
@@ -387,7 +387,7 @@ function Pagination({
   page: number;
   more: boolean;
   onPage: (page: number) => void;
-    total?: number;
+  total?: number;
 }) {
   if (page === 1 && !more) return null;
   return (
@@ -441,7 +441,7 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
           item.href.split("/").at(-1) === section ||
           (section === "overview" &&
             item.href === `/workspace/${context.place.id}`),
-    )?.label ?? "Workspace";
+      )?.label ?? "Workspace";
   if (!workspaceSectionAllowed(context, section))
     return (
       <div className={cn(surfaceClass, surfacePad)}>
@@ -758,103 +758,103 @@ function Overview() {
               </div>
             ) : (
               <>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                      {outstanding > 0 ? "Outstanding balance" : "Account balance"}
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+                    {outstanding > 0 ? "Outstanding balance" : "Account balance"}
+                  </p>
+                  {outstanding > 0 ? (
+                    <p className="mt-0.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[var(--vms-ink)]">
+                      {formatMoney(outstanding, chargeCurrency)}
                     </p>
-                    {outstanding > 0 ? (
-                      <p className="mt-0.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[var(--vms-ink)]">
-                        {formatMoney(outstanding, chargeCurrency)}
-                      </p>
-                    ) : (
-                        <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[var(--vms-success)]">
-                          <CheckCircle2 aria-hidden className="h-4 w-4" />
-                          Nothing outstanding
-                        </p>
-                    )}
-                    {openCharges.length ? (
-                      <p className="mt-1 truncate text-[11px] leading-4 text-[var(--vms-ink-muted)]">
-                        {openCharges
-                          .slice(0, 2)
-                          .map((item) => item.title)
-                          .join(" · ")}
-                        {openCharges.length > 2
-                          ? ` · +${openCharges.length - 2} more`
-                          : ""}
-                      </p>
-                    ) : null}
-                    {overdueCount > 0 ? (
-                      <span className="mt-1.5 inline-flex rounded-full bg-[var(--vms-danger-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-danger)]">
-                        {overdueCount} overdue
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                      Next payment
+                  ) : (
+                    <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[var(--vms-success)]">
+                      <CheckCircle2 aria-hidden className="h-4 w-4" />
+                      Nothing outstanding
                     </p>
-                    {nextDue ? (
-                      <>
-                        <p className="mt-0.5 text-lg font-semibold leading-tight tabular-nums tracking-[-0.02em] text-[var(--vms-ink)]">
-                          {formatMoney(nextDue.balance, nextDue.currency)}
-                        </p>
-                        <p className="mt-0.5 text-[11px] leading-4 text-[var(--vms-ink-muted)]">
-                          Due {day(nextDue.due_date)} ·{" "}
-                          {cadenceLabel(
-                            nextDue.acknowledged_cadence ?? nextDue.recurrence,
-                          )}
-                          {nextDue.is_recurring ? " · recurring" : " · one-off"}
-                        </p>
-                        {nextDue.is_flexible ? (
-                          <p className="text-[11px] leading-4 text-[var(--vms-ink-muted)]">
-                            Baseline {cadenceLabel(nextDue.recurrence)}
-                            {nextDue.acknowledged_cadence
-                              ? ` · acknowledged ${cadenceLabel(nextDue.acknowledged_cadence)}`
-                              : " · not acknowledged"}
-                          </p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                        Nothing scheduled
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-                    {nextDue &&
-                      nextDue.can_pay &&
-                      nextDue.status === "scheduled" ? (
-                      <Button
-                        onClick={() => payNext.mutate(nextDue.id)}
-                        isLoading={payNext.isPending}
-                      >
-                        Pay {formatMoney(nextDue.balance, nextDue.currency)}
-                      </Button>
-                    ) : null}
-                    <Button
-                      asChild
-                      variant={
-                        nextDue && nextDue.can_pay && nextDue.status === "scheduled"
-                          ? "outline"
-                          : "primary"
-                      }
-                    >
-                      <Link href={`/workspace/${place.id}/charges`}>
-                        View all charges
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                  {payNext.isError ? (
-                    <p
-                      role="alert"
-                      className="text-[11px] text-[var(--vms-danger)] sm:col-span-2"
-                    >
-                      {parseApiError(payNext.error).message}
+                  )}
+                  {openCharges.length ? (
+                    <p className="mt-1 truncate text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+                      {openCharges
+                        .slice(0, 2)
+                        .map((item) => item.title)
+                        .join(" · ")}
+                      {openCharges.length > 2
+                        ? ` · +${openCharges.length - 2} more`
+                        : ""}
                     </p>
                   ) : null}
+                  {overdueCount > 0 ? (
+                    <span className="mt-1.5 inline-flex rounded-full bg-[var(--vms-danger-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-danger)]">
+                      {overdueCount} overdue
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+                    Next payment
+                  </p>
+                  {nextDue ? (
+                    <>
+                      <p className="mt-0.5 text-lg font-semibold leading-tight tabular-nums tracking-[-0.02em] text-[var(--vms-ink)]">
+                        {formatMoney(nextDue.balance, nextDue.currency)}
+                      </p>
+                      <p className="mt-0.5 text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+                        Due {day(nextDue.due_date)} ·{" "}
+                        {cadenceLabel(
+                          nextDue.acknowledged_cadence ?? nextDue.recurrence,
+                        )}
+                        {nextDue.is_recurring ? " · recurring" : " · one-off"}
+                      </p>
+                      {nextDue.is_flexible ? (
+                        <p className="text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+                          Baseline {cadenceLabel(nextDue.recurrence)}
+                          {nextDue.acknowledged_cadence
+                            ? ` · acknowledged ${cadenceLabel(nextDue.acknowledged_cadence)}`
+                            : " · not acknowledged"}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                      Nothing scheduled
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+                  {nextDue &&
+                    nextDue.can_pay &&
+                    nextDue.status === "scheduled" ? (
+                    <Button
+                      onClick={() => payNext.mutate(nextDue.id)}
+                      isLoading={payNext.isPending}
+                    >
+                      Pay {formatMoney(nextDue.balance, nextDue.currency)}
+                    </Button>
+                  ) : null}
+                  <Button
+                    asChild
+                    variant={
+                      nextDue && nextDue.can_pay && nextDue.status === "scheduled"
+                        ? "outline"
+                        : "primary"
+                    }
+                  >
+                    <Link href={`/workspace/${place.id}/charges`}>
+                      View all charges
+                      <ArrowRight aria-hidden className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+                {payNext.isError ? (
+                  <p
+                    role="alert"
+                    className="text-[11px] text-[var(--vms-danger)] sm:col-span-2"
+                  >
+                    {parseApiError(payNext.error).message}
+                  </p>
+                ) : null}
               </>
             )}
           </div>
@@ -1036,12 +1036,12 @@ function Overview() {
                   </ul>
                 </div>
               ))}
-              </div>
+            </div>
           ) : (
             <EmptyRow
               icon={Clock3}
               title="Nothing recorded yet"
-                  description="Visitor movements, requests, invitations and charges will show up here."
+              description="Visitor movements, requests, invitations and charges will show up here."
             />
           )}
         </SectionCard>
@@ -1061,7 +1061,7 @@ function Overview() {
                       tone={
                         item.status === "resolved" || item.status === "closed"
                           ? "success"
-                          : "primary"
+                          : "coral"
                       }
                     />
                     <div className="min-w-0 flex-1">
@@ -1087,9 +1087,9 @@ function Overview() {
                     <Link href={`/workspace/${place.id}/maintenance`}>
                       Make a request
                     </Link>
-                    </Button>
-                  }
-                />
+                  </Button>
+                }
+              />
             )}
           </State>
         </SectionCard>
@@ -1231,52 +1231,52 @@ function Announcements() {
               })}
             </ul>
 
-              {selected ? (
-                <aside className="min-w-0 lg:sticky lg:top-4">
-                  <article
-                    className={cn(
-                      surfaceClass,
-                      "px-4 py-4 sm:px-5 sm:py-5",
-                    )}
+            {selected ? (
+              <aside className="min-w-0 lg:sticky lg:top-4">
+                <article
+                  className={cn(
+                    surfaceClass,
+                    "px-4 py-4 sm:px-5 sm:py-5",
+                  )}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={announcementStyles[announcementTone(selected.priority)].badge}>
+                      {announcementPriorityLabel(selected.priority)}
+                    </Badge>
+                    {selected.is_pinned ? (
+                      <Badge variant="neutral">Pinned</Badge>
+                    ) : null}
+                  </div>
+                  <h2 className="mt-2 text-lg font-semibold leading-6 tracking-[-0.01em] text-[var(--vms-ink)]">
+                    {selected.title}
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                    Published {date(selected.published_at)} · by{" "}
+                    {qualifiedPlaceName(place)} management
+                  </p>
+                  <div className="mt-4 space-y-3 border-t border-[var(--vms-line)] pt-4 text-sm leading-6 text-[var(--vms-ink)]">
+                    {selected.body
+                      .split(/\n{2,}/)
+                      .filter(Boolean)
+                      .map((paragraph, index) => (
+                        <p
+                          key={index}
+                          className="whitespace-pre-wrap break-words"
+                        >
+                          {paragraph}
+                        </p>
+                      ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(null)}
+                    className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--vms-ink)] underline underline-offset-4 lg:hidden"
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={announcementStyles[announcementTone(selected.priority)].badge}>
-                        {announcementPriorityLabel(selected.priority)}
-                      </Badge>
-                      {selected.is_pinned ? (
-                        <Badge variant="neutral">Pinned</Badge>
-                      ) : null}
-                    </div>
-                    <h2 className="mt-2 text-lg font-semibold leading-6 tracking-[-0.01em] text-[var(--vms-ink)]">
-                      {selected.title}
-                    </h2>
-                    <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                      Published {date(selected.published_at)} · by{" "}
-                      {qualifiedPlaceName(place)} management
-                    </p>
-                    <div className="mt-4 space-y-3 border-t border-[var(--vms-line)] pt-4 text-sm leading-6 text-[var(--vms-ink)]">
-                      {selected.body
-                        .split(/\n{2,}/)
-                        .filter(Boolean)
-                        .map((paragraph, index) => (
-                          <p
-                            key={index}
-                            className="whitespace-pre-wrap break-words"
-                          >
-                            {paragraph}
-                          </p>
-                        ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(null)}
-                      className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--vms-ink)] underline underline-offset-4 lg:hidden"
-                    >
-                      Back to the list
-                    </button>
-                  </article>
-                </aside>
-              ) : null}
+                    Back to the list
+                  </button>
+                </article>
+              </aside>
+            ) : null}
           </div>
         )}
       </State>
@@ -1482,9 +1482,9 @@ function Charges() {
                       </td>
                     </tr>
                   ))}
-                  </tbody>
-                </table>
-              </div>
+                </tbody>
+              </table>
+            </div>
           )}
         </State>
       </div>
@@ -1733,16 +1733,16 @@ function Charges() {
                         No due dates match these filters.
                       </td>
                     </tr>
-                    )}
-                  </tbody>
-                </table>
-                <div className="px-3 pb-2">
-                  <Pagination
-                    page={page}
-                    more={page * 20 < (query.data?.total ?? 0)}
-                    onPage={setPage}
-                    total={query.data?.total}
-                  />
+                  )}
+                </tbody>
+              </table>
+              <div className="px-3 pb-2">
+                <Pagination
+                  page={page}
+                  more={page * 20 < (query.data?.total ?? 0)}
+                  onPage={setPage}
+                  total={query.data?.total}
+                />
               </div>
             </div>
 
@@ -2198,15 +2198,15 @@ function Maintenance() {
                       </tr>
                     );
                   })}
-                  </tbody>
-                </table>
-                <div className="px-3 pb-2">
-                  <Pagination
-                    page={page}
-                    more={page * 20 < (query.data?.total ?? 0)}
-                    onPage={setPage}
-                    total={query.data?.total}
-                  />
+                </tbody>
+              </table>
+              <div className="px-3 pb-2">
+                <Pagination
+                  page={page}
+                  more={page * 20 < (query.data?.total ?? 0)}
+                  onPage={setPage}
+                  total={query.data?.total}
+                />
               </div>
             </div>
 

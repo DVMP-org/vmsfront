@@ -18,6 +18,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           passwordVisible ? (
             <button
               type="button"
+              aria-label="Hide password"
               onClick={() => setPasswordVisible((val) => !val)}
             >
               <Eye />
@@ -25,6 +26,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           ) : (
             <button
               type="button"
+              aria-label="Show password"
               onClick={() => setPasswordVisible((val) => !val)}
             >
               <EyeOff />
