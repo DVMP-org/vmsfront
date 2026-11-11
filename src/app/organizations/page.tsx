@@ -48,7 +48,7 @@ export default function OrganizationsPage() {
               Account / Organizations
             </p>
             <h1 className="mt-2 text-[28px] font-semibold leading-9 tracking-[-0.035em] sm:text-[32px]">
-              Welcome, {user?.first_name || "User"}
+              Welcome{user ? `, ${user.first_name || user.email}` : <span role="status" aria-label="Loading your name" className="ml-2 inline-block h-8 w-32 animate-pulse rounded bg-[var(--vms-surface-subtle)] align-middle" />}
             </h1>
             <p className="mt-1 text-sm leading-6 text-[var(--vms-ink-muted)]">
               Choose the organization whose administration or workspaces you

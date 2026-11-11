@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -82,7 +83,7 @@ export function ResidentialUnitDetail({
 }: {
   unit?: ResidentialUnitRow;
   relationships: WorkspaceRelationship[];
-  contextKey: string;
+  contextKey: QueryContext;
   siteId: string;
   canManageUnits: boolean;
   canManagePeople: boolean;

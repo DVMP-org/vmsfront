@@ -1,5 +1,6 @@
 "use client";
 
+import { queryKeys, type QueryContext } from "@/lib/query-keys";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +34,7 @@ export function PlaceAssignmentModal({
   defaultPlaceId?: string;
   siteId: string;
   places: Array<{ id: string; name: string }>;
-  contextKey: string;
+  contextKey: QueryContext;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -79,7 +80,10 @@ export function PlaceAssignmentModal({
     },
     onSuccess: () => {
       toast.success("Household relationship created.");
-      void client.invalidateQueries({ queryKey: ["auth", "verify"] });
+      for (const queryKey of [
+        ["auth", "verify"], queryKeys.relationships.all,
+        queryKeys.people.all, queryKeys.places.all, ["place"], ["residential"],
+      ]) void client.invalidateQueries({ queryKey });
       onSaved();
     },
     onError: (error) => setErrors({ form: parseApiError(error).message }),

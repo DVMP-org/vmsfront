@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -489,7 +490,7 @@ function CreateInvitationDrawer({
 }: {
   open: boolean;
   siteId: string;
-  contextKey: string;
+  contextKey: QueryContext;
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {

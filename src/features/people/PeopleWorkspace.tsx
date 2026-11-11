@@ -25,7 +25,6 @@ import { Modal } from "@/components/ui/Modal";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
-import { useAuthStore } from "@/store/auth-store";
 import { AccessCredentialDialog } from "@/features/access-credentials/AccessCredentialDialog";
 import { type AddPlacePersonInput, peopleApi, type PlacePerson } from "./api";
 import "./people-directory.css";
@@ -41,7 +40,6 @@ export default function PeopleWorkspace() {
   const organization = useAppStore((state) => state.organization);
   const selectedSite = useAppStore((state) => state.selectedProperty);
   const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
-  const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const access = useSiteAccess();
   const profile = access.workspace;
@@ -52,7 +50,7 @@ export default function PeopleWorkspace() {
     null,
   );
   const [notice, setNotice] = useState("");
-  const contextKey = `${organization?.id}:${user?.id}`;
+  const contextKey = access.contextKey;
   const siteId = selectedSite?.id || null;
   const people = useQuery({
     queryKey: ["site-people", contextKey, siteId],

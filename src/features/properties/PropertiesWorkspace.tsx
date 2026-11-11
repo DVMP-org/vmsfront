@@ -32,6 +32,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { hasAdminPermission } from "@/lib/permissions";
+import { queryKeys } from "@/lib/query-keys";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -447,7 +448,10 @@ function SitesWorkspace({
           onSaved={async () => {
             setAddPlaceOpen(false);
             setNotice("Place added to the Site.");
-            await detail.refetch();
+            await Promise.all([
+              detail.refetch(),
+              queryClient.invalidateQueries({ queryKey: queryKeys.places.all }),
+            ]);
           }}
         />
       ) : null}

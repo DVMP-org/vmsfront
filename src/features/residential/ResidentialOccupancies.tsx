@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { useConfirmAction } from "@/components/ui/useConfirmAction";
 
 import { useMemo, useRef, useState } from "react";
@@ -107,7 +108,7 @@ export default function ResidentialOccupancies() {
   );
 
   const selectedDetail = rows.find((row) => row.id === detailId);
-  const retainedDetail = useRef<{ contextKey: string; row: OccupancyRow }>();
+  const retainedDetail = useRef<{ contextKey: QueryContext; row: OccupancyRow }>();
   if (selectedDetail)
     retainedDetail.current = { contextKey, row: selectedDetail };
   // Keep the record visible during the drawer's exit, within this workspace only.
@@ -424,7 +425,7 @@ export default function ResidentialOccupancies() {
           />
         </section>
         <Drawer
-          key={contextKey}
+          key={JSON.stringify(contextKey)}
           isOpen={!!selectedDetail}
           onClose={() => setDetailId(null)}
           title="Resident details"

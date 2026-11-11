@@ -119,7 +119,7 @@ describe("buildLobbyWorkspaces", () => {
 
     expect(siteCard).toMatchObject({
       title: "Pebble Court",
-      destination: "/admin",
+      destination: "/admin?site_id=site-1",
       roleLabel: "Site administrator",
       selection: { id: "site-1", name: "Pebble Court" },
     });
@@ -206,7 +206,7 @@ it("uses the Site operating type independently of legacy organization and Place 
     organization,
   });
   expect(workspaces.find(item => item.type === "site_admin")).toMatchObject({
-    useCase: "hospitality", destination: "/admin",
+    useCase: "hospitality", destination: "/admin?site_id=site-1",
   });
   expect(workspaces.find(item => item.type === "party")).not.toHaveProperty("useCase");
 });
