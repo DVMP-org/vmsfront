@@ -47,3 +47,22 @@ describe("Place workspace navigation", () => {
     expect(workspaceSectionAllowed(context, "settings")).toBe(false);
   });
 });
+
+it("exposes the Site forum in every use case only when its module is enabled", () => {
+  for (const domain of [
+    "residential",
+    "commercial",
+    "hospitality",
+    "mixed_use",
+  ] as const) {
+    const enabled = {
+      ...context,
+      effective_use_case: domain,
+      modules: ["forum"],
+    };
+    expect(workspaceSectionAllowed(enabled, "forums")).toBe(true);
+    expect(workspaceSectionAllowed({ ...enabled, modules: [] }, "forums")).toBe(
+      false,
+    );
+  }
+});

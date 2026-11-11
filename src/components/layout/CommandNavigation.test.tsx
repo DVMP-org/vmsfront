@@ -179,3 +179,16 @@ it("opens one shortcut dialog when existing layouts mount multiple headers", () 
   fireEvent.keyDown(window, { key: "k", ctrlKey: true });
   expect(document.querySelectorAll("dialog[open]")).toHaveLength(0);
 });
+
+it("exposes forum participation to active Site managers without moderation grants", () => {
+  expect(
+    permittedCommands(null, ["forum"], [], true, "hospitality").some(
+      (entry) => entry.href === "/admin/forums",
+    ),
+  ).toBe(true);
+  expect(
+    permittedCommands(null, ["forum"], [], false, "hospitality").some(
+      (entry) => entry.href === "/admin/forums",
+    ),
+  ).toBe(false);
+});

@@ -98,7 +98,7 @@ describe("residential administration routing", () => {
     // Site modules report "billing"; the residential Finance group still asks
     // for "charges". Both must resolve to the same enabled module.
     const links = contextualAdminLinks(
-      ["residential", "billing", "access_control", "communication"],
+      ["residential", "billing", "access_control", "communication", "forum"],
       [],
       "residential",
     );

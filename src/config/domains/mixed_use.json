@@ -112,6 +112,18 @@
           "module": "check_in_out"
         }
       ]
+    },
+    {
+      "id": "community",
+      "label": "Community",
+      "items": [
+        {
+          "label": "Community forum",
+          "href": "/admin/forums",
+          "icon": "message",
+          "module": "forum"
+        }
+      ]
     }
   ],
   "dashboard": {
@@ -228,6 +240,12 @@
           "href": "/workspace/{placeId}/announcements",
           "icon": "megaphone",
           "module": "communication"
+        },
+        {
+          "label": "Community forum",
+          "href": "/workspace/{placeId}/forums",
+          "icon": "message",
+          "module": "forum"
         },
         {
           "label": "My charges",

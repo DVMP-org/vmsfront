@@ -104,10 +104,10 @@ export const adminLinks: AdminRoute[] = [
   },
   {
     href: "/admin/forums",
-    label: "Community",
+    label: "Community forum",
     icon: MessageSquare,
-    permission: "forum_posts.list",
-    module: "forums",
+    managementOnly: true,
+    module: "forum",
     group: "Community",
   },
   {
@@ -161,7 +161,7 @@ const moduleKeyAliases: Record<string, string[]> = {
   charges: ["billing"],
   gates: ["access_control"],
   check_in_out: ["access_control"],
-  forums: ["communication"],
+  forums: ["forum"],
   dashboard: ["properties", "residential", "commercial", "hospitality", "mixed_use"],
 };
 
@@ -243,6 +243,7 @@ export function contextualAdminLinks(
     .filter((link) => isModuleEnabled(link.module, modules))
     .map((link, index) => ({
       ...link,
+      ...(link.href === "/admin/forums" ? { managementOnly: true } : {}),
       group: configuredHrefs.has(link.href)
         ? link.group
         : link.module

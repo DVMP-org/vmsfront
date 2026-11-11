@@ -321,11 +321,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       // Site navigation is derived exclusively from Site RBAC. Organization
       // grants must not leak into this management shell.
       if (!mounted || workspaceContext.isPending) {
-        return baseLinks.filter((link: any) => !link.permission);
+        return baseLinks.filter(
+          (link: any) => !link.permission && !link.managementOnly,
+        );
       }
 
       if (!workspaceContext.data?.management?.is_administrator) {
-        return baseLinks.filter((link: any) => !link.permission);
+        return baseLinks.filter(
+          (link: any) => !link.permission && !link.managementOnly,
+        );
       }
 
       baseLinks = baseLinks
@@ -388,16 +392,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       (a, b) => (b.href?.length || 0) - (a.href?.length || 0),
     );
     return (
-      sorted.find(
-        (l) => {
-          if (!l.href) return false;
-          const target = l.href.split("?")[0];
-          return (
-            pathname === target ||
-            (target !== "/admin" && pathname.startsWith(target + "/"))
-          );
-        },
-      ) || null
+      sorted.find((l) => {
+        if (!l.href) return false;
+        const target = l.href.split("?")[0];
+        return (
+          pathname === target ||
+          (target !== "/admin" && pathname.startsWith(target + "/"))
+        );
+      }) || null
     );
   }, [links, pathname]);
 

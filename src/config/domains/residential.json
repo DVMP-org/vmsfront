@@ -101,7 +101,6 @@
       "id": "access",
       "label": "Access",
       "items": [
-
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",
@@ -128,6 +127,18 @@
           "icon": "history",
           "permission": "checkpoint_events.list",
           "module": "access_control"
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "label": "Community",
+      "items": [
+        {
+          "label": "Community forum",
+          "href": "/admin/forums",
+          "icon": "message",
+          "module": "forum"
         }
       ]
     }
@@ -239,6 +250,12 @@
           "href": "/workspace/{placeId}/announcements",
           "icon": "megaphone",
           "module": "communication"
+        },
+        {
+          "label": "Community forum",
+          "href": "/workspace/{placeId}/forums",
+          "icon": "message",
+          "module": "forum"
         },
         {
           "label": "My charges",
