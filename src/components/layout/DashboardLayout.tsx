@@ -149,10 +149,10 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
               aria-label={isMobile ? "Workspace navigation" : undefined}
               tabIndex={isMobile ? -1 : undefined}
               className={cn(
-                "z-50 flex-shrink-0",
+                "flex-shrink-0",
                 isMobile
-                  ? "fixed inset-y-0 left-0 w-64 lg:hidden"
-                  : "hidden h-full self-start overflow-hidden lg:block",
+                  ? "fixed inset-y-0 left-0 z-50 w-64 lg:hidden"
+                  : "z-30 hidden h-full self-start overflow-hidden lg:block",
               )}
               style={{ willChange: "transform, width" }}
             >

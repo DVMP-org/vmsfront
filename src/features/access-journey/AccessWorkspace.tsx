@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -1217,6 +1219,7 @@ function InvitationDetail({
   onRevoke: () => void;
   revoking: boolean;
 }) {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const invitation = useInvitation(invitationId);
@@ -1242,6 +1245,7 @@ function InvitationDetail({
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
+      if (dialogRef.current?.closest("[inert]")) return;
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
@@ -1499,7 +1503,7 @@ function InvitationDetail({
               {canEdit ? (
                 <button
                   type="button"
-                  onClick={onRevoke}
+                  onClick={() => confirmAction({title: "Revoke invitation?", description: "This invitation will no longer grant visitor access.", confirmLabel: "Revoke invitation", onConfirm: onRevoke})}
                   disabled={revoking}
                   className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-sm font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
                 >
@@ -1518,6 +1522,7 @@ function InvitationDetail({
           </div>
         )}
       </section>
+      {confirmationDialog}
     </div>
   );
 }

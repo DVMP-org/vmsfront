@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -45,6 +47,7 @@ const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function AdminManagementPage() {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const router = useRouter();
 
   // URL query sync
@@ -176,7 +179,7 @@ export default function AdminManagementPage() {
 
   const handleDelete = (adminId: string) => {
     setDeletingAdminId(adminId);
-    deleteAdmin.mutate(adminId, {
+    return deleteAdmin.mutateAsync(adminId, {
       onSettled: () => setDeletingAdminId(null),
     });
   };
@@ -313,12 +316,7 @@ export default function AdminManagementPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              if (confirm(`Are you sure you want to delete the admin "${row.name}"?`)) {
-                toast.info(`Deleting admin "${row.name}"...`);
-                handleDelete(row.id);
-              }
-            }}
+            onClick={() => confirmAction({title: "Delete administrator?", description: `Delete ${row.name}? This removes the administrator record.`, confirmLabel: "Delete administrator", onConfirm: () => handleDelete(row.id)})}
             disabled={deletingAdminId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -521,6 +519,7 @@ export default function AdminManagementPage() {
           />
         )}
       </SlideOver>
+      {confirmationDialog}
     </>
   );
 }

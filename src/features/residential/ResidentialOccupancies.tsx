@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,11 +11,11 @@ import {
   CircleSlash2,
   MoreHorizontal,
   Plus,
-  X,
 } from "lucide-react";
 import { format } from "date-fns/format";
 
 import { Button } from "@/components/ui/Button";
+import { Drawer } from "@/components/ui/Drawer";
 import {
   DataTable,
   type BulkAction,
@@ -44,6 +46,7 @@ type OccupancyRow = {
 };
 
 export default function ResidentialOccupancies() {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const { contextKey, selectedProperty, canManagePeople } =
     useResidentialAccess();
   const queryClient = useQueryClient();
@@ -103,7 +106,16 @@ export default function ResidentialOccupancies() {
     [relationships.data?.items, scopeIds],
   );
 
-  const detail = rows.find((row) => row.id === detailId);
+  const selectedDetail = rows.find((row) => row.id === detailId);
+  const retainedDetail = useRef<{ contextKey: string; row: OccupancyRow }>();
+  if (selectedDetail)
+    retainedDetail.current = { contextKey, row: selectedDetail };
+  // Keep the record visible during the drawer's exit, within this workspace only.
+  const detail =
+    selectedDetail ||
+    (retainedDetail.current?.contextKey === contextKey
+      ? retainedDetail.current.row
+      : undefined);
   const visibleRows =
     tab === "pending"
       ? rows.filter((row) => row.status === "pending")
@@ -166,6 +178,7 @@ export default function ResidentialOccupancies() {
         <button
           type="button"
           className="flex items-center gap-3 text-left"
+          aria-haspopup="dialog"
           onClick={() => setDetailId(row.id)}
         >
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-200 font-semibold text-slate-600">
@@ -254,6 +267,7 @@ export default function ResidentialOccupancies() {
           variant="ghost"
           size="sm"
           aria-label={`View ${row.person_name} details`}
+          aria-haspopup="dialog"
           onClick={() => setDetailId(row.id)}
         >
           <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
@@ -353,9 +367,7 @@ export default function ResidentialOccupancies() {
           </button>
         ))}
       </div>
-      <div
-        className={`grid items-start gap-5 ${detail ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""}`}
-      >
+      <div>
         <section className="min-w-0 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
           <DataTable
             data={visibleRows}
@@ -379,18 +391,21 @@ export default function ResidentialOccupancies() {
             }}
             emptyMessage="No household relationships match this property yet."
             tableLabel="Households and lease relationships"
+            rowClassName={(row) =>
+              row.id === detailId ? "bg-[var(--vms-coral-soft)]" : ""
+            }
             scrollHint="Scroll horizontally to compare people, units, roles and lease dates."
             mobileSummary={(row) => (
-              <div className="space-y-2">
+              <button
+                type="button"
+                aria-label={`Open ${row.person_name} details`}
+                aria-haspopup="dialog"
+                className="w-full space-y-2 text-left"
+                onClick={() => setDetailId(row.id)}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <button
-                      type="button"
-                      className="font-semibold text-left"
-                      onClick={() => setDetailId(row.id)}
-                    >
-                      {row.person_name}
-                    </button>
+                    <span className="font-semibold">{row.person_name}</span>
                     <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
                       {row.unit_name} · {titleCase(row.role)}
                     </p>
@@ -404,125 +419,120 @@ export default function ResidentialOccupancies() {
                     ? `Ends ${format(new Date(row.effective_to), "d MMM yyyy")}`
                     : "Open-ended relationship"}
                 </p>
-              </div>
+              </button>
             )}
           />
         </section>
-        {detail && (
-          <aside
-            className="rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4"
-            aria-label="Resident details"
-          >
-            <div className="flex items-center justify-between border-b border-[var(--vms-line)] pb-4">
-              <h2 className="text-lg font-semibold">Resident details</h2>
-              <button
-                type="button"
-                aria-label="Close resident details"
-                onClick={() => setDetailId(null)}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex items-center gap-4 border-b border-[var(--vms-line)] py-4">
-              <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-slate-200 text-xl font-semibold text-slate-600">
-                {detail.person_name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase()}
-              </span>
-              <div>
-                <h3 className="text-xl font-semibold">{detail.person_name}</h3>
-                <p className="text-sm text-[var(--vms-ink-muted)]">
-                  {detail.unit_name} · {titleCase(detail.role)}
-                </p>
-                <div className="mt-2">
-                  <StatusBadge tone={relationshipTone(detail.status)}>
-                    {titleCase(detail.status)}
-                  </StatusBadge>
+        <Drawer
+          key={contextKey}
+          isOpen={!!selectedDetail}
+          onClose={() => setDetailId(null)}
+          title="Resident details"
+          description={
+            detail
+              ? `${detail.unit_name} · ${titleCase(detail.role)}`
+              : undefined
+          }
+          className="max-w-md"
+        >
+          {detail && (
+            <>
+              <div className="flex items-center gap-4 border-b border-[var(--vms-line)] py-4">
+                <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-slate-200 text-xl font-semibold text-slate-600">
+                  {detail.person_name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()}
+                </span>
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {detail.person_name}
+                  </h3>
+                  <p className="text-sm text-[var(--vms-ink-muted)]">
+                    {detail.unit_name} · {titleCase(detail.role)}
+                  </p>
+                  <div className="mt-2">
+                    <StatusBadge tone={relationshipTone(detail.status)}>
+                      {titleCase(detail.status)}
+                    </StatusBadge>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="border-b border-[var(--vms-line)] py-4">
-              <h3 className="font-semibold">Contact information</h3>
-              <p className="mt-2 break-all text-sm">
-                {detail.email || "No email available"}
-              </p>
-            </div>
-            <div className="border-b border-[var(--vms-line)] py-4">
-              <h3 className="font-semibold">Occupancy</h3>
-              <p className="mt-2 text-sm">
-                {detail.effective_from
-                  ? format(new Date(detail.effective_from), "MMM d, yyyy")
-                  : "Start date unavailable"}{" "}
-                –{" "}
-                {detail.effective_to
-                  ? format(new Date(detail.effective_to), "MMM d, yyyy")
-                  : "Present"}
-              </p>
-              <p className="mt-2 text-sm">
-                {detail.unit_name} · {titleCase(detail.role)}
-              </p>
-            </div>
-            <div className="py-4">
-              <h3 className="font-semibold">Household members</h3>
-              {rows
-                .filter(
-                  (member) =>
-                    member.unit_id === detail.unit_id &&
-                    member.status === "active",
-                )
-                .map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => setDetailId(member.id)}
-                    className="flex w-full items-center justify-between border-b border-[var(--vms-line)] py-3 text-left text-sm"
+              <div className="border-b border-[var(--vms-line)] py-4">
+                <h3 className="font-semibold">Contact information</h3>
+                <p className="mt-2 break-all text-sm">
+                  {detail.email || "No email available"}
+                </p>
+              </div>
+              <div className="border-b border-[var(--vms-line)] py-4">
+                <h3 className="font-semibold">Occupancy</h3>
+                <p className="mt-2 text-sm">
+                  {detail.effective_from
+                    ? format(new Date(detail.effective_from), "MMM d, yyyy")
+                    : "Start date unavailable"}{" "}
+                  –{" "}
+                  {detail.effective_to
+                    ? format(new Date(detail.effective_to), "MMM d, yyyy")
+                    : "Present"}
+                </p>
+                <p className="mt-2 text-sm">
+                  {detail.unit_name} · {titleCase(detail.role)}
+                </p>
+              </div>
+              <div className="py-4">
+                <h3 className="font-semibold">Household members</h3>
+                {rows
+                  .filter(
+                    (member) =>
+                      member.unit_id === detail.unit_id &&
+                      member.status === "active",
+                  )
+                  .map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => setDetailId(member.id)}
+                      className="flex w-full items-center justify-between border-b border-[var(--vms-line)] py-3 text-left text-sm"
+                    >
+                      <span>{member.person_name}</span>
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">
+                        {titleCase(member.role)}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+              <Link
+                href={`/admin/residential/occupancies/${encodeURIComponent(detail.id)}`}
+                className="flex min-h-11 items-center justify-center rounded-md bg-[var(--vms-action)] px-4 text-sm font-semibold text-[var(--vms-on-action)]"
+              >
+                View full profile
+              </Link>
+              {canManagePeople &&
+                ["pending", "active"].includes(detail.status) && (
+                  <Button
+                    variant="ghost"
+                    className="mt-2 w-full"
+                    onClick={() => confirmAction({title: "End relationship?", description: `End ${detail.person_name}'s relationship with ${detail.unit_name}? Their access through this relationship will end.`, confirmLabel: "End relationship", onConfirm: () => update.mutateAsync({ ids: [detail.id], action: "end" })})}
                   >
-                    <span>{member.person_name}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">
-                      {titleCase(member.role)}
-                    </span>
-                  </button>
-                ))}
-            </div>
-            <Link
-              href={`/admin/residential/occupancies/${encodeURIComponent(detail.id)}`}
-              className="flex min-h-11 items-center justify-center rounded-md bg-[var(--vms-action)] px-4 text-sm font-semibold text-[var(--vms-on-action)]"
-            >
-              View full profile
-            </Link>
-            {canManagePeople &&
-              ["pending", "active"].includes(detail.status) && (
+                    End relationship
+                  </Button>
+                )}
+              {canManagePeople && detail.status === "ended" && (
                 <Button
                   variant="ghost"
                   className="mt-2 w-full"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `End ${detail.person_name}'s relationship with ${detail.unit_name}?`,
-                      )
-                    )
-                      update.mutate({ ids: [detail.id], action: "end" });
-                  }}
+                  onClick={() =>
+                    update.mutate({ ids: [detail.id], action: "activate" })
+                  }
                 >
-                  End relationship
+                  Reactivate relationship
                 </Button>
               )}
-            {canManagePeople && detail.status === "ended" && (
-              <Button
-                variant="ghost"
-                className="mt-2 w-full"
-                onClick={() =>
-                  update.mutate({ ids: [detail.id], action: "activate" })
-                }
-              >
-                Reactivate relationship
-              </Button>
-            )}
-          </aside>
-        )}
+            </>
+          )}
+        </Drawer>
       </div>
 
       <PlaceAssignmentModal
@@ -541,6 +551,7 @@ export default function ResidentialOccupancies() {
           });
         }}
       />
+      {confirmationDialog}
     </ResidentialShell>
   );
 }

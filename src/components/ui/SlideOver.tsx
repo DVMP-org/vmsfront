@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { OverlayHeader } from "./OverlayHeader";
+import { useOverlayPresence } from "./useOverlayPresence";
 
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "./useDialogFocus";
@@ -14,12 +16,17 @@ export interface SlideOverProps {
   title?: string;
   description?: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  size?: "sm" | "md" | "lg" | "xl" | "full" | "custom";
   className?: string;
   ariaLabel?: string;
   /** Sticky action bar pinned below the scrolling body. */
   footer?: React.ReactNode;
   bodyClassName?: string;
+  side?: "left" | "right";
+  icon?: LucideIcon;
+  eyebrow?: string;
+  closeLabel?: string;
+  initialFocusSelector?: string;
 }
 
 const sizes: Record<NonNullable<SlideOverProps["size"]>, string> = {
@@ -28,6 +35,7 @@ const sizes: Record<NonNullable<SlideOverProps["size"]>, string> = {
   lg: "sm:max-w-3xl",
   xl: "sm:max-w-5xl",
   full: "sm:max-w-full",
+  custom: "",
 };
 
 export function SlideOver({
@@ -41,20 +49,33 @@ export function SlideOver({
   ariaLabel = "Panel",
   footer,
   bodyClassName,
+  side = "right",
+  icon,
+  eyebrow,
+  closeLabel = "Close panel",
+  initialFocusSelector,
 }: SlideOverProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const generatedId = React.useId();
   const titleId = `drawer-title-${generatedId.replace(/:/g, "")}`;
   const descriptionId = `drawer-description-${generatedId.replace(/:/g, "")}`;
-  useDialogFocus(isOpen, onClose, panelRef);
+  const { present, state } = useOverlayPresence(isOpen);
+  useDialogFocus(present, onClose, panelRef, initialFocusSelector);
 
-  if (!isOpen || typeof document === "undefined") return null;
+  if (!present || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end overflow-hidden">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex overflow-hidden",
+        side === "left" ? "justify-start" : "justify-end",
+      )}
+      data-overlay-root=""
+    >
       <div
-        className={cn("absolute inset-0 bg-black/40", styles.backdrop)}
-        onClick={onClose}
+        className={cn("absolute inset-0 bg-black/30", styles.backdrop)}
+        data-state={state}
+        onClick={isOpen ? onClose : undefined}
         aria-hidden="true"
       />
       <section
@@ -65,41 +86,29 @@ export function SlideOver({
         aria-label={title ? undefined : ariaLabel}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
+        data-state={state}
+        data-side={side}
         className={cn(
-          styles.panel,
-          "relative flex h-full w-full flex-col border-l border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
+          side === "left" ? styles.panelLeft : styles.panel,
+          "relative flex h-[100dvh] w-full flex-col overflow-hidden border-[var(--vms-line)] bg-[var(--vms-surface)] text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)]",
+          side === "left" ? "border-r" : "border-l",
           sizes[size],
           className,
         )}
       >
-        <header className="flex min-h-16 items-start justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
-          <div className="min-w-0">
-            {title ? (
-              <h2 id={titleId} className="text-lg font-semibold leading-6">
-                {title}
-              </h2>
-            ) : null}
-            {description ? (
-              <p
-                id={descriptionId}
-                className="mt-1 text-sm leading-5 text-[var(--vms-ink-muted)]"
-              >
-                {description}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close panel"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-          >
-            <X aria-hidden="true" className="h-5 w-5" />
-          </button>
-        </header>
+        <OverlayHeader
+          title={title}
+          titleId={titleId}
+          description={description}
+          descriptionId={descriptionId}
+          icon={icon}
+          eyebrow={eyebrow}
+          onClose={onClose}
+          closeLabel={closeLabel}
+        />
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6",
+            "min-h-0 flex-1 overscroll-contain overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6",
             footer && "pb-5",
             bodyClassName,
           )}

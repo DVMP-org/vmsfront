@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +32,7 @@ import { invitationApprovalsApi, type VisitSession } from "./api";
 import { formatDate, guestNames, StatusBadge } from "./InvitationApprovals";
 
 export function InvitationDetail({ invitationId }: { invitationId: string }) {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const queryClient = useQueryClient();
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
@@ -183,7 +186,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
             <Button
               type="button"
               variant="destructive-outlined"
-              onClick={() => revoke.mutate()}
+              onClick={() => confirmAction({title: "Revoke invitation?", description: "This invitation will no longer grant visitor access.", confirmLabel: "Revoke invitation", onConfirm: () => revoke.mutateAsync()})}
               isLoading={revoke.isPending}
               loadingLabel="Revoking"
             >
@@ -426,6 +429,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           </div>
         </form>
       </Modal>
+      {confirmationDialog}
     </main>
   );
 }

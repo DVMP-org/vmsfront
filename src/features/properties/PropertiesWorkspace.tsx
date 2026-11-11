@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -647,6 +649,7 @@ function SiteDetails({
   onAddPlace: () => void;
   onSaved: (message: string) => Promise<void>;
 }) {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(routeAction === "edit");
@@ -775,7 +778,7 @@ function SiteDetails({
               className="w-full"
               variant="outline"
               disabled={archive.isPending}
-              onClick={() => archive.mutate()}
+              onClick={() => site.is_active ? confirmAction({title: `Archive ${site.name}?`, description: "This Site will leave the active register. Its existing records remain available.", confirmLabel: "Archive Site", onConfirm: () => archive.mutateAsync()}) : archive.mutate()}
             >
               {archive.isPending
                 ? "Updating…"
@@ -799,6 +802,7 @@ function SiteDetails({
           canCreate={allowed("create")}
         />
       </section>
+      {confirmationDialog}
     </>
   );
 }
