@@ -21,7 +21,18 @@ function getBaseDomainUrl(
   const protocol =
     forwardedProtocol ||
     (request ? new URL(request.url).protocol.replace(":", "") : PROTOCOL);
-  const port = request?.nextUrl.port ? `:${request.nextUrl.port}` : "";
+  // Never leak the container's internal port into a public redirect. A
+  // forwarded port is authoritative; the request port is only trusted for
+  // plain-http local development.
+  const forwardedPort = request?.headers
+    .get("x-forwarded-port")
+    ?.split(",")[0]
+    .trim();
+  const requestPort =
+    forwardedPort || (protocol === "http" ? request?.nextUrl.port || "" : "");
+  const defaultPort = protocol === "https" ? "443" : "80";
+  const port =
+    requestPort && requestPort !== defaultPort ? `:${requestPort}` : "";
   const url = new URL(`${protocol}://${BASE_DOMAIN}${port}${pathname}`);
   if (search) {
     url.search = search;

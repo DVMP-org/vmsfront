@@ -69,6 +69,27 @@ vi.mock("@/features/sites/api", () => ({
   },
 }));
 
+vi.mock("@/features/context/api", () => ({
+  contextApi: {
+    catalog: vi.fn().mockResolvedValue({
+      contract_version: "vmscore.context/v2",
+      module_groups: [],
+      specialist_groups: [],
+      use_cases: [
+        {
+          value: "residential",
+          label: "Residential",
+          modules: [],
+          module_groups: [],
+        },
+      ],
+      building_types: [],
+      common_modules: [],
+      structure_kinds: [],
+    }),
+  },
+}));
+
 const site = {
   id: "site-1",
   organization_id: "org-1",
@@ -100,7 +121,6 @@ const place = {
   slug: "block-a",
   kind: "building" as const,
   building_type: "apartment_block",
-  use_case: "residential" as const,
   description: null,
   address: "1 Harbour Way",
   is_active: true,
@@ -210,6 +230,9 @@ describe("organization Site register", () => {
     fireEvent.change(await screen.findByLabelText(/Site name/), {
       target: { value: "Riverside Campus" },
     });
+    fireEvent.change(screen.getByLabelText(/Operating type/), {
+      target: { value: "residential" },
+    });
     fireEvent.change(screen.getByLabelText(/Administrator email/), {
       target: { value: "manager@example.test" },
     });
@@ -221,6 +244,7 @@ describe("organization Site register", () => {
           name: "Riverside Campus",
           admin_email: "manager@example.test",
           parent_site_id: null,
+          use_case: "residential",
         }),
       ),
     );

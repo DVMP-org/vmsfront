@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { formatDistanceToNow, format, isToday, isYesterday, differenceInDays } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { format } from "date-fns/format";
+import { isToday } from "date-fns/isToday";
+import { isYesterday } from "date-fns/isYesterday";
+import { differenceInDays } from "date-fns/differenceInDays";
 import {
   AlertTriangle,
   ArrowLeft,

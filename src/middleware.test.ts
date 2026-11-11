@@ -102,6 +102,20 @@ describe("organization routing", () => {
     expect(location.pathname).toBe("/organizations");
   });
 
+  it("does not leak the internal port into public https redirects", () => {
+    const request = new NextRequest("https://vmsfront.to:3000/", {
+      headers: { host: "vmsfront.to:3000" },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.host).toBe("vmsfront.to");
+    expect(location.port).toBe("");
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("redirect_to")).toBe("/organizations");
+  });
+
   it("preserves the local port when authenticated auth routes leave the base domain", () => {
     const request = new NextRequest("http://lvh.me:3116/auth/login", {
       headers: {

@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
 

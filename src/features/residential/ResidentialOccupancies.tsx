@@ -11,7 +11,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "date-fns/format";
 
 import { Button } from "@/components/ui/Button";
 import {

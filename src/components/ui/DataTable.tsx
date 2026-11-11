@@ -41,7 +41,9 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
-import { format, parseISO, isValid } from "date-fns";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
+import { isValid } from "date-fns/isValid";
 import { cn } from "@/lib/utils";
 import { SearchableSelect } from "./SearchableSelect";
 

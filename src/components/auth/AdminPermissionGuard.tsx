@@ -29,7 +29,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     const links = contextualAdminLinks(
       workspace.data?.modules,
       workspace.data?.module_groups,
-      workspace.data?.effective_use_case,
+      workspace.data?.effective_use_case ?? undefined,
     );
     const flattened: any[] = [];
     links.forEach((link) => {

@@ -101,12 +101,7 @@
       "id": "access",
       "label": "Access",
       "items": [
-        {
-          "label": "Gates",
-          "href": "/admin/gates",
-          "icon": "scan",
-          "module": "access_control"
-        },
+
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",

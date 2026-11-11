@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +22,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { contextApi, type UseCase } from "@/features/context/api";
 import { type Site, type SiteInput, sitesApi } from "@/features/sites/api";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { parseApiError } from "@/lib/error-utils";
@@ -40,7 +41,13 @@ export default function FirstPlaceSetupPage() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminPhone, setAdminPhone] = useState("");
+  const [useCase, setUseCase] = useState<UseCase | "">("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const catalog = useQuery({
+    queryKey: ["context-catalog"],
+    queryFn: contextApi.catalog,
+    retry: false,
+  });
 
   const needsFirstPlace = organization?.needs_first_site === true;
 
@@ -75,18 +82,12 @@ export default function FirstPlaceSetupPage() {
     ? parseApiError(mutation.error).message
     : "";
 
-  const useCaseLabel = useMemo(
-    () =>
-      organization?.use_case
-        ? organization.use_case.replaceAll("_", " ")
-        : "Organization default",
-    [organization?.use_case],
-  );
-
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
     if (!name.trim()) nextErrors["first-place-name"] = "Enter a Site name.";
+    if (!useCase)
+      nextErrors["first-place-use-case"] = "Choose an operating type.";
     if (!adminEmail.trim()) {
       nextErrors["first-place-admin-email"] =
         "Enter the Site administrator email.";
@@ -102,7 +103,7 @@ export default function FirstPlaceSetupPage() {
       admin_name: adminName.trim() || null,
       admin_phone: adminPhone.trim() || null,
       parent_site_id: null,
-      use_case: organization?.use_case || null,
+      use_case: useCase as UseCase,
     });
   }
 
@@ -246,6 +247,46 @@ export default function FirstPlaceSetupPage() {
                 </Field>
 
                 <Field
+                  id="first-place-use-case"
+                  label="Operating type"
+                  description="The Site owns this operating type and its Places inherit it. It cannot be changed later."
+                  required
+                  error={errors["first-place-use-case"]}
+                >
+                  {(control) => (
+                    <select
+                      {...control}
+                      className={fieldControlClassName}
+                      value={useCase}
+                      onChange={(event) => {
+                        setUseCase(event.target.value as UseCase | "");
+                        setErrors({});
+                      }}
+                      disabled={mutation.isPending}
+                    >
+                      <option value="">Choose an operating type</option>
+                      {catalog.data?.use_cases.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+                {catalog.isError ? (
+                  <p className="text-xs text-[var(--vms-warning)]">
+                    Could not load operating types.{" "}
+                    <button
+                      type="button"
+                      onClick={() => catalog.refetch()}
+                      className="font-semibold underline"
+                    >
+                      Retry
+                    </button>
+                  </p>
+                ) : null}
+
+                <Field
                   id="first-place-address"
                   label="Address"
                   description="Street, building and locality used by operators."
@@ -349,7 +390,7 @@ export default function FirstPlaceSetupPage() {
                     Operating context
                   </dt>
                   <dd className="mt-1 font-semibold capitalize">
-                    {useCaseLabel}
+                    {useCase ? useCase.replaceAll("_", " ") : "Not selected"}
                   </dd>
                 </div>
               </dl>
@@ -361,7 +402,10 @@ export default function FirstPlaceSetupPage() {
                 <Button
                   type="submit"
                   disabled={
-                    mutation.isPending || !name.trim() || !adminEmail.trim()
+                    mutation.isPending ||
+                    !name.trim() ||
+                    !adminEmail.trim() ||
+                    !useCase
                   }
                   aria-busy={mutation.isPending}
                 >
