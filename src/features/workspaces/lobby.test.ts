@@ -195,3 +195,18 @@ describe("resolveLobbyWorkspaces", () => {
     );
   });
 });
+
+
+it("uses the Site operating type independently of legacy organization and Place classification", () => {
+  const workspaces = buildLobbyWorkspaces({
+    context: context({
+      site_workspaces: [{ ...siteWorkspace, site: { ...siteWorkspace.site, use_case: "hospitality" } }],
+      workspaces: [relationship] as never,
+    }),
+    organization,
+  });
+  expect(workspaces.find(item => item.type === "site_admin")).toMatchObject({
+    useCase: "hospitality", destination: "/admin",
+  });
+  expect(workspaces.find(item => item.type === "party")).not.toHaveProperty("useCase");
+});
