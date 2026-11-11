@@ -28,8 +28,7 @@ export interface ContextCatalog {
 export interface WorkspaceContext {
   contract_version: "vmscore.context/v2";
   organization_id: string;
-  organization_use_case: UseCase;
-  effective_use_case: UseCase;
+  effective_use_case: UseCase | null;
   site_id: string | null;
   place_id: string | null;
   context_scope: "organization" | "administration" | "membership";

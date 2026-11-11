@@ -17,6 +17,16 @@ vi.mock("@tanstack/react-query", () => ({
     isPending: false,
     error: null,
   }),
+  useQuery: () => ({
+    data: {
+      use_cases: [
+        { value: "residential", label: "Residential" },
+        { value: "mixed_use", label: "Mixed use" },
+      ],
+    },
+    isError: false,
+    refetch: vi.fn(),
+  }),
   useQueryClient: () => ({
     setQueryData: vi.fn(),
     invalidateQueries: vi.fn(),
@@ -30,7 +40,6 @@ vi.mock("@/hooks/use-organization", () => ({
       name: "Harbour Operations",
       slug: "harbour",
       needs_first_site: true,
-      use_case: "mixed_use",
     },
     currentSlug: "harbour",
     isPending: false,
@@ -60,6 +69,7 @@ describe("first-place onboarding", () => {
     ).toHaveTextContent("First place");
     expect(screen.getByText("Back to plan")).toBeInTheDocument();
     expect(screen.getByLabelText(/Site name/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Operating type/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Administrator email/)).toBeInTheDocument();
     expect(screen.queryByText("Property directory")).toBeNull();
   });

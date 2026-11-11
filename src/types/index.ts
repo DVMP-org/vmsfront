@@ -90,7 +90,6 @@ export interface OrganizationMembership {
 }
 
 export interface CreateOrganizationRequest {
-  use_case: import("@/features/context/api").UseCase;
   name: string;
   slug: string;
   description?: string;

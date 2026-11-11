@@ -37,7 +37,7 @@ export interface SiteInput {
   admin_email: string;
   admin_name?: string | null;
   admin_phone?: string | null;
-  use_case?: UseCase | null;
+  use_case: UseCase;
   parent_site_id?: string | null;
   description?: string | null;
   address?: string;
@@ -51,10 +51,9 @@ export interface SiteCreated extends Site {
 
 export interface SitePlaceInput extends Omit<
   PropertyInput,
-  "site_id" | "parent_id" | "use_case"
+  "site_id" | "parent_id"
 > {
   parent_id?: string | null;
-  use_case?: UseCase | null;
 }
 
 const base = "/admin/sites";

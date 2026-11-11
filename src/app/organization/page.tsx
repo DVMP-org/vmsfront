@@ -56,8 +56,6 @@ export default function OrganizationHomePage() {
 
   const displayName =
     user?.first_name || user?.email || "Organization administrator";
-  const useCase =
-    organization.use_case?.replaceAll("_", " ") || "Not configured";
   const subscription = organization.subscription?.status || "Not active";
 
   return (
@@ -90,7 +88,11 @@ export default function OrganizationHomePage() {
         aria-label="Organization details"
         className="grid overflow-hidden rounded-lg border border-[#E5E7EB] bg-white sm:grid-cols-2 xl:grid-cols-4"
       >
-        <Fact label="Operating use case" value={titleCase(useCase)} />
+        <Fact
+          label="Sites"
+          value={String(organization.sites?.length ?? 0)}
+          detail="Each Site owns its operating type"
+        />
         <Fact label="Organization URL" value={organization.slug} />
         <Fact label="Subscription" value={titleCase(subscription)} />
         <Fact label="Signed in" value={displayName} detail={user?.email} />

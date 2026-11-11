@@ -186,11 +186,7 @@ export function SiteConfiguration() {
                 Operating context
               </dt>
               <dd className="mt-1 font-semibold capitalize">
-                {(
-                  property.data.use_case ??
-                  workspace.data?.effective_use_case ??
-                  ""
-                )
+                {(property.data.use_case ?? workspace.data?.effective_use_case ?? "")
                   .toString()
                   .replaceAll("_", " ")}
               </dd>

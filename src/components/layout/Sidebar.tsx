@@ -290,7 +290,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
               ? undefined
               : workspaceContext.data?.modules,
             workspaceContext.data?.module_groups,
-            workspaceContext.data?.effective_use_case,
+            workspaceContext.data?.effective_use_case ?? undefined,
           );
 
     const managementDashboardAvailable = canOpenManagementDashboard(
