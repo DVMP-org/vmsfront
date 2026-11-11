@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { useState, useEffect, useMemo } from "react";
 import {
     useBillingSettings,
@@ -90,11 +92,12 @@ function SinglePaymentCard({
     paymentMethod: PaymentMethod;
     isDefault?: boolean;
     onSetDefault?: () => void;
-    onDelete?: () => void;
+    onDelete?: () => unknown | Promise<unknown>;
     isSettingDefault?: boolean;
     isDeleting?: boolean;
 }) {
-    const [showActions, setShowActions] = useState(false);
+    const { confirmAction, confirmationDialog } = useConfirmAction();
+  const [showActions, setShowActions] = useState(false);
     const brandConfig = BRAND_CONFIG[paymentMethod.brand?.toLowerCase() || ""] || {
         gradient: " ",
         logo: paymentMethod.brand?.toUpperCase() || "CARD"
@@ -193,7 +196,7 @@ function SinglePaymentCard({
                             <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={onDelete}
+                                onClick={() => confirmAction({ title: "Remove payment method?", description: `Remove the saved card ending in ${paymentMethod.last4}? It will no longer be available for billing.`, confirmLabel: "Remove payment method", onConfirm: () => onDelete?.() })}
                                 disabled={isDeleting}
                                 className="bg-red-500/80 hover:bg-red-600 text-white border-red-400"
                             >
@@ -208,6 +211,7 @@ function SinglePaymentCard({
                     </div>
                 )}
             </div>
+      {confirmationDialog}
         </div>
     );
 }
@@ -248,7 +252,7 @@ function PaymentMethodsSection() {
     const { data: paymentMethods, isLoading } = usePaymentMethods();
     const { mutate: createCheckout, isPending: isCreating } = useCreateCheckoutSession();
     const { mutate: setDefault, isPending: isSettingDefault, variables: settingDefaultId } = useSetDefaultPaymentMethod();
-    const { mutate: deleteMethod, isPending: isDeleting, variables: deletingId } = useDeletePaymentMethod();
+    const { mutateAsync: deleteMethod, isPending: isDeleting, variables: deletingId } = useDeletePaymentMethod();
 
     const handleAddPaymentMethod = () => {
         const returnUrl = window.location.href;

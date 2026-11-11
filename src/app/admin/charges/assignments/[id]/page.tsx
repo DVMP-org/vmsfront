@@ -1,2 +1,9 @@
 import ChargesWorkspace from "@/features/charges/ChargesWorkspace";
-export default function Page({params}:{params:{id:string}}){return <ChargesWorkspace action="assignment" id={params.id}/>;}
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const routeParams = await params;
+  return <ChargesWorkspace action="assignment" id={routeParams.id} />;
+}

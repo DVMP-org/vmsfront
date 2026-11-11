@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "./Table";
 import { Input } from "./Input";
+import { useConfirmAction } from "./useConfirmAction";
 import { Button } from "./Button";
 import {
   ChevronLeft,
@@ -220,7 +221,23 @@ export function DataTable<T extends Record<string, any>>({
   const [localSearchTerm, setLocalSearchTerm] = useState(
     effectiveInitialSearch,
   );
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const columnPickerRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    if (!enableViewControls) return;
+    const dismissColumnPicker = (event: PointerEvent) => {
+      const picker = columnPickerRef.current;
+      if (picker?.open && !picker.contains(event.target as Node)) {
+        picker.open = false;
+      }
+    };
+    document.addEventListener("pointerdown", dismissColumnPicker);
+    return () =>
+      document.removeEventListener("pointerdown", dismissColumnPicker);
+  }, [enableViewControls]);
+
   const isUserTypingRef = useRef(false);
   const lastLocalValueRef = useRef(effectiveInitialSearch);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -372,7 +389,10 @@ export function DataTable<T extends Record<string, any>>({
 
   // Build filters from internal filterValues
   const currentFilters = useMemo(() => {
-    const filters: FilterConfig[] = [];
+    // Keep mandatory server scope filters even when they have no editable control.
+    const filters: FilterConfig[] = effectiveInitialFilters.filter(
+      (filter) => !availableFilters.some((definition) => definition.field === filter.field),
+    );
 
     availableFilters.forEach((filterDef) => {
       if (filterDef.type === "date-range") {
@@ -407,7 +427,7 @@ export function DataTable<T extends Record<string, any>>({
     });
 
     return filters;
-  }, [availableFilters, filterValues]);
+  }, [availableFilters, filterValues, effectiveInitialFilters]);
 
   // Use ref to store the latest onFiltersChange callback to avoid re-renders
   const onFiltersChangeRef = useRef(onFiltersChange);
@@ -714,11 +734,20 @@ export function DataTable<T extends Record<string, any>>({
   const handleBulkAction = (action: BulkAction) => {
     const selectedIds = Array.from(selected);
 
-    if (action.requiresConfirmation) {
-      const message =
-        action.confirmationMessage ||
-        `Are you sure you want to ${action.label.toLowerCase()} ${selectedIds.length} item(s)?`;
-      if (!window.confirm(message)) return;
+    if (
+      action.requiresConfirmation ||
+      action.variant === "destructive" ||
+      /\b(delete|remove|archive|revoke)\b/i.test(action.label)
+    ) {
+      confirmAction({
+        title: `${action.label}?`,
+        description:
+          action.confirmationMessage ||
+          `Apply “${action.label}” to ${selectedIds.length} selected item${selectedIds.length === 1 ? "" : "s"}?`,
+        confirmLabel: action.label,
+        onConfirm: () => action.onClick(selectedIds),
+      });
+      return;
     }
 
     action.onClick(selectedIds);
@@ -870,6 +899,7 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className={cn("space-y-3 xs:space-y-4", className)}>
+      {confirmationDialog}
       {(searchable || availableFilters.length > 0 || enableViewControls) && (
         <div className="m-2 flex flex-wrap items-center gap-2 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {searchable ? (
@@ -932,7 +962,18 @@ export function DataTable<T extends Record<string, any>>({
             ) : null}
             {enableViewControls ? (
               <>
-                <details className="relative">
+                <details
+                  ref={columnPickerRef}
+                  className="relative"
+                  onKeyDown={(event) => {
+                    if (event.key !== "Escape" || !event.currentTarget.open)
+                      return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.currentTarget.open = false;
+                    event.currentTarget.querySelector("summary")?.focus();
+                  }}
+                >
                   <summary
                     aria-label="Choose visible columns"
                     className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs font-medium [&::-webkit-details-marker]:hidden"
@@ -1147,7 +1188,7 @@ export function DataTable<T extends Record<string, any>>({
                           column.responsiveHide === "lg" &&
                             "hidden lg:table-cell",
                           column.responsiveHide === "xl" &&
-                          "hidden xl:table-cell",
+                            "hidden xl:table-cell",
                         )}
                         style={
                           column.minWidth
@@ -1275,7 +1316,7 @@ export function DataTable<T extends Record<string, any>>({
                                 column.responsiveHide === "lg" &&
                                   "hidden lg:table-cell",
                                 column.responsiveHide === "xl" &&
-                                "hidden xl:table-cell",
+                                  "hidden xl:table-cell",
                               )}
                               style={
                                 column.minWidth

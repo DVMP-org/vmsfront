@@ -1,9 +1,10 @@
 import { OrganizationSiteDetail } from "@/features/organization-workspace/components/OrganizationSiteDetail";
 
-export default function OrganizationSitePage({
+export default async function OrganizationSitePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <OrganizationSiteDetail siteId={params.id} />;
+  const routeParams = await params;
+  return <OrganizationSiteDetail siteId={routeParams.id} />;
 }

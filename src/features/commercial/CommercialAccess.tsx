@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -415,7 +416,7 @@ function AssignAccessModal({
 }: {
   open: boolean;
   spaces: Array<{ id: string; name: string }>;
-  contextKey: string;
+  contextKey: QueryContext;
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {

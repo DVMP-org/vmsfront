@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -7,6 +8,7 @@ interface FormSectionProps {
   description?: string;
   children: ReactNode;
   className?: string;
+  icon?: LucideIcon;
 }
 
 export function FormSection({
@@ -14,6 +16,7 @@ export function FormSection({
   description,
   children,
   className,
+  icon: Icon,
 }: FormSectionProps) {
   return (
     <section
@@ -23,7 +26,15 @@ export function FormSection({
       )}
     >
       <div>
-        <h3 className="text-sm font-semibold text-[var(--vms-ink)]">{title}</h3>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--vms-ink)]">
+          {Icon ? (
+            <Icon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-[var(--vms-ink-muted)]"
+            />
+          ) : null}
+          {title}
+        </h3>
         {description ? (
           <p className="mt-1 text-xs leading-[18px] text-[var(--vms-ink-muted)]">
             {description}

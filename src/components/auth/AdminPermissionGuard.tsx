@@ -141,6 +141,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         >
           Retry
         </button>
+        <Link href="/organization/workspaces" className="ml-4 font-semibold underline">Switch workspace</Link>
       </div>
     );
   }

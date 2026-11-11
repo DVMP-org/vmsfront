@@ -114,6 +114,6 @@ describe("WorkspaceSwitcher", () => {
       id: "office",
       name: "Harbour Offices",
     });
-    expect(mocks.push).toHaveBeenCalledWith("/admin");
+    expect(mocks.push).toHaveBeenCalledWith("/admin?site_id=office");
   });
 });

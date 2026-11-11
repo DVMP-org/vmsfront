@@ -1,3 +1,4 @@
+import { siteIdFromSearch, storedSiteId } from "@/lib/site-context";
 import {
   createApiClient,
   createCookieUtilities,
@@ -25,6 +26,14 @@ export const apiClient = createApiClient({
   baseURL: API_URL,
   getToken: getStoredAuthToken,
   getOrganizationSlug: subdomains.getSubdomain,
-  getPropertyId: () => useAppStore.getState().selectedSite?.id ?? null,
+  getPropertyId: () => {
+    const selectedSiteId = useAppStore.getState().selectedSite?.id ?? null;
+    if (typeof window === "undefined") return selectedSiteId;
+    return (
+      siteIdFromSearch(window.location.search) ||
+      selectedSiteId ||
+      storedSiteId(subdomains.getSubdomain())
+    );
+  },
   onUnauthorized: () => useAuthStore.getState().clearAuth(),
 });

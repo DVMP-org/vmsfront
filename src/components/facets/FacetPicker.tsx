@@ -1,4 +1,5 @@
 "use client";
+import type { QueryContext } from "@/lib/query-keys";
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
@@ -26,7 +27,7 @@ export function FacetPicker({
   label: string;
   value: FacetItem | null;
   onChange: (item: FacetItem | null) => void;
-  contextKey: string;
+  contextKey: QueryContext;
   excludeIds?: string[];
   id?: string;
   description?: string;

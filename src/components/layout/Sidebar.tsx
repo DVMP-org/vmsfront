@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
-  Settings,
   Shield,
   Scan,
   Activity,
@@ -18,13 +17,12 @@ import {
   X,
   UserCog,
   Puzzle,
-  Wallet,
   Palette,
   FolderTree,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAppStore } from "@/store/app-store";
-import { loadPlugins, getPluginRoutesForUserType } from "@/lib/plugin_loader";
+import { loadPlugins } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
 import {
   buildPluginPath,
@@ -33,7 +31,7 @@ import {
   findMatchingRoute,
   findPluginRouteAndType,
 } from "@/lib/plugin-utils";
-import { useResidentResidency } from "@/hooks/use-resident-data";
+import { withSite } from "@/lib/site-context";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
 import { canOpenManagementDashboard } from "@/features/workspaces/catalog";
@@ -45,25 +43,9 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-function buildResidentLinks(
-  _residencyId?: string,
-  isSuperUser: boolean = false,
-) {
-  const links = [
-    { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-    { href: "/profile?context=resident", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
-  ];
-
-  if (isSuperUser) {
-    links.push({
-      href: "/organization/settings",
-      label: "Settings",
-      icon: Settings,
-    });
-  }
-
-  return links;
-}
+// Personal Place navigation is owned by PlaceWorkspaceShell. Keep the shared
+// account link for plugin shells that still use the resident layout identifier.
+const accountLinks = [{ href: "/profile?context=resident", label: "Profile", icon: UserCog }];
 
 const SidebarLink = memo(function SidebarLink({
   link,
@@ -206,11 +188,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     };
   }, []);
 
-  const routeResidencyId = useMemo(() => {
-    const match = pathname?.match(/^\/residency\/([^/]+)/);
-    return match ? match[1] : undefined;
-  }, [pathname]);
-
   // Determine actual type based on which plugin routes array contains the active route
   // This ensures we show the correct sidebar based on the plugin's route definitions
   const actualType = useMemo<"resident" | "admin">(() => {
@@ -228,6 +205,17 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
     return type;
   }, [pathname, type, plugins]);
+
+  const searchParams = useSearchParams();
+  const urlSiteId = searchParams?.get("site_id") || searchParams?.get("site");
+  const activeSiteId = urlSiteId || selectedSite?.id;
+
+  const formatAdminHref = useCallback(
+    (href: string) => {
+      return actualType === "admin" ? withSite(href, activeSiteId) : href;
+    },
+    [actualType, activeSiteId],
+  );
 
   // Helper function to get routes for a plugin based on user type - memoized
   // Strictly filters by type - no fallback to avoid showing wrong routes
@@ -270,21 +258,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     });
   }, [plugins, actualType]);
 
-  // Memoize effectiveResidencyId to prevent unnecessary recalculations
-  const effectiveResidencyId = useMemo(() => {
-    if (actualType !== "resident") return undefined;
-    return selectedResidency?.id ?? routeResidencyId;
-  }, [actualType, selectedResidency?.id, routeResidencyId]);
-
-  const { data: residentResidency } = useResidentResidency(
-    effectiveResidencyId ?? null,
-  );
-  const isSuperUser = residentResidency?.is_super_user ?? false;
-
   const links = useMemo(() => {
     let baseLinks =
       actualType === "resident"
-        ? buildResidentLinks(effectiveResidencyId, isSuperUser)
+        ? accountLinks
         : contextualAdminLinks(
             workspaceContext.isError
               ? undefined
@@ -321,11 +298,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       // Site navigation is derived exclusively from Site RBAC. Organization
       // grants must not leak into this management shell.
       if (!mounted || workspaceContext.isPending) {
-        return baseLinks.filter((link: any) => !link.permission);
+        return baseLinks.filter(
+          (link: any) => !link.permission && !link.managementOnly,
+        );
       }
 
       if (!workspaceContext.data?.management?.is_administrator) {
-        return baseLinks.filter((link: any) => !link.permission);
+        return baseLinks.filter(
+          (link: any) => !link.permission && !link.managementOnly,
+        );
       }
 
       baseLinks = baseLinks
@@ -364,8 +345,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     });
   }, [
     actualType,
-    effectiveResidencyId,
-    isSuperUser,
     mounted,
     selectedSite,
     workspaceContext.data,
@@ -388,16 +367,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       (a, b) => (b.href?.length || 0) - (a.href?.length || 0),
     );
     return (
-      sorted.find(
-        (l) => {
-          if (!l.href) return false;
-          const target = l.href.split("?")[0];
-          return (
-            pathname === target ||
-            (target !== "/admin" && pathname.startsWith(target + "/"))
-          );
-        },
-      ) || null
+      sorted.find((l) => {
+        if (!l.href) return false;
+        const target = l.href.split("?")[0];
+        return (
+          pathname === target ||
+          (target !== "/admin" && pathname.startsWith(target + "/"))
+        );
+      }) || null
     );
   }, [links, pathname]);
 
@@ -612,7 +589,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                   )}
                 >
                   <Link
-                    href={link.href}
+                    href={formatAdminHref(link.href)}
                     onClick={handleLinkClick}
                     aria-current={isActive ? "page" : undefined}
                     title={collapsed && !isMobile ? link.label : undefined}
@@ -677,7 +654,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         return (
                           <li key={child.href} className="pl-3 py-0.5">
                             <Link
-                              href={child.href}
+                              href={formatAdminHref(child.href)}
                               onClick={handleLinkClick}
                               className={cn(
                                 "flex items-center  text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
@@ -712,7 +689,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                   </p>
                 )}
               <SidebarLink
-                link={link}
+                link={{ ...link, href: formatAdminHref(link.href) }}
                 isActive={isActive}
                 collapsed={collapsed}
                 isMobile={isMobile}

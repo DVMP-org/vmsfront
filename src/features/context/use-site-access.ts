@@ -17,6 +17,11 @@ export function useSiteAccess() {
   const workspace = useWorkspaceContext();
   const organization = useAppStore((state) => state.organization);
   const site = useAppStore((state) => state.selectedSite);
+  const activeSite =
+    workspace.data?.management?.selected_site ||
+    site ||
+    workspace.data?.management?.authoritative_site ||
+    null;
   const user = useAuthStore((state) => state.user);
   const permissions = useMemo(
     () => workspacePermissions(workspace.data),
@@ -26,7 +31,7 @@ export function useSiteAccess() {
     workspace,
     permissions,
     contextKey: `${organization?.id || "organization"}:${
-      site?.id || "site"
+      activeSite?.id || "site"
     }:${user?.id || "user"}`,
     allowed: (requirement: string | string[]) =>
       hasPermissionGrant(permissions, requirement),

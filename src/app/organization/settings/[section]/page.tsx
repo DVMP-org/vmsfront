@@ -34,12 +34,13 @@ export function generateStaticParams() {
   return Object.keys(sections).map((section) => ({ section }));
 }
 
-export default function OrganizationConfigurationPage({
+export default async function OrganizationConfigurationPage({
   params,
 }: {
-  params: { section: string };
+  params: Promise<{ section: string }>;
 }) {
-  const section = params.section as OrganizationSettingsSection;
+  const routeParams = await params;
+  const section = routeParams.section as OrganizationSettingsSection;
   const config = sections[section];
   if (!config) notFound();
 

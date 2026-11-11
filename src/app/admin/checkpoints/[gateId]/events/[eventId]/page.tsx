@@ -1,8 +1,14 @@
 import { CheckpointRecord } from "@/features/checkpoints/CheckpointPages";
-export default function Page({
+export default async function Page({
   params,
 }: {
-  params: { gateId: string; eventId: string };
+  params: Promise<{ gateId: string; eventId: string }>;
 }) {
-  return <CheckpointRecord gateId={params.gateId} eventId={params.eventId} />;
+  const routeParams = await params;
+  return (
+    <CheckpointRecord
+      gateId={routeParams.gateId}
+      eventId={routeParams.eventId}
+    />
+  );
 }

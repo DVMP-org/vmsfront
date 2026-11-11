@@ -1,24 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Archive,
-  Database,
-  ExternalLink,
+  Building2,
+  DoorOpen,
+  FileText,
+  MapPin,
   Pencil,
   Plus,
   RotateCcw,
-  UserPlus,
-  Users,
-  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
-import { Drawer } from "@/components/ui/Drawer";
 import { PropertyImage } from "@/components/ui/PropertyImage";
 import {
   DataTable,
@@ -26,12 +26,11 @@ import {
   type Column,
   type FilterDefinition,
 } from "@/components/ui/DataTable";
+import { FormSection } from "@/components/ui/form/FormSection";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useSiteAccess } from "@/features/context/use-site-access";
-import { formatCurrency } from "@/lib/utils";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import {
@@ -42,14 +41,12 @@ import {
 import { PlaceAssignmentModal } from "@/features/places/PlaceAssignmentModal";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
+import {
+  ResidentialUnitDetail,
+  type ResidentialUnitRow,
+} from "./ResidentialUnitDetail";
 
-type UnitRow = Place & {
-  building_id: string;
-  building_name: string;
-  status: string;
-  occupancy_status: string;
-  residents: string;
-};
+type UnitRow = ResidentialUnitRow;
 type ParentChoice = Pick<PlaceTreeNode, "id" | "name" | "site_id"> & {
   kind: string;
 };
@@ -64,15 +61,16 @@ const unitTypes = [
 ];
 
 export default function ResidentialUnits() {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const { contextKey, selectedSite, canManageUnits, canManagePeople } =
     useResidentialAccess();
-  const { allowed } = useSiteAccess();
   const queryClient = useQueryClient();
   const placeId = selectedSite?.id || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<UnitRow | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [assignSession, setAssignSession] = useState(0);
   const [assignPlaceId, setAssignPlaceId] = useState<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -85,12 +83,6 @@ export default function ResidentialUnits() {
     queryKey: ["residential", contextKey, "tree"],
     queryFn: residentialApi.tree,
     enabled: !!placeId,
-  });
-  const charges = useQuery({
-    queryKey: ["residential", contextKey, "charge-assignments", placeId],
-    queryFn: residentialApi.chargeAssignments,
-    enabled: !!detailId && !!placeId && allowed("charges.list"),
-    retry: false,
   });
   const relationships = useQuery({
     queryKey: ["residential", contextKey, "relationships", placeId],
@@ -217,6 +209,16 @@ export default function ResidentialUnits() {
       options: unitTypes,
     },
   ];
+  function requestArchive(unit: UnitRow) {
+    if (!unit.is_active) { toggle.mutate([unit.id]); return; }
+    confirmAction({
+      title: `Archive ${unit.name}?`,
+      description: "This removes the unit from active inventory. Existing occupancy or future use may prevent archiving.",
+      confirmLabel: "Archive unit",
+      onConfirm: () => toggle.mutateAsync([unit.id]),
+    });
+  }
+
   const columns: Column<UnitRow>[] = [
     {
       key: "name",
@@ -309,7 +311,7 @@ export default function ResidentialUnits() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => toggle.mutate([unit.id])}
+                onClick={() => requestArchive(unit)}
                 aria-label={`${unit.is_active ? "Archive" : "Activate"} ${unit.name}`}
               >
                 {unit.is_active ? (
@@ -438,7 +440,7 @@ export default function ResidentialUnits() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => toggle.mutate([unit.id])}
+                        onClick={() => requestArchive(unit)}
                       >
                         {unit.is_active ? "Archive" : "Activate"}
                       </Button>
@@ -449,129 +451,32 @@ export default function ResidentialUnits() {
             )}
           />
         </section>
-        {unitRows.find((unit) => unit.id === detailId) &&
-          (() => {
-            const unit = unitRows.find((item) => item.id === detailId)!;
-            return (
-              <Drawer
-                isOpen={true}
-                className="max-w-[390px]"
-                contentClassName="p-0 sm:p-0"
-                title={unit.name}
-                description={unit.building_name}
-                onClose={() => setDetailId(null)}
-              >
-                <div className="space-y-4 border-b border-[var(--vms-line)] p-4">
-                  <StatusBadge
-                    tone={
-                      unit.occupancy_status === "occupied"
-                        ? "success"
-                        : "neutral"
-                    }
-                  >
-                    {unit.occupancy_status === "occupied"
-                      ? "Occupied"
-                      : "Vacant"}
-                  </StatusBadge>
-                  <div className="flex gap-4">
-                    <PropertyImage name={unit.name} className="h-20 w-20" />
-                    <dl className="min-w-0 flex-1 text-sm">
-                      <div className="flex justify-between gap-3 border-b border-[var(--vms-line)] py-2">
-                        <dt className="text-[var(--vms-ink-muted)]">
-                          Unit type
-                        </dt>
-                        <dd className="text-right font-medium">
-                          {unitTypes.find(
-                            (type) => type.value === unit.building_type,
-                          )?.label || "Unit"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 py-2">
-                        <dt className="text-[var(--vms-ink-muted)]">
-                          Building
-                        </dt>
-                        <dd className="text-right font-medium">
-                          {unit.building_name}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                </div>
-                <div className="space-y-3 border-b border-[var(--vms-line)] p-4">
-                  <h3 className="flex items-center gap-2 font-semibold">
-                    <Users className="h-4 w-4" aria-hidden /> Occupant
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <Avatar name={unit.residents} decorative tone="info" />
-                    <p className="text-sm">
-                      {unit.residents || "No active household"}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3 border-b border-[var(--vms-line)] p-4">
-                  <h3 className="flex items-center gap-2 font-semibold">
-                    <Database className="h-4 w-4" aria-hidden /> Charges &amp;
-                    balance
-                  </h3>
-                  {!allowed("charges.list") ? (
-                    <p className="text-sm text-[var(--vms-ink-muted)]">
-                      Charge information is not available with your access.
-                    </p>
-                  ) : charges.isPending ? (
-                    <p className="text-sm text-[var(--vms-ink-muted)]">
-                      Loading charges…
-                    </p>
-                  ) : charges.isError ? (
-                    <div className="text-sm text-[var(--vms-danger)]">
-                      Could not load charges.{" "}
-                      <button
-                        className="underline"
-                        onClick={() => charges.refetch()}
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : (
-                    <UnitCharges
-                      assignments={(charges.data || []).filter(
-                        (item) => item.target_place.id === unit.id,
-                      )}
-                    />
-                  )}
-                </div>
-                <div className="space-y-2 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 font-semibold">
-                    <Zap className="h-4 w-4" aria-hidden /> Quick actions
-                  </h3>
-                  <Button asChild className="w-full">
-                    <Link href={`/admin/places/${unit.id}`}>
-                      <ExternalLink className="h-4 w-4" aria-hidden /> View unit
-                    </Link>
-                  </Button>
-                  {canManagePeople && (
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setAssignPlaceId(unit.id);
-                        setDetailId(null);
-                        setAssignOpen(true);
-                      }}
-                    >
-                      <UserPlus className="h-4 w-4" aria-hidden /> Assign
-                      resident
-                    </Button>
-                  )}
-                </div>
-              </Drawer>
-            );
-          })()}
+        <ResidentialUnitDetail
+          key={JSON.stringify(contextKey)}
+          unit={unitRows.find((unit) => unit.id === detailId)}
+          relationships={relationships.data?.items || []}
+          contextKey={contextKey}
+          siteId={placeId}
+          canManageUnits={canManageUnits}
+          canManagePeople={canManagePeople}
+          onClose={() => setDetailId(null)}
+          onEdit={(unit) => {
+            setDetailId(null);
+            setEditUnit(unit);
+          }}
+          onAssign={(id) => {
+            setAssignSession((session) => session + 1);
+            setAssignPlaceId(id);
+            setDetailId(null);
+            setAssignOpen(true);
+          }}
+        />
       </div>
 
       <PlaceAssignmentModal
         title="Assign a household relationship"
         placeLabel="Unit"
-        key={`assign:${assignOpen}:${assignPlaceId || "none"}`}
+        key={`assign:${assignSession}:${assignPlaceId || "none"}`}
         open={assignOpen}
         defaultPlaceId={assignPlaceId || undefined}
         siteId={placeId}
@@ -586,7 +491,6 @@ export default function ResidentialUnits() {
         }}
       />
       <UnitFormModal
-        key={`create:${createOpen}:${parentChoices[0]?.id || "none"}`}
         open={createOpen}
         mode="create"
         parents={parentChoices}
@@ -599,7 +503,6 @@ export default function ResidentialUnits() {
         }}
       />
       <UnitFormModal
-        key={`edit:${editUnit?.id || "none"}`}
         open={!!editUnit}
         mode="edit"
         unit={editUnit}
@@ -612,68 +515,8 @@ export default function ResidentialUnits() {
           });
         }}
       />
+      {confirmationDialog}
     </ResidentialShell>
-  );
-}
-
-function UnitCharges({
-  assignments,
-}: {
-  assignments: import("@/features/charges/api").Assignment[];
-}) {
-  if (!assignments.length)
-    return (
-      <p className="text-sm text-[var(--vms-ink-muted)]">
-        No charges assigned to this unit.
-      </p>
-    );
-  const currencies = new Set(
-    assignments.map((item) => item.charge_definition.currency),
-  );
-  if (currencies.size > 1 || !currencies.has("NGN"))
-    return (
-      <p className="text-sm text-[var(--vms-ink-muted)]">
-        View charges in the finance register for currency details.
-      </p>
-    );
-  const monthly = assignments
-    .filter((item) => item.charge_definition.recurrence === "monthly")
-    .reduce((sum, item) => sum + Number(item.charge_definition.amount || 0), 0);
-  const balance = assignments.reduce(
-    (sum, item) => sum + Number(item.outstanding_amount || 0),
-    0,
-  );
-  const nextDue = assignments
-    .map((item) => item.next_due_date)
-    .filter((date): date is string => !!date)
-    .sort()[0];
-  return (
-    <dl className="text-sm">
-      {[
-        ["Monthly charge", formatCurrency(monthly)],
-        ["Current balance", formatCurrency(balance)],
-        [
-          "Next due date",
-          nextDue ? new Date(nextDue).toLocaleDateString() : "—",
-        ],
-      ].map(([label, value]) => (
-        <div
-          key={label}
-          className="flex justify-between gap-3 border-b border-[var(--vms-line)] py-2 last:border-0"
-        >
-          <dt className="text-[var(--vms-ink-muted)]">{label}</dt>
-          <dd
-            className={
-              label === "Current balance" && balance > 0
-                ? "font-semibold text-[var(--vms-danger)]"
-                : "font-medium"
-            }
-          >
-            {value}
-          </dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 
@@ -692,6 +535,14 @@ function UnitFormModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const formId = useId();
+  const fieldIds: Record<string, string> = {
+    name: `${formId}-unit-name`,
+    parent_id: `${formId}-unit-parent`,
+    building_type: `${formId}-unit-type`,
+    address: `${formId}-unit-address`,
+    description: `${formId}-unit-description`,
+  };
   const selectedSite = useAppStore((state) => state.selectedSite);
   const [name, setName] = useState(unit?.name || "");
   const [parentId, setParentId] = useState(
@@ -701,6 +552,16 @@ function UnitFormModal({
   const [address, setAddress] = useState(unit?.address || "");
   const [description, setDescription] = useState(unit?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const defaultParentId = parents[0]?.id || "";
+  useEffect(() => {
+    if (!open) return;
+    setName(unit?.name || "");
+    setParentId(unit?.building_id || defaultParentId);
+    setUnitType(unit?.building_type || "apartment");
+    setAddress(unit?.address || "");
+    setDescription(unit?.description || "");
+    setErrors({});
+  }, [open, unit, defaultParentId]);
   const save = useMutation({
     mutationFn: async () => {
       if (mode === "edit" && unit) {
@@ -735,6 +596,7 @@ function UnitFormModal({
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (save.isPending) return;
     const next: Record<string, string> = {};
     if (!name.trim()) next.name = "Enter a unit name or number.";
     if (mode === "create" && !parentId)
@@ -749,105 +611,161 @@ function UnitFormModal({
   return (
     <Modal
       isOpen={open}
-      onClose={onClose}
+      onClose={() => {
+        if (!save.isPending) onClose();
+      }}
       title={
-        mode === "create" ? "Add a residential unit" : `Edit ${unit?.name}`
+        mode === "create"
+          ? "Add a residential unit"
+          : `Edit ${unit?.name || name}`
       }
-      description="Units are canonical places, so occupancy, charges and access retain the same property identity."
-    >
-      <form className="space-y-4" onSubmit={submit} noValidate>
-        <FormErrorSummary errors={errors} />
-        <Field id="unit-name" label="Unit name" required error={errors.name}>
-          {(control) => (
-            <input
-              {...control}
-              className={fieldControlClassName}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoComplete="off"
-              placeholder="e.g. Apartment 4B"
-            />
-          )}
-        </Field>
-        {mode === "create" ? (
-          <>
-            <Field
-              id="unit-parent"
-              label="Building or site"
-              required
-              error={errors.parent_id}
-            >
-              {(control) => (
-                <select
-                  {...control}
-                  className={fieldControlClassName}
-                  value={parentId}
-                  onChange={(event) => setParentId(event.target.value)}
-                >
-                  {parents.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.name} · {parent.kind}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
-            <Field
-              id="unit-type"
-              label="Unit type"
-              required
-              error={errors.building_type}
-            >
-              {(control) => (
-                <select
-                  {...control}
-                  className={fieldControlClassName}
-                  value={unitType}
-                  onChange={(event) => setUnitType(event.target.value)}
-                >
-                  {unitTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
-          </>
-        ) : null}
-        <Field id="unit-address" label="Address">
-          {(control) => (
-            <input
-              {...control}
-              className={fieldControlClassName}
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              autoComplete="street-address"
-            />
-          )}
-        </Field>
-        <Field id="unit-description" label="Description">
-          {(control) => (
-            <textarea
-              {...control}
-              className={`${fieldControlClassName} min-h-24 py-2`}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          )}
-        </Field>
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>
+      description={
+        mode === "create"
+          ? "Add a home to your property. Connect residents and charges when you’re ready."
+          : "Update the unit’s name, address and notes for your team."
+      }
+      icon={DoorOpen}
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={save.isPending}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending
-              ? "Saving…"
-              : mode === "create"
-                ? "Create unit"
-                : "Save changes"}
+          <Button type="submit" form={formId} isLoading={save.isPending}>
+            {mode === "create" ? "Create unit" : "Save changes"}
           </Button>
         </div>
+      }
+    >
+      <form
+        id={formId}
+        className="space-y-6"
+        onSubmit={submit}
+        noValidate
+        aria-busy={save.isPending}
+      >
+        <fieldset disabled={save.isPending} className="min-w-0 space-y-6">
+          <FormErrorSummary
+            errors={Object.fromEntries(
+              Object.entries(errors).map(([key, value]) => [
+                fieldIds[key] || key,
+                value,
+              ]),
+            )}
+          />
+          <FormSection
+            title="Unit details"
+            description="A clear name and location help your team find the right home."
+            icon={DoorOpen}
+            className="md:grid-cols-1 md:gap-4"
+          >
+            <Field
+              id={fieldIds.name}
+              label="Unit name"
+              icon={DoorOpen}
+              required
+              error={errors.name}
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  className={fieldControlClassName}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  autoComplete="off"
+                  placeholder="e.g. Apartment 4B"
+                />
+              )}
+            </Field>
+            {mode === "create" ? (
+              <>
+                <Field
+                  id={fieldIds.parent_id}
+                  label="Building or site"
+                  icon={Building2}
+                  required
+                  error={errors.parent_id}
+                >
+                  {(control) => (
+                    <select
+                      {...control}
+                      className={fieldControlClassName}
+                      value={parentId}
+                      onChange={(event) => setParentId(event.target.value)}
+                    >
+                      {parents.map((parent) => (
+                        <option key={parent.id} value={parent.id}>
+                          {parent.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+                <Field
+                  id={fieldIds.building_type}
+                  label="Unit type"
+                  icon={DoorOpen}
+                  required
+                  error={errors.building_type}
+                >
+                  {(control) => (
+                    <select
+                      {...control}
+                      className={fieldControlClassName}
+                      value={unitType}
+                      onChange={(event) => setUnitType(event.target.value)}
+                    >
+                      {unitTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+              </>
+            ) : null}
+          </FormSection>
+          <FormSection
+            title="Location & notes"
+            description="Add the details residents and your team need."
+            icon={MapPin}
+            className="md:grid-cols-1 md:gap-4"
+          >
+            <Field id={fieldIds.address} label="Address" icon={MapPin}>
+              {(control) => (
+                <input
+                  {...control}
+                  className={fieldControlClassName}
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  autoComplete="street-address"
+                  placeholder="Street address or location within the property"
+                />
+              )}
+            </Field>
+            <Field
+              id={fieldIds.description}
+              label="Description"
+              icon={FileText}
+              description="Optional notes about the layout, location or access."
+            >
+              {(control) => (
+                <textarea
+                  {...control}
+                  className={`${fieldControlClassName} min-h-24 py-2`}
+                  placeholder="e.g. Two-bedroom apartment on the second floor"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                />
+              )}
+            </Field>
+          </FormSection>
+        </fieldset>
       </form>
     </Modal>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
+
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,6 +53,7 @@ type InventoryRow = Place & {
 };
 
 export default function CommercialInventory() {
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const { selectedSite, contextKey, canManageInventory } =
     useCommercialAccess();
   const client = useQueryClient();
@@ -162,6 +165,16 @@ export default function CommercialInventory() {
       ],
     },
   ];
+  function requestArchive(row: InventoryRow) {
+    if (!row.is_active) { toggle.mutate([row.id]); return; }
+    confirmAction({
+      title: `Archive ${row.name}?`,
+      description: "This removes the space from active inventory. Existing occupancy or future use may prevent archiving.",
+      confirmLabel: "Archive space",
+      onConfirm: () => toggle.mutateAsync([row.id]),
+    });
+  }
+
   const columns: Column<InventoryRow>[] = [
     {
       key: "name",
@@ -250,7 +263,7 @@ export default function CommercialInventory() {
               variant="ghost"
               size="sm"
               aria-label={`${row.is_active ? "Archive" : "Activate"} ${row.name}`}
-              onClick={() => toggle.mutate([row.id])}
+              onClick={() => requestArchive(row)}
             >
               {row.is_active ? (
                 <Archive className="h-4 w-4" aria-hidden="true" />
@@ -380,7 +393,7 @@ export default function CommercialInventory() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => toggle.mutate([row.id])}
+                    onClick={() => requestArchive(row)}
                   >
                     {row.is_active ? "Archive" : "Activate"}
                   </Button>
@@ -415,6 +428,7 @@ export default function CommercialInventory() {
           });
         }}
       />
+      {confirmationDialog}
     </CommercialShell>
   );
 }

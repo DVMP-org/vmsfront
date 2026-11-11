@@ -281,6 +281,7 @@ describe("charge routes", () => {
         "/admin/charges/definitions/charge",
       ),
     );
+    await waitFor(() => expect(mocks.definitions).toHaveBeenCalledTimes(2));
   });
 
   it("hides the schedule window until it is enabled", async () => {

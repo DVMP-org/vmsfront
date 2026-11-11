@@ -1,9 +1,10 @@
 import { OrganizationSiteEdit } from "@/features/organization-workspace/components/OrganizationSiteEdit";
 
-export default function EditOrganizationSitePage({
+export default async function EditOrganizationSitePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <OrganizationSiteEdit siteId={params.id} />;
+  const routeParams = await params;
+  return <OrganizationSiteEdit siteId={routeParams.id} />;
 }

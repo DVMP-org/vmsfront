@@ -1,5 +1,6 @@
 "use client";
 
+import { queryKeys, type QueryContext } from "@/lib/query-keys";
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
@@ -81,6 +82,7 @@ export default function ChargesWorkspace({
   action?: ChargeAction;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const selectedSite = useAppStore((state) => state.selectedSite);
   const access = useSiteAccess();
   const [createOpen, setCreateOpen] = useState(action === "new");
@@ -143,6 +145,7 @@ export default function ChargesWorkspace({
           if (action === "new") router.push("/admin/charges");
         }}
         onCreated={(definition) => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.charges.all });
           setCreateOpen(false);
           router.push(`/admin/charges/definitions/${definition.id}`);
         }}
@@ -188,14 +191,14 @@ function Directory({
   allow,
   onCreate,
 }: {
-  contextKey: string;
+  contextKey: QueryContext;
   siteId?: string;
   allow: (permission: string) => boolean;
   onCreate: () => void;
 }) {
   const [page, setPage] = useState(1);
   const query = useQuery({
-    queryKey: ["charges", contextKey, "definitions", page, siteId],
+    queryKey: queryKeys.charges.definitions(contextKey, page, siteId),
     queryFn: () => chargesApi.definitions(page, siteId),
     enabled: !!siteId,
     placeholderData: (previous) => previous,
@@ -647,7 +650,7 @@ function DefinitionDetail({
   allow,
 }: {
   id: string;
-  contextKey: string;
+  contextKey: QueryContext;
   allow: (permission: string) => boolean;
 }) {
   const [page, setPage] = useState(1);
@@ -910,7 +913,7 @@ function AssignCharge({
   onAssigned,
 }: {
   id: string;
-  contextKey: string;
+  contextKey: QueryContext;
   open: boolean;
   onClose: () => void;
   onAssigned: (result: AssignTargetsResult) => void;
@@ -1037,7 +1040,7 @@ function PlaceTargetPicker({
   onChange,
   error,
 }: {
-  contextKey: string;
+  contextKey: QueryContext;
   selected: FacetItem[];
   onChange: (items: FacetItem[]) => void;
   error?: string;
@@ -1176,7 +1179,7 @@ function AssignmentDetail({
   allow,
 }: {
   id: string;
-  contextKey: string;
+  contextKey: QueryContext;
   allow: (permission: string) => boolean;
 }) {
   const queryClient = useQueryClient();

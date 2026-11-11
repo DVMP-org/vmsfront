@@ -119,7 +119,7 @@ describe("buildLobbyWorkspaces", () => {
 
     expect(siteCard).toMatchObject({
       title: "Pebble Court",
-      destination: "/admin",
+      destination: "/admin?site_id=site-1",
       roleLabel: "Site administrator",
       selection: { id: "site-1", name: "Pebble Court" },
     });
@@ -207,4 +207,18 @@ it("keeps inherited Sites distinct when they share one ancestor assignment", () 
   });
   expect(new Set(cards.map((card) => card.id)).size).toBe(2);
   expect(cards.map((card) => card.selection?.id)).toEqual(["site-1", "child-site"]);
+});
+
+it("uses the Site operating type independently of legacy organization and Place classification", () => {
+  const workspaces = buildLobbyWorkspaces({
+    context: context({
+      site_workspaces: [{ ...siteWorkspace, site: { ...siteWorkspace.site, use_case: "hospitality" } }],
+      workspaces: [relationship] as never,
+    }),
+    organization,
+  });
+  expect(workspaces.find(item => item.type === "site_admin")).toMatchObject({
+    useCase: "hospitality", destination: "/admin?site_id=site-1",
+  });
+  expect(workspaces.find(item => item.type === "party")).not.toHaveProperty("useCase");
 });

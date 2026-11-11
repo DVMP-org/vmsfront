@@ -1,4 +1,5 @@
 "use client";
+import { withSite } from "@/lib/site-context";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -89,7 +90,7 @@ export function WorkspaceSwitcher({
     setSelectedSite(place ? { id: place.id, name: place.name } : null);
     setOpen(false);
     onMobileClose?.();
-    router.push(card.href);
+    router.push(card.area === "management" ? withSite(card.href, place?.id) : card.href);
   }
 
   if (collapsed && !isMobile) {

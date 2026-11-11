@@ -22,6 +22,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { accessJourneyApi, type VisitAuthorization } from "@/features/access-journey/api";
+import { accessJourneyKeys } from "@/features/access-journey/queries";
 import { isGuestOnSite } from "@/features/access-journey/lib";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { parseApiError } from "@/lib/error-utils";
@@ -185,14 +186,13 @@ export function VisitorsSection() {
     const hasSidebar = useMediaQuery("(min-width: 1280px)");
 
     const query = useQuery({
-        queryKey: ["place-visitors", place.id, party.id],
+        queryKey: accessJourneyKeys.list(place.id, party.id),
         queryFn: () => accessJourneyApi.list(place.id),
         retry: false,
     });
     const cancel = useMutation({
         mutationFn: accessJourneyApi.cancel,
         onSuccess: () => {
-            void client.invalidateQueries({ queryKey: ["place-visitors", place.id] });
             void client.invalidateQueries({
                 queryKey: ["workspace", "visit-authorizations", place.id],
             });

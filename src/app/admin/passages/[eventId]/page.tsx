@@ -1,9 +1,10 @@
 import { AccessEventDetail } from "@/features/passages/AccessEventDetail";
 
-export default function AccessEventPage({
+export default async function AccessEventPage({
   params,
 }: {
-  params: { eventId: string };
+  params: Promise<{ eventId: string }>;
 }) {
-  return <AccessEventDetail eventId={params.eventId} />;
+  const routeParams = await params;
+  return <AccessEventDetail eventId={routeParams.eventId} />;
 }

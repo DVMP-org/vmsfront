@@ -49,15 +49,15 @@ BaseInnerInput.displayName = "BaseInnerInput";
 export const inputContainerVariants = cva(
   [
     "relative flex min-h-[var(--vms-control-height)] w-full items-center rounded-[var(--vms-radius-control)] border px-3 py-2",
-    "text-base transition-[border-color,box-shadow,background-color] duration-[var(--vms-motion)]",
-    "focus-within:border-[var(--vms-ink-muted)] focus-within:ring-2 focus-within:ring-[var(--vms-focus)] focus-within:ring-offset-1",
+    "gap-2 text-base shadow-[0_1px_2px_rgb(0_0_0_/_0.025)] transition-[border-color,box-shadow,background-color] duration-[var(--vms-motion)]",
+    "focus-within:border-[var(--vms-ink)] focus-within:ring-2 focus-within:ring-[var(--vms-focus)] focus-within:ring-offset-1",
     "disabled:cursor-not-allowed disabled:opacity-50",
   ],
   {
     variants: {
       status: {
         default:
-          "border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)]",
+          "border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)] hover:border-[var(--vms-ink-muted)]",
         error:
           "border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)] focus-within:ring-[var(--vms-danger)]",
         loading:
@@ -134,9 +134,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || `input-${generatedId.replace(/:/g, "")}`;
     const descriptionId = description ? `${inputId}-description` : undefined;
     const errorId = error ? `${inputId}-error` : undefined;
-    const describedBy = [ariaDescribedBy, descriptionId, errorId]
-      .filter(Boolean)
-      .join(" ") || undefined;
+    const describedBy =
+      [ariaDescribedBy, descriptionId, errorId].filter(Boolean).join(" ") ||
+      undefined;
 
     let containerStatus: VariantProps<typeof inputContainerVariants>["status"] =
       status;
@@ -190,9 +190,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={error ? true : ariaInvalid}
             aria-describedby={describedBy}
             aria-busy={isLoading || undefined}
-            className={cn(
-              Icon && !leftNode ? "pl-7" : "",
-            )}
+            className={cn(Icon && !leftNode ? "pl-7" : "")}
           />
 
           {rightNode ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryContext } from "@/lib/query-keys";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -619,7 +620,7 @@ function MaintenanceDetailDialog({
   onUpdate,
 }: {
   request: MaintenanceRequest | null;
-  contextKey: string;
+  contextKey: QueryContext;
   workflow: string[];
   pending: boolean;
   onClose: () => void;

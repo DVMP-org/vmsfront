@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Column, DataTable } from "./DataTable";
@@ -91,6 +92,34 @@ describe("DataTable register foundation", () => {
     ).toBeInTheDocument();
   });
 
+  it("dismisses the column picker outside and on Escape without resetting choices", () => {
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+      />,
+    );
+    const trigger = screen.getByText("Columns").closest("summary")!;
+    const picker = trigger.closest("details")!;
+    fireEvent.click(trigger);
+    const role = screen.getByRole("checkbox", { name: "Role" });
+    fireEvent.pointerDown(role);
+    fireEvent.click(role);
+    expect(picker).toHaveAttribute("open");
+    expect(role).not.toBeChecked();
+    fireEvent.pointerDown(document.body, { pointerType: "touch" });
+    expect(picker).not.toHaveAttribute("open");
+    fireEvent.click(trigger);
+    expect(role).not.toBeChecked();
+    role.focus();
+    fireEvent.keyDown(role, { key: "Escape" });
+    expect(picker).not.toHaveAttribute("open");
+    expect(trigger).toHaveFocus();
+    expect(
+      screen.queryByRole("columnheader", { name: "Role" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("debounces remote search while keeping the input responsive", () => {
     vi.useFakeTimers();
     const onSearchChange = vi.fn();
@@ -115,7 +144,7 @@ describe("DataTable register foundation", () => {
     vi.useRealTimers();
   });
 
-  it("runs a bulk action for the selected rows", () => {
+  it("confirms a destructive bulk action for the selected rows", async () => {
     const archive = vi.fn();
     render(
       <DataTable
@@ -128,7 +157,23 @@ describe("DataTable register foundation", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Select row" }));
     fireEvent.click(screen.getByRole("button", { name: "Archive" }));
-    expect(archive).toHaveBeenCalledWith(["one"]);
+    expect(archive).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog", { name: "Archive?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(archive).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Archive?" })).getByRole(
+        "button",
+        { name: "Archive" },
+      ),
+    );
+    await waitFor(() =>
+      expect(archive).toHaveBeenCalledExactlyOnceWith(["one"]),
+    );
   });
 
   it("applies searchable select filters to client-side collections", async () => {

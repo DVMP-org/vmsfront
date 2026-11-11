@@ -89,7 +89,7 @@ describe("SiteConfiguration", () => {
     mocks.update.mockResolvedValue({});
   });
 
-  it("loads the selected site module configuration and planned access automation", async () => {
+  it("loads module configuration for the selected Site", async () => {
     mount();
 
     expect(
@@ -99,9 +99,7 @@ describe("SiteConfiguration", () => {
       screen.getByRole("button", { name: "Operational settings" }),
     );
     expect(screen.getByTestId("site-modules")).toHaveTextContent("site-1:true");
-    expect(
-      screen.getByText(/Plugins and integrations are configured once/),
-    ).toBeVisible();
+    expect(sitesApi.get).toHaveBeenCalledWith("site-1");
   });
 
   it("asks the user to select a site instead of guessing a workspace", () => {

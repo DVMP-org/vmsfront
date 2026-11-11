@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { queryKeys } from "@/lib/query-keys";
 import { parseApiError } from "@/lib/error-utils";
 import {
     accessJourneyApi,
@@ -23,17 +24,7 @@ import {
     type VisitAuthorization,
 } from "./api";
 
-export const accessJourneyKeys = {
-    all: ["workspace", "visit-authorizations"] as const,
-    list: (placeId: string, partyId: string) =>
-        ["workspace", "visit-authorizations", placeId, partyId] as const,
-    detail: (invitationId: string) =>
-        ["workspace", "visit-authorizations", "detail", invitationId] as const,
-    checkpoints: (invitationId: string) =>
-        ["workspace", "visit-authorizations", "checkpoints", invitationId] as const,
-    credentials: (invitationId: string) =>
-        ["workspace", "visit-authorizations", "credentials", invitationId] as const,
-};
+export const accessJourneyKeys = queryKeys.invitations;
 
 /** Thrown when a query is enabled without the id it needs. */
 const required = (value: string | null | undefined, label: string) => {

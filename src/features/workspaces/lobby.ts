@@ -74,7 +74,9 @@ function siteCard(
     title: siteWorkspace.site.name,
     description: "Manage occupancy, access, maintenance and charges.",
     roleLabel: "Site administrator",
-    destination: managementDestination(useCase),
+    destination: `${managementDestination(useCase)}${
+      managementDestination(useCase).includes("?") ? "&" : "?"
+    }site_id=${siteWorkspace.site.id}`,
     useCase,
     selection: { id: siteWorkspace.site.id, name: siteWorkspace.site.name },
   };

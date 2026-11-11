@@ -1,9 +1,10 @@
 import { OrganizationSiteMove } from "@/features/organization-workspace/components/OrganizationSiteMove";
 
-export default function MoveOrganizationSitePage({
+export default async function MoveOrganizationSitePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <OrganizationSiteMove siteId={params.id} />;
+  const routeParams = await params;
+  return <OrganizationSiteMove siteId={routeParams.id} />;
 }
