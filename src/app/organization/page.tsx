@@ -56,8 +56,6 @@ export default function OrganizationHomePage() {
 
   const displayName =
     user?.first_name || user?.email || "Organization administrator";
-  const useCase =
-    organization.use_case?.replaceAll("_", " ") || "Not configured";
   const subscription = organization.subscription?.status || "Not active";
 
   return (
@@ -77,7 +75,7 @@ export default function OrganizationHomePage() {
             </p>
           </div>
           <Link
-            href="/organization/workspaces"
+            href="/"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#1F2933] px-4 text-sm font-semibold text-white transition hover:bg-[#111820] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8402A] focus-visible:ring-offset-2"
           >
             Open Workspaces
@@ -90,7 +88,11 @@ export default function OrganizationHomePage() {
         aria-label="Organization details"
         className="grid overflow-hidden rounded-lg border border-[#E5E7EB] bg-white sm:grid-cols-2 xl:grid-cols-4"
       >
-        <Fact label="Operating use case" value={titleCase(useCase)} />
+        <Fact
+          label="Sites"
+          value={String(organization.sites?.length ?? 0)}
+          detail="Each Site owns its operating type"
+        />
         <Fact label="Organization URL" value={organization.slug} />
         <Fact label="Subscription" value={titleCase(subscription)} />
         <Fact label="Signed in" value={displayName} detail={user?.email} />
@@ -132,7 +134,7 @@ export default function OrganizationHomePage() {
             not create a workspace.
           </p>
           <Link
-            href="/organization/workspaces"
+            href="/"
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-[#C7CDD3] bg-white px-3 text-xs font-semibold text-[#1F2933] transition hover:bg-[#F5F7F8]"
           >
             Review permitted workspaces

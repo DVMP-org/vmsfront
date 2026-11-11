@@ -66,7 +66,7 @@ export function ResidentialShell({
               items={[
                 {
                   label: "Property workspace",
-                  href: "/organization/workspaces",
+                  href: "/?lobby=1",
                 },
                 { label: selectedProperty.name },
                 { label: title },

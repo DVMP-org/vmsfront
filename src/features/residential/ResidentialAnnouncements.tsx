@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Archive, Megaphone, Pencil, Pin, Plus, Send } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "date-fns/format";
 
 import { Button } from "@/components/ui/Button";
 import {

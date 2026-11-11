@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Building2, Loader2, Sparkles } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SetupProgress } from "@/components/onboarding/SetupProgress";
-import { contextApi, type UseCase } from "@/features/context/api";
 import {
   generateSlugFromName,
   useCheckSlugAvailability,
@@ -24,7 +22,6 @@ interface OrganizationDraft {
   name: string;
   slug: string;
   description: string;
-  use_case: UseCase | "";
   slugManuallyEdited: boolean;
 }
 
@@ -32,7 +29,6 @@ const emptyDraft: OrganizationDraft = {
   name: "",
   slug: "",
   description: "",
-  use_case: "",
   slugManuallyEdited: false,
 };
 
@@ -43,11 +39,6 @@ export default function CreateOrganizationPage() {
   const [draftRestored, setDraftRestored] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [slugCheckPending, setSlugCheckPending] = useState(false);
-  const catalog = useQuery({
-    queryKey: ["context-catalog"],
-    queryFn: contextApi.catalog,
-    retry: false,
-  });
   const { createOrganization, isLoading, error, fieldErrors } =
     useCreateOrganization({
       redirectTo: "/plans?setup=first-workspace",
@@ -63,12 +54,7 @@ export default function CreateOrganizationPage() {
       if (!saved) return;
       const parsed = JSON.parse(saved) as Partial<OrganizationDraft>;
       const restored = { ...emptyDraft, ...parsed };
-      if (
-        restored.name ||
-        restored.slug ||
-        restored.description ||
-        restored.use_case
-      ) {
+      if (restored.name || restored.slug || restored.description) {
         setDraft(restored);
         setDraftRestored(true);
       }
@@ -142,7 +128,6 @@ export default function CreateOrganizationPage() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
-    if (!draft.use_case) nextErrors.use_case = "Choose an operating use case";
     if (!draft.name.trim()) nextErrors.name = "Organization name is required";
     if (draft.slug.length < 2) {
       nextErrors.slug = "Slug must be at least 2 characters";
@@ -160,7 +145,6 @@ export default function CreateOrganizationPage() {
     }
     setErrors({});
     createOrganization({
-      use_case: draft.use_case as UseCase,
       name: draft.name.trim(),
       slug: draft.slug.trim(),
       description: draft.description.trim() || undefined,
@@ -184,15 +168,15 @@ export default function CreateOrganizationPage() {
         <header className="mb-7">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
             <Sparkles className="h-4 w-4" />
-            Set up your operating workspace
+            Set up your workspace
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
             Create your organization
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Start with the operating model. Your plan and first property
-            workspace follow, and your setup remains available if you need to
-            return.
+            Start with your organization. Your plan and first property follow,
+            and you choose that property&apos;s operating type when you create
+            it.
           </p>
         </header>
 
@@ -229,45 +213,6 @@ export default function CreateOrganizationPage() {
                   {error}
                 </div>
               ) : null}
-
-              <div>
-                <label
-                  htmlFor="use_case"
-                  className="block text-sm font-medium text-[var(--vms-ink)]"
-                >
-                  Operating use case
-                </label>
-                <select
-                  id="use_case"
-                  value={draft.use_case}
-                  onChange={(event) =>
-                    update("use_case", event.target.value as UseCase | "")
-                  }
-                  disabled={isLoading}
-                  className="mt-2 h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base text-[var(--vms-ink)] outline-none focus:border-[var(--vms-focus)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--vms-focus)_20%,transparent)] sm:text-sm"
-                >
-                  <option value="">Choose your organization’s use case</option>
-                  {catalog.data?.use_cases.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs leading-5 text-[var(--vms-ink-muted)]">
-                  This is fixed at creation and determines the available
-                  modules. Mixed use allows properties with distinct contexts.
-                </p>
-                {catalog.isError ? (
-                  <button
-                    type="button"
-                    onClick={() => catalog.refetch()}
-                    className="mt-2 text-xs font-semibold text-[var(--vms-warning)]"
-                  >
-                    Could not load use cases. Retry
-                  </button>
-                ) : null}
-                <FieldError message={combinedErrors.use_case} />
-              </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
@@ -380,7 +325,7 @@ export default function CreateOrganizationPage() {
               <NextStep
                 number="1"
                 title="Organization"
-                detail="Set the operating model and tenant URL."
+                detail="Set the organization identity and tenant URL."
                 active
               />
               <NextStep

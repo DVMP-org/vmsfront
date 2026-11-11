@@ -28,7 +28,7 @@ export function useRequireEmailVerification(enabled: boolean = true) {
 
         // // If verified and on verification page, redirect to home or select
         // if (isEmailVerified && isVerificationPage) {
-        //     router.replace("/select");
+        //     router.replace("/");
         // }
     }, [enabled, isAuthenticated, user, pathname, router]);
 }

@@ -15,7 +15,6 @@ export interface Property {
   name: string;
   kind: PropertyKind;
   building_type?: string | null;
-  use_case?: import("@/features/context/api").UseCase | null;
   description: string | null;
   address: string;
   is_active: boolean;
@@ -37,7 +36,6 @@ export type PropertyInput = {
   address: string;
   parent_id?: string | null;
   building_type?: string | null;
-  use_case?: import("@/features/context/api").UseCase | null;
 };
 const base = "/admin/places";
 export const propertiesApi = {
@@ -70,7 +68,7 @@ export const propertiesApi = {
     id: string,
     body: Omit<
       PropertyInput,
-      "site_id" | "parent_id" | "kind" | "building_type" | "use_case"
+      "site_id" | "parent_id" | "kind" | "building_type"
     >,
   ) =>
     (await apiClient.patch<ApiResponse<Property>>(`${base}/${id}`, body)).data,

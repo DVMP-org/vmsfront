@@ -6,7 +6,6 @@ import OrganizationPage from "./page";
 const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
   organization: vi.fn(),
-  catalog: vi.fn(),
   update: vi.fn(),
   setOrganization: vi.fn(),
 }));
@@ -18,7 +17,6 @@ vi.mock("@/services/admin-service", () => ({
 vi.mock("@/features/context/api", () => ({
   contextApi: {
     organization: mocks.organization,
-    catalog: mocks.catalog,
     updateOrganization: mocks.update,
   },
 }));
@@ -46,7 +44,6 @@ const organization = {
   name: "Harbour Estate",
   slug: "harbour-estate",
   description: "Mixed-use operations",
-  use_case: "mixed_use",
   created_at: "2026-01-01",
   updated_at: "2026-01-02",
   subscription: null,
@@ -57,12 +54,6 @@ function mount(permissions: string[]) {
     data: { effective_permissions: permissions },
   });
   mocks.organization.mockResolvedValue(organization);
-  mocks.catalog.mockResolvedValue({
-    use_cases: [
-      { value: "mixed_use", label: "Mixed use", modules: [] },
-      { value: "residential", label: "Residential", modules: [] },
-    ],
-  });
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -77,13 +68,13 @@ describe("organization settings page", () => {
     vi.clearAllMocks();
   });
 
-  it("edits mutable details while keeping the use case and slug fixed", async () => {
+  it("edits mutable details while keeping the slug fixed", async () => {
     const updated = { ...organization, name: "Harbour Group" };
     mocks.update.mockResolvedValue(updated);
     mount(["organizations.show", "organizations.update"]);
 
     const name = await screen.findByLabelText("Name");
-    expect(screen.getByText("Mixed use")).toBeInTheDocument();
+    expect(screen.getByText("Sites")).toBeInTheDocument();
     expect(screen.getByText("harbour-estate")).toBeInTheDocument();
     expect(
       screen.queryByRole("combobox", { name: /operating use case/i }),

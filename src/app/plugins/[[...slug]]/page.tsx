@@ -143,7 +143,7 @@ function PluginContent({ params }: Props) {
                               router.push(
                                 notFoundLayoutType === "admin"
                                   ? "/admin"
-                                  : "/organization/workspaces",
+                                  : "/",
                               ),
                         }}
                     />

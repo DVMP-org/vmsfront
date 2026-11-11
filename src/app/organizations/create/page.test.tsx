@@ -52,7 +52,6 @@ describe("CreateOrganizationPage", () => {
         name: "Harbour Operations",
         slug: "harbour-operations",
         description: "Mixed-use estate operations",
-        use_case: "mixed_use",
         slugManuallyEdited: true,
       }),
     );
@@ -73,9 +72,6 @@ describe("CreateOrganizationPage", () => {
   it("creates the organization and explains the next setup steps", () => {
     render(<CreateOrganizationPage />);
 
-    fireEvent.change(screen.getByLabelText("Operating use case"), {
-      target: { value: "hospitality" },
-    });
     fireEvent.change(screen.getByLabelText("Organization name"), {
       target: { value: "Harbour Hotel Group" },
     });
@@ -85,7 +81,6 @@ describe("CreateOrganizationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue to plan" }));
 
     expect(mocks.createOrganization).toHaveBeenCalledWith({
-      use_case: "hospitality",
       name: "Harbour Hotel Group",
       slug: "harbour-hotel-group",
       description: "Hotel operations",
@@ -98,9 +93,6 @@ describe("CreateOrganizationPage", () => {
     mocks.checkSlug.mockResolvedValue(false);
     render(<CreateOrganizationPage />);
 
-    fireEvent.change(screen.getByLabelText("Operating use case"), {
-      target: { value: "residential" },
-    });
     fireEvent.change(screen.getByLabelText("Organization name"), {
       target: { value: "Existing Estate" },
     });

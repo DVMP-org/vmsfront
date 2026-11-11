@@ -19,11 +19,9 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  differenceInCalendarDays,
-  format,
-  formatDistanceToNowStrict,
-} from "date-fns";
+import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
+import { format } from "date-fns/format";
+import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Button, buttonVariants } from "@/components/ui/Button";

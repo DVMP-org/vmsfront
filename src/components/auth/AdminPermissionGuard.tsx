@@ -29,7 +29,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
     const links = contextualAdminLinks(
       workspace.data?.modules,
       workspace.data?.module_groups,
-      workspace.data?.effective_use_case,
+      workspace.data?.effective_use_case ?? undefined,
     );
     const flattened: any[] = [];
     links.forEach((link) => {
@@ -171,7 +171,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button variant="outline" asChild>
-            <Link href="/organization/workspaces">
+            <Link href="/?lobby=1">
               <Home className="mr-2 h-4 w-4" />
               Back to Workspaces
             </Link>

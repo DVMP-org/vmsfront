@@ -277,7 +277,7 @@ export function PlaceWorkspaceSwitcher({
 
                     <div className="my-2 border-t border-[var(--vms-line)]" />
                     <Link
-                        href="/organization/workspaces"
+                        href="/?lobby=1"
                         onClick={() => {
                             setOpen(false);
                             onNavigate?.();

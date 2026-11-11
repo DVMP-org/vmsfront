@@ -1,28 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth-store";
-import { getSubdomain } from "@/lib/subdomain-utils";
+import { OrganizationMemberGuard } from "@/components/auth/OrganizationMemberGuard";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { WorkspaceLobbyPage } from "@/features/workspaces/WorkspaceLobbyPage";
 
-export default function HomePage() {
-  const router = useRouter();
-  const { isAuthenticated, token, _hasHydrated } = useAuthStore();
-
-  useEffect(() => {
-    if (!_hasHydrated) return;
-
-    if (isAuthenticated || !!token) {
-      router.replace(getSubdomain() ? "/organization" : "/organizations");
-    } else {
-      router.replace("/auth/login");
-    }
-  }, [_hasHydrated, isAuthenticated, token, router]);
-
+export default function WorkspaceLobbyRoute() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-    </div>
+    <RouteGuard>
+      <OrganizationMemberGuard>
+        <WorkspaceLobbyPage />
+      </OrganizationMemberGuard>
+    </RouteGuard>
   );
 }
-

@@ -46,7 +46,7 @@ export function OrganizationSwitcher() {
 
   function switchOrganization(slug: string) {
     setOpen(false);
-    window.location.assign(buildSubdomainUrl(slug, "/organization"));
+    window.location.assign(buildSubdomainUrl(slug, "/"));
   }
 
   return (

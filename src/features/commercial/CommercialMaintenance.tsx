@@ -11,7 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "date-fns/format";
 import { toast } from "sonner";
 
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";

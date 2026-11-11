@@ -531,7 +531,7 @@ export default function PlansPage() {
       router.replace("/admin");
       return;
     }
-    router.replace("/organization/workspaces");
+    router.replace("/");
   }, [firstWorkspaceSetup, organization?.needs_first_site, router]);
 
   const activePlans =
@@ -725,9 +725,7 @@ export default function PlansPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white  shadow-xl border border-zinc-200/50  mb-6">
-              <Sparkles className="h-8 w-8 text-[var(--vms-action)]" />
-            </div>
+
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900  sm:text-4xl">
               {firstWorkspaceSetup ? "Continue setting up" : "Choose Your Plan"}
             </h1>

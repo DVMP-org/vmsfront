@@ -20,7 +20,8 @@ import {
 import { adminService } from "@/services/admin-service";
 import { GatePass } from "@/types";
 import { Loader } from "@/components/ui/loader";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { format } from "date-fns/format";
 import Image from "next/image";
 import { generalService } from "@/services/general-service";
 

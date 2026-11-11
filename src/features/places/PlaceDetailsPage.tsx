@@ -80,7 +80,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
   if (!site)
     return (
       <InlineAlert tone="warning" title="Choose a workspace">
-        <Link href="/organization/workspaces">
+        <Link href="/?lobby=1">
           Select a site to view its places.
         </Link>
       </InlineAlert>

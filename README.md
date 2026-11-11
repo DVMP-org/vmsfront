@@ -44,9 +44,7 @@ A modern, responsive dashboard application for the VMSCORE visitor and resident 
 
 2. **Install dependencies**:
    ```bash
-   npm install
-   # or
-   yarn install
+   pnpm install
    ```
 
 3. **Set up environment variables**:

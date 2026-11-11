@@ -71,7 +71,7 @@ export interface Organization {
     parent_site_id: string | null;
     name: string;
     slug: string;
-    use_case?: import("@/features/context/api").UseCase | null;
+    use_case: import("@/features/context/api").UseCase;
     description: string | null;
     address: string;
     is_active: boolean;
@@ -90,7 +90,6 @@ export interface OrganizationMembership {
 }
 
 export interface CreateOrganizationRequest {
-  use_case: import("@/features/context/api").UseCase;
   name: string;
   slug: string;
   description?: string;
@@ -399,7 +398,11 @@ export interface AdminSummary {
   id: string;
   user_id: string;
   role_id: string | null;
+  role_ids?: string[];
   permissions: string | null;
+  role?: AdminRole | null;
+  roles?: AdminRole[];
+  effective_permissions?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -414,7 +417,6 @@ export interface WorkspacePlace {
   address?: string;
   parent_id?: string | null;
   building_type?: string | null;
-  use_case?: string | null;
 }
 
 export interface WorkspaceRelationship {
@@ -454,7 +456,7 @@ export interface CurrentUserContext {
       parent_site_id: string | null;
       name: string;
       slug: string;
-      use_case?: import("@/features/context/api").UseCase | null;
+      use_case: import("@/features/context/api").UseCase;
       description: string | null;
       address: string;
       is_active: boolean;

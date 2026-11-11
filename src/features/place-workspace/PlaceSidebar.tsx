@@ -111,7 +111,7 @@ export function PlaceSidebar({
 
             <div className="mt-auto border-t border-[var(--vms-line)] pt-2">
                 <Link
-                    href="/organization/workspaces"
+                    href="/?lobby=1"
                     onClick={onNavigate}
                     className="flex min-h-10 items-center gap-2.5 rounded-md px-3 text-[13px] font-semibold text-[var(--vms-ink)] transition hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                 >
