@@ -41,7 +41,7 @@ export default function CreateOrganizationPage() {
   const [slugCheckPending, setSlugCheckPending] = useState(false);
   const { createOrganization, isLoading, error, fieldErrors } =
     useCreateOrganization({
-      redirectTo: "/plans?setup=first-workspace",
+      redirectTo: "/plans?setup=first-site",
       onSuccess: () => {
         window.localStorage.removeItem(DRAFT_KEY);
       },

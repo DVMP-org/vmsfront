@@ -13,7 +13,7 @@ const role = {
   id: "role-1",
   name: "Operations lead",
   code: "operations_lead",
-  description: "Coordinates property operations",
+  description: "Coordinates Site operations",
   permissions: ["places.list"],
   permissions_parsed: ["places.list"],
   created_at: "2026-11-08T00:00:00Z",

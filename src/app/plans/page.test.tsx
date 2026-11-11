@@ -56,7 +56,7 @@ describe("plan activation setup", () => {
     vi.clearAllMocks();
     mocks.needsFirstSite = true;
     window.sessionStorage.clear();
-    window.history.replaceState({}, "", "/plans?setup=first-workspace");
+    window.history.replaceState({}, "", "/plans?setup=first-site");
     mocks.subscribe.mockResolvedValue({
       data: {
         id: "subscription",
@@ -66,7 +66,7 @@ describe("plan activation setup", () => {
     });
   });
 
-  it("continues to first-place creation instead of the dashboard", async () => {
+  it("continues to first-Site creation instead of the dashboard", async () => {
     render(<PlansPage />);
 
     fireEvent.click(
@@ -79,11 +79,11 @@ describe("plan activation setup", () => {
         billing_cycle: "monthly",
       }),
     );
-    expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place");
+    expect(mocks.replace).toHaveBeenCalledWith("/setup/first-site");
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });
 
-  it("returns to workspace selection when the first place already exists", async () => {
+  it("returns to workspace selection when the first Site already exists", async () => {
     mocks.needsFirstSite = false;
     render(<PlansPage />);
 
@@ -97,7 +97,7 @@ describe("plan activation setup", () => {
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });
 
-  it("keeps the first-place gate even when the setup query was lost", async () => {
+  it("keeps the first-Site gate even when the setup query was lost", async () => {
     window.history.replaceState({}, "", "/plans");
     render(<PlansPage />);
 
@@ -106,8 +106,20 @@ describe("plan activation setup", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place"),
+      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-site"),
     );
     expect(mocks.replace).not.toHaveBeenCalledWith("/admin");
+  });
+
+  it("ignores the retired first-workspace setup query", async () => {
+    window.history.replaceState({}, "", "/plans?setup=first-workspace");
+    render(<PlansPage />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Choose Your Plan" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Continue setting up" }),
+    ).toBeNull();
   });
 });

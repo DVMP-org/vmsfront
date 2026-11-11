@@ -54,10 +54,10 @@ type TenantRow = {
 };
 
 export default function CommercialTenants() {
-  const { selectedProperty, contextKey, canManagePeople } =
+  const { selectedSite, contextKey, canManagePeople } =
     useCommercialAccess();
   const client = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const tree = useQuery({

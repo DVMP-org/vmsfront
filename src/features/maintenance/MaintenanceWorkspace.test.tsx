@@ -47,7 +47,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
     selector({
-      selectedProperty: { id: "site-1", name: "Harbour Heights" },
+      selectedSite: { id: "site-1", name: "Harbour Heights" },
     }),
 }));
 
@@ -69,8 +69,8 @@ vi.mock("@/features/context/use-site-access", () => ({
   }),
 }));
 
-vi.mock("@/features/properties/api", () => ({
-  propertiesApi: { tree: mocks.tree },
+vi.mock("@/features/places/api", () => ({
+  placesApi: { tree: mocks.tree },
 }));
 
 vi.mock("@/components/facets/FacetPicker", () => ({

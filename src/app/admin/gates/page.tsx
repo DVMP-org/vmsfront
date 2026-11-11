@@ -36,7 +36,7 @@ const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_SIZE = 10;
 
 export default function AdminGatesPage() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const config = useMemo(
     () => ({
       page: { defaultValue: 1 },
@@ -98,16 +98,16 @@ export default function AdminGatesPage() {
         operator: "eq",
       });
     }
-    if (selectedProperty?.id) {
+    if (selectedSite?.id) {
       filters.push({
         field: "site_id",
-        value: selectedProperty.id,
+        value: selectedSite.id,
         operator: "eq",
       });
     }
 
     return filters;
-  }, [dependency_id, selectedProperty?.id]);
+  }, [dependency_id, selectedSite?.id]);
 
   const { data: filterOptionsData } = useAdminGates({
     page: 1,
@@ -122,8 +122,8 @@ export default function AdminGatesPage() {
     filters: formatFiltersForAPI(activeFilters),
   });
   const operators = useQuery({
-    queryKey: ["checkpoint-operators", selectedProperty?.id],
-    queryFn: () => checkpointsApi.operators(selectedProperty?.id),
+    queryKey: ["checkpoint-operators", selectedSite?.id],
+    queryFn: () => checkpointsApi.operators(selectedSite?.id),
     retry: false,
   });
   const operatorsByGate = useMemo(() => {

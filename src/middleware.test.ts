@@ -28,9 +28,9 @@ describe("organization routing", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("keeps first-place setup inside an authenticated tenant context", () => {
+  it("keeps first-Site setup inside an authenticated tenant context", () => {
     const request = new NextRequest(
-      "https://harbour.vmsfront.to/setup/first-place/",
+      "https://harbour.vmsfront.to/setup/first-site/",
       {
         headers: {
           host: "harbour.vmsfront.to",
@@ -45,7 +45,7 @@ describe("organization routing", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("redirects the retired admin first-place URL to standalone setup", () => {
+  it("does not redirect the retired admin first-place query into setup", () => {
     const request = new NextRequest(
       "https://harbour.vmsfront.to/admin/properties/new/?setup=first-place",
       {
@@ -57,9 +57,26 @@ describe("organization routing", () => {
     );
 
     const response = middleware(request);
-    const location = new URL(response.headers.get("location") || "");
 
-    expect(location.pathname).toBe("/setup/first-place");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("does not redirect the old first-place setup URL to first-site", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/setup/first-place",
+      {
+        headers: {
+          host: "harbour.vmsfront.to",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   it("sends an authenticated subdomain root to the workspace lobby", () => {
@@ -114,6 +131,61 @@ describe("organization routing", () => {
     expect(location.port).toBe("");
     expect(location.pathname).toBe("/auth/login");
     expect(location.searchParams.get("redirect_to")).toBe("/organizations");
+  });
+
+  it("keeps localhost development on its own port", () => {
+    const request = new NextRequest("http://localhost:3000/", {
+      headers: {
+        host: "localhost:3000",
+        cookie: "auth-token=valid-token",
+      },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.host).toBe("localhost:3000");
+    expect(location.pathname).toBe("/organizations");
+  });
+
+  it("ignores a forwarded internal port on the public base domain", () => {
+    const request = new NextRequest("https://vmsfront.to/", {
+      headers: {
+        host: "vmsfront.to",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "vmsfront.to",
+        "x-forwarded-port": "3000",
+        cookie: "auth-token=valid-token",
+      },
+    });
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.host).toBe("vmsfront.to");
+    expect(location.port).toBe("");
+    expect(location.pathname).toBe("/organizations");
+  });
+
+  it("redirects a tenant host to the public base domain without the proxy port", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/organizations",
+      {
+        headers: {
+          host: "harbour.vmsfront.to",
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": "harbour.vmsfront.to",
+          "x-forwarded-port": "3000",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.host).toBe("vmsfront.to");
+    expect(location.pathname).toBe("/organizations");
   });
 
   it("preserves the local port when authenticated auth routes leave the base domain", () => {

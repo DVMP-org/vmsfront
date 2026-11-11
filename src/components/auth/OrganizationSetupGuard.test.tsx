@@ -34,7 +34,7 @@ describe("OrganizationSetupGuard", () => {
     mocks.isPending = false;
   });
 
-  it("forces an organization without a place into first-place setup", async () => {
+  it("forces an organization without a Site into first-Site setup", async () => {
     render(
       <OrganizationSetupGuard>
         <p>Admin dashboard</p>
@@ -42,24 +42,24 @@ describe("OrganizationSetupGuard", () => {
     );
 
     await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-place"),
+      expect(mocks.replace).toHaveBeenCalledWith("/setup/first-site"),
     );
     expect(screen.queryByText("Admin dashboard")).toBeNull();
   });
 
-  it("allows the first-place creation route", () => {
-    mocks.pathname = "/setup/first-place/";
+  it("allows the first-Site creation route", () => {
+    mocks.pathname = "/setup/first-site/";
     render(
       <OrganizationSetupGuard>
-        <p>Create first place</p>
+        <p>Create first Site</p>
       </OrganizationSetupGuard>,
     );
 
-    expect(screen.getByText("Create first place")).toBeInTheDocument();
+    expect(screen.getByText("Create first Site")).toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("does not block an organization that already has a place", () => {
+  it("does not block an organization that already has a Site", () => {
     mocks.needsFirstSite = false;
     render(
       <OrganizationSetupGuard>

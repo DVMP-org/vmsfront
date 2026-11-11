@@ -13,13 +13,13 @@ import { useSiteAccess } from "@/features/context/use-site-access";
 export function useResidentialAccess() {
   const access = useSiteAccess();
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const can = access.allowed;
 
   return {
     profile: access.workspace,
     organization,
-    selectedProperty,
+    selectedSite,
     contextKey: access.contextKey,
     canListUnits: can("places.list"),
     canManageUnits: can("places.create") || can("places.update"),
@@ -48,19 +48,19 @@ export function ResidentialShell({
   children: ReactNode;
   showWorkspace?: boolean;
 }) {
-  const { profile, selectedProperty, contextKey } = useResidentialAccess();
+  const { profile, selectedSite, contextKey } = useResidentialAccess();
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      {showWorkspace && selectedProperty && (
+      {showWorkspace && selectedSite && (
         <WorkspaceContext
-          name={selectedProperty.name}
+          name={selectedSite.name}
           description="Residential"
         />
       )}
       <PageHeader
         breadcrumbs={
-          selectedProperty && !showWorkspace ? (
+          selectedSite && !showWorkspace ? (
             <Breadcrumbs
               className="mb-5"
               items={[
@@ -68,7 +68,7 @@ export function ResidentialShell({
                   label: "Property workspace",
                   href: "/?lobby=1",
                 },
-                { label: selectedProperty.name },
+                { label: selectedSite.name },
                 { label: title },
               ]}
             />
@@ -80,7 +80,7 @@ export function ResidentialShell({
         primaryAction={primaryAction}
       />
 
-      {!selectedProperty ? (
+      {!selectedSite ? (
         <PropertyContext contextKey={contextKey} />
       ) : profile.isError ? (
         <section
@@ -106,8 +106,8 @@ export function ResidentialShell({
 }
 
 function PropertyContext({ contextKey: _contextKey }: { contextKey: string }) {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-7">
       <h2 className="text-lg font-semibold">Choose a residential property</h2>
@@ -118,8 +118,8 @@ function PropertyContext({ contextKey: _contextKey }: { contextKey: string }) {
       <div className="mt-5 max-w-xl">
         <SitePicker
           label="Residential property"
-          value={selectedProperty}
-          onChange={setSelectedProperty}
+          value={selectedSite}
+          onChange={setSelectedSite}
         />
       </div>
     </section>

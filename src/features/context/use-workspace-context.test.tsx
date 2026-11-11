@@ -16,14 +16,14 @@ vi.mock("@/store/app-store", () => ({
   useAppStore: (
     selector: (state: {
       organization: { id: string };
-      selectedProperty: { id: string; name: string };
-      setSelectedProperty: typeof mocks.clearProperty;
+      selectedSite: { id: string; name: string };
+      setSelectedSite: typeof mocks.clearProperty;
     }) => unknown,
   ) =>
     selector({
       organization: { id: "org" },
-      selectedProperty: { id: "stale-place", name: "Old property" },
-      setSelectedProperty: mocks.clearProperty,
+      selectedSite: { id: "stale-place", name: "Old property" },
+      setSelectedSite: mocks.clearProperty,
     }),
 }));
 

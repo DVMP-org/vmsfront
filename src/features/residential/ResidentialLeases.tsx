@@ -34,9 +34,9 @@ const filters: Array<{ value: LeaseFilter; label: string }> = [
 ];
 
 export default function ResidentialLeases() {
-    const { contextKey, selectedProperty } = useResidentialAccess();
+    const { contextKey, selectedSite } = useResidentialAccess();
     const [filter, setFilter] = useState<LeaseFilter>("all");
-    const placeId = selectedProperty?.id || "";
+    const placeId = selectedSite?.id || "";
     const tree = useQuery({
         queryKey: ["residential", contextKey, "tree"],
         queryFn: residentialApi.tree,
@@ -151,7 +151,7 @@ export default function ResidentialLeases() {
                     })}
                 </div>
 
-                {!selectedProperty ? (
+                {!selectedSite ? (
                     <p className="px-4 py-6 text-sm text-[var(--vms-ink-muted)]">
                         Choose a property to review its leases.
                     </p>

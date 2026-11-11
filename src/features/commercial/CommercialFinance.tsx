@@ -48,9 +48,9 @@ type FinanceRow = {
 };
 
 export default function CommercialFinance() {
-  const { selectedProperty, contextKey, canManageFinance } =
+  const { selectedSite, contextKey, canManageFinance } =
     useCommercialAccess();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const tree = useQuery({
     queryKey: ["commercial", contextKey, "tree"],

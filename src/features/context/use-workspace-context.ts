@@ -8,9 +8,9 @@ import { contextApi } from "./api";
 
 export function useWorkspaceContext() {
   const organization = useAppStore((state) => state.organization);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const user = useAuthStore((state) => state.user);
-  const property = useAppStore((state) => state.selectedProperty);
+  const property = useAppStore((state) => state.selectedSite);
   const query = useQuery({
     queryKey: ["workspace-context", organization?.id, user?.id, property?.id],
     queryFn: () => contextApi.workspace(property?.id),
@@ -23,9 +23,9 @@ export function useWorkspaceContext() {
   useEffect(() => {
     const status = getApiErrorStatus(query.error);
     if (property && (status === 403 || status === 404)) {
-      setSelectedProperty(null);
+      setSelectedSite(null);
     }
-  }, [property, query.error, setSelectedProperty]);
+  }, [property, query.error, setSelectedSite]);
 
   return query;
 }

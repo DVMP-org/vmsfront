@@ -36,7 +36,7 @@ interface VisitorRow {
 }
 
 export function ResidentialVisitors() {
-  const site = useAppStore((state) => state.selectedProperty);
+  const site = useAppStore((state) => state.selectedSite);
   const siteId = site?.id;
   const [active, setActive] = useState<{
     invitationId: string;

@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   analyticsRefetch: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
-  selectedProperty: { id: "place", name: "Harbour Hotel" } as {
+  selectedSite: { id: "place", name: "Harbour Hotel" } as {
     id: string;
     name: string;
   } | null,
@@ -31,7 +31,7 @@ vi.mock("@/features/context/use-workspace-context", () => ({
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
-    selector({ selectedProperty: mocks.selectedProperty }),
+    selector({ selectedSite: mocks.selectedSite }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
@@ -122,7 +122,7 @@ const analytics = {
 describe("operating dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.selectedProperty = { id: "place", name: "Harbour Hotel" };
+    mocks.selectedSite = { id: "place", name: "Harbour Hotel" };
     mocks.managementIsAdministrator = true;
     window.history.replaceState({}, "", "/admin");
     window.sessionStorage.clear();
@@ -135,7 +135,7 @@ describe("operating dashboard", () => {
     });
   });
 
-  it("does not route first-place setup through the management dashboard", () => {
+  it("does not route first-Site setup through the management dashboard", () => {
     mocks.query.mockReturnValue({
       data: { ...dashboard, root_places: [] },
       isPending: false,
@@ -219,7 +219,7 @@ describe("operating dashboard", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
-  it("continues the first-workspace setup checklist after plan activation", async () => {
+  it("ignores the retired first-workspace setup query", async () => {
     mocks.query.mockReturnValue({
       data: dashboard,
       isPending: false,
@@ -230,12 +230,13 @@ describe("operating dashboard", () => {
     render(<AdminDashboardPage />);
 
     expect(
-      await screen.findByRole("heading", {
+      screen.queryByRole("heading", {
         name: "Your management workspace is ready",
       }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Review first site/ }));
-    expect(mocks.push).toHaveBeenCalledWith("/admin/site/configuration");
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Review first site/ }),
+    ).toBeNull();
   });
 
   it("routes people work to the canonical property roster", () => {

@@ -6,10 +6,10 @@ import type {
 } from "@/types";
 import { chargesApi, type Assignment } from "@/features/charges/api";
 import {
-  propertiesApi,
-  type Property,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type Place,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import type { Announcement, AnnouncementInput } from "./contracts";
 import { useAppStore } from "@/store/app-store";
 
@@ -44,7 +44,7 @@ export const residentialApi = {
     } = {},
   ) =>
     (
-      await apiClient.get<ApiResponse<PaginatedResponse<Property>>>(
+      await apiClient.get<ApiResponse<PaginatedResponse<Place>>>(
         "/admin/places",
         {
           params: {
@@ -54,14 +54,14 @@ export const residentialApi = {
             is_active: params.is_active,
             parent_id: params.parent_id,
             search: params.search,
-            site_id: useAppStore.getState().selectedProperty?.id,
+            site_id: useAppStore.getState().selectedSite?.id,
           },
         },
       )
     ).data,
-  tree: (): Promise<PropertyTreeNode[]> => {
-    const siteId = useAppStore.getState().selectedProperty?.id;
-    return siteId ? propertiesApi.tree(siteId) : Promise.resolve([]);
+  tree: (): Promise<PlaceTreeNode[]> => {
+    const siteId = useAppStore.getState().selectedSite?.id;
+    return siteId ? placesApi.tree(siteId) : Promise.resolve([]);
   },
   relationships: async (
     params: {
@@ -137,9 +137,9 @@ export const residentialApi = {
     ),
 };
 
-export function flattenPlaces(roots: PropertyTreeNode[]): PropertyTreeNode[] {
-  const output: PropertyTreeNode[] = [];
-  const visit = (node: PropertyTreeNode) => {
+export function flattenPlaces(roots: PlaceTreeNode[]): PlaceTreeNode[] {
+  const output: PlaceTreeNode[] = [];
+  const visit = (node: PlaceTreeNode) => {
     output.push(node);
     node.children.forEach(visit);
   };
@@ -148,7 +148,7 @@ export function flattenPlaces(roots: PropertyTreeNode[]): PropertyTreeNode[] {
 }
 
 export function descendantIds(
-  roots: PropertyTreeNode[],
+  roots: PlaceTreeNode[],
   rootId: string,
 ): Set<string> {
   const root = flattenPlaces(roots).find((place) => place.id === rootId);

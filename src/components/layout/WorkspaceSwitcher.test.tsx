@@ -4,7 +4,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
-  setSelectedProperty: vi.fn(),
+  setSelectedSite: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -41,8 +41,8 @@ vi.mock("@/features/context/use-workspace-context", () => ({
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      selectedProperty: { id: "office", name: "Harbour Offices" },
-      setSelectedProperty: mocks.setSelectedProperty,
+      selectedSite: { id: "office", name: "Harbour Offices" },
+      setSelectedSite: mocks.setSelectedSite,
     }),
 }));
 
@@ -82,7 +82,7 @@ vi.mock("@/features/workspaces/catalog", () => ({
 describe("WorkspaceSwitcher", () => {
   beforeEach(() => {
     mocks.push.mockReset();
-    mocks.setSelectedProperty.mockReset();
+    mocks.setSelectedSite.mockReset();
   });
 
   it("lists only place-backed management and personal access", () => {
@@ -110,7 +110,7 @@ describe("WorkspaceSwitcher", () => {
       screen.getByRole("button", { name: /Harbour Offices management/i }),
     );
 
-    expect(mocks.setSelectedProperty).toHaveBeenCalledWith({
+    expect(mocks.setSelectedSite).toHaveBeenCalledWith({
       id: "office",
       name: "Harbour Offices",
     });

@@ -6,7 +6,7 @@ import { useAuthStore } from "@/store/auth-store";
 
 export function useHospitalityAccess() {
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const user = useAuthStore((state) => state.user);
   const access = useSiteAccess();
   const contextKey = access.contextKey;
@@ -14,7 +14,7 @@ export function useHospitalityAccess() {
 
   return {
     organization,
-    selectedProperty,
+    selectedSite,
     user,
     contextKey,
     profile,

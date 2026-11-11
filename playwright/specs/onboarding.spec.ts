@@ -9,7 +9,7 @@ import { AuthPage } from "../pages/AuthPage";
 import { OrganizationSetupPage } from "../pages/OrganizationSetupPage";
 
 test.describe("@canonical @onboarding authoritative first-run flow", () => {
-  test("login → organizations → create organization → plan → first place → Workspaces", async ({
+  test("login → organizations → create organization → plan → first Site → Workspaces", async ({
     page,
   }) => {
     await installCanonicalApi(page, { emptyOrganizationIndex: true });
@@ -39,14 +39,14 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
       await setup.activateFreePlan();
       await expect(page).toHaveURL(
         new RegExp(
-          `harbour\\.${vmsConfig.baseDomain}:${vmsConfig.webPort}/setup/first-place`,
+          `harbour\\.${vmsConfig.baseDomain}:${vmsConfig.webPort}/setup/first-site`,
         ),
       );
       await setup.expectStandaloneSetupShell();
     });
 
-    await test.step("Create the first place", async () => {
-      await setup.createFirstPlace({
+    await test.step("Create the first Site", async () => {
+      await setup.createFirstSite({
         name: "Harbour Court",
         address: "19 Marina Road, Lagos",
         description: "Mixed-use waterfront operations",
@@ -68,34 +68,31 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
     const tenant = await seedSession(context, { needsFirstSite: true });
     const setup = new OrganizationSetupPage(page);
 
-    await page.goto(`${tenant}/setup/first-place`);
+    await page.goto(`${tenant}/setup/first-site`);
     await setup.expectStandaloneSetupShell();
     await page.reload();
     await setup.expectStandaloneSetupShell();
     await expect(
       page.getByRole("link", { name: "Back to plan" }),
-    ).toHaveAttribute("href", "/plans/?setup=first-workspace");
+    ).toHaveAttribute("href", "/plans/?setup=first-site");
   });
 
-  test("retired admin setup URL redirects before management guards", async ({
+  test("retired first-place setup URLs are not redirected into onboarding", async ({
     context,
     page,
   }) => {
     await installCanonicalApi(page, { needsFirstSite: true });
     const tenant = await seedSession(context, { needsFirstSite: true });
 
-    await page.goto(
-      `${tenant}/admin/properties/new/?setup=first-place`,
-    );
+    await page.goto(`${tenant}/setup/first-place`);
 
-    await expect(page).toHaveURL(/\/setup\/first-place\/?$/);
+    await expect(page).not.toHaveURL(/\/setup\/first-site\/?$/);
     await expect(
-      page.getByRole("heading", { name: "Create your first place" }),
-    ).toBeVisible();
-    await expect(page.getByText("Property workspace")).toHaveCount(0);
+      page.getByRole("heading", { name: "Create your first Site" }),
+    ).toHaveCount(0);
   });
 
-  test("admin entry without a place redirects to standalone setup", async ({
+  test("admin entry without a Site redirects to standalone setup", async ({
     context,
     page,
   }) => {
@@ -104,9 +101,9 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
 
     await page.goto(`${tenant}/admin`);
 
-    await expect(page).toHaveURL(/\/setup\/first-place\/?$/);
+    await expect(page).toHaveURL(/\/setup\/first-site\/?$/);
     await expect(
-      page.getByRole("heading", { name: "Create your first place" }),
+      page.getByRole("heading", { name: "Create your first Site" }),
     ).toBeVisible();
   });
 
@@ -137,13 +134,13 @@ test.describe("@canonical @onboarding authoritative first-run flow", () => {
     await installCanonicalApi(page, { needsFirstSite: false });
     const tenant = await seedSession(context);
 
-    await page.goto(`${tenant}/setup/first-place`);
+    await page.goto(`${tenant}/setup/first-site`);
 
     await expect(
-      page.getByText("Your organization already has a place"),
+      page.getByText("Your organization already has a Site"),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open Workspaces" }),
-    ).toHaveAttribute("href", "/organization/workspaces/");
+    ).toHaveAttribute("href", "/?lobby=1");
   });
 });

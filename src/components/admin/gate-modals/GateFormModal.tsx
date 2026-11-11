@@ -66,7 +66,7 @@ export function GateFormModal({
   const Container = presentation === "drawer" ? Drawer : Modal;
   const isEditing = !!gate;
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
 
   const {
     register,
@@ -164,7 +164,7 @@ export function GateFormModal({
             ...(access_end ? { end: access_end } : {}),
           }
         : null;
-    const siteId = selectedProperty?.id;
+    const siteId = selectedSite?.id;
     if (!isEditing && !siteId) {
       setSubmitError("Select a site workspace before creating a checkpoint.");
       return;
@@ -400,7 +400,7 @@ export function GateFormModal({
           </Button>
           <Button
             type="submit"
-            disabled={!isEditing && !selectedProperty?.id}
+            disabled={!isEditing && !selectedSite?.id}
             isLoading={createGate.isPending || updateGate.isPending}
           >
             {isEditing ? "Save changes" : "Create gate"}

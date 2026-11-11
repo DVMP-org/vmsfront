@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 
-const FIRST_PLACE_PATH = "/setup/first-place";
+const FIRST_SITE_PATH = "/setup/first-site";
 
 export function OrganizationSetupGuard({
   children,
@@ -15,23 +15,23 @@ export function OrganizationSetupGuard({
   const router = useRouter();
   const { organization, isPending } = useCurrentOrganization();
   const normalizedPathname = pathname?.replace(/\/+$/, "") || "";
-  const isCreatingFirstPlace =
-    normalizedPathname === FIRST_PLACE_PATH ||
-    normalizedPathname.startsWith(`${FIRST_PLACE_PATH}/`);
-  const requiresFirstPlace =
+  const isCreatingFirstSite =
+    normalizedPathname === FIRST_SITE_PATH ||
+    normalizedPathname.startsWith(`${FIRST_SITE_PATH}/`);
+  const requiresFirstSite =
     !isPending &&
     organization?.needs_first_site === true &&
-    !isCreatingFirstPlace;
+    !isCreatingFirstSite;
 
   useEffect(() => {
-    if (!requiresFirstPlace) return;
-    router.replace(FIRST_PLACE_PATH);
-  }, [requiresFirstPlace, router]);
+    if (!requiresFirstSite) return;
+    router.replace(FIRST_SITE_PATH);
+  }, [requiresFirstSite, router]);
 
-  if (requiresFirstPlace) {
+  if (requiresFirstSite) {
     return (
       <p role="status" className="sr-only">
-        Opening the required first property setup.
+        Opening the required first Site setup.
       </p>
     );
   }

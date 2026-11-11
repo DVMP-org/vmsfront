@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { checkpointsApi } from "@/features/checkpoints/api";
-import { propertiesApi } from "@/features/properties/api";
+import { placesApi } from "@/features/places/api";
 import { PassagesDirectory } from "./PassagesDirectory";
 
 const mocks = vi.hoisted(() => ({
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
     selector({
-      selectedProperty: { id: "site-1", name: "Harbour Campus" },
+      selectedSite: { id: "site-1", name: "Harbour Campus" },
     }),
 }));
 vi.mock("@/hooks/use-admin", () => ({
@@ -23,11 +23,11 @@ vi.mock("@/hooks/use-admin", () => ({
     },
   }),
 }));
-vi.mock("@/features/properties/api", async () => {
+vi.mock("@/features/places/api", async () => {
   const actual = await vi.importActual<
-    typeof import("@/features/properties/api")
-  >("@/features/properties/api");
-  return { ...actual, propertiesApi: { list: vi.fn() } };
+    typeof import("@/features/places/api")
+  >("@/features/places/api");
+  return { ...actual, placesApi: { list: vi.fn() } };
 });
 vi.mock("@/features/checkpoints/api", async () => {
   const actual = await vi.importActual<
@@ -77,7 +77,7 @@ function mount() {
 describe("PassagesDirectory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(propertiesApi.list).mockResolvedValue({
+    vi.mocked(placesApi.list).mockResolvedValue({
       items: [],
       page: 1,
       total: 0,

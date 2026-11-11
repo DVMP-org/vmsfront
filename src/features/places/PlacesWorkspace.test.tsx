@@ -1,0 +1,264 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import PlacesWorkspace from "@/features/places/PlacesWorkspace";
+import { sitesApi } from "@/features/sites/api";
+
+const mocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  searchParams: new URLSearchParams(),
+  profile: vi.fn(),
+  setSelectedSite: vi.fn(),
+  organization: {
+    id: "org-1",
+    name: "Harbour",
+    slug: "harbour",
+    use_case: "residential",
+    created_at: "",
+    updated_at: "",
+    subscription: null,
+  },
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
+  useSearchParams: () => mocks.searchParams,
+  usePathname: () => "/organization/sites",
+}));
+
+vi.mock("@/store/app-store", () => {
+  const state = {
+    organization: mocks.organization,
+    selectedSite: null,
+    setSelectedSite: mocks.setSelectedSite,
+  };
+  const useAppStore = (selector: (value: typeof state) => unknown) =>
+    selector(state);
+  useAppStore.getState = () => state;
+  return { useAppStore };
+});
+
+vi.mock("@/store/auth-store", () => {
+  const state = {
+    user: { id: "user-1", email: "owner@example.test" },
+    token: "token",
+    _hasHydrated: true,
+    isAuthenticated: true,
+  };
+  return {
+    useAuthStore: (selector?: (value: typeof state) => unknown) =>
+      selector ? selector(state) : state,
+  };
+});
+
+vi.mock("@/services/admin-service", () => ({
+  adminService: { getAdminProfile: mocks.profile },
+}));
+
+vi.mock("@/features/sites/api", () => ({
+  sitesApi: {
+    list: vi.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    move: vi.fn(),
+    toggle: vi.fn(),
+    createPlace: vi.fn(),
+  },
+}));
+
+vi.mock("@/features/context/api", () => ({
+  contextApi: {
+    catalog: vi.fn().mockResolvedValue({
+      contract_version: "vmscore.context/v2",
+      module_groups: [],
+      specialist_groups: [],
+      use_cases: [
+        {
+          value: "residential",
+          label: "Residential",
+          modules: [],
+          module_groups: [],
+        },
+      ],
+      building_types: [],
+      common_modules: [],
+      structure_kinds: [],
+    }),
+  },
+}));
+
+const site = {
+  id: "site-1",
+  organization_id: "org-1",
+  parent_site_id: null,
+  name: "Harbour Estate",
+  slug: "harbour-estate",
+  use_case: "residential" as const,
+  description: "Primary residential Site",
+  address: "1 Harbour Way",
+  is_active: true,
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+};
+
+const childSite = {
+  ...site,
+  id: "site-child",
+  parent_site_id: "site-1",
+  name: "Harbour Annex",
+  slug: "harbour-annex",
+};
+
+const place = {
+  id: "place-1",
+  site_id: "site-1",
+  organization_id: "org-1",
+  parent_id: null,
+  name: "Block A",
+  slug: "block-a",
+  kind: "building" as const,
+  building_type: "apartment_block",
+  description: null,
+  address: "1 Harbour Way",
+  is_active: true,
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+};
+
+function mount(route = {}) {
+  return render(
+    <QueryClientProvider
+      client={
+        new QueryClient({
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
+        })
+      }
+    >
+      <PlacesWorkspace route={route} basePath="/organization/sites" />
+    </QueryClientProvider>,
+  );
+}
+
+describe("organization Site register", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.profile.mockResolvedValue({
+      data: { effective_permissions: ["*"] },
+    });
+    vi.mocked(sitesApi.list).mockResolvedValue({
+      items: [site, childSite],
+      total: 2,
+      page: 1,
+      page_size: 10,
+      total_pages: 1,
+    });
+    vi.mocked(sitesApi.get).mockResolvedValue({
+      ...site,
+      ancestors: [],
+      child_sites: [childSite],
+      places: [place],
+    });
+    vi.mocked(sitesApi.create).mockResolvedValue({
+      ...site,
+      site_admin: {
+        assignment_id: "site-admin-1",
+        user: {
+          id: "user-1",
+          name: "Site Administrator",
+          email: "manager@example.test",
+          is_active: true,
+        },
+        role: "site_admin",
+        status: "active",
+        roles: [],
+        effective_permissions: ["*"],
+      },
+      onboarding_email: "queued",
+      user_created: true,
+    });
+  });
+
+  it("shows only the organization Site register in organization context", async () => {
+    mount();
+
+    expect(
+      await screen.findByRole("heading", { name: "Places" }),
+    ).toBeVisible();
+    expect(
+      (await screen.findAllByText("Harbour Estate")).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("Organization overview")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New Site" })).toBeVisible();
+    expect(sitesApi.list).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1 }),
+    );
+    expect(screen.getAllByText("Harbour Annex").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: /Details/ }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: /Edit/ }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: /Child/ }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("shows direct child Sites and Places without a hierarchy diagram", async () => {
+    mount({ id: "site-1" });
+
+    expect(
+      await screen.findByRole("heading", { name: "Harbour Estate" }),
+    ).toBeVisible();
+    expect(screen.getByText("Harbour Annex")).toBeVisible();
+    expect(screen.getAllByText("Block A").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/diagram/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /open workspace/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("creates a Site from the organization route and opens its detail", async () => {
+    mount({ action: "new" });
+
+    fireEvent.change(await screen.findByLabelText(/Site name/), {
+      target: { value: "Riverside Campus" },
+    });
+    fireEvent.change(screen.getByLabelText(/Operating type/), {
+      target: { value: "residential" },
+    });
+    fireEvent.change(screen.getByLabelText(/Administrator email/), {
+      target: { value: "manager@example.test" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create Site" }));
+
+    await waitFor(() =>
+      expect(sitesApi.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Riverside Campus",
+          admin_email: "manager@example.test",
+          parent_site_id: null,
+          use_case: "residential",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(mocks.push).toHaveBeenCalledWith(
+        "/organization/sites/site-1",
+      ),
+    );
+  });
+
+  it("shows a recoverable failure when Sites cannot load", async () => {
+    vi.mocked(sitesApi.list).mockRejectedValueOnce(new Error("Network down"));
+    mount();
+    expect(await screen.findByText("Sites could not be loaded")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+  });
+});

@@ -6,7 +6,7 @@ import { sitesApi } from "@/features/sites/api";
 import { SiteConfiguration } from "./SiteConfiguration";
 
 const mocks = vi.hoisted(() => ({
-  selectedProperty: { id: "site-1", name: "Harbour Campus" } as {
+  selectedSite: { id: "site-1", name: "Harbour Campus" } as {
     id: string;
     name: string;
   } | null,
@@ -22,9 +22,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/store/app-store", () => ({
   useAppStore: (
     selector: (state: {
-      selectedProperty: typeof mocks.selectedProperty;
+      selectedSite: typeof mocks.selectedSite;
     }) => unknown,
-  ) => selector({ selectedProperty: mocks.selectedProperty }),
+  ) => selector({ selectedSite: mocks.selectedSite }),
 }));
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => mocks.workspace,
@@ -62,7 +62,7 @@ function mount() {
 
 describe("SiteConfiguration", () => {
   beforeEach(() => {
-    mocks.selectedProperty = { id: "site-1", name: "Harbour Campus" };
+    mocks.selectedSite = { id: "site-1", name: "Harbour Campus" };
     vi.mocked(sitesApi.get).mockResolvedValue({
       id: "site-1",
       organization_id: "org-1",
@@ -105,7 +105,7 @@ describe("SiteConfiguration", () => {
   });
 
   it("asks the user to select a site instead of guessing a workspace", () => {
-    mocks.selectedProperty = null;
+    mocks.selectedSite = null;
     mount();
 
     expect(screen.getByText("Select a site workspace")).toBeVisible();

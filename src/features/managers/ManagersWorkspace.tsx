@@ -17,7 +17,7 @@ import { useAppStore } from "@/store/app-store";
 import { type SiteManager, managersApi, type SiteRole } from "./api";
 
 export function ManagersWorkspace() {
-  const selectedSite = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const queryClient = useQueryClient();
   const access = useSiteAccess();
   const profile = access.workspace;

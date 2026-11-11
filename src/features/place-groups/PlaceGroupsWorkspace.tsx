@@ -15,13 +15,13 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { parseApiError } from "@/lib/error-utils";
-import { propertiesApi } from "@/features/properties/api";
+import { placesApi } from "@/features/places/api";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
 import { placeGroupsApi, type PlaceGroup } from "./api";
 
 export function PlaceGroupsWorkspace() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const access = useSiteAccess();
   const client = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -31,20 +31,20 @@ export function PlaceGroupsWorkspace() {
     "place_groups.update",
   ]);
   const groups = useQuery({
-    queryKey: ["place-groups", selectedProperty?.id],
+    queryKey: ["place-groups", selectedSite?.id],
     queryFn: placeGroupsApi.list,
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
   });
   const places = useQuery({
-    queryKey: ["place-group-places", selectedProperty?.id],
+    queryKey: ["place-group-places", selectedSite?.id],
     queryFn: () =>
-      propertiesApi.list({
+      placesApi.list({
         page: 1,
         page_size: 100,
         is_active: true,
-        site_id: selectedProperty!.id,
+        site_id: selectedSite!.id,
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
   });
   const columns: Column<PlaceGroup>[] = [
     {
@@ -110,7 +110,7 @@ export function PlaceGroupsWorkspace() {
         title="Place groups"
         description="Group a logical subset of units and spaces for shared charges, policies and reporting."
         primaryAction={
-          canManage && selectedProperty ? (
+          canManage && selectedSite ? (
             <Button onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Create group
@@ -154,10 +154,10 @@ export function PlaceGroupsWorkspace() {
       </section>
       {(createOpen || editing) && (
         <PlaceGroupDrawer
-          key={`${selectedProperty?.id}:${editing?.id || "new"}`}
+          key={`${selectedSite?.id}:${editing?.id || "new"}`}
           open
           group={editing}
-          siteId={selectedProperty?.id || ""}
+          siteId={selectedSite?.id || ""}
           places={places.data?.items ?? []}
           placesLoading={places.isPending}
           placesError={

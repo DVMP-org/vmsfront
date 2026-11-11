@@ -25,6 +25,6 @@ export const apiClient = createApiClient({
   baseURL: API_URL,
   getToken: getStoredAuthToken,
   getOrganizationSlug: subdomains.getSubdomain,
-  getPropertyId: () => useAppStore.getState().selectedProperty?.id ?? null,
+  getPropertyId: () => useAppStore.getState().selectedSite?.id ?? null,
   onUnauthorized: () => useAuthStore.getState().clearAuth(),
 });

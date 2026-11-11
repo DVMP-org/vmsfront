@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -326,15 +327,20 @@ export default function OrganizationAdministratorsPage() {
       {!embedded ? (
         <OrganizationAdminHeader
           eyebrow="Organization administration"
-          title="Administrators"
-          description="Manage organization-level access. Site administration and occupancy relationships remain separate in Places and People."
+          title="Members & Roles"
+          description="Manage organization-level members and the roles that delegate administration. Site administration and occupancy relationships remain separate in Places and People."
           actions={
-            canCreate ? (
-              <Button onClick={openCreate}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add administrator
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href="/organization/roles">Review roles</Link>
               </Button>
-            ) : undefined
+              {canCreate ? (
+                <Button onClick={openCreate}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add administrator
+                </Button>
+              ) : null}
+            </div>
           }
         />
       ) : null}
@@ -450,7 +456,7 @@ export default function OrganizationAdministratorsPage() {
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="Add organization administrator"
-        description="This grants tenant administration. It does not grant a property workspace or occupancy relationship."
+        description="This grants tenant administration. It does not grant a Site workspace or occupancy relationship."
         size="lg"
       >
         <form className="space-y-5" onSubmit={submitCreate} noValidate>
@@ -642,7 +648,7 @@ export default function OrganizationAdministratorsPage() {
         title="Remove organization administrator?"
         description={
           deletingAdmin
-            ? `${displayName(deletingAdmin)} will lose organization administration access. Property workspaces and occupancy relationships are not removed automatically.`
+            ? `${displayName(deletingAdmin)} will lose organization administration access. Site workspaces and occupancy relationships are not removed automatically.`
             : undefined
         }
         size="sm"

@@ -94,9 +94,11 @@ export default function IntegrationsSection({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const basePath = pathname?.startsWith("/organization")
-    ? "/organization/settings/integrations"
-    : "/admin/integrations";
+  const basePath = pathname?.startsWith("/organization/integrations")
+    ? "/organization/integrations"
+    : pathname?.startsWith("/organization")
+      ? "/organization/settings/integrations"
+      : "/admin/integrations";
 
   const { data, isLoading, isError, isFetching, refetch } = useIntegrations({
     page: 1,

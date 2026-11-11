@@ -16,7 +16,7 @@ import { useWorkspaceContext } from "./use-workspace-context";
 export function useSiteAccess() {
   const workspace = useWorkspaceContext();
   const organization = useAppStore((state) => state.organization);
-  const site = useAppStore((state) => state.selectedProperty);
+  const site = useAppStore((state) => state.selectedSite);
   const user = useAuthStore((state) => state.user);
   const permissions = useMemo(
     () => workspacePermissions(workspace.data),

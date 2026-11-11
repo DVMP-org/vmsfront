@@ -1041,7 +1041,7 @@ export function useAdminDuePayments(
 export function useAdminProfile() {
   const {token,_hasHydrated,isAuthenticated,user}=useAuthStore();
   const organization=useAppStore(s=>s.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
 
   return useQuery<Admin>({
     queryKey: [
@@ -1049,14 +1049,14 @@ export function useAdminProfile() {
       "profile",
       organization?.id,
       user?.id,
-      selectedProperty?.id,
+      selectedSite?.id,
     ],
     queryFn: async () => {
       try {
         return (await adminService.getAdminProfile()).data;
       } catch (error) {
         if (getApiErrorStatus(error) !== 404 || !user) throw error;
-        const context = await contextApi.workspace(selectedProperty?.id);
+        const context = await contextApi.workspace(selectedSite?.id);
         const management = context.management;
         if (
           !management?.is_administrator ||

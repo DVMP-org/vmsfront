@@ -54,10 +54,10 @@ type AccessRow = {
 };
 
 export default function CommercialAccess() {
-  const { selectedProperty, contextKey, canManageAccess } =
+  const { selectedSite, contextKey, canManageAccess } =
     useCommercialAccess();
   const client = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const tree = useQuery({

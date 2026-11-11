@@ -56,10 +56,10 @@ const categories = [
 ];
 
 export default function CommercialMaintenance() {
-  const { selectedProperty, contextKey, canManageMaintenance } =
+  const { selectedSite, contextKey, canManageMaintenance } =
     useCommercialAccess();
   const client = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [active, setActive] = useState<CommercialMaintenanceRequest | null>(

@@ -32,7 +32,7 @@ import "@/app/admin/hospitality/styles.css";
 
 export default function HospitalityOverview() {
   const organization = useAppStore((s) => s.organization);
-  const selectedProperty = useAppStore((s) => s.selectedProperty);
+  const selectedSite = useAppStore((s) => s.selectedSite);
   const user = useAuthStore((s) => s.user);
   const context = `${organization?.id}:${user?.id}`;
   return (
@@ -40,8 +40,8 @@ export default function HospitalityOverview() {
       key={context}
       context={context}
       enabled={!!organization?.id && !!user?.id}
-      propertyId={selectedProperty?.id}
-      propertyName={selectedProperty?.name}
+      propertyId={selectedSite?.id}
+      propertyName={selectedSite?.name}
     />
   );
 }

@@ -55,6 +55,21 @@ describe("browser context helpers", () => {
     expect(base.buildSubdomainUrl("admin", "/admin")).toBe("/admin");
   });
 
+  it("drops a leaked dev port from public tenant URLs", () => {
+    const tenant = createSubdomainUtilities({
+      baseDomain: "vmsfront.to",
+      location: {
+        hostname: "vmsfront.to",
+        protocol: "https:",
+        port: "3000",
+      },
+    });
+
+    expect(tenant.buildSubdomainUrl("north", "/organization")).toBe(
+      "https://north.vmsfront.to/organization",
+    );
+  });
+
   it("keeps the local development port", () => {
     const local = createSubdomainUtilities({
       baseDomain: "vmsfront.to",

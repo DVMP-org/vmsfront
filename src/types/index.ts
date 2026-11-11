@@ -79,6 +79,7 @@ export interface Organization {
     updated_at: string;
   }> | null;
   needs_first_site?: boolean;
+  members_count?: number | null;
   subscription: Subscription | null;
 }
 

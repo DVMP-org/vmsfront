@@ -6,13 +6,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 
-export function useIntegrations(params: {
-  page: number,
-  pageSize: number,
-  search?: string | null,
-  filters?: string | null,
-  sort?: string | null,
-}) {
+export function useIntegrations(
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string | null;
+    filters?: string | null;
+    sort?: string | null;
+  },
+  options?: { enabled?: boolean },
+) {
   return useQuery<PaginatedResponse<Integration>>({
     queryKey: ["integrations", params],
     queryFn: async () => {
@@ -25,6 +28,7 @@ export function useIntegrations(params: {
       });
       return response.data;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -70,6 +74,32 @@ export function useDisableIntegration() {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to disable integration");
+    },
+  });
+}
+
+export function usePaymentGatewaySelection() {
+  return useQuery({
+    queryKey: ["integrations", "payment-gateway-selection"],
+    queryFn: async () => {
+      const response = await integrationService.getPaymentGatewaySelection();
+      return response.data;
+    },
+  });
+}
+
+export function useSelectPaymentGateway() {
+  return useMutation({
+    mutationFn: async (integrationId: string) =>
+      integrationService.selectPaymentGateway(integrationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["integrations", "payment-gateway-selection"],
+      });
+      toast.success("Payment gateway updated for charge payments");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to select the payment gateway");
     },
   });
 }

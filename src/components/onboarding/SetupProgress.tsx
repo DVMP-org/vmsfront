@@ -1,12 +1,12 @@
 import { Check, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type OrganizationSetupStep = "organization" | "plan" | "workspace";
+export type OrganizationSetupStep = "organization" | "plan" | "site";
 
 const steps: Array<{ id: OrganizationSetupStep; label: string }> = [
   { id: "organization", label: "Organization" },
   { id: "plan", label: "Plan" },
-  { id: "workspace", label: "First place" },
+  { id: "site", label: "First Site" },
 ];
 
 export function SetupProgress({

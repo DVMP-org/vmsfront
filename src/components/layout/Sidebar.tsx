@@ -138,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedResidency, selectedProperty } = useAppStore();
+  const { selectedResidency, selectedSite } = useAppStore();
   const workspaceContext = useWorkspaceContext();
 
   useEffect(() => {
@@ -294,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           );
 
     const managementDashboardAvailable = canOpenManagementDashboard(
-      selectedProperty?.id,
+      selectedSite?.id,
       workspaceContext.data?.management?.is_administrator,
     );
 
@@ -367,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     effectiveResidencyId,
     isSuperUser,
     mounted,
-    selectedProperty,
+    selectedSite,
     workspaceContext.data,
     workspaceContext.isError,
     workspaceContext.isPending,

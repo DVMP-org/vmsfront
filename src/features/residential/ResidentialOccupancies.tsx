@@ -44,7 +44,7 @@ type OccupancyRow = {
 };
 
 export default function ResidentialOccupancies() {
-  const { contextKey, selectedProperty, canManagePeople } =
+  const { contextKey, selectedSite, canManagePeople } =
     useResidentialAccess();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function ResidentialOccupancies() {
     "residents",
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const tree = useQuery({
     queryKey: ["residential", contextKey, "tree"],
     queryFn: residentialApi.tree,

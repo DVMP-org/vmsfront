@@ -3,6 +3,7 @@ import { ApiResponse, PaginatedResponse } from "@/types";
 import {
   Integration,
   IntegrationCredentials,
+  PaymentGatewaySelection,
   UpdateIntegrationRequest,
 } from "@/types/integration";
 
@@ -55,5 +56,20 @@ export const integrationService = {
   // Health check
   async checkHealth(name: string): Promise<ApiResponse<{ status: string; message?: string }>> {
     return apiClient.get(`/admin/integrations/${name}/health`);
+  },
+
+  // Organization payment gateway selection
+  async getPaymentGatewaySelection(): Promise<
+    ApiResponse<PaymentGatewaySelection | null>
+  > {
+    return apiClient.get("/admin/integrations/payment-gateway");
+  },
+
+  async selectPaymentGateway(
+    integrationId: string,
+  ): Promise<ApiResponse<PaymentGatewaySelection>> {
+    return apiClient.put("/admin/integrations/payment-gateway", {
+      integration_id: integrationId,
+    });
   },
 };

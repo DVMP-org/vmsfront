@@ -26,7 +26,7 @@ import { PlaceAssignmentModal } from "./PlaceAssignmentModal";
 
 export function PlaceDetailsPage({ placeId }: { placeId: string }) {
   const { allowed, contextKey, workspace } = useSiteAccess();
-  const site = useAppStore((state) => state.selectedProperty);
+  const site = useAppStore((state) => state.selectedSite);
   const queryClient = useQueryClient();
   const [assignOpen, setAssignOpen] = useState(false);
   const canView = allowed(["places.show", "places.list"]);

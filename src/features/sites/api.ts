@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
-import type { Property, PropertyInput } from "@/features/properties/api";
+import type { Place, PlaceInput } from "@/features/places/api";
 import type { UseCase } from "@/features/context/api";
 
 export interface SiteNotificationSettings {
@@ -29,7 +29,7 @@ export interface Site {
 export interface SiteDetail extends Site {
   ancestors: Site[];
   child_sites: Site[];
-  places: Property[];
+  places: Place[];
 }
 
 export interface SiteInput {
@@ -50,7 +50,7 @@ export interface SiteCreated extends Site {
 }
 
 export interface SitePlaceInput extends Omit<
-  PropertyInput,
+  PlaceInput,
   "site_id" | "parent_id"
 > {
   parent_id?: string | null;
@@ -96,7 +96,7 @@ export const sitesApi = {
     ).data,
   createPlace: async (siteId: string, body: SitePlaceInput) =>
     (
-      await apiClient.post<ApiResponse<Property>>(
+      await apiClient.post<ApiResponse<Place>>(
         `${base}/${siteId}/places`,
         body,
       )

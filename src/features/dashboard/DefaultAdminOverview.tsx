@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
-import { FirstWorkspaceSetup } from "@/components/onboarding/FirstWorkspaceSetup";
 import type { DashboardRange } from "@/features/dashboard/AccessTrendPanel";
 import {
   DashboardSkeleton,
@@ -36,28 +35,21 @@ export default function DefaultAdminOverview() {
   const analytics = useAdminAnalyticsSummary();
   const context = useWorkspaceContext();
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const data = dashboard.data as AdminDashboard | undefined;
-  const [showFirstWorkspaceSetup, setShowFirstWorkspaceSetup] = useState(false);
   const [range, setRange] = useState<DashboardRange>(14);
 
   useEffect(() => {
     setRange(initialRange());
-    const params = new URLSearchParams(window.location.search);
-    const requested =
-      params.get("setup") === "first-workspace" ||
-      window.sessionStorage.getItem("organization-setup-step") ===
-        "first-workspace";
-    if (requested) setShowFirstWorkspaceSetup(true);
   }, []);
 
   useEffect(() => {
     if (!data) return;
     if (!data.root_places.length) return;
-    if (!selectedProperty) {
+    if (!selectedSite) {
       router.replace("/?lobby=1");
     }
-  }, [data, router, selectedProperty]);
+  }, [data, router, selectedSite]);
 
   function handleRangeChange(nextRange: DashboardRange) {
     setRange(nextRange);
@@ -80,7 +72,7 @@ export default function DefaultAdminOverview() {
     );
   }
 
-  if (!data?.root_places.length || !selectedProperty) {
+  if (!data?.root_places.length || !selectedSite) {
     return (
       <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
         Preparing workspace context…
@@ -122,26 +114,10 @@ export default function DefaultAdminOverview() {
       isStale={dashboard.isError}
       isFetching={dashboard.isFetching}
       onRetryDashboard={() => dashboard.refetch()}
-      propertyName={selectedProperty.name}
+      propertyName={selectedSite.name}
       organizationName={organization?.name || "Organization"}
       useCase={useCase}
       updatedAt={dashboard.dataUpdatedAt}
-      setupPanel={
-        showFirstWorkspaceSetup ? (
-          <FirstWorkspaceSetup
-            rootPlaceCount={data.root_places.length}
-            onOpenProperties={() => {
-              window.sessionStorage.removeItem("organization-setup-step");
-              setShowFirstWorkspaceSetup(false);
-              router.push("/admin/site/configuration");
-            }}
-            onDismiss={() => {
-              window.sessionStorage.removeItem("organization-setup-step");
-              setShowFirstWorkspaceSetup(false);
-            }}
-          />
-        ) : null
-      }
     />
   );
 }

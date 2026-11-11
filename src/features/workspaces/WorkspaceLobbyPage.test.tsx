@@ -9,7 +9,7 @@ import { WorkspaceLobbyPage } from "./WorkspaceLobbyPage";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
-  setSelectedProperty: vi.fn(),
+  setSelectedSite: vi.fn(),
   logout: vi.fn(),
   refetch: vi.fn(),
 }));
@@ -33,7 +33,7 @@ vi.mock("@/hooks/use-organization", () => ({
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ setSelectedProperty: mocks.setSelectedProperty }),
+    selector({ setSelectedSite: mocks.setSelectedSite }),
 }));
 
 const organization = {
@@ -135,7 +135,7 @@ function mockOrganization(hasMultiple = false) {
 describe("WorkspaceLobbyPage", () => {
   beforeEach(() => {
     mocks.push.mockReset();
-    mocks.setSelectedProperty.mockReset();
+    mocks.setSelectedSite.mockReset();
     mocks.logout.mockReset();
     mocks.refetch.mockReset();
     window.history.replaceState({}, "", "/");
@@ -191,7 +191,7 @@ describe("WorkspaceLobbyPage", () => {
     await waitFor(() =>
       expect(mocks.push).toHaveBeenCalledWith("/workspace/place-1"),
     );
-    expect(mocks.setSelectedProperty).toHaveBeenCalledWith({
+    expect(mocks.setSelectedSite).toHaveBeenCalledWith({
       id: "place-1",
       name: "Pebble Court - APT 01",
     });

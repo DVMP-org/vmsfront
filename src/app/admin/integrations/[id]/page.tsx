@@ -35,6 +35,7 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  CreditCard,
   Loader2,
   Settings,
   Info,
@@ -44,6 +45,8 @@ import {
   useDisableIntegration,
   useEnableIntegration,
   useIntegration,
+  usePaymentGatewaySelection,
+  useSelectPaymentGateway,
   useUpdateIntegrationCredentials,
 } from "@/hooks/use-integrations";
 import { titleCase } from "@/lib/utils";
@@ -53,9 +56,11 @@ export default function IntegrationDetailsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const integrationId = params?.id as string;
-  const listPath = pathname?.startsWith("/organization")
-    ? "/organization/settings/integrations"
-    : "/admin/integrations";
+  const listPath = pathname?.startsWith("/organization/integrations")
+    ? "/organization/integrations"
+    : pathname?.startsWith("/organization")
+      ? "/organization/settings/integrations"
+      : "/admin/integrations";
 
   const [credentialValues, setCredentialValues] =
     useState<CredentialFormValues>({});
@@ -89,6 +94,9 @@ export default function IntegrationDetailsPage() {
   const enableMutation = useEnableIntegration();
   // Disable mutation
   const disableMutation = useDisableIntegration();
+  // Organization payment gateway selection
+  const paymentSelection = usePaymentGatewaySelection();
+  const selectPaymentGateway = useSelectPaymentGateway();
   // Update integration mutation
   const updateMutation = useUpdateIntegrationCredentials(integrationId);
 
@@ -440,6 +448,61 @@ export default function IntegrationDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Charge payment selection */}
+          {integration.provider === "payment" ? (
+            <Card>
+              <CardHeader className="pb-3 border-b border-[var(--vms-line)]">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-base">Charge payments</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  The selected payment integration collects charge payments for
+                  this organization.
+                </p>
+                {paymentSelection.isLoading ? (
+                  <div className="h-8 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
+                ) : paymentSelection.data?.integration_id === integration.id ? (
+                  <Badge variant="success">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Active for charges
+                  </Badge>
+                ) : (
+                  <>
+                    {paymentSelection.data ? (
+                      <p className="text-xs text-muted-foreground">
+                        Current: {paymentSelection.data.name}
+                      </p>
+                    ) : null}
+                    <Button
+                      className="w-full"
+                      size="sm"
+                      onClick={() =>
+                        selectPaymentGateway.mutate(integration.id)
+                      }
+                      disabled={
+                        !integration.enabled ||
+                        !integration.configured ||
+                        selectPaymentGateway.isPending
+                      }
+                      isLoading={selectPaymentGateway.isPending}
+                    >
+                      Use for charge payments
+                    </Button>
+                    {!integration.enabled || !integration.configured ? (
+                      <p className="text-xs text-[var(--vms-warning)]">
+                        Enable and configure this integration before selecting
+                        it for charge payments.
+                      </p>
+                    ) : null}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Capabilities */}
           {integration?.capabilities &&

@@ -40,9 +40,9 @@ export function WorkspaceSwitcher({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const setSelectedProperty = useAppStore(
-    (state) => state.setSelectedProperty,
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore(
+    (state) => state.setSelectedSite,
   );
   const admin = useAdminProfile();
   const currentUser = useVerifyToken();
@@ -86,7 +86,7 @@ export function WorkspaceSwitcher({
   function chooseWorkspace(card: WorkspaceCard) {
     const place =
       card.area === "management" ? card.place : card.relationship?.place;
-    setSelectedProperty(place ? { id: place.id, name: place.name } : null);
+    setSelectedSite(place ? { id: place.id, name: place.name } : null);
     setOpen(false);
     onMobileClose?.();
     router.push(card.href);
@@ -138,7 +138,7 @@ export function WorkspaceSwitcher({
               Workspace
             </span>
             <span className="mt-0.5 block truncate text-xs font-semibold text-[#1F2933]">
-              {selectedProperty?.name || "Choose a property"}
+              {selectedSite?.name || "Choose a property"}
             </span>
           </span>
           <ChevronDown

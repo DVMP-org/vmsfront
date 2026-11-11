@@ -14,9 +14,9 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import {
-  propertiesApi,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { mixedUseApi } from "./api";
 import { MixedUseShell } from "./MixedUseShell";
@@ -61,37 +61,37 @@ const modules = [
 ];
 
 export function MixedUseOverview() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const facilities = useQuery({
-    queryKey: ["mixed-use-overview-facilities", selectedProperty?.id],
+    queryKey: ["mixed-use-overview-facilities", selectedSite?.id],
     queryFn: () =>
-      mixedUseApi.listFacilities(selectedProperty!.id, {
+      mixedUseApi.listFacilities(selectedSite!.id, {
         page: 1,
         page_size: 100,
         active: true,
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
   const allocations = useQuery({
-    queryKey: ["mixed-use-overview-allocations", selectedProperty?.id],
+    queryKey: ["mixed-use-overview-allocations", selectedSite?.id],
     queryFn: () =>
-      mixedUseApi.listAllocations(selectedProperty!.id, {
+      mixedUseApi.listAllocations(selectedSite!.id, {
         page: 1,
         page_size: 100,
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
   const tree = useQuery({
     queryKey: ["mixed-use-overview-tree"],
     queryFn: () =>
-      selectedProperty?.id
-        ? propertiesApi.tree(selectedProperty.id)
+      selectedSite?.id
+        ? placesApi.tree(selectedSite.id)
         : Promise.resolve([]),
     retry: false,
   });
-  const selectedTree = findNode(tree.data ?? [], selectedProperty?.id);
+  const selectedTree = findNode(tree.data ?? [], selectedSite?.id);
   const spaceCount = selectedTree ? countDescendants(selectedTree) : 0;
   const approvedAllocations =
     allocations.data?.items.filter((item) => item.status === "approved")
@@ -99,11 +99,11 @@ export function MixedUseOverview() {
 
   return (
     <MixedUseShell
-      title="Property operations"
+      title="Place operations"
       description="One operating view across residential, commercial, hospitality and shared spaces."
       primaryAction={
         <Badge variant="success">
-          {selectedProperty?.name || "Mixed-use property"}
+          {selectedSite?.name || "Mixed-use property"}
         </Badge>
       }
     >
@@ -135,7 +135,7 @@ export function MixedUseOverview() {
 
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <header className="border-b border-[var(--vms-line)] p-5">
-          <h2 className="text-lg font-semibold">Property modules</h2>
+          <h2 className="text-lg font-semibold">Place modules</h2>
           <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
             One cohesive property-management experience, backed by shared
             operational services.
@@ -187,9 +187,9 @@ function Metric({
 }
 
 function findNode(
-  nodes: PropertyTreeNode[],
+  nodes: PlaceTreeNode[],
   selectedId?: string,
-): PropertyTreeNode | null {
+): PlaceTreeNode | null {
   if (!selectedId) return null;
   for (const node of nodes) {
     if (node.id === selectedId) return node;
@@ -199,7 +199,7 @@ function findNode(
   return null;
 }
 
-function countDescendants(node: PropertyTreeNode): number {
+function countDescendants(node: PlaceTreeNode): number {
   return (node.children ?? []).reduce(
     (total, child) => total + 1 + countDescendants(child),
     0,

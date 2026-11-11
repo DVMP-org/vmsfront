@@ -16,7 +16,7 @@ vi.mock("@/store/app-store", () => ({
   useAppStore: (select: any) =>
     select({
       organization: { id: "org" },
-      selectedProperty: { id: "hotel", name: "Harbour Hotel" },
+      selectedSite: { id: "hotel", name: "Harbour Hotel" },
     }),
 }));
 vi.mock("@/store/auth-store", () => ({

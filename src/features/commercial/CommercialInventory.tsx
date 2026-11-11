@@ -29,10 +29,10 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import {
-  propertiesApi,
-  type Property,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type Place,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
 import {
   commercialApi,
@@ -42,7 +42,7 @@ import {
 } from "./api";
 import { commercialUnitTypes, titleCase } from "./contracts";
 
-type InventoryRow = Property & {
+type InventoryRow = Place & {
   location: string;
   commercial_type: string;
   occupancy: "occupied" | "vacant";
@@ -51,10 +51,10 @@ type InventoryRow = Property & {
 };
 
 export default function CommercialInventory() {
-  const { selectedProperty, contextKey, canManageInventory } =
+  const { selectedSite, contextKey, canManageInventory } =
     useCommercialAccess();
   const client = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryRow | null>(null);
@@ -96,7 +96,7 @@ export default function CommercialInventory() {
       const occupants = byPlace.get(place.id) || [];
       return {
         ...place,
-        location: parent?.name || "Property",
+        location: parent?.name || "Place",
         commercial_type: place.building_type || "office",
         occupancy: occupants.length ? "occupied" : "vacant",
         occupants: occupants.join(", "),
@@ -109,7 +109,7 @@ export default function CommercialInventory() {
       const targets = rows.filter((row) => ids.includes(row.id));
       const activate = targets.every((row) => !row.is_active);
       return Promise.all(
-        targets.map((row) => propertiesApi.toggle(row.id, activate)),
+        targets.map((row) => placesApi.toggle(row.id, activate)),
       );
     },
     onSuccess: async (updated) => {
@@ -428,11 +428,11 @@ function CommercialSpaceModal({
 }: {
   open: boolean;
   space?: InventoryRow | null;
-  parents: PropertyTreeNode[];
+  parents: PlaceTreeNode[];
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const selectedSite = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const [name, setName] = useState(space?.name || "");
   const [parentId, setParentId] = useState(
     space?.parent_id || parents[0]?.id || "",
@@ -446,12 +446,12 @@ function CommercialSpaceModal({
   const save = useMutation({
     mutationFn: () =>
       space
-        ? propertiesApi.update(space.id, {
+        ? placesApi.update(space.id, {
             name: name.trim(),
             address: address.trim(),
             description: description.trim(),
           })
-        : propertiesApi.create({
+        : placesApi.create({
             site_id:
               parents.find((parent) => parent.id === parentId)?.site_id ||
               parents[0]?.site_id ||

@@ -10,6 +10,7 @@ import {
   CalendarClock,
   Settings2,
   ShieldCheck,
+  Upload,
   Users,
 } from "lucide-react";
 
@@ -17,6 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
+import { ImportModelsDrawer } from "@/features/organization-workspace/components/ImportModelsDrawer";
+import type { OrganizationImportModel } from "@/features/organization-workspace/api";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { workspacePermissions } from "@/features/context/api";
 import { sitesApi } from "@/features/sites/api";
@@ -31,16 +34,17 @@ export function SiteConfiguration() {
   const [activeTab, setActiveTab] = useState<
     "general" | "gates" | "access" | "roles" | "operations" | "notifications"
   >("general");
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const [importOpen, setImportOpen] = useState(false);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const workspace = useWorkspaceContext();
   const property = useQuery({
-    queryKey: ["site-configuration-site", selectedProperty?.id],
-    queryFn: () => sitesApi.get(selectedProperty!.id),
-    enabled: !!selectedProperty?.id,
+    queryKey: ["site-configuration-site", selectedSite?.id],
+    queryFn: () => sitesApi.get(selectedSite!.id),
+    enabled: !!selectedSite?.id,
     retry: false,
   });
 
-  if (!selectedProperty?.id) {
+  if (!selectedSite?.id) {
     return (
       <main className="space-y-5 pb-10">
         <header className="border-b border-[var(--vms-line)] pb-5">
@@ -98,6 +102,14 @@ export function SiteConfiguration() {
         return permission.startsWith(grant.slice(0, -1));
       return grant === permission;
     });
+  const importableModels: OrganizationImportModel[] = [
+    ...(allowed("places.create")
+      ? (["properties", "units"] as OrganizationImportModel[])
+      : []),
+    ...(allowed("parties.create") && allowed("place_relationships.create")
+      ? (["parties"] as OrganizationImportModel[])
+      : []),
+  ];
   const tabs = [
     ["general", "General"],
     ["gates", "Gates & checkpoints"],
@@ -134,6 +146,14 @@ export function SiteConfiguration() {
             throughout this workspace.
           </p>
         </div>
+        {importableModels.length > 0 ? (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              Import
+            </Button>
+          </div>
+        ) : null}
       </header>
 
 
@@ -238,6 +258,16 @@ export function SiteConfiguration() {
         <NotificationSettingsPanel
           property={property.data}
           canEdit={canEditModules}
+        />
+      ) : null}
+
+      {importableModels.length > 0 ? (
+        <ImportModelsDrawer
+          isOpen={importOpen}
+          onClose={() => setImportOpen(false)}
+          scope="site"
+          siteId={property.data.id}
+          models={importableModels}
         />
       ) : null}
     </main>

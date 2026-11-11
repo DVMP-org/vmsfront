@@ -39,8 +39,8 @@ const OCCUPANCY_ROLES = {
 
 export default function PeopleWorkspace() {
   const organization = useAppStore((state) => state.organization);
-  const selectedSite = useAppStore((state) => state.selectedProperty);
-  const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const access = useSiteAccess();

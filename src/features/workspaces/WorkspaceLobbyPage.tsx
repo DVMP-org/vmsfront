@@ -78,8 +78,8 @@ export function WorkspaceLobbyPage() {
   const context = useVerifyToken();
   const { organization } = useCurrentOrganization();
   const { data: organizations = [] } = useMyOrganizations();
-  const setSelectedProperty = useAppStore(
-    (state) => state.setSelectedProperty,
+  const setSelectedSite = useAppStore(
+    (state) => state.setSelectedSite,
   );
   useRequireEmailVerification(true);
 
@@ -106,11 +106,11 @@ export function WorkspaceLobbyPage() {
   const openWorkspace = useCallback(
     (workspace: LobbyWorkspace) => {
       if (workspace.selection) {
-        setSelectedProperty(workspace.selection);
+        setSelectedSite(workspace.selection);
       }
       router.push(workspace.destination);
     },
-    [router, setSelectedProperty],
+    [router, setSelectedSite],
   );
 
   useEffect(() => {

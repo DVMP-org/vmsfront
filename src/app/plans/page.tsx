@@ -479,7 +479,7 @@ function BillingForm({
 
 export default function PlansPage() {
   const router = useRouter();
-  const [firstWorkspaceSetup, setFirstWorkspaceSetup] = useState(false);
+  const [firstSiteSetup, setFirstSiteSetup] = useState(false);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
@@ -509,14 +509,14 @@ export default function PlansPage() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const requested =
-      searchParams.get("setup") === "first-workspace" ||
+      searchParams.get("setup") === "first-site" ||
       window.sessionStorage.getItem("organization-setup-step") ===
-        "first-workspace";
+        "first-site";
     if (requested) {
-      setFirstWorkspaceSetup(true);
+      setFirstSiteSetup(true);
       window.sessionStorage.setItem(
         "organization-setup-step",
-        "first-workspace",
+        "first-site",
       );
     }
   }, []);
@@ -524,15 +524,15 @@ export default function PlansPage() {
   const finishSetup = useCallback(() => {
     window.sessionStorage.removeItem("organization-setup-step");
     if (organization?.needs_first_site === true) {
-      router.replace("/setup/first-place");
+      router.replace("/setup/first-site");
       return;
     }
-    if (!firstWorkspaceSetup) {
+    if (!firstSiteSetup) {
       router.replace("/admin");
       return;
     }
     router.replace("/");
-  }, [firstWorkspaceSetup, organization?.needs_first_site, router]);
+  }, [firstSiteSetup, organization?.needs_first_site, router]);
 
   const activePlans =
     plans
@@ -713,7 +713,7 @@ export default function PlansPage() {
 
       <main className="flex-1 relative z-10">
         <div className="max-w-6xl mx-auto py-12 px-6 sm:py-20 lg:px-8">
-          {firstWorkspaceSetup ? (
+          {firstSiteSetup ? (
             <div className="mb-8">
               <SetupProgress currentStep="plan" />
             </div>
@@ -727,16 +727,16 @@ export default function PlansPage() {
           >
 
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900  sm:text-4xl">
-              {firstWorkspaceSetup ? "Continue setting up" : "Choose Your Plan"}
+              {firstSiteSetup ? "Continue setting up" : "Choose Your Plan"}
             </h1>
             <p className="mt-3 text-lg text-zinc-500  max-w-xl mx-auto">
-              {firstWorkspaceSetup ? (
+              {firstSiteSetup ? (
                 <>
                   Choose a plan for{" "}
                   <span className="font-semibold text-zinc-700 ">
                     {organization?.name || "your organization"}
                   </span>
-                  . Your management workspace comes next.
+                  . Your first Site comes next.
                 </>
               ) : organization?.name ? (
                 <>
@@ -897,7 +897,7 @@ export default function PlansPage() {
                         ) : (
                           <>
                             <Zap className="mr-2 h-5 w-5" />
-                            {firstWorkspaceSetup
+                            {firstSiteSetup
                               ? "Activate and continue"
                               : "Activate Free Plan"}
                           </>

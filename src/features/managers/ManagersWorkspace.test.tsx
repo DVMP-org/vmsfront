@@ -23,7 +23,7 @@ vi.mock("@/store/app-store", () => {
       updated_at: "",
       subscription: null,
     },
-    get selectedProperty() {
+    get selectedSite() {
       return mocks.selectedSite;
     },
   };

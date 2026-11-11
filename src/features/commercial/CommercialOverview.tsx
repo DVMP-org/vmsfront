@@ -44,8 +44,8 @@ type LeaseAttention = {
 };
 
 export default function CommercialOverview() {
-  const { selectedProperty, contextKey } = useCommercialAccess();
-  const placeId = selectedProperty?.id || "";
+  const { selectedSite, contextKey } = useCommercialAccess();
+  const placeId = selectedSite?.id || "";
   const tree = useQuery({
     queryKey: ["commercial", contextKey, "tree"],
     queryFn: commercialApi.tree,
