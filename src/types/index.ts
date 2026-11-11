@@ -71,7 +71,7 @@ export interface Organization {
     parent_site_id: string | null;
     name: string;
     slug: string;
-    use_case?: import("@/features/context/api").UseCase | null;
+    use_case: import("@/features/context/api").UseCase;
     description: string | null;
     address: string;
     is_active: boolean;
@@ -417,7 +417,6 @@ export interface WorkspacePlace {
   address?: string;
   parent_id?: string | null;
   building_type?: string | null;
-  use_case?: string | null;
 }
 
 export interface WorkspaceRelationship {
@@ -457,7 +456,7 @@ export interface CurrentUserContext {
       parent_site_id: string | null;
       name: string;
       slug: string;
-      use_case?: import("@/features/context/api").UseCase | null;
+      use_case: import("@/features/context/api").UseCase;
       description: string | null;
       address: string;
       is_active: boolean;

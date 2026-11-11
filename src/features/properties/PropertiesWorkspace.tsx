@@ -152,7 +152,7 @@ function SitesWorkspace({
           <span>
             <strong className="block">{site.name}</strong>
             <span className="block text-xs capitalize text-[var(--vms-ink-muted)]">
-              {site.use_case?.replaceAll("_", " ") || "Not set"}
+              {site.use_case.replaceAll("_", " ")}
             </span>
           </span>
         </span>
@@ -230,7 +230,7 @@ function SitesWorkspace({
           ["Site", "Use case", "Address", "Status"],
           ...rows.map((site) => [
             site.name,
-            site.use_case || "",
+            site.use_case,
             site.address,
             site.is_active ? "Active" : "Archived",
           ]),
@@ -694,7 +694,7 @@ function SiteDetails({
               </p>
               <h2 className="mt-1 text-2xl font-semibold">{site.name}</h2>
               <p className="mt-1 text-sm capitalize text-[var(--vms-ink-muted)]">
-                {site.use_case?.replaceAll("_", " ") || "Inherited context"} ·{" "}
+                {site.use_case.replaceAll("_", " ")} ·{" "}
                 {site.address || "No address"}
               </p>
             </div>
@@ -967,7 +967,7 @@ function ChildSites({
               <span>
                 <strong className="block text-sm">{site.name}</strong>
                 <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
-                  {site.use_case?.replaceAll("_", " ") || "Not set"}
+                  {site.use_case.replaceAll("_", " ")}
                 </span>
               </span>
               <ChevronRight className="h-4 w-4" aria-hidden="true" />

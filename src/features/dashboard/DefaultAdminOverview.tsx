@@ -107,9 +107,7 @@ export default function DefaultAdminOverview() {
   }
 
   const useCase =
-    context.data.effective_use_case?.replaceAll("_", " ") ||
-    organization?.use_case?.replaceAll("_", " ") ||
-    "operations";
+    context.data.effective_use_case?.replaceAll("_", " ") || "operations";
 
   return (
     <OperationsDashboard

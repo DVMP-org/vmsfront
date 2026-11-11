@@ -65,9 +65,8 @@ function organizationCard(
 
 function siteCard(
   siteWorkspace: NonNullable<CurrentUserContext["site_workspaces"]>[number],
-  organization: Organization | null | undefined,
 ): LobbyWorkspace {
-  const useCase = siteWorkspace.site.use_case ?? organization?.use_case ?? null;
+  const useCase = siteWorkspace.site.use_case;
   return {
     id: `site_admin:${siteWorkspace.assignment_id}`,
     type: "site_admin",
@@ -108,7 +107,6 @@ function partyCard(workspace: PropertyWorkspace): LobbyWorkspace | null {
     description: PARTY_DESCRIPTION[primaryArea],
     roleLabel: roleLabels.join(" · "),
     destination: `/workspace/${workspace.place.id}`,
-    useCase: workspace.place.use_case ?? null,
     selection: { id: workspace.place.id, name: selectionName },
   };
 }
@@ -133,7 +131,7 @@ export function buildLobbyWorkspaces({
   }
 
   for (const siteWorkspace of context.site_workspaces ?? []) {
-    workspaces.push(siteCard(siteWorkspace, organization));
+    workspaces.push(siteCard(siteWorkspace));
   }
 
   const partyWorkspaces = buildPropertyWorkspaces({

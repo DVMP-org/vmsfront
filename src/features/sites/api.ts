@@ -17,7 +17,7 @@ export interface Site {
   parent_site_id: string | null;
   name: string;
   slug: string;
-  use_case: UseCase | null;
+  use_case: UseCase;
   description: string | null;
   address: string;
   is_active: boolean;

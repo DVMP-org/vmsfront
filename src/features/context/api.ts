@@ -43,14 +43,14 @@ export interface WorkspaceContext {
       id: string;
       name: string;
       slug: string;
-      use_case: UseCase | null;
+      use_case: UseCase;
       parent_site_id: string | null;
     } | null;
     authoritative_site: {
       id: string;
       name: string;
       slug: string;
-      use_case: UseCase | null;
+      use_case: UseCase;
       parent_site_id: string | null;
     } | null;
     administrators: Array<{
