@@ -20,16 +20,17 @@ describe("residential module navigation", () => {
     expect(
       screen.getByRole("link", { name: "Residency directory" }),
     ).toHaveAttribute("href", "/admin/residential/units");
-    expect(
-      screen.getByRole("link", { name: "Visitors & access" }),
-    ).toHaveAttribute("href", "/admin/residential/visitors");
+    expect(screen.getByRole("link", { name: "Visitors" })).toHaveAttribute(
+      "href",
+      "/admin/residential/visitors",
+    );
     expect(screen.getByRole("link", { name: "Announcements" })).toHaveAttribute(
       "href",
       "/admin/residential/announcements",
     );
-    expect(screen.getByRole("link", { name: "Checkpoints" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Gates" })).toHaveAttribute(
       "href",
-      "/admin/checkpoints",
+      "/admin/gates",
     );
     expect(screen.getByRole("link", { name: "Invitations" })).toHaveAttribute(
       "href",

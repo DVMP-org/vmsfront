@@ -10,7 +10,11 @@ export interface Definition {
   currency: string;
   recurrence: string;
   start_date?: string | null;
+  /** Last date a schedule may fall on. NULL means the charge runs on. */
+  end_date?: string | null;
   is_active: boolean;
+  /** Fees priced flexibly let the payer acknowledge a coarser cadence. */
+  is_flexible?: boolean;
   created_by_site_admin_id?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -35,6 +39,8 @@ export interface Assignment {
     };
   } | null;
   outstanding_amount: string;
+  /** Cadence the payer acknowledged for a flexible fee, if any. */
+  acknowledged_cadence?: string | null;
   schedule_count?: number;
   open_schedule_count?: number;
   next_due_date?: string | null;
@@ -54,6 +60,18 @@ export interface Schedule {
     id: string;
     responsible_party: { display_name: string };
   };
+}
+
+export interface AssignmentSkip {
+  place_id: string;
+  place_name: string;
+  reason: string;
+}
+
+export interface AssignTargetsResult {
+  created: Assignment[];
+  skipped: AssignmentSkip[];
+  target_count: number;
 }
 
 const base = "/admin/charges";
@@ -92,6 +110,8 @@ export const chargesApi = {
     }),
   assign: (body: object) => post<Assignment>("/assignments", body),
   assignGroup: (body: object) => post<Assignment[]>("/assignments/group", body),
+  assignTargets: (body: object) =>
+    post<AssignTargetsResult>("/assignments/targets", body),
   schedules: (id: string, page = 1) =>
     get<PaginatedResponse<Schedule>>("/schedules", {
       assignment_id: id,
@@ -102,4 +122,6 @@ export const chargesApi = {
     post<Schedule[]>(`/assignments/${id}/schedules`, body),
   transfer: (id: string, body: object) =>
     post(`/assignments/${id}/transfer`, body),
+  assignResponsibility: (id: string, body: object) =>
+    post(`/assignments/${id}/responsibility`, body),
 };

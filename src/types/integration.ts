@@ -70,6 +70,8 @@ export interface Integration {
   // Runtime state
   enabled: boolean;
   configured: boolean;
+  /** Whether the provider driver is registered and running in this process. */
+  is_running?: boolean;
   last_synced_at?: string | null;
   version?: string;
   created_at?: string;

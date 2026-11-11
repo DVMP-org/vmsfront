@@ -51,7 +51,7 @@ function buildResidentLinks(
 ) {
   const links = [
     { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-    { href: "/resident/profile", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
+    { href: "/profile?context=resident", label: "Profile", icon: UserCog }, // Changed icon to UserCog to match profile better, kept label
   ];
 
   if (isSuperUser) {
@@ -149,7 +149,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const isLinkActive = useCallback(
     (href: string) => {
       if (!pathname || !href) return false;
-      return pathname === href || pathname.startsWith(href + "/");
+      const target = href.split("?")[0];
+      return (
+        pathname === target ||
+        (target !== "/admin" && pathname.startsWith(target + "/"))
+      );
     },
     [pathname],
   );
@@ -385,8 +389,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
     );
     return (
       sorted.find(
-        (l) =>
-          l.href && (pathname === l.href || pathname.startsWith(l.href + "/")),
+        (l) => {
+          if (!l.href) return false;
+          const target = l.href.split("?")[0];
+          return (
+            pathname === target ||
+            (target !== "/admin" && pathname.startsWith(target + "/"))
+          );
+        },
       ) || null
     );
   }, [links, pathname]);
@@ -584,52 +594,67 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
             );
             return (
               <div key={linkKey} className="mb-0.5">
-                <button
-                  onClick={() => toggleMenu(link.label)}
+                {actualType === "admin" &&
+                  (!collapsed || isMobile) &&
+                  link.group !== (links[index - 1] as any)?.group && (
+                    <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+                      {link.group}
+                    </p>
+                  )}
+                <div
                   className={cn(
                     "flex w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
                     "group relative",
-                    isMobile || !collapsed
-                      ? "gap-3 px-3 py-2.5 justify-between"
-                      : "justify-center px-2 py-2.5",
-                    activeChild
+                    isMobile || !collapsed ? "gap-1" : "justify-center",
+                    activeChild || isActive
                       ? "bg-transparent font-semibold text-[var(--vms-ink)]"
                       : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                   )}
-                  title={collapsed && !isMobile ? link.label : undefined}
                 >
-                  <div
+                  <Link
+                    href={link.href}
+                    onClick={handleLinkClick}
+                    aria-current={isActive ? "page" : undefined}
+                    title={collapsed && !isMobile ? link.label : undefined}
                     className={cn(
-                      "flex items-center gap-3 min-w-0",
-                      (isMobile || !collapsed) && "flex-1",
+                      "flex min-w-0 items-center gap-3 rounded-[var(--vms-radius-control)] py-2.5",
+                      isMobile || !collapsed ? "flex-1 px-3" : "px-2",
                     )}
                   >
                     <Icon
                       className={cn(
                         "h-5 w-5 flex-shrink-0",
-                        activeChild && "text-[var(--vms-ink)]",
+                        (activeChild || isActive) && "text-[var(--vms-ink)]",
                       )}
                     />
                     {(isMobile || !collapsed) && (
                       <span
                         className={cn(
                           "flex-1 truncate text-left",
-                          activeChild && "font-bold",
+                          (activeChild || isActive) && "font-bold",
                         )}
                       >
                         {link.label}
                       </span>
                     )}
-                  </div>
+                  </Link>
                   {(isMobile || !collapsed) && (
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      className="flex-shrink-0"
+                    <button
+                      type="button"
+                      onClick={() => toggleMenu(link.label)}
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${link.label}`}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
                     >
-                      <ChevronDown className="h-3.5 w-3.5 text-[var(--vms-ink-muted)]" />
-                    </motion.div>
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        className="flex-shrink-0"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </motion.div>
+                    </button>
                   )}
-                </button>
+                </div>
 
                 <AnimatePresence>
                   {isExpanded && (isMobile || !collapsed) && (
@@ -643,7 +668,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                         damping: 35,
                         mass: 0.5,
                       }}
-                      className="ml-4 mt-1 space-y-0.5 overflow-hidden border-l border-[var(--vms-line)]"
+                      className="ml-4 mt-1 space-y-0.5 overflow-hidden "
                     >
                       {link.children.map((child: any) => {
                         const ChildIcon = child.icon;
@@ -655,10 +680,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                               href={child.href}
                               onClick={handleLinkClick}
                               className={cn(
-                                "flex items-center rounded-[var(--vms-radius-control)] text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
+                                "flex items-center  text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
                                 "gap-3 px-3 py-2",
                                 isChildActive
-                                  ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
+                                  ? " border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
                                   : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                               )}
                             >

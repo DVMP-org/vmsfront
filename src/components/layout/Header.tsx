@@ -61,7 +61,11 @@ export const Header = memo(function Header({
     enabled: isAdminRoute && !!organization?.id && !!currentUser?.id,
     staleTime: 0,
   });
-  const profileHref = isAdminRoute ? "/admin/profile" : "/resident/profile";
+  const placeWorkspaceRoot = pathname?.match(/^\/workspace\/[^/]+/)?.[0];
+  // One shared profile route; the shell follows where it was opened from.
+  const profileHref = placeWorkspaceRoot
+    ? `${placeWorkspaceRoot}/profile`
+    : `/profile?context=${isAdminRoute ? "admin" : "resident"}`;
   const roleLabel = isAdminRoute ? "Administrator" : "Workspace member";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);

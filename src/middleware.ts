@@ -84,7 +84,9 @@ export function middleware(request: NextRequest) {
   const isVerifyEmailPath = pathname.startsWith("/auth/verify-email");
   const isOrganizationsPath = pathname.startsWith("/organizations");
   const isDashboardPath = pathname.startsWith("/admin");
+  const isWorkspacePath = pathname === "/workspace" || pathname.startsWith("/workspace/");
   const isSelectPath = pathname.startsWith("/select");
+  const isProfilePath = pathname === "/profile" || pathname.startsWith("/profile/");
   const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
     pathname === "/organization" || pathname.startsWith("/organization/");
@@ -114,7 +116,12 @@ export function middleware(request: NextRequest) {
   // Dashboard and organization routes require tenant context from a subdomain.
   if (
     !isOnSubdomain &&
-    (isDashboardPath || isSelectPath || isSetupPath || isOrganizationPath)
+    (isDashboardPath ||
+      isWorkspacePath ||
+      isSelectPath ||
+      isSetupPath ||
+      isOrganizationPath ||
+      isProfilePath)
   ) {
     if (isAuthenticated) {
       return NextResponse.redirect(
@@ -152,7 +159,12 @@ export function middleware(request: NextRequest) {
   // RULE 4: Protected paths on subdomain require authentication
   if (
     !isAuthenticated &&
-    (isDashboardPath || isSelectPath || isSetupPath || isOrganizationPath)
+    (isDashboardPath ||
+      isWorkspacePath ||
+      isSelectPath ||
+      isSetupPath ||
+      isOrganizationPath ||
+      isProfilePath)
   ) {
     const loginUrl = isOnSubdomain
       ? new URL("/auth/login", request.url)
@@ -177,7 +189,10 @@ export const config = {
   matcher: [
     "/admin",
     "/admin/:path*",
+    "/workspace/:path*",
     "/select",
+    "/profile",
+    "/profile/:path*",
     "/setup",
     "/setup/:path*",
     "/organization",

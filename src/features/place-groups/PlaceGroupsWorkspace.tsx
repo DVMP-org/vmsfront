@@ -7,10 +7,12 @@ import { Building2, Layers3, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Drawer } from "@/components/ui/Drawer";
+import { Input } from "@/components/ui/Input";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
-import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { parseApiError } from "@/lib/error-utils";
 import { propertiesApi } from "@/features/properties/api";
@@ -136,24 +138,42 @@ export function PlaceGroupsWorkspace() {
                 {group.places.map((place) => place.name).join(", ") ||
                   "No members"}
               </p>
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditing(group)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Edit{" "}
+                  {group.name}
+                </Button>
+              )}
             </div>
           )}
         />
       </section>
-      <PlaceGroupDrawer
-        open={createOpen || !!editing}
-        group={editing}
-        siteId={selectedProperty?.id || ""}
-        places={places.data?.items ?? []}
-        onClose={close}
-        onSaved={async () => {
-          close();
-          await client.invalidateQueries({ queryKey: ["place-groups"] });
-          toast.success(
-            editing ? "Place group updated." : "Place group created.",
-          );
-        }}
-      />
+      {(createOpen || editing) && (
+        <PlaceGroupDrawer
+          key={`${selectedProperty?.id}:${editing?.id || "new"}`}
+          open
+          group={editing}
+          siteId={selectedProperty?.id || ""}
+          places={places.data?.items ?? []}
+          placesLoading={places.isPending}
+          placesError={
+            places.isError ? parseApiError(places.error).message : undefined
+          }
+          onRetryPlaces={() => void places.refetch()}
+          onClose={close}
+          onSaved={async () => {
+            close();
+            await client.invalidateQueries({ queryKey: ["place-groups"] });
+            toast.success(
+              editing ? "Place group updated." : "Place group created.",
+            );
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -163,6 +183,9 @@ function PlaceGroupDrawer({
   group,
   siteId,
   places,
+  placesLoading,
+  placesError,
+  onRetryPlaces,
   onClose,
   onSaved,
 }: {
@@ -170,6 +193,9 @@ function PlaceGroupDrawer({
   group: PlaceGroup | null;
   siteId: string;
   places: Array<{ id: string; name: string; kind: string }>;
+  placesLoading: boolean;
+  placesError?: string;
+  onRetryPlaces: () => void;
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -207,31 +233,24 @@ function PlaceGroupDrawer({
     save.mutate();
   }
   return (
-    <Modal
+    <Drawer
       isOpen={open}
       onClose={onClose}
       title={group ? `Edit ${group.name}` : "Create Place group"}
       description="Use groups to assign a charge or policy to a logical subset of Places."
-      size="lg"
-      className="sm:ml-auto sm:mr-0 sm:h-[calc(100dvh-3rem)] sm:max-h-none sm:rounded-r-none"
     >
       <form className="space-y-4" onSubmit={submit}>
         <FormErrorSummary errors={errors} />
-        <Field
+        <Input
           id="place-group-name"
           label="Group name"
+          showAsterisk
           required
           error={errors.name}
-        >
-          {(control) => (
-            <input
-              {...control}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className={fieldControlClassName}
-            />
-          )}
-        </Field>
+          icon={Layers3}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
         <Field id="place-group-description" label="Description">
           {(control) => (
             <textarea
@@ -252,42 +271,77 @@ function PlaceGroupDrawer({
             </p>
           ) : null}
           <div className="mt-2 max-h-72 divide-y divide-[var(--vms-line)] overflow-y-auto rounded-[var(--vms-radius-control)] border border-[var(--vms-line)]">
-            {places.map((place) => (
-              <label
-                key={place.id}
-                className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2"
+            {placesLoading ? (
+              <p
+                role="status"
+                className="p-3 text-sm text-[var(--vms-ink-muted)]"
               >
-                <input
-                  type="checkbox"
-                  checked={memberIds.has(place.id)}
-                  onChange={(event) =>
-                    setSelected((current) =>
-                      event.target.checked
-                        ? [...current, place.id]
-                        : current.filter((id) => id !== place.id),
-                    )
-                  }
-                />
-                <Building2 className="h-4 w-4" aria-hidden="true" />
-                <span>
-                  <strong className="block text-sm">{place.name}</strong>
-                  <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
-                    {place.kind}
-                  </span>
-                </span>
-              </label>
-            ))}
+                Loading places…
+              </p>
+            ) : placesError ? (
+              <div role="alert" className="p-3 text-sm">
+                <p>{placesError}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={onRetryPlaces}
+                >
+                  Retry places
+                </Button>
+              </div>
+            ) : places.length === 0 ? (
+              <p className="p-3 text-sm text-[var(--vms-ink-muted)]">
+                No active places available.
+              </p>
+            ) : (
+              places.map((place) => (
+                <div
+                  key={place.id}
+                  className="px-3 hover:bg-[var(--vms-surface-subtle)]"
+                >
+                  <Checkbox
+                    checked={memberIds.has(place.id)}
+                    onChange={(event) =>
+                      setSelected((current) =>
+                        event.target.checked
+                          ? [...current, place.id]
+                          : current.filter((id) => id !== place.id),
+                      )
+                    }
+                    label={
+                      <span className="flex items-center gap-3">
+                        <Building2 className="h-4 w-4" aria-hidden="true" />
+                        <span>
+                          <strong className="block text-sm">
+                            {place.name}
+                          </strong>
+                          <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
+                            {place.kind}
+                          </span>
+                        </span>
+                      </span>
+                    }
+                  />
+                </div>
+              ))
+            )}
           </div>
         </fieldset>
         <div className="flex justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={save.isPending}>
+          <Button
+            type="submit"
+            isLoading={save.isPending}
+            disabled={placesLoading || !!placesError}
+          >
             {group ? "Save group" : "Create group"}
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

@@ -22,10 +22,12 @@ const mocks = vi.hoisted(() => ({
   assignment: vi.fn(),
   assign: vi.fn(),
   assignGroup: vi.fn(),
+  assignTargets: vi.fn(),
   groups: vi.fn(),
   schedules: vi.fn(),
   generate: vi.fn(),
   transfer: vi.fn(),
+  loadFacets: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -92,6 +94,9 @@ vi.mock("@/components/facets/FacetPicker", () => ({
 }));
 
 vi.mock("./api", () => ({ chargesApi: mocks }));
+vi.mock("@/components/facets/client", () => ({
+  loadFacets: mocks.loadFacets,
+}));
 vi.mock("@/features/place-groups/api", () => ({
   placeGroupsApi: { list: mocks.groups },
 }));
@@ -119,7 +124,7 @@ const assignment = {
 };
 
 function mount(
-  action?: "new" | "definition" | "assign" | "assignment",
+  action?: "new" | "definition" | "assignment",
   id = "charge",
 ) {
   return render(
@@ -148,6 +153,22 @@ describe("charge routes", () => {
     });
     mocks.assignment.mockResolvedValue(assignment);
     mocks.schedules.mockResolvedValue({ items: [], total_pages: 0 });
+    mocks.loadFacets.mockResolvedValue({
+      contract_version: "vmscore.facets/v1",
+      facet: "places",
+      items: [
+        {
+          value: "place",
+          label: "Harbour House",
+          disabled: false,
+          description: "Block A",
+          meta: { kind: "unit", slug: "harbour-house", parent_id: null },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+      revision: "1",
+    });
     mocks.groups.mockResolvedValue([
       {
         id: "group",
@@ -262,6 +283,41 @@ describe("charge routes", () => {
     );
   });
 
+  it("hides the schedule window until it is enabled", async () => {
+    mocks.create.mockResolvedValue(definition);
+    mount("new");
+    const drawer = await screen.findByRole("dialog", {
+      name: "Create a charge",
+    });
+    expect(within(drawer).queryByLabelText(/^Start date/)).toBeNull();
+    expect(within(drawer).queryByLabelText(/^End date/)).toBeNull();
+
+    fireEvent.change(within(drawer).getByLabelText(/^Name/), {
+      target: { value: "Service charge" },
+    });
+    fireEvent.change(within(drawer).getByLabelText(/^Amount/), {
+      target: { value: "15000" },
+    });
+    fireEvent.click(
+      within(drawer).getByRole("checkbox", { name: /Set a schedule window/ }),
+    );
+    fireEvent.change(await within(drawer).findByLabelText(/^End date/), {
+      target: { value: "2027-03-31" },
+    });
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Create charge" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          start_date: expect.any(String),
+          end_date: expect.any(String),
+        }),
+      ),
+    );
+  });
+
   it("opens assignment actions without duplicate definitions", async () => {
     mount("definition");
     const assignmentLinks = await screen.findAllByRole("link", {
@@ -272,27 +328,39 @@ describe("charge routes", () => {
       "/admin/charges/assignments/assignment",
     );
     expect(
-      screen.getByRole("link", { name: "Assign to a property" }),
-    ).toHaveAttribute("href", "/admin/charges/definitions/charge/assign");
+      screen.getByRole("button", { name: "Assign charge" }),
+    ).toBeInTheDocument();
   });
 
-  it("requires a target and responsible party before creating an assignment", async () => {
-    mocks.assign.mockResolvedValue(assignment);
-    mount("assign");
-    expect(
-      await screen.findByRole("button", { name: "Create assignment" }),
-    ).toBeDisabled();
+  it("assigns to a Place from the drawer without asking for a schedule count", async () => {
+    mocks.assignTargets.mockResolvedValue({
+      created: [assignment],
+      skipped: [],
+      target_count: 1,
+    });
+    mount("definition");
+    fireEvent.click(await screen.findByRole("button", { name: "Assign charge" }));
+    const drawer = await screen.findByRole("dialog", {
+      name: /Assign Service charge/,
+    });
+    const submit = within(drawer).getByRole("button", { name: "Assign charge" });
+    expect(submit).toBeDisabled();
+    expect(within(drawer).queryByLabelText(/Initial schedules/i)).toBeNull();
+    expect(within(drawer).queryByLabelText(/First due date/i)).toBeNull();
+
     fireEvent.click(
-      screen.getByRole("button", {
-        name: "Choose Target Place",
+      await within(drawer).findByRole("option", { name: /Harbour House/ }),
+    );
+    await waitFor(() => expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+
+    // No payer chosen: the fee is payable by any Party at the Place.
+    await waitFor(() =>
+      expect(mocks.assignTargets).toHaveBeenCalledWith({
+        charge_definition_id: "charge",
+        target_place_ids: ["place"],
       }),
     );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Choose Responsible person or organization",
-      }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Create assignment" }));
     await waitFor(() =>
       expect(mocks.push).toHaveBeenCalledWith(
         "/admin/charges/assignments/assignment",
@@ -301,35 +369,39 @@ describe("charge routes", () => {
   });
 
   it("assigns one charge definition across a Place group", async () => {
-    mocks.assignGroup.mockResolvedValue([
-      assignment,
-      { ...assignment, id: "two" },
-    ]);
-    mount("assign");
-    await screen.findByRole("heading", { name: "Assign charge" });
-    fireEvent.click(screen.getByRole("radio", { name: "Place group" }));
-    await screen.findByRole("option", { name: /West wing/ });
-    fireEvent.change(await screen.findByLabelText(/Target Place group/i), {
+    mocks.assignTargets.mockResolvedValue({
+      created: [assignment, { ...assignment, id: "two" }],
+      skipped: [],
+      target_count: 2,
+    });
+    mount("definition");
+    fireEvent.click(await screen.findByRole("button", { name: "Assign charge" }));
+    const drawer = await screen.findByRole("dialog", {
+      name: /Assign Service charge/,
+    });
+    fireEvent.change(await within(drawer).findByLabelText(/^Place group/i), {
       target: { value: "group" },
     });
     fireEvent.click(
-      screen.getByRole("button", {
-        name: "Choose Responsible person or organization",
+      within(drawer).getByRole("button", {
+        name: /Choose Responsible person or organization/,
       }),
     );
-    const submit = screen.getByRole("button", { name: "Create assignment" });
+    const submit = within(drawer).getByRole("button", { name: "Assign charge" });
     await waitFor(() => expect(submit).toBeEnabled());
     fireEvent.click(submit);
 
     await waitFor(() =>
-      expect(mocks.assignGroup).toHaveBeenCalledWith({
+      expect(mocks.assignTargets).toHaveBeenCalledWith({
         charge_definition_id: "charge",
+        target_place_ids: [],
         place_group_id: "group",
         responsible_party_id: "selected-party",
-        schedule_count: 1,
       }),
     );
-    expect(mocks.push).toHaveBeenCalledWith("/admin/charges");
+    expect(mocks.push).not.toHaveBeenCalledWith(
+      "/admin/charges/assignments/two",
+    );
   });
 
   it("shows the responsible payer and schedule balances on an assignment", async () => {
@@ -401,6 +473,39 @@ describe("charge routes", () => {
     await waitFor(() =>
       expect(mocks.generate).toHaveBeenCalledWith("assignment", {
         schedule_count: 3,
+      }),
+    );
+  });
+
+  it("waits for an acknowledged cadence before scheduling a flexible fee", async () => {
+    mocks.assignment.mockResolvedValue({
+      ...assignment,
+      charge_definition: { ...definition, is_flexible: true },
+    });
+    mocks.schedules.mockResolvedValue({ items: [], total: 0, total_pages: 0 });
+    mocks.generate.mockResolvedValue([]);
+
+    mount("assignment", "assignment");
+
+    expect(await screen.findByText("No schedule yet")).toBeInTheDocument();
+    expect(
+      screen.getByText(/nothing is scheduled when it is assigned/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Generate schedules" }),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Schedule cadence" }));
+    fireEvent.click(
+      await within(screen.getByRole("dialog")).findByRole("button", {
+        name: "Create schedule",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.generate).toHaveBeenCalledWith("assignment", {
+        schedule_count: 1,
+        cadence: "monthly",
       }),
     );
   });

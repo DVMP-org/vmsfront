@@ -17,6 +17,8 @@ export function useIntegrations(params: {
     queryKey: ["integrations", params],
     queryFn: async () => {
       const response = await integrationService.getIntegrations({
+        page: params.page,
+        pageSize: params.pageSize,
         search: params.search || undefined,
         filters: params.filters || undefined,
         sort: params.sort || undefined,
@@ -45,9 +47,9 @@ export function useEnableIntegration() {
     mutationFn: async (name: string) => {
       return integrationService.enableIntegration(name);
     },
-    onSuccess: (_data, name) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
-      queryClient.invalidateQueries({ queryKey: ["integration", name] });
+      queryClient.invalidateQueries({ queryKey: ["integration"] });
       toast.success("Integration enabled successfully");
     },
     onError: (error: any) => {
@@ -61,9 +63,9 @@ export function useDisableIntegration() {
     mutationFn: async (name: string) => {
       return integrationService.disableIntegration(name);
     },
-    onSuccess: (_data, name) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
-      queryClient.invalidateQueries({ queryKey: ["integration", name] });
+      queryClient.invalidateQueries({ queryKey: ["integration"] });
       toast.success("Integration disabled successfully");
     },
     onError: (error: any) => {
@@ -79,6 +81,7 @@ export function useUpdateIntegrationCredentials(integrationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
+      queryClient.invalidateQueries({ queryKey: ["integration"] });
       queryClient.invalidateQueries({ queryKey: ["integration", integrationId] });
       toast.success("Integration updated successfully");
     },

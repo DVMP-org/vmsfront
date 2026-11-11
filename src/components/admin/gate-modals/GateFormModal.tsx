@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Modal } from "@/components/ui/Modal";
+import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -36,6 +37,7 @@ interface GateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   gate?: Gate;
+  presentation?: "modal" | "drawer";
 }
 
 const credentialOptions = [
@@ -55,7 +57,13 @@ const weekdays = [
   [6, "Sun"],
 ] as const;
 
-export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
+export function GateFormModal({
+  isOpen,
+  onClose,
+  gate,
+  presentation = "modal",
+}: GateFormModalProps) {
+  const Container = presentation === "drawer" ? Drawer : Modal;
   const isEditing = !!gate;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const selectedProperty = useAppStore((state) => state.selectedProperty);
@@ -194,13 +202,16 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
   };
 
   return (
-    <Modal
+    <Container
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? "Edit gate" : "Create gate"}
       description="Name the checkpoint and configure movement. Dependencies and operator assignment are managed from the Gates register."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-5">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className={presentation === "drawer" ? "space-y-5" : "space-y-5 p-5"}
+      >
         <FormErrorSummary errors={fieldErrors} />
 
         <Field
@@ -396,6 +407,6 @@ export function GateFormModal({ isOpen, onClose, gate }: GateFormModalProps) {
           </Button>
         </div>
       </form>
-    </Modal>
+    </Container>
   );
 }

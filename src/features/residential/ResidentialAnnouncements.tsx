@@ -21,9 +21,11 @@ import { parseApiError } from "@/lib/error-utils";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { residentialApi } from "./api";
 import {
+  announcementPriorities,
   titleCase,
   type Announcement,
   type AnnouncementAudience,
+  type AnnouncementPriority,
 } from "./contracts";
 
 const audiences: AnnouncementAudience[] = [
@@ -337,6 +339,9 @@ function AnnouncementModal({
     announcement?.audience || "all_residents",
   );
   const [isPinned, setIsPinned] = useState(announcement?.is_pinned || false);
+  const [priority, setPriority] = useState<AnnouncementPriority>(
+    announcement?.priority || "normal",
+  );
   const [expiresAt, setExpiresAt] = useState(
     announcement?.expires_at?.slice(0, 10) || "",
   );
@@ -347,6 +352,7 @@ function AnnouncementModal({
         title: title.trim(),
         body: body.trim(),
         audience,
+        priority,
         is_pinned: isPinned,
         expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
       };
@@ -469,6 +475,28 @@ function AnnouncementModal({
               )}
             </Field>
           </div>
+          <Field
+            id="announcement-priority"
+            label="Priority"
+            description="Sets the badge and tone residents see on their dashboard."
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={priority}
+                onChange={(event) =>
+                  setPriority(event.target.value as AnnouncementPriority)
+                }
+              >
+                {announcementPriorities.map((option) => (
+                  <option key={option} value={option}>
+                    {titleCase(option)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
           <label className="flex min-h-11 items-center gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-sm">
             <input
               type="checkbox"

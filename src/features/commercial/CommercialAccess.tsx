@@ -165,7 +165,7 @@ export default function CommercialAccess() {
       sortable: true,
       accessor: (row) => (
         <Link
-          href={`/admin/properties/${row.space_id}`}
+          href={`/admin/places/${row.space_id}`}
           className="font-medium underline-offset-4 hover:underline"
         >
           {row.space}

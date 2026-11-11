@@ -418,6 +418,8 @@ export interface WorkspacePlace {
 }
 
 export interface WorkspaceRelationship {
+  site_id?: string;
+  is_super_admin?: boolean;
   id: string;
   organization_id: string;
   role: string;

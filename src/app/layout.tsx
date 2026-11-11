@@ -3,6 +3,7 @@ import Script from "next/script";
 import "@fontsource-variable/inter";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "@vms/ui/tokens.css";
+import "react-datepicker/dist/react-datepicker.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";

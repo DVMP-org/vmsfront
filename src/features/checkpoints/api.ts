@@ -3,6 +3,9 @@ import { ApiResponse, PaginatedResponse } from "@/types";
 export interface Gate {
   id: string;
   name: string;
+  slug?: string;
+  site_id?: string;
+  dependency_id?: string | null;
   place_id?: string | null;
   allowed_entry?: boolean;
   allowed_exit?: boolean;
@@ -13,8 +16,10 @@ export interface Gate {
 export interface ActiveCheckpoint {
   id: string;
   name: string;
-  place_id: string;
-  place_name: string;
+  site_id: string;
+  site_name: string;
+  place_id?: string | null;
+  place_name?: string | null;
   allowed_entry: boolean;
   allowed_exit: boolean;
   automatic_direction: boolean;
@@ -33,13 +38,14 @@ export interface CheckpointOperatorAssignment {
   id: string;
   gate_id: string;
   gate_name: string;
-  place: {
+  site_id?: string;
+  place?: {
     id: string;
     name: string;
     slug: string;
     kind: string;
     is_active: boolean;
-  };
+  } | null;
   site_admin: {
     id: string;
     user: {
@@ -68,6 +74,8 @@ export interface Passage {
   subject_type?: "visitor" | "party" | "unknown";
   gate_id: string;
   gate_name?: string | null;
+  next_gate_id?: string | null;
+  next_gate_name?: string | null;
   place_id?: string;
   place_name?: string | null;
   lane_id?: string | null;
@@ -99,6 +107,45 @@ export interface PassageInput {
   device_id?: string;
   manual_override?: boolean;
   override_reason?: string;
+}
+export interface CredentialPreviewGuest {
+  suffix: string;
+  display_name: string;
+  phone?: string | null;
+  state: string;
+  /** Checkpoint holding the guest's active presence, when checked in. */
+  checked_in_at?: string | null;
+  /** Checkpoint the guest must still pass in their current direction. */
+  next_checkpoint?: string | null;
+}
+export interface CredentialPreviewInvitation {
+  code: string;
+  status: string;
+  purpose?: string | null;
+  valid_from: string;
+  valid_to: string;
+  max_uses?: number | null;
+  uses_count: number;
+  host_name?: string | null;
+  place_name?: string | null;
+}
+export interface CredentialPreview {
+  credential_reference: string;
+  subject_type: "visitor" | "party" | "unknown";
+  credential_type: string;
+  person_name?: string | null;
+  invitation?: CredentialPreviewInvitation | null;
+  guests: CredentialPreviewGuest[];
+  requires_guest_selection: boolean;
+  selected_guest_suffix?: string | null;
+  suggested_direction?: "entry" | "exit" | null;
+  can_check_in: boolean;
+  can_check_out: boolean;
+  blocking_reason?: string | null;
+  /** The visitor passed this checkpoint but still owes a dependent one. */
+  onward_required?: boolean;
+  next_gate_id?: string | null;
+  next_checkpoint?: string | null;
 }
 export interface AccessEventFilters {
   page?: number;
@@ -156,10 +203,10 @@ export const checkpointsApi = {
         "/admin/checkpoints/active",
       )
     ).data,
-  console: async (gateId: string) =>
+  console: async () =>
     (
       await apiClient.get<ApiResponse<CheckpointConsoleContext>>(
-        `/admin/checkpoints/${gateId}/console`,
+        "/admin/checkpoints/console",
       )
     ).data,
   myAssignments: async () =>
@@ -175,12 +222,18 @@ export const checkpointsApi = {
         { params: { page, page_size: 20 } },
       )
     ).data,
-  record: async (id: string, body: PassageInput) =>
+  preview: async (body: { credential: string; guest_suffix?: string }) =>
+    (
+      await apiClient.post<ApiResponse<CredentialPreview>>(
+        "/admin/checkpoints/credentials/preview",
+        body,
+      )
+    ).data,
+  record: async (body: PassageInput) =>
     (
       await apiClient.post<ApiResponse<Passage>>(
         "/admin/checkpoints/passages",
         body,
-        { headers: { "X-Checkpoint": id } },
       )
     ).data,
   operators: async (siteId?: string | null) =>
@@ -195,6 +248,13 @@ export const checkpointsApi = {
       await apiClient.put<ApiResponse<CheckpointOperatorAssignment>>(
         `/admin/checkpoints/${gateId}/operator`,
         { site_admin_id: siteAdminId },
+      )
+    ).data,
+  setOperators: async (gateId: string, siteAdminIds: string[]) =>
+    (
+      await apiClient.put<ApiResponse<CheckpointOperatorAssignments>>(
+        `/admin/checkpoints/${gateId}/operators`,
+        { site_admin_ids: siteAdminIds },
       )
     ).data,
   event: async (id: string) =>

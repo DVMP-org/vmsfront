@@ -2,14 +2,11 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export type MaintenanceDomain =
-  | "residential"
-  | "commercial"
-  | "hospitality"
-  | "mixed_use";
+  "residential" | "commercial" | "hospitality" | "mixed_use";
 
 export interface MaintenanceRequest {
   id: string;
-  property_place_id: string;
+  site_id: string;
   place: { id: string; name: string };
   domain: MaintenanceDomain;
   request_type: "request" | "work_order" | "inspection" | "preventive";
@@ -27,6 +24,12 @@ export interface MaintenanceRequest {
     | "closed";
   assigned_to?: { id: string; display_name: string } | null;
   reported_by?: { id: string; display_name: string } | null;
+  created_by_site_admin?: {
+    id: string;
+    user_id: string;
+    display_name: string;
+    avatar_url?: string | null;
+  } | null;
   contractor?: { id: string; display_name: string } | null;
   approval_status: "not_required" | "pending" | "approved" | "rejected";
   scheduled_for?: string | null;
@@ -58,7 +61,7 @@ export interface MaintenanceRequest {
 }
 
 export interface MaintenanceCreateInput {
-  property_place_id: string;
+  site_id: string;
   place_id: string;
   domain: MaintenanceDomain;
   request_type: MaintenanceRequest["request_type"];
@@ -125,10 +128,7 @@ export const maintenanceApi = {
         body,
       )
     ).data,
-  update: async (
-    id: string,
-    body: MaintenanceUpdateInput,
-  ) =>
+  update: async (id: string, body: MaintenanceUpdateInput) =>
     (
       await apiClient.patch<ApiResponse<MaintenanceRequest>>(
         `/admin/maintenance/${id}`,

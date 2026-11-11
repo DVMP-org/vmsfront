@@ -45,7 +45,7 @@ import {
   type SiteInput,
   sitesApi,
 } from "@/features/sites/api";
-import "@/app/admin/properties/styles.css";
+import "./styles.css";
 
 export interface PropertyRoute {
   id?: string;
@@ -60,7 +60,7 @@ type DirectoryValues = {
 
 export default function PropertiesPage({
   route = {},
-  basePath = "/admin/properties",
+  basePath = "/organization/properties",
 }: {
   route?: PropertyRoute;
   basePath?: string;
@@ -106,11 +106,6 @@ function SitesWorkspace({
   const setSelectedSite = useAppStore((state) => state.setSelectedProperty);
   const selectedId = route.id;
   const creating = route.action === "new";
-  useEffect(() => {
-    if (basePath === "/admin/properties") {
-      router.replace("/admin");
-    }
-  }, [basePath, router]);
   const allowed = (action: string) =>
     profile.isSuccess &&
     !profile.isError &&
@@ -257,17 +252,6 @@ function SitesWorkspace({
       },
     },
   ];
-  if (basePath === "/admin/properties") {
-    return (
-      <InlineAlert
-        tone="warning"
-        title="Organization property management moved"
-      >
-        Site administrators manage their Site here. Organization Sites are
-        managed from Organization → Properties.
-      </InlineAlert>
-    );
-  }
   if (profile.isPending) return <p role="status">Loading Site permissions…</p>;
   if (profile.isError) {
     return (

@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
-  Clock3,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   KeyRound,
   MapPin,
   Plus,
-  RefreshCw,
+  Search,
   ShieldAlert,
   Share2,
   UserRound,
@@ -22,20 +24,30 @@ import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
-import {
-  DataTable,
-  type BulkAction,
-  type Column,
-} from "@/components/ui/DataTable";
+import { Avatar } from "@/components/ui/Avatar";
+import { FormDrawer, FormRecordSummary } from "@/components/ui/form/FormDrawer";
+import { FormSection } from "@/components/ui/form/FormSection";
 import type { WorkspaceRelationship } from "@/types";
 import {
-  accessJourneyApi,
   type CreateVisitAuthorizationInput,
   type VisitAuthorization,
   type VisitAuthorizationStatus,
 } from "./api";
-
-const MAX_INVITATION_GUESTS = 20;
+import {
+  MAX_INVITATION_GUESTS,
+  bucketInvitations,
+  clampMaxUses,
+} from "./lib";
+import { VisitorJourneyPanel } from "./VisitorJourneyPanel";
+import {
+  useCreateInvitation,
+  useInvitation,
+  useInvitationCheckpoints,
+  useInvitationCredentials,
+  usePlaceInvitations,
+  useRevokeInvitation,
+  useUpdateInvitation,
+} from "./queries";
 
 const statusMeta: Record<
   VisitAuthorizationStatus,
@@ -71,42 +83,267 @@ const statusMeta: Record<
   },
 };
 
+const activeStatusMeta = {
+  label: "Active",
+  className:
+    "border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+};
+
+/**
+ * The status to show a person. The server derives ``display_status`` so an
+ * invitation somebody has already used reads "Active", and an elapsed window
+ * reads "Expired", instead of the raw stored status.
+ */
+function statusPresentation(
+  status: VisitAuthorizationStatus,
+  displayStatus?: string | null,
+) {
+  const effective = displayStatus ?? status;
+  if (effective === "active") return activeStatusMeta;
+  return statusMeta[effective as VisitAuthorizationStatus] ?? statusMeta[status];
+}
+
+const PAGE_SIZE = 8;
+type InvitationTab = "upcoming" | "on_site" | "past";
+type VisitDateFilter = "all" | "today" | "week" | "month";
+type StatusFilter = "all" | VisitAuthorizationStatus;
+
+const dayLabel = (value: Date) =>
+  value.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+const timeLabel = (value: Date) =>
+  value.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+function filterInvitations(
+  items: VisitAuthorization[],
+  {
+    search,
+    visitDate,
+    status,
+  }: { search: string; visitDate: VisitDateFilter; status: StatusFilter },
+) {
+  const needle = search.trim().toLowerCase();
+  const now = new Date();
+  const horizon = new Date(now);
+  if (visitDate === "today") horizon.setHours(23, 59, 59, 999);
+  if (visitDate === "week") horizon.setDate(horizon.getDate() + 7);
+  if (visitDate === "month") horizon.setDate(horizon.getDate() + 30);
+  return items.filter((invitation) => {
+    if (status !== "all" && invitation.status !== status) return false;
+    if (visitDate !== "all") {
+      const start = new Date(invitation.valid_from);
+      if (start > horizon) return false;
+      if (visitDate === "today" && start < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+        return false;
+      }
+    }
+    if (!needle) return true;
+    return [
+      invitation.code,
+      invitation.purpose ?? "",
+      invitation.host_party?.display_name ?? "",
+      ...invitation.guests.map(
+        (guest) =>
+          `${guest.display_name_snapshot} ${guest.phone_snapshot ?? ""} ${guest.email_snapshot ?? ""} ${invitation.code}-${guest.suffix} ${guest.suffix}`,
+      ),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
+  });
+}
+
+function InvitationStatus({
+  status,
+  displayStatus,
+}: {
+  status: VisitAuthorizationStatus;
+  displayStatus?: string | null;
+}) {
+  const meta = statusPresentation(status, displayStatus);
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+        meta.className,
+      )}
+    >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+      {meta.label}
+    </span>
+  );
+}
+
+function VisitWindow({ from, to }: { from: string; to: string }) {
+  const start = new Date(from);
+  const end = new Date(to);
+  const hours = Math.max(1, Math.round((end.getTime() - start.getTime()) / 3_600_000));
+  return (
+    <div className="text-xs leading-5 text-[var(--vms-ink-muted)]">
+      <p className="flex items-center gap-1.5 font-medium text-[var(--vms-ink)]">
+        <CalendarClock aria-hidden className="h-3.5 w-3.5" />
+        {dayLabel(start)}
+      </p>
+      <p className="mt-0.5">
+        {timeLabel(start)} – {timeLabel(end)} ({hours}h)
+      </p>
+    </div>
+  );
+}
+
+function VisitorCell({
+  invitation,
+  guestName,
+  guestPhone,
+  state,
+}: {
+  invitation?: VisitAuthorization;
+  guestName?: string;
+  guestPhone?: string | null;
+  state?: string;
+}) {
+  const guests = invitation?.guests ?? [];
+  const grouped = guests.length > 1;
+  const name = grouped
+    ? `${guests.length} visitors`
+    : guestName || guests[0]?.display_name_snapshot || "Visitor";
+  const detail = grouped
+    ? guests.map((guest) => guest.display_name_snapshot).join(", ")
+    : guestPhone || guests[0]?.phone_snapshot || "";
+  return (
+    <div className="flex items-center gap-2.5">
+      <span aria-hidden className="flex shrink-0 -space-x-2">
+        {(grouped ? guests.slice(0, 2) : [undefined]).map((guest, index) => (
+          <Avatar
+            key={guest?.id ?? index}
+            name={guest?.display_name_snapshot ?? guestName ?? "Visitor"}
+            size="sm"
+            tone={index === 0 ? "coral" : "ink"}
+            decorative
+            className="ring-2 ring-[var(--vms-surface)]"
+          />
+        ))}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-[var(--vms-ink)]">
+          {name}
+        </p>
+        {detail ? (
+          <p className="truncate text-xs text-[var(--vms-ink-muted)]">
+            {detail}
+          </p>
+        ) : null}
+        {state === "checked_in" ? (
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-success)]">
+            Checked in
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function EmptyInvitations({
+  tab,
+  onInvite,
+}: {
+  tab: InvitationTab;
+  onInvite: () => void;
+}) {
+  const copy: Record<InvitationTab, { title: string; detail: string }> = {
+    upcoming: {
+      title: "No upcoming invitations",
+      detail: "Invite a visitor and their invitation will appear here.",
+    },
+    on_site: {
+      title: "Nobody is on site",
+      detail: "Visitors appear here once they check in during their window.",
+    },
+    past: {
+      title: "No past invitations",
+      detail: "Invitations move here once their visit window closes.",
+    },
+  };
+  return (
+    <div className="flex flex-col items-center gap-2 py-12 text-center">
+      <CalendarClock aria-hidden className="h-6 w-6 text-[var(--vms-ink-muted)]" />
+      <p className="text-sm font-semibold text-[var(--vms-ink)]">
+        {copy[tab].title}
+      </p>
+      <p className="max-w-sm text-xs leading-5 text-[var(--vms-ink-muted)]">
+        {copy[tab].detail}
+      </p>
+      {tab === "upcoming" ? (
+        <button
+          type="button"
+          onClick={onInvite}
+          className="mt-1 text-xs font-semibold text-[var(--vms-ink)] underline underline-offset-4"
+        >
+          Invite your first visitor
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function AccessWorkspace({
   relationship,
   partyName,
   partyEmail,
+  siteId,
 }: {
   relationship: WorkspaceRelationship;
   partyName: string;
   partyEmail?: string | null;
-}) {
-  const queryClient = useQueryClient();
+    siteId?: string | null;
+  }) {
   const [showComposer, setShowComposer] = useState(false);
   const [selectedInvitationId, setSelectedInvitationId] = useState<
     string | null
   >(null);
-  const queryKey = ["workspace", "visit-authorizations", relationship.place.id];
-  const invitations = useQuery({
-    queryKey,
-    queryFn: () => accessJourneyApi.list(relationship.place.id),
-    retry: false,
-  });
-  const cancelInvitation = useMutation({
-    mutationFn: accessJourneyApi.cancel,
-    onSuccess: async () => {
-      toast.success("Invitation cancelled");
-      await queryClient.invalidateQueries({
-        queryKey: ["workspace", "visit-authorizations"],
-      });
-    },
-    onError: (error) => toast.error(parseApiError(error).message),
-  });
+  const [tab, setTab] = useState<InvitationTab>("upcoming");
+  const [search, setSearch] = useState("");
+  const [visitDate, setVisitDate] = useState<VisitDateFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const invitations = usePlaceInvitations(
+    relationship.place.id,
+    relationship.party.id,
+  );
+  const revokeInvitation = useRevokeInvitation();
   const items = useMemo(
     () => invitations.data?.items || [],
     [invitations.data?.items],
   );
-  const stats = useMemo(() => countInvitations(items), [items]);
   const closeInvitation = useCallback(() => setSelectedInvitationId(null), []);
+  const buckets = useMemo(() => bucketInvitations(items), [items]);
+  const filtered = useMemo(
+    () =>
+      filterInvitations(buckets[tab], {
+        search,
+        visitDate,
+        status: statusFilter,
+      }),
+    [buckets, search, statusFilter, tab, visitDate],
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const visible = filtered;
+  const visibleRows = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  ).slice(0, 5);
+  const expandedList = useMemo(() => new Set(expanded), [expanded]);
 
   async function copyCode(code: string) {
     try {
@@ -117,223 +354,382 @@ export function AccessWorkspace({
     }
   }
 
-  const invitationColumns: Column<VisitAuthorization>[] = [
-    {
-      key: "guests",
-      header: "Guest",
-      sortable: true,
-      accessor: (invitation) => (
-        <div className="min-w-0">
-          <strong className="block truncate text-sm">
-            {invitation.guests
-              .map((guest) => guest.display_name_snapshot)
-              .join(", ")}
-          </strong>
-          <span className="font-mono text-xs font-semibold tracking-[0.08em] text-[var(--vms-ink-muted)]">
-            {invitation.code}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "valid_from",
-      header: "Validity",
-      sortable: true,
-      accessor: (invitation) => (
-        <span className="whitespace-nowrap text-xs text-[var(--vms-ink-muted)]">
-          {formatWindow(invitation.valid_from, invitation.valid_to)}
-        </span>
-      ),
-    },
-    {
-      key: "uses_count",
-      header: "Uses",
-      sortable: true,
-      accessor: (invitation) => (
-        <span className="whitespace-nowrap text-sm tabular-nums">
-          {invitation.uses_count}
-          {invitation.max_uses ? ` / ${invitation.max_uses}` : ""}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      sortable: true,
-      accessor: (invitation) => {
-        const status = statusMeta[invitation.status];
-        return (
-          <span
-            className={cn(
-              "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-              status.className,
-            )}
-          >
-            {status.label}
-          </span>
-        );
-      },
-    },
-    {
-      key: "actions",
-      header: "",
-      mobileHide: true,
-      accessor: (invitation) => (
-        <div className="flex justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => setSelectedInvitationId(invitation.id)}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 text-xs font-semibold hover:bg-[var(--vms-surface-subtle)]"
-          >
-            View
-            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => copyCode(invitation.code)}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 text-xs font-semibold hover:bg-[var(--vms-surface-subtle)]"
-          >
-            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-            Copy
-          </button>
-        </div>
-      ),
-    },
-  ];
-  const invitationBulkActions: BulkAction[] = [
-    {
-      label: "Copy selected codes",
-      icon: Copy,
-      onClick: async (ids) => {
-        const codes = items
-          .filter((invitation) => ids.includes(invitation.id))
-          .map((invitation) => invitation.code);
-        try {
-          await navigator.clipboard.writeText(codes.join("\n"));
-          toast.success(
-            `${codes.length} invitation code${codes.length === 1 ? "" : "s"} copied.`,
-          );
-        } catch {
-          toast.error("Invitation codes could not be copied.");
-        }
-      },
-    },
-  ];
+  function toggleExpanded(id: string) {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Summary
-          icon={CalendarClock}
-          label="Active invitations"
-          value={stats.active}
-          detail="Approved and currently valid"
-        />
-        <Summary
-          icon={Clock3}
-          label="Awaiting approval"
-          value={stats.requested}
-          detail="Submitted to site administration"
-        />
-        <Summary
-          icon={Users}
-          label="Guests invited"
-          value={stats.guests}
-          detail="Across all listed invitations"
-        />
-      </section>
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
 
-      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm  ">
-        <div className="flex flex-col gap-4 border-b border-zinc-200 p-5  sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Visitor invitations</h2>
-            <p className="mt-1 text-sm text-zinc-500 ">
-              Invite visitors to {relationship.place.name} and follow their
-              approval and arrival status.
-            </p>
-          </div>
           <button
             type="button"
-            onClick={() => setShowComposer((current) => !current)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            onClick={() => setShowComposer(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-action)] bg-[var(--vms-action)] px-4 py-2.5 text-sm font-semibold text-[var(--vms-on-action)] shadow-[var(--vms-shadow-raised)] transition hover:bg-[var(--vms-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2"
           >
-            {showComposer ? (
-              <XCircle className="h-4 w-4" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {showComposer ? "Close" : "Create invitation"}
+            <Plus className="h-4 w-4" aria-hidden />
+            Invite visitor
           </button>
         </div>
 
-        {showComposer ? (
-          <InvitationComposer
-            destinationPlaceId={relationship.place.id}
-            destinationName={relationship.place.name}
-            partyName={partyName}
-            partyEmail={partyEmail}
-            onCreated={async () => {
-              setShowComposer(false);
-              await queryClient.invalidateQueries({ queryKey });
-            }}
-          />
-        ) : null}
+        <InvitationComposer
+          isOpen={showComposer}
+          onClose={() => setShowComposer(false)}
+          siteId={siteId ?? relationship.site_id ?? null}
+          destinationPlaceId={relationship.place.id}
+          destinationName={relationship.place.name}
+          partyName={partyName}
+          partyEmail={partyEmail}
+          onCreated={() => setShowComposer(false)}
+        />
 
-        <div className="p-3">
-          <DataTable
-            data={items}
-            columns={invitationColumns}
-            tableLabel="Workspace visitor invitations"
-            searchPlaceholder="Search invitations"
-            isLoading={invitations.isPending}
-            errorMessage={
-              invitations.isError
-                ? parseApiError(invitations.error).message
-                : undefined
-            }
-            onRetry={() => invitations.refetch()}
-            emptyMessage="No invitations yet"
-            selectable
-            getRowId={(invitation) => invitation.id}
-            bulkActions={invitationBulkActions}
-            showPagination={items.length > 10}
-            pageSize={10}
-            mobileSummary={(invitation) => (
-              <InvitationRow
-                invitation={invitation}
-                cancelling={
-                  cancelInvitation.isPending &&
-                  cancelInvitation.variables === invitation.id
-                }
-                onCopy={() => copyCode(invitation.code)}
-                onOpen={() => setSelectedInvitationId(invitation.id)}
-                onCancel={() => cancelInvitation.mutate(invitation.id)}
-              />
-            )}
-          />
+        <div className="px-4 sm:px-5">
+          <div
+            role="tablist"
+            aria-label="Invitation period"
+            className="flex gap-1 overflow-x-auto border-b border-[var(--vms-line)]"
+          >
+            {(
+              [
+                ["upcoming", "Upcoming"],
+                ["on_site", "On site"],
+                ["past", "Past"],
+              ] as const
+            ).map(([value, label]) => {
+              const active = tab === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setTab(value);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "relative inline-flex min-h-11 shrink-0 items-center gap-1.5 px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
+                    active
+                      ? "font-semibold text-[var(--vms-ink)]"
+                      : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]",
+                  )}
+                >
+                  {label}
+                  <span className="text-xs font-medium text-[var(--vms-ink-muted)]">
+                    ({buckets[value].length})
+                  </span>
+                  {active ? (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--vms-active-accent)]"
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5">
+          <label className="relative flex min-h-10 flex-1 items-center sm:max-w-sm">
+            <span className="sr-only">Search invitations</span>
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-[var(--vms-ink-muted)]"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by invitation ID or visitor name"
+              className="min-h-10 w-full rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] pl-9 pr-3 text-sm text-[var(--vms-ink)] transition hover:border-[var(--vms-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+            />
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <span className="sr-only">Visit date</span>
+            <CalendarDays
+              aria-hidden
+              className="h-4 w-4 text-[var(--vms-ink-muted)]"
+            />
+            <select
+              value={visitDate}
+              onChange={(event) => {
+                setVisitDate(event.target.value as VisitDateFilter);
+                setPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3 text-sm text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+            >
+              <option value="all">Visit date</option>
+              <option value="today">Today</option>
+              <option value="week">Next 7 days</option>
+              <option value="month">Next 30 days</option>
+            </select>
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <span className="sr-only">Status</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as StatusFilter);
+                setPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3 text-sm text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+            >
+              <option value="all">All status</option>
+              <option value="requested">Awaiting approval</option>
+              <option value="approved">Approved</option>
+              <option value="declined">Declined</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="revoked">Revoked</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="px-4 pb-2 sm:px-5">
+          {invitations.isError ? (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-3 py-2.5 text-sm text-[var(--vms-danger)]"
+            >
+              <p>{parseApiError(invitations.error).message}</p>
+              <button
+                type="button"
+                onClick={() => invitations.refetch()}
+                className="font-semibold underline"
+              >
+                Retry
+              </button>
+            </div>
+          ) : invitations.isPending ? (
+            <LoadingRows />
+          ) : visible.length === 0 ? (
+            <EmptyInvitations tab={tab} onInvite={() => setShowComposer(true)} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[46rem] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[var(--vms-line)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+                    <th scope="col" className="py-2.5 pr-3 font-semibold">
+                      Invitation ID
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 font-semibold">
+                      Visitor(s)
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 font-semibold">
+                      Visit window
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 font-semibold">
+                      Host
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 font-semibold">
+                      Status
+                    </th>
+                    <th scope="col" className="py-2.5 text-right font-semibold">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.map((invitation) => {
+                    const grouped = invitation.guests.length > 1;
+                    const isOpen = expandedList.has(invitation.id);
+                    const primary = invitation.guests[0];
+                    return (
+                      <Fragment key={invitation.id}>
+                        <tr className="border-b border-[var(--vms-line)] align-top transition hover:bg-[var(--vms-surface-subtle)]">
+                          <td className="py-3 pr-3">
+                            <div className="flex items-center gap-1.5">
+                              {grouped ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpanded(invitation.id)}
+                                  aria-expanded={isOpen}
+                                  aria-label={`${isOpen ? "Collapse" : "Expand"} invitation ${invitation.code}`}
+                                  className="grid h-6 w-6 shrink-0 place-items-center rounded text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                                >
+                                  <ChevronDown
+                                    aria-hidden
+                                    className={cn(
+                                      "h-3.5 w-3.5 transition-transform",
+                                      isOpen && "rotate-180",
+                                    )}
+                                  />
+                                </button>
+                              ) : (
+                                <span aria-hidden className="w-6 shrink-0" />
+                              )}
+                              <span className="font-mono text-[13px] font-semibold text-[var(--vms-ink)]">
+                                {invitation.code}
+                              </span>
+                              {grouped ? (
+                                <span className="rounded-full bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--vms-ink-muted)]">
+                                  Group ({invitation.guests.length})
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-3">
+                            <VisitorCell
+                              invitation={invitation}
+                              guestName={primary?.display_name_snapshot}
+                              guestPhone={primary?.phone_snapshot}
+                            />
+                          </td>
+                          <td className="py-3 pr-3">
+                            <VisitWindow
+                              from={invitation.valid_from}
+                              to={invitation.valid_to}
+                            />
+                          </td>
+                          <td className="py-3 pr-3 text-sm text-[var(--vms-ink)]">
+                            {invitation.host_party?.display_name || partyName}
+                          </td>
+                          <td className="py-3 pr-3">
+                            <InvitationStatus
+                              status={invitation.status}
+                              displayStatus={invitation.display_status}
+                            />
+                          </td>
+                          <td className="py-3 text-right">
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => copyCode(invitation.code)}
+                                aria-label={`Copy invitation ${invitation.code}`}
+                                className="grid h-8 w-8 place-items-center rounded-md text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                              >
+                                <Copy aria-hidden className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedInvitationId(invitation.id)
+                                }
+                                aria-label={`Open invitation ${invitation.code}`}
+                                className="grid h-8 w-8 place-items-center rounded-md text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                              >
+                                <ArrowUpRight
+                                  aria-hidden
+                                  className="h-3.5 w-3.5"
+                                />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {grouped && isOpen
+                          ? invitation.guests.map((guest) => (
+                            <tr
+                              key={`${invitation.id}:${guest.id}`}
+                              className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]/40 align-top"
+                            >
+                              <td className="py-2.5 pr-3 pl-9">
+                                <span className="font-mono text-[12px] text-[var(--vms-ink-muted)]">
+                                  {invitation.code}-{guest.suffix}
+                                </span>
+                              </td>
+                              <td className="py-2.5 pr-3">
+                                <VisitorCell
+                                  guestName={guest.display_name_snapshot}
+                                  guestPhone={guest.phone_snapshot}
+                                  state={guest.state}
+                                />
+                              </td>
+                              <td className="py-2.5 pr-3">
+                                <VisitWindow
+                                  from={invitation.valid_from}
+                                  to={invitation.valid_to}
+                                />
+                              </td>
+                              <td className="py-2.5 pr-3 text-sm text-[var(--vms-ink-muted)]">
+                                {invitation.host_party?.display_name ||
+                                  partyName}
+                              </td>
+                              <td className="py-2.5 pr-3">
+                                <InvitationStatus
+                                  status={invitation.status}
+                                  displayStatus={invitation.display_status}
+                                />
+                              </td>
+                              <td />
+                            </tr>
+                          ))
+                          : null}
+                      </Fragment>
+                    );
+                  })}
+                      </tbody>
+                    </table>
+                  </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--vms-line)] px-4 py-3 sm:px-5">
+          <p className="text-xs text-[var(--vms-ink-muted)]">
+            {visible.length
+              ? `Showing ${pageStart + 1}–${pageStart + visibleRows.length} of ${visible.length} invitations`
+              : "No invitations to show"}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1}
+              aria-label="Previous page"
+              className="grid h-8 w-8 place-items-center rounded-md border border-[var(--vms-line)] text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] disabled:opacity-40"
+            >
+              <ChevronLeft aria-hidden className="h-4 w-4" />
+            </button>
+            {pageNumbers.map((number) => (
+              <button
+                key={number}
+                type="button"
+                onClick={() => setPage(number)}
+                aria-current={number === page ? "page" : undefined}
+                className={cn(
+                  "grid h-8 min-w-8 place-items-center rounded-md border px-2 text-xs font-semibold transition",
+                  number === page
+                    ? "border-[var(--vms-action)] bg-[var(--vms-action)] text-[var(--vms-on-action)]"
+                    : "border-[var(--vms-line)] text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)]",
+                )}
+              >
+                {number}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page >= totalPages}
+              aria-label="Next page"
+              className="grid h-8 w-8 place-items-center rounded-md border border-[var(--vms-line)] text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] disabled:opacity-40"
+            >
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </section>
-
-      {relationship.place.address ? (
-        <section className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-sm shadow-sm  ">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-          <div>
-            <p className="font-medium">Destination</p>
-            <p className="mt-0.5 text-zinc-500 ">
-              {relationship.place.address}
-            </p>
-          </div>
-        </section>
-      ) : null}
 
       {selectedInvitationId ? (
         <InvitationDetail
           invitationId={selectedInvitationId}
           onClose={closeInvitation}
-          onCancel={() => cancelInvitation.mutate(selectedInvitationId)}
-          cancelling={
-            cancelInvitation.isPending &&
-            cancelInvitation.variables === selectedInvitationId
+          onRevoke={() => revokeInvitation.mutate(selectedInvitationId)}
+          revoking={
+            revokeInvitation.isPending &&
+            revokeInvitation.variables === selectedInvitationId
           }
         />
       ) : null}
@@ -342,47 +738,89 @@ export function AccessWorkspace({
 }
 
 function InvitationComposer({
+  isOpen,
+  onClose,
+  siteId,
   destinationPlaceId,
   destinationName,
   partyName,
   partyEmail,
   onCreated,
 }: {
+    isOpen: boolean;
+    onClose: () => void;
+    siteId: string | null;
   destinationPlaceId: string;
   destinationName: string;
   partyName: string;
   partyEmail?: string | null;
-  onCreated: () => Promise<void>;
+    onCreated: () => void | Promise<void>;
 }) {
   const [guests, setGuests] = useState<GuestDraft[]>([createGuestDraft()]);
   const [purpose, setPurpose] = useState("");
-  const [maxUses, setMaxUses] = useState(1);
+  const [maxUses, setMaxUses] = useState("1");
   const [validFrom, setValidFrom] = useState(() => toLocalInput(new Date()));
   const [validTo, setValidTo] = useState(() =>
     toLocalInput(new Date(Date.now() + 4 * 60 * 60 * 1000)),
   );
   const [error, setError] = useState<string | null>(null);
-  const createInvitation = useMutation({
-    mutationFn: accessJourneyApi.create,
+  const [invalidGuestIds, setInvalidGuestIds] = useState<string[]>([]);
+  const createInvitation = useCreateInvitation({
     onSuccess: async () => {
       toast.success("Invitation submitted");
+      setGuests([createGuestDraft()]);
+      setPurpose("");
+      setMaxUses("1");
+      setInvalidGuestIds([]);
+      setError(null);
       await onCreated();
     },
     onError: (mutationError) => setError(parseApiError(mutationError).message),
   });
 
+  const windowStart = new Date(validFrom);
+  const windowEnd = new Date(validTo);
+  const windowHours =
+    Number.isFinite(windowStart.getTime()) &&
+      Number.isFinite(windowEnd.getTime()) &&
+      windowEnd > windowStart
+      ? Math.round(((windowEnd.getTime() - windowStart.getTime()) / 3_600_000) * 10) / 10
+      : null;
+
+  function applyWindow(hours: number, dayOffset = 0) {
+    const base = new Date();
+    base.setDate(base.getDate() + dayOffset);
+    base.setSeconds(0, 0);
+    if (dayOffset > 0) base.setHours(9, 0, 0, 0);
+    else base.setMinutes(Math.floor(base.getMinutes() / 15) * 15, 0, 0);
+    setValidFrom(toLocalInput(base));
+    setValidTo(toLocalInput(new Date(base.getTime() + hours * 3_600_000)));
+  }
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    const start = new Date(validFrom);
-    const end = new Date(validTo);
+    if (!siteId) {
+      setError(
+        "This workspace is missing its Site reference. Reload the workspace and try again.",
+      );
+      return;
+    }
     const missingGuest = guests.findIndex(
       (guest) => !guest.display_name.trim(),
     );
     if (missingGuest !== -1) {
+      setInvalidGuestIds(
+        guests
+          .filter((guest) => !guest.display_name.trim())
+          .map((guest) => guest.id),
+      );
       setError(`Enter visitor ${missingGuest + 1}’s name.`);
       return;
     }
+    setInvalidGuestIds([]);
+    const start = new Date(validFrom);
+    const end = new Date(validTo);
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
       setError("Choose a valid access window.");
       return;
@@ -392,10 +830,11 @@ function InvitationComposer({
       return;
     }
     const input: CreateVisitAuthorizationInput = {
+      site_id: siteId,
       destination_place_id: destinationPlaceId,
       valid_from: start.toISOString(),
       valid_to: end.toISOString(),
-      max_uses: Math.max(1, maxUses),
+      max_uses: clampMaxUses(maxUses),
       purpose: purpose.trim() || null,
       guests: guests.map((guest) => ({
         display_name: guest.display_name.trim(),
@@ -407,26 +846,55 @@ function InvitationComposer({
   }
 
   return (
-    <form
+    <FormDrawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create invitation"
+      description={`Invite visitors to ${destinationName}.`}
       onSubmit={submit}
-      className="border-b border-zinc-200 bg-zinc-50/80 p-5  "
+      submitLabel="Submit invitation"
+      isSubmitting={createInvitation.isPending}
+      canSubmit={Boolean(siteId)}
+      size="lg"
+      footerNote={
+        siteId
+          ? `${guests.length} ${guests.length === 1 ? "visitor" : "visitors"}${windowHours
+            ? ` · ${windowHours} hour${windowHours === 1 ? "" : "s"} of access`
+            : ""
+          }`
+          : "This workspace is missing its Site reference"
+      }
+      error={error}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-semibold">Create a visitor invitation</h3>
-          <p className="mt-1 text-sm text-zinc-500 ">
-            Hosted by {partyName} at {destinationName}.
+      {!siteId ? (
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 rounded-[var(--vms-radius-control)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] px-3 py-2.5 text-sm text-[var(--vms-warning)]"
+        >
+          <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="min-w-0 flex-1">
+            This workspace is missing its Site reference, so the invitation
+            cannot be submitted. Reload the workspace and try again.
           </p>
         </div>
-        {partyEmail ? (
-          <span className="hidden rounded-full bg-white px-3 py-1 text-xs text-zinc-500 shadow-sm   sm:block">
-            {partyEmail}
-          </span>
-        ) : null}
-      </div>
+      ) : null}
+      <FormRecordSummary
+        title={destinationName}
+        meta={`Hosted by ${partyName}`}
+        trailing={
+          partyEmail ? (
+            <span className="min-w-0 truncate text-xs text-[var(--vms-ink-muted)]">
+              {partyEmail}
+            </span>
+          ) : undefined
+        }
+      />
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Purpose">
+      <FormSection
+        title="Visit window"
+        description="Everything the checkpoint operator needs to honour this invitation."
+      >
+        <Field label="Purpose" hint="Shown on the invitation and at the gate.">
           <input
             value={purpose}
             onChange={(event) => setPurpose(event.target.value)}
@@ -434,178 +902,193 @@ function InvitationComposer({
             className={inputClass}
           />
         </Field>
-        <Field label="Access starts" required>
-          <input
-            type="datetime-local"
-            value={validFrom}
-            onChange={(event) => setValidFrom(event.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Access ends" required>
-          <input
-            type="datetime-local"
-            value={validTo}
-            onChange={(event) => setValidTo(event.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Maximum entries">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Access starts" required>
+            <input
+              type="datetime-local"
+              value={validFrom}
+              onChange={(event) => setValidFrom(event.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Access ends" required>
+            <input
+              type="datetime-local"
+              value={validTo}
+              onChange={(event) => setValidTo(event.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-[var(--vms-ink-muted)]">
+            Quick fill
+          </span>
+          {[
+            { label: "Next 4 hours", hours: 4, offset: 0 },
+            { label: "Next 8 hours", hours: 8, offset: 0 },
+            { label: "Tomorrow, 9am–8pm", hours: 11, offset: 1 },
+          ].map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => applyWindow(preset.hours, preset.offset)}
+              className="inline-flex min-h-8 items-center rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-2.5 text-xs font-semibold text-[var(--vms-ink)] transition hover:border-[var(--vms-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+        <Field
+          label="Maximum entries"
+          hint="How many times the visitor may pass through a checkpoint."
+        >
           <input
             type="number"
+            inputMode="numeric"
+            step={1}
             min={1}
             max={100}
             value={maxUses}
-            onChange={(event) => setMaxUses(Number(event.target.value))}
+            onChange={(event) => setMaxUses(event.target.value)}
+            onBlur={() => setMaxUses(String(clampMaxUses(maxUses)))}
             className={inputClass}
           />
         </Field>
-      </div>
+      </FormSection>
 
-      <section
-        className="mt-5 rounded-lg border border-zinc-200 bg-white p-4  "
-        aria-label="Invited guests"
+      <FormSection
+        title="Visitors"
+        description={`Everyone covered by this invitation. Up to ${MAX_INVITATION_GUESTS} visitors.`}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold">Guests</h4>
-            <p className="mt-0.5 text-xs text-zinc-500 ">
-              Add everyone covered by this invitation.
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-[var(--vms-ink-muted)]">
+            {guests.length} of {MAX_INVITATION_GUESTS} added
+          </p>
           <button
             type="button"
             disabled={guests.length >= MAX_INVITATION_GUESTS}
             onClick={() =>
               setGuests((current) => [...current, createGuestDraft()])
             }
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50  "
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-2.5 text-xs font-semibold text-[var(--vms-ink)] transition hover:bg-[var(--vms-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5" aria-hidden />
             Add another guest
           </button>
         </div>
-        <div className="mt-3 space-y-3">
-          {guests.map((guest, index) => (
-            <div
-              key={guest.id}
-              className="rounded-md border border-zinc-200 p-3 "
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <strong className="text-xs uppercase tracking-[0.08em] text-zinc-500 ">
-                  Guest {index + 1}
-                </strong>
-                {guests.length > 1 ? (
-                  <button
-                    type="button"
-                    aria-label={`Remove guest ${index + 1}`}
-                    onClick={() =>
-                      setGuests((current) =>
-                        current.filter((item) => item.id !== guest.id),
-                      )
+        <div className="space-y-3">
+          {guests.map((guest, index) => {
+            const invalid = invalidGuestIds.includes(guest.id);
+            return (
+              <div
+                key={guest.id}
+                className={`rounded-[var(--vms-radius-control)] border bg-[var(--vms-surface)] p-3 ${invalid
+                    ? "border-[var(--vms-danger)]"
+                    : "border-[var(--vms-line)]"
+                  }`}
+              >
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="grid h-6 w-6 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[11px] font-semibold text-[var(--vms-ink)]"
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
+                      Guest {index + 1}
+                    </span>
+                  </div>
+                  {guests.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label={`Remove guest ${index + 1}`}
+                      onClick={() =>
+                        setGuests((current) =>
+                          current.filter((item) => item.id !== guest.id),
+                        )
+                      }
+                      className="text-xs font-semibold text-[var(--vms-danger)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field
+                    label={
+                      index === 0
+                        ? "Visitor name"
+                        : `Additional visitor ${index} name`
                     }
-                    className="text-xs font-semibold text-[var(--vms-danger)] hover:underline"
+                    required
                   >
-                    Remove
-                  </button>
-                ) : null}
+                    <input
+                      value={guest.display_name}
+                      aria-invalid={invalid || undefined}
+                      onChange={(event) =>
+                        updateGuest(
+                          setGuests,
+                          guest.id,
+                          "display_name",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Full name"
+                      autoComplete="name"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <Field
+                    label={
+                      index === 0 ? "Email" : `Additional visitor ${index} email`
+                    }
+                  >
+                    <input
+                      type="email"
+                      value={guest.email}
+                      onChange={(event) =>
+                        updateGuest(
+                          setGuests,
+                          guest.id,
+                          "email",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Optional"
+                      autoComplete="email"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <Field
+                    label={
+                      index === 0 ? "Phone" : `Additional visitor ${index} phone`
+                    }
+                  >
+                    <input
+                      type="tel"
+                      value={guest.phone}
+                      onChange={(event) =>
+                        updateGuest(
+                          setGuests,
+                          guest.id,
+                          "phone",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Optional"
+                      autoComplete="tel"
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                <Field
-                  label={
-                    index === 0
-                      ? "Visitor name"
-                      : `Additional visitor ${index} name`
-                  }
-                  required
-                >
-                  <input
-                    value={guest.display_name}
-                    onChange={(event) =>
-                      updateGuest(
-                        setGuests,
-                        guest.id,
-                        "display_name",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Full name"
-                    autoComplete="name"
-                    className={inputClass}
-                  />
-                </Field>
-                <Field
-                  label={
-                    index === 0 ? "Email" : `Additional visitor ${index} email`
-                  }
-                >
-                  <input
-                    type="email"
-                    value={guest.email}
-                    onChange={(event) =>
-                      updateGuest(
-                        setGuests,
-                        guest.id,
-                        "email",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Optional"
-                    autoComplete="email"
-                    className={inputClass}
-                  />
-                </Field>
-                <Field
-                  label={
-                    index === 0 ? "Phone" : `Additional visitor ${index} phone`
-                  }
-                >
-                  <input
-                    type="tel"
-                    value={guest.phone}
-                    onChange={(event) =>
-                      updateGuest(
-                        setGuests,
-                        guest.id,
-                        "phone",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Optional"
-                    autoComplete="tel"
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </section>
-
-      {error ? (
-        <p
-          role="alert"
-          className="mt-4 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] px-3 py-2 text-sm text-[var(--vms-danger)]   "
-        >
-          {error}
-        </p>
-      ) : null}
-
-      <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <button
-          type="submit"
-          disabled={createInvitation.isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--vms-action)] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {createInvitation.isPending ? (
-            <RefreshCw className="h-4 w-4 animate-spin" />
-          ) : (
-            <UserRound className="h-4 w-4" />
-          )}
-          Submit invitation
-        </button>
-      </div>
-    </form>
+      </FormSection>
+    </FormDrawer>
   );
 }
 
@@ -726,35 +1209,30 @@ function InvitationRow({
 function InvitationDetail({
   invitationId,
   onClose,
-  onCancel,
-  cancelling,
+  onRevoke,
+  revoking,
 }: {
   invitationId: string;
   onClose: () => void;
-  onCancel: () => void;
-  cancelling: boolean;
+  onRevoke: () => void;
+  revoking: boolean;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const invitation = useQuery({
-    queryKey: ["workspace", "visit-authorization", invitationId],
-    queryFn: () => accessJourneyApi.get(invitationId),
-    retry: false,
-  });
-  const checkpointEvents = useQuery({
-    queryKey: ["workspace", "visit-checkpoint-events", invitationId],
-    queryFn: () => accessJourneyApi.checkpointEvents(invitationId),
-    enabled: invitation.isSuccess,
-    retry: false,
-  });
-  const guestCredentials = useQuery({
-    queryKey: ["workspace", "visit-credentials", invitationId],
-    queryFn: () => accessJourneyApi.credentials(invitationId),
-    enabled: invitation.isSuccess && invitation.data?.status === "approved",
-    retry: false,
-  });
+  const invitation = useInvitation(invitationId);
+  const checkpointEvents = useInvitationCheckpoints(invitationId);
+  const guestCredentials = useInvitationCredentials(invitationId);
+  const update = useUpdateInvitation(invitationId);
   const data = invitation.data;
-  const status = data ? statusMeta[data.status] : null;
+  const status = data
+    ? statusPresentation(data.status, data.display_status)
+    : null;
+  // Owners may change an invitation until a visitor has used it.
+  const canEdit =
+    !!data &&
+    (data.status === "requested" || data.status === "approved") &&
+    data.uses_count === 0 &&
+    (data.display_status ?? data.status) !== "active";
 
   useEffect(() => {
     const previousFocus =
@@ -978,16 +1456,29 @@ function InvitationDetail({
               </div>
             </div>
 
-            <ArrivalHistory
-              events={checkpointEvents.data?.items || []}
-              loading={checkpointEvents.isPending}
-              error={
-                checkpointEvents.isError
-                  ? parseApiError(checkpointEvents.error).message
-                  : null
-              }
-              onRetry={() => checkpointEvents.refetch()}
-            />
+            <section aria-labelledby="visitor-journey-title">
+              <h3 id="visitor-journey-title" className="text-sm font-semibold">
+                Visitor journey
+              </h3>
+              <p className="mt-0.5 text-xs text-zinc-500 ">
+                Every scan recorded for each visitor. Pick a visitor to follow
+                their check-ins and check-outs.
+              </p>
+              <div className="mt-3">
+                <VisitorJourneyPanel
+                  guests={data.guests}
+                  events={checkpointEvents.data?.items || []}
+                  loading={checkpointEvents.isPending}
+                  error={
+                    checkpointEvents.isError
+                      ? parseApiError(checkpointEvents.error).message
+                      : null
+                  }
+                  onRetry={() => checkpointEvents.refetch()}
+                  showRoute={false}
+                />
+              </div>
+            </section>
 
             {data.decline_reason ? (
               <div className="rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
@@ -996,17 +1487,25 @@ function InvitationDetail({
               </div>
             ) : null}
 
+            {canEdit ? (
+              <InvitationEditForm
+                invitation={data}
+                saving={update.isPending}
+                onSave={(body) => update.mutate(body)}
+              />
+            ) : null}
+
             <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4  sm:flex-row sm:justify-end">
-              {(data.status === "requested" || data.status === "approved") && (
+              {canEdit ? (
                 <button
                   type="button"
-                  onClick={onCancel}
-                  disabled={cancelling}
+                  onClick={onRevoke}
+                  disabled={revoking}
                   className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-sm font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
                 >
-                  {cancelling ? "Cancelling…" : "Cancel invitation"}
+                  {revoking ? "Revoking…" : "Revoke invitation"}
                 </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 onClick={shareInvitation}
@@ -1023,79 +1522,139 @@ function InvitationDetail({
   );
 }
 
-function ArrivalHistory({
-  events,
-  loading,
-  error,
-  onRetry,
+function InvitationEditForm({
+  invitation,
+  saving,
+  onSave,
 }: {
-  events: Array<{
-    id: string;
-    direction: "entry" | "exit";
-    outcome: "allowed" | "denied";
-    reason_code: string;
-    occurred_at: string;
-    gate_id: string;
-  }>;
-  loading: boolean;
-  error: string | null;
-  onRetry: () => void;
+  invitation: VisitAuthorization;
+  saving: boolean;
+  onSave: (body: {
+    valid_from: string;
+    valid_to: string;
+    max_uses: number;
+    purpose: string | null;
+  }) => void;
 }) {
-  return (
-    <section aria-labelledby="arrival-history-title">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 id="arrival-history-title" className="text-sm font-semibold">
-            Arrival history
-          </h3>
-          <p className="mt-0.5 text-xs text-zinc-500 ">
-            Checkpoint decisions recorded for this invitation.
-          </p>
-        </div>
-        <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600  ">
-          {events.length} {events.length === 1 ? "event" : "events"}
-        </span>
-      </div>
+  const [open, setOpen] = useState(false);
+  const [validFrom, setValidFrom] = useState(() =>
+    toLocalInput(new Date(invitation.valid_from)),
+  );
+  const [validTo, setValidTo] = useState(() =>
+    toLocalInput(new Date(invitation.valid_to)),
+  );
+  const [maxUses, setMaxUses] = useState(
+    String(invitation.max_uses ?? 1),
+  );
+  const [purpose, setPurpose] = useState(invitation.purpose ?? "");
+  const [error, setError] = useState<string | null>(null);
 
-      {loading ? (
-        <p className="mt-3 text-sm text-zinc-500 ">Loading arrival history…</p>
-      ) : error ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]   ">
-          <span>{error}</span>
-          <button type="button" onClick={onRetry} className="font-semibold">
-            Retry
-          </button>
-        </div>
-      ) : events.length === 0 ? (
-        <p className="mt-3 rounded-lg border border-dashed border-zinc-200 p-3 text-sm text-zinc-500  ">
-          No checkpoint events yet.
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const start = new Date(validFrom);
+    const end = new Date(validTo);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+      setError("Choose a valid access window.");
+      return;
+    }
+    if (end <= start) {
+      setError("The access window must end after it starts.");
+      return;
+    }
+    setError(null);
+    onSave({
+      valid_from: start.toISOString(),
+      valid_to: end.toISOString(),
+      max_uses: clampMaxUses(maxUses),
+      purpose: purpose.trim() || null,
+    });
+  }
+
+  if (!open) {
+    return (
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-lg border border-[var(--vms-line-strong)] px-3 py-2 text-sm font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)]"
+        >
+          Edit invitation
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="space-y-4 rounded-xl border border-[var(--vms-line)] p-4"
+    >
+      <h3 className="text-sm font-semibold">Edit invitation</h3>
+      <p className="text-xs text-[var(--vms-ink-muted)]">
+        An invitation can be changed until a visitor checks in.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Access starts" required>
+          <input
+            type="datetime-local"
+            value={validFrom}
+            onChange={(event) => setValidFrom(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Access ends" required>
+          <input
+            type="datetime-local"
+            value={validTo}
+            onChange={(event) => setValidTo(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Maximum entries">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={100}
+            value={maxUses}
+            onChange={(event) => setMaxUses(event.target.value)}
+            onBlur={() => setMaxUses(String(clampMaxUses(maxUses)))}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Purpose">
+          <input
+            value={purpose}
+            onChange={(event) => setPurpose(event.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      {error ? (
+        <p role="alert" className="text-sm text-[var(--vms-danger)]">
+          {error}
         </p>
-      ) : (
-        <ol className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200  ">
-          {events.map((event) => (
-            <li
-              key={event.id}
-              className="flex items-center justify-between gap-3 px-3 py-2.5"
-            >
-              <div>
-                <p className="text-sm font-medium capitalize">
-                  {event.direction} · {event.outcome}
-                </p>
-                <p className="mt-0.5 text-xs text-zinc-500 ">
-                  Gate {event.gate_id.slice(0, 8)} · {event.reason_code}
-                </p>
-              </div>
-              <time
-                dateTime={event.occurred_at}
-                className="text-right text-xs text-zinc-500 "
-              >
-                {formatDateTime(event.occurred_at)}
-              </time>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          disabled={saving}
+          className="rounded-lg border border-[var(--vms-line)] px-3 py-2 text-sm font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-[var(--vms-action)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -1145,21 +1704,30 @@ function Summary({
 function Field({
   label,
   required = false,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
+    hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block text-sm font-medium">
+    <label className="block text-[13px] font-semibold text-[var(--vms-ink)]">
       <span>
         {label}
         {required ? (
-          <span className="ml-1 text-[var(--vms-danger)]">*</span>
+          <span aria-hidden className="ml-0.5 text-[var(--vms-danger)]">
+            *
+          </span>
         ) : null}
       </span>
-      <span className="mt-1.5 block">{children}</span>
+      <span className="mt-1.5 block font-normal">{children}</span>
+      {hint ? (
+        <span className="mt-1 block text-xs font-normal leading-5 text-[var(--vms-ink-muted)]">
+          {hint}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -1202,24 +1770,6 @@ function LoadingRows() {
         />
       ))}
     </div>
-  );
-}
-
-function countInvitations(items: VisitAuthorization[]) {
-  const now = Date.now();
-  return items.reduce(
-    (counts, invitation) => ({
-      requested: counts.requested + (invitation.status === "requested" ? 1 : 0),
-      active:
-        counts.active +
-        (invitation.status === "approved" &&
-        new Date(invitation.valid_from).getTime() <= now &&
-        new Date(invitation.valid_to).getTime() > now
-          ? 1
-          : 0),
-      guests: counts.guests + invitation.guests.length,
-    }),
-    { requested: 0, active: 0, guests: 0 },
   );
 }
 

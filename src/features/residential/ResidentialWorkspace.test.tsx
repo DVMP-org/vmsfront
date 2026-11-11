@@ -10,12 +10,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import ResidentialOverview from "./ResidentialOverview";
+import { ResidentProfile } from "./ResidentProfile";
 import ResidentialOccupancies from "./ResidentialOccupancies";
 import ResidentialUnits from "./ResidentialUnits";
 
 const mocks = vi.hoisted(() => ({
   tree: vi.fn(),
   relationships: vi.fn(),
+  relationship: vi.fn(),
   maintenance: vi.fn(),
   chargeAssignments: vi.fn(),
   announcements: vi.fn(),
@@ -105,6 +107,10 @@ vi.mock("@/components/facets/FacetPicker", () => ({
   ),
 }));
 
+vi.mock("@/features/places/api", () => ({
+  placeRelationshipsApi: { create: mocks.createRelationship },
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -117,6 +123,7 @@ vi.mock("./api", () => ({
   residentialApi: {
     tree: mocks.tree,
     relationships: mocks.relationships,
+    relationship: mocks.relationship,
     maintenance: mocks.maintenance,
     chargeAssignments: mocks.chargeAssignments,
     announcements: mocks.announcements,
@@ -309,8 +316,31 @@ describe("residential operations", () => {
     expect(screen.getByText("Occupancy breakdown")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Add unit/ })).toHaveAttribute(
       "href",
-      "/admin/residential/units",
+      "/admin/residential/units?create=1",
     );
+  });
+
+  it("opens and closes the selected unit details", async () => {
+    mount(<ResidentialUnits />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open Apartment 4B" }),
+    );
+    const panel = screen.getByRole("dialog", { name: "Apartment 4B" });
+    expect(within(panel).getByText("Occupant")).toBeInTheDocument();
+    expect(
+      within(panel).getByRole("link", { name: "View unit" }),
+    ).toHaveAttribute("href", "/admin/places/unit-4b");
+    fireEvent.click(
+      within(panel).getByRole("button", { name: "Assign resident" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Assign a household relationship",
+    });
+    expect(within(dialog).getByLabelText(/^Unit/)).toHaveValue("unit-4b");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.queryByRole("dialog", { name: "Apartment 4B" }),
+    ).not.toBeInTheDocument();
   });
 
   it("creates a canonical unit from the unit register", async () => {
@@ -377,10 +407,40 @@ describe("residential operations", () => {
     );
   });
 
+  it("loads the selected resident profile and household", async () => {
+    mocks.relationship.mockResolvedValue(relationship);
+    mount(<ResidentProfile relationshipId="relationship" />);
+    expect(
+      await screen.findByRole("heading", { name: "Ada Resident" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("ada@example.test")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: /Ada Resident/ }),
+    ).toHaveAttribute("href", "/admin/residential/occupancies/relationship");
+    expect(mocks.relationship).toHaveBeenCalledWith("relationship");
+  });
+
+  it("opens resident details from the row action and links to the profile", async () => {
+    mount(<ResidentialOccupancies />);
+    expect(screen.queryByLabelText("Resident details")).not.toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "View Ada Resident details" }),
+    );
+    const panel = screen.getByLabelText("Resident details");
+    expect(within(panel).getByText("ada@example.test")).toBeInTheDocument();
+    expect(
+      within(panel).getByRole("link", { name: "View full profile" }),
+    ).toHaveAttribute("href", "/admin/residential/occupancies/relationship");
+    fireEvent.click(
+      within(panel).getByRole("button", { name: "Close resident details" }),
+    );
+    expect(screen.queryByLabelText("Resident details")).not.toBeInTheDocument();
+  });
+
   it("onboards a new resident directly from Assign household", async () => {
     mount(<ResidentialOccupancies />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Assign household" }),
+      await screen.findByRole("button", { name: "Add resident" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Assign a household relationship",

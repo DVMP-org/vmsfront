@@ -305,7 +305,7 @@ export default function DesignSystemGallery() {
               <Breadcrumbs
                 items={[
                   { label: "Harbour Group", href: "/organization" },
-                  { label: "Properties", href: "/admin/properties" },
+                  { label: "Properties", href: "/admin/places" },
                   { label: "Anchor House" },
                 ]}
               />

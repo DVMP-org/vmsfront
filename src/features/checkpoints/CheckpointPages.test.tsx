@@ -23,13 +23,15 @@ const m = vi.hoisted(() => ({
   history: vi.fn(),
   accessEvents: vi.fn(),
   record: vi.fn(),
+  preview: vi.fn(),
   event: vi.fn(),
   topology: vi.fn(),
   simulate: vi.fn(),
   commands: vi.fn(),
 }));
 vi.mock("@/store/app-store", () => ({
-  useAppStore: (f: any) => f({ organization: { id: "org" } }),
+  useAppStore: (f: any) =>
+    f({ organization: { id: "org" }, selectedProperty: { id: "site" } }),
 }));
 vi.mock("@/store/auth-store", () => ({
   useAuthStore: (f: any) => f({ user: { id: "user" } }),
@@ -140,6 +142,37 @@ beforeEach(() => {
     total_pages: 0,
   });
   m.event.mockResolvedValue(event);
+  m.preview.mockResolvedValue({
+    credential_reference: "INV-123456-001",
+    subject_type: "visitor",
+    credential_type: "invitation_code",
+    person_name: "Ade Guest",
+    invitation: {
+      code: "INV-123456",
+      status: "approved",
+      purpose: null,
+      valid_from: "2026-11-07T09:00:00Z",
+      valid_to: "2026-11-07T18:00:00Z",
+      max_uses: 3,
+      uses_count: 0,
+      host_name: "Host Resident",
+      place_name: "North Campus",
+    },
+    guests: [
+      {
+        suffix: "001",
+        display_name: "Ade Guest",
+        phone: null,
+        state: "not_checked_in",
+      },
+    ],
+    requires_guest_selection: false,
+    selected_guest_suffix: "001",
+    suggested_direction: "entry",
+    can_check_in: true,
+    can_check_out: true,
+    blocking_reason: null,
+  });
   m.topology.mockResolvedValue({
     places: [
       {
@@ -206,9 +239,10 @@ it("creates idempotency keys without crypto.randomUUID on local HTTP", () => {
 it("lists every Site checkpoint with a direct console action", async () => {
   mount(<CheckpointDirectory />);
   expect(await screen.findByText("Main entrance")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Assign managers" })).toBeVisible();
   expect(screen.getByRole("link", { name: "Open console" })).toHaveAttribute(
     "href",
-    "/admin/checkpoints/console?gate=gate",
+    "/admin/checkpoints/console",
   );
   expect(
     screen
@@ -222,7 +256,7 @@ it("retries the same immutable passage after unknown failure then offers next pe
   m.record
     .mockRejectedValueOnce(new Error("network interrupted"))
     .mockResolvedValue({ ...event, replayed: true });
-  mount(<CheckpointConsole gateId="gate" />);
+  mount(<CheckpointConsole />);
   await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
@@ -230,10 +264,10 @@ it("retries the same immutable passage after unknown failure then offers next pe
   fireEvent.click(screen.getByRole("button", { name: "Check in" }));
   await screen.findByRole("button", { name: "Retry same passage" });
   expect(screen.getByLabelText("Credential")).toBeDisabled();
-  const first = m.record.mock.calls[0][1];
+  const first = m.record.mock.calls[0][0];
   fireEvent.click(screen.getByRole("button", { name: "Retry same passage" }));
   await screen.findByText("Entry permitted");
-  expect(m.record.mock.calls[1][1]).toEqual(first);
+  expect(m.record.mock.calls[1][0]).toEqual(first);
   expect(first.idempotency_key).toBeTruthy();
   expect(screen.getByText(/Previously recorded/)).toBeInTheDocument();
   expect(m.simulate).toHaveBeenCalledWith(
@@ -268,14 +302,14 @@ it("distinguishes denied result and checkout direction", async () => {
     command: null,
     lane: { observed_state: "closed" },
   });
-  mount(<CheckpointConsole gateId="gate" />);
+  mount(<CheckpointConsole />);
   await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Check out" }));
   await screen.findByText("Access denied");
-  expect(screen.getByText("not present")).toBeInTheDocument();
+  expect(screen.getByText("Not present")).toBeInTheDocument();
   expect(screen.getByText("2. Device command")).toBeInTheDocument();
   expect(screen.getByText("No command")).toBeInTheDocument();
 });
@@ -286,7 +320,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
     value: false,
   });
   m.record.mockResolvedValue(event);
-  mount(<CheckpointConsole gateId="gate" />);
+  mount(<CheckpointConsole />);
   await screen.findAllByText("Main entrance");
   fireEvent.change(screen.getByLabelText("Credential"), {
     target: { value: "VISIT-OFFLINE" },
@@ -312,12 +346,25 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
   expect(screen.queryByText(/provisional passage queued/i)).toBeNull();
 });
-it("fails closed for missing permission instead of loading forever", async () => {
+it("keeps the console visible and lets the API enforce recording permission", async () => {
   m.permissions = [];
-  mount(<CheckpointConsole gateId="gate" />);
-  await screen.findByText("You do not have checkpoint recording permission.");
-  expect(m.console).not.toHaveBeenCalled();
-  expect(m.record).not.toHaveBeenCalled();
+  m.console.mockRejectedValue(
+    new Error("No checkpoint is assigned to the signed-in Site manager"),
+  );
+  m.record.mockRejectedValue(
+    new Error("Checkpoint recording permission is required"),
+  );
+  mount(<CheckpointConsole />);
+  await screen.findByText("No checkpoint assigned");
+  expect(
+    screen.getByRole("heading", { name: "Check-in console" }),
+  ).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Credential"), {
+    target: { value: "VISIT123" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
+  await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
+  expect(m.console).toHaveBeenCalledWith();
 });
 it("does not show a passage fetched under another gate route", async () => {
   m.event.mockResolvedValue({ ...event, gate_id: "other" });
@@ -328,4 +375,152 @@ it("does not show a passage fetched under another gate route", async () => {
   expect(
     screen.queryByRole("heading", { name: "Allowed · Check-in" }),
   ).toBeNull();
+});
+
+it("resolves the assigned console without fetching gates or sending a gate ID", async () => {
+  mount(<CheckpointConsole />);
+  await screen.findAllByText("Main entrance");
+  expect(m.console).toHaveBeenCalledWith();
+  expect(m.gates).not.toHaveBeenCalled();
+});
+
+it("lists every visitor on a group invitation and records the chosen suffix", async () => {
+  m.preview.mockImplementation(async (body: { guest_suffix?: string }) => ({
+    credential_reference: body.guest_suffix
+      ? `INV-123456-${body.guest_suffix}`
+      : "INV-123456",
+    subject_type: "visitor",
+    credential_type: "invitation_code",
+    person_name: "Ade Guest",
+    invitation: {
+      code: "INV-123456",
+      status: "approved",
+      purpose: null,
+      valid_from: "2026-11-07T09:00:00Z",
+      valid_to: "2026-11-07T18:00:00Z",
+      max_uses: 5,
+      uses_count: 0,
+      host_name: "Host Resident",
+      place_name: "North Campus",
+    },
+    guests: [
+      {
+        suffix: "001",
+        display_name: "Ade Guest",
+        phone: null,
+        state: "not_checked_in",
+      },
+      {
+        suffix: "002",
+        display_name: "Bola Guest",
+        phone: null,
+        state: "not_checked_in",
+      },
+    ],
+    requires_guest_selection: !body.guest_suffix,
+    selected_guest_suffix: body.guest_suffix ?? null,
+    suggested_direction: body.guest_suffix ? "entry" : null,
+    can_check_in: Boolean(body.guest_suffix),
+    can_check_out: false,
+    blocking_reason: body.guest_suffix ? null : "guest_suffix_required",
+  }));
+  m.record.mockResolvedValue(event);
+
+  mount(<CheckpointConsole />);
+  await screen.findAllByText("Main entrance");
+  fireEvent.change(screen.getByLabelText("Credential"), {
+    target: { value: "123456" },
+  });
+
+  expect(
+    await screen.findByText(/Visitors on this invitation \(2\)/),
+  ).toBeVisible();
+  expect(screen.getByRole("button", { name: "Check in" })).toBeDisabled();
+  expect(
+    screen.getByText(/This invitation covers several visitors/),
+  ).toBeVisible();
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Bola Guest/ }),
+  );
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Check in" })).toBeEnabled(),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
+  await waitFor(() =>
+    expect(m.record).toHaveBeenCalledWith(
+      expect.objectContaining({ credential: "123456", guest_suffix: "002" }),
+    ),
+  );
+});
+
+it("checks in a single visitor without asking for a guest suffix", async () => {
+  m.record.mockResolvedValue(event);
+  mount(<CheckpointConsole />);
+  await screen.findAllByText("Main entrance");
+  fireEvent.change(screen.getByLabelText("Credential"), {
+    target: { value: "INV-123456" },
+  });
+
+  expect(
+    await screen.findByText(/Single visitor invited — Ade Guest/),
+  ).toBeVisible();
+  expect(screen.queryByText(/Visitors on this invitation/)).toBeNull();
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Check in" })).toBeEnabled(),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
+  await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
+});
+
+it("explains an unapproved invitation instead of a bare reason code", async () => {
+  m.preview.mockResolvedValue({
+    credential_reference: "INV-123456",
+    subject_type: "visitor",
+    credential_type: "invitation_code",
+    person_name: "Ade Guest",
+    invitation: {
+      code: "INV-123456",
+      status: "requested",
+      purpose: null,
+      valid_from: "2026-11-07T09:00:00Z",
+      valid_to: "2026-11-07T18:00:00Z",
+      max_uses: 1,
+      uses_count: 0,
+      host_name: "Host Resident",
+      place_name: "North Campus",
+    },
+    guests: [
+      {
+        suffix: "001",
+        display_name: "Ade Guest",
+        phone: null,
+        state: "not_checked_in",
+      },
+    ],
+    requires_guest_selection: false,
+    selected_guest_suffix: "001",
+    suggested_direction: null,
+    can_check_in: false,
+    can_check_out: false,
+    blocking_reason: "authorization_requested",
+  });
+
+  mount(<CheckpointConsole />);
+  await screen.findAllByText("Main entrance");
+  fireEvent.change(screen.getByLabelText("Credential"), {
+    target: { value: "INV-123456" },
+  });
+
+  expect(
+    (
+      await screen.findAllByText(
+        /still awaiting approval, so nobody can check in yet/i,
+      )
+    ).length,
+  ).toBeGreaterThan(0);
+  expect(screen.getByRole("button", { name: "Check in" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Check out" })).toBeDisabled();
 });

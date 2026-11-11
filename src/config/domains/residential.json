@@ -15,7 +15,7 @@
       "items": [
         {
           "label": "Residential overview",
-          "href": "/admin/residential",
+          "href": "/admin",
           "icon": "home",
           "module": "residential"
         },
@@ -52,6 +52,12 @@
       "label": "Finance",
       "items": [
         {
+          "label": "Leases & agreements",
+          "href": "/admin/residential/leases",
+          "icon": "scale",
+          "module": "leases"
+        },
+        {
           "label": "Bills & collections",
           "href": "/admin/charges",
           "icon": "receipt",
@@ -84,12 +90,6 @@
           "module": "maintenance"
         },
         {
-          "label": "Visitors & access",
-          "href": "/admin/residential/visitors",
-          "icon": "shield",
-          "module": "access_control"
-        },
-        {
           "label": "Announcements",
           "href": "/admin/residential/announcements",
           "icon": "megaphone",
@@ -102,34 +102,49 @@
       "label": "Access",
       "items": [
         {
-          "label": "Checkpoints",
-          "href": "/admin/checkpoints",
+          "label": "Gates",
+          "href": "/admin/gates",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",
           "icon": "scan",
-          "module": "check_in_out"
+          "permission": "checkpoint_events.record",
+          "module": "access_control"
         },
         {
           "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
-          "module": "check_in_out"
+          "permission": "visit_authorizations.list",
+          "module": "access_control"
+        },
+        {
+          "label": "Visitors",
+          "href": "/admin/residential/visitors",
+          "icon": "shield",
+          "module": "access_control"
         },
         {
           "label": "Movement log",
           "href": "/admin/passages",
           "icon": "history",
-          "module": "check_in_out"
+          "permission": "checkpoint_events.list",
+          "module": "access_control"
         }
       ]
     }
   ],
   "dashboard": {
-    "priorities": ["maintenance", "collections", "arrivals", "occupancy"]
+    "priorities": [
+      "maintenance",
+      "collections",
+      "arrivals",
+      "occupancy"
+    ],
+    "component": "residential"
   },
   "views": {
     "maintenance": {
@@ -141,11 +156,27 @@
         "status",
         "updated"
       ],
-      "filters": ["status", "priority", "category", "unit"]
+      "filters": [
+        "status",
+        "priority",
+        "category",
+        "unit"
+      ]
     },
     "residents": {
-      "columns": ["person", "unit", "role", "lease", "status", "balance"],
-      "filters": ["role", "unit", "status"]
+      "columns": [
+        "person",
+        "unit",
+        "role",
+        "lease",
+        "status",
+        "balance"
+      ],
+      "filters": [
+        "role",
+        "unit",
+        "status"
+      ]
     }
   },
   "maintenance": {
@@ -166,5 +197,104 @@
       "closed"
     ],
     "requires_access_authorization": true
-  }
+  },
+  "workspace_navigation": [
+    {
+      "id": "place",
+      "label": "My place",
+      "items": [
+        {
+          "label": "Home overview",
+          "href": "/workspace/{placeId}",
+          "icon": "home",
+          "module": "core"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Visitors & access",
+      "items": [
+        {
+          "label": "Invitations",
+          "href": "/workspace/{placeId}/invitations",
+          "icon": "ticket",
+          "module": "access_control"
+        },
+        {
+          "label": "Visitors",
+          "href": "/workspace/{placeId}/visitors",
+          "icon": "users",
+          "module": "access_control"
+        },
+        {
+          "label": "Movement log",
+          "href": "/workspace/{placeId}/movements",
+          "icon": "history",
+          "module": "access_control"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "items": [
+        {
+          "label": "Announcements",
+          "href": "/workspace/{placeId}/announcements",
+          "icon": "megaphone",
+          "module": "communication"
+        },
+        {
+          "label": "My charges",
+          "href": "/workspace/{placeId}/charges",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Maintenance requests",
+          "href": "/workspace/{placeId}/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "label": "Account",
+      "items": [
+        {
+          "label": "My profile",
+          "href": "/workspace/{placeId}/profile",
+          "icon": "user",
+          "module": "core"
+        },
+        {
+          "label": "Place settings",
+          "href": "/workspace/{placeId}/settings",
+          "icon": "settings",
+          "module": "people",
+          "place_admin_only": true
+        }
+      ]
+    }
+  ],
+  "workspace_dashboard": [
+    {
+      "section": "announcements",
+      "module": "communication"
+    },
+    {
+      "section": "charges",
+      "module": "billing"
+    },
+    {
+      "section": "maintenance",
+      "module": "maintenance"
+    },
+    {
+      "section": "invitations",
+      "module": "access_control"
+    }
+  ]
 }

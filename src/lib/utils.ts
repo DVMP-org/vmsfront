@@ -2,39 +2,43 @@ import { type ClassValue, clsx } from "clsx";
 import { formatDistanceToNow } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
+import { formatDateTime } from "./datetime";
+import { initials } from "./strings";
+
+// Formatting helpers live in focused modules and are re-exported here so
+// existing imports keep working while new code imports the specific module.
+export {
+  formatDate,
+  formatDateTime,
+  formatMonthYear,
+  formatTime,
+  formatDateRange,
+  fromDateInputValue,
+  isPast,
+  relativeTime,
+  toDate,
+  toDateInputValue,
+  toDateTimeInputValue,
+} from "./datetime";
+export {
+  humanize,
+  initials,
+  maskEmail,
+  normalizeCode,
+  normalizeKey,
+  pluralize,
+  slugify,
+  titleCase,
+  truncate,
+} from "./strings";
+export { formatAmount, formatMoney, sumAmounts } from "./currency";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date, format: "short" | "long" = "long"): string {
-  const options: Intl.DateTimeFormatOptions =
-    format === "short"
-      ? { year: "numeric", month: "short", day: "numeric" }
-      : { year: "numeric", month: "long", day: "numeric" };
-  return new Date(date).toLocaleDateString("en-US", options);
-}
-
-export function formatDateTime(date: string | Date): string {
-  return new Date(date).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-export function formatTime(date: string | Date): string {
-  return new Date(date).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export function getInitials(firstName?: string | null, lastName?: string | null): string {
-  const first = firstName?.charAt(0) || "";
-  const last = lastName?.charAt(0) || "";
-  return (first + last).toUpperCase() || "U";
+  return initials([firstName, lastName].filter(Boolean).join(" "), "U");
 }
 
 export function getFullName(
@@ -96,25 +100,6 @@ export const getStatusStyles = (status: string) => {
 export function truncateText(text: string, length: number = 50): string {
   if (text.length <= length) return text;
   return text.substring(0, length) + "...";
-}
-
-/**
- * Converts a string into title case, handling extra spaces and punctuation.
- *
- * @param {string} v - The input string.
- * @returns {string} - The title-cased string, or an empty string if input is falsy.
- */
-export function titleCase(v) {
-  if (!v) return "";
-
-  // Normalize whitespace and lowercase first
-  v = v.trim().replace(/\s+/g, " ").toLowerCase();
-  v = v.replace(/_/g, " ").replace(/-/g, " ");
-  // Convert to title case
-  return v
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
 
 /**

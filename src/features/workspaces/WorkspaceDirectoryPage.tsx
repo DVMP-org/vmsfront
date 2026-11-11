@@ -123,28 +123,7 @@ export function WorkspaceDirectoryPage() {
         <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[var(--vms-ink)] sm:text-[32px]">
           Choose your workspace
         </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[var(--vms-ink-muted)]">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--vms-surface-subtle)] text-[11px] font-semibold uppercase text-[var(--vms-ink)]">
-            {initials(userName)}
-          </span>
-          <span className="font-semibold text-[var(--vms-ink)]">
-            {userName}
-          </span>
-          <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
-          <span>
-            Role:{" "}
-            <span className="font-medium text-[var(--vms-ink)]">
-              {managementRole || "Organization member"}
-            </span>
-          </span>
-          <span className="hidden h-5 w-px bg-[var(--vms-line)] sm:block" />
-          <span>
-            Organization:{" "}
-            <span className="font-medium text-[var(--vms-ink)]">
-              {organization?.name || "Current organization"}
-            </span>
-          </span>
-        </div>
+
       </header>
 
       {notice ? (
@@ -156,24 +135,6 @@ export function WorkspaceDirectoryPage() {
           <span>{notice}</span>
         </div>
       ) : null}
-
-      <section
-        aria-label="Workspace summary"
-        className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <Metric icon={Building2} label="Properties" value={workspaces.length} />
-        <Metric
-          icon={ShieldCheck}
-          label="Management"
-          value={managedPropertyCount}
-        />
-        <Metric
-          icon={UserRound}
-          label="Personal access"
-          value={personalAccessCount}
-        />
-        <Metric icon={KeyRound} label="Active accesses" value={accessCount} />
-      </section>
 
       {context.isError ? (
         <StatusPanel
@@ -213,7 +174,11 @@ export function WorkspaceDirectoryPage() {
                   workspace={workspace}
                   organizationUseCase={organization?.use_case}
                   selected={selectedWorkspace?.key === workspace.key}
-                  onSelect={() => setSelectedPropertyId(workspace.key)}
+                  onSelect={() => {
+                    const personal = workspace.accesses.find(access => access.area !== "management");
+                    if (personal) openAccess(workspace, personal);
+                    else setSelectedPropertyId(workspace.key);
+                  }}
                 />
               ))}
             </div>

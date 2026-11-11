@@ -113,7 +113,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={asChild && (disabled || isLoading) ? true : undefined}
         {...props}
       >
-        {content}
+        {asChild ? children : content}
       </Component>
     );
   },

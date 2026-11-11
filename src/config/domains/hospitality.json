@@ -15,7 +15,7 @@
       "items": [
         {
           "label": "Hospitality overview",
-          "href": "/admin/hospitality",
+          "href": "/admin",
           "icon": "bed",
           "module": "hospitality"
         },
@@ -88,8 +88,8 @@
       "label": "Access",
       "items": [
         {
-          "label": "Checkpoints",
-          "href": "/admin/checkpoints",
+          "label": "Gates",
+          "href": "/admin/gates",
           "icon": "scan",
           "module": "check_in_out"
         },
@@ -121,7 +121,8 @@
       "room_readiness",
       "maintenance",
       "folio_balance"
-    ]
+    ],
+    "component": "hospitality"
   },
   "views": {
     "stays": {
@@ -133,7 +134,12 @@
         "stay_status",
         "folio"
       ],
-      "filters": ["stay_status", "room_type", "arrival", "departure"]
+      "filters": [
+        "stay_status",
+        "room_type",
+        "arrival",
+        "departure"
+      ]
     },
     "maintenance": {
       "columns": [
@@ -144,7 +150,12 @@
         "room_status",
         "status"
       ],
-      "filters": ["priority", "room", "room_status", "status"]
+      "filters": [
+        "priority",
+        "room",
+        "room_status",
+        "status"
+      ]
     }
   },
   "maintenance": {
@@ -165,5 +176,108 @@
       "closed"
     ],
     "affects_room_availability": true
-  }
+  },
+  "workspace_navigation": [
+    {
+      "id": "place",
+      "label": "My place",
+      "items": [
+        {
+          "label": "Stay overview",
+          "href": "/workspace/{placeId}",
+          "icon": "home",
+          "module": "core"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "label": "Visitors & access",
+      "items": [
+        {
+          "label": "Invitations",
+          "href": "/workspace/{placeId}/invitations",
+          "icon": "ticket",
+          "module": "access_control"
+        },
+        {
+          "label": "Visitors",
+          "href": "/workspace/{placeId}/visitors",
+          "icon": "users",
+          "module": "access_control"
+        },
+        {
+          "label": "Movement log",
+          "href": "/workspace/{placeId}/movements",
+          "icon": "history",
+          "module": "access_control"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "items": [
+        {
+          "label": "Announcements",
+          "href": "/workspace/{placeId}/announcements",
+          "icon": "megaphone",
+          "module": "communication"
+        },
+        {
+          "label": "My charges",
+          "href": "/workspace/{placeId}/charges",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Maintenance requests",
+          "href": "/workspace/{placeId}/maintenance",
+          "icon": "wrench",
+          "module": "maintenance"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "label": "Account",
+      "items": [
+        {
+          "label": "My profile",
+          "href": "/workspace/{placeId}/profile",
+          "icon": "user",
+          "module": "core"
+        },
+        {
+          "label": "Place settings",
+          "href": "/workspace/{placeId}/settings",
+          "icon": "settings",
+          "module": "people",
+          "place_admin_only": true
+        }
+      ]
+    }
+  ],
+  "workspace_dashboard": [
+    {
+      "section": "stay",
+      "module": "hospitality"
+    },
+    {
+      "section": "invitations",
+      "module": "access_control"
+    },
+    {
+      "section": "announcements",
+      "module": "communication"
+    },
+    {
+      "section": "maintenance",
+      "module": "maintenance"
+    },
+    {
+      "section": "charges",
+      "module": "billing"
+    }
+  ]
 }

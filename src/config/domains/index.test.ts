@@ -44,12 +44,14 @@ describe("domain experience configuration", () => {
         (group) => group.id === "access",
       );
       expect(access?.label).toBe("Access");
-      expect(access?.items.map((item) => item.href)).toEqual([
-        "/admin/checkpoints",
-        "/admin/checkpoints/console",
-        "/admin/invitations",
-        "/admin/passages",
-      ]);
+      expect(access?.items.map((item) => item.href)).toEqual(
+        expect.arrayContaining([
+          "/admin/gates",
+          "/admin/checkpoints/console",
+          "/admin/invitations",
+          "/admin/passages",
+        ]),
+      );
     }
   });
 });

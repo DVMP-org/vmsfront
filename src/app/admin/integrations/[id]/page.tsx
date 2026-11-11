@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { integrationService } from "@/services/integration-service";
 import {
   Integration,
@@ -25,6 +25,7 @@ import {
   CredentialFormRenderer,
   IntegrationStatusToggle,
   IntegrationTypeBadge,
+  IntegrationTypeIcon,
 } from "@/app/admin/settings/integrations/components";
 import {
   ArrowLeft,
@@ -50,8 +51,11 @@ import { titleCase } from "@/lib/utils";
 export default function IntegrationDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const pathname = usePathname();
   const integrationId = params?.id as string;
+  const listPath = pathname?.startsWith("/organization")
+    ? "/organization/settings/integrations"
+    : "/admin/integrations";
 
   const [credentialValues, setCredentialValues] =
     useState<CredentialFormValues>({});
@@ -175,7 +179,9 @@ export default function IntegrationDetailsPage() {
       });
     }
 
-    updateMutation.mutate(updatedCredentials);
+    updateMutation.mutate(updatedCredentials, {
+      onSuccess: () => setHasChanges(false),
+    });
   };
 
   const handleToggle = () => {
@@ -207,10 +213,10 @@ export default function IntegrationDetailsPage() {
     return (
       <div className="space-y-4">
         <button
-          onClick={() => router.push("/admin/integrations")}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => router.push(listPath)}
+          className="inline-flex min-h-9 items-center gap-1.5 text-sm text-[var(--vms-ink-muted)] transition-colors hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Integrations
         </button>
         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -230,10 +236,10 @@ export default function IntegrationDetailsPage() {
     <div className="space-y-6">
       {/* Back Button */}
       <button
-        onClick={() => router.push("/admin/integrations")}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        onClick={() => router.push(listPath)}
+        className="inline-flex min-h-9 items-center gap-1.5 text-sm text-[var(--vms-ink-muted)] transition-colors hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to Integrations
       </button>
 
@@ -241,19 +247,11 @@ export default function IntegrationDetailsPage() {
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         {/* Logo & Info */}
         <div className="flex items-start gap-4 flex-1">
-          {integration?.logo_url ? (
-            <img
-              src={integration?.logo_url}
-              alt={integration.name}
-              className="h-14 w-14 rounded-lg object-contain bg-muted p-1"
-            />
-          ) : (
-            <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center">
-              <span className="text-xl font-semibold text-muted-foreground">
-                {titleCase(integration.name)}
-              </span>
-            </div>
-          )}
+          <IntegrationTypeIcon
+            type={integration.provider}
+            logoUrl={integration.logo_url}
+            className="h-14 w-14"
+          />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl font-semibold text-foreground">

@@ -179,7 +179,7 @@ export default function CommercialInventory() {
           </span>
           <span className="min-w-0">
             <Link
-              href={`/admin/properties/${row.id}`}
+              href={`/admin/places/${row.id}`}
               className="block truncate font-semibold underline-offset-4 hover:underline"
             >
               {row.name}
@@ -347,7 +347,7 @@ export default function CommercialInventory() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <Link
-                    href={`/admin/properties/${row.id}`}
+                    href={`/admin/places/${row.id}`}
                     className="font-semibold underline-offset-4 hover:underline"
                   >
                     {row.name}

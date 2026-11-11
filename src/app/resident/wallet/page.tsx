@@ -198,7 +198,7 @@ export default function WalletPage() {
                             variant="outline"
                             size="sm"
                             className="text-xs h-9 bg-background/50 hover:bg-background/80"
-                            onClick={() => router.push("/resident/profile")}
+                            onClick={() => router.push("/profile?context=resident")}
                         >
                             Account Settings
                         </Button>

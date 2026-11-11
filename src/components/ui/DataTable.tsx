@@ -52,7 +52,7 @@ export interface Column<T> {
   sortable?: boolean;
   className?: string;
   /** Hide column at this breakpoint and below: 'sm' = <640px, 'md' = <768px, 'lg' = <1024px */
-  responsiveHide?: "sm" | "md" | "lg";
+  responsiveHide?: "sm" | "md" | "lg" | "xl";
   /** Minimum width for this column (prevents squishing) */
   minWidth?: number;
   /** Keep utility/action columns out of the generated mobile summary. */
@@ -193,7 +193,7 @@ export function DataTable<T extends Record<string, any>>({
   onRetry,
   errorMessage = null,
   rowClassName,
-  enableRowStriping = true,
+  enableRowStriping = false,
   enableViewControls = true,
 }: DataTableProps<T>) {
   // Validate and normalize inputs to prevent runtime errors
@@ -869,7 +869,7 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div className={cn("space-y-3 xs:space-y-4", className)}>
       {(searchable || availableFilters.length > 0 || enableViewControls) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="m-2 flex flex-wrap items-center gap-2 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {searchable ? (
             <div className="relative min-w-[13rem] flex-1 sm:max-w-[22rem]">
               <Search
@@ -1043,7 +1043,7 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <div className="rounded-lg bg-card overflow-hidden">
+      <div className="m-2 rounded-lg bg-card overflow-hidden">
         {isLoading ? (
           <div
             className="space-y-px bg-border"
@@ -1144,6 +1144,8 @@ export function DataTable<T extends Record<string, any>>({
                             "hidden md:table-cell",
                           column.responsiveHide === "lg" &&
                             "hidden lg:table-cell",
+                          column.responsiveHide === "xl" &&
+                          "hidden xl:table-cell",
                         )}
                         style={
                           column.minWidth
@@ -1270,6 +1272,8 @@ export function DataTable<T extends Record<string, any>>({
                                   "hidden md:table-cell",
                                 column.responsiveHide === "lg" &&
                                   "hidden lg:table-cell",
+                                column.responsiveHide === "xl" &&
+                                "hidden xl:table-cell",
                               )}
                               style={
                                 column.minWidth
@@ -1341,9 +1345,9 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {showPagination && (
-        <div className="flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
+        <div className="m-2 flex flex-col gap-3 xs:flex-row xs:items-center xs:justify-between">
           <div className="flex items-center gap-4 text-xs xs:text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
+            <div className="px-2 flex items-center gap-2">
               <span className="whitespace-nowrap">Rows per page</span>
               <select
                 value={pageSize}

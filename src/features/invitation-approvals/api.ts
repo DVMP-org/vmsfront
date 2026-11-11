@@ -21,6 +21,7 @@ export interface InvitationListParams {
   pageSize?: number;
   search?: string;
   destinationPlaceId?: string;
+  site_id?: string;
 }
 
 export interface VisitSession {
@@ -68,6 +69,7 @@ export const invitationApprovalsApi = {
             page_size: params.pageSize ?? 25,
             ...(params.status !== "all" ? { status: params.status } : {}),
             ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+            ...(params.site_id ? { site_id: params.site_id } : {}),
             ...(params.destinationPlaceId
               ? { destination_place_id: params.destinationPlaceId }
               : {}),

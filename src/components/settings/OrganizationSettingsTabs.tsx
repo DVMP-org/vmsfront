@@ -35,7 +35,7 @@ const sections = [
   {
     id: "plugins",
     label: "Plugins",
-    href: "/organization/settings/plugins",
+    href: "/organization/plugins",
   },
   {
     id: "integrations",
@@ -96,6 +96,7 @@ export function organizationSettingsSectionFromPath(
     return "subscription";
   }
   if (pathname?.startsWith("/organization/settings/plugins")) return "plugins";
+  if (pathname?.startsWith("/organization/plugins")) return "plugins";
   if (pathname?.startsWith("/organization/settings/integrations")) {
     return "integrations";
   }

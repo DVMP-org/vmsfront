@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 const sections = [
   {
-    href: "/admin/commercial",
+    href: "/admin",
     label: "Overview",
     icon: LayoutDashboard,
   },
@@ -68,7 +68,7 @@ export function CommercialModuleNav() {
       <ul className="flex min-w-max gap-1 px-1">
         {sections.map((section) => {
           const active =
-            section.href === "/admin/commercial"
+            section.href === "/admin"
               ? pathname === section.href
               : pathname?.startsWith(section.href);
           const Icon = section.icon;

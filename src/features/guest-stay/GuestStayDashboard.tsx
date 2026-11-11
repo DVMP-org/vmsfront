@@ -16,17 +16,25 @@ import {
 } from "@/features/hospitality/contracts";
 import { guestStayApi } from "./api";
 
-export function GuestStayDashboard() {
+export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
   const stays = useQuery({
     queryKey: ["workspace", "guest-stays"],
     queryFn: guestStayApi.list,
     retry: false,
   });
-  const items = [...(stays.data?.items || [])].sort(
-    (left, right) =>
-      new Date(left.planned_check_in).getTime() -
-      new Date(right.planned_check_in).getTime(),
-  );
+  const items = [...(stays.data?.items || [])]
+    .filter(
+      (stay) =>
+        !placeId ||
+        stay.room_assignments.some(
+          (assignment) => assignment.room.id === placeId,
+        ),
+    )
+    .sort(
+      (left, right) =>
+        new Date(left.planned_check_in).getTime() -
+        new Date(right.planned_check_in).getTime(),
+    );
 
   return (
     <section
@@ -53,7 +61,9 @@ export function GuestStayDashboard() {
           className="inline-flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 py-2 text-xs font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface-subtle)] disabled:opacity-50"
         >
           <RefreshCw
-            className={stays.isFetching ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"}
+            className={
+              stays.isFetching ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"
+            }
           />
           Refresh
         </button>
@@ -127,9 +137,7 @@ function StayCard({ stay }: { stay: Stay }) {
           <div className="flex items-start gap-3">
             <CalendarClock className="mt-0.5 h-4 w-4 text-slate-400" />
             <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">
-                Arrival
-              </dt>
+              <dt className="text-xs text-[var(--vms-ink-muted)]">Arrival</dt>
               <dd className="mt-0.5 text-sm font-medium">
                 {formatDate(stay.planned_check_in)}
               </dd>
@@ -138,9 +146,7 @@ function StayCard({ stay }: { stay: Stay }) {
           <div className="flex items-start gap-3">
             <Clock3 className="mt-0.5 h-4 w-4 text-slate-400" />
             <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">
-                Departure
-              </dt>
+              <dt className="text-xs text-[var(--vms-ink-muted)]">Departure</dt>
               <dd className="mt-0.5 text-sm font-medium">
                 {formatDate(stay.planned_check_out)}
               </dd>

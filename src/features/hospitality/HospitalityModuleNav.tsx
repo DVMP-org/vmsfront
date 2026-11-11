@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   {
-    href: "/admin/hospitality",
+    href: "/admin",
     label: "Reservations",
     icon: ConciergeBell,
     exact: true,
@@ -58,7 +58,7 @@ export function HospitalityModuleNav() {
         const Icon = link.icon;
         const active =
           "exact" in link && link.exact
-            ? pathname === "/admin/hospitality"
+            ? pathname === "/admin"
             : pathname === link.href || pathname.startsWith(`${link.href}/`);
         return (
           <Link

@@ -12,13 +12,15 @@ import type {
   AdminProfileUpdatePayload,
 } from "@/types";
 
-export function useResidentProfileDetails() {
+export function useResidentProfileDetails(options?: { enabled?: boolean }) {
   return useQuery<Resident>({
     queryKey: ["profile", "resident"],
     queryFn: async () => {
       const response = await residentService.getResident();
       return response.data;
     },
+    retry: false,
+    enabled: options?.enabled ?? true,
   });
 }
 

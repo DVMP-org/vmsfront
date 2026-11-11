@@ -1,5 +1,5 @@
-import AdminIntegrationsPage from "@/app/admin/integrations/page";
+import IntegrationsSection from "@/app/admin/settings/components/IntegrationsSection";
 
 export default function OrganizationIntegrationsPage() {
-  return <AdminIntegrationsPage />;
+  return <IntegrationsSection embedded />;
 }
