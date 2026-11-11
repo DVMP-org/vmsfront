@@ -41,6 +41,7 @@
     "@types/react-datepicker": "^7.0.0",
     "@uiw/react-md-editor": "^3.25.6",
     "@vms/api-client": "workspace:*",
+    "@vms/ui": "workspace:*",
     "axios": "^1.6.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
