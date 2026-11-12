@@ -301,7 +301,7 @@ export default function CommercialTenants() {
       description="Tenant, member and employee relationships attached to commercial spaces, with explicit lease periods and expiry attention."
       primaryAction={
         canManagePeople ? (
-          <Button onClick={() => setCreateOpen(true)} disabled={!spaces.length}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add party
           </Button>
@@ -348,7 +348,6 @@ export default function CommercialTenants() {
               variant="outline"
               size="sm"
               onClick={() => setCreateOpen(true)}
-              disabled={!spaces.length}
             >
               <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
               Add a party
@@ -482,6 +481,11 @@ function AssignTenantModal({
           id="tenant-space"
           label="Commercial space"
           required
+          description={
+            spaces.length
+              ? undefined
+              : "This Site has no commercial spaces yet. Add one from inventory first."
+          }
           error={errors.space}
         >
           {(control) => (

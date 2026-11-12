@@ -134,7 +134,12 @@ export function descendantIds(
   rootId: string,
 ): Set<string> {
   const root = flattenPlaces(roots).find((place) => place.id === rootId);
-  if (!root) return new Set();
+  if (!root) {
+    // The id belongs to the Site, not a Place: the tree is already site-scoped,
+    // so every node is in scope. Returning an empty set here silently emptied
+    // inventory, parties and access screens on freshly created commercial Sites.
+    return new Set(flattenPlaces(roots).map((place) => place.id));
+  }
   return new Set(flattenPlaces([root]).map((place) => place.id));
 }
 

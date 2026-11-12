@@ -60,4 +60,14 @@ describe("commercial place scope", () => {
     expect(isCommercialInventory(tree[0].children[0].children[0])).toBe(true);
     expect(isCommercialInventory(tree[0].children[0])).toBe(false);
   });
+
+  it("scopes a Site id to the whole site tree", () => {
+    // A Site is not a Place, so the id never appears in the tree. Treat that as
+    // "everything in this site" instead of an empty scope that disables actions.
+    const siteScoped = descendantIds(
+      [...tree[0].children],
+      "site-id-that-is-not-a-place",
+    );
+    expect([...siteScoped]).toEqual(["building", "shop"]);
+  });
 });

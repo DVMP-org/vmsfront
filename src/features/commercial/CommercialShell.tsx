@@ -18,18 +18,27 @@ export function useCommercialAccess() {
   const organization = useAppStore((state) => state.organization);
   const selectedSite = useAppStore((state) => state.selectedSite);
   const can = access.allowed;
+  const administrator = access.isAdministrator;
 
   return {
     profile,
     organization,
     selectedSite,
     contextKey: access.contextKey,
-    canManageInventory: can("places.create") || can("places.update"),
-    canManagePeople: can("place_relationships.create") || can("parties.create"),
-    canManageFinance: can("charges.create") || can("charges.update"),
+    canManageInventory:
+      administrator || can("places.create") || can("places.update"),
+    canManagePeople:
+      administrator ||
+      can("place_relationships.create") ||
+      can("parties.create"),
+    canManageFinance:
+      administrator || can("charges.create") || can("charges.update"),
     canManageAccess:
-      can("place_relationships.create") || can("visit_authorizations.approve"),
+      administrator ||
+      can("place_relationships.create") ||
+      can("visit_authorizations.approve"),
     canManageMaintenance:
+      administrator ||
       can("maintenance.create") ||
       can("maintenance.update") ||
       can("places.update"),
