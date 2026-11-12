@@ -10,7 +10,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import CommercialInventory from "./CommercialInventory";
-import CommercialMaintenance from "./CommercialMaintenance";
 import CommercialOverview from "./CommercialOverview";
 import CommercialTenants from "./CommercialTenants";
 
@@ -106,6 +105,12 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/invitation-approvals/api", () => ({
   invitationApprovalsApi: { list: mocks.invitations },
 }));
+vi.mock("@/features/maintenance/api", () => ({
+  maintenanceApi: { list: async () => ({ items: [], total: 0 }) },
+}));
+vi.mock("@/features/contractors/api", () => ({
+  contractorsApi: { list: async () => ({ items: [], total: 0 }) },
+}));
 vi.mock("@/features/places/api", () => ({
   placesApi: {
     create: mocks.createProperty,
@@ -118,10 +123,7 @@ vi.mock("./api", () => ({
     tree: mocks.tree,
     relationships: mocks.relationships,
     chargeAssignments: mocks.assignment,
-    maintenance: mocks.maintenance,
     createRelationship: mocks.createRelationship,
-    createMaintenance: mocks.createMaintenance,
-    updateMaintenance: mocks.updateMaintenance,
   },
   flattenPlaces: (roots: TreeNode[]) => {
     const output: TreeNode[] = [];
@@ -249,7 +251,6 @@ describe("commercial operations", () => {
     mocks.tree.mockResolvedValue(tree);
     mocks.relationships.mockResolvedValue({ items: [tenant], total: 1 });
     mocks.assignment.mockResolvedValue([]);
-    mocks.maintenance.mockResolvedValue({ items: [], total: 0 });
     mocks.invitations.mockResolvedValue({ items: [], total: 0 });
     mocks.createProperty.mockResolvedValue(space());
     mocks.createRelationship.mockResolvedValue(tenant);
@@ -261,11 +262,13 @@ describe("commercial operations", () => {
     expect(
       await screen.findByRole("heading", { name: "Commercial overview" }),
     ).toBeInTheDocument();
-    expect(await screen.findByText("1 occupied")).toBeInTheDocument();
+    expect(await screen.findByText("100% occupied")).toBeInTheDocument();
     expect((await screen.findAllByText("Acme Studio")).length).toBeGreaterThan(
       0,
     );
     expect(screen.getAllByText("Lease attention").length).toBeGreaterThan(0);
+    expect(screen.getByText("Occupancy by building")).toBeInTheDocument();
+    expect(screen.getByText("Contractor access")).toBeInTheDocument();
   });
 
   it("creates a canonical office space", async () => {
@@ -331,20 +334,5 @@ describe("commercial operations", () => {
         }),
       ),
     );
-  });
-
-  it("reports a missing commercial maintenance API instead of a false zero", async () => {
-    mocks.maintenance.mockRejectedValue(
-      new Error("Commercial API unavailable"),
-    );
-    mount(<CommercialMaintenance />);
-
-    expect(
-      await screen.findByText("Commercial maintenance is unavailable."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Commercial API unavailable/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
   });
 });

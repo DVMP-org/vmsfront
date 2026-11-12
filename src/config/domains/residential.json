@@ -90,6 +90,12 @@
           "module": "maintenance"
         },
         {
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
+        },
+        {
           "label": "Announcements",
           "href": "/admin/residential/announcements",
           "icon": "megaphone",

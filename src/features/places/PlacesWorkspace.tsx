@@ -754,7 +754,7 @@ function SiteDetails({
           </Button>
           <Button asChild className="w-full" variant="outline">
             <Link
-              href="/admin/people"
+              href="/admin/contractors"
               onClick={() =>
                 useAppStore
                   .getState()
@@ -762,7 +762,7 @@ function SiteDetails({
               }
             >
               <Users className="h-4 w-4" aria-hidden="true" />
-              People
+              Contractors
             </Link>
           </Button>
           {allowed("update") && !editing ? (

@@ -223,7 +223,6 @@ export function OperationsDashboard({
             detail: `${metrics.active_relationships} active relationships`,
             icon: Users,
             tone: "ink",
-            href: "/admin/people",
           },
           {
             label: "Pending approvals",

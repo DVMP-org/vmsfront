@@ -54,14 +54,6 @@ export const adminLinks: AdminRoute[] = [
     group: "Workspace",
   },
   {
-    href: "/admin/people",
-    label: "People",
-    icon: Users,
-    module: "people",
-    group: "Workspace",
-    managementOnly: true,
-  },
-  {
     href: "/admin/managers",
     label: "Managers",
     icon: UserCog,

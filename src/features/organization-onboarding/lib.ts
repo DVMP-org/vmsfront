@@ -227,6 +227,7 @@ const MODULE_LABELS: Record<string, string> = {
     dashboard: "Operations dashboard",
     properties: "Sites, buildings and units",
     people: "People directory",
+    contractors: "Contractors and permits",
     check_in_out: "Check-in and check-out",
     gates: "Gates and checkpoints",
     charges: "Charges and invoicing",
@@ -253,6 +254,11 @@ const CORE_CAPABILITY_GROUPS: ModuleGroup[] = [
         modules: ["dashboard", "properties", "people"],
     },
     { key: "access", label: "Access", modules: ["check_in_out", "gates"] },
+    {
+        key: "staff",
+        label: "Staff & contractors",
+        modules: ["contractors"],
+    },
     { key: "finance", label: "Finance", modules: ["charges"] },
     { key: "community", label: "Community", modules: ["forum"] },
     {

@@ -51,8 +51,8 @@ export const commercialUnitTypes = [
   { value: "conference_room", label: "Conference room" },
 ] as const;
 
-export const tenantRoles = ["tenant", "member"] as const;
-export const accessRoles = ["employee", "contractor"] as const;
+export const tenantRoles = ["tenant", "member", "employee"] as const;
+export const accessRoles = ["employee"] as const;
 export const maintenancePriorities: MaintenancePriority[] = [
   "low",
   "normal",
