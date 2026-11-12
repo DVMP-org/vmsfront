@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { ShieldCheck, UserRoundPlus, Users } from "lucide-react";
-
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -26,6 +25,7 @@ import {
 } from "../lib";
 import { useContractors, useRevokeContractor } from "../queries";
 import { CreateContractorDrawer } from "./CreateContractorDrawer";
+import { EditContractorDrawer } from "./EditContractorDrawer";
 
 /**
  * Site contractors: external people and firms invited for a bounded window.
@@ -37,14 +37,22 @@ export function ContractorDirectory() {
   const access = useSiteAccess();
   const canManage = access.allowed(["contractors.create", "contractors.update"]);
   const [createOpen, setCreateOpen] = useState(false);
+  const [managed, setManaged] = useState<Contractor | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | Contractor["status"]>(
+    "all",
+  );
   const { confirmAction, confirmationDialog } = useConfirmAction();
   const query = useContractors(selectedSite?.id);
   const revoke = useRevokeContractor(selectedSite?.id);
 
-  const rows = useMemo(() => query.data?.items ?? [], [query.data]);
-  const active = rows.filter((row) => row.status === "active").length;
-  const attention = rows.filter(contractorNeedsAttention).length;
-  const permits = rows.filter((row) => row.requires_permit).length;
+  const allRows = useMemo(() => query.data?.items ?? [], [query.data]);
+  const rows =
+    statusFilter === "all"
+      ? allRows
+      : allRows.filter((row) => row.status === statusFilter);
+  const active = allRows.filter((row) => row.status === "active").length;
+  const attention = allRows.filter(contractorNeedsAttention).length;
+  const permits = allRows.filter((row) => row.requires_permit).length;
 
   const columns: Column<Contractor>[] = [
     {
@@ -110,23 +118,44 @@ export function ContractorDirectory() {
       header: "",
       accessor: (row) =>
         canManage && row.status !== "revoked" ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              confirmAction({
-                title: `Revoke ${row.contact_name}'s access?`,
-                description:
-                  "Their window closes immediately. Revoked contractors stay on record for audit.",
-                confirmLabel: "Revoke access",
-                onConfirm: () => revoke.mutateAsync(row.id),
-              })
-            }
-          >
-            Revoke
-          </Button>
-        ) : null,
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setManaged(row)}
+            >
+              Manage
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                confirmAction({
+                  title: `Revoke ${row.contact_name}'s access?`,
+                  description:
+                    "Their window closes immediately. Revoked contractors stay on record for audit.",
+                  confirmLabel: "Revoke access",
+                  onConfirm: () => revoke.mutateAsync(row.id),
+                })
+              }
+            >
+              Revoke
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setManaged(row)}
+            >
+              View
+            </Button>
+          </div>
+        ),
     },
   ];
 
@@ -187,6 +216,42 @@ export function ContractorDirectory() {
           </section>
 
           <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {(
+                [
+                  "all",
+                  "invited",
+                  "active",
+                  "suspended",
+                  "expired",
+                  "revoked",
+                ] as const
+              ).map((value) => {
+                const count =
+                  value === "all"
+                    ? allRows.length
+                    : allRows.filter((row) => row.status === value).length;
+                const isActive = statusFilter === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setStatusFilter(value)}
+                    aria-pressed={isActive}
+                    className={
+                      isActive
+                        ? "rounded-full bg-[var(--vms-action)] px-3 py-1.5 text-xs font-semibold text-[var(--vms-on-action)]"
+                        : "rounded-full bg-[var(--vms-surface-subtle)] px-3 py-1.5 text-xs font-semibold text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"
+                    }
+                  >
+                    {value === "all" ? "All" : contractorStatusLabel(value)}
+                    <span className="ml-1.5 tabular-nums opacity-70">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
             <DataTable
               data={rows}
               columns={columns}
@@ -234,6 +299,11 @@ export function ContractorDirectory() {
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         siteId={selectedSite?.id}
+      />
+      <EditContractorDrawer
+        contractor={managed}
+        siteId={selectedSite?.id}
+        onClose={() => setManaged(null)}
       />
       {confirmationDialog}
     </main>

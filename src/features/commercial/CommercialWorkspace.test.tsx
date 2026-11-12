@@ -307,12 +307,12 @@ describe("commercial operations", () => {
     mount(<CommercialTenants />);
 
     const assign = await screen.findByRole("button", {
-      name: "Assign business tenant",
+      name: "Add party",
     });
     await waitFor(() => expect(assign).toBeEnabled());
     fireEvent.click(assign);
     const dialog = await screen.findByRole("dialog", {
-      name: "Assign business tenant",
+      name: "Add party to a space",
     });
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Business organization" }),
@@ -321,7 +321,7 @@ describe("commercial operations", () => {
       target: { value: "2027-12-31" },
     });
     fireEvent.click(
-      within(dialog).getByRole("button", { name: "Assign tenant" }),
+      within(dialog).getByRole("button", { name: "Add party" }),
     );
 
     await waitFor(() =>
