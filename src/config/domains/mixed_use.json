@@ -20,10 +20,10 @@
           "module": "mixed_use"
         },
         {
-          "label": "Occupancy & tenancies",
-          "href": "/admin/people",
-          "icon": "users",
-          "module": "people"
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         }
       ]
     },

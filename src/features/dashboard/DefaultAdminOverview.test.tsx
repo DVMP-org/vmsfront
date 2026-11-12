@@ -239,7 +239,7 @@ describe("operating dashboard", () => {
     ).toBeNull();
   });
 
-  it("routes people work to the canonical property roster", () => {
+  it("shows people metrics without the retired roster link", () => {
     mocks.query.mockReturnValue({
       data: dashboard,
       isPending: false,
@@ -247,9 +247,10 @@ describe("operating dashboard", () => {
       refetch: mocks.refetch,
     });
     render(<AdminDashboardPage />);
+    expect(screen.getByText("People")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /active relationships/ }),
-    ).toHaveAttribute("href", "/admin/people");
+      screen.queryByRole("link", { name: /active relationships/ }),
+    ).toBeNull();
   });
 
   it("keeps access reports usable when analytics partially fails", () => {

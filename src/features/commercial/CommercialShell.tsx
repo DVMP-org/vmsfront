@@ -30,7 +30,9 @@ export function useCommercialAccess() {
     canManageAccess:
       can("place_relationships.create") || can("visit_authorizations.approve"),
     canManageMaintenance:
-      can("maintenance.manage") || can("places.update") || can("places.create"),
+      can("maintenance.create") ||
+      can("maintenance.update") ||
+      can("places.update"),
   };
 }
 

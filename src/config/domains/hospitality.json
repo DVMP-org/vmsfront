@@ -48,6 +48,12 @@
           "href": "/admin/hospitality/maintenance",
           "icon": "wrench",
           "module": "maintenance"
+        },
+        {
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         }
       ]
     },
