@@ -288,7 +288,7 @@ export default function CommercialAccess() {
       description="Time-bounded operating access for employees and contractors, kept separate from business tenancy and visitor invitations."
       primaryAction={
         canManageAccess ? (
-          <Button onClick={() => setCreateOpen(true)} disabled={!spaces.length}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Assign access
           </Button>

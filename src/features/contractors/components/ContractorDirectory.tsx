@@ -33,9 +33,13 @@ import { EditContractorDrawer } from "./EditContractorDrawer";
  * directories.
  */
 export function ContractorDirectory() {
-  const selectedSite = useAppStore((state) => state.selectedSite);
+  const storedSite = useAppStore((state) => state.selectedSite);
   const access = useSiteAccess();
-  const canManage = access.allowed(["contractors.create", "contractors.update"]);
+  const selectedSite =
+    access.workspace.data?.management?.selected_site ?? storedSite;
+  const canManage =
+    access.isAdministrator ||
+    access.allowed(["contractors.create", "contractors.update"]);
   const [createOpen, setCreateOpen] = useState(false);
   const [managed, setManaged] = useState<Contractor | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | Contractor["status"]>(

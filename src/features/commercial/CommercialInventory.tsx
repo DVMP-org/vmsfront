@@ -300,10 +300,7 @@ export default function CommercialInventory() {
       description="Office, shop, retail, warehouse and conference inventory with occupancy and operating state."
       primaryAction={
         canManageInventory ? (
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={!parents.length}
-          >
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add commercial space
           </Button>
@@ -491,7 +488,9 @@ function CommercialSpaceModal({
     event.preventDefault();
     const next: Record<string, string> = {};
     if (name.trim().length < 2) next.name = "Enter a space name.";
-    if (!parentId && !space) next.parent = "Choose the building or property.";
+    if (!parentId && !space && parents.length) {
+      next.parent = "Choose the building or property.";
+    }
     setErrors(next);
     if (Object.keys(next).length) return;
     save.mutate();
@@ -526,7 +525,12 @@ function CommercialSpaceModal({
           <Field
             id="commercial-parent"
             label="Building or property"
-            required={!space}
+            required={!space && parents.length > 0}
+            description={
+              parents.length
+                ? undefined
+                : "No buildings yet — this space is created at the top level of the Site."
+            }
             error={errors.parent}
           >
             {(control) => (
@@ -534,9 +538,12 @@ function CommercialSpaceModal({
                 {...control}
                 className={fieldControlClassName}
                 value={parentId}
-                disabled={!!space}
+                disabled={!!space || parents.length === 0}
                 onChange={(event) => setParentId(event.target.value)}
               >
+                {parents.length === 0 ? (
+                  <option value="">Top level of this Site</option>
+                ) : null}
                 {parents.map((parent) => (
                   <option key={parent.id} value={parent.id}>
                     {parent.name}
