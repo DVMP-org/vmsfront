@@ -39,10 +39,28 @@ export default function OrganizationsPage() {
     useEffect(() => {
         if (!singleOrganization) return;
         const destination = resolvePostAuthDestination([singleOrganization]);
-        if (!destination.startsWith("/") && typeof window !== "undefined") {
-            window.location.replace(destination);
+
+        // A relative destination is handled by the router; only the tenant
+        // subdomain handoff needs a full navigation.
+        if (destination.startsWith("/")) return;
+
+        const target = new URL(destination, window.location.origin);
+        if (target.origin === window.location.origin) {
+            router.replace(`${target.pathname}${target.search}`);
+            return;
         }
-    }, [singleOrganization]);
+
+        // If the tenant host rejects this session it bounces straight back
+        // here. Handing off again each time would reload this page forever, so
+        // allow one handoff per destination inside a short window and otherwise
+        // stay put and let the user pick an organization.
+        const key = "vms:tenant-handoff";
+        const lastHandoff = Number(window.sessionStorage.getItem(key) ?? 0);
+        if (Date.now() - lastHandoff < 10_000) return;
+
+        window.sessionStorage.setItem(key, String(Date.now()));
+        window.location.replace(destination);
+    }, [singleOrganization, router]);
 
     const handleSelectOrganization = (organization: Organization) => {
         setSelectedCard(`org-${organization.slug}`);

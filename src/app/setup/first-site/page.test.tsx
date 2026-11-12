@@ -72,7 +72,9 @@ describe("first-site onboarding", () => {
     ).toHaveTextContent("First Site");
     expect(screen.getByText("Back to plan")).toBeInTheDocument();
     expect(screen.getByLabelText(/Site name/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Operating type/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: /Operating type/ }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/Administrator email/)).toBeInTheDocument();
     expect(screen.queryByText("Property directory")).toBeNull();
   });

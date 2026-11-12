@@ -86,7 +86,6 @@ export function CommercialShell({
         primaryAction={primaryAction}
       />
 
-      <CommercialModuleNav />
 
       {!selectedSite ? (
         <PropertyContext contextKey={contextKey} />

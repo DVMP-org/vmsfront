@@ -61,10 +61,10 @@ describe("CreateOrganizationPage", () => {
     expect(
       screen.getByText("Draft restored from this browser."),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Organization name")).toHaveValue(
+    expect(screen.getByLabelText(/Organization name/)).toHaveValue(
       "Harbour Operations",
     );
-    expect(screen.getByLabelText("Workspace URL")).toHaveValue(
+    expect(screen.getByLabelText(/Workspace URL/)).toHaveValue(
       "harbour-operations",
     );
   });
@@ -72,10 +72,10 @@ describe("CreateOrganizationPage", () => {
   it("creates the organization and explains the next setup steps", () => {
     render(<CreateOrganizationPage />);
 
-    fireEvent.change(screen.getByLabelText("Organization name"), {
+    fireEvent.change(screen.getByLabelText(/Organization name/), {
       target: { value: "Harbour Hotel Group" },
     });
-    fireEvent.change(screen.getByLabelText("Description (optional)"), {
+    fireEvent.change(screen.getByLabelText(/Description/), {
       target: { value: "Hotel operations" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Continue to plan" }));
@@ -86,14 +86,14 @@ describe("CreateOrganizationPage", () => {
       description: "Hotel operations",
     });
     expect(screen.getAllByText("Plan").length).toBeGreaterThan(0);
-    expect(screen.getByText("First workspace")).toBeInTheDocument();
+    expect(screen.getAllByText("First Site").length).toBeGreaterThan(0);
   });
 
   it("explains an unavailable workspace URL immediately", async () => {
     mocks.checkSlug.mockResolvedValue(false);
     render(<CreateOrganizationPage />);
 
-    fireEvent.change(screen.getByLabelText("Organization name"), {
+    fireEvent.change(screen.getByLabelText(/Organization name/), {
       target: { value: "Existing Estate" },
     });
 
@@ -106,7 +106,7 @@ describe("CreateOrganizationPage", () => {
       screen.getByRole("button", { name: "Continue to plan" }),
     ).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText("Workspace URL"), {
+    fireEvent.change(screen.getByLabelText(/Workspace URL/), {
       target: { value: "new-estate" },
     });
     mocks.checkSlug.mockResolvedValue(true);

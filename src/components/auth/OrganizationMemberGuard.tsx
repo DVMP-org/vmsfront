@@ -4,15 +4,25 @@ import { useMemo } from "react";
 import { useMyOrganizations } from "@/hooks/use-organization";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { Building2, Home, ArrowLeft, RefreshCw } from "lucide-react";
+import {
+  PageSkeleton,
+  StandalonePageSkeleton,
+} from "@/components/ui/Skeleton";
 import { Button } from "../ui/Button";
 import Link from "next/link";
 import { getApiErrorStatus } from "@/lib/error-utils";
 interface OrganizationMemberGuardProps {
   children: React.ReactNode;
+  /**
+   * Routes that render their own chrome (lobby, plans, place workspace) need a
+   * full-page skeleton; routes inside a shell need only the content area.
+   */
+  standalone?: boolean;
 }
 
 export function OrganizationMemberGuard({
   children,
+  standalone = false,
 }: OrganizationMemberGuardProps) {
   // Fetch current organization from subdomain
   const {
@@ -58,27 +68,10 @@ export function OrganizationMemberGuard({
   const hasAccess = orgExists && isMember;
 
   if (isLoading) {
-    return (
-      <div
-        className="space-y-4 py-2"
-        role="status"
-        aria-label="Loading organization"
-      >
-        <div className="space-y-2">
-          <span className="block h-8 w-56 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
-          <span className="block h-4 w-full max-w-xl animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div
-              key={index}
-              className="h-28 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]"
-            />
-          ))}
-        </div>
-        <div className="h-64 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />
-        <span className="sr-only">Loading organization</span>
-      </div>
+    return standalone ? (
+      <StandalonePageSkeleton label="Loading organization" />
+    ) : (
+      <PageSkeleton label="Loading organization" />
     );
   }
 

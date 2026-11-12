@@ -7,6 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";
+import { BootSkeleton } from "@/components/ui/Skeleton";
 
 export const metadata: Metadata = {
   title: "VMS Core — Property Operations",
@@ -86,7 +87,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<BootSkeleton label="Loading VMS Core" />}>
           <Providers>{children}</Providers>
         </Suspense>
       </body>

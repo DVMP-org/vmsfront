@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { hasAdminPermission } from "@/lib/permissions";
@@ -25,14 +26,7 @@ export function OrganizationAccessGuard({
     const organization = useCurrentOrganization();
 
     if (profile.isPending || organization.isPending) {
-        return (
-            <div role="status" className="space-y-4">
-                <span className="sr-only">Checking organization administration access</span>
-                <div className="h-8 w-56 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
-                <div className="h-4 w-full max-w-xl animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
-                <div className="h-64 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />
-            </div>
-        );
+        return <PageSkeleton label="Loading organization administration" />;
     }
 
     const canManage =

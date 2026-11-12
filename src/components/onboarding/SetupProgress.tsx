@@ -1,48 +1,87 @@
-import { Check, Circle } from "lucide-react";
+import { Check } from "lucide-react";
+
+import {
+  ONBOARDING_STEPS,
+  onboardingStepState,
+  type OnboardingStepId,
+} from "@/features/organization-onboarding/lib";
 import { cn } from "@/lib/utils";
 
-export type OrganizationSetupStep = "organization" | "plan" | "site";
+/** Kept for existing imports; the canonical union lives in the feature lib. */
+export type OrganizationSetupStep = OnboardingStepId;
 
-const steps: Array<{ id: OrganizationSetupStep; label: string }> = [
-  { id: "organization", label: "Organization" },
-  { id: "plan", label: "Plan" },
-  { id: "site", label: "First Site" },
-];
+const STATE_COPY = {
+  complete: "Done",
+  current: "In progress",
+  upcoming: "Up next",
+} as const;
 
+/**
+ * Three-step progress rail shared by the organization, plan and first-Site
+ * steps. It reports state rather than acting as navigation: the steps are
+ * sequential and only the server decides when one is finished.
+ */
 export function SetupProgress({
   currentStep,
 }: {
-  currentStep: OrganizationSetupStep;
-}) {
-  const currentIndex = steps.findIndex((step) => step.id === currentStep);
-
+    currentStep: OnboardingStepId;
+  }) {
   return (
     <ol
       aria-label="Organization setup progress"
-      className="grid gap-2 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2 sm:grid-cols-3"
+      className="grid gap-1 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-1.5 sm:grid-cols-3"
     >
-      {steps.map((step, index) => {
-        const complete = index < currentIndex;
-        const current = index === currentIndex;
+      {ONBOARDING_STEPS.map((step, index) => {
+        const state = onboardingStepState(step.id, currentStep);
         return (
           <li
             key={step.id}
-            aria-current={current ? "step" : undefined}
+            aria-current={state === "current" ? "step" : undefined}
+            data-state={state}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-              current &&
-                "bg-[var(--vms-surface-subtle)] font-semibold text-[var(--vms-ink)]",
-              !current && "text-[var(--vms-ink-muted)]",
+              "relative flex items-center gap-2.5 rounded-[var(--vms-radius-control)] px-3 py-2.5",
+              state === "current" && "bg-[var(--vms-surface-subtle)]",
             )}
           >
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--vms-surface)] text-[10px] ring-1 ring-[var(--vms-line)]">
-              {complete ? (
-                <Check className="h-3.5 w-3.5 text-[var(--vms-success)]" />
+            <span
+              aria-hidden="true"
+              className={cn(
+                "grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold tabular-nums ring-1",
+                state === "complete" &&
+                "bg-[var(--vms-success-subtle)] text-[var(--vms-success)] ring-[color-mix(in_srgb,var(--vms-success)_30%,transparent)]",
+                state === "current" &&
+                "bg-[var(--vms-action)] text-[var(--vms-on-action)] ring-transparent",
+                state === "upcoming" &&
+                "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] ring-[var(--vms-line)]",
+              )}
+            >
+              {state === "complete" ? (
+                <Check className="h-3.5 w-3.5" />
               ) : (
-                <Circle className="h-3 w-3" />
+                  index + 1
               )}
             </span>
-            {step.label}
+            <span className="min-w-0">
+              <span
+                className={cn(
+                  "block truncate text-sm",
+                  state === "current"
+                    ? "font-semibold text-[var(--vms-ink)]"
+                    : "font-medium text-[var(--vms-ink-muted)]",
+                )}
+              >
+                {step.label}
+              </span>
+              <span className="mt-0.5 block truncate text-[11px] leading-4 text-[var(--vms-ink-muted)]">
+                {STATE_COPY[state]}
+              </span>
+            </span>
+            {index < ONBOARDING_STEPS.length - 1 ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-0 top-1/2 hidden h-8 w-px -translate-y-1/2 bg-[var(--vms-line)] sm:block"
+              />
+            ) : null}
           </li>
         );
       })}

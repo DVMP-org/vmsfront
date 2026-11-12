@@ -105,7 +105,13 @@ function extractOrgSubdomain(hostname: string): string | null {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get("host") || "";
+  // Prefer the original viewer host. Behind CloudFront the Host header can be
+  // rewritten to the origin hostname, which makes every tenant request look
+  // like a base-domain request and sends /organization to the apex.
+  const hostname =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    "";
 
   // Extract organization subdomain
   const orgSubdomain = extractOrgSubdomain(hostname);
