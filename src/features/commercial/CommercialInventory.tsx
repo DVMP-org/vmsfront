@@ -40,20 +40,21 @@ import {
   commercialApi,
   descendantIds,
   flattenPlaces,
-  isCommercialInventory,
+  isCommercialPlace,
 } from "./api";
 import {
   commercialSpaceKind,
   commercialSpaceTypeLabel,
   commercialSpaceTypes,
-  commercialUnitTypes,
   titleCase,
 } from "./contracts";
 
 type InventoryRow = Place & {
   location: string;
   commercial_type: string;
-  occupancy: "occupied" | "vacant";
+  /** A building holds spaces instead of being occupied by one relationship. */
+  is_container: boolean;
+  occupancy: "occupied" | "vacant" | "container";
   occupants: string;
   state: "active" | "archived";
 };
@@ -98,14 +99,22 @@ export default function CommercialInventory() {
       names.push(relationship.party.display_name);
       byPlace.set(relationship.place.id, names);
     }
-    return scopedPlaces.filter(isCommercialInventory).map((place) => {
+    return scopedPlaces.filter(isCommercialPlace).map((place) => {
       const parent = place.parent_id ? byId.get(place.parent_id) : null;
       const occupants = byPlace.get(place.id) || [];
+      const isContainer = place.kind === "building";
       return {
         ...place,
-        location: parent?.name || "Place",
-        commercial_type: place.building_type || "office",
-        occupancy: occupants.length ? "occupied" : "vacant",
+        location: parent?.name || "Top level of this Site",
+        commercial_type: isContainer
+          ? "building"
+          : place.building_type || "office",
+        is_container: isContainer,
+        occupancy: isContainer
+          ? "container"
+          : occupants.length
+            ? "occupied"
+            : "vacant",
         occupants: occupants.join(", "),
         state: place.is_active ? "active" : "archived",
       };
@@ -145,7 +154,7 @@ export default function CommercialInventory() {
       field: "commercial_type",
       label: "Space type",
       type: "select",
-      options: commercialUnitTypes.map((type) => ({
+      options: commercialSpaceTypes.map((type) => ({
         value: type.value,
         label: type.label,
       })),
@@ -220,9 +229,15 @@ export default function CommercialInventory() {
       sortable: true,
       accessor: (row) => (
         <StatusBadge
-          tone={row.occupancy === "occupied" ? "success" : "neutral"}
+          tone={
+            row.is_container
+              ? "info"
+              : row.occupancy === "occupied"
+                ? "success"
+                : "neutral"
+          }
         >
-          {titleCase(row.occupancy)}
+          {row.is_container ? "Container" : titleCase(row.occupancy)}
         </StatusBadge>
       ),
     },
@@ -231,7 +246,10 @@ export default function CommercialInventory() {
       header: "Business relationship",
       accessor: (row) => (
         <span className="block max-w-64 truncate">
-          {row.occupants || "No active relationship"}
+          {row.occupants ||
+            (row.is_container
+              ? "Holds lettable spaces"
+              : "No active relationship")}
         </span>
       ),
     },
@@ -314,13 +332,13 @@ export default function CommercialInventory() {
           {
             icon: Building2,
             label: "Buildings",
-            value: parents.length,
+            value: rows.filter((row) => row.is_container).length,
             detail: "Containers for lettable spaces",
           },
           {
             icon: Building2,
             label: "Spaces",
-            value: rows.length,
+            value: rows.filter((row) => !row.is_container).length,
             detail: "Across this property hierarchy",
           },
           {
@@ -375,13 +393,22 @@ export default function CommercialInventory() {
                   </p>
                 </div>
                 <StatusBadge
-                  tone={row.occupancy === "occupied" ? "success" : "neutral"}
+                  tone={
+                    row.is_container
+                      ? "info"
+                      : row.occupancy === "occupied"
+                        ? "success"
+                        : "neutral"
+                  }
                 >
-                  {titleCase(row.occupancy)}
+                  {row.is_container ? "Container" : titleCase(row.occupancy)}
                 </StatusBadge>
               </div>
               <p className="text-xs text-[var(--vms-ink-muted)]">
-                {row.occupants || "No active business relationship"}
+                {row.occupants ||
+                  (row.is_container
+                    ? "Holds lettable spaces"
+                    : "No active business relationship")}
               </p>
               {canManageInventory ? (
                 <div className="flex gap-2">
@@ -592,11 +619,13 @@ function CommercialSpaceModal({
                     ? "Top level of this Site"
                     : "No building — top level of this Site"}
                 </option>
-                {parents.map((parent) => (
-                  <option key={parent.id} value={parent.id}>
-                    {parent.name}
-                  </option>
-                ))}
+                {parents
+                  .filter((parent) => parent.id !== space?.id)
+                  .map((parent) => (
+                    <option key={parent.id} value={parent.id}>
+                      {parent.name}
+                    </option>
+                  ))}
               </select>
             )}
           </Field>

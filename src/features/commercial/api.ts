@@ -143,11 +143,28 @@ export function descendantIds(
   return new Set(flattenPlaces([root]).map((place) => place.id));
 }
 
-export function isCommercialInventory(place: Place) {
+const lettableTypes = [
+  "office",
+  "shop",
+  "retail_unit",
+  "warehouse",
+  "conference_room",
+];
+
+/**
+ * Every Place that belongs to commercial inventory. Buildings are inventory
+ * too: they are what the lettable spaces sit in, so the inventory list shows
+ * them instead of counting them invisibly.
+ */
+export function isCommercialPlace(place: Place) {
+  if (place.kind === "building") return true;
   return (
     ["unit", "space"].includes(place.kind) &&
-    ["office", "shop", "retail_unit", "warehouse", "conference_room"].includes(
-      place.building_type || "",
-    )
+    lettableTypes.includes(place.building_type || "")
   );
+}
+
+/** Lettable spaces only: a building is a container, not a lease target. */
+export function isCommercialInventory(place: Place) {
+  return place.kind !== "building" && isCommercialPlace(place);
 }

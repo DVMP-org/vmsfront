@@ -76,7 +76,7 @@
           "module": "maintenance"
         },
         {
-          "label": "Staff access",
+          "label": "Employee access",
           "href": "/admin/commercial/access",
           "icon": "shield",
           "module": "access_control"

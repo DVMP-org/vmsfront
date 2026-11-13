@@ -142,6 +142,16 @@ vi.mock("./api", () => ({
     const root = flatten(roots).find((node) => node.id === rootId);
     return new Set(root ? flatten([root]).map((node) => node.id) : []);
   },
+  isCommercialPlace: (place: TreeNode) =>
+    place.kind === "building" ||
+    (["unit", "space"].includes(place.kind) &&
+      [
+        "office",
+        "shop",
+        "retail_unit",
+        "warehouse",
+        "conference_room",
+      ].includes(place.building_type || "")),
   isCommercialInventory: (place: TreeNode) =>
     ["unit", "space"].includes(place.kind) &&
     ["office", "shop", "retail_unit", "warehouse", "conference_room"].includes(
@@ -271,6 +281,17 @@ describe("commercial operations", () => {
     expect(screen.getAllByText("Lease attention").length).toBeGreaterThan(0);
     expect(screen.getByText("Occupancy by building")).toBeInTheDocument();
     expect(screen.getByText("Contractor access")).toBeInTheDocument();
+  });
+
+  it("lists buildings next to the spaces they contain", async () => {
+    mount(<CommercialInventory />);
+
+    expect(
+      (await screen.findAllByRole("link", { name: "Harbour Tower" })).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Container").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Building").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Suite 4A").length).toBeGreaterThan(0);
   });
 
   it("creates a canonical office space", async () => {
