@@ -58,6 +58,12 @@
           "module": "leases"
         },
         {
+          "label": "Lease register",
+          "href": "/admin/leases",
+          "icon": "document",
+          "module": "leases"
+        },
+        {
           "label": "Bills & collections",
           "href": "/admin/charges",
           "icon": "receipt",

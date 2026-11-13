@@ -30,6 +30,12 @@
           "href": "/admin/commercial/tenants",
           "icon": "users",
           "module": "people"
+        },
+        {
+          "label": "Lease register",
+          "href": "/admin/leases",
+          "icon": "document",
+          "module": "leases"
         }
       ]
     },
