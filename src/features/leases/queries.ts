@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { parseApiError } from "@/lib/error-utils";
 
 import { placeRelationshipsApi, placesApi } from "@/features/places/api";
+import { partiesApi, type PartyInput } from "@/features/parties/api";
 
 import {
     leasesApi,
@@ -131,6 +132,29 @@ export function useLeasePlan(
         queryFn: () => leasesApi.plan(leaseId!),
         enabled: Boolean(siteId && leaseId && enabled),
         staleTime: 0,
+    });
+}
+
+/**
+ * Create the Party inline while drafting a lease.
+ *
+ * A new tenant should not have to be registered somewhere else first: a lease
+ * names a Party, so creating both together is one decision for the operator.
+ */
+export function useCreateLeaseParty(siteId?: string | null) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (input: PartyInput) => partiesApi.create(input),
+        onSuccess: async (party) => {
+            await Promise.all([
+                client.invalidateQueries({ queryKey: ["leases"] }),
+                client.invalidateQueries({ queryKey: ["commercial"] }),
+                client.invalidateQueries({ queryKey: ["place"] }),
+                client.invalidateQueries({ queryKey: leaseKeys.all(siteId) }),
+            ]);
+            toast.success(`${party.display_name} was added as a party`);
+        },
+        onError: (error) => toast.error(parseApiError(error).message),
     });
 }
 
