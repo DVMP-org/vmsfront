@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ChevronsDownUp, ChevronsUpDown, Plus, Search, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -29,6 +30,8 @@ import { SiteDirectoryTable } from "./SiteDirectoryTable";
 type StatusFilter = "all" | "active" | "archived";
 
 export function SitesDirectoryPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const current = useCurrentOrganization();
     const slug = current.organization?.slug ?? null;
     const sitesQuery = useOrganizationSites(slug);
@@ -51,6 +54,24 @@ export function SitesDirectoryPage() {
         profile.isSuccess &&
         !profile.isError &&
         hasAdminPermission(profile.data, `places.${action}`);
+    const canCreateSite = allowed("create");
+
+    useEffect(() => {
+        if (searchParams?.get("create") === "site" && canCreateSite) {
+            setParentSite(null);
+            setCreateOpen(true);
+        }
+    }, [canCreateSite, searchParams]);
+
+    function closeCreate() {
+        setCreateOpen(false);
+        if (searchParams?.get("create") !== "site") return;
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("create");
+        router.replace(`/organization/sites${next.size ? `?${next}` : ""}`, {
+            scroll: false,
+        });
+    }
 
     useEffect(() => {
         if (initialized.current || sites.length === 0) return;
@@ -303,7 +324,7 @@ export function SitesDirectoryPage() {
 
             <CreateSiteDrawer
                 isOpen={createOpen}
-                onClose={() => setCreateOpen(false)}
+                onClose={closeCreate}
                 slug={slug}
                 sites={sites}
                 parentSite={parentSite}

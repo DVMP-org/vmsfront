@@ -77,9 +77,7 @@ export function HospitalityAdminPage({
         primaryAction={primaryAction}
         secondaryActions={secondaryActions}
       />
-      <div className="mt-4">
-        <HospitalityModuleNav />
-      </div>
+
       <div className="mt-5 min-w-0">{children}</div>
     </main>
   );

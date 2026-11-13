@@ -113,6 +113,28 @@ describe("accessible overlays", () => {
     );
     expect(document.body.style.overflow).toBe("hidden");
   });
+  it("keeps atomic drawer work open while dismissal is disabled", () => {
+    const close = vi.fn();
+    render(
+      <SlideOver
+        isOpen
+        onClose={close}
+        title="Saving Site"
+        dismissible={false}
+        busy
+      >
+        Saving…
+      </SlideOver>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Saving Site" });
+    expect(dialog).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "Close panel" })).toBeDisabled();
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(dialog.previousElementSibling as HTMLElement);
+    expect(close).not.toHaveBeenCalled();
+    expect(dialog).toHaveAttribute("data-state", "open");
+  });
   it("only dismisses the top overlay and preserves its parent's scroll lock", async () => {
     function NestedHarness() {
       const [parent, setParent] = useState(false);

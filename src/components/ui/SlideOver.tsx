@@ -27,6 +27,9 @@ export interface SlideOverProps {
   eyebrow?: string;
   closeLabel?: string;
   initialFocusSelector?: string;
+  /** Prevents Escape, backdrop and close-button dismissal during atomic work. */
+  dismissible?: boolean;
+  busy?: boolean;
 }
 
 const sizes: Record<NonNullable<SlideOverProps["size"]>, string> = {
@@ -54,13 +57,21 @@ export function SlideOver({
   eyebrow,
   closeLabel = "Close panel",
   initialFocusSelector,
+  dismissible = true,
+  busy = false,
 }: SlideOverProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const generatedId = React.useId();
   const titleId = `drawer-title-${generatedId.replace(/:/g, "")}`;
   const descriptionId = `drawer-description-${generatedId.replace(/:/g, "")}`;
   const { present, state } = useOverlayPresence(isOpen);
-  useDialogFocus(present, onClose, panelRef, initialFocusSelector);
+  useDialogFocus(
+    present,
+    onClose,
+    panelRef,
+    initialFocusSelector,
+    dismissible,
+  );
 
   if (!present || typeof document === "undefined") return null;
 
@@ -75,7 +86,7 @@ export function SlideOver({
       <div
         className={cn("absolute inset-0 bg-black/30", styles.backdrop)}
         data-state={state}
-        onClick={isOpen ? onClose : undefined}
+        onClick={isOpen && dismissible ? onClose : undefined}
         aria-hidden="true"
       />
       <section
@@ -85,6 +96,7 @@ export function SlideOver({
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : ariaLabel}
         aria-describedby={description ? descriptionId : undefined}
+        aria-busy={busy || undefined}
         tabIndex={-1}
         data-state={state}
         data-side={side}
@@ -105,6 +117,7 @@ export function SlideOver({
           eyebrow={eyebrow}
           onClose={onClose}
           closeLabel={closeLabel}
+          closeDisabled={!dismissible}
         />
         <div
           className={cn(

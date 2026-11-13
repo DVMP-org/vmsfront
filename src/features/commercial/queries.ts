@@ -16,6 +16,9 @@ export const commercialKeys = {
   tree: (contextKey: string) => ["commercial", contextKey, "tree"] as const,
   relationships: (contextKey: string) =>
     ["commercial", contextKey, "relationships"] as const,
+  /** Every relationship, live or ended: inventory shows who occupies a space. */
+  inventoryRelationships: (contextKey: string) =>
+    ["commercial", contextKey, "relationships", "all"] as const,
   assignments: (contextKey: string) =>
     ["commercial", contextKey, "charges"] as const,
   maintenance: (contextKey: string) =>
@@ -39,6 +42,17 @@ export function useCommercialRelationships(
   return useQuery({
     queryKey: commercialKeys.relationships(contextKey),
     queryFn: () => commercialApi.relationships({ status: "active" }),
+    enabled,
+  });
+}
+
+export function useCommercialInventoryRelationships(
+  contextKey: string,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: commercialKeys.inventoryRelationships(contextKey),
+    queryFn: () => commercialApi.relationships(),
     enabled,
   });
 }

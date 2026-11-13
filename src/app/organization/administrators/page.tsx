@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Download,
@@ -84,6 +84,8 @@ function isProtected(admin: Admin) {
 
 export default function OrganizationAdministratorsPage() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const embedded =
     pathname?.startsWith("/organization/settings/administrators") === true;
   const [page, setPage] = useState(1);
@@ -117,6 +119,27 @@ export default function OrganizationAdministratorsPage() {
   const canUpdate = hasAdminPermission(profile.data, "admins.update");
   const canDelete = hasAdminPermission(profile.data, "admins.delete");
   const readOnly = !canCreate && !canUpdate && !canDelete;
+
+  useEffect(() => {
+    if (
+      searchParams?.get("create") === "administrator" &&
+      canCreate
+    ) {
+      setDraft(emptyDraft);
+      setErrors({});
+      setCreateOpen(true);
+    }
+  }, [canCreate, searchParams]);
+
+  function closeCreate() {
+    setCreateOpen(false);
+    if (searchParams?.get("create") !== "administrator") return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("create");
+    router.replace(`${pathname}${next.size ? `?${next}` : ""}`, {
+      scroll: false,
+    });
+  }
 
   function openCreate() {
     setDraft(emptyDraft);
@@ -163,7 +186,7 @@ export default function OrganizationAdministratorsPage() {
           setNotice(
             `${displayName(result.data)} was added as an organization administrator.`,
           );
-          setCreateOpen(false);
+          closeCreate();
           setDraft(emptyDraft);
           setErrors({});
         },
@@ -454,7 +477,7 @@ export default function OrganizationAdministratorsPage() {
 
       <Modal
         isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={closeCreate}
         title="Add organization administrator"
         description="This grants tenant administration. It does not grant a Site workspace or occupancy relationship."
         size="lg"
@@ -596,7 +619,7 @@ export default function OrganizationAdministratorsPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setCreateOpen(false)}
+              onClick={closeCreate}
             >
               Cancel
             </Button>

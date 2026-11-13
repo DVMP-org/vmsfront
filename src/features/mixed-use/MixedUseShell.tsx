@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
-import { MixedUseNav } from "./MixedUseNav";
 
 export function useMixedUseAccess() {
   const access = useSiteAccess();
@@ -80,8 +79,6 @@ export function MixedUseShell({
         }
         primaryAction={selectedSite ? primaryAction : undefined}
       />
-
-      <MixedUseNav />
 
       {!selectedSite ? (
         <PropertyContext contextKey={contextKey} />

@@ -29,7 +29,21 @@
           "label": "Rooms",
           "href": "/admin/hospitality/rooms",
           "icon": "building",
-          "module": "properties"
+          "module": "properties",
+          "children": [
+            {
+              "label": "Room directory",
+              "href": "/admin/hospitality/rooms",
+              "icon": "building",
+              "module": "properties"
+            },
+            {
+              "label": "Room Groups",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
         }
       ]
     },
@@ -38,13 +52,13 @@
       "label": "Room operations",
       "items": [
         {
-          "label": "Housekeeping & readiness",
+          "label": "Housekeeping",
           "href": "/admin/hospitality/housekeeping",
           "icon": "sparkles",
           "module": "housekeeping"
         },
         {
-          "label": "Room & engineering maintenance",
+          "label": "Room Maintenance",
           "href": "/admin/hospitality/maintenance",
           "icon": "wrench",
           "module": "maintenance"
@@ -59,7 +73,7 @@
     },
     {
       "id": "finance",
-      "label": "Guest accounting",
+      "label": "Billing",
       "items": [
         {
           "label": "Guest folios & billing",
@@ -78,12 +92,6 @@
               "href": "/admin/hospitality/billing",
               "icon": "calculator",
               "module": "charges"
-            },
-            {
-              "label": "Place groups",
-              "href": "/admin/place-groups",
-              "icon": "layers",
-              "module": "properties"
             }
           ]
         }

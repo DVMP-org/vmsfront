@@ -19,6 +19,13 @@ const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
 }));
 
+// The page reads its route to decide whether it is embedded in settings.
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/organization/administrators",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/hooks/use-admin", () => ({
   useAdmins: mocks.admins,
   useAdminRoles: mocks.roles,

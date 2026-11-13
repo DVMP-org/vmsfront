@@ -43,7 +43,7 @@ describe("command navigation", () => {
     );
     expect(
       commands.find((entry) => entry.label === "Guest folios & billing")?.group,
-    ).toBe("Guest accounting");
+    ).toBe("Billing");
     expect(
       commands.find((entry) => entry.label === "Reservations & stays")?.group,
     ).toBe("Front office");

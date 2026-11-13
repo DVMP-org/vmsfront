@@ -10,6 +10,12 @@ import {
   ChevronDown,
   Building2,
   CircleHelp,
+  Home,
+  Plug,
+  Puzzle,
+  Settings,
+  UserCog,
+  Users,
 } from "lucide-react";
 import { useAuth, useProfile } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/app-store";
@@ -24,6 +30,48 @@ import { CommandNavigation } from "./CommandNavigation";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { withSite } from "@/lib/site-context";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
+import { OrganizationCreateMenu } from "./OrganizationCreateMenu";
+import type { AdminRoute } from "@/config/admin-routes";
+
+const organizationCommands: AdminRoute[] = [
+  { href: "/organization", label: "Organization home", icon: Home },
+  {
+    href: "/organization/sites",
+    label: "Sites",
+    icon: Building2,
+    permission: "places.list",
+  },
+  {
+    href: "/organization/administrators",
+    label: "Members & Roles",
+    icon: Users,
+    permission: "admins.list",
+  },
+  {
+    href: "/organization/managers",
+    label: "Site managers",
+    icon: UserCog,
+    permission: "admins.list",
+  },
+  {
+    href: "/organization/integrations",
+    label: "Integrations",
+    icon: Plug,
+    permission: ["admins.list", "organizations.show"],
+  },
+  {
+    href: "/organization/plugins",
+    label: "Plugins",
+    icon: Puzzle,
+    permission: "admins.list",
+  },
+  {
+    href: "/organization/settings",
+    label: "Organization settings",
+    icon: Settings,
+    permission: "organizations.show",
+  },
+];
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -47,6 +95,9 @@ export const Header = memo(function Header({
   const router = useRouter();
 
   const isAdminRoute = type == "admin" || pathname?.startsWith("/admin");
+  const isOrganizationRoute =
+    pathname === "/organization" ||
+    pathname?.startsWith("/organization/") === true;
   const isOrganizationsIndex =
     pathname === "/organizations" ||
     pathname === "/organizations/" ||
@@ -59,7 +110,10 @@ export const Header = memo(function Header({
   const commandProfile = useQuery({
     queryKey: ["command-profile", organization?.id, currentUser?.id],
     queryFn: async () => (await adminService.getAdminProfile()).data,
-    enabled: isAdminRoute && !!organization?.id && !!currentUser?.id,
+    enabled:
+      (isAdminRoute || isOrganizationRoute) &&
+      !!organization?.id &&
+      !!currentUser?.id,
     staleTime: 0,
   });
   const placeWorkspaceRoot = pathname?.match(/^\/workspace\/[^/]+/)?.[0];
@@ -107,20 +161,38 @@ export const Header = memo(function Header({
             <VmsWordmark compact size="md" className="sm:hidden" />
             <VmsWordmark size="md" className="hidden sm:inline-flex" />
           </Link>
-          {currentUser && !isOrganizationsIndex ? (
+          {currentUser && !isOrganizationsIndex && !isOrganizationRoute ? (
             <div className="hidden min-w-0 md:block">
               <OrganizationSwitcher />
             </div>
           ) : null}
         </div>
 
-        {currentUser && isAdminRoute ? (
+        {currentUser && (isAdminRoute || isOrganizationRoute) ? (
           <div className="flex min-w-0 flex-1 justify-center px-1 sm:max-w-[34rem] sm:px-3">
             <div className="w-full max-w-[29rem]">
               <CommandNavigation
-                modules={workspaceContext.data?.modules || []}
-                moduleGroups={workspaceContext.data?.module_groups || []}
-                useCase={workspaceContext.data?.effective_use_case ?? undefined}
+                modules={
+                  isOrganizationRoute
+                    ? undefined
+                    : workspaceContext.data?.modules || []
+                }
+                moduleGroups={
+                  isOrganizationRoute
+                    ? []
+                    : workspaceContext.data?.module_groups || []
+                }
+                useCase={
+                  isOrganizationRoute
+                    ? undefined
+                    : workspaceContext.data?.effective_use_case ?? undefined
+                }
+                routes={isOrganizationRoute ? organizationCommands : undefined}
+                searchLabel={
+                  isOrganizationRoute
+                    ? "Search organization pages"
+                    : "Search VMS Core"
+                }
                 canManage={
                   !!workspaceContext.data?.management?.is_administrator
                 }
@@ -140,9 +212,35 @@ export const Header = memo(function Header({
 
         {currentUser ? (
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+            {isOrganizationRoute && commandProfile.data ? (
+              <OrganizationCreateMenu
+                permissions={commandProfile.data.effective_permissions}
+              />
+            ) : null}
+            {isOrganizationRoute ? (
+              <>
+                <span className="mx-0.5 hidden h-6 w-px bg-white/15 sm:block" aria-hidden="true" />
+                <Link
+                  href="/organization/settings"
+                  aria-label="Organization settings"
+                  className="grid h-10 w-10 place-items-center rounded-full text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-coral-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--vms-ink)]"
+                >
+                  <Settings className="h-[1.125rem] w-[1.125rem]" aria-hidden="true" />
+                </Link>
+              </>
+            ) : null}
             <div className="[&_button]:text-white/80 [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
               <NotificationDropdown />
             </div>
+
+            {isOrganizationRoute ? (
+              <>
+                <span className="mx-0.5 hidden h-6 w-px bg-white/15 md:block" aria-hidden="true" />
+                <div className="hidden md:block">
+                  <OrganizationSwitcher compact />
+                </div>
+              </>
+            ) : null}
 
             <div className="relative" ref={menuRef}>
               <button

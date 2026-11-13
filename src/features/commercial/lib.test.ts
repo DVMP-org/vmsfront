@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import type { Place } from "@/features/places/api";
+
 import {
   ageingBucket,
   ageingTotals,
+  buildInventoryRows,
   buildOccupancy,
   buildRentRoll,
+  defaultExpandedInventoryIds,
+  flattenInventoryRows,
 } from "./lib";
 
 const places = [
@@ -158,5 +163,82 @@ describe("commercial rent roll", () => {
     expect(totals.find((bucket) => bucket.key === "90_plus")?.amount).toBe(750);
     expect(totals.find((bucket) => bucket.key === "1_30")?.amount).toBe(300);
     expect(totals.find((bucket) => bucket.key === "current")?.amount).toBe(50);
+  });
+});
+
+const place = (
+  overrides: Partial<Place> & { id: string; name: string },
+): Place => ({
+  site_id: "site",
+  parent_id: null,
+  kind: "unit",
+  building_type: "office",
+  description: null,
+  address: "",
+  is_active: true,
+  updated_at: "2026-11-09T00:00:00Z",
+  ...overrides,
+});
+
+const tower = place({
+  id: "tower",
+  name: "Harbour Tower",
+  kind: "building",
+  building_type: "building",
+});
+const suite4a = place({ id: "suite-4a", name: "Suite 4A", parent_id: "tower" });
+const suite2b = place({ id: "suite-2b", name: "Suite 2B", parent_id: "tower" });
+const kiosk = place({ id: "kiosk", name: "Kiosk 1" });
+const inventoryPlaces = [tower, suite4a, suite2b, kiosk];
+
+const inventoryRows = buildInventoryRows(
+  inventoryPlaces,
+  inventoryPlaces,
+  [{ party: { display_name: "Acme Studio" }, place: { id: "suite-4a" } }],
+);
+
+describe("commercial inventory hierarchy", () => {
+  it("marks a building as a container and locates the spaces it holds", () => {
+    const building = inventoryRows.find((row) => row.id === "tower");
+    expect(building).toMatchObject({
+      is_container: true,
+      occupancy: "container",
+      location: "Top level of this Site",
+    });
+
+    const suite = inventoryRows.find((row) => row.id === "suite-4a");
+    expect(suite).toMatchObject({
+      is_container: false,
+      occupancy: "occupied",
+      occupants: "Acme Studio",
+      location: "Harbour Tower",
+    });
+  });
+
+  it("puts the building at the top level with its spaces underneath", () => {
+    const rows = flattenInventoryRows(
+      inventoryRows,
+      defaultExpandedInventoryIds(inventoryRows),
+    );
+    expect(rows.map((row) => [row.name, row.depth])).toEqual([
+      ["Harbour Tower", 0],
+      ["Suite 2B", 1],
+      ["Suite 4A", 1],
+      ["Kiosk 1", 0],
+    ]);
+    expect(rows[0]).toMatchObject({ has_children: true, child_count: 2 });
+  });
+
+  it("hides the spaces of a collapsed building", () => {
+    const rows = flattenInventoryRows(inventoryRows, new Set());
+    expect(rows.map((row) => row.name)).toEqual(["Harbour Tower", "Kiosk 1"]);
+  });
+
+  it("keeps a space whose building is outside the scope at the top level", () => {
+    const scoped = buildInventoryRows([suite4a], inventoryPlaces, []);
+    const rows = flattenInventoryRows(scoped, new Set());
+    expect(rows).toEqual([
+      expect.objectContaining({ id: "suite-4a", depth: 0, has_children: false }),
+    ]);
   });
 });
