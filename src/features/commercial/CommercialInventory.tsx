@@ -494,9 +494,6 @@ function CommercialSpaceModal({
     event.preventDefault();
     const next: Record<string, string> = {};
     if (name.trim().length < 2) next.name = "Enter a space name.";
-    if (structuralKind !== "building" && !parentId) {
-      next.parent = "Choose the building this space sits in.";
-    }
     setErrors(next);
     if (Object.keys(next).length) return;
     save.mutate();
@@ -547,6 +544,8 @@ function CommercialSpaceModal({
                 onChange={(event) => {
                   const nextType = event.target.value;
                   setBuildingType(nextType);
+                  // A new building starts at the top level; a space defaults to
+                  // the first building but can still be cleared to top level.
                   setParentId(
                     commercialSpaceKind(nextType) === "building"
                       ? ""
@@ -564,16 +563,11 @@ function CommercialSpaceModal({
           </Field>
           <Field
             id="commercial-parent"
-            label={
-              structuralKind === "building" ? "Parent building" : "Building"
-            }
-            required={structuralKind !== "building"}
+            label="Building"
             description={
               structuralKind === "building"
-                ? "Optional — nest this building inside another one."
-                : parents.length
-                  ? "The building this space sits in."
-                  : "No building yet. Create a Building from the space type list first."
+                ? "Optional — nest this building inside another one, or leave it at the top level."
+                : "Optional — leave empty to create it at the top level of this Site. Only buildings can contain other places."
             }
             error={errors.parent}
           >
@@ -585,11 +579,11 @@ function CommercialSpaceModal({
                 disabled={!!space}
                 onChange={(event) => setParentId(event.target.value)}
               >
-                {structuralKind === "building" ? (
-                  <option value="">Top level of this Site</option>
-                ) : parents.length === 0 ? (
-                  <option value="">Create a building first</option>
-                ) : null}
+                <option value="">
+                  {structuralKind === "building"
+                    ? "Top level of this Site"
+                    : "No building — top level of this Site"}
+                </option>
                 {parents.map((parent) => (
                   <option key={parent.id} value={parent.id}>
                     {parent.name}

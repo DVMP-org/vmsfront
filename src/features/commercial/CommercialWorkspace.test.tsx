@@ -335,6 +335,37 @@ describe("commercial operations", () => {
     );
   });
 
+  it("creates a space at the top level without a building", async () => {
+    mount(<CommercialInventory />);
+
+    const add = await screen.findByRole("button", {
+      name: "Add commercial space",
+    });
+    await waitFor(() => expect(add).toBeEnabled());
+    fireEvent.click(add);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space name/), {
+      target: { value: "Kiosk 1" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Building/), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add space" }));
+
+    await waitFor(() =>
+      expect(mocks.createProperty).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Kiosk 1",
+          kind: "unit",
+          building_type: "office",
+          parent_id: null,
+        }),
+      ),
+    );
+  });
+
   it("assigns an organization as a business tenant with a lease period", async () => {
     mount(<CommercialTenants />);
 
