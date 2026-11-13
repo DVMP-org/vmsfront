@@ -42,7 +42,13 @@ import {
   flattenPlaces,
   isCommercialInventory,
 } from "./api";
-import { commercialUnitTypes, titleCase } from "./contracts";
+import {
+  commercialSpaceKind,
+  commercialSpaceTypeLabel,
+  commercialSpaceTypes,
+  commercialUnitTypes,
+  titleCase,
+} from "./contracts";
 
 type InventoryRow = Place & {
   location: string;
@@ -83,9 +89,7 @@ export default function CommercialInventory() {
     () => allPlaces.filter((place) => scopeIds.has(place.id)),
     [allPlaces, scopeIds],
   );
-  const parents = scopedPlaces.filter((place) =>
-    ["site", "building"].includes(place.kind),
-  );
+  const parents = scopedPlaces.filter((place) => place.kind === "building");
   const rows = useMemo<InventoryRow[]>(() => {
     const byId = new Map(allPlaces.map((place) => [place.id, place]));
     const byPlace = new Map<string, string[]>();
@@ -208,9 +212,7 @@ export default function CommercialInventory() {
       key: "commercial_type",
       header: "Type",
       sortable: true,
-      accessor: (row) =>
-        commercialUnitTypes.find((type) => type.value === row.commercial_type)
-          ?.label || titleCase(row.commercial_type),
+      accessor: (row) => commercialSpaceTypeLabel(row.commercial_type),
     },
     {
       key: "occupancy",
@@ -311,6 +313,12 @@ export default function CommercialInventory() {
         items={[
           {
             icon: Building2,
+            label: "Buildings",
+            value: parents.length,
+            detail: "Containers for lettable spaces",
+          },
+          {
+            icon: Building2,
             label: "Spaces",
             value: rows.length,
             detail: "Across this property hierarchy",
@@ -363,10 +371,7 @@ export default function CommercialInventory() {
                     {row.name}
                   </Link>
                   <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    {row.location} ·{" "}
-                    {commercialUnitTypes.find(
-                      (type) => type.value === row.commercial_type,
-                    )?.label || titleCase(row.commercial_type)}
+                    {row.location} · {commercialSpaceTypeLabel(row.commercial_type)}
                   </p>
                 </div>
                 <StatusBadge
@@ -451,6 +456,7 @@ function CommercialSpaceModal({
   const [buildingType, setBuildingType] = useState(
     space?.building_type || "office",
   );
+  const structuralKind = commercialSpaceKind(buildingType);
   const [address, setAddress] = useState(space?.address || "");
   const [description, setDescription] = useState(space?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -469,7 +475,7 @@ function CommercialSpaceModal({
               selectedSite?.id ||
               "",
             name: name.trim(),
-            kind: "unit",
+            kind: structuralKind,
             building_type: buildingType,
             address: address.trim(),
             description: description.trim(),
@@ -488,8 +494,8 @@ function CommercialSpaceModal({
     event.preventDefault();
     const next: Record<string, string> = {};
     if (name.trim().length < 2) next.name = "Enter a space name.";
-    if (!parentId && !space && parents.length) {
-      next.parent = "Choose the building or property.";
+    if (structuralKind !== "building" && !parentId) {
+      next.parent = "Choose the building this space sits in.";
     }
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -523,13 +529,51 @@ function CommercialSpaceModal({
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
-            id="commercial-parent"
-            label="Building or property"
-            required={!space && parents.length > 0}
+            id="commercial-type"
+            label="Space type"
+            required
             description={
-              parents.length
-                ? undefined
-                : "No buildings yet — this space is created at the top level of the Site."
+              structuralKind === "building"
+                ? "Buildings can contain spaces and other buildings."
+                : "Only a building can contain this space."
+            }
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={buildingType}
+                disabled={!!space}
+                onChange={(event) => {
+                  const nextType = event.target.value;
+                  setBuildingType(nextType);
+                  setParentId(
+                    commercialSpaceKind(nextType) === "building"
+                      ? ""
+                      : (parents[0]?.id ?? ""),
+                  );
+                }}
+              >
+                {commercialSpaceTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <Field
+            id="commercial-parent"
+            label={
+              structuralKind === "building" ? "Parent building" : "Building"
+            }
+            required={structuralKind !== "building"}
+            description={
+              structuralKind === "building"
+                ? "Optional — nest this building inside another one."
+                : parents.length
+                  ? "The building this space sits in."
+                  : "No building yet. Create a Building from the space type list first."
             }
             error={errors.parent}
           >
@@ -538,32 +582,17 @@ function CommercialSpaceModal({
                 {...control}
                 className={fieldControlClassName}
                 value={parentId}
-                disabled={!!space || parents.length === 0}
+                disabled={!!space}
                 onChange={(event) => setParentId(event.target.value)}
               >
-                {parents.length === 0 ? (
+                {structuralKind === "building" ? (
                   <option value="">Top level of this Site</option>
+                ) : parents.length === 0 ? (
+                  <option value="">Create a building first</option>
                 ) : null}
                 {parents.map((parent) => (
                   <option key={parent.id} value={parent.id}>
                     {parent.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          <Field id="commercial-type" label="Space type">
-            {(control) => (
-              <select
-                {...control}
-                className={fieldControlClassName}
-                value={buildingType}
-                disabled={!!space}
-                onChange={(event) => setBuildingType(event.target.value)}
-              >
-                {commercialUnitTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
                   </option>
                 ))}
               </select>

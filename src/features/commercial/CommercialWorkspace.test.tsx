@@ -298,8 +298,40 @@ describe("commercial operations", () => {
         building_type: "office",
         address: "2 Harbour Way",
         description: "",
-        parent_id: "site",
+        parent_id: "building",
       }),
+    );
+  });
+
+  it("creates a building from the same space type list", async () => {
+    mount(<CommercialInventory />);
+
+    const add = await screen.findByRole("button", {
+      name: "Add commercial space",
+    });
+    await waitFor(() => expect(add).toBeEnabled());
+    fireEvent.click(add);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space name/), {
+      target: { value: "Tower B" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space type/), {
+      target: { value: "building" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add space" }));
+
+    await waitFor(() =>
+      expect(mocks.createProperty).toHaveBeenCalledWith(
+        expect.objectContaining({
+          site_id: "site",
+          name: "Tower B",
+          kind: "building",
+          building_type: "building",
+          parent_id: null,
+        }),
+      ),
     );
   });
 
