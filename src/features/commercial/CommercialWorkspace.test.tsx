@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   invitations: vi.fn(),
   createProperty: vi.fn(),
   updateProperty: vi.fn(),
+  moveProperty: vi.fn(),
   toggleProperty: vi.fn(),
   profile: {
     effective_permissions: [
@@ -115,6 +116,7 @@ vi.mock("@/features/places/api", () => ({
   placesApi: {
     create: mocks.createProperty,
     update: mocks.updateProperty,
+    move: mocks.moveProperty,
     toggle: mocks.toggleProperty,
   },
 }));
@@ -363,6 +365,27 @@ describe("commercial operations", () => {
           parent_id: null,
         }),
       ),
+    );
+  });
+
+  it("moves a space out of its building from the edit form", async () => {
+    mocks.updateProperty.mockResolvedValue(space());
+    mount(<CommercialInventory />);
+
+    const edit = await screen.findByRole("button", {
+      name: "Edit Suite 4A",
+    });
+    fireEvent.click(edit);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Edit commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Building/), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save space" }));
+
+    await waitFor(() =>
+      expect(mocks.moveProperty).toHaveBeenCalledWith("suite-4a", null),
     );
   });
 
