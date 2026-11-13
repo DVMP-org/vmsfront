@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { Modal } from "@/components/ui/Modal";
-import { Switch } from "@/components/ui/Switch";
 import { parseApiError } from "@/lib/error-utils";
 
 import type { Lease } from "../api";
 import { useTerminateLease } from "../queries";
+import { LeaseToggleRow } from "./LeaseToggleRow";
 
 function today(): string {
   const now = new Date();
@@ -128,11 +128,12 @@ export function TerminateLeaseDialog({
         </Field>
 
         {!isDraft ? (
-          <Switch
+          <LeaseToggleRow
+            id="terminate-end-charges"
             checked={endCharges}
             onChange={setEndCharges}
             label="End the charges this lease created"
-            description="Off leaves them billing. Only do that if the party still owes for the space."
+            description="On stops billing from the end date but keeps invoices already issued, so outstanding arrears can still be collected. Off leaves the charges running, which only makes sense if the party still owes for the space."
           />
         ) : null}
       </div>

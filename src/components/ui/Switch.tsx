@@ -53,6 +53,11 @@ export function Switch({
                     checked ? "translate-x-[1.375rem]" : "translate-x-0.5",
                 )}
             />
+            {description ? (
+                <span id={descriptionId} className="sr-only">
+                    {description}
+                </span>
+            ) : null}
         </button>
     );
 }

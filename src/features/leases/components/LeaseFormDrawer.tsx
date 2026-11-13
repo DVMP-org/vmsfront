@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormDrawer } from "@/components/ui/form/FormDrawer";
 import { FormSection } from "@/components/ui/form/FormSection";
-import { Switch } from "@/components/ui/Switch";
 import { parseApiError } from "@/lib/error-utils";
 
 import type {
@@ -17,7 +16,8 @@ import type {
   LeaseInput,
   LeaseKind,
 } from "../api";
-import { useCreateLease, useUpdateLease } from "../queries";
+import { useCreateLease, useCreateLeaseParty, useUpdateLease } from "../queries";
+import { LeaseToggleRow } from "./LeaseToggleRow";
 
 export type PlaceOption = { id: string; name: string; kind: string };
 export type PartyOption = { id: string; display_name: string };
@@ -33,6 +33,10 @@ type ExtraLine = {
 type Draft = {
   place_id: string;
   party_id: string;
+  new_party_name: string;
+  new_party_email: string;
+  new_party_phone: string;
+  new_party_kind: "person" | "organization";
   kind: LeaseKind;
   reference: string;
   starts_at: string;
@@ -45,6 +49,9 @@ type Draft = {
   notes: string;
   extras: ExtraLine[];
 };
+
+/** Sentinel for "this lease introduces a Party the Site does not have yet". */
+const NEW_PARTY = "__new_party__";
 
 const cadenceOptions: { value: ChargeRecurrence; label: string }[] = [
   { value: "monthly", label: "Monthly" },
@@ -83,11 +90,17 @@ function newLine(): ExtraLine {
   };
 }
 
-function emptyDraft(): Draft {
+function emptyDraft(
+  partyKind: "person" | "organization" = "organization",
+): Draft {
   const starts = today();
   return {
     place_id: "",
     party_id: "",
+    new_party_name: "",
+    new_party_email: "",
+    new_party_phone: "",
+    new_party_kind: partyKind,
     kind: "lease",
     reference: "",
     starts_at: starts,
@@ -109,6 +122,10 @@ function draftFrom(lease: Lease): Draft {
   return {
     place_id: lease.place_id,
     party_id: lease.party_id,
+    new_party_name: "",
+    new_party_email: "",
+    new_party_phone: "",
+    new_party_kind: "organization",
     kind: lease.kind,
     reference: lease.reference ?? "",
     starts_at: lease.starts_at.slice(0, 10),
@@ -146,6 +163,7 @@ export function LeaseFormDrawer({
   lease,
   places,
   parties,
+  defaultPartyKind = "organization",
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -153,20 +171,30 @@ export function LeaseFormDrawer({
   lease?: Lease | null;
   places: PlaceOption[];
   parties: PartyOption[];
+  /** The domain's natural party type, used as the new-party default. */
+  defaultPartyKind?: "person" | "organization";
 }) {
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [draft, setDraft] = useState<Draft>(() =>
+    emptyDraft(defaultPartyKind),
+  );
   const [showErrors, setShowErrors] = useState(false);
   const create = useCreateLease(siteId);
   const update = useUpdateLease(siteId);
+  const createParty = useCreateLeaseParty(siteId);
   const mutation = lease ? update : create;
   const editing = Boolean(lease);
 
   useEffect(() => {
     if (!isOpen) return;
-    setDraft(lease ? draftFrom(lease) : emptyDraft());
+    setDraft(
+      lease
+        ? draftFrom(lease)
+        : emptyDraft(defaultPartyKind),
+    );
     setShowErrors(false);
     create.reset();
     update.reset();
+    createParty.reset();
     // Reset only when the drawer opens or the target lease changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, lease?.id]);
@@ -178,7 +206,11 @@ export function LeaseFormDrawer({
   const errors = useMemo(() => {
     const found: Record<string, string> = {};
     if (!draft.place_id) found.place_id = "Choose the space this lease covers";
-    if (!draft.party_id) found.party_id = "Choose the party taking the space";
+    if (!draft.party_id) {
+      found.party_id = "Choose the party taking the space";
+    } else if (draft.party_id === NEW_PARTY && !draft.new_party_name.trim()) {
+      found.new_party_name = "Enter the party's name";
+    }
     if (!draft.starts_at) found.starts_at = "Choose a start date";
     if (draft.ends_at && draft.ends_at <= draft.starts_at) {
       found.ends_at = "The end date must be after the start date";
@@ -218,14 +250,32 @@ export function LeaseFormDrawer({
     return lines;
   }, [draft]);
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setShowErrors(true);
     if (Object.keys(errors).length > 0) return;
 
+    // A lease always names an existing Party, so an inline Party is created
+    // first and the lease is then attached to it. If that fails, nothing else
+    // is attempted and no half-made lease is left behind.
+    let partyId = draft.party_id;
+    if (partyId === NEW_PARTY) {
+      try {
+        const created = await createParty.mutateAsync({
+          kind: draft.new_party_kind,
+          display_name: draft.new_party_name.trim(),
+          email: draft.new_party_email.trim().toLowerCase() || null,
+          phone: draft.new_party_phone.trim() || null,
+        });
+        partyId = created.id;
+      } catch {
+        return;
+      }
+    }
+
     const input: LeaseInput = {
       place_id: draft.place_id,
-      party_id: draft.party_id,
+      party_id: partyId,
       kind: draft.kind,
       reference: draft.reference || null,
       starts_at: draft.starts_at,
@@ -250,9 +300,12 @@ export function LeaseFormDrawer({
     }
   }
 
-  const failure = mutation.isError
-    ? parseApiError(mutation.error).message
-    : null;
+  const failure =
+    mutation.isError
+      ? parseApiError(mutation.error).message
+      : createParty.isError
+        ? parseApiError(createParty.error).message
+        : null;
   const visible = (key: string) => (showErrors ? errors[key] : undefined);
 
   return (
@@ -262,7 +315,7 @@ export function LeaseFormDrawer({
       title={editing ? "Edit draft lease" : "Draft a lease"}
       description="A draft holds a plan only. Charges are created when you confirm it."
       submitLabel="Save draft"
-      isSubmitting={mutation.isPending}
+      isSubmitting={mutation.isPending || createParty.isPending}
       onSubmit={submit}
       error={failure}
       size="lg"
@@ -313,9 +366,88 @@ export function LeaseFormDrawer({
                   {party.display_name}
                 </option>
               ))}
+              <option value={NEW_PARTY}>New party…</option>
             </select>
           )}
         </Field>
+
+        {draft.party_id === NEW_PARTY ? (
+          <div className="space-y-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-border)] bg-[var(--vms-surface-subtle)] p-3">
+            <p className="text-xs text-[var(--vms-ink-muted)]">
+              This party is created when you save the draft, so the lease can
+              name it. Nothing is billed until you confirm the lease.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                id="lease-new-party-name"
+                label="Party name"
+                required
+                error={visible("new_party_name")}
+              >
+                {(control) => (
+                  <input
+                    {...control}
+                    className={fieldControlClassName}
+                    value={draft.new_party_name}
+                    onChange={(event) =>
+                      update$("new_party_name", event.target.value)
+                    }
+                    placeholder="Acme Stores Ltd"
+                  />
+                )}
+              </Field>
+              <Field
+                id="lease-new-party-kind"
+                label="Party type"
+                description="A business tenant is an organisation."
+              >
+                {(control) => (
+                  <select
+                    {...control}
+                    className={fieldControlClassName}
+                    value={draft.new_party_kind}
+                    onChange={(event) =>
+                      update$(
+                        "new_party_kind",
+                        event.target.value as "person" | "organization",
+                      )
+                    }
+                  >
+                    <option value="organization">Organisation</option>
+                    <option value="person">Person</option>
+                  </select>
+                )}
+              </Field>
+              <Field id="lease-new-party-email" label="Email">
+                {(control) => (
+                  <input
+                    {...control}
+                    type="email"
+                    className={fieldControlClassName}
+                    value={draft.new_party_email}
+                    onChange={(event) =>
+                      update$("new_party_email", event.target.value)
+                    }
+                    placeholder="accounts@acme.example"
+                  />
+                )}
+              </Field>
+              <Field id="lease-new-party-phone" label="Phone">
+                {(control) => (
+                  <input
+                    {...control}
+                    type="tel"
+                    className={fieldControlClassName}
+                    value={draft.new_party_phone}
+                    onChange={(event) =>
+                      update$("new_party_phone", event.target.value)
+                    }
+                  />
+                )}
+              </Field>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="lease-kind" label="Agreement type">
@@ -449,11 +581,12 @@ export function LeaseFormDrawer({
             )}
           </Field>
         </div>
-        <Switch
+        <LeaseToggleRow
+          id="lease-rent-creates-definition"
           checked={draft.rent_creates_definition}
           onChange={(next) => update$("rent_creates_definition", next)}
           label="Create a new Rent charge definition"
-          description="Leave off to reuse the Site's existing Rent definition. It must match this amount and cadence exactly."
+          description="Off reuses the Site's existing Rent definition, which must match this amount and cadence exactly. On creates a separate one, useful when this tenant's rent differs from everyone else's."
         />
         <Field
           id="lease-deposit"
@@ -553,16 +686,26 @@ export function LeaseFormDrawer({
                   )}
                 </Field>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <Switch
+              <div className="flex items-start justify-between gap-3">
+                <LeaseToggleRow
+                  id={`lease-extra-new-definition-${line.key}`}
+                  className="flex-1"
                   checked={line.create_definition}
                   onChange={(next) => {
                     const updated = [...draft.extras];
                     updated[index] = { ...line, create_definition: next };
                     update$("extras", updated);
                   }}
-                  label={`Create a new definition for ${line.name || "this charge"}`}
-                  description="Off reuses the Site definition with the same name."
+                  label={
+                    line.name
+                      ? `Create a new definition for ${line.name}`
+                      : "Create a new charge definition"
+                  }
+                  description={
+                    line.name
+                      ? `Off reuses the Site's existing ${line.name} definition, which must match this amount and cadence.`
+                      : "Off reuses the Site definition with the same name once you name this charge."
+                  }
                 />
                 <Button
                   type="button"
