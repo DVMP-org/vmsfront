@@ -34,6 +34,39 @@ export interface PersonalMaintenance {
   status: string;
   created_at: string;
 }
+/** One charge inside the tenant's lease plan. */
+export interface LeaseChargeSummary {
+  id: string;
+  name: string;
+  amount: string;
+  currency: string;
+  recurrence: string;
+  status: string;
+}
+
+/**
+ * The tenant's own agreement for this Place.
+ *
+ * `accepted_at` is the Party's acknowledgement. It is deliberately separate
+ * from billing, which starts when an administrator confirms the lease.
+ */
+export interface LeaseAgreement {
+  id: string;
+  reference: string | null;
+  kind: string;
+  status: string;
+  starts_at: string;
+  ends_at: string | null;
+  rent_amount: string | null;
+  currency: string;
+  rent_cadence: string | null;
+  deposit_amount: string | null;
+  notice_days: number;
+  signed_at: string | null;
+  accepted_at: string | null;
+  charge_lines: LeaseChargeSummary[];
+}
+
 export interface PlaceCharge {
   id: string;
   title: string;
@@ -193,6 +226,19 @@ export const placeWorkspaceApi = {
     (
       await apiClient.get<ApiResponse<WorkspaceRelationship[]>>(
         `${path(id)}/members`,
+      )
+    ).data,
+  leases: async (id: string) =>
+    (
+      await apiClient.get<
+        ApiResponse<{ items: LeaseAgreement[]; total: number }>
+      >(`${path(id)}/leases`)
+    ).data,
+  acceptLease: async (id: string, leaseId: string) =>
+    (
+      await apiClient.post<ApiResponse<LeaseAgreement>>(
+        `${path(id)}/leases/${encodeURIComponent(leaseId)}/accept`,
+        {},
       )
     ).data,
   addMember: async (
