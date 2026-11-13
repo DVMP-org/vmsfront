@@ -5,6 +5,7 @@ import {
   Calculator,
   CalendarDays,
   DoorOpen,
+  FileText,
   History,
   Home,
   MessageSquare,
@@ -140,6 +141,7 @@ const domainIcons: Record<string, LucideIcon> = {
   ticket: TicketCheck,
   history: History,
   layers: Blocks,
+  document: FileText,
 };
 
 /**

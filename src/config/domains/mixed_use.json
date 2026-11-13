@@ -38,6 +38,12 @@
           "module": "leases"
         },
         {
+          "label": "Lease register",
+          "href": "/admin/leases",
+          "icon": "document",
+          "module": "leases"
+        },
+        {
           "label": "Revenue & charges",
           "href": "/admin/charges",
           "icon": "receipt",
