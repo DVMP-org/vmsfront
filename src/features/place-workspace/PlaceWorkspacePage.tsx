@@ -41,6 +41,7 @@ import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
+import { AgreementCard } from "./AgreementCard";
 import { MovementsSection } from "./MovementsSection";
 import { PartyBadgeStrip } from "./PartyBadgeStrip";
 import { VisitorsSection } from "./VisitorsSection";
@@ -860,6 +861,8 @@ function Overview() {
           </div>
         </div>
       </section>
+
+      <AgreementCard placeId={place.id} partyId={party.id} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard
