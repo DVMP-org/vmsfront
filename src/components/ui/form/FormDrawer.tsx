@@ -63,6 +63,9 @@ export function FormDrawer({
             description={description}
             size={size}
             className={className}
+            dismissible={!isSubmitting}
+            busy={isSubmitting}
+            initialFocusSelector="input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
             footer={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     {footerNote ? (
@@ -94,7 +97,12 @@ export function FormDrawer({
                 </div>
             }
         >
-            <form id={formId} onSubmit={onSubmit} className="space-y-6">
+            <form
+                id={formId}
+                onSubmit={onSubmit}
+                className="space-y-6"
+                noValidate
+            >
                 {error ? (
                     <div
                         role="alert"

@@ -150,6 +150,17 @@ interface DataTableProps<T> {
   enableRowStriping?: boolean;
   /** Show the shared columns and density controls. */
   enableViewControls?: boolean;
+  /**
+   * Optional tree rendering. `data` must already be in depth-first tree order.
+   * Descendants of collapsed rows are hidden; a search or a filter keeps its
+   * matches together with the ancestor rows that give them context, so a match
+   * is never lost behind a collapsed parent. Client-side sorting is skipped
+   * while a hierarchy is supplied, because reordering would break the tree.
+   */
+  hierarchy?: {
+    parentId: (row: T) => string | null | undefined;
+    isExpanded: (id: string) => boolean;
+  };
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -198,6 +209,7 @@ export function DataTable<T extends Record<string, any>>({
   rowClassName,
   enableRowStriping = false,
   enableViewControls = true,
+  hierarchy,
 }: DataTableProps<T>) {
   // Validate and normalize inputs to prevent runtime errors
   const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
@@ -559,6 +571,39 @@ export function DataTable<T extends Record<string, any>>({
       );
     }
 
+    if (hierarchy) {
+      const byId = new Map<string, T>();
+      safeData.forEach((row) => byId.set(getRowId(row), row));
+      const matched = new Set(result.map((row) => getRowId(row)));
+      const isNarrowed = Boolean(localSearchTerm) || currentFilters.length > 0;
+
+      if (isNarrowed) {
+        // Keep every match reachable: a match with a collapsed parent brings
+        // its ancestors along so the row still reads in context.
+        const keep = new Set(matched);
+        matched.forEach((id) => {
+          let parent = hierarchy.parentId(byId.get(id)!);
+          while (parent && byId.has(parent) && !keep.has(parent)) {
+            keep.add(parent);
+            const parentRow = byId.get(parent);
+            parent = parentRow ? hierarchy.parentId(parentRow) : null;
+          }
+        });
+        result = safeData.filter((row) => keep.has(getRowId(row)));
+      } else {
+        result = safeData.filter((row) => {
+          if (!matched.has(getRowId(row))) return false;
+          let parent = hierarchy.parentId(row);
+          while (parent && byId.has(parent)) {
+            if (!hierarchy.isExpanded(parent)) return false;
+            const parentRow = byId.get(parent);
+            parent = parentRow ? hierarchy.parentId(parentRow) : null;
+          }
+          return true;
+        });
+      }
+    }
+
     return result;
   }, [
     safeData,
@@ -568,12 +613,14 @@ export function DataTable<T extends Record<string, any>>({
     getComparableValue,
     serverSide,
     disableClientSideFiltering,
+    hierarchy,
+    getRowId,
   ]);
 
   // Sort data
   const sortedData = useMemo(() => {
-    if (disableClientSideSorting) {
-      // Server-side sorting: return data as-is
+    if (disableClientSideSorting || hierarchy) {
+    // Server-side sorting, or a tree that must keep its depth-first order.
       return filteredData;
     }
 
@@ -601,6 +648,7 @@ export function DataTable<T extends Record<string, any>>({
     safeColumns,
     getComparableValue,
     disableClientSideSorting,
+    hierarchy,
   ]);
 
   // Paginate data (only for client-side pagination)

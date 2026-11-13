@@ -1,7 +1,7 @@
 /* Transform/opacity only. Portals stay mounted until the exit has finished. */
 .panel,
 .panelLeft {
-  animation: drawer-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: drawer-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --drawer-offset: 100%;
 }
 .panelLeft {
@@ -28,9 +28,11 @@
 @keyframes drawer-enter {
   from {
     transform: translate3d(var(--drawer-offset), 0, 0);
+    opacity: 0.92;
   }
   to {
     transform: translate3d(0, 0, 0);
+    opacity: 1;
   }
 }
 @keyframes drawer-exit {

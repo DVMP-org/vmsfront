@@ -49,6 +49,8 @@ export function CommandNavigation({
   moduleGroups = [],
   canManage = false,
   useCase,
+  routes,
+  searchLabel = "Search VMS Core",
 }: {
   role?: Admin | null;
   modules?: readonly string[];
@@ -57,6 +59,8 @@ export function CommandNavigation({
   navigate: (href: string) => void;
   canManage?: boolean;
   useCase?: string;
+  routes?: AdminRoute[];
+  searchLabel?: string;
 }) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -65,8 +69,10 @@ export function CommandNavigation({
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const commands = useMemo(
-    () => permittedCommands(role, modules, moduleGroups, canManage, useCase),
-    [role, modules, moduleGroups, canManage, useCase],
+    () =>
+      routes ??
+      permittedCommands(role, modules, moduleGroups, canManage, useCase),
+    [role, modules, moduleGroups, canManage, useCase, routes],
   );
   const matches = commands.filter((entry) =>
     entry.label.toLowerCase().includes(query.trim().toLowerCase()),
@@ -122,10 +128,10 @@ export function CommandNavigation({
         onClick={open}
         className={styles.trigger}
         aria-haspopup="dialog"
-        aria-label="Search VMS Core"
+        aria-label={searchLabel}
       >
         <Search aria-hidden="true" />
-        <span className={styles.triggerLabel}>Search VMS Core</span>
+        <span className={styles.triggerLabel}>{searchLabel}</span>
         <kbd>⌘ K</kbd>
       </button>
       <dialog

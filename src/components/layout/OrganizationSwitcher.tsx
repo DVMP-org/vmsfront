@@ -15,7 +15,7 @@ import {
 import { buildSubdomainUrl } from "@/lib/subdomain-utils";
 import { cn } from "@/lib/utils";
 
-export function OrganizationSwitcher() {
+export function OrganizationSwitcher({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { organization } = useCurrentOrganization();
@@ -56,19 +56,24 @@ export function OrganizationSwitcher() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="global-organization-switcher"
-        className="flex h-10 max-w-[260px] items-center gap-2 rounded-md border border-white/15 bg-white/[0.06] px-2.5 text-left text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]"
+        className={cn(
+          "flex h-10 max-w-[260px] items-center gap-2 rounded-md px-2.5 text-left text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]",
+          compact ? "bg-white/[0.06]" : "border border-white/15 bg-white/[0.06]",
+        )}
       >
         <OrganizationMark
           name={organization?.name}
           logoUrl={organization?.logo_url}
         />
         <span className="hidden min-w-0 flex-1 sm:block">
-          <span className="block truncate text-xs font-semibold">
+          <span className={cn("block truncate font-semibold", compact ? "text-sm" : "text-xs")}>
             {organization?.name || "Choose organization"}
           </span>
-          <span className="mt-0.5 block truncate text-[10px] text-white/60">
-            {organization?.slug || "Organization"}
-          </span>
+          {!compact ? (
+            <span className="mt-0.5 block truncate text-[10px] text-white/60">
+              {organization?.slug || "Organization"}
+            </span>
+          ) : null}
         </span>
         <ChevronDown
           className={cn(
@@ -82,7 +87,10 @@ export function OrganizationSwitcher() {
       {open ? (
         <div
           id="global-organization-switcher"
-          className="absolute left-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#DDE2E6] bg-white p-2 text-[#1F2933] shadow-xl"
+          className={cn(
+            "absolute z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#DDE2E6] bg-white p-2 text-[#1F2933] shadow-xl",
+            compact ? "right-0" : "left-0",
+          )}
         >
           <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667280]">
             Current organization

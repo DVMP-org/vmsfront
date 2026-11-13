@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, ShieldCheck, UserCog } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -28,6 +28,7 @@ import { OrganizationManagerRolesDrawer } from "./OrganizationManagerRolesDrawer
 import { EmptyPanel, SurfaceCard } from "./organization-ui";
 
 export function OrganizationManagersPage() {
+    const router = useRouter();
     const current = useCurrentOrganization();
     const slug = current.organization?.slug ?? null;
     const profile = useAdminProfile();
@@ -45,6 +46,24 @@ export function OrganizationManagersPage() {
     const [addOpen, setAddOpen] = useState(false);
     const [editing, setEditing] = useState<OrganizationManager | null>(null);
     const [removing, setRemoving] = useState<OrganizationManager | null>(null);
+    const canCreateManager = can("admins.create");
+
+    useEffect(() => {
+        if (searchParams?.get("create") === "manager" && canCreateManager) {
+            setAddOpen(true);
+        }
+    }, [canCreateManager, searchParams]);
+
+    function closeAddDrawer() {
+        setAddOpen(false);
+        if (searchParams?.get("create") !== "manager") return;
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("create");
+        router.replace(
+            `/organization/managers${next.size ? `?${next}` : ""}`,
+            { scroll: false },
+        );
+    }
 
     const filtered = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -240,7 +259,7 @@ export function OrganizationManagersPage() {
 
             <AddOrganizationManagerDrawer
                 isOpen={addOpen}
-                onClose={() => setAddOpen(false)}
+                onClose={closeAddDrawer}
                 slug={slug}
                 sites={sites.data ?? []}
                 defaultSiteId={siteFilter}

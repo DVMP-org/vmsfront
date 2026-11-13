@@ -33,15 +33,15 @@
       "items": [
         {
           "label": "Leases & agreements",
-          "href": "/admin/commercial/tenants",
-          "icon": "scale",
-          "module": "leases"
-        },
-        {
-          "label": "Lease register",
           "href": "/admin/leases",
           "icon": "document",
           "module": "leases"
+        },
+        {
+          "label": "Parties & tenancies",
+          "href": "/admin/commercial/tenants",
+          "icon": "users",
+          "module": "people"
         },
         {
           "label": "Revenue & charges",

@@ -1,6 +1,7 @@
 import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
+import type { Place } from "@/features/places/api";
 
 export type LeaseAttention = {
     id: string;
@@ -257,4 +258,124 @@ export function ageingTotals(
             .filter((row) => row.bucket === bucket.key)
             .reduce((total, row) => total + row.balance, 0),
     }));
+}
+
+export type InventoryRow = Place & {
+    /** Building name, or the top-level marker for a standalone place. */
+    location: string;
+    commercial_type: string;
+    /** A building holds spaces instead of being occupied by one relationship. */
+    is_container: boolean;
+    occupancy: "occupied" | "vacant" | "container";
+    occupants: string;
+    state: "active" | "archived";
+};
+
+export type InventoryDisplayRow = InventoryRow & {
+    depth: number;
+    has_children: boolean;
+    child_count: number;
+};
+
+/**
+ * One row per commercial Place, carrying its building name and the business
+ * relationships that occupy it, so the inventory table renders from one pass.
+ */
+export function buildInventoryRows(
+    places: Place[],
+    allPlaces: Place[],
+    relationships: Array<{
+        party: { display_name: string };
+        place: { id: string };
+    }>,
+): InventoryRow[] {
+    const byId = new Map(allPlaces.map((place) => [place.id, place]));
+    const byPlace = new Map<string, string[]>();
+    for (const relationship of relationships) {
+        const names = byPlace.get(relationship.place.id) ?? [];
+        names.push(relationship.party.display_name);
+        byPlace.set(relationship.place.id, names);
+    }
+
+    return places.map((place) => {
+        const parent = place.parent_id ? byId.get(place.parent_id) : null;
+        const occupants = byPlace.get(place.id) ?? [];
+        const isContainer = place.kind === "building";
+        const occupancy: InventoryRow["occupancy"] = isContainer
+            ? "container"
+            : occupants.length
+                ? "occupied"
+                : "vacant";
+        return {
+            ...place,
+            location: parent?.name ?? "Top level of this Site",
+            commercial_type: isContainer
+                ? "building"
+                : place.building_type || "office",
+            is_container: isContainer,
+            occupancy,
+            occupants: occupants.join(", "),
+            state: place.is_active ? "active" : "archived",
+        };
+    });
+}
+
+/** Buildings that currently hold places, so they start expanded. */
+export function defaultExpandedInventoryIds(
+    rows: InventoryRow[],
+): Set<string> {
+    const ids = new Set(rows.map((row) => row.id));
+    const parents = rows
+        .map((row) => row.parent_id)
+        .filter((parentId): parentId is string =>
+            Boolean(parentId && ids.has(parentId)),
+        );
+    return new Set(parents);
+}
+
+/**
+ * Flatten the inventory depth-first: a building is a top-level row and the
+ * places it holds sit underneath it. Every descendant of a collapsed row is
+ * omitted. A place whose parent is outside the current scope stays top level,
+ * because a standalone shop or office on its own stand is legitimate.
+ */
+export function flattenInventoryRows(
+    rows: InventoryRow[],
+    expanded: ReadonlySet<string>,
+): InventoryDisplayRow[] {
+    const ids = new Set(rows.map((row) => row.id));
+    const byParent = new Map<string | null, InventoryRow[]>();
+    for (const row of rows) {
+        const parent =
+            row.parent_id && ids.has(row.parent_id) ? row.parent_id : null;
+        const siblings = byParent.get(parent) ?? [];
+        siblings.push(row);
+        byParent.set(parent, siblings);
+    }
+    for (const siblings of Array.from(byParent.values())) {
+        siblings.sort((left, right) => {
+            if (left.is_container !== right.is_container) {
+                return left.is_container ? -1 : 1;
+            }
+            return left.name.localeCompare(right.name);
+        });
+    }
+
+    const output: InventoryDisplayRow[] = [];
+    const walk = (parent: string | null, depth: number) => {
+        for (const row of byParent.get(parent) ?? []) {
+            const children = byParent.get(row.id) ?? [];
+            output.push({
+                ...row,
+                depth,
+                has_children: children.length > 0,
+                child_count: children.length,
+            });
+            if (children.length > 0 && expanded.has(row.id)) {
+                walk(row.id, depth + 1);
+            }
+        }
+    };
+    walk(null, 0);
+    return output;
 }
