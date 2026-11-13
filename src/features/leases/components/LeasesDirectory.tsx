@@ -22,7 +22,6 @@ import {
   monthlyEquivalent,
 } from "../lib";
 import {
-  useLeasePartyOptions,
   useLeasePlaceOptions,
   useLeases,
 } from "../queries";
@@ -62,7 +61,6 @@ export function LeasesDirectory() {
 
   const query = useLeases(siteId);
   const placeOptions = useLeasePlaceOptions(siteId);
-  const partyOptions = useLeasePartyOptions(siteId);
 
   const allRows = useMemo(() => query.data?.items ?? [], [query.data]);
   const rows =
@@ -273,7 +271,6 @@ export function LeasesDirectory() {
         siteId={siteId}
         lease={editing}
         places={placeOptions.data ?? []}
-        parties={partyOptions.data ?? []}
       />
 
       <LeaseDetailDrawer

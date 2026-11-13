@@ -83,6 +83,45 @@ export function useLeasePlaceOptions(siteId: string | null | undefined) {
 }
 
 /**
+ * Parties already attached to a specific Place.
+ *
+ * A lease names someone who occupies the space it covers, so the party list is
+ * the occupancy of that space — not the whole Site register. Offering everyone
+ * let an operator draft a lease for a party who was never in the space.
+ */
+export function usePlacePartyOptions(
+    siteId: string | null | undefined,
+    placeId: string | null | undefined,
+) {
+    return useQuery({
+        queryKey: [
+            "leases",
+            siteId ?? "no-site",
+            "place-parties",
+            placeId ?? "none",
+        ] as const,
+        queryFn: async () => {
+            const result = await placeRelationshipsApi.list({
+                place_id: placeId!,
+                status: "active",
+            });
+            const seen = new Map<string, PartyOption>();
+            for (const relationship of result.items) {
+                seen.set(relationship.party.id, {
+                    id: relationship.party.id,
+                    display_name: relationship.party.display_name,
+                });
+            }
+            return [...seen.values()].sort((a, b) =>
+                a.display_name.localeCompare(b.display_name),
+            );
+        },
+        enabled: Boolean(siteId && placeId),
+        staleTime: 15_000,
+    });
+}
+
+/**
  * Parties already attached to the Site, as lease candidates.
  *
  * Reading them from place relationships keeps one definition of "who is on this

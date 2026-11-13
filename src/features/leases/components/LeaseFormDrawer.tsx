@@ -17,7 +17,7 @@ import type {
   LeaseInput,
   LeaseKind,
 } from "../api";
-import { useCreateLease, useUpdateLease } from "../queries";
+import { useCreateLease, useUpdateLease, usePlacePartyOptions } from "../queries";
 
 export type PlaceOption = { id: string; name: string; kind: string };
 export type PartyOption = { id: string; display_name: string };
@@ -145,14 +145,12 @@ export function LeaseFormDrawer({
   siteId,
   lease,
   places,
-  parties,
 }: {
   isOpen: boolean;
   onClose: () => void;
   siteId?: string | null;
   lease?: Lease | null;
   places: PlaceOption[];
-  parties: PartyOption[];
 }) {
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [showErrors, setShowErrors] = useState(false);
@@ -160,6 +158,8 @@ export function LeaseFormDrawer({
   const update = useUpdateLease(siteId);
   const mutation = lease ? update : create;
   const editing = Boolean(lease);
+  // The party must be an occupant of the space, so the list follows the place.
+  const placeParties = usePlacePartyOptions(siteId, draft.place_id);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -178,7 +178,9 @@ export function LeaseFormDrawer({
   const errors = useMemo(() => {
     const found: Record<string, string> = {};
     if (!draft.place_id) found.place_id = "Choose the space this lease covers";
-    if (!draft.party_id) found.party_id = "Choose the party taking the space";
+    if (draft.place_id && !draft.party_id) {
+      found.party_id = "Choose the party taking the space";
+    }
     if (!draft.starts_at) found.starts_at = "Choose a start date";
     if (draft.ends_at && draft.ends_at <= draft.starts_at) {
       found.ends_at = "The end date must be after the start date";
@@ -276,18 +278,21 @@ export function LeaseFormDrawer({
         title="Agreement"
         description="Who takes which space, and under what kind of agreement."
       >
-        <Field
-          id="lease-place"
-          label="Space"
-          required
-          error={visible("place_id")}
-        >
+        <Field id="lease-place" label="Space" required error={visible("place_id")}>
           {(control) => (
             <select
               {...control}
               className={fieldControlClassName}
               value={draft.place_id}
-              onChange={(event) => update$("place_id", event.target.value)}
+              onChange={(event) => {
+                // The party list belongs to the place, so a change of space
+                // must clear the occupant that was picked for the old one.
+                setDraft((current) => ({
+                  ...current,
+                  place_id: event.target.value,
+                  party_id: "",
+                }));
+              }}
             >
               <option value="">Select a space</option>
               {places.map((place) => (
@@ -299,23 +304,47 @@ export function LeaseFormDrawer({
           )}
         </Field>
 
-        <Field id="lease-party" label="Party" required error={visible("party_id")}>
-          {(control) => (
-            <select
-              {...control}
-              className={fieldControlClassName}
-              value={draft.party_id}
-              onChange={(event) => update$("party_id", event.target.value)}
-            >
-              <option value="">Select a party</option>
-              {parties.map((party) => (
-                <option key={party.id} value={party.id}>
-                  {party.display_name}
+        {draft.place_id ? (
+          <Field
+            id="lease-party"
+            label="Party"
+            required
+            error={visible("party_id")}
+            description={
+              placeParties.isLoading
+                ? "Looking up who occupies this space…"
+                : placeParties.data?.length
+                  ? "Only parties attached to this space can hold its lease."
+                  : "Nobody occupies this space yet. Add the party to the space first."
+            }
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={draft.party_id}
+                disabled={!placeParties.data?.length}
+                onChange={(event) => update$("party_id", event.target.value)}
+              >
+                <option value="">
+                  {placeParties.data?.length
+                    ? "Select a party"
+                    : "No party on this space"}
                 </option>
-              ))}
-            </select>
-          )}
-        </Field>
+                {(placeParties.data ?? []).map((party) => (
+                  <option key={party.id} value={party.id}>
+                    {party.display_name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+        ) : (
+          <p className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-border)] p-3 text-sm text-[var(--vms-ink-muted)]">
+            Choose a space first. The party for this lease is whoever occupies
+            that space, so the list only appears once the space is known.
+          </p>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="lease-kind" label="Agreement type">
