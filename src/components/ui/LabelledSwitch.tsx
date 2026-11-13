@@ -4,13 +4,14 @@ import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 
 /**
- * A switch with the explanation beside it.
+ * A switch with its explanation beside it.
  *
- * `Switch` on its own is only the toggle: its label and description are
+ * `Switch` on its own is only the toggle track: its label and description are
  * accessibility-only, so a bare `<Switch>` reads as an unexplained slider on
- * screen. Anything that toggles money uses this row instead.
+ * screen. Any toggle whose meaning is not obvious from the row it sits in should
+ * use this instead.
  */
-export function LeaseToggleRow({
+export function LabelledSwitch({
   id,
   label,
   description,

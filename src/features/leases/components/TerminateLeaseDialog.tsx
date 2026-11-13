@@ -9,7 +9,7 @@ import { parseApiError } from "@/lib/error-utils";
 
 import type { Lease } from "../api";
 import { useTerminateLease } from "../queries";
-import { LeaseToggleRow } from "./LeaseToggleRow";
+import { LabelledSwitch } from "@/components/ui/LabelledSwitch";
 
 function today(): string {
   const now = new Date();
@@ -128,7 +128,7 @@ export function TerminateLeaseDialog({
         </Field>
 
         {!isDraft ? (
-          <LeaseToggleRow
+          <LabelledSwitch
             id="terminate-end-charges"
             checked={endCharges}
             onChange={setEndCharges}

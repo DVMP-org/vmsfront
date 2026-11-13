@@ -9,8 +9,10 @@ import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
+import { LabelledSwitch } from "@/components/ui/LabelledSwitch";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
+import { leasesApi, type ChargeRecurrence } from "@/features/leases/api";
 import { peopleApi } from "@/features/people/api";
 import { partiesApi } from "@/features/parties/api";
 import { placeRelationshipsApi } from "./api";
@@ -74,6 +76,10 @@ export function PlaceAssignmentModal({
   const [role, setRole] = useState(roleOptions[0]?.value ?? "resident");
   const [effectiveFrom, setEffectiveFrom] = useState("");
   const [effectiveTo, setEffectiveTo] = useState("");
+  const [withLease, setWithLease] = useState(false);
+  const [rentAmount, setRentAmount] = useState("");
+  const [rentCadence, setRentCadence] =
+    useState<ChargeRecurrence>("monthly");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const save = useMutation({
     mutationFn: async () => {
@@ -85,9 +91,11 @@ export function PlaceAssignmentModal({
           ? new Date(`${effectiveTo}T00:00:00`).toISOString()
           : null,
       };
+      let partyId: string;
+      let result;
       if (personMode === "new") {
         if (resolvedPartyKind === "person") {
-          return peopleApi.add(siteId, {
+          const added = await peopleApi.add(siteId, {
             place_id: placeId,
             display_name: displayName.trim(),
             email: email.trim().toLowerCase(),
@@ -96,30 +104,62 @@ export function PlaceAssignmentModal({
             role,
             ...effective,
           });
+          partyId = added.party.id;
+          result = added;
+        } else {
+          // A business tenant is a Party in its own right: create the Party, then
+          // attach it, so the same record can hold charges, leases and contacts.
+          const created = await partiesApi.create({
+            kind: "organization",
+            display_name: displayName.trim(),
+            email: email.trim().toLowerCase() || null,
+            phone: phone.trim() || null,
+          });
+          partyId = created.id;
+          result = await placeRelationshipsApi.create({
+            party_id: partyId,
+            place_id: placeId,
+            role,
+            status: "active",
+            ...effective,
+          });
         }
-        // A business tenant is a Party in its own right: create the Party, then
-        // attach it, so the same record can hold charges, leases and contacts.
-        const created = await partiesApi.create({
-          kind: "organization",
-          display_name: displayName.trim(),
-          email: email.trim().toLowerCase() || null,
-          phone: phone.trim() || null,
-        });
-        return placeRelationshipsApi.create({
-          party_id: created.id,
+      } else {
+        partyId = party!.value;
+        result = await placeRelationshipsApi.create({
+          party_id: partyId,
           place_id: placeId,
           role,
           status: "active",
           ...effective,
         });
       }
-      return placeRelationshipsApi.create({
-        party_id: party!.value,
-        place_id: placeId,
-        role,
-        status: "active",
-        ...effective,
-      });
+
+      // The lease is drafted last, only once the party really occupies the
+      // space. A draft bills nothing, so a failure here leaves an attached
+      // party rather than a lease against a party who never moved in.
+      if (withLease) {
+        await leasesApi.create({
+          place_id: placeId,
+          party_id: partyId,
+          kind: useCase === "residential" ? "tenancy" : "lease",
+          starts_at: effective.effective_from ?? new Date().toISOString(),
+          ends_at: effective.effective_to,
+          rent_amount: rentAmount,
+          currency: "NGN",
+          rent_cadence: rentCadence,
+          notice_days: 30,
+          charge_lines: [
+            {
+              name: "Rent",
+              amount: rentAmount,
+              recurrence: rentCadence,
+              create_definition: false,
+            },
+          ],
+        });
+      }
+      return result;
     },
     onSuccess: () => {
       toast.success(
@@ -127,10 +167,13 @@ export function PlaceAssignmentModal({
           ? "Household relationship created."
           : "Party attached to the place.",
       );
+      if (withLease) {
+        toast.success("Draft lease created — confirm it to start billing.");
+      }
       for (const queryKey of [
         ["auth", "verify"], queryKeys.relationships.all,
         queryKeys.people.all, queryKeys.places.all, ["place"], ["residential"],
-        ["commercial"], ["hospitality"], ["mixed_use"],
+        ["commercial"], ["hospitality"], ["mixed_use"], ["leases"],
       ]) void client.invalidateQueries({ queryKey });
       onSaved();
     },
@@ -158,6 +201,9 @@ export function PlaceAssignmentModal({
     }
     if (effectiveFrom && effectiveTo && effectiveTo <= effectiveFrom) {
       next.effective_to = "The end date must be after the start date.";
+    }
+    if (withLease && !(Number(rentAmount) > 0)) {
+      next["lease-rent"] = "Enter the rent this lease bills.";
     }
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -356,6 +402,54 @@ export function PlaceAssignmentModal({
             )}
           </Field>
         </div>
+        <LabelledSwitch
+          id="also-draft-lease"
+          checked={withLease}
+          onChange={setWithLease}
+          label="Also draft a lease for this party"
+          description="Creates a draft using the dates above, with a Rent charge line. A draft bills nothing until you confirm it on the lease register, where you can add other charges first."
+        />
+        {withLease ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              id="lease-rent"
+              label="Rent per period"
+              required
+              error={errors["lease-rent"]}
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  className={fieldControlClassName}
+                  value={rentAmount}
+                  onChange={(event) => setRentAmount(event.target.value)}
+                  placeholder="500000.00"
+                />
+              )}
+            </Field>
+            <Field id="lease-rent-cadence" label="Billed">
+              {(control) => (
+                <select
+                  {...control}
+                  className={fieldControlClassName}
+                  value={rentCadence}
+                  onChange={(event) =>
+                    setRentCadence(event.target.value as ChargeRecurrence)
+                  }
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="biannual">Every 6 months</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              )}
+            </Field>
+          </div>
+        ) : null}
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { LeaseToggleRow } from "./LeaseToggleRow";
+import { LabelledSwitch } from "@/components/ui/LabelledSwitch";
 
 /**
  * A bare `Switch` renders only the track: its label and description are
@@ -11,7 +11,7 @@ import { LeaseToggleRow } from "./LeaseToggleRow";
 describe("lease toggle row", () => {
   it("shows the label and the explanation, not just a slider", () => {
     render(
-      <LeaseToggleRow
+      <LabelledSwitch
         id="rent-definition"
         label="Create a new Rent charge definition"
         description="Off reuses the Site's existing Rent definition."
@@ -30,7 +30,7 @@ describe("lease toggle row", () => {
 
   it("points the switch at a description element that exists", () => {
     render(
-      <LeaseToggleRow
+      <LabelledSwitch
         id="rent-definition"
         label="Create a new Rent charge definition"
         description="Off reuses the Site's existing Rent definition."
@@ -51,7 +51,7 @@ describe("lease toggle row", () => {
   it("reports the opposite state when toggled", () => {
     const onChange = vi.fn();
     render(
-      <LeaseToggleRow
+      <LabelledSwitch
         id="rent-definition"
         label="Create a new definition"
         description="Off reuses the Site definition with the same name."
