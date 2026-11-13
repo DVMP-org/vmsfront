@@ -9,7 +9,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useSiteAccess } from "@/features/context/use-site-access";
-import { placePartyKindFor } from "@/features/places/roles";
 import { formatMoney } from "@/lib/currency";
 import { useAppStore } from "@/store/app-store";
 
@@ -52,7 +51,6 @@ export function LeasesDirectory() {
   const selectedSite =
     access.workspace.data?.management?.selected_site ?? storedSite;
   const siteId = selectedSite?.id;
-  const useCase = access.workspace.data?.effective_use_case;
   const canManage =
     access.isAdministrator || access.allowed(["leases.create", "leases.update"]);
 
@@ -276,9 +274,6 @@ export function LeasesDirectory() {
         lease={editing}
         places={placeOptions.data ?? []}
         parties={partyOptions.data ?? []}
-        defaultPartyKind={
-          placePartyKindFor(useCase) === "person" ? "person" : "organization"
-        }
       />
 
       <LeaseDetailDrawer
