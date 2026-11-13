@@ -14,12 +14,11 @@ import {
   WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 import { format } from "date-fns/format";
 
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
 
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
@@ -32,22 +31,13 @@ import {
   useCommercialRelationships,
   useCommercialTree,
 } from "./queries";
-
-type LeaseAttention = {
-  id: string;
-  tenant: string;
-  space: string;
-  role: string;
-  ends_at: string | null;
-  days: number | null;
-  state: "current" | "expired" | "expiring" | "open_ended";
-};
-
-type OccupancyRow = {
-  building: string;
-  total: number;
-  occupied: number;
-};
+import {
+  buildLeaseAttention,
+  buildOccupancy,
+  expiryBuckets,
+  leaseTone,
+  type LeaseAttention,
+} from "./lib";
 
 export default function CommercialOverview() {
   const { selectedSite, contextKey } = useCommercialAccess();
@@ -269,9 +259,16 @@ export default function CommercialOverview() {
               {occupancy.map((row) => {
                 const rate = row.total ? (row.occupied / row.total) * 100 : 0;
                 return (
-                  <li key={row.building}>
+                  <li key={row.label}>
                     <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="truncate font-medium">{row.building}</span>
+                      <span className="truncate font-medium">
+                        {row.label}
+                        {row.standalone ? (
+                          <span className="ml-1.5 text-xs font-normal text-[var(--vms-ink-muted)]">
+                            standalone
+                          </span>
+                        ) : null}
+                      </span>
                       <span className="shrink-0 tabular-nums text-[var(--vms-ink-muted)]">
                         {row.occupied}/{row.total} · {Math.round(rate)}%
                       </span>
@@ -279,7 +276,7 @@ export default function CommercialOverview() {
                     <div
                       className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--vms-surface-subtle)]"
                       role="img"
-                      aria-label={`${row.building}: ${Math.round(rate)}% occupied`}
+                      aria-label={`${row.label}: ${Math.round(rate)}% occupied`}
                     >
                       <span
                         className="block h-full rounded-full bg-[var(--vms-action)]"
@@ -712,99 +709,4 @@ function formatMoney(amount: unknown, currency?: string | null): string {
   } catch {
     return value.toLocaleString();
   }
-}
-
-function expiryBuckets(leases: LeaseAttention[]) {
-  const expiring = leases.filter((lease) => lease.state === "expiring");
-  return [
-    {
-      key: "expired",
-      label: "Expired",
-      danger: true,
-      count: leases.filter((lease) => lease.state === "expired").length,
-    },
-    {
-      key: "30",
-      label: "≤ 30 days",
-      danger: false,
-      count: expiring.filter((lease) => (lease.days ?? 0) <= 30).length,
-    },
-    {
-      key: "60",
-      label: "31–60 days",
-      danger: false,
-      count: expiring.filter((lease) => (lease.days ?? 0) > 30).length,
-    },
-    {
-      key: "open",
-      label: "Open-ended",
-      danger: false,
-      count: leases.filter((lease) => lease.state === "open_ended").length,
-    },
-  ];
-}
-
-function buildLeaseAttention(
-  relationships: Array<{
-    id: string;
-    role: string;
-    effective_to: string | null;
-    party: { display_name: string };
-    place: { id: string; name: string };
-  }>,
-): LeaseAttention[] {
-  return relationships.map((relationship) => {
-    const days = relationship.effective_to
-      ? differenceInCalendarDays(new Date(relationship.effective_to), new Date())
-      : null;
-    return {
-      id: relationship.id,
-      tenant: relationship.party.display_name,
-      space: relationship.place.name,
-      role: relationship.role,
-      ends_at: relationship.effective_to,
-      days,
-      state:
-        days === null
-          ? "open_ended"
-          : days < 0
-            ? "expired"
-            : days <= 60
-              ? "expiring"
-              : "current",
-    };
-  });
-}
-
-function buildOccupancy(
-  inventory: Array<{ id: string; name: string; parent_id: string | null }>,
-  places: Array<{ id: string; name: string }>,
-  relationships: Array<{ place: { id: string } }>,
-): OccupancyRow[] {
-  const names = new Map(places.map((place) => [place.id, place.name]));
-  const occupied = new Set(relationships.map((row) => row.place.id));
-  const byBuilding = new Map<string, OccupancyRow>();
-  inventory.forEach((space) => {
-    const building =
-      (space.parent_id && names.get(space.parent_id)) || "Unassigned";
-    const row =
-      byBuilding.get(building) ??
-      ({ building, total: 0, occupied: 0 } satisfies OccupancyRow);
-    row.total += 1;
-    if (occupied.has(space.id)) row.occupied += 1;
-    byBuilding.set(building, row);
-  });
-  return [...byBuilding.values()].sort((left, right) =>
-    left.building.localeCompare(right.building),
-  );
-}
-
-export function leaseTone(state: LeaseAttention["state"]): StatusTone {
-  return state === "expired"
-    ? "danger"
-    : state === "expiring"
-      ? "warning"
-      : state === "open_ended"
-        ? "neutral"
-        : "success";
 }

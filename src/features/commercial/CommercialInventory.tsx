@@ -461,26 +461,33 @@ function CommercialSpaceModal({
   const [description, setDescription] = useState(space?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () =>
-      space
-        ? placesApi.update(space.id, {
-            name: name.trim(),
-            address: address.trim(),
-            description: description.trim(),
-          })
-        : placesApi.create({
-            site_id:
-              parents.find((parent) => parent.id === parentId)?.site_id ||
-              parents[0]?.site_id ||
-              selectedSite?.id ||
-              "",
-            name: name.trim(),
-            kind: structuralKind,
-            building_type: buildingType,
-            address: address.trim(),
-            description: description.trim(),
-            parent_id: parentId || null,
-          }),
+    mutationFn: async () => {
+      if (!space) {
+        return placesApi.create({
+          site_id:
+            parents.find((parent) => parent.id === parentId)?.site_id ||
+            parents[0]?.site_id ||
+            selectedSite?.id ||
+            "",
+          name: name.trim(),
+          kind: structuralKind,
+          building_type: buildingType,
+          address: address.trim(),
+          description: description.trim(),
+          parent_id: parentId || null,
+        });
+      }
+
+      const updated = await placesApi.update(space.id, {
+        name: name.trim(),
+        address: address.trim(),
+        description: description.trim(),
+      });
+      if ((space.parent_id ?? "") !== parentId) {
+        await placesApi.move(space.id, parentId || null);
+      }
+      return updated;
+    },
     onSuccess: async () => {
       toast.success(
         space ? "Commercial space updated." : "Commercial space added.",
@@ -565,9 +572,11 @@ function CommercialSpaceModal({
             id="commercial-parent"
             label="Building"
             description={
-              structuralKind === "building"
-                ? "Optional — nest this building inside another one, or leave it at the top level."
-                : "Optional — leave empty to create it at the top level of this Site. Only buildings can contain other places."
+              space
+                ? "Move this place to another building, or leave it at the top level of the Site."
+                : structuralKind === "building"
+                  ? "Optional — nest this building inside another one, or leave it at the top level."
+                  : "Optional — leave empty to create it at the top level of this Site. Only buildings can contain other places."
             }
             error={errors.parent}
           >
@@ -576,7 +585,6 @@ function CommercialSpaceModal({
                 {...control}
                 className={fieldControlClassName}
                 value={parentId}
-                disabled={!!space}
                 onChange={(event) => setParentId(event.target.value)}
               >
                 <option value="">
