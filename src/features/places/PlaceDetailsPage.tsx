@@ -23,10 +23,13 @@ import { parseApiError } from "@/lib/error-utils";
 import type { WorkspaceRelationship } from "@/types";
 import { placesApi, placeRelationshipsApi } from "./api";
 import { PlaceAssignmentModal } from "./PlaceAssignmentModal";
+import { placeAssignmentCopyFor } from "./roles";
 
 export function PlaceDetailsPage({ placeId }: { placeId: string }) {
   const { allowed, contextKey, workspace } = useSiteAccess();
   const site = useAppStore((state) => state.selectedSite);
+  const useCase = workspace.data?.effective_use_case ?? null;
+  const assignmentCopy = placeAssignmentCopyFor(useCase);
   const queryClient = useQueryClient();
   const [assignOpen, setAssignOpen] = useState(false);
   const canView = allowed(["places.show", "places.list"]);
@@ -127,7 +130,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
           canAssign ? (
             <Button onClick={() => setAssignOpen(true)}>
               <UserPlus className="h-4 w-4" aria-hidden />
-              Assign resident
+              {assignmentCopy.action}
             </Button>
           ) : undefined
         }
@@ -229,6 +232,8 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
         siteId={site.id}
         places={[currentPlace]}
         defaultPlaceId={placeId}
+        closedPlaceName={currentPlace.name}
+        useCase={useCase}
         contextKey={contextKey}
         onClose={() => setAssignOpen(false)}
         onSaved={() => {

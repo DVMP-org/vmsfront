@@ -410,6 +410,25 @@ describe("commercial operations", () => {
     );
   });
 
+  it("offers buildings as party targets alongside the spaces", async () => {
+    mount(<CommercialTenants />);
+
+    const assign = await screen.findByRole("button", { name: "Add party" });
+    await waitFor(() => expect(assign).toBeEnabled());
+    fireEvent.click(assign);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add party to a space",
+    });
+    const options = Array.from(
+      within(dialog)
+        .getByLabelText(/^Commercial space/)
+        .querySelectorAll("option"),
+    ).map((option) => option.textContent);
+    // A whole-building lease is real, so the building is selectable — but the
+    // picker defaults to the lettable space, not the container.
+    expect(options).toEqual(["Suite 4A", "Harbour Tower · Building"]);
+  });
+
   it("assigns an organization as a business tenant with a lease period", async () => {
     mount(<CommercialTenants />);
 

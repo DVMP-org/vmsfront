@@ -36,7 +36,7 @@ import {
   commercialApi,
   descendantIds,
   flattenPlaces,
-  isCommercialInventory,
+  isCommercialPlace,
 } from "./api";
 import { accessRoles, titleCase } from "./contracts";
 
@@ -93,9 +93,22 @@ export default function CommercialAccess() {
   );
   const spaces = useMemo(
     () =>
-      allPlaces.filter(
-        (place) => scopeIds.has(place.id) && isCommercialInventory(place),
-      ),
+      allPlaces
+        .filter(
+          (place) => scopeIds.has(place.id) && isCommercialPlace(place),
+        )
+        // Spaces first, buildings last: operational access is normally granted
+        // to a space, and the picker defaults to the first option.
+        .sort(
+          (left, right) =>
+            Number(left.kind === "building") -
+            Number(right.kind === "building"),
+        )
+        .map((place) => ({
+          ...place,
+          name:
+            place.kind === "building" ? `${place.name} · Building` : place.name,
+        })),
     [allPlaces, scopeIds],
   );
   const rows = useMemo<AccessRow[]>(

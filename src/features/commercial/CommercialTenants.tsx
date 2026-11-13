@@ -38,7 +38,7 @@ import {
   commercialApi,
   descendantIds,
   flattenPlaces,
-  isCommercialInventory,
+  isCommercialPlace,
 } from "./api";
 import { tenantRoles, titleCase } from "./contracts";
 
@@ -84,9 +84,22 @@ export default function CommercialTenants() {
   );
   const spaces = useMemo(
     () =>
-      allPlaces.filter(
-        (place) => scopeIds.has(place.id) && isCommercialInventory(place),
-      ),
+      allPlaces
+        .filter(
+          (place) => scopeIds.has(place.id) && isCommercialPlace(place),
+        )
+        // Spaces first, buildings last: a whole-building lease is the rare case,
+        // and the picker defaults to the first option.
+        .sort(
+          (left, right) =>
+            Number(left.kind === "building") -
+            Number(right.kind === "building"),
+        )
+        .map((place) => ({
+          ...place,
+          name:
+            place.kind === "building" ? `${place.name} · Building` : place.name,
+        })),
     [allPlaces, scopeIds],
   );
   const rows = useMemo<TenantRow[]>(
