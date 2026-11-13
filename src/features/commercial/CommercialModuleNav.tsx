@@ -38,7 +38,7 @@ const sections = [
   },
   {
     href: "/admin/commercial/access",
-    label: "Staff & access",
+    label: "Employee access",
     icon: DoorOpen,
   },
   {

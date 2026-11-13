@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { descendantIds, flattenPlaces, isCommercialInventory } from "./api";
+import {
+  descendantIds,
+  flattenPlaces,
+  isCommercialInventory,
+  isCommercialPlace,
+} from "./api";
 
 const tree = [
   {
@@ -58,6 +63,11 @@ describe("commercial place scope", () => {
 
   it("recognizes commercial space types only", () => {
     expect(isCommercialInventory(tree[0].children[0].children[0])).toBe(true);
+    expect(isCommercialInventory(tree[0].children[0])).toBe(false);
+  });
+
+  it("treats a building as inventory but not as a lettable space", () => {
+    expect(isCommercialPlace(tree[0].children[0])).toBe(true);
     expect(isCommercialInventory(tree[0].children[0])).toBe(false);
   });
 

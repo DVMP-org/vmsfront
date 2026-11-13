@@ -179,9 +179,7 @@ export default function CommercialAccess() {
       header: "Access role",
       sortable: true,
       accessor: (row) => (
-        <StatusBadge tone={row.role === "contractor" ? "warning" : "info"}>
-          {titleCase(row.role)}
-        </StatusBadge>
+        <StatusBadge tone="info">{titleCase(row.role)}</StatusBadge>
       ),
     },
     {
@@ -276,7 +274,7 @@ export default function CommercialAccess() {
           variant: "destructive",
           requiresConfirmation: true,
           confirmationMessage:
-            "End access for the selected employees and contractors? Their historical access record remains auditable.",
+            "End access for the selected employees? Their historical access record remains auditable.",
           onClick: (ids) => update.mutate({ ids, active: false }),
         },
       ]
@@ -284,8 +282,8 @@ export default function CommercialAccess() {
 
   return (
     <CommercialShell
-      title="Staff & contractor access"
-      description="Time-bounded operating access for employees and contractors, kept separate from business tenancy and visitor invitations."
+      title="Employee access"
+      description="Time-bounded operating access for employee parties, kept separate from business tenancy, contractor registration and visitor invitations."
       primaryAction={
         canManageAccess ? (
           <Button onClick={() => setCreateOpen(true)}>
@@ -301,7 +299,7 @@ export default function CommercialAccess() {
             icon: KeyRound,
             label: "Access relationships",
             value: rows.length,
-            detail: "Employees and contractors",
+            detail: "Employee parties with operating access",
           },
           {
             icon: ShieldCheck,
@@ -324,8 +322,9 @@ export default function CommercialAccess() {
           <div>
             <h2 className="text-base font-semibold">Operational access</h2>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              Employee and contractor access uses Party-to-Place relationships
-              and the same access-control policy as shared checkpoints.
+              Employee access uses Party-to-Place relationships and the same
+              access-control policy as shared checkpoints. Contractors are
+              registered separately against the Site.
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
@@ -355,8 +354,8 @@ export default function CommercialAccess() {
             void tree.refetch();
             void relationships.refetch();
           }}
-          emptyMessage="No employee or contractor access relationships match this property."
-          tableLabel="Commercial staff and contractor access"
+          emptyMessage="No employee access relationships match this property."
+          tableLabel="Commercial employee access"
           mobileSummary={(row) => (
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-3">
@@ -463,7 +462,7 @@ function AssignAccessModal({
       isOpen={open}
       onClose={onClose}
       title="Assign commercial access"
-      description="Create a time-bounded employee or contractor relationship for a commercial space."
+      description="Create a time-bounded employee relationship for a commercial space."
       size="md"
     >
       <form className="space-y-4" onSubmit={submit} noValidate>
