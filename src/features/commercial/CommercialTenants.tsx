@@ -38,7 +38,7 @@ import {
   commercialApi,
   descendantIds,
   flattenPlaces,
-  isCommercialInventory,
+  isCommercialPlace,
 } from "./api";
 import { tenantRoles, titleCase } from "./contracts";
 
@@ -58,10 +58,10 @@ type TenantRow = {
 
 export default function CommercialTenants() {
   const { confirmAction, confirmationDialog } = useConfirmAction();
-  const { selectedProperty, contextKey, canManagePeople } =
+  const { selectedSite, contextKey, canManagePeople } =
     useCommercialAccess();
   const client = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const tree = useQuery({
@@ -84,9 +84,22 @@ export default function CommercialTenants() {
   );
   const spaces = useMemo(
     () =>
-      allPlaces.filter(
-        (place) => scopeIds.has(place.id) && isCommercialInventory(place),
-      ),
+      allPlaces
+        .filter(
+          (place) => scopeIds.has(place.id) && isCommercialPlace(place),
+        )
+        // Spaces first, buildings last: a whole-building lease is the rare case,
+        // and the picker defaults to the first option.
+        .sort(
+          (left, right) =>
+            Number(left.kind === "building") -
+            Number(right.kind === "building"),
+        )
+        .map((place) => ({
+          ...place,
+          name:
+            place.kind === "building" ? `${place.name} · Building` : place.name,
+        })),
     [allPlaces, scopeIds],
   );
   const rows = useMemo<TenantRow[]>(
@@ -297,13 +310,13 @@ export default function CommercialTenants() {
 
   return (
     <CommercialShell
-      title="Business tenants & leases"
-      description="Organization and member relationships attached to commercial spaces, with explicit lease periods and expiry attention."
+      title="Parties & tenancies"
+      description="Tenant, member and employee relationships attached to commercial spaces, with explicit lease periods and expiry attention."
       primaryAction={
         canManagePeople ? (
-          <Button onClick={() => setCreateOpen(true)} disabled={!spaces.length}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Assign business tenant
+            Add party
           </Button>
         ) : undefined
       }
@@ -312,9 +325,9 @@ export default function CommercialTenants() {
         items={[
           {
             icon: BriefcaseBusiness,
-            label: "Tenant relationships",
+            label: "Parties",
             value: rows.length,
-            detail: "Current and historical records",
+            detail: "Tenants, members and employees",
           },
           {
             icon: CheckCircle2,
@@ -334,19 +347,25 @@ export default function CommercialTenants() {
         <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-semibold">
-              Tenancy and lease periods
+              Parties on commercial spaces
             </h2>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              Lease expiry is derived from the canonical Place relationship.
-              Access and charges can follow the same organization Party.
+              Tenants hold the lease, members share the space and employees work
+              in it. Lease expiry is derived from the canonical Place
+              relationship; contractors are registered against the Site instead.
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/people">
+          {canManagePeople ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+            >
               <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
-              Add a business party
-            </Link>
-          </Button>
+              Add a party
+            </Button>
+          ) : null}
         </div>
         <DataTable
           data={rows}
@@ -465,8 +484,8 @@ function AssignTenantModal({
     <Modal
       isOpen={open}
       onClose={onClose}
-      title="Assign business tenant"
-      description="Attach a business Party to a commercial space with an explicit lease period."
+      title="Add party to a space"
+      description="Attach a business or member Party to a commercial space with a role and lease period."
       size="md"
     >
       <form className="space-y-4" onSubmit={submit} noValidate>
@@ -475,6 +494,11 @@ function AssignTenantModal({
           id="tenant-space"
           label="Commercial space"
           required
+          description={
+            spaces.length
+              ? undefined
+              : "This Site has no commercial spaces yet. Add one from inventory first."
+          }
           error={errors.space}
         >
           {(control) => (
@@ -553,7 +577,7 @@ function AssignTenantModal({
             Cancel
           </Button>
           <Button type="submit" isLoading={save.isPending}>
-            Assign tenant
+            Add party
           </Button>
         </div>
       </form>

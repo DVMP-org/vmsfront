@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import { BrandingSection } from "@/app/admin/settings/components/BrandingSection";
-import { MailerSettingsSection } from "@/app/admin/settings/components/MailerSettingsSection";
-import { PaymentGatewaysSection } from "@/app/admin/settings/components/PaymentGatewaysSection";
 import { SubscriptionSection } from "@/app/admin/settings/components/SubscriptionSection";
 import { type OrganizationSettingsSection } from "@/components/settings/OrganizationSettingsTabs";
+import { EmailTemplatesSection } from "@/features/email-templates/components/EmailTemplatesSection";
 
 const sections: Partial<
   Record<
@@ -17,17 +16,11 @@ const sections: Partial<
       "Control organization marks, identity accents and the accessible light brand kit.",
     component: BrandingSection,
   },
-  payment: {
-    title: "Payment gateways",
+  templates: {
+    title: "Email templates",
     description:
-      "Configure the providers used to collect organization and property payments.",
-    component: PaymentGatewaysSection,
-  },
-  mailer: {
-    title: "Mail delivery",
-    description:
-      "Configure delivery infrastructure and the organization's transactional email.",
-    component: MailerSettingsSection,
+      "Customize transactional email content. SMTP delivery is configured as an integration.",
+    component: EmailTemplatesSection,
   },
   subscription: {
     title: "Subscription and billing",

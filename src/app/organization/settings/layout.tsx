@@ -14,12 +14,12 @@ const headings: Record<
   general: {
     title: "Organization settings",
     description:
-      "Manage the identity, operating context and configuration above your properties and workspaces.",
+      "Manage the identity, operating context and configuration above your Sites and workspaces.",
   },
   administrators: {
     title: "Administrators",
     description:
-      "Manage organization-level administrators without implying property occupancy or site administration.",
+      "Manage organization-level administrators without implying Place occupancy or site administration.",
   },
   roles: {
     title: "Roles & permissions",
@@ -31,14 +31,10 @@ const headings: Record<
     description:
       "Control organization marks, identity accents and the accessible light brand kit.",
   },
-  payment: {
-    title: "Payment gateways",
+  templates: {
+    title: "Email templates",
     description:
-      "Configure providers used to collect organization and property payments.",
-  },
-  mailer: {
-    title: "Mail delivery",
-    description: "Configure transactional email delivery for the organization.",
+      "Customize transactional email content. Delivery credentials live in the SMTP integration.",
   },
   subscription: {
     title: "Subscription and billing",
@@ -48,7 +44,7 @@ const headings: Record<
   plugins: {
     title: "Organization plugins",
     description:
-      "Install, enable and configure plugins once for every property in this organization.",
+      "Install, enable and configure plugins once for every Site in this organization.",
   },
   integrations: {
     title: "Organization integrations",

@@ -6,10 +6,10 @@ import type {
 } from "@/types";
 import { chargesApi, type Assignment } from "@/features/charges/api";
 import {
-  propertiesApi,
-  type Property,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type Place,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import type {
   CommercialMaintenanceInput,
   CommercialMaintenanceRequest,
@@ -31,9 +31,9 @@ const unwrap = async <T>(request: Promise<ApiResponse<T>>) =>
   (await request).data;
 
 export const commercialApi = {
-  tree: (): Promise<PropertyTreeNode[]> => {
-    const siteId = useAppStore.getState().selectedProperty?.id;
-    return siteId ? propertiesApi.tree(siteId) : Promise.resolve([]);
+  tree: (): Promise<PlaceTreeNode[]> => {
+    const siteId = useAppStore.getState().selectedSite?.id;
+    return siteId ? placesApi.tree(siteId) : Promise.resolve([]);
   },
   relationships: async (
     params: {
@@ -119,9 +119,9 @@ export const commercialApi = {
     ),
 };
 
-export function flattenPlaces(roots: PropertyTreeNode[]): PropertyTreeNode[] {
-  const output: PropertyTreeNode[] = [];
-  const visit = (node: PropertyTreeNode) => {
+export function flattenPlaces(roots: PlaceTreeNode[]): PlaceTreeNode[] {
+  const output: PlaceTreeNode[] = [];
+  const visit = (node: PlaceTreeNode) => {
     output.push(node);
     node.children.forEach(visit);
   };
@@ -130,19 +130,41 @@ export function flattenPlaces(roots: PropertyTreeNode[]): PropertyTreeNode[] {
 }
 
 export function descendantIds(
-  roots: PropertyTreeNode[],
+  roots: PlaceTreeNode[],
   rootId: string,
 ): Set<string> {
   const root = flattenPlaces(roots).find((place) => place.id === rootId);
-  if (!root) return new Set();
+  if (!root) {
+    // The id belongs to the Site, not a Place: the tree is already site-scoped,
+    // so every node is in scope. Returning an empty set here silently emptied
+    // inventory, parties and access screens on freshly created commercial Sites.
+    return new Set(flattenPlaces(roots).map((place) => place.id));
+  }
   return new Set(flattenPlaces([root]).map((place) => place.id));
 }
 
-export function isCommercialInventory(place: Property) {
+const lettableTypes = [
+  "office",
+  "shop",
+  "retail_unit",
+  "warehouse",
+  "conference_room",
+];
+
+/**
+ * Every Place that belongs to commercial inventory. Buildings are inventory
+ * too: they are what the lettable spaces sit in, so the inventory list shows
+ * them instead of counting them invisibly.
+ */
+export function isCommercialPlace(place: Place) {
+  if (place.kind === "building") return true;
   return (
     ["unit", "space"].includes(place.kind) &&
-    ["office", "shop", "retail_unit", "warehouse", "conference_room"].includes(
-      place.building_type || "",
-    )
+    lettableTypes.includes(place.building_type || "")
   );
+}
+
+/** Lettable spaces only: a building is a container, not a lease target. */
+export function isCommercialInventory(place: Place) {
+  return place.kind !== "building" && isCommercialPlace(place);
 }

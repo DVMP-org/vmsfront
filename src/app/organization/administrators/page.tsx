@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Download,
@@ -83,6 +84,8 @@ function isProtected(admin: Admin) {
 
 export default function OrganizationAdministratorsPage() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const embedded =
     pathname?.startsWith("/organization/settings/administrators") === true;
   const [page, setPage] = useState(1);
@@ -116,6 +119,27 @@ export default function OrganizationAdministratorsPage() {
   const canUpdate = hasAdminPermission(profile.data, "admins.update");
   const canDelete = hasAdminPermission(profile.data, "admins.delete");
   const readOnly = !canCreate && !canUpdate && !canDelete;
+
+  useEffect(() => {
+    if (
+      searchParams?.get("create") === "administrator" &&
+      canCreate
+    ) {
+      setDraft(emptyDraft);
+      setErrors({});
+      setCreateOpen(true);
+    }
+  }, [canCreate, searchParams]);
+
+  function closeCreate() {
+    setCreateOpen(false);
+    if (searchParams?.get("create") !== "administrator") return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("create");
+    router.replace(`${pathname}${next.size ? `?${next}` : ""}`, {
+      scroll: false,
+    });
+  }
 
   function openCreate() {
     setDraft(emptyDraft);
@@ -162,7 +186,7 @@ export default function OrganizationAdministratorsPage() {
           setNotice(
             `${displayName(result.data)} was added as an organization administrator.`,
           );
-          setCreateOpen(false);
+          closeCreate();
           setDraft(emptyDraft);
           setErrors({});
         },
@@ -326,15 +350,20 @@ export default function OrganizationAdministratorsPage() {
       {!embedded ? (
         <OrganizationAdminHeader
           eyebrow="Organization administration"
-          title="Administrators"
-          description="Manage organization-level access. Site administration and occupancy relationships remain separate in Places and People."
+          title="Members & Roles"
+          description="Manage organization-level members and the roles that delegate administration. Site administration and occupancy relationships remain separate in Places and People."
           actions={
-            canCreate ? (
-              <Button onClick={openCreate}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add administrator
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href="/organization/roles">Review roles</Link>
               </Button>
-            ) : undefined
+              {canCreate ? (
+                <Button onClick={openCreate}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add administrator
+                </Button>
+              ) : null}
+            </div>
           }
         />
       ) : null}
@@ -448,9 +477,9 @@ export default function OrganizationAdministratorsPage() {
 
       <Modal
         isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={closeCreate}
         title="Add organization administrator"
-        description="This grants tenant administration. It does not grant a property workspace or occupancy relationship."
+        description="This grants tenant administration. It does not grant a Site workspace or occupancy relationship."
         size="lg"
       >
         <form className="space-y-5" onSubmit={submitCreate} noValidate>
@@ -590,7 +619,7 @@ export default function OrganizationAdministratorsPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setCreateOpen(false)}
+              onClick={closeCreate}
             >
               Cancel
             </Button>
@@ -642,7 +671,7 @@ export default function OrganizationAdministratorsPage() {
         title="Remove organization administrator?"
         description={
           deletingAdmin
-            ? `${displayName(deletingAdmin)} will lose organization administration access. Property workspaces and occupancy relationships are not removed automatically.`
+            ? `${displayName(deletingAdmin)} will lose organization administration access. Site workspaces and occupancy relationships are not removed automatically.`
             : undefined
         }
         size="sm"

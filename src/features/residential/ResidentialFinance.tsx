@@ -48,10 +48,10 @@ type FinanceRow = {
 };
 
 export default function ResidentialFinance() {
-  const { contextKey, selectedProperty, canManageFinance } =
+  const { contextKey, selectedSite, canManageFinance } =
     useResidentialAccess();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const tree = useQuery({
     queryKey: ["residential", contextKey, "tree"],
     queryFn: residentialApi.tree,

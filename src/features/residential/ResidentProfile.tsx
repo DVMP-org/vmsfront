@@ -22,11 +22,11 @@ export function ResidentProfile({
 }: {
   relationshipId: string;
 }) {
-  const { contextKey, selectedProperty } = useResidentialAccess();
+  const { contextKey, selectedSite } = useResidentialAccess();
   const relationship = useQuery({
     queryKey: ["residential", contextKey, "relationship", relationshipId],
     queryFn: () => residentialApi.relationship(relationshipId),
-    enabled: !!selectedProperty?.id && !!relationshipId,
+    enabled: !!selectedSite?.id && !!relationshipId,
     retry: false,
   });
   const household = useQuery({
@@ -60,7 +60,7 @@ export function ResidentProfile({
       >
         <ArrowLeft className="h-4 w-4" /> Back to residents
       </Link>
-      {relationship.isPending && selectedProperty ? (
+      {relationship.isPending && selectedSite ? (
         <p role="status">Loading resident details…</p>
       ) : null}
       {relationship.isError ? (

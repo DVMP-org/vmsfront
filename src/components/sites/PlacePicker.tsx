@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { fieldControlClassName } from "@/components/ui/form/Field";
 import {
-  propertiesApi,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 
 export function PlacePicker({
   siteId,
@@ -22,7 +22,7 @@ export function PlacePicker({
 }) {
   const places = useQuery({
     queryKey: ["place-picker", siteId],
-    queryFn: () => propertiesApi.tree(siteId),
+    queryFn: () => placesApi.tree(siteId),
     enabled: !!siteId,
   });
   const items = useMemo(
@@ -67,7 +67,7 @@ export function PlacePicker({
 }
 
 export function flattenPlaces(
-  roots: PropertyTreeNode[],
-): PropertyTreeNode[] {
+  roots: PlaceTreeNode[],
+): PlaceTreeNode[] {
   return roots.flatMap((root) => [root, ...flattenPlaces(root.children || [])]);
 }

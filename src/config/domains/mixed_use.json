@@ -20,10 +20,10 @@
           "module": "mixed_use"
         },
         {
-          "label": "Occupancy & tenancies",
-          "href": "/admin/people",
-          "icon": "users",
-          "module": "people"
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         }
       ]
     },
@@ -33,9 +33,15 @@
       "items": [
         {
           "label": "Leases & agreements",
-          "href": "/admin/commercial/tenants",
-          "icon": "scale",
+          "href": "/admin/leases",
+          "icon": "document",
           "module": "leases"
+        },
+        {
+          "label": "Parties & tenancies",
+          "href": "/admin/commercial/tenants",
+          "icon": "users",
+          "module": "people"
         },
         {
           "label": "Revenue & charges",
@@ -104,6 +110,12 @@
           "href": "/admin/invitations",
           "icon": "ticket",
           "module": "check_in_out"
+        },
+        {
+          "label": "Visitors",
+          "href": "/admin/mixed-use/visitors",
+          "icon": "shield",
+          "module": "access_control"
         },
         {
           "label": "Movement log",

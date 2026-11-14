@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
-import { FirstWorkspaceSetup } from "@/components/onboarding/FirstWorkspaceSetup";
 import type { DashboardRange } from "@/features/dashboard/AccessTrendPanel";
 import {
   DashboardSkeleton,
@@ -13,7 +12,11 @@ import {
 } from "@/features/dashboard/DashboardPrimitives";
 import { OperationsDashboard } from "@/features/dashboard/OperationsDashboard";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import { useAdminAnalyticsSummary, useAdminDashboard } from "@/hooks/use-admin";
+import {
+  useAdminAnalyticsSummary,
+  useAdminDashboard,
+  useOperationsAttention,
+} from "@/hooks/use-admin";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import type { AdminDashboard } from "@/types";
@@ -34,30 +37,24 @@ export default function DefaultAdminOverview() {
   const router = useRouter();
   const dashboard = useAdminDashboard();
   const analytics = useAdminAnalyticsSummary();
+  const attention = useOperationsAttention();
   const context = useWorkspaceContext();
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const data = dashboard.data as AdminDashboard | undefined;
-  const [showFirstWorkspaceSetup, setShowFirstWorkspaceSetup] = useState(false);
   const [range, setRange] = useState<DashboardRange>(14);
 
   useEffect(() => {
     setRange(initialRange());
-    const params = new URLSearchParams(window.location.search);
-    const requested =
-      params.get("setup") === "first-workspace" ||
-      window.sessionStorage.getItem("organization-setup-step") ===
-        "first-workspace";
-    if (requested) setShowFirstWorkspaceSetup(true);
   }, []);
 
   useEffect(() => {
     if (!data) return;
     if (!data.root_places.length) return;
-    if (!selectedProperty) {
+    if (!selectedSite) {
       router.replace("/?lobby=1");
     }
-  }, [data, router, selectedProperty]);
+  }, [data, router, selectedSite]);
 
   function handleRangeChange(nextRange: DashboardRange) {
     setRange(nextRange);
@@ -80,7 +77,7 @@ export default function DefaultAdminOverview() {
     );
   }
 
-  if (!data?.root_places.length || !selectedProperty) {
+  if (!data?.root_places.length || !selectedSite) {
     return (
       <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
         Preparing workspace context…
@@ -116,32 +113,21 @@ export default function DefaultAdminOverview() {
       analyticsPending={analytics.isPending}
       analyticsError={analytics.isError}
       analyticsFetching={analytics.isFetching}
+      attention={attention.data}
+      attentionPending={attention.isPending}
+      attentionError={attention.isError}
+      attentionFetching={attention.isFetching}
+      onRetryAttention={() => attention.refetch()}
       range={range}
       onRangeChange={handleRangeChange}
       onRetryAnalytics={() => analytics.refetch()}
       isStale={dashboard.isError}
       isFetching={dashboard.isFetching}
       onRetryDashboard={() => dashboard.refetch()}
-      propertyName={selectedProperty.name}
+      propertyName={selectedSite.name}
       organizationName={organization?.name || "Organization"}
       useCase={useCase}
       updatedAt={dashboard.dataUpdatedAt}
-      setupPanel={
-        showFirstWorkspaceSetup ? (
-          <FirstWorkspaceSetup
-            rootPlaceCount={data.root_places.length}
-            onOpenProperties={() => {
-              window.sessionStorage.removeItem("organization-setup-step");
-              setShowFirstWorkspaceSetup(false);
-              router.push("/admin/site/configuration");
-            }}
-            onDismiss={() => {
-              window.sessionStorage.removeItem("organization-setup-step");
-              setShowFirstWorkspaceSetup(false);
-            }}
-          />
-        ) : null
-      }
     />
   );
 }

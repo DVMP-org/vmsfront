@@ -62,9 +62,9 @@ interface ActivityEntry {
 }
 
 export default function ResidentialOverview() {
-  const { selectedProperty, contextKey, canManageUnits, canManageVisitors } =
+  const { selectedSite, contextKey, canManageUnits, canManageVisitors } =
     useResidentialAccess();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const tree = useQuery({
     queryKey: ["residential", contextKey, "tree"],
     queryFn: residentialApi.tree,
@@ -192,7 +192,7 @@ export default function ResidentialOverview() {
   return (
     <ResidentialShell
       title="Residential overview"
-      description={`Units, occupancy, finance and operations for ${selectedProperty?.name || "the selected property"}.`}
+      description={`Units, occupancy, finance and operations for ${selectedSite?.name || "the selected property"}.`}
       primaryAction={
         canManageUnits ? (
           <Link
@@ -363,7 +363,7 @@ export default function ResidentialOverview() {
               </h2>
               <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
                 Current unit occupancy at{" "}
-                {selectedProperty?.name || "this property"}.
+                {selectedSite?.name || "this property"}.
               </p>
             </div>
           </div>

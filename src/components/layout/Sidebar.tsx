@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([]);
   const pathname = usePathname();
-  const { selectedProperty } = useAppStore();
+  const { selectedResidency, selectedSite } = useAppStore();
   const workspaceContext = useWorkspaceContext();
 
   useEffect(() => {
@@ -208,7 +208,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
 
   const searchParams = useSearchParams();
   const urlSiteId = searchParams?.get("site_id") || searchParams?.get("site");
-  const activeSiteId = urlSiteId || selectedProperty?.id;
+  const activeSiteId = urlSiteId || selectedSite?.id;
 
   const formatAdminHref = useCallback(
     (href: string) => {
@@ -271,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           );
 
     const managementDashboardAvailable = canOpenManagementDashboard(
-      selectedProperty?.id,
+      selectedSite?.id,
       workspaceContext.data?.management?.is_administrator,
     );
 
@@ -346,7 +346,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   }, [
     actualType,
     mounted,
-    selectedProperty,
+    selectedSite,
     workspaceContext.data,
     workspaceContext.isError,
     workspaceContext.isPending,

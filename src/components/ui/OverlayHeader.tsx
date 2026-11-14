@@ -10,6 +10,7 @@ export function OverlayHeader({
   eyebrow,
   onClose,
   closeLabel,
+  closeDisabled = false,
 }: {
   title?: string;
   titleId: string;
@@ -19,6 +20,7 @@ export function OverlayHeader({
   eyebrow?: string;
   onClose: () => void;
   closeLabel: string;
+  closeDisabled?: boolean;
 }) {
   return (
     <header className="flex shrink-0 items-start gap-3 border-b border-[var(--vms-line)] px-5 py-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
@@ -53,8 +55,9 @@ export function OverlayHeader({
       <button
         type="button"
         onClick={onClose}
+        disabled={closeDisabled}
         aria-label={closeLabel}
-        className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+        className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <X aria-hidden="true" className="h-4 w-4" />
       </button>

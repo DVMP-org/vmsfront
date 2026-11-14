@@ -38,12 +38,12 @@ vi.mock("@/store/app-store", () => ({
   useAppStore: (
     selector: (state: {
       organization: { id: string };
-      selectedProperty: { id: string; name: string };
+      selectedSite: { id: string; name: string };
     }) => unknown,
   ) =>
     selector({
       organization: { id: "org" },
-      selectedProperty: { id: "site", name: "Harbour Campus" },
+      selectedSite: { id: "site", name: "Harbour Campus" },
     }),
 }));
 

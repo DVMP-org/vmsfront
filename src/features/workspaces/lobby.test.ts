@@ -197,6 +197,18 @@ describe("resolveLobbyWorkspaces", () => {
 });
 
 
+it("keeps inherited Sites distinct when they share one ancestor assignment", () => {
+  const inherited = {
+    ...siteWorkspace,
+    site: { ...siteWorkspace.site, id: "child-site", parent_site_id: "site-1", name: "Annex" },
+  };
+  const cards = buildLobbyWorkspaces({
+    context: context({ site_workspaces: [siteWorkspace, inherited] }), organization,
+  });
+  expect(new Set(cards.map((card) => card.id)).size).toBe(2);
+  expect(cards.map((card) => card.selection?.id)).toEqual(["site-1", "child-site"]);
+});
+
 it("uses the Site operating type independently of legacy organization and Place classification", () => {
   const workspaces = buildLobbyWorkspaces({
     context: context({

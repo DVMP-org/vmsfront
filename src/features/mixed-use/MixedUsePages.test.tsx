@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpenseAllocations } from "@/features/mixed-use/ExpenseAllocations";
 import { SharedFacilities } from "@/features/mixed-use/SharedFacilities";
 import { mixedUseApi } from "@/features/mixed-use/api";
-import { propertiesApi } from "@/features/properties/api";
+import { placesApi } from "@/features/places/api";
 
 const access = vi.hoisted(() => ({
   canManageFacilities: true,
@@ -34,7 +34,7 @@ vi.mock("@/features/mixed-use/MixedUseShell", () => ({
   useMixedUseAccess: () => ({
     profile: { isError: false, refetch: vi.fn() },
     organization: { id: "org", name: "Harbour Group" },
-    selectedProperty: { id: "place-1", name: "Harbour Complex" },
+    selectedSite: { id: "place-1", name: "Harbour Complex" },
     contextKey: "org:user",
     ...access,
   }),
@@ -43,11 +43,11 @@ vi.mock("@/features/mixed-use/MixedUseShell", () => ({
 vi.mock("@/store/app-store", () => ({
   useAppStore: (
     selector: (state: {
-      selectedProperty: { id: string; name: string };
+      selectedSite: { id: string; name: string };
     }) => unknown,
   ) =>
     selector({
-      selectedProperty: { id: "place-1", name: "Harbour Complex" },
+      selectedSite: { id: "place-1", name: "Harbour Complex" },
     }),
 }));
 
@@ -69,14 +69,14 @@ vi.mock("@/features/mixed-use/api", async () => {
   };
 });
 
-vi.mock("@/features/properties/api", async () => {
+vi.mock("@/features/places/api", async () => {
   const actual = await vi.importActual<
-    typeof import("@/features/properties/api")
-  >("@/features/properties/api");
+    typeof import("@/features/places/api")
+  >("@/features/places/api");
   return {
     ...actual,
-    propertiesApi: {
-      ...actual.propertiesApi,
+    placesApi: {
+      ...actual.placesApi,
       tree: vi.fn().mockResolvedValue([]),
     },
   };
@@ -149,7 +149,7 @@ describe("mixed-use pages", () => {
   beforeEach(() => {
     access.canManageFacilities = true;
     access.canManageExpenses = true;
-    vi.mocked(propertiesApi.tree).mockResolvedValue([]);
+    vi.mocked(placesApi.tree).mockResolvedValue([]);
     vi.mocked(mixedUseApi.listFacilities).mockResolvedValue({
       items: [facility],
       total: 1,

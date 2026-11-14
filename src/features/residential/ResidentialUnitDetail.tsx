@@ -21,13 +21,13 @@ import { Drawer } from "@/components/ui/Drawer";
 import { PropertyImage } from "@/components/ui/PropertyImage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { Assignment } from "@/features/charges/api";
-import type { Property } from "@/features/properties/api";
+import type { Place } from "@/features/places/api";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import type { WorkspaceRelationship } from "@/types";
 import { residentialApi } from "./api";
 import { titleCase } from "./contracts";
 
-export type ResidentialUnitRow = Property & {
+export type ResidentialUnitRow = Place & {
   building_id: string;
   building_name: string;
   status: string;

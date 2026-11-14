@@ -68,7 +68,7 @@ function siteCard(
 ): LobbyWorkspace {
   const useCase = siteWorkspace.site.use_case;
   return {
-    id: `site_admin:${siteWorkspace.assignment_id}`,
+    id: `site_admin:${siteWorkspace.assignment_id}:${siteWorkspace.site.id}`,
     type: "site_admin",
     category: "SITE MANAGEMENT",
     title: siteWorkspace.site.name,

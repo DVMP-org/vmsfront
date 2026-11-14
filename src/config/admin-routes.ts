@@ -5,6 +5,7 @@ import {
   Calculator,
   CalendarDays,
   DoorOpen,
+  FileText,
   History,
   Home,
   MessageSquare,
@@ -52,14 +53,6 @@ export const adminLinks: AdminRoute[] = [
     permission: "places.show",
     module: "properties",
     group: "Workspace",
-  },
-  {
-    href: "/admin/people",
-    label: "People",
-    icon: Users,
-    module: "people",
-    group: "Workspace",
-    managementOnly: true,
   },
   {
     href: "/admin/managers",
@@ -148,6 +141,7 @@ const domainIcons: Record<string, LucideIcon> = {
   ticket: TicketCheck,
   history: History,
   layers: Blocks,
+  document: FileText,
 };
 
 /**

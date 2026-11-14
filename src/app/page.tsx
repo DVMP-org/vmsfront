@@ -7,7 +7,7 @@ import { WorkspaceLobbyPage } from "@/features/workspaces/WorkspaceLobbyPage";
 export default function WorkspaceLobbyRoute() {
   return (
     <RouteGuard>
-      <OrganizationMemberGuard>
+      <OrganizationMemberGuard standalone>
         <WorkspaceLobbyPage />
       </OrganizationMemberGuard>
     </RouteGuard>

@@ -58,6 +58,13 @@ export interface IntegrationConfig {
   credentials: IntegrationCredentials,
 }
 
+export interface PaymentGatewaySelection {
+  integration_id: string;
+  name: string;
+  provider: string;
+  configured: boolean;
+}
+
 export interface Integration {
   id: string;
   name: string;

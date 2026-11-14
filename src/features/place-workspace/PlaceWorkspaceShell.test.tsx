@@ -7,7 +7,7 @@ vi.mock("next/navigation",()=>({useParams:()=>({placeId:"home"}),usePathname:()=
 vi.mock("@/components/layout/Header", () => ({ Header: ({ onMenuClick }: { onMenuClick?: () => void }) => <button onClick={onMenuClick}>Open workspace menu</button> }));
 vi.mock("@/hooks/use-auth", () => ({ useVerifyToken: () => ({ data: { workspaces: [{ id: "relationship-home", role: "resident", place: { id: "home", name: "My home", kind: "unit" } }, { id: "relationship-office", role: "tenant", place: { id: "office", name: "My office", kind: "space" } }], site_workspaces: [{ assignment_id: "assignment", role: "site_admin", site: { id: "site", name: "Sunset Estate" }, effective_permissions: [] }] } }) }));
 vi.mock("@/store/auth-store",()=>({useAuthStore:(selector:any)=>selector({user:{id:"user"}})}));
-vi.mock("@/store/app-store",()=>({useAppStore:(selector:any)=>selector({organization:{id:"org"},setSelectedProperty:m.select})}));
+vi.mock("@/store/app-store",()=>({useAppStore:(selector:any)=>selector({organization:{id:"org"},setSelectedSite:m.select})}));
 vi.mock("./api",()=>({placeWorkspaceApi:{context:m.context}}));
 beforeEach(()=>{vi.resetAllMocks();m.context.mockResolvedValue({place:{id:"home",name:"My home"},party:{id:"party"},effective_use_case:"residential",modules:["access_control","people","billing"],is_place_admin:false});});
 function mount(){render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><PlaceWorkspaceShell><h1>My dashboard</h1></PlaceWorkspaceShell></QueryClientProvider>);}

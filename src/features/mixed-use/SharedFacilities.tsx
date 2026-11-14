@@ -62,7 +62,7 @@ const emptyForm: SharedFacilityInput = {
 };
 
 export function SharedFacilities() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const context = useMixedUseAccess();
   const client = useQueryClient();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -72,27 +72,27 @@ export function SharedFacilities() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const query = useQuery({
-    queryKey: ["mixed-use-facilities", selectedProperty?.id],
+    queryKey: ["mixed-use-facilities", selectedSite?.id],
     queryFn: () =>
-      mixedUseApi.listFacilities(selectedProperty!.id, {
+      mixedUseApi.listFacilities(selectedSite!.id, {
         page: 1,
         page_size: 100,
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
 
   const save = useMutation({
     mutationFn: async (input: SharedFacilityInput) => {
-      if (!selectedProperty) throw new Error("Select a property first");
+      if (!selectedSite) throw new Error("Select a property first");
       if (editing) {
         return mixedUseApi.updateFacility(
-          selectedProperty.id,
+          selectedSite.id,
           editing.id,
           input,
         );
       }
-      return mixedUseApi.createFacility(selectedProperty.id, input);
+      return mixedUseApi.createFacility(selectedSite.id, input);
     },
     onSuccess: () => {
       toast.success(editing ? "Facility updated." : "Facility added.");
@@ -112,8 +112,8 @@ export function SharedFacilities() {
       facility: SharedFacility;
       active: boolean;
     }) => {
-      if (!selectedProperty) throw new Error("Select a property first");
-      return mixedUseApi.updateFacility(selectedProperty.id, facility.id, {
+      if (!selectedSite) throw new Error("Select a property first");
+      return mixedUseApi.updateFacility(selectedSite.id, facility.id, {
         is_active: active,
       });
     },

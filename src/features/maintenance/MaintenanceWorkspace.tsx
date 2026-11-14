@@ -30,9 +30,9 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { domainExperience, type DomainUseCase } from "@/config/domains";
 import {
-  propertiesApi,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import {
@@ -60,7 +60,7 @@ const statusTone = {
 
 export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const experience = domainExperience(domain)!;
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const client = useQueryClient();
   const [filters, setFilters] = useState<FilterConfig[]>([]);
   const [page, setPage] = useState(1);
@@ -72,22 +72,22 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const tree = useQuery({
     queryKey: ["maintenance-property-tree"],
     queryFn: () =>
-      selectedProperty?.id
-        ? propertiesApi.tree(selectedProperty.id)
+      selectedSite?.id
+        ? placesApi.tree(selectedSite.id)
         : Promise.resolve([]),
     retry: false,
   });
   const spaces = useMemo(() => {
     const roots = tree.data ?? [];
-    const selectedRoot = findProperty(roots, selectedProperty?.id);
+    const selectedRoot = findProperty(roots, selectedSite?.id);
     return selectedRoot
       ? flatten(selectedRoot)
       : roots.flatMap((root) => flatten(root));
-  }, [tree.data, selectedProperty?.id]);
+  }, [tree.data, selectedSite?.id]);
   const query = useQuery({
     queryKey: [
       "maintenance",
-      selectedProperty?.id,
+      selectedSite?.id,
       domain,
       filters,
       search,
@@ -104,11 +104,11 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         category: filterValue(filters, "category"),
         place_id: filterValue(filters, "place"),
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
   const summary = useQuery({
-    queryKey: ["maintenance", selectedProperty?.id, domain, "summary"],
+    queryKey: ["maintenance", selectedSite?.id, domain, "summary"],
     queryFn: async () => {
       const base = {
         page: 1,
@@ -128,7 +128,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
         urgent: urgent.total,
       };
     },
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
   const create = useMutation({
@@ -234,7 +234,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     },
   ];
 
-  if (!selectedProperty) {
+  if (!selectedSite) {
     return (
       <main className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] p-6">
         Select a property workspace to manage maintenance.
@@ -389,7 +389,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       <MaintenanceForm
         open={formOpen}
         domain={domain}
-        siteId={selectedProperty.id}
+        siteId={selectedSite.id}
         spaces={spaces}
         pending={create.isPending}
         onClose={() => setFormOpen(false)}
@@ -397,7 +397,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       />
       <MaintenanceDetailDialog
         request={activeRequest}
-        contextKey={selectedProperty.id}
+        contextKey={selectedSite.id}
         workflow={experience.maintenance.workflow}
         pending={update.isPending}
         onClose={() => setActiveRequest(null)}
@@ -443,7 +443,7 @@ function MaintenanceForm({
   open: boolean;
   domain: DomainUseCase;
   siteId: string;
-  spaces: PropertyTreeNode[];
+  spaces: PlaceTreeNode[];
   pending: boolean;
   onClose: () => void;
   onSubmit: (body: MaintenanceCreateInput) => void;
@@ -1280,9 +1280,9 @@ function formatTimestamp(value: string) {
 }
 
 function findProperty(
-  nodes: PropertyTreeNode[],
+  nodes: PlaceTreeNode[],
   id?: string,
-): PropertyTreeNode | null {
+): PlaceTreeNode | null {
   if (!id) return null;
   for (const node of nodes) {
     if (node.id === id) return node;
@@ -1292,7 +1292,7 @@ function findProperty(
   return null;
 }
 
-function flatten(node: PropertyTreeNode | null): PropertyTreeNode[] {
+function flatten(node: PlaceTreeNode | null): PlaceTreeNode[] {
   if (!node) return [];
   return [node, ...node.children.flatMap(flatten)];
 }

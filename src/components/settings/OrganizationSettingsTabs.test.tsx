@@ -18,10 +18,11 @@ describe("OrganizationSettingsTabs", () => {
     expect(
       screen.getByRole("link", { name: "Administrators" }),
     ).toHaveAttribute("href", "/organization/settings/administrators");
-    expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute(
-      "href",
-      "/organization/settings/payment",
-    );
+    expect(
+      screen.getByRole("link", { name: "Email templates" }),
+    ).toHaveAttribute("href", "/organization/settings/templates");
+    expect(screen.queryByRole("link", { name: "Payments" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Mail delivery" })).toBeNull();
     expect(screen.getByRole("link", { name: "Plugins" })).toHaveAttribute(
       "href",
       "/organization/plugins",
@@ -44,5 +45,8 @@ describe("OrganizationSettingsTabs", () => {
     expect(
       organizationSettingsSectionFromPath("/organization/settings/roles"),
     ).toBe("roles");
+    expect(
+      organizationSettingsSectionFromPath("/organization/settings/templates"),
+    ).toBe("templates");
   });
 });

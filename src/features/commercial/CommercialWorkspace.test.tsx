@@ -10,7 +10,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import CommercialInventory from "./CommercialInventory";
-import CommercialMaintenance from "./CommercialMaintenance";
 import CommercialOverview from "./CommercialOverview";
 import CommercialTenants from "./CommercialTenants";
 
@@ -25,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   invitations: vi.fn(),
   createProperty: vi.fn(),
   updateProperty: vi.fn(),
+  moveProperty: vi.fn(),
   toggleProperty: vi.fn(),
   profile: {
     effective_permissions: [
@@ -44,8 +44,8 @@ vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
     selector({
       organization: { id: "org", name: "Harbour Group" },
-      selectedProperty: { id: "site", name: "Harbour Offices" },
-      setSelectedProperty: vi.fn(),
+      selectedSite: { id: "site", name: "Harbour Offices" },
+      setSelectedSite: vi.fn(),
     }),
 }));
 vi.mock("@/store/auth-store", () => ({
@@ -106,10 +106,17 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/invitation-approvals/api", () => ({
   invitationApprovalsApi: { list: mocks.invitations },
 }));
-vi.mock("@/features/properties/api", () => ({
-  propertiesApi: {
+vi.mock("@/features/maintenance/api", () => ({
+  maintenanceApi: { list: async () => ({ items: [], total: 0 }) },
+}));
+vi.mock("@/features/contractors/api", () => ({
+  contractorsApi: { list: async () => ({ items: [], total: 0 }) },
+}));
+vi.mock("@/features/places/api", () => ({
+  placesApi: {
     create: mocks.createProperty,
     update: mocks.updateProperty,
+    move: mocks.moveProperty,
     toggle: mocks.toggleProperty,
   },
 }));
@@ -118,10 +125,7 @@ vi.mock("./api", () => ({
     tree: mocks.tree,
     relationships: mocks.relationships,
     chargeAssignments: mocks.assignment,
-    maintenance: mocks.maintenance,
     createRelationship: mocks.createRelationship,
-    createMaintenance: mocks.createMaintenance,
-    updateMaintenance: mocks.updateMaintenance,
   },
   flattenPlaces: (roots: TreeNode[]) => {
     const output: TreeNode[] = [];
@@ -138,6 +142,16 @@ vi.mock("./api", () => ({
     const root = flatten(roots).find((node) => node.id === rootId);
     return new Set(root ? flatten([root]).map((node) => node.id) : []);
   },
+  isCommercialPlace: (place: TreeNode) =>
+    place.kind === "building" ||
+    (["unit", "space"].includes(place.kind) &&
+      [
+        "office",
+        "shop",
+        "retail_unit",
+        "warehouse",
+        "conference_room",
+      ].includes(place.building_type || "")),
   isCommercialInventory: (place: TreeNode) =>
     ["unit", "space"].includes(place.kind) &&
     ["office", "shop", "retail_unit", "warehouse", "conference_room"].includes(
@@ -249,7 +263,6 @@ describe("commercial operations", () => {
     mocks.tree.mockResolvedValue(tree);
     mocks.relationships.mockResolvedValue({ items: [tenant], total: 1 });
     mocks.assignment.mockResolvedValue([]);
-    mocks.maintenance.mockResolvedValue({ items: [], total: 0 });
     mocks.invitations.mockResolvedValue({ items: [], total: 0 });
     mocks.createProperty.mockResolvedValue(space());
     mocks.createRelationship.mockResolvedValue(tenant);
@@ -261,11 +274,24 @@ describe("commercial operations", () => {
     expect(
       await screen.findByRole("heading", { name: "Commercial overview" }),
     ).toBeInTheDocument();
-    expect(await screen.findByText("1 occupied")).toBeInTheDocument();
+    expect(await screen.findByText("100% occupied")).toBeInTheDocument();
     expect((await screen.findAllByText("Acme Studio")).length).toBeGreaterThan(
       0,
     );
     expect(screen.getAllByText("Lease attention").length).toBeGreaterThan(0);
+    expect(screen.getByText("Occupancy by building")).toBeInTheDocument();
+    expect(screen.getByText("Contractor access")).toBeInTheDocument();
+  });
+
+  it("lists buildings next to the spaces they contain", async () => {
+    mount(<CommercialInventory />);
+
+    expect(
+      (await screen.findAllByRole("link", { name: "Harbour Tower" })).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Container").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Building").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Suite 4A").length).toBeGreaterThan(0);
   });
 
   it("creates a canonical office space", async () => {
@@ -295,21 +321,124 @@ describe("commercial operations", () => {
         building_type: "office",
         address: "2 Harbour Way",
         description: "",
-        parent_id: "site",
+        parent_id: "building",
       }),
     );
+  });
+
+  it("creates a building from the same space type list", async () => {
+    mount(<CommercialInventory />);
+
+    const add = await screen.findByRole("button", {
+      name: "Add commercial space",
+    });
+    await waitFor(() => expect(add).toBeEnabled());
+    fireEvent.click(add);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space name/), {
+      target: { value: "Tower B" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space type/), {
+      target: { value: "building" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add space" }));
+
+    await waitFor(() =>
+      expect(mocks.createProperty).toHaveBeenCalledWith(
+        expect.objectContaining({
+          site_id: "site",
+          name: "Tower B",
+          kind: "building",
+          building_type: "building",
+          parent_id: null,
+        }),
+      ),
+    );
+  });
+
+  it("creates a space at the top level without a building", async () => {
+    mount(<CommercialInventory />);
+
+    const add = await screen.findByRole("button", {
+      name: "Add commercial space",
+    });
+    await waitFor(() => expect(add).toBeEnabled());
+    fireEvent.click(add);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Space name/), {
+      target: { value: "Kiosk 1" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Building/), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add space" }));
+
+    await waitFor(() =>
+      expect(mocks.createProperty).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Kiosk 1",
+          kind: "unit",
+          building_type: "office",
+          parent_id: null,
+        }),
+      ),
+    );
+  });
+
+  it("moves a space out of its building from the edit form", async () => {
+    mocks.updateProperty.mockResolvedValue(space());
+    mount(<CommercialInventory />);
+
+    const edit = await screen.findByRole("button", {
+      name: "Edit Suite 4A",
+    });
+    fireEvent.click(edit);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Edit commercial space",
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Building/), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save space" }));
+
+    await waitFor(() =>
+      expect(mocks.moveProperty).toHaveBeenCalledWith("suite-4a", null),
+    );
+  });
+
+  it("offers buildings as party targets alongside the spaces", async () => {
+    mount(<CommercialTenants />);
+
+    const assign = await screen.findByRole("button", { name: "Add party" });
+    await waitFor(() => expect(assign).toBeEnabled());
+    fireEvent.click(assign);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add party to a space",
+    });
+    const options = Array.from(
+      within(dialog)
+        .getByLabelText(/^Commercial space/)
+        .querySelectorAll("option"),
+    ).map((option) => option.textContent);
+    // A whole-building lease is real, so the building is selectable — but the
+    // picker defaults to the lettable space, not the container.
+    expect(options).toEqual(["Suite 4A", "Harbour Tower · Building"]);
   });
 
   it("assigns an organization as a business tenant with a lease period", async () => {
     mount(<CommercialTenants />);
 
     const assign = await screen.findByRole("button", {
-      name: "Assign business tenant",
+      name: "Add party",
     });
     await waitFor(() => expect(assign).toBeEnabled());
     fireEvent.click(assign);
     const dialog = await screen.findByRole("dialog", {
-      name: "Assign business tenant",
+      name: "Add party to a space",
     });
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Business organization" }),
@@ -318,7 +447,7 @@ describe("commercial operations", () => {
       target: { value: "2027-12-31" },
     });
     fireEvent.click(
-      within(dialog).getByRole("button", { name: "Assign tenant" }),
+      within(dialog).getByRole("button", { name: "Add party" }),
     );
 
     await waitFor(() =>
@@ -331,20 +460,5 @@ describe("commercial operations", () => {
         }),
       ),
     );
-  });
-
-  it("reports a missing commercial maintenance API instead of a false zero", async () => {
-    mocks.maintenance.mockRejectedValue(
-      new Error("Commercial API unavailable"),
-    );
-    mount(<CommercialMaintenance />);
-
-    expect(
-      await screen.findByText("Commercial maintenance is unavailable."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Commercial API unavailable/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
   });
 });

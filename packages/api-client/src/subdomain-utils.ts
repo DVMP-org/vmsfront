@@ -81,16 +81,25 @@ export function createSubdomainUtilities(
       return path;
     }
 
-    if (
+    const isLocal =
       location.hostname === "localhost" ||
-      location.hostname.endsWith(".localhost")
-    ) {
+      location.hostname.endsWith(".localhost") ||
+      location.hostname === "lvh.me" ||
+      location.hostname.endsWith(".lvh.me");
+
+    if (isLocal) {
+      const suffix = location.hostname.endsWith("lvh.me")
+        ? "lvh.me"
+        : "localhost";
       const port = location.port ? `:${location.port}` : "";
-      return `${location.protocol}//${slug}.localhost${port}${path}`;
+      return `${location.protocol}//${slug}.${suffix}${port}${path}`;
     }
 
-    const port = location.port ? `:${location.port}` : "";
-    return `${location.protocol}//${slug}.${baseDomain}${port}${path}`;
+    // Public hosts never carry the dev/container port. Proxies forward the
+    // internal 3000 port, which otherwise yields `tenant.vmsfront.to:3000`.
+    const [baseHost, basePort = ""] = baseDomain.split(":");
+    const port = basePort ? `:${basePort}` : "";
+    return `${location.protocol}//${slug}.${baseHost}${port}${path}`;
   };
 
   return { getSubdomain, isBaseDomain, buildSubdomainUrl };

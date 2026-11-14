@@ -27,13 +27,13 @@ export const apiClient = createApiClient({
   getToken: getStoredAuthToken,
   getOrganizationSlug: subdomains.getSubdomain,
   getPropertyId: () => {
-    const slug = subdomains.getSubdomain();
-    if (!slug) return null;
-    const state = useAppStore.getState();
-    const urlSiteId = typeof window === "undefined" ? null : siteIdFromSearch(window.location.search);
-    return urlSiteId ||
-      (state.organization?.slug === slug ? state.selectedProperty?.id : null) ||
-      storedSiteId(slug);
+    const selectedSiteId = useAppStore.getState().selectedSite?.id ?? null;
+    if (typeof window === "undefined") return selectedSiteId;
+    return (
+      siteIdFromSearch(window.location.search) ||
+      selectedSiteId ||
+      storedSiteId(subdomains.getSubdomain())
+    );
   },
   onUnauthorized: () => useAuthStore.getState().clearAuth(),
 });

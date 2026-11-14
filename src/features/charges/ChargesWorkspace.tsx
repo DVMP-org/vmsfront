@@ -83,7 +83,7 @@ export default function ChargesWorkspace({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const selectedSite = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const access = useSiteAccess();
   const [createOpen, setCreateOpen] = useState(action === "new");
   const contextKey = access.contextKey;

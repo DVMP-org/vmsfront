@@ -79,6 +79,7 @@ export interface Organization {
     updated_at: string;
   }> | null;
   needs_first_site?: boolean;
+  members_count?: number | null;
   subscription: Subscription | null;
 }
 
@@ -773,6 +774,37 @@ export interface AdminDashboard {
     place_id: string;
     gate_id: string;
   }>;
+}
+
+export type AttentionKind = "access" | "billing" | "maintenance" | "lease";
+
+export interface AttentionItem {
+  code: string;
+  kind: AttentionKind;
+  subject_type: string;
+  subject_id: string;
+  site_id: string;
+  place_id?: string | null;
+  place_name?: string | null;
+  party_name?: string | null;
+  domain?: string | null;
+  due_at?: string | null;
+  amount?: string | number | null;
+  currency?: string | null;
+}
+
+export interface AttentionCategory {
+  kind: AttentionKind;
+  count: number;
+  items: AttentionItem[];
+}
+
+export interface OperationsAttention {
+  site_id: string;
+  site_name: string;
+  generated_at: string;
+  total: number;
+  categories: AttentionCategory[];
 }
 
 // Wallet Types

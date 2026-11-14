@@ -457,7 +457,7 @@ function Metric({
 }
 
 export function PassagesDirectory() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [searchInput, setSearchInput] = useState("");
@@ -629,7 +629,7 @@ export function PassagesDirectory() {
         <h1>Movement logs</h1>
         <p>
           Audit entries, exits and checkpoint progress across{" "}
-          {selectedProperty?.name || "this Site"}.
+          {selectedSite?.name || "this Site"}.
         </p>
       </header>
 

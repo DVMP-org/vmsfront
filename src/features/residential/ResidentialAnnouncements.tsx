@@ -36,13 +36,13 @@ const audiences: AnnouncementAudience[] = [
 ];
 
 export default function ResidentialAnnouncements() {
-  const { contextKey, selectedProperty, canManageAnnouncements } =
+  const { contextKey, selectedSite, canManageAnnouncements } =
     useResidentialAccess();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [active, setActive] = useState<Announcement | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const announcements = useQuery({
     queryKey: ["residential", contextKey, "announcements", placeId],
     queryFn: () => residentialApi.announcements({}),

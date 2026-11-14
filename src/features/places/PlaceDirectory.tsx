@@ -11,7 +11,7 @@ import { placesApi, type Place } from "./api";
 
 export function PlaceDirectory() {
   const { allowed, contextKey, workspace } = useSiteAccess();
-  const site = useAppStore((state) => state.selectedProperty);
+  const site = useAppStore((state) => state.selectedSite);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const list = useQuery({

@@ -34,10 +34,10 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import {
-  propertiesApi,
-  type Property,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type Place,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { PlaceAssignmentModal } from "@/features/places/PlaceAssignmentModal";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
@@ -47,7 +47,7 @@ import {
 } from "./ResidentialUnitDetail";
 
 type UnitRow = ResidentialUnitRow;
-type ParentChoice = Pick<PropertyTreeNode, "id" | "name" | "site_id"> & {
+type ParentChoice = Pick<PlaceTreeNode, "id" | "name" | "site_id"> & {
   kind: string;
 };
 
@@ -62,10 +62,10 @@ const unitTypes = [
 
 export default function ResidentialUnits() {
   const { confirmAction, confirmationDialog } = useConfirmAction();
-  const { contextKey, selectedProperty, canManageUnits, canManagePeople } =
+  const { contextKey, selectedSite, canManageUnits, canManagePeople } =
     useResidentialAccess();
   const queryClient = useQueryClient();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<UnitRow | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -105,17 +105,17 @@ export default function ResidentialUnits() {
     (place) => place.kind === "building",
   );
   const parentChoices = useMemo<ParentChoice[]>(() => {
-    if (!selectedProperty) return parentPlaces;
+    if (!selectedSite) return parentPlaces;
     return [
       {
-        id: `site:${selectedProperty.id}`,
-        name: selectedProperty.name,
-        site_id: selectedProperty.id,
+        id: `site:${selectedSite.id}`,
+        name: selectedSite.name,
+        site_id: selectedSite.id,
         kind: "site",
       },
       ...parentPlaces,
     ];
-  }, [parentPlaces, selectedProperty]);
+  }, [parentPlaces, selectedSite]);
   const unitRows = useMemo<UnitRow[]>(() => {
     const byId = new Map(allPlaces.map((place) => [place.id, place]));
     const relationshipsByPlace = new Map<
@@ -135,8 +135,8 @@ export default function ResidentialUnits() {
       .map((place) => {
         const parent = place.parent_id ? byId.get(place.parent_id) : undefined;
         const residents = relationshipsByPlace.get(place.id) || [];
-        const rootParentId = selectedProperty
-          ? `site:${selectedProperty.id}`
+        const rootParentId = selectedSite
+          ? `site:${selectedSite.id}`
           : "";
         return {
           ...place,
@@ -145,20 +145,20 @@ export default function ResidentialUnits() {
             parent?.name ||
             (place.parent_id
               ? "Unknown building"
-              : selectedProperty?.name || "Site root"),
+              : selectedSite?.name || "Site root"),
           status: place.is_active ? "active" : "archived",
           occupancy_status: residents.length ? "occupied" : "vacant",
           residents: residents.map((row) => row.display_name).join(", "),
         };
       });
-  }, [allPlaces, relationships.data?.items, scopedPlaces, selectedProperty]);
+  }, [allPlaces, relationships.data?.items, scopedPlaces, selectedSite]);
 
   const toggle = useMutation({
     mutationFn: async (ids: string[]) => {
       const targets = unitRows.filter((row) => ids.includes(row.id));
       const shouldActivate = targets.every((row) => !row.is_active);
       return Promise.all(
-        targets.map((row) => propertiesApi.toggle(row.id, shouldActivate)),
+        targets.map((row) => placesApi.toggle(row.id, shouldActivate)),
       );
     },
     onSuccess: async (updated) => {
@@ -357,7 +357,7 @@ export default function ResidentialUnits() {
     <ResidentialShell
       showWorkspace
       title="Units"
-      description={`Unit directory for ${selectedProperty?.name || "the selected"} residential property.`}
+      description={`Unit directory for ${selectedSite?.name || "the selected"} residential property.`}
       primaryAction={primaryAction}
     >
       <div>
@@ -543,7 +543,7 @@ function UnitFormModal({
     address: `${formId}-unit-address`,
     description: `${formId}-unit-description`,
   };
-  const selectedSite = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const [name, setName] = useState(unit?.name || "");
   const [parentId, setParentId] = useState(
     unit?.building_id || parents[0]?.id || "",
@@ -565,13 +565,13 @@ function UnitFormModal({
   const save = useMutation({
     mutationFn: async () => {
       if (mode === "edit" && unit) {
-        return propertiesApi.update(unit.id, {
+        return placesApi.update(unit.id, {
           name: name.trim(),
           address: address.trim(),
           description: description.trim(),
         });
       }
-      return propertiesApi.create({
+      return placesApi.create({
         site_id:
           (parentId.startsWith("site:")
             ? selectedSite?.id

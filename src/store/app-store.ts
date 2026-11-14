@@ -4,8 +4,8 @@ import { Residency, BrandingConfig, Organization } from "@/types";
 import { deleteCookie, setCookie } from "@/lib/cookies";
 
 interface AppState {
-    selectedProperty: {id:string;name:string} | null;
-    setSelectedProperty: (property: {id:string;name:string} | null) => void;
+    selectedSite: {id:string;name:string} | null;
+    setSelectedSite: (site: {id:string;name:string} | null) => void;
     organization: Organization | null;
     selectedResidency: Residency | null;
     branding: BrandingConfig | null;
@@ -18,17 +18,17 @@ interface AppState {
 export const useAppStore = create<AppState>()(
     persist(
         (set, get) => ({
-            selectedProperty: null,
-            setSelectedProperty: (selectedProperty) => {
-                if (selectedProperty?.id) {
-                    setCookie("selected-site", selectedProperty.id, 30);
+            selectedSite: null,
+            setSelectedSite: (selectedSite) => {
+                if (selectedSite?.id) {
+                    setCookie("selected-site", selectedSite.id, 30);
                     const slug = get().organization?.slug;
                     if (slug) setCookie("selected-site-organization", slug, 30);
                 } else {
                     deleteCookie("selected-site");
                     deleteCookie("selected-site-organization");
                 }
-                set({ selectedProperty });
+                set({ selectedSite });
             },
             organization: null,
             selectedResidency: null,
@@ -49,7 +49,7 @@ export const useAppStore = create<AppState>()(
                 }
                 set((state) => ({
                     organization,
-                    selectedProperty: isDifferentOrg ? null : state.selectedProperty,
+                    selectedSite: isDifferentOrg ? null : state.selectedSite,
                 }));
             },
             setBranding: (branding) => set({ branding }),
@@ -61,7 +61,7 @@ export const useAppStore = create<AppState>()(
                     localStorage.removeItem("app-storage");
                 }
                 set({
-                    selectedProperty: null,
+                    selectedSite: null,
                     organization: null,
                     selectedResidency: null,
                     branding: null,

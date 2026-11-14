@@ -9,7 +9,7 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { ShieldAlert, Home, ArrowLeft } from "lucide-react";
 import { Button } from "../ui/Button";
 import Link from "next/link";
-import { CardSkeleton } from "../ui/Skeleton";
+import { PageSkeleton } from "../ui/Skeleton";
 import { useEffect, useMemo, useState } from "react";
 
 interface AdminPermissionGuardProps {
@@ -114,15 +114,7 @@ export function AdminPermissionGuard({ children }: AdminPermissionGuardProps) {
   ]);
 
   if (isLoading || (requiresManagementContext && workspace.isPending)) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="h-8 w-64 animate-pulse rounded-lg bg-muted" />
-          <div className="h-4 w-96 animate-pulse rounded-lg bg-muted" />
-        </div>
-        <CardSkeleton />
-      </div>
-    );
+    return <PageSkeleton label="Loading administration context" />;
   }
 
   const moduleRoute = matchedRoute;

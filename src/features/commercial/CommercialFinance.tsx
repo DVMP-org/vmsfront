@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   CircleDollarSign,
@@ -23,16 +22,23 @@ import {
   type FilterDefinition,
 } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import type { Assignment } from "@/features/charges/api";
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
 import {
-  commercialApi,
   descendantIds,
   flattenPlaces,
   isCommercialInventory,
 } from "./api";
+import { RentRollSection } from "./components/RentRollSection";
 import { titleCase } from "./contracts";
+import { buildRentRoll } from "./lib";
+import {
+  useCommercialChargeAssignments,
+  useCommercialRelationships,
+  useCommercialTree,
+} from "./queries";
 
 type FinanceRow = {
   id: string;
@@ -48,20 +54,13 @@ type FinanceRow = {
 };
 
 export default function CommercialFinance() {
-  const { selectedProperty, contextKey, canManageFinance } =
+  const { selectedSite, contextKey, canManageFinance } =
     useCommercialAccess();
-  const placeId = selectedProperty?.id || "";
+  const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const tree = useQuery({
-    queryKey: ["commercial", contextKey, "tree"],
-    queryFn: commercialApi.tree,
-    enabled: !!placeId,
-  });
-  const assignments = useQuery({
-    queryKey: ["commercial", contextKey, "charge-assignments", placeId],
-    queryFn: commercialApi.chargeAssignments,
-    enabled: !!placeId,
-  });
+  const tree = useCommercialTree(contextKey, !!placeId);
+  const relationships = useCommercialRelationships(contextKey, !!placeId);
+  const assignments = useCommercialChargeAssignments(contextKey, !!placeId);
   const scopeIds = useMemo(
     () => (tree.data ? descendantIds(tree.data, placeId) : new Set<string>()),
     [placeId, tree.data],
@@ -69,6 +68,24 @@ export default function CommercialFinance() {
   const places = useMemo(
     () => (tree.data ? flattenPlaces(tree.data) : []),
     [tree.data],
+  );
+  const lettableSpaces = useMemo(
+    () =>
+      places.filter(
+        (place) => scopeIds.has(place.id) && isCommercialInventory(place),
+      ),
+    [places, scopeIds],
+  );
+  const rentRoll = useMemo(
+    () =>
+      buildRentRoll(
+        lettableSpaces,
+        (relationships.data?.items || []).filter((row) =>
+          scopeIds.has(row.place.id),
+        ),
+        assignments.data || [],
+      ),
+    [assignments.data, lettableSpaces, relationships.data?.items, scopeIds],
   );
   const rows = useMemo<FinanceRow[]>(
     () =>
@@ -177,11 +194,10 @@ export default function CommercialFinance() {
       label: "Commercial space",
       type: "select",
       isSearchable: true,
-      options: places
-        .filter(
-          (place) => scopeIds.has(place.id) && isCommercialInventory(place),
-        )
-        .map((place) => ({ value: place.id, label: place.name })),
+      options: lettableSpaces.map((place) => ({
+        value: place.id,
+        label: place.name,
+      })),
     },
     {
       field: "state",
@@ -254,6 +270,23 @@ export default function CommercialFinance() {
             detail: "Uses each charge’s published currency",
           },
         ]}
+      />
+      <RentRollSection
+        rows={rentRoll}
+        currency={currency}
+        isLoading={tree.isPending || relationships.isPending || assignments.isPending}
+        errorMessage={
+          tree.isError || relationships.isError || assignments.isError
+            ? parseApiError(
+                tree.error || relationships.error || assignments.error,
+              ).message
+            : null
+        }
+        onRetry={() => {
+          void tree.refetch();
+          void relationships.refetch();
+          void assignments.refetch();
+        }}
       />
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -330,18 +363,6 @@ export default function CommercialFinance() {
       </section>
     </CommercialShell>
   );
-}
-
-function formatMoney(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
 }
 
 function SummaryStrip({

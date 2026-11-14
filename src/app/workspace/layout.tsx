@@ -8,7 +8,7 @@ export default function WorkspaceLayout({
 }) {
   return (
     <RouteGuard>
-      <OrganizationMemberGuard>{children}</OrganizationMemberGuard>
+      <OrganizationMemberGuard standalone>{children}</OrganizationMemberGuard>
     </RouteGuard>
   );
 }

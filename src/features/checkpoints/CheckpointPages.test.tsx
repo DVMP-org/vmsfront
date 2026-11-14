@@ -31,7 +31,7 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (f: any) =>
-    f({ organization: { id: "org" }, selectedProperty: { id: "site" } }),
+    f({ organization: { id: "org" }, selectedSite: { id: "site" } }),
 }));
 vi.mock("@/store/auth-store", () => ({
   useAuthStore: (f: any) => f({ user: { id: "user" } }),

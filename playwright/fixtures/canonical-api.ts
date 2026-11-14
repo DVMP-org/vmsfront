@@ -205,7 +205,7 @@ export async function seedSession(
     },
   ]);
   await context.addInitScript(
-    ({ organization, user, selectedProperty }) => {
+    ({ organization, user, selectedSite }) => {
       localStorage.setItem(
         "auth-storage",
         JSON.stringify({
@@ -222,7 +222,7 @@ export async function seedSession(
         "app-storage",
         JSON.stringify({
           state: {
-            selectedProperty,
+            selectedSite,
             organization,
             selectedResidency: null,
             branding: null,
@@ -231,7 +231,7 @@ export async function seedSession(
         }),
       );
     },
-    { organization, user, selectedProperty: defaultPlace },
+    { organization, user, selectedSite: defaultPlace },
   );
   return vmsConfig.tenantURL(slug);
 }

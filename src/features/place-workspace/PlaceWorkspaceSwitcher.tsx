@@ -80,7 +80,7 @@ export function PlaceWorkspaceSwitcher({
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+    const setSelectedSite = useAppStore((state) => state.setSelectedSite);
     const memberships = useVerifyToken();
 
     const allRelationships = memberships.data?.workspaces ?? [];
@@ -160,7 +160,7 @@ export function PlaceWorkspaceSwitcher({
                 (item) => item.place.id === entry.placeId,
             );
             if (relationship) {
-                setSelectedProperty({
+                setSelectedSite({
                     id: relationship.place.id,
                     name: qualifiedPlaceName(relationship.place),
                 });

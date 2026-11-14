@@ -43,16 +43,49 @@ export interface CommercialMaintenanceInput {
   due_at?: string | null;
 }
 
-export const commercialUnitTypes = [
-  { value: "office", label: "Office" },
-  { value: "shop", label: "Shop" },
-  { value: "retail_unit", label: "Retail unit" },
-  { value: "warehouse", label: "Warehouse" },
-  { value: "conference_room", label: "Conference room" },
-] as const;
+export type CommercialStructuralKind = "building" | "unit" | "space";
 
-export const tenantRoles = ["tenant", "member"] as const;
-export const accessRoles = ["employee", "contractor"] as const;
+export interface CommercialSpaceType {
+  value: string;
+  label: string;
+  /** Structure the type is stored as. Only buildings may contain Places. */
+  kind: CommercialStructuralKind;
+}
+
+/**
+ * One list for the inventory form: a building is created exactly like a space,
+ * it is just the structural kind that can hold other Places.
+ */
+export const commercialSpaceTypes: CommercialSpaceType[] = [
+  { value: "building", label: "Building", kind: "building" },
+  { value: "office", label: "Office", kind: "unit" },
+  { value: "shop", label: "Shop", kind: "unit" },
+  { value: "retail_unit", label: "Retail unit", kind: "unit" },
+  { value: "warehouse", label: "Warehouse", kind: "unit" },
+  { value: "conference_room", label: "Conference room", kind: "space" },
+];
+
+/** Lettable types only; used for filters and labels. */
+export const commercialUnitTypes = commercialSpaceTypes.filter(
+  (type) => type.kind !== "building",
+);
+
+export function commercialSpaceKind(typeValue: string): CommercialStructuralKind {
+  return (
+    commercialSpaceTypes.find((type) => type.value === typeValue)?.kind ?? "unit"
+  );
+}
+
+export function commercialSpaceTypeLabel(value: string | null | undefined) {
+  if (!value) return "Unspecified";
+  return (
+    commercialSpaceTypes.find((type) => type.value === value)?.label ??
+    titleCase(value)
+  );
+}
+
+export const tenantRoles = ["tenant", "member", "employee"] as const;
+export const accessRoles = ["employee"] as const;
 export const maintenancePriorities: MaintenancePriority[] = [
   "low",
   "normal",

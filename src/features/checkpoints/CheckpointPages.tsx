@@ -53,7 +53,7 @@ import "./styles.css";
 function useCheckpointContext() {
   const org = useAppStore((s) => s.organization);
   const user = useAuthStore((s) => s.user);
-  const site = useAppStore((s) => s.selectedProperty);
+  const site = useAppStore((s) => s.selectedSite);
   return `${org?.id}:${user?.id}:${site?.id}`;
 }
 function useAccess() {
@@ -336,7 +336,7 @@ export function CheckpointDirectory() {
 
 function DefaultCheckpointDirectory() {
   const access = useAccess();
-  const siteId = useAppStore((state) => state.selectedProperty?.id);
+  const siteId = useAppStore((state) => state.selectedSite?.id);
   const [assigning, setAssigning] = useState<{
     id: string;
     name: string;

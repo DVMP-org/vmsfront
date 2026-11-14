@@ -10,14 +10,14 @@ import { contextApi } from "./api";
 
 export function useWorkspaceContext() {
   const organization = useAppStore((state) => state.organization);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const user = useAuthStore((state) => state.user);
-  const property = useAppStore((state) => state.selectedProperty);
+  const site = useAppStore((state) => state.selectedSite);
 
   const searchParams = useSearchParams();
   const urlSiteId = searchParams?.get("site_id") || searchParams?.get("site");
   const effectiveSiteId =
-    urlSiteId || property?.id || storedSiteId(organization?.slug || null);
+    urlSiteId || site?.id || storedSiteId(organization?.slug || null);
   const tenantSlug = getSubdomain();
 
   const query = useQuery({
@@ -38,17 +38,17 @@ export function useWorkspaceContext() {
   });
 
   useEffect(() => {
-    const site =
+    const activeSite =
       query.data?.management?.selected_site ||
       query.data?.management?.authoritative_site;
     if (
-      site &&
-      (!effectiveSiteId || site.id === effectiveSiteId) &&
-      (!property || property.id !== site.id || property.name !== site.name)
+      activeSite &&
+      (!effectiveSiteId || activeSite.id === effectiveSiteId) &&
+      (!site || site.id !== activeSite.id || site.name !== activeSite.name)
     ) {
-      setSelectedProperty({ id: site.id, name: site.name });
+      setSelectedSite({ id: activeSite.id, name: activeSite.name });
     }
-  }, [query.data, property, effectiveSiteId, setSelectedProperty]);
+  }, [query.data, site, effectiveSiteId, setSelectedSite]);
 
   return query;
 }

@@ -34,7 +34,7 @@ import {
     MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BillingFormState } from "@/app/plans/page";
+import type { BillingFormState } from "@/features/organization-onboarding/lib";
 
 // Popular countries for the dropdown
 const COUNTRIES = [

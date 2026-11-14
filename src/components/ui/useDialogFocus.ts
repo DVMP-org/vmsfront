@@ -38,6 +38,7 @@ export function useDialogFocus(
   onClose: () => void,
   panelRef: React.RefObject<HTMLElement | null>,
   initialFocusSelector?: string,
+  dismissible = true,
 ) {
   const onCloseRef = React.useRef(onClose);
   onCloseRef.current = onClose;
@@ -82,6 +83,7 @@ export function useDialogFocus(
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isTop()) return;
       if (event.key === "Escape") {
+        if (!dismissible) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         onCloseRef.current();
@@ -139,5 +141,5 @@ export function useDialogFocus(
         target?.focus({ preventScroll: true });
       }
     };
-  }, [initialFocusSelector, isOpen, panelRef]);
+  }, [dismissible, initialFocusSelector, isOpen, panelRef]);
 }

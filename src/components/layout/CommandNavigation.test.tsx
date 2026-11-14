@@ -43,7 +43,7 @@ describe("command navigation", () => {
     );
     expect(
       commands.find((entry) => entry.label === "Guest folios & billing")?.group,
-    ).toBe("Guest accounting");
+    ).toBe("Billing");
     expect(
       commands.find((entry) => entry.label === "Reservations & stays")?.group,
     ).toBe("Front office");
@@ -66,7 +66,7 @@ describe("command navigation", () => {
       ),
     ).toBe(false);
   });
-  it("shows property people only to a property manager", () => {
+  it("no longer offers the retired people directory", () => {
     expect(
       permittedCommands(
         role(["places.list"]),
@@ -79,7 +79,7 @@ describe("command navigation", () => {
       permittedCommands(null, ["dashboard", "people"], [], true).some(
         (entry) => entry.href === "/admin/people",
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
   it("searches permitted routes, handles empty results, and navigates with Enter", () => {
     HTMLDialogElement.prototype.showModal = function () {

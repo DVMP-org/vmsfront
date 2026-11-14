@@ -10,17 +10,16 @@ import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
-import { MixedUseNav } from "./MixedUseNav";
 
 export function useMixedUseAccess() {
   const access = useSiteAccess();
   const profile = access.workspace;
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   return {
     profile,
     organization,
-    selectedProperty,
+    selectedSite,
     contextKey: access.contextKey,
     canManageFacilities: access.allowed("places.update"),
     canManageExpenses: access.allowed("charges.create"),
@@ -41,7 +40,7 @@ export function MixedUseShell({
   const {
     profile,
     organization,
-    selectedProperty,
+    selectedSite,
     contextKey,
     canManageFacilities,
     canManageExpenses,
@@ -64,10 +63,10 @@ export function MixedUseShell({
             <Badge variant="neutral">
               {organization?.name || "Organization"}
             </Badge>
-            {selectedProperty ? (
+            {selectedSite ? (
               <Badge variant="neutral">
                 <Building2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                {selectedProperty.name}
+                {selectedSite.name}
               </Badge>
             ) : (
               <Badge variant="warning">No property selected</Badge>
@@ -78,12 +77,10 @@ export function MixedUseShell({
             </Badge>
           </div>
         }
-        primaryAction={selectedProperty ? primaryAction : undefined}
+        primaryAction={selectedSite ? primaryAction : undefined}
       />
 
-      <MixedUseNav />
-
-      {!selectedProperty ? (
+      {!selectedSite ? (
         <PropertyContext contextKey={contextKey} />
       ) : profile.isError ? (
         <section
@@ -109,8 +106,8 @@ export function MixedUseShell({
 }
 
 function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-7">
       <h2 className="text-lg font-semibold">Choose a mixed-use property</h2>
@@ -121,8 +118,8 @@ function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext
       <div className="mt-5 max-w-xl">
         <SitePicker
           label="Mixed-use property"
-          value={selectedProperty}
-          onChange={setSelectedProperty}
+          value={selectedSite}
+          onChange={setSelectedSite}
         />
       </div>
     </section>

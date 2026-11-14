@@ -35,7 +35,7 @@ or deactivate it.
 ## Covered contracts
 
 - login, organizations, organization creation, plan activation and standalone
-  first-place onboarding
+  first-Site onboarding
 - current Place and organization workspace routing
 - management, organization-only, occupant and guest authority boundaries
 - Property create/edit/move/archive

@@ -1,7 +1,7 @@
 import { OrganizationMemberGuard } from "@/components/auth/OrganizationMemberGuard";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { OrganizationShell } from "@/components/layout/OrganizationShell";
-import { OrganizationSetupGuard } from "@/components/auth/OrganizationSetupGuard";
+import { OrganizationAccessGuard } from "@/features/organization-workspace/components/OrganizationAccessGuard";
 
 export default function OrganizationLayout({
   children,
@@ -12,7 +12,7 @@ export default function OrganizationLayout({
     <RouteGuard>
       <OrganizationShell>
         <OrganizationMemberGuard>
-          <OrganizationSetupGuard>{children}</OrganizationSetupGuard>
+          <OrganizationAccessGuard>{children}</OrganizationAccessGuard>
         </OrganizationMemberGuard>
       </OrganizationShell>
     </RouteGuard>

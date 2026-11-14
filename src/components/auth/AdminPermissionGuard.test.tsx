@@ -94,17 +94,17 @@ describe("AdminPermissionGuard management boundary", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("keeps first-place setup outside the admin management guard", () => {
+  it("keeps first-Site setup outside the admin management guard", () => {
     mocks.pathname = "/admin/properties/new/";
     mocks.isAdministrator = false;
 
     render(
       <AdminPermissionGuard>
-        <div>Create the first place</div>
+        <div>Create the first Site</div>
       </AdminPermissionGuard>,
     );
 
-    expect(screen.queryByText("Create the first place")).toBeNull();
+    expect(screen.queryByText("Create the first Site")).toBeNull();
     return waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith(
         "/organization?reason=management-required",

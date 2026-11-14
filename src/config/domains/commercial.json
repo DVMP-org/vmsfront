@@ -26,10 +26,16 @@
           "module": "properties"
         },
         {
-          "label": "Business tenants",
+          "label": "Parties & tenancies",
           "href": "/admin/commercial/tenants",
           "icon": "users",
           "module": "people"
+        },
+        {
+          "label": "Lease register",
+          "href": "/admin/leases",
+          "icon": "document",
+          "module": "leases"
         }
       ]
     },
@@ -76,10 +82,16 @@
           "module": "maintenance"
         },
         {
-          "label": "Staff & contractor access",
+          "label": "Employee access",
           "href": "/admin/commercial/access",
           "icon": "shield",
           "module": "access_control"
+        },
+        {
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         }
       ]
     },
@@ -104,6 +116,12 @@
           "href": "/admin/invitations",
           "icon": "ticket",
           "module": "check_in_out"
+        },
+        {
+          "label": "Visitors",
+          "href": "/admin/commercial/visitors",
+          "icon": "shield",
+          "module": "access_control"
         },
         {
           "label": "Movement log",

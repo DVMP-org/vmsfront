@@ -5,11 +5,13 @@ import AdminDashboardPage from "./DefaultAdminOverview";
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
   analyticsQuery: vi.fn(),
+  attentionQuery: vi.fn(),
   refetch: vi.fn(),
   analyticsRefetch: vi.fn(),
+  attentionRefetch: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
-  selectedProperty: { id: "place", name: "Harbour Hotel" } as {
+  selectedSite: { id: "place", name: "Harbour Hotel" } as {
     id: string;
     name: string;
   } | null,
@@ -19,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/hooks/use-admin", () => ({
   useAdminDashboard: mocks.query,
   useAdminAnalyticsSummary: mocks.analyticsQuery,
+  useOperationsAttention: mocks.attentionQuery,
 }));
 vi.mock("@/features/context/use-workspace-context", () => ({
   useWorkspaceContext: () => ({
@@ -31,7 +34,7 @@ vi.mock("@/features/context/use-workspace-context", () => ({
 }));
 vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
-    selector({ selectedProperty: mocks.selectedProperty }),
+    selector({ selectedSite: mocks.selectedSite }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
@@ -119,10 +122,57 @@ const analytics = {
   },
 };
 
+const attention = {
+  site_id: "place",
+  site_name: "Harbour Hotel",
+  generated_at: "2026-01-01T10:00:00Z",
+  total: 5,
+  categories: [
+    {
+      kind: "access",
+      count: 1,
+      items: [
+        {
+          code: "access.awaiting_approval",
+          kind: "access",
+          subject_type: "visit_authorization",
+          subject_id: "visit",
+          site_id: "place",
+          place_id: "place",
+          place_name: "Harbour Hotel",
+          party_name: "Alex Host",
+          due_at: "2026-01-01T12:00:00Z",
+          amount: null,
+          currency: null,
+        },
+      ],
+    },
+    {
+      kind: "billing",
+      count: 4,
+      items: [
+        {
+          code: "billing.charge_overdue",
+          kind: "billing",
+          subject_type: "charge_schedule",
+          subject_id: "charge",
+          site_id: "place",
+          place_id: "place",
+          place_name: "Harbour Hotel",
+          party_name: "Payer",
+          due_at: "2025-12-01T00:00:00Z",
+          amount: "250.00",
+          currency: "NGN",
+        },
+      ],
+    },
+  ],
+};
+
 describe("operating dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.selectedProperty = { id: "place", name: "Harbour Hotel" };
+    mocks.selectedSite = { id: "place", name: "Harbour Hotel" };
     mocks.managementIsAdministrator = true;
     window.history.replaceState({}, "", "/admin");
     window.sessionStorage.clear();
@@ -133,9 +183,16 @@ describe("operating dashboard", () => {
       isFetching: false,
       refetch: mocks.analyticsRefetch,
     });
+    mocks.attentionQuery.mockReturnValue({
+      data: attention,
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: mocks.attentionRefetch,
+    });
   });
 
-  it("does not route first-place setup through the management dashboard", () => {
+  it("does not route first-Site setup through the management dashboard", () => {
     mocks.query.mockReturnValue({
       data: { ...dashboard, root_places: [] },
       isPending: false,
@@ -195,7 +252,7 @@ describe("operating dashboard", () => {
       within(placeScope).queryByRole("link", { name: /Harbour Hotel/ }),
     ).not.toBeInTheDocument();
     expect(within(placeScope).getByText("Harbour Hotel")).toBeInTheDocument();
-    expect(screen.getByText("Guest arrival")).toBeInTheDocument();
+    expect(screen.getByText("Invitation awaiting approval")).toBeInTheDocument();
     const activityTable = screen.getByRole("table", {
       name: "Recent checkpoint activity for Harbour Hotel",
     });
@@ -203,6 +260,46 @@ describe("operating dashboard", () => {
     expect(within(activityTable).getByText("allowed")).toBeInTheDocument();
     expect(screen.getByText(/6 allowed/)).toBeInTheDocument();
     expect(screen.getByText(/4 denied/)).toBeInTheDocument();
+  });
+
+  it("groups overdue work in the attention queue", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    render(<AdminDashboardPage />);
+
+    const queue = screen.getByRole("region", { name: "Attention required" });
+    expect(within(queue).getByText("5 open")).toBeInTheDocument();
+    expect(
+      within(queue).getByText("Invitation awaiting approval"),
+    ).toBeInTheDocument();
+    expect(within(queue).getByText("Charge past due")).toBeInTheDocument();
+    expect(within(queue).getByText("3 more in Billing")).toBeInTheDocument();
+  });
+
+  it("says so when nothing needs attention", () => {
+    mocks.query.mockReturnValue({
+      data: dashboard,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    mocks.attentionQuery.mockReturnValue({
+      data: { ...attention, total: 0, categories: [] },
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: mocks.attentionRefetch,
+    });
+    render(<AdminDashboardPage />);
+
+    const queue = screen.getByRole("region", { name: "Attention required" });
+    expect(
+      within(queue).getByText("Nothing is overdue or waiting for a decision."),
+    ).toBeInTheDocument();
   });
 
   it("warns when refresh fails but cached data remains", () => {
@@ -219,7 +316,7 @@ describe("operating dashboard", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
-  it("continues the first-workspace setup checklist after plan activation", async () => {
+  it("ignores the retired first-workspace setup query", async () => {
     mocks.query.mockReturnValue({
       data: dashboard,
       isPending: false,
@@ -230,15 +327,16 @@ describe("operating dashboard", () => {
     render(<AdminDashboardPage />);
 
     expect(
-      await screen.findByRole("heading", {
+      screen.queryByRole("heading", {
         name: "Your management workspace is ready",
       }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Review first site/ }));
-    expect(mocks.push).toHaveBeenCalledWith("/admin/site/configuration");
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Review first site/ }),
+    ).toBeNull();
   });
 
-  it("routes people work to the canonical property roster", () => {
+  it("shows people metrics without the retired roster link", () => {
     mocks.query.mockReturnValue({
       data: dashboard,
       isPending: false,
@@ -246,9 +344,10 @@ describe("operating dashboard", () => {
       refetch: mocks.refetch,
     });
     render(<AdminDashboardPage />);
+    expect(screen.getByText("People")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /active relationships/ }),
-    ).toHaveAttribute("href", "/admin/people");
+      screen.queryByRole("link", { name: /active relationships/ }),
+    ).toBeNull();
   });
 
   it("keeps access reports usable when analytics partially fails", () => {
@@ -269,7 +368,7 @@ describe("operating dashboard", () => {
     render(<AdminDashboardPage />);
 
     expect(screen.getByText("Access trend unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Guest arrival")).toBeInTheDocument();
+    expect(screen.getByText("Invitation awaiting approval")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.analyticsRefetch).toHaveBeenCalledOnce();
   });

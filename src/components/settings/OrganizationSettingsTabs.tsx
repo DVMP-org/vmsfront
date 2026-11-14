@@ -18,14 +18,9 @@ const sections = [
     href: "/organization/settings/branding",
   },
   {
-    id: "payment",
-    label: "Payments",
-    href: "/organization/settings/payment",
-  },
-  {
-    id: "mailer",
-    label: "Mail delivery",
-    href: "/organization/settings/mailer",
+    id: "templates",
+    label: "Email templates",
+    href: "/organization/settings/templates",
   },
   {
     id: "subscription",
@@ -90,8 +85,9 @@ export function organizationSettingsSectionFromPath(
   if (pathname?.startsWith("/organization/settings/roles")) return "roles";
   if (pathname?.startsWith("/organization/settings/branding"))
     return "branding";
-  if (pathname?.startsWith("/organization/settings/payment")) return "payment";
-  if (pathname?.startsWith("/organization/settings/mailer")) return "mailer";
+  if (pathname?.startsWith("/organization/settings/templates")) {
+    return "templates";
+  }
   if (pathname?.startsWith("/organization/settings/subscription")) {
     return "subscription";
   }

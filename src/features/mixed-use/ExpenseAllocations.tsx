@@ -22,9 +22,9 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
 import {
-  propertiesApi,
-  type PropertyTreeNode,
-} from "@/features/properties/api";
+  placesApi,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import {
   mixedUseApi,
@@ -92,14 +92,14 @@ function dateInput(date: Date) {
   return local.toISOString().slice(0, 10);
 }
 
-function flattenTree(nodes: PropertyTreeNode[]): PropertyTreeNode[] {
+function flattenTree(nodes: PlaceTreeNode[]): PlaceTreeNode[] {
   return nodes.flatMap((node) => [node, ...flattenTree(node.children)]);
 }
 
 function selectedTree(
-  nodes: PropertyTreeNode[],
+  nodes: PlaceTreeNode[],
   selectedId: string,
-): PropertyTreeNode | null {
+): PlaceTreeNode | null {
   for (const node of nodes) {
     if (node.id === selectedId) return node;
     const child = selectedTree(node.children, selectedId);
@@ -117,7 +117,7 @@ function money(amount: string, currency: string) {
 }
 
 export function ExpenseAllocations() {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const context = useMixedUseAccess();
   const client = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
@@ -126,22 +126,22 @@ export function ExpenseAllocations() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const query = useQuery({
-    queryKey: ["mixed-use-expense-allocations", selectedProperty?.id],
+    queryKey: ["mixed-use-expense-allocations", selectedSite?.id],
     queryFn: () =>
-      mixedUseApi.listAllocations(selectedProperty!.id, {
+      mixedUseApi.listAllocations(selectedSite!.id, {
         page: 1,
         page_size: 100,
       }),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
   const tree = useQuery({
     queryKey: ["property-tree", "mixed-use-expenses"],
     queryFn: () =>
-      selectedProperty?.id
-        ? propertiesApi.tree(selectedProperty.id)
+      selectedSite?.id
+        ? placesApi.tree(selectedSite.id)
         : Promise.resolve([]),
-    enabled: !!selectedProperty?.id,
+    enabled: !!selectedSite?.id,
     retry: false,
   });
 
@@ -162,16 +162,16 @@ export function ExpenseAllocations() {
   );
   const allocationAmount = Number(form.total_amount) || 0;
   const targetOptions = useMemo(() => {
-    if (!tree.data || !selectedProperty) return [];
-    const root = selectedTree(tree.data, selectedProperty.id);
+    if (!tree.data || !selectedSite) return [];
+    const root = selectedTree(tree.data, selectedSite.id);
     if (!root) return [];
     return flattenTree(root.children).filter((place) => place.is_active);
-  }, [selectedProperty, tree.data]);
+  }, [selectedSite, tree.data]);
 
   const create = useMutation({
     mutationFn: (input: ExpenseAllocationInput) => {
-      if (!selectedProperty) throw new Error("Select a property first");
-      return mixedUseApi.createAllocation(selectedProperty.id, input);
+      if (!selectedSite) throw new Error("Select a property first");
+      return mixedUseApi.createAllocation(selectedSite.id, input);
     },
     onSuccess: () => {
       toast.success("Expense allocation created as a draft.");
@@ -193,10 +193,10 @@ export function ExpenseAllocations() {
       allocation: ExpenseAllocation;
       action: "approve" | "archive";
     }) => {
-      if (!selectedProperty) throw new Error("Select a property first");
+      if (!selectedSite) throw new Error("Select a property first");
       return action === "approve"
-        ? mixedUseApi.approveAllocation(selectedProperty.id, allocation.id)
-        : mixedUseApi.archiveAllocation(selectedProperty.id, allocation.id);
+        ? mixedUseApi.approveAllocation(selectedSite.id, allocation.id)
+        : mixedUseApi.archiveAllocation(selectedSite.id, allocation.id);
     },
     onSuccess: () => {
       toast.success("Allocation status updated.");

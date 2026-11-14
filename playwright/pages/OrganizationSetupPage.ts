@@ -55,12 +55,12 @@ export class OrganizationSetupPage {
       .click();
     await expect(this.page).toHaveURL(
       new RegExp(
-        `${vmsConfig.baseDomain}.*\\/setup\\/first-place\\/?$`,
+        `${vmsConfig.baseDomain}.*\\/setup\\/first-site\\/?$`,
       ),
     );
   }
 
-  async createFirstPlace({
+  async createFirstSite({
     name,
     address,
     description,
@@ -70,25 +70,24 @@ export class OrganizationSetupPage {
     description?: string;
   }) {
     await expect(
-      this.page.getByRole("heading", { name: "Create your first place" }),
+      this.page.getByRole("heading", { name: "Create your first Site" }),
     ).toBeVisible();
-    await this.page.getByLabel("Place name").fill(name);
+    await this.page.getByLabel("Site name").fill(name);
     await this.page.getByLabel("Address").fill(address);
     if (description) {
       await this.page.getByLabel("Description").fill(description);
     }
     await this.page
-      .getByRole("button", { name: "Create first place" })
+      .getByRole("button", { name: "Create first Site" })
       .click();
-    await expect(this.page).toHaveURL(
-      new RegExp(`${vmsConfig.baseDomain}.*\\/organization\\/workspaces`),
-      { timeout: 30_000 },
-    );
+    await expect(
+      this.page.getByRole("heading", { name: "Choose your workspace" }),
+    ).toBeVisible({ timeout: 30_000 });
   }
 
   async expectStandaloneSetupShell() {
     await expect(
-      this.page.getByRole("heading", { name: "Create your first place" }),
+      this.page.getByRole("heading", { name: "Create your first Site" }),
     ).toBeVisible();
     await expect(
       this.page.getByRole("navigation", { name: "Administration" }),

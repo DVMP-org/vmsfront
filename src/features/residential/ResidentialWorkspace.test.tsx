@@ -45,8 +45,8 @@ vi.mock("@/store/app-store", () => ({
   useAppStore: (selector: (state: unknown) => unknown) =>
     selector({
       organization: { id: "org", name: "Harbour Estates" },
-      selectedProperty: { id: "site", name: "Harbour Heights" },
-      setSelectedProperty: vi.fn(),
+      selectedSite: { id: "site", name: "Harbour Heights" },
+      setSelectedSite: vi.fn(),
     }),
 }));
 
@@ -145,8 +145,8 @@ vi.mock("./api", () => ({
   },
 }));
 
-vi.mock("@/features/properties/api", () => ({
-  propertiesApi: {
+vi.mock("@/features/places/api", () => ({
+  placesApi: {
     create: mocks.create,
     update: mocks.update,
     toggle: mocks.toggle,

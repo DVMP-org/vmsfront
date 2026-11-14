@@ -7,33 +7,58 @@ const DEFAULT_ORGANIZATION_SLUG =
   process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 
 /**
- * Construct a URL on the base domain (without subdomain)
+ * Construct a URL on the base domain (without subdomain).
+ *
+ * Public hosts must never inherit the request/forwarded port: Valet and
+ * container proxies forward the internal dev port (3000), which previously
+ * produced redirects such as `https://vmsfront.to:3000/organizations`.
+ * Only local development hosts keep their port so `localhost:3000` and
+ * `lvh.me:3116` continue to work.
  */
 function getBaseDomainUrl(
   pathname: string = "/",
   search: string = "",
   request?: NextRequest,
 ): URL {
+  const requestUrl = request ? new URL(request.url) : null;
   const forwardedProtocol = request?.headers
     .get("x-forwarded-proto")
     ?.split(",")[0]
     .trim();
   const protocol =
     forwardedProtocol ||
-    (request ? new URL(request.url).protocol.replace(":", "") : PROTOCOL);
-  // Never leak the container's internal port into a public redirect. A
-  // forwarded port is authoritative; the request port is only trusted for
-  // plain-http local development.
-  const forwardedPort = request?.headers
-    .get("x-forwarded-port")
-    ?.split(",")[0]
-    .trim();
-  const requestPort =
-    forwardedPort || (protocol === "http" ? request?.nextUrl.port || "" : "");
+    (requestUrl ? requestUrl.protocol.replace(":", "") : PROTOCOL);
+
+  const firstHeader = (value?: string | null) =>
+    value?.split(",")[0]?.trim() || "";
+  const forwardedHost = firstHeader(request?.headers.get("x-forwarded-host"));
+  const hostHeader = firstHeader(request?.headers.get("host"));
+  const rawHost = forwardedHost || hostHeader || requestUrl?.host || BASE_DOMAIN;
+  const [requestHostname, requestPort] = (() => {
+    const match = rawHost.match(/^(.+?)(?::(\d+))?$/);
+    return [match?.[1] || BASE_DOMAIN, match?.[2] || ""] as const;
+  })();
+
+  const isLocal =
+    requestHostname === "localhost" ||
+    requestHostname.endsWith(".localhost") ||
+    requestHostname === "lvh.me" ||
+    requestHostname.endsWith(".lvh.me");
+  const [baseHostname, basePort = ""] = BASE_DOMAIN.split(":");
+
+  const hostname = isLocal
+    ? requestHostname.endsWith("lvh.me")
+      ? "lvh.me"
+      : "localhost"
+    : baseHostname;
+  const requestedPort = isLocal
+    ? requestPort || requestUrl?.port || ""
+    : basePort;
   const defaultPort = protocol === "https" ? "443" : "80";
   const port =
-    requestPort && requestPort !== defaultPort ? `:${requestPort}` : "";
-  const url = new URL(`${protocol}://${BASE_DOMAIN}${port}${pathname}`);
+    requestedPort && requestedPort !== defaultPort ? `:${requestedPort}` : "";
+
+  const url = new URL(`${protocol}://${hostname}${port}${pathname}`);
   if (search) {
     url.search = search;
   }
@@ -80,7 +105,13 @@ function extractOrgSubdomain(hostname: string): string | null {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get("host") || "";
+  // Prefer the original viewer host. Behind CloudFront the Host header can be
+  // rewritten to the origin hostname, which makes every tenant request look
+  // like a base-domain request and sends /organization to the apex.
+  const hostname =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    "";
 
   // Extract organization subdomain
   const orgSubdomain = extractOrgSubdomain(hostname);
@@ -105,10 +136,6 @@ export function middleware(request: NextRequest) {
   const isSetupPath = pathname === "/setup" || pathname.startsWith("/setup/");
   const isOrganizationPath =
     pathname === "/organization" || pathname.startsWith("/organization/");
-  const normalizedPathname = pathname.replace(/\/+$/, "");
-  const isLegacyFirstPlacePath =
-    normalizedPathname === "/admin/properties/new" &&
-    request.nextUrl.searchParams.get("setup") === "first-place";
 
   // Always add X-Organization header if on subdomain
   const requestHeaders = new Headers(request.headers);
@@ -175,12 +202,6 @@ export function middleware(request: NextRequest) {
       ? new URL("/", request.url)
       : getBaseDomainUrl("/organizations", "", request);
     return NextResponse.redirect(destinationUrl);
-  }
-
-  // RULE 3a: First-place setup is a standalone onboarding route. Redirect
-  // older admin URLs before the management guards evaluate them.
-  if (isLegacyFirstPlacePath) {
-    return NextResponse.redirect(new URL("/setup/first-place", request.url));
   }
 
   // RULE 4: Protected paths on subdomain require authentication

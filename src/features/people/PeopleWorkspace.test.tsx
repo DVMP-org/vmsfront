@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   profileData: {
     effective_permissions: [] as string[],
   },
-  setSelectedProperty: vi.fn(),
+  setSelectedSite: vi.fn(),
   selectedSite: { id: "site-1", name: "Harbour Estate" } as {
     id: string;
     name: string;
@@ -26,8 +26,8 @@ vi.mock("@/store/app-store", () => {
       updated_at: "",
       subscription: null,
     },
-    selectedProperty: mocks.selectedSite,
-    setSelectedProperty: mocks.setSelectedProperty,
+    selectedSite: mocks.selectedSite,
+    setSelectedSite: mocks.setSelectedSite,
   };
   return {
     useAppStore: (selector: (value: typeof state) => unknown) =>

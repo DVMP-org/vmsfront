@@ -54,7 +54,7 @@
         {
           "label": "Leases & agreements",
           "href": "/admin/residential/leases",
-          "icon": "scale",
+          "icon": "document",
           "module": "leases"
         },
         {
@@ -88,6 +88,12 @@
           "href": "/admin/residential/maintenance",
           "icon": "wrench",
           "module": "maintenance"
+        },
+        {
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         },
         {
           "label": "Announcements",

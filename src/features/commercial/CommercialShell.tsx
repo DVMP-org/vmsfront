@@ -16,21 +16,32 @@ export function useCommercialAccess() {
   const access = useSiteAccess();
   const profile = access.workspace;
   const organization = useAppStore((state) => state.organization);
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const can = access.allowed;
+  const administrator = access.isAdministrator;
 
   return {
     profile,
     organization,
-    selectedProperty,
+    selectedSite,
     contextKey: access.contextKey,
-    canManageInventory: can("places.create") || can("places.update"),
-    canManagePeople: can("place_relationships.create") || can("parties.create"),
-    canManageFinance: can("charges.create") || can("charges.update"),
+    canManageInventory:
+      administrator || can("places.create") || can("places.update"),
+    canManagePeople:
+      administrator ||
+      can("place_relationships.create") ||
+      can("parties.create"),
+    canManageFinance:
+      administrator || can("charges.create") || can("charges.update"),
     canManageAccess:
-      can("place_relationships.create") || can("visit_authorizations.approve"),
+      administrator ||
+      can("place_relationships.create") ||
+      can("visit_authorizations.approve"),
     canManageMaintenance:
-      can("maintenance.manage") || can("places.update") || can("places.create"),
+      administrator ||
+      can("maintenance.create") ||
+      can("maintenance.update") ||
+      can("places.update"),
   };
 }
 
@@ -48,7 +59,7 @@ export function CommercialShell({
   const {
     profile,
     organization,
-    selectedProperty,
+    selectedSite,
     contextKey,
     canManageInventory,
   } = useCommercialAccess();
@@ -69,10 +80,10 @@ export function CommercialShell({
             <Badge variant="neutral">
               {organization?.name || "Organization"}
             </Badge>
-            {selectedProperty ? (
+            {selectedSite ? (
               <Badge variant="neutral">
                 <Building2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                {selectedProperty.name}
+                {selectedSite.name}
               </Badge>
             ) : (
               <Badge variant="warning">No property selected</Badge>
@@ -86,9 +97,8 @@ export function CommercialShell({
         primaryAction={primaryAction}
       />
 
-      <CommercialModuleNav />
 
-      {!selectedProperty ? (
+      {!selectedSite ? (
         <PropertyContext contextKey={contextKey} />
       ) : profile.isError ? (
         <section
@@ -114,8 +124,8 @@ export function CommercialShell({
 }
 
 function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
-  const selectedProperty = useAppStore((state) => state.selectedProperty);
-  const setSelectedProperty = useAppStore((state) => state.setSelectedProperty);
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-7">
       <h2 className="text-lg font-semibold">Choose a commercial property</h2>
@@ -126,8 +136,8 @@ function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext
       <div className="mt-5 max-w-xl">
         <SitePicker
           label="Commercial property"
-          value={selectedProperty}
-          onChange={setSelectedProperty}
+          value={selectedSite}
+          onChange={setSelectedSite}
         />
       </div>
     </section>
