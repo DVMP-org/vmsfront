@@ -6,13 +6,14 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { formatMoney } from "@/lib/currency";
-import { formatDateRange } from "@/lib/datetime";
+import { formatDateRange, formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { PublicBookingPayment } from "../PublicBookingPayment";
 import { PublicBookingSteps } from "./PublicBookingSteps";
 import { PublicBookingSummary } from "./PublicBookingSummary";
 import { PublicCategoryChooser } from "./PublicCategoryChooser";
 import { PublicGuestDetailsForm, type PublicGuestDetails } from "./PublicGuestDetailsForm";
+import { PublicPayStep } from "./PublicPayStep";
 import { PublicStaySearch } from "./PublicStaySearch";
 import {
   defaultStayDates,
@@ -61,6 +62,9 @@ export function PublicHospitalityBookingFlow({
     phone: "",
     notes: "",
   });
+  // Paying is the last step, not a button on a confirmation screen: the guest
+  // chooses here whether this is a booking (paid now) or a reservation (held).
+  const [finished, setFinished] = useState(false);
 
   const submit = useSubmitPublicBooking(siteSlug);
   const window = stayWindow(checkIn, checkOut);
@@ -74,8 +78,17 @@ export function PublicHospitalityBookingFlow({
   });
 
   if (submit.isSuccess) {
+    if (finished) {
+      return (
+        <PublicBookingConfirmation siteSlug={siteSlug} created={submit.data} />
+      );
+    }
     return (
-      <PublicBookingConfirmation siteSlug={siteSlug} created={submit.data} />
+      <PublicPayStep
+        siteSlug={siteSlug}
+        created={submit.data}
+        onDone={() => setFinished(true)}
+      />
     );
   }
 
@@ -102,10 +115,10 @@ export function PublicHospitalityBookingFlow({
     setStep(2);
   }
 
-  function submitBooking() {
+  function submitStay(kind: "booking" | "reservation") {
     if (!category) return;
     submit.mutate({
-      kind: "booking",
+      kind,
       place_id: null,
       place_group_id: category.id,
       rooms,
@@ -196,7 +209,7 @@ export function PublicHospitalityBookingFlow({
                   {parseApiError(submit.error).message}
                 </p>
               ) : null}
-              <div className="flex flex-wrap justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <Button
                   type="button"
                   variant="ghost"
@@ -204,14 +217,24 @@ export function PublicHospitalityBookingFlow({
                 >
                   Back
                 </Button>
-                <Button
-                  type="button"
-                  disabled={submit.isPending}
-                  isLoading={submit.isPending}
-                  onClick={submitBooking}
-                >
-                  Request this stay
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={submit.isPending}
+                    onClick={() => submitStay("reservation")}
+                  >
+                    Reserve — pay later
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={submit.isPending}
+                    isLoading={submit.isPending}
+                    onClick={() => submitStay("booking")}
+                  >
+                    Pay and book
+                  </Button>
+                </div>
               </div>
             </div>
           ) : null}
@@ -234,11 +257,11 @@ export function PublicHospitalityBookingFlow({
 }
 
 /**
- * What the guest gets once the request is in.
+ * What the guest gets once they have finished the flow.
  *
- * Explicit that this is a request: the property has not accepted it yet. The
- * payment block exists because paying is the next thing a guest wants to do, and
- * paying does not confirm the stay either.
+ * Explicit that this is a request: the property has not accepted it yet. Paying
+ * happened on the step before this one, so this screen does not ask for money
+ * again — it says what has been sent and what happens next.
  */
 export function PublicBookingConfirmation({
   siteSlug,
@@ -248,15 +271,19 @@ export function PublicBookingConfirmation({
   created: PublicBookingCreated;
 }) {
   const subject = created.room_category_name ?? created.place_name;
+  const paid = created.payment_required && created.amount_due;
 
   return (
     <section className="mx-auto flex max-w-xl flex-col items-start gap-3 rounded-xl border border-[var(--vms-border)] bg-[var(--vms-surface)] p-6">
       <span className="flex items-center gap-2 text-[var(--vms-success)]">
         <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-        <h1 className="text-base font-semibold">Request sent</h1>
+        <h1 className="text-base font-semibold">
+          {paid ? "Booking sent" : "Reservation held"}
+        </h1>
       </span>
       <p className="text-sm text-[var(--vms-ink)]">
-        {created.site_name} has your request
+        {created.site_name} has your
+        {paid ? " booking" : " reservation"}
         {subject ? ` for ${subject}` : ""}
         {created.rooms > 1 ? ` (${created.rooms} rooms)` : ""}. Nothing is
         confirmed yet — you will hear back once someone has reviewed it.
@@ -269,11 +296,16 @@ export function PublicBookingConfirmation({
         <p className="text-sm text-[var(--vms-ink)]">
           {formatMoney(created.amount_due, created.currency)}{" "}
           <span className="text-xs text-[var(--vms-ink-muted)]">
-            for the stay
+            {paid ? "paid" : "for the stay"}
           </span>
         </p>
       ) : null}
-      <PublicBookingPayment siteSlug={siteSlug} booking={created} />
+      {!paid && created.hold_expires_at ? (
+        <p className="text-xs text-[var(--vms-ink-muted)]">
+          Your rooms are held until {formatDateTime(created.hold_expires_at)}.
+          You can pay before then to keep them.
+        </p>
+      ) : null}
     </section>
   );
 }

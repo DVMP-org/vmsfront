@@ -121,6 +121,13 @@ export interface PublicBookingCreated {
   currency: string | null;
   amount_due: string | null;
   payable: boolean;
+  /**
+   * True for a booking, which is paid for when it is made. False for a
+   * reservation, which holds a room and may be paid for later or not at all.
+   */
+  payment_required: boolean;
+  /** When the held room goes back if nothing is paid. */
+  hold_expires_at: string | null;
 }
 
 /** A gateway hand-off, exactly as the payment provider returns it. */
