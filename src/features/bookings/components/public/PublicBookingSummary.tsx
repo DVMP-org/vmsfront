@@ -2,7 +2,7 @@
 
 import { formatMoney } from "@/lib/currency";
 import { formatDate } from "@/lib/datetime";
-import { estimatedTotal } from "../../public-lib";
+import { estimateFromRates } from "../../public-lib";
 import type { PublicRoomCategory } from "../../public-api-types";
 
 /**
@@ -29,7 +29,9 @@ export function PublicBookingSummary({
   rooms: number;
   guests: number;
 }) {
-  const estimate = estimatedTotal(category?.nightly_rate ?? null, nights, rooms);
+  const estimate = category
+    ? estimateFromRates(category.rates, nights, rooms)
+    : null;
 
   return (
     <section

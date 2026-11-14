@@ -63,22 +63,33 @@ export function nightsBetween(checkIn: string, checkOut: string): number {
 }
 
 /**
- * What a chosen category would cost, for display before the guest commits.
+ * What the rooms a guest is about to take would cost.
  *
- * This is an estimate and the screen says so. It is advertised rate against the
- * nights and rooms the guest just asked for; the figure that is charged comes
- * back from the server with the booking, because the server is the only place
- * that knows what the rooms actually cost.
+ * Priced per room, not per category. A "Deluxe Super" holding a 50,000 room and
+ * a 60,000 room must come to 110,000 for two — quoting the cheapest twice would
+ * understate the bill. Summing the cheapest `rooms` entries of the server's own
+ * list is the arithmetic the server will do when it allocates, so the two agree.
+ *
+ * The figure actually charged still comes back with the booking; this is what the
+ * guest is shown before they commit, and the screen says it is an estimate.
+ *
+ * Returns null when fewer rooms are free than were asked for: there is no honest
+ * total for a request the property cannot fill.
  */
-export function estimatedTotal(
-  nightlyRate: string | null,
+export function estimateFromRates(
+  rates: readonly string[],
   nights: number,
   rooms: number,
 ): number | null {
-  if (nightlyRate === null) return null;
-  const rate = Number(nightlyRate);
-  if (!Number.isFinite(rate) || nights <= 0 || rooms <= 0) return null;
-  return rate * nights * rooms;
+  if (nights <= 0 || rooms <= 0) return null;
+  const picked = rates.slice(0, rooms);
+  if (picked.length < rooms) return null;
+  const perNight = picked.reduce((total, rate) => {
+    const value = Number(rate);
+    return Number.isFinite(value) ? total + value : Number.NaN;
+  }, 0);
+  if (!Number.isFinite(perNight)) return null;
+  return perNight * nights;
 }
 
 /** Whether a room category can be booked at all for the window. */

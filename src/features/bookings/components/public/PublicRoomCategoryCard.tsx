@@ -6,7 +6,7 @@ import { BedDouble } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/currency";
 import { humanize } from "@/lib/strings";
-import { canBookCategory, estimatedTotal } from "../../public-lib";
+import { canBookCategory, estimateFromRates } from "../../public-lib";
 import type { PublicRoomCategory } from "../../public-api-types";
 
 const MAX_ROOMS_PER_BOOKING = 5;
@@ -40,7 +40,10 @@ export function PublicRoomCategoryCard({
   const bookable = canBookCategory(category);
   const maxRooms = Math.min(category.rooms_available, MAX_ROOMS_PER_BOOKING);
   const chosen = Math.min(Math.max(1, Number(rooms) || 1), Math.max(1, maxRooms));
-  const estimate = estimatedTotal(category.nightly_rate, nights, chosen);
+  const estimate = estimateFromRates(category.rates, nights, chosen);
+  // More than one rate means the cheapest room is a starting price, not the
+  // price of the room this guest will actually get.
+  const varies = new Set(category.rates).size > 1;
   const shownAmenities = category.amenities.slice(0, 4);
   const extraAmenities = category.amenities.length - shownAmenities.length;
 
@@ -133,6 +136,7 @@ export function PublicRoomCategoryCard({
                     {formatMoney(estimate, category.currency ?? undefined)}
                   </strong>{" "}
                   for {nights} {nights === 1 ? "night" : "nights"}
+                  {chosen > 1 ? `, ${chosen} rooms` : ""}
                 </span>
               ) : null}
               <Button
