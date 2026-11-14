@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canBookCategory,
   defaultStayDates,
-  estimatedTotal,
+  estimateFromRates,
   nightsBetween,
   stayWindow,
 } from "./public-lib";
@@ -44,13 +44,18 @@ describe("public booking dates", () => {
 });
 
 describe("public booking pricing", () => {
-  it("estimates from the advertised rate, the nights and the rooms", () => {
-    expect(estimatedTotal("120.00", 3, 1)).toBe(360);
-    expect(estimatedTotal("120.00", 3, 2)).toBe(720);
+  it("adds up the rooms the guest is actually taking", () => {
+    // Emerald 50,000 and Sapphire 60,000 are both "Deluxe Super". Two rooms for
+    // one night is 110,000 — not the cheapest room twice.
+    expect(estimateFromRates(["50000", "60000", "70000"], 1, 2)).toBe(110000);
+    expect(estimateFromRates(["50000", "60000", "70000"], 1, 1)).toBe(50000);
+    expect(estimateFromRates(["50000", "60000"], 3, 2)).toBe(330000);
   });
 
-  it("has no estimate when the category has no advertised rate", () => {
-    expect(estimatedTotal(null, 3, 1)).toBeNull();
+  it("has no estimate when there are not enough rooms to fill the request", () => {
+    // Quoting a total for rooms that do not exist would be inventing one.
+    expect(estimateFromRates(["50000"], 1, 2)).toBeNull();
+    expect(estimateFromRates([], 1, 1)).toBeNull();
   });
 
   it("will not present an unpriced category as bookable", () => {

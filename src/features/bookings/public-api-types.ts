@@ -48,6 +48,14 @@ export interface PublicRoomCategory {
   rooms_total: number;
   /** Equals `rooms_total` until a dated search says otherwise. */
   rooms_available: number;
+  /**
+   * The nightly rate of each free room, cheapest first.
+   *
+   * `nightly_rate` is the cheapest of these. The list exists because two rooms of
+   * one category can cost different amounts, and quoting the cheapest twice would
+   * understate what two rooms actually come to.
+   */
+  rates: string[];
   amenities: string[];
 }
 

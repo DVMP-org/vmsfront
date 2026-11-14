@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { formatMoney } from "@/lib/currency";
+
 import { PublicHospitalityBookingFlow } from "./PublicHospitalityBookingFlow";
 import type { PublicSiteBooking } from "../../public-api-types";
 
@@ -22,6 +24,8 @@ const availability = {
       capacity: 2,
       rooms_total: 3,
       rooms_available: 2,
+      // Two rooms at different rates: Emerald 120, Sapphire 140.
+      rates: ["120.00", "140.00", "150.00"],
       amenities: ["wifi", "air_conditioning"],
     },
     {
@@ -33,6 +37,7 @@ const availability = {
       capacity: 3,
       rooms_total: 1,
       rooms_available: 0,
+      rates: [],
       amenities: [],
     },
   ],
@@ -171,5 +176,21 @@ describe("public hospitality booking", () => {
     });
 
     expect(within(form).getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("prices two rooms as the two rooms the guest gets, not the cheapest twice", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Search rooms" }));
+
+    const rooms = await screen.findByLabelText("Rooms of Deluxe Super");
+    fireEvent.change(rooms, { target: { value: "2" } });
+
+    // The free rooms are 120 and 140, so one night of two rooms is 260. Quoting
+    // 120 twice would understate what the guest is about to be charged.
+    const card = screen
+      .getByRole("heading", { name: "Deluxe Super" })
+      .closest("li") as HTMLElement;
+    expect(within(card).getByText(formatMoney(260, "USD"))).toBeTruthy();
+    expect(within(card).getByText(/Estimated/)).toBeTruthy();
   });
 });
