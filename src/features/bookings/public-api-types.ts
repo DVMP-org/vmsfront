@@ -32,6 +32,34 @@ export interface PublicBookingHost {
   place_id: string;
 }
 
+/**
+ * A type of room a hotel sells, which is what a guest actually chooses.
+ *
+ * The individual rooms are not offered: the hotel assigns one later. The count is
+ * the only thing about inventory a guest needs.
+ */
+export interface PublicRoomCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  nightly_rate: string | null;
+  currency: string | null;
+  capacity: number | null;
+  rooms_total: number;
+  /** Equals `rooms_total` until a dated search says otherwise. */
+  rooms_available: number;
+  amenities: string[];
+}
+
+/** What is left for the dates the guest asked about. */
+export interface PublicAvailability {
+  site_slug: string;
+  check_in_at: string;
+  check_out_at: string;
+  nights: number;
+  categories: PublicRoomCategory[];
+}
+
 export interface PublicSiteBooking {
   site_id: string;
   site_name: string;
@@ -42,12 +70,18 @@ export interface PublicSiteBooking {
   requires_host: boolean;
   requires_place: boolean;
   places: PublicBookablePlace[];
+  /** Hospitality sells categories rather than rooms. Empty for other domains. */
+  categories: PublicRoomCategory[];
   hosts: PublicBookingHost[];
 }
 
 export interface PublicBookingInput {
   kind: "booking" | "reservation";
   place_id: string | null;
+  /** Set instead of `place_id` when the guest chose a category of room. */
+  place_group_id?: string | null;
+  /** How many rooms of that category. Ignored without `place_group_id`. */
+  rooms?: number;
   host_party_id: string | null;
   check_in_at: string;
   check_out_at: string;
@@ -56,6 +90,8 @@ export interface PublicBookingInput {
   requester_email: string | null;
   requester_phone: string | null;
   purpose: string | null;
+  /** Free text the guest left on the form; the property reads it on the booking. */
+  notes?: string | null;
 }
 
 export interface PublicBookingCreated {
@@ -64,6 +100,9 @@ export interface PublicBookingCreated {
   kind: "booking" | "reservation";
   site_name: string;
   place_name: string | null;
+  /** What a category booking bought, when it did not name a room. */
+  room_category_name: string | null;
+  rooms: number;
   check_in_at: string;
   check_out_at: string;
   guest_count: number;

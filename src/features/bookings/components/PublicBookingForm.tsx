@@ -43,8 +43,24 @@ function defaultWindow() {
  * Nothing here confirms a booking. The visitor is told plainly that a request was
  * made, because the decision belongs to a person at the Site.
  */
-export function PublicBookingForm({ siteSlug }: { siteSlug: string }) {
-  const catalogue = usePublicSiteBooking(siteSlug);
+export function PublicBookingForm({
+  siteSlug,
+  catalogue: provided,
+}: {
+  siteSlug: string;
+  /** The entry point already read this; passing it avoids a second request. */
+  catalogue?: PublicSiteBooking;
+}) {
+  const query = usePublicSiteBooking(siteSlug);
+  const catalogue = provided
+    ? {
+        data: provided,
+        isPending: false,
+        isError: false,
+        isFetching: false,
+        refetch: query.refetch,
+      }
+    : query;
   const submit = useSubmitPublicBooking(siteSlug);
 
   const defaults = useMemo(defaultWindow, []);
