@@ -1,6 +1,12 @@
 "use client";
 
-const STEPS = ["Search", "Choose room", "Guest details", "Review"] as const;
+const STEPS = [
+  "Search",
+  "Choose room",
+  "Guest details",
+  "Review",
+  "Pay",
+] as const;
 
 /**
  * Where the guest is in the booking flow.

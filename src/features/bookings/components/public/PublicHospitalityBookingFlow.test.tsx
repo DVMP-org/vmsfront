@@ -144,7 +144,7 @@ describe("public hospitality booking", () => {
 
   it("books the category, not the room, and sends the room count", async () => {
     await reachDetails();
-    fireEvent.click(screen.getByRole("button", { name: "Request this stay" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pay and book" }));
 
     await waitFor(() => expect(submitMutate).toHaveBeenCalledTimes(1));
     const [payload] = submitMutate.mock.calls[0];
@@ -161,6 +161,14 @@ describe("public hospitality booking", () => {
     // chose dates.
     expect(payload.check_in_at).toBeTruthy();
     expect(payload.check_out_at).toBeTruthy();
+  });
+
+  it("can reserve instead, without committing to pay", async () => {
+    await reachDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Reserve — pay later" }));
+
+    await waitFor(() => expect(submitMutate).toHaveBeenCalledTimes(1));
+    expect(submitMutate.mock.calls[0][0]).toMatchObject({ kind: "reservation" });
   });
 
   it("will not proceed without a way to reach the guest", async () => {
