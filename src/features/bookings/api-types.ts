@@ -7,7 +7,12 @@
  * UI stop caring when the server adds a column.
  */
 
-import type { BookingDomain, BookingKind, BookingStatus } from "./types";
+import type {
+  BookingDomain,
+  BookingKind,
+  BookingSource,
+  BookingStatus,
+} from "./types";
 
 export interface BookingActivityDto {
   id: string;
@@ -28,6 +33,8 @@ export interface BookingDto {
   requester_email: string | null;
   requester_phone: string | null;
   status: BookingStatus;
+  /** How the booking reached the Site: public page, phone, walk-in, staff. */
+  source: BookingSource;
   check_in_at: string;
   check_out_at: string;
   guest_count: number;
@@ -63,7 +70,13 @@ export interface BookingListParams {
   page?: number;
   page_size?: number;
   status?: BookingStatus;
+  /** A reservation is a booking whose room is not named yet, so the register
+   *  shows both and this is what tells them apart. */
+  kind?: BookingKind;
+  source?: BookingSource;
   place_id?: string;
+  /** Matches the guest's name, email, phone or stated purpose, server-side. */
+  search?: string;
 }
 
 export interface RecordBookingPaymentInput {

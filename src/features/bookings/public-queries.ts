@@ -8,6 +8,7 @@ import type { ApiResponse } from "@/types";
 import type {
   PublicBookingCreated,
   PublicBookingInput,
+  PublicBookingPayment,
   PublicSiteBooking,
 } from "./public-api-types";
 
@@ -51,5 +52,26 @@ export function useSubmitPublicBooking(siteSlug: string) {
           input,
         ),
       ),
+  });
+}
+
+/**
+ * Start a gateway payment for a booking this visitor just made.
+ *
+ * No amount is sent. The server prices the booking it already holds, from the
+ * room's own rate and the nights requested, so there is no number here for a
+ * visitor to change.
+ */
+export function usePayPublicBooking(siteSlug: string) {
+  return useMutation({
+    mutationFn: async (bookingId: string) =>
+      unwrap(
+        await apiClient.post<ApiResponse<PublicBookingPayment>>(
+          `/public/sites/${siteSlug}/bookings/${bookingId}/pay`,
+          {},
+        ),
+      ),
+    // A declined card is the visitor's to retry deliberately, not ours to hammer.
+    retry: false,
   });
 }
