@@ -8,7 +8,6 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { PageHeader } from "@/components/ui/PageHeader";
 import PageLoader from "@/components/ui/PageLoader";
 
-import { HospitalityModuleNav } from "./HospitalityModuleNav";
 import type { useHospitalityAccess } from "./use-hospitality-access";
 
 type HospitalityAccess = ReturnType<typeof useHospitalityAccess>;
