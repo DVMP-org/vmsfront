@@ -1,12 +1,13 @@
 /**
  * Transport for the bookings API. No React, no caching policy — just calls.
  *
- * Every endpoint here is Site-scoped and the API client already supplies the
- * selected Site, so nothing in this file has to think about tenancy.
+ * Every method returns the API envelope, because the server wraps every
+ * successful body as `{ success, message, data }`. The hooks unwrap it once, so
+ * components never see the envelope and the message never leaks into their data.
  */
 
 import { apiClient } from "@/lib/api-client";
-import type { PaginatedResponse } from "@/types";
+import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
   BookingDetailDto,
   BookingDto,
@@ -16,43 +17,48 @@ import type {
 } from "./api-types";
 
 export const bookingsService = {
-  async list(params: BookingListParams = {}) {
-    return apiClient.get<PaginatedResponse<BookingDto>>("/admin/bookings", {
+  async list(
+    params: BookingListParams = {},
+  ): Promise<ApiResponse<PaginatedResponse<BookingDto>>> {
+    return apiClient.get("/admin/bookings", {
       params: params as Record<string, unknown>,
     });
   },
 
-  async detail(bookingId: string) {
-    return apiClient.get<BookingDetailDto>(`/admin/bookings/${bookingId}`);
+  async detail(bookingId: string): Promise<ApiResponse<BookingDetailDto>> {
+    return apiClient.get(`/admin/bookings/${bookingId}`);
   },
 
-  async approve(bookingId: string) {
-    return apiClient.post<BookingDto>(`/admin/bookings/${bookingId}/approve`);
+  async approve(bookingId: string): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/approve`);
   },
 
-  async decline(bookingId: string, reason: string) {
-    return apiClient.post<BookingDto>(`/admin/bookings/${bookingId}/decline`, {
-      reason,
+  async decline(
+    bookingId: string,
+    reason: string,
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/decline`, { reason });
+  },
+
+  async assignRoom(
+    bookingId: string,
+    placeId: string,
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/assign-room`, {
+      place_id: placeId,
     });
   },
 
-  async assignRoom(bookingId: string, placeId: string) {
-    return apiClient.post<BookingDto>(
-      `/admin/bookings/${bookingId}/assign-room`,
-      { place_id: placeId },
-    );
+  async listPayments(
+    bookingId: string,
+  ): Promise<ApiResponse<BookingPaymentDto[]>> {
+    return apiClient.get(`/admin/bookings/${bookingId}/payments`);
   },
 
-  async listPayments(bookingId: string) {
-    return apiClient.get<BookingPaymentDto[]>(
-      `/admin/bookings/${bookingId}/payments`,
-    );
-  },
-
-  async recordPayment(bookingId: string, input: RecordBookingPaymentInput) {
-    return apiClient.post<BookingPaymentDto>(
-      `/admin/bookings/${bookingId}/payments`,
-      input,
-    );
+  async recordPayment(
+    bookingId: string,
+    input: RecordBookingPaymentInput,
+  ): Promise<ApiResponse<BookingPaymentDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/payments`, input);
   },
 };
