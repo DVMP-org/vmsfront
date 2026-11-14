@@ -105,6 +105,7 @@ function extractOrgSubdomain(hostname: string): string | null {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   const { pathname } = request.nextUrl;
+  const normalizedPathname = pathname.replace(/\/+$/, "") || "/";
   // Prefer the original viewer host. Behind CloudFront the Host header can be
   // rewritten to the origin hostname, which makes every tenant request look
   // like a base-domain request and sends /organization to the apex.
@@ -123,12 +124,16 @@ export function middleware(request: NextRequest) {
 
   // Classify the path
   const isAuthPath = pathname.startsWith("/auth");
-  const isVerifyEmailPath = pathname.startsWith("/auth/verify-email");
   const isOrganizationsPath = pathname.startsWith("/organizations");
   const isDashboardPath = pathname.startsWith("/admin");
   const isWorkspacePath =
     pathname === "/workspace" || pathname.startsWith("/workspace/");
-  const isLobbyPath = pathname === "/";
+  const isLobbyPath = normalizedPathname === "/";
+  const isInternalLobbyPath =
+    normalizedPathname === "/lobby" || pathname.startsWith("/lobby/");
+  const isLandingAlias =
+    pathname === "/landing" || pathname.startsWith("/landing/");
+  const isTenantLoginPath = normalizedPathname === "/auth/login";
   const isCommunityPath =
     pathname === "/community" || pathname.startsWith("/community/");
   const isProfilePath =
@@ -147,24 +152,31 @@ export function middleware(request: NextRequest) {
   // ROUTING RULES (in order of priority)
   // ============================================================
 
-  // RULE 0: Always allow verify-email - users must be able to verify regardless of context
-  if (isVerifyEmailPath) {
-    return NextResponse.next({
+  // RULE 0: Public marketing and account creation belong to the base domain.
+  // A tenant host exposes only login; all other auth journeys run centrally.
+  if (isOnSubdomain && isLandingAlias) {
+    return NextResponse.redirect(getBaseDomainUrl("/", "", request));
+  }
+  if (isOnSubdomain && isAuthPath && !isTenantLoginPath) {
+    return NextResponse.redirect(
+      getBaseDomainUrl(pathname, request.nextUrl.search, request),
+    );
+  }
+
+  // RULE 0b: Keep the public homepage on the base domain and serve the
+  // protected workspace lobby at the tenant root without exposing /lobby.
+  if (isLobbyPath && isOnSubdomain && isAuthenticated) {
+    const lobbyUrl = new URL("/lobby", request.url);
+    return NextResponse.rewrite(lobbyUrl, {
       request: { headers: requestHeaders },
     });
   }
-
-  // RULE 0b: The workspace lobby is the organization subdomain root. On the
-  // base domain the root is an account entry point, not a tenant surface.
-  if (isLobbyPath && !isOnSubdomain) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(
-        getBaseDomainUrl("/organizations", "", request),
-      );
-    }
-    const loginUrl = getBaseDomainUrl("/auth/login", "", request);
-    loginUrl.searchParams.set("redirect_to", "/organizations");
-    return NextResponse.redirect(loginUrl);
+  if (isInternalLobbyPath) {
+    return NextResponse.redirect(
+      isOnSubdomain
+        ? new URL("/", request.url)
+        : getBaseDomainUrl("/", "", request),
+    );
   }
 
   // RULE 1: On BASE DOMAIN - block dashboard routes entirely
@@ -173,6 +185,7 @@ export function middleware(request: NextRequest) {
     !isOnSubdomain &&
     (isDashboardPath ||
       isWorkspacePath ||
+      isCommunityPath ||
       isSetupPath ||
       isOrganizationPath ||
       isProfilePath)
@@ -206,6 +219,7 @@ export function middleware(request: NextRequest) {
 
   // RULE 4: Protected paths on subdomain require authentication
   if (
+    isOnSubdomain &&
     !isAuthenticated &&
     (isDashboardPath ||
       isWorkspacePath ||
@@ -237,6 +251,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/landing/:path*",
+    "/lobby/:path*",
     "/admin",
     "/admin/:path*",
     "/workspace/:path*",

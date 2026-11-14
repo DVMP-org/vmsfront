@@ -140,6 +140,7 @@ export function PanelState({
   onRetry,
   isRetrying = false,
   compact = false,
+  retryLabel = "Retry",
 }: {
   kind: "loading" | "empty" | "error";
   title: string;
@@ -147,6 +148,7 @@ export function PanelState({
   onRetry?: () => void;
   isRetrying?: boolean;
   compact?: boolean;
+    retryLabel?: string;
 }) {
   return (
     <div
@@ -170,7 +172,7 @@ export function PanelState({
           isLoading={isRetrying}
         >
           {!isRetrying ? <RefreshCcw className="h-3.5 w-3.5" /> : null}
-          Retry
+          {retryLabel}
         </Button>
       ) : null}
     </div>

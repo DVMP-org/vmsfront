@@ -35,6 +35,7 @@ import {
 import type { WorkspaceRelationship } from "@/types";
 import { parseApiError } from "@/lib/error-utils";
 import { formatCurrency } from "@/lib/utils";
+import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
 import { titleCase, type Announcement } from "./contracts";
@@ -236,6 +237,11 @@ export default function ResidentialOverview() {
           value={maintenance.isPending ? "—" : String(openMaintenance.length)}
         />
       </section>
+
+      <AttentionQueueSection
+        useCase="residential"
+        propertyName={selectedSite?.name || "this property"}
+      />
 
       {hasLoadError ? (
         <section

@@ -90,7 +90,9 @@ describe("organization routing", () => {
     const response = middleware(request);
 
     expect(response.headers.get("location")).toBeNull();
-    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "https://harbour.vmsfront.to/lobby",
+    );
   });
 
   it("sends anonymous subdomain root visitors to login with the lobby as their destination", () => {
@@ -105,7 +107,7 @@ describe("organization routing", () => {
     expect(location.searchParams.get("redirect_to")).toBe("/");
   });
 
-  it("keeps the base-domain root in the account space", () => {
+  it("keeps the base-domain root on the public landing page", () => {
     const request = new NextRequest("https://vmsfront.to/", {
       headers: {
         host: "vmsfront.to",
@@ -114,26 +116,22 @@ describe("organization routing", () => {
     });
 
     const response = middleware(request);
-    const location = new URL(response.headers.get("location") || "");
-
-    expect(location.pathname).toBe("/organizations");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("does not leak the internal port into public https redirects", () => {
-    const request = new NextRequest("https://vmsfront.to:3000/", {
-      headers: { host: "vmsfront.to:3000" },
+  it("serves the base-domain landing page to anonymous visitors", () => {
+    const request = new NextRequest("https://vmsfront.to/", {
+      headers: { host: "vmsfront.to" },
     });
 
     const response = middleware(request);
-    const location = new URL(response.headers.get("location") || "");
 
-    expect(location.host).toBe("vmsfront.to");
-    expect(location.port).toBe("");
-    expect(location.pathname).toBe("/auth/login");
-    expect(location.searchParams.get("redirect_to")).toBe("/organizations");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("keeps localhost development on its own port", () => {
+  it("keeps localhost development on the public landing page", () => {
     const request = new NextRequest("http://localhost:3000/", {
       headers: {
         host: "localhost:3000",
@@ -142,10 +140,8 @@ describe("organization routing", () => {
     });
 
     const response = middleware(request);
-    const location = new URL(response.headers.get("location") || "");
-
-    expect(location.host).toBe("localhost:3000");
-    expect(location.pathname).toBe("/organizations");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   it("ignores a forwarded internal port on the public base domain", () => {
@@ -160,11 +156,8 @@ describe("organization routing", () => {
     });
 
     const response = middleware(request);
-    const location = new URL(response.headers.get("location") || "");
-
-    expect(location.host).toBe("vmsfront.to");
-    expect(location.port).toBe("");
-    expect(location.pathname).toBe("/organizations");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   it("redirects a tenant host to the public base domain without the proxy port", () => {
@@ -186,6 +179,57 @@ describe("organization routing", () => {
 
     expect(location.host).toBe("vmsfront.to");
     expect(location.pathname).toBe("/organizations");
+  });
+
+  it("redirects tenant registration to the base domain", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/auth/register?source=invite",
+      { headers: { host: "harbour.vmsfront.to" } },
+    );
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.origin).toBe("https://vmsfront.to");
+    expect(location.pathname).toBe("/auth/register");
+    expect(location.searchParams.get("source")).toBe("invite");
+  });
+
+  it("allows login on a tenant domain", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/auth/login",
+      { headers: { host: "harbour.vmsfront.to" } },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("allows the canonical trailing-slash login on a tenant domain", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/auth/login/",
+      { headers: { host: "harbour.vmsfront.to" } },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("redirects a tenant landing alias to the base-domain homepage", () => {
+    const request = new NextRequest(
+      "https://harbour.vmsfront.to/landing",
+      { headers: { host: "harbour.vmsfront.to" } },
+    );
+
+    const response = middleware(request);
+    const location = new URL(response.headers.get("location") || "");
+
+    expect(location.origin).toBe("https://vmsfront.to");
+    expect(location.pathname).toBe("/");
   });
 
   it("preserves the local port when authenticated auth routes leave the base domain", () => {
