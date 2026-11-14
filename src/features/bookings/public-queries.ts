@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api-client";
 import { unwrap } from "@/lib/api-envelope";
 import type { ApiResponse } from "@/types";
 import type {
+  PublicAvailability,
   PublicBookingCreated,
   PublicBookingInput,
   PublicBookingPayment,
@@ -72,6 +73,42 @@ export function usePayPublicBooking(siteSlug: string) {
         ),
       ),
     // A declined card is the visitor's to retry deliberately, not ours to hammer.
+    retry: false,
+  });
+}
+
+export const publicAvailabilityKeys = {
+  window: (siteSlug: string, checkIn: string, checkOut: string) =>
+    ["public", "availability", siteSlug, checkIn, checkOut] as const,
+};
+
+/**
+ * What is left to sell for a window, by room category.
+ *
+ * Only fetched once the guest has actually searched, because an empty window is
+ * not a question worth asking and the answer is only valid for those dates.
+ */
+export function usePublicAvailability({
+  siteSlug,
+  checkIn,
+  checkOut,
+  enabled,
+}: {
+  siteSlug: string;
+  checkIn: string;
+  checkOut: string;
+  enabled: boolean;
+}) {
+  return useQuery({
+    queryKey: publicAvailabilityKeys.window(siteSlug, checkIn, checkOut),
+    queryFn: async () =>
+      unwrap(
+        await apiClient.get<ApiResponse<PublicAvailability>>(
+          `/public/sites/${siteSlug}/availability`,
+          { params: { check_in_at: checkIn, check_out_at: checkOut } },
+        ),
+      ),
+    enabled: Boolean(siteSlug && enabled && checkIn && checkOut),
     retry: false,
   });
 }
