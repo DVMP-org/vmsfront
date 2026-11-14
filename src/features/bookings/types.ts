@@ -19,6 +19,16 @@ export type BookingStatus =
 
 export type BookingKind = "reservation" | "booking";
 
+/**
+ * How a booking reached the Site.
+ *
+ * `public` is the Site's own booking page and is the default, so a row that
+ * never says otherwise came from there. The other three are staff taking a
+ * booking on someone's behalf, which is the one fact a public form cannot
+ * produce.
+ */
+export type BookingSource = "public" | "phone" | "walk_in" | "staff";
+
 export type BookingDomain =
   | "residential"
   | "commercial"
