@@ -63,7 +63,8 @@ export const hospitalityApi = {
     create: async (body: {
       name: string;
       room_number: string;
-      room_type: string;
+      place_group_id?: string | null;
+      room_type?: string;
       floor?: string | null;
       capacity: number;
       base_rate: string;
@@ -81,6 +82,7 @@ export const hospitalityApi = {
       body: Partial<{
         name: string;
         room_number: string;
+        place_group_id: string | null;
         room_type: string;
         floor: string | null;
         capacity: number;

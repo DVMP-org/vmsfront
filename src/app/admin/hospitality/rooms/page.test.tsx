@@ -30,6 +30,19 @@ vi.mock("@/features/hospitality/api", () => ({
       update: mocks.update,
       setStatus: mocks.setStatus,
     },
+    amenities: { list: async () => [] },
+  },
+}));
+
+// The category picker reads Place groups. Left unmocked it would try a real
+// fetch, so the suite pins a fixed vocabulary instead.
+vi.mock("@/features/place-groups/api", () => ({
+  placeGroupsApi: {
+    list: async () => [
+      { id: "group-deluxe", name: "Deluxe Super", description: null, places: [] },
+    ],
+    create: async () => ({}),
+    update: async () => ({}),
   },
 }));
 
@@ -38,6 +51,8 @@ const room = {
   name: "Harbour Suite",
   room_number: "101",
   room_type: "suite",
+  place_group_id: null,
+  place_group_name: null,
   floor: "1",
   capacity: 2,
   base_rate: "180.00",
@@ -101,7 +116,7 @@ describe("hospitality room inventory", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("creates the room the operator typed, with its own price", async () => {
+  it("creates the room the operator typed, sold as the category they chose", async () => {
     // The form opened and rendered but never reached the API, so this asserts the
     // call itself rather than only that the fields are on screen.
     mocks.create.mockResolvedValue(room);
@@ -116,8 +131,8 @@ describe("hospitality room inventory", () => {
     fireEvent.change(within(dialog).getByLabelText("Room number"), {
       target: { value: "102" },
     });
-    fireEvent.change(within(dialog).getByLabelText("Room type"), {
-      target: { value: "twin" },
+    fireEvent.change(within(dialog).getByLabelText("Room category"), {
+      target: { value: "group-deluxe" },
     });
     fireEvent.change(within(dialog).getByLabelText("Nightly rate"), {
       target: { value: "95" },
@@ -130,10 +145,36 @@ describe("hospitality room inventory", () => {
       expect.objectContaining({
         name: "Harbour Twin",
         room_number: "102",
-        room_type: "twin",
+        // The category, not a retyped type string: the server derives
+        // `room_type` from it so the two cannot disagree.
+        place_group_id: "group-deluxe",
         base_rate: "95.00",
         currency: "USD",
       }),
+    );
+  });
+
+  it("does not demand a category before a room can be entered", async () => {
+    // A room can exist before anyone decides what to sell it as, and the floor
+    // is optional because plenty of properties have only one.
+    mocks.create.mockResolvedValue(room);
+    mount();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add room" }));
+    const dialog = await screen.findByRole("dialog");
+
+    fireEvent.change(within(dialog).getByLabelText("Room name"), {
+      target: { value: "Store room" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Room number"), {
+      target: { value: "B1" },
+    });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add room" }));
+
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ place_group_id: null, floor: null }),
     );
   });
 });

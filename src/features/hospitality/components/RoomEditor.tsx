@@ -10,7 +10,7 @@ import { SlideOver } from "@/components/ui/SlideOver";
 import { formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import { hospitalityApi } from "../api";
-import { useHospitalityAmenities } from "../queries";
+import { useHospitalityAmenities, useRoomCategories } from "../queries";
 import type { HospitalityRoom, RoomOperationalStatus } from "../contracts";
 
 const roomStatusOptions: Array<{ value: RoomOperationalStatus; label: string }> =
@@ -27,7 +27,7 @@ const CURRENCIES = ["USD", "EUR", "GBP", "NGN", "KES", "ZAR", "AED"];
 const emptyRoom = {
   name: "",
   room_number: "",
-  room_type: "",
+  place_group_id: "",
   floor: "",
   capacity: "2",
   base_rate: "",
@@ -69,7 +69,7 @@ export function RoomEditor({
 type RoomValues = {
   name: string;
   room_number: string;
-  room_type: string;
+  place_group_id: string;
   floor: string;
   capacity: string;
   base_rate: string;
@@ -83,7 +83,7 @@ type RoomValues = {
       ? {
           name: room.name,
           room_number: room.room_number,
-          room_type: room.room_type,
+          place_group_id: room.place_group_id ?? "",
           floor: room.floor || "",
           capacity: String(room.capacity),
           base_rate: room.base_rate,
@@ -98,6 +98,7 @@ type RoomValues = {
         },
   );
   const amenities = useHospitalityAmenities();
+  const categories = useRoomCategories(open);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -106,7 +107,6 @@ type RoomValues = {
       if (!values.name.trim() || !values.room_number.trim()) {
         throw new Error("Room name and room number are required.");
       }
-      if (!values.room_type.trim()) throw new Error("Room type is required.");
       if (!Number.isInteger(capacity) || capacity < 1) {
         throw new Error("Capacity must be a whole number of at least 1.");
       }
@@ -119,7 +119,7 @@ type RoomValues = {
       const body = {
         name: values.name.trim(),
         room_number: values.room_number.trim(),
-        room_type: values.room_type.trim(),
+        place_group_id: values.place_group_id || null,
         floor: values.floor.trim() || null,
         capacity,
         base_rate: baseRate.toFixed(2),
@@ -207,18 +207,33 @@ type RoomValues = {
               value={values.room_number}
               onChange={onField}
             />
-            <Input
-              label="Room type"
-              name="room_type"
-              required
-              placeholder="Suite, king, twin…"
-              description="The category guests are sold before a room is assigned."
-              value={values.room_type}
-              onChange={onField}
-            />
+            <div className="space-y-1.5 text-sm font-medium">
+              <label htmlFor="room-category" className="block">
+                Room category
+              </label>
+              <select
+                id="room-category"
+                name="place_group_id"
+                className="h-[var(--vms-control-height)] w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base sm:text-sm"
+                value={values.place_group_id}
+                onChange={onField}
+              >
+                <option value="">Not categorised</option>
+                {(categories.data ?? []).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <span className="block text-xs font-normal text-[var(--vms-ink-muted)]">
+                What guests book. Manage the list on Room categories.
+              </span>
+            </div>
             <Input
               label="Floor"
               name="floor"
+              placeholder="Optional"
+              description="Leave blank for a single-storey property."
               value={values.floor}
               onChange={onField}
             />
@@ -267,7 +282,7 @@ type RoomValues = {
               type="number"
               min={0}
               step="0.01"
-              required
+              placeholder="Optional"
               value={values.base_rate}
               onChange={onField}
             />
