@@ -117,6 +117,7 @@ export default function HospitalityRoomsPage() {
       header: "Type",
       sortable: true,
       accessor: (room) => (
+        // show room category here instead of room_type
         <div>
           <span className="block capitalize">{room.room_type}</span>
           <span className="text-xs text-[var(--vms-ink-muted)]">

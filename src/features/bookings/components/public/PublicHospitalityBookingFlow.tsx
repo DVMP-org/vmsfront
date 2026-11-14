@@ -123,13 +123,16 @@ export function PublicHospitalityBookingFlow({
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold text-[var(--vms-ink)]">
-          Book a stay at {site.site_name}
-        </h1>
-        <p className="text-sm text-[var(--vms-ink-muted)]">
-          Choose your dates, then the type of room. We assign the room itself.
-        </p>
+      <header className="flex flex-col gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold text-[var(--vms-ink)]">
+            Find your perfect stay
+          </h1>
+          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+            Rooms and suites at {site.site_name}. Choose your dates, then the type
+            of room — we assign the room itself.
+          </p>
+        </div>
         <PublicBookingSteps current={step} />
       </header>
 
