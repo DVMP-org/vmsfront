@@ -3,9 +3,11 @@
 import { useState } from "react";
 
 import { DetailPanel } from "@/components/ui/DetailPanel";
+import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { BookingCreateForm } from "./BookingCreateForm";
 import { BookingDetailPanel } from "./BookingDetailPanel";
 import { BookingRegisterRow } from "./BookingRegisterRow";
 import type { BookingStatus } from "../types";
@@ -30,6 +32,7 @@ const STATUS_FILTERS: Array<{ value: BookingStatus | "all"; label: string }> = [
 export function BookingsRegister() {
   const [status, setStatus] = useState<BookingStatus | "all">("requested");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const isWide = useMediaQuery("(min-width: 1280px)", true);
 
   const list = useBookings(
@@ -44,10 +47,24 @@ export function BookingsRegister() {
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <header className="flex flex-col gap-2">
-          <h1 className="text-lg font-semibold text-[var(--vms-ink)]">Bookings</h1>
-          <p className="text-xs text-[var(--vms-ink-muted)]">
-            Every booking at this Site, with who asked and what was decided.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-lg font-semibold text-[var(--vms-ink)]">
+                Bookings
+              </h1>
+              <p className="text-xs text-[var(--vms-ink-muted)]">
+                Every booking at this Site, with who asked and what was decided.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setCreating(true)}
+            >
+              New booking
+            </Button>
+          </div>
         </header>
 
         <div
@@ -156,6 +173,15 @@ export function BookingsRegister() {
           {detail.data ? <BookingDetailPanel booking={detail.data} /> : null}
         </Drawer>
       )}
+
+      <Drawer
+        isOpen={creating}
+        onClose={() => setCreating(false)}
+        title="New booking"
+        description="Taken on a call, or at the desk"
+      >
+        <BookingCreateForm onCreated={() => setCreating(false)} />
+      </Drawer>
     </div>
   );
 }

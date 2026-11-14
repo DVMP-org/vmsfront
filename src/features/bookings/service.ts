@@ -9,6 +9,7 @@
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
+  AdminBookingCreateInput,
   BookingDetailDto,
   BookingDto,
   BookingListParams,
@@ -17,6 +18,12 @@ import type {
 } from "./api-types";
 
 export const bookingsService = {
+  async create(
+    input: AdminBookingCreateInput,
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post("/admin/bookings", input);
+  },
+
   async list(
     params: BookingListParams = {},
   ): Promise<ApiResponse<PaginatedResponse<BookingDto>>> {

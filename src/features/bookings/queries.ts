@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { unwrap } from "@/lib/api-envelope";
 import { bookingsService } from "./service";
 import type {
+  AdminBookingCreateInput,
   BookingListParams,
   RecordBookingPaymentInput,
 } from "./api-types";
@@ -88,4 +89,16 @@ export function useRecordBookingPayment(bookingId: string) {
     async (input: RecordBookingPaymentInput) =>
       unwrap(await bookingsService.recordPayment(bookingId, input)),
   );
+}
+
+/** Taking a booking puts a new row in the register, so the register refreshes. */
+export function useCreateBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AdminBookingCreateInput) =>
+      unwrap(await bookingsService.create(input)),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+  });
 }
