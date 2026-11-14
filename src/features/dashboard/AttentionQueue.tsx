@@ -23,6 +23,8 @@ const CODE_COPY: Record<string, string> = {
   "access.awaiting_approval": "Invitation awaiting approval",
   "billing.charge_overdue": "Charge past due",
   "maintenance.past_due": "Maintenance past due",
+  "maintenance.sla_response_breached": "Maintenance not picked up in time",
+  "maintenance.sla_resolution_breached": "Maintenance past its resolution target",
   "lease.expiring": "Lease ending soon",
 };
 
