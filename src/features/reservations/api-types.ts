@@ -45,9 +45,14 @@ export interface ReservationListParams {
   status?: ReservationStatus;
   place_id?: string;
   place_type?: string;
-  /** Matches anything *overlapping* the window, not only what starts inside it. */
-  starts_after?: string;
-  ends_before?: string;
+  /**
+   * An **overlap** filter on the allocation interval, not a creation-date filter.
+   * Anything whose period intersects the window is returned, including an
+   * allocation that started before it. Half-open, so a check-out morning does
+   * not collide with the same day's check-in.
+   */
+  overlaps_from?: string;
+  overlaps_to?: string;
 }
 
 export interface ReservationReleaseInput {

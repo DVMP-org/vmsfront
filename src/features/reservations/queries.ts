@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { unwrap } from "@/lib/api-envelope";
 import { reservationsService } from "./service";
 import type {
+  ReservationDto,
   ReservationListParams,
   ReservationReleaseInput,
 } from "./api-types";
@@ -22,10 +23,33 @@ export const reservationKeys = {
     ["reservations", "list", params] as const,
 };
 
+/**
+ * How long until this page's answer goes stale.
+ *
+ * `is_holding` is a snapshot, and it changes without anyone touching the row: a
+ * hold simply runs out. Leaving the board open would then show a lapsed hold as
+ * still claiming a room until something else caused a refetch — the page would
+ * become wrong by standing still.
+ *
+ * So the query wakes just after the soonest expiry it knows about, and never
+ * waits longer than a minute in case a row it has not seen yet expires sooner.
+ */
+function refetchAfterNextExpiry(items: ReservationDto[]): number | false {
+  const now = Date.now();
+  const pending = items
+    .filter((row) => row.status === "held" && row.expires_at)
+    .map((row) => new Date(row.expires_at as string).getTime() - now)
+    .filter((ms) => ms > 0);
+  if (pending.length === 0) return false;
+  return Math.min(Math.min(...pending) + 1_000, 60_000);
+}
+
 export function useReservations(params: ReservationListParams = {}) {
   return useQuery({
     queryKey: reservationKeys.list(params),
     queryFn: async () => unwrap(await reservationsService.list(params)),
+    refetchInterval: (query) =>
+      refetchAfterNextExpiry(query.state.data?.items ?? []),
   });
 }
 

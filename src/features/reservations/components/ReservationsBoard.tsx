@@ -62,13 +62,15 @@ export function ReservationsBoard() {
       ...(status ? { status: status as ReservationListParams["status"] } : {}),
       ...(placeId ? { place_id: placeId } : {}),
       // A date input is a day; the window it means starts at the beginning of
-      // that day and ends at the beginning of the next.
+      // that day and ends at the beginning of the next. These are overlap
+      // filters on the allocation interval, so an allocation that began before
+      // the window still appears.
       ...(fromDate
-        ? { starts_after: new Date(`${fromDate}T00:00:00`).toISOString() }
+        ? { overlaps_from: new Date(`${fromDate}T00:00:00`).toISOString() }
         : {}),
       ...(toDate
         ? {
-            ends_before: new Date(
+            overlaps_to: new Date(
               new Date(`${toDate}T00:00:00`).getTime() + 86_400_000,
             ).toISOString(),
           }
