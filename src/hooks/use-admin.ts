@@ -581,6 +581,17 @@ export function useAdminDashboard() {
   });
 }
 
+export function useOperationsAttention(limit = 5) {
+  return useQuery({
+    queryKey: ["admin", "operations-attention", limit],
+    queryFn: async () => {
+      const response = await adminService.getOperationsAttention(limit);
+      return response.data;
+    },
+    refetchInterval: 60 * 1000,
+  });
+}
+
 export function useAdminAnalyticsSummary() {
   return useQuery({
     queryKey: ["admin", "analytics-summary"],

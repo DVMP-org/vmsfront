@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import {
-  ArrowRight,
   Building2,
   CalendarDays,
-  CheckCircle2,
   Clock3,
   DoorOpen,
   ListChecks,
@@ -17,8 +15,14 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import type { AdminDashboard, AnalyticsSummary } from "@/types";
+import { formatDateTime } from "@/lib/datetime";
+import type {
+  AdminDashboard,
+  AnalyticsSummary,
+  OperationsAttention,
+} from "@/types";
 import { AccessTrendPanel, type DashboardRange } from "./AccessTrendPanel";
+import { AttentionQueue } from "./AttentionQueue";
 import {
   MetricStrip,
   PanelState,
@@ -26,31 +30,6 @@ import {
   SeeAllLink,
   StaleDataBanner,
 } from "./DashboardPrimitives";
-
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : dateTimeFormatter.format(date);
-}
-
-function relativeTime(value: string) {
-  const timestamp = new Date(value).getTime();
-  if (!Number.isFinite(timestamp)) return "just now";
-  const seconds = Math.round((timestamp - Date.now()) / 1000);
-  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-  if (Math.abs(seconds) < 60) return formatter.format(seconds, "second");
-  const minutes = Math.round(seconds / 60);
-  if (Math.abs(minutes) < 60) return formatter.format(minutes, "minute");
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) return formatter.format(hours, "hour");
-  return formatter.format(Math.round(hours / 24), "day");
-}
 
 function movementLabel(direction: string) {
   if (direction === "entry") return "Entry";
@@ -75,6 +54,11 @@ export function OperationsDashboard({
   analyticsPending,
   analyticsError,
   analyticsFetching,
+  attention,
+  attentionPending,
+  attentionError,
+  attentionFetching,
+  onRetryAttention,
   range,
   onRangeChange,
   onRetryAnalytics,
@@ -92,6 +76,11 @@ export function OperationsDashboard({
   analyticsPending: boolean;
   analyticsError: boolean;
   analyticsFetching: boolean;
+  attention?: OperationsAttention;
+  attentionPending: boolean;
+  attentionError: boolean;
+  attentionFetching: boolean;
+  onRetryAttention: () => void;
   range: DashboardRange;
   onRangeChange: (range: DashboardRange) => void;
   onRetryAnalytics: () => void;
@@ -105,9 +94,6 @@ export function OperationsDashboard({
   setupPanel?: React.ReactNode;
 }) {
   const metrics = data.metrics;
-  const pendingApprovals = data.recent_visit_authorizations.filter(
-    (item) => item.status === "requested",
-  );
   const activeProperties = data.root_places.filter((place) => place.is_active);
 
   return (
@@ -270,55 +256,15 @@ export function OperationsDashboard({
           onRetry={onRetryAnalytics}
         />
 
-        <ReportPanel
-          title="Attention required"
-          description="Approvals that can block access if left unresolved."
-          action={<SeeAllLink href="/admin/invitations">Review all</SeeAllLink>}
-          className="xl:row-span-2"
-        >
-          {pendingApprovals.length ? (
-            <ol className="divide-y divide-[var(--vms-line)]">
-              {pendingApprovals.slice(0, 5).map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={`/admin/invitations?highlight=${encodeURIComponent(item.id)}`}
-                    className="group grid min-h-20 gap-2 px-4 py-4 transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] sm:px-5"
-                  >
-                    <span className="flex items-start gap-3">
-                      <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]">
-                        <ShieldAlert className="h-4 w-4" aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <strong className="block text-sm font-semibold leading-5">
-                          {item.purpose || "Visitor approval requested"}
-                        </strong>
-                        <span className="mt-1 block text-xs leading-5 text-[var(--vms-ink-muted)]">
-                          {item.host_party?.display_name || "Host not recorded"}{" "}
-                          · {item.destination_place?.name || propertyName}
-                        </span>
-                        <span className="mt-1 block text-[11px] text-[var(--vms-ink-muted)]">
-                          Requested {relativeTime(item.valid_from)}
-                        </span>
-                      </span>
-                      <ArrowRight
-                        className="mt-2 h-4 w-4 shrink-0 text-[var(--vms-ink-muted)] transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                        aria-hidden
-                      />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="flex min-h-40 items-center gap-3 px-5 py-6 text-sm text-[var(--vms-ink-muted)]">
-              <CheckCircle2
-                className="h-5 w-5 shrink-0 text-[var(--vms-success)]"
-                aria-hidden
-              />
-              No approvals need attention.
-            </div>
-          )}
-        </ReportPanel>
+        <AttentionQueue
+          queue={attention}
+          useCase={useCase}
+          propertyName={propertyName}
+          isLoading={attentionPending}
+          isError={attentionError}
+          isRetrying={attentionFetching}
+          onRetry={onRetryAttention}
+        />
 
         <ReportPanel
           title="Place scope"

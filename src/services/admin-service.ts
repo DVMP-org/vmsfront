@@ -25,6 +25,7 @@ import {
     User,
     ImportResponse,
     AdminProfileUpdatePayload,
+    OperationsAttention,
     ForumCategory,
     ForumCategoryPayload,
     ForumCategoryUpdatePayload,
@@ -56,6 +57,13 @@ export const adminService = {
     // Dashboard
     async getDashboard(): Promise<ApiResponse<AdminDashboard>> {
         return apiClient.get("/admin/dashboard");
+    },
+
+    async getOperationsAttention(
+        limit?: number,
+    ): Promise<ApiResponse<OperationsAttention>> {
+        const query = limit ? `?limit=${limit}` : "";
+        return apiClient.get(`/admin/operations/attention${query}`);
     },
 
     async getAnalyticsSummary(): Promise<ApiResponse<AnalyticsSummary>> {

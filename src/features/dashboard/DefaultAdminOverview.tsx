@@ -12,7 +12,11 @@ import {
 } from "@/features/dashboard/DashboardPrimitives";
 import { OperationsDashboard } from "@/features/dashboard/OperationsDashboard";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import { useAdminAnalyticsSummary, useAdminDashboard } from "@/hooks/use-admin";
+import {
+  useAdminAnalyticsSummary,
+  useAdminDashboard,
+  useOperationsAttention,
+} from "@/hooks/use-admin";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import type { AdminDashboard } from "@/types";
@@ -33,6 +37,7 @@ export default function DefaultAdminOverview() {
   const router = useRouter();
   const dashboard = useAdminDashboard();
   const analytics = useAdminAnalyticsSummary();
+  const attention = useOperationsAttention();
   const context = useWorkspaceContext();
   const organization = useAppStore((state) => state.organization);
   const selectedSite = useAppStore((state) => state.selectedSite);
@@ -108,6 +113,11 @@ export default function DefaultAdminOverview() {
       analyticsPending={analytics.isPending}
       analyticsError={analytics.isError}
       analyticsFetching={analytics.isFetching}
+      attention={attention.data}
+      attentionPending={attention.isPending}
+      attentionError={attention.isError}
+      attentionFetching={attention.isFetching}
+      onRetryAttention={() => attention.refetch()}
       range={range}
       onRangeChange={handleRangeChange}
       onRetryAnalytics={() => analytics.refetch()}
