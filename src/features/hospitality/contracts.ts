@@ -34,6 +34,8 @@ export interface HospitalityRoom {
   capacity: number;
   base_rate: string;
   currency: string;
+  /** Catalogue codes; the vocabulary lives on the server. */
+  amenities: string[];
   status: RoomOperationalStatus;
   housekeeping_status: HousekeepingStatus;
   current_stay_id: string | null;

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -99,5 +99,41 @@ describe("hospitality room inventory", () => {
     expect(
       screen.getAllByRole("button", { name: "Retry" }).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("creates the room the operator typed, with its own price", async () => {
+    // The form opened and rendered but never reached the API, so this asserts the
+    // call itself rather than only that the fields are on screen.
+    mocks.create.mockResolvedValue(room);
+    mount();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add room" }));
+    const dialog = await screen.findByRole("dialog");
+
+    fireEvent.change(within(dialog).getByLabelText("Room name"), {
+      target: { value: "Harbour Twin" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Room number"), {
+      target: { value: "102" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Room type"), {
+      target: { value: "twin" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Nightly rate"), {
+      target: { value: "95" },
+    });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add room" }));
+
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Harbour Twin",
+        room_number: "102",
+        room_type: "twin",
+        base_rate: "95.00",
+        currency: "USD",
+      }),
+    );
   });
 });
