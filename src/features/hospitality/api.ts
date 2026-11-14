@@ -12,6 +12,15 @@ import {
 } from "./contracts";
 const base = "/admin/hospitality/stays";
 const moduleBase = "/admin/hospitality";
+
+/** One entry in the amenity vocabulary the server accepts. */
+export interface AmenityOption {
+  code: string;
+  label: string;
+  group: string;
+  group_label: string;
+}
+
 export const hospitalityApi = {
   list: async (page: number, status: string) =>
     (
@@ -28,6 +37,21 @@ export const hospitalityApi = {
   action: async (id: string, action: string, body?: unknown) =>
     (await apiClient.post<ApiResponse<Stay>>(`${base}/${id}/${action}`, body))
       .data,
+  /**
+   * The vocabulary a room's amenities are chosen from.
+   *
+   * Fetched rather than hard-coded, because the server validates writes against
+   * exactly this list — a picker with its own copy would eventually offer
+   * something the server refuses.
+   */
+  amenities: {
+    list: async () =>
+      (
+        await apiClient.get<ApiResponse<AmenityOption[]>>(
+          `${moduleBase}/amenities`,
+        )
+      ).data,
+  },
   rooms: {
     list: async (params?: { search?: string; status?: string }) =>
       (
@@ -44,6 +68,7 @@ export const hospitalityApi = {
       capacity: number;
       base_rate: string;
       currency: string;
+      amenities?: string[];
     }) =>
       (
         await apiClient.post<ApiResponse<HospitalityRoom>>(
@@ -62,6 +87,7 @@ export const hospitalityApi = {
         base_rate: string;
         currency: string;
         status: RoomOperationalStatus;
+        amenities: string[];
       }>,
     ) =>
       (
