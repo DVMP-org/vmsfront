@@ -20,11 +20,23 @@
           "module": "hospitality"
         },
         {
+          "label": "Bookings",
+          "href": "/admin/bookings",
+          "icon": "document",
+          "module": "reservations"
+        },
+        {
           "label": "Reservations & stays",
           "href": "/admin/hospitality/calendar",
           "icon": "calendar",
           "module": "reservations"
-        },
+        }
+      ]
+    },
+    {
+      "id": "rooms",
+      "label": "Room operations",
+      "items": [
         {
           "label": "Rooms",
           "href": "/admin/hospitality/rooms",
@@ -44,13 +56,7 @@
               "module": "properties"
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "rooms",
-      "label": "Room operations",
-      "items": [
+        },
         {
           "label": "Housekeeping",
           "href": "/admin/hospitality/housekeeping",

@@ -19,7 +19,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
-import { HospitalityModuleNav } from "@/features/hospitality/HospitalityModuleNav";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import {
