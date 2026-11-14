@@ -118,6 +118,12 @@
           "module": "check_in_out"
         },
         {
+          "label": "Visitors",
+          "href": "/admin/commercial/visitors",
+          "icon": "shield",
+          "module": "access_control"
+        },
+        {
           "label": "Movement log",
           "href": "/admin/passages",
           "icon": "history",
