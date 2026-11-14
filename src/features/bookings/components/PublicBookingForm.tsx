@@ -6,9 +6,11 @@ import { CalendarClock, CheckCircle2, Home, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
+import { formatMoney } from "@/lib/currency";
 import { formatDateRange } from "@/lib/datetime";
 import { canReserve } from "../public-api-types";
 import type { PublicSiteBooking } from "../public-api-types";
+import { PublicBookingPayment } from "./PublicBookingPayment";
 import {
   usePublicSiteBooking,
   useSubmitPublicBooking,
@@ -100,6 +102,7 @@ export function PublicBookingForm({ siteSlug }: { siteSlug: string }) {
           {formatDateRange(created.check_in_at, created.check_out_at)} ·{" "}
           {created.guest_count} {created.guest_count === 1 ? "guest" : "guests"}
         </p>
+        <PublicBookingPayment siteSlug={siteSlug} booking={created} />
       </section>
     );
   }
@@ -159,7 +162,11 @@ export function PublicBookingForm({ siteSlug }: { siteSlug: string }) {
               <option value="">Choose a place…</option>
               {site.places.map((place) => (
                 <option key={place.id} value={place.id}>
-                  {place.name}
+                  {/* A guest choosing a room should see what it costs before
+                      picking, not after submitting. */}
+                  {place.nightly_rate && place.currency
+                    ? `${place.name} — ${formatMoney(place.nightly_rate, place.currency)} a night`
+                    : place.name}
                 </option>
               ))}
             </select>
