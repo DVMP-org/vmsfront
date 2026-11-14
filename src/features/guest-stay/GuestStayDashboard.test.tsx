@@ -8,6 +8,7 @@ vi.mock("./api", () => ({
   guestStayApi: {
     list: vi.fn(),
     get: vi.fn(),
+    folio: vi.fn(),
   },
 }));
 
@@ -56,6 +57,17 @@ beforeEach(() => {
     page_size: 20,
     total_pages: 1,
   });
+  vi.mocked(guestStayApi.folio).mockResolvedValue({
+    id: "folio",
+    stay_id: "stay",
+    guest_name: "Ada Guest",
+    status: "open",
+    currency: "USD",
+    total: "135.50",
+    paid: "100.00",
+    balance: "35.50",
+    lines: [],
+  });
 });
 
 it("shows the guest stay, arrival state and assigned room", async () => {
@@ -83,4 +95,50 @@ it("shows a guest-specific empty state", async () => {
   mount();
 
   expect(await screen.findByText("No stay assigned")).toBeInTheDocument();
+});
+
+it("shows what the stay costs and what is still owed", async () => {
+  vi.mocked(guestStayApi.folio).mockResolvedValue({
+    id: "folio",
+    stay_id: "stay",
+    guest_name: "Ada Guest",
+    status: "open",
+    currency: "USD",
+    total: "135.50",
+    paid: "100.00",
+    balance: "35.50",
+    lines: [
+      {
+        id: "line-room",
+        description: "Room charge",
+        category: "room",
+        amount: "120.00",
+        currency: "USD",
+        created_at: "2027-04-05T15:00:00Z",
+      },
+      {
+        id: "line-payment",
+        description: "Payment taken with the booking",
+        category: "payment",
+        amount: "100.00",
+        currency: "USD",
+        created_at: "2027-04-05T14:00:00Z",
+      },
+    ],
+  });
+  mount();
+
+  expect(await screen.findByText("Your bill")).toBeInTheDocument();
+  expect(screen.getByText("Room charge")).toBeInTheDocument();
+  expect(screen.getByText("Payment taken with the booking")).toBeInTheDocument();
+  expect(screen.getByText("Balance")).toBeInTheDocument();
+  expect(screen.getByText("Open")).toBeInTheDocument();
+});
+
+it("says plainly when nothing has been charged yet", async () => {
+  mount();
+
+  expect(
+    await screen.findByText("Nothing has been charged to this stay yet."),
+  ).toBeInTheDocument();
 });
