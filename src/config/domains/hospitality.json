@@ -56,8 +56,8 @@
               "module": "properties"
             },
             {
-              "label": "Room Groups",
-              "href": "/admin/place-groups",
+              "label": "Room categories",
+              "href": "/admin/hospitality/room-categories",
               "icon": "layers",
               "module": "properties"
             }

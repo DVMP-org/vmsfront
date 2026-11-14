@@ -17,6 +17,12 @@ export interface AssignableRoom {
   name: string;
   room_number: string | null;
   status: string;
+  /**
+   * The Place group the room is sold as. A picker does not need it, but the
+   * categories page totals rooms per category from this same list rather than
+   * asking the server for a count that would then have to be kept in step.
+   */
+  place_group_id: string | null;
 }
 
 export const hospitalityService = {

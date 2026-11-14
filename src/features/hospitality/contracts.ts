@@ -30,6 +30,9 @@ export interface HospitalityRoom {
   name: string;
   room_number: string;
   room_type: string;
+  /** The Place group this room is sold as, when one has been chosen. */
+  place_group_id: string | null;
+  place_group_name: string | null;
   floor: string | null;
   capacity: number;
   base_rate: string;

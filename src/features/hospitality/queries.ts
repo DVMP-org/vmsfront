@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { unwrap } from "@/lib/api-envelope";
+import { placeGroupsApi } from "@/features/place-groups/api";
 import { hospitalityApi } from "./api";
 import { hospitalityService } from "./service";
 
@@ -34,5 +35,26 @@ export function useHospitalityAmenities() {
     queryKey: hospitalityAmenityKeys.all,
     queryFn: () => hospitalityApi.amenities.list(),
     staleTime: Infinity,
+  });
+}
+
+export const roomCategoryKeys = {
+  all: ["hospitality", "room-categories"] as const,
+};
+
+/**
+ * The Site's Place groups, presented as room categories.
+ *
+ * A category *is* a Place group — the generic grouping the Site already has —
+ * so this reuses that transport rather than inventing a second endpoint that
+ * would drift from it. `staleTime` is short because the room form reads this to
+ * populate its picker, and a category created a moment ago has to appear.
+ */
+export function useRoomCategories(enabled = true) {
+  return useQuery({
+    queryKey: roomCategoryKeys.all,
+    queryFn: () => placeGroupsApi.list(),
+    enabled,
+    staleTime: 30_000,
   });
 }
