@@ -16,6 +16,7 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HospitalityModuleNav } from "@/features/hospitality/HospitalityModuleNav";
@@ -249,8 +250,12 @@ function HospitalityWorkspace({
           ) : null
         }
       />
-      <div className="mt-4">
-        <HospitalityModuleNav />
+
+      <div className="mt-4 mb-2">
+        <AttentionQueueSection
+          useCase="hospitality"
+          propertyName={propertyName || "this property"}
+        />
       </div>
       {notice && (
         <p role="status" className="stay-notice">

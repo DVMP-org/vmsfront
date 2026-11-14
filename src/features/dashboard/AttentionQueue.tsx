@@ -213,6 +213,7 @@ export function AttentionQueue({
           description="Nothing has been changed. Retry to read the current exceptions."
           onRetry={onRetry}
           isRetrying={isRetrying}
+            retryLabel="Retry work queue"
           compact
         />
       ) : !queue || queue.total === 0 ? (

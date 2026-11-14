@@ -19,6 +19,7 @@ import { format } from "date-fns/format";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { parseApiError } from "@/lib/error-utils";
 
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
@@ -217,6 +218,11 @@ export default function CommercialOverview() {
           attention={overdueWorkOrders.length > 0}
         />
       </section>
+
+      <AttentionQueueSection
+        useCase="commercial"
+        propertyName={selectedSite?.name || "this property"}
+      />
 
       {errors.length ? (
         <section

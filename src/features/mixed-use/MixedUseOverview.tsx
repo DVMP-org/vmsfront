@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
+import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import {
   placesApi,
   type PlaceTreeNode,
@@ -132,6 +133,11 @@ export function MixedUseOverview() {
           </p>
         </article>
       </section>
+
+      <AttentionQueueSection
+        useCase="mixed_use"
+        propertyName={selectedSite?.name || "this property"}
+      />
 
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <header className="border-b border-[var(--vms-line)] p-5">
