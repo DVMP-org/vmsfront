@@ -6,6 +6,8 @@
  * function rather than four inline `new Date` calls.
  */
 
+import { formatMoney } from "@/lib/currency";
+
 /** Check-in from 15:00, check-out by 11:00 — the times a hotel actually runs on. */
 const CHECK_IN_HOUR = 15;
 const CHECK_OUT_HOUR = 11;
@@ -98,4 +100,22 @@ export function canBookCategory(category: {
   nightly_rate: string | null;
 }): boolean {
   return category.rooms_available > 0 && category.nightly_rate !== null;
+}
+
+/**
+ * How a place is named in a list or a searchable select.
+ *
+ * The rate is included when there is one, because a visitor choosing between
+ * places should see what each costs before picking rather than after submitting.
+ * When there is no rate the name stands alone — zero is a price, absence is not.
+ */
+export function placeLabel(place: {
+  name: string;
+  nightly_rate: string | null;
+  currency: string | null;
+}): string {
+  if (place.nightly_rate && place.currency) {
+    return `${place.name} — ${formatMoney(place.nightly_rate, place.currency)} a night`;
+  }
+  return place.name;
 }
