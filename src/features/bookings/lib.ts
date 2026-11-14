@@ -7,7 +7,8 @@
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
 import { humanize } from "@/lib/strings";
-import type { BookingStatus } from "./types";
+import type { BookingDto } from "./api-types";
+import type { BookingStatus, BookingSummary } from "./types";
 
 const toneByStatus: Record<BookingStatus, StatusTone> = {
   pending_payment: "warning",
@@ -46,4 +47,32 @@ export function formatBookingWindow(from: string, to: string): string {
     return "—";
   }
   return `${windowFormatter.format(start)} – ${windowFormatter.format(end)}`;
+}
+
+/**
+ * Fold a server booking into the presentational summary the register renders.
+ *
+ * The server exposes ids, not names, for the place and the host. Until the
+ * bookings API joins them, a booking with no place yet — a hospitality
+ * reservation — says so rather than showing a blank cell that reads as missing
+ * data.
+ */
+export function toBookingSummary(booking: BookingDto): BookingSummary {
+  return {
+    id: booking.id,
+    kind: booking.kind,
+    domain: booking.domain,
+    status: booking.status,
+    placeName: booking.place_id ? "Assigned place" : "No place yet",
+    hostName: null,
+    requester: {
+      name: booking.requester_name,
+      email: booking.requester_email,
+      phone: booking.requester_phone,
+    },
+    checkInAt: booking.check_in_at,
+    checkOutAt: booking.check_out_at,
+    guestCount: booking.guest_count,
+    purpose: booking.purpose,
+  };
 }

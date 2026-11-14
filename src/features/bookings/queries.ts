@@ -9,6 +9,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { unwrap } from "@/lib/api-envelope";
 import { bookingsService } from "./service";
 import type {
   BookingListParams,
@@ -27,14 +28,15 @@ export const bookingKeys = {
 export function useBookings(params: BookingListParams = {}) {
   return useQuery({
     queryKey: bookingKeys.list(params),
-    queryFn: () => bookingsService.list(params),
+    queryFn: async () => unwrap(await bookingsService.list(params)),
   });
 }
 
 export function useBooking(bookingId: string | null) {
   return useQuery({
     queryKey: bookingKeys.detail(bookingId),
-    queryFn: () => bookingsService.detail(bookingId as string),
+    queryFn: async () =>
+      unwrap(await bookingsService.detail(bookingId as string)),
     enabled: Boolean(bookingId),
   });
 }
@@ -42,7 +44,8 @@ export function useBooking(bookingId: string | null) {
 export function useBookingPayments(bookingId: string | null) {
   return useQuery({
     queryKey: bookingKeys.payments(bookingId),
-    queryFn: () => bookingsService.listPayments(bookingId as string),
+    queryFn: async () =>
+      unwrap(await bookingsService.listPayments(bookingId as string)),
     enabled: Boolean(bookingId),
   });
 }
@@ -62,25 +65,27 @@ function useDecisionMutation<TArgs>(
 }
 
 export function useApproveBooking(bookingId: string) {
-  return useDecisionMutation(bookingId, () =>
-    bookingsService.approve(bookingId),
+  return useDecisionMutation(bookingId, async () =>
+    unwrap(await bookingsService.approve(bookingId)),
   );
 }
 
 export function useDeclineBooking(bookingId: string) {
-  return useDecisionMutation(bookingId, (reason: string) =>
-    bookingsService.decline(bookingId, reason),
+  return useDecisionMutation(bookingId, async (reason: string) =>
+    unwrap(await bookingsService.decline(bookingId, reason)),
   );
 }
 
 export function useAssignBookingRoom(bookingId: string) {
-  return useDecisionMutation(bookingId, (placeId: string) =>
-    bookingsService.assignRoom(bookingId, placeId),
+  return useDecisionMutation(bookingId, async (placeId: string) =>
+    unwrap(await bookingsService.assignRoom(bookingId, placeId)),
   );
 }
 
 export function useRecordBookingPayment(bookingId: string) {
-  return useDecisionMutation(bookingId, (input: RecordBookingPaymentInput) =>
-    bookingsService.recordPayment(bookingId, input),
+  return useDecisionMutation(
+    bookingId,
+    async (input: RecordBookingPaymentInput) =>
+      unwrap(await bookingsService.recordPayment(bookingId, input)),
   );
 }
