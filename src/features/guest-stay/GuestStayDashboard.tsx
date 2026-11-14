@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import {
   CalendarClock,
   CheckCircle2,
@@ -8,20 +7,18 @@ import {
   DoorOpen,
   RefreshCw,
 } from "lucide-react";
+import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import {
   guestName,
   statusLabel,
   type Stay,
 } from "@/features/hospitality/contracts";
-import { guestStayApi } from "./api";
+import { GuestStayFolio } from "./GuestStayFolio";
+import { useGuestStays } from "./queries";
 
 export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
-  const stays = useQuery({
-    queryKey: ["workspace", "guest-stays"],
-    queryFn: guestStayApi.list,
-    retry: false,
-  });
+  const stays = useGuestStays();
   const items = [...(stays.data?.items || [])]
     .filter(
       (stay) =>
@@ -123,7 +120,8 @@ function StayCard({ stay }: { stay: Stay }) {
           ? "Stay completed"
           : statusLabel(stay.status);
   return (
-    <article className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="flex flex-col gap-4 p-5">
+      <article className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[var(--vms-success)]">
@@ -139,7 +137,7 @@ function StayCard({ stay }: { stay: Stay }) {
             <div>
               <dt className="text-xs text-[var(--vms-ink-muted)]">Arrival</dt>
               <dd className="mt-0.5 text-sm font-medium">
-                {formatDate(stay.planned_check_in)}
+                {formatDateTime(stay.planned_check_in)}
               </dd>
             </div>
           </div>
@@ -148,7 +146,7 @@ function StayCard({ stay }: { stay: Stay }) {
             <div>
               <dt className="text-xs text-[var(--vms-ink-muted)]">Departure</dt>
               <dd className="mt-0.5 text-sm font-medium">
-                {formatDate(stay.planned_check_out)}
+                {formatDateTime(stay.planned_check_out)}
               </dd>
             </div>
           </div>
@@ -168,11 +166,14 @@ function StayCard({ stay }: { stay: Stay }) {
         </p>
         <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
           {stay.actual_check_in
-            ? `Checked in ${formatDate(stay.actual_check_in)}`
+            ? `Checked in ${formatDateTime(stay.actual_check_in)}`
             : "Check in at the hotel reception"}
         </p>
       </div>
-    </article>
+      </article>
+
+      <GuestStayFolio stayId={stay.id} />
+    </div>
   );
 }
 
@@ -186,11 +187,4 @@ function currentRoom(stay: Stay) {
         (!assignment.assigned_to ||
           new Date(assignment.assigned_to).getTime() > now),
     );
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 }

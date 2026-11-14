@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
-import type { Stay } from "@/features/hospitality/contracts";
+import type { GuestFolio, Stay } from "@/features/hospitality/contracts";
 
 export const guestStayApi = {
   list: async () =>
@@ -19,6 +19,16 @@ export const guestStayApi = {
     (
       await apiClient.get<ApiResponse<Stay>>(
         `/workspace/hospitality/stays/${stayId}`,
+      )
+    ).data,
+  /**
+   * The guest's own bill. The server answers only for a stay the caller is on,
+   * so an unknown id is a 404 rather than somebody else's folio.
+   */
+  folio: async (stayId: string) =>
+    (
+      await apiClient.get<ApiResponse<GuestFolio>>(
+        `/workspace/hospitality/stays/${stayId}/folio`,
       )
     ).data,
 };
