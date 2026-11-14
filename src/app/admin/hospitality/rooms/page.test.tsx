@@ -103,7 +103,7 @@ describe("hospitality room inventory", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add room" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByLabelText("Room name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Capacity")).toBeInTheDocument();
+    expect(screen.getByLabelText("Sleeps")).toBeInTheDocument();
   });
 
   it("renders an explicit recoverable collection failure", async () => {

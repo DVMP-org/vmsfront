@@ -1,7 +1,8 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -9,9 +10,13 @@ import { Input } from "@/components/ui/Input";
 import { SlideOver } from "@/components/ui/SlideOver";
 import { formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
+import { useAppStore } from "@/store/app-store";
 import { hospitalityApi } from "../api";
 import { useHospitalityAmenities, useRoomCategories } from "../queries";
 import type { HospitalityRoom, RoomOperationalStatus } from "../contracts";
+import { AmenityPicker } from "./AmenityPicker";
+import { RoomCategoryField } from "./RoomCategoryField";
+import { RoomDetailsPanel } from "./RoomDetailsPanel";
 
 const roomStatusOptions: Array<{ value: RoomOperationalStatus; label: string }> =
   [
@@ -34,24 +39,52 @@ const emptyRoom = {
   currency: "USD",
 };
 
+type RoomValues = {
+  name: string;
+  room_number: string;
+  place_group_id: string;
+  floor: string;
+  capacity: string;
+  base_rate: string;
+  currency: string;
+  status: RoomOperationalStatus;
+  amenities: string[];
+};
+
+/** A titled section, so the drawer reads as three short questions, not one list. */
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className="space-y-3 border-t border-[var(--vms-line)] pt-4 first:border-0 first:pt-0">
+      <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
+        {title}
+      </legend>
+      {hint ? <p className="text-xs text-[var(--vms-ink-muted)]">{hint}</p> : null}
+      {children}
+    </fieldset>
+  );
+}
+
 /**
  * Add or edit one sellable room.
+ *
+ * The form asks what the room *is*. How the room is *doing* — who is in it, what
+ * is broken, who is arriving — sits behind "View details" and is read-only, because
+ * an operational fact is not something to type over in a form.
  *
  * **The bug this form had.** Every `onChange` read `event.currentTarget.value`
  * *inside* a `setValues` updater. React defers updater functions, and by the time
  * it ran the event's `currentTarget` had already been cleared, so the first
  * keystroke threw `Cannot read properties of null (reading 'value')` and the form
- * was unusable. Values are now read from the event immediately and only then
- * handed to the updater — the DOM node is never touched after dispatch.
- *
- * Three things the form makes explicit, because the room is the thing that gets
- * sold:
- * - the nightly rate is what the public page charges, so it is shown with a
- *   sample total rather than as a bare number;
- * - amenities are chosen from the server's vocabulary, which is the same list the
- *   server validates against;
- * - a room with no rate is legitimate (it is just not sellable yet), so zero is
- *   allowed and does not read as free.
+ * was unusable. Values are read from the event immediately and only then handed
+ * to the updater.
  */
 export function RoomEditor({
   open,
@@ -66,18 +99,6 @@ export function RoomEditor({
   onClose: () => void;
   onSaved: (message: string) => Promise<void>;
 }) {
-type RoomValues = {
-  name: string;
-  room_number: string;
-  place_group_id: string;
-  floor: string;
-  capacity: string;
-  base_rate: string;
-  currency: string;
-  status: RoomOperationalStatus;
-  amenities: string[];
-};
-
   const [values, setValues] = useState<RoomValues>(() =>
     room
       ? {
@@ -97,8 +118,10 @@ type RoomValues = {
           amenities: [] as string[],
         },
   );
+  const [showDetails, setShowDetails] = useState(false);
   const amenities = useHospitalityAmenities();
   const categories = useRoomCategories(open);
+  const siteId = useAppStore((state) => state.selectedSite?.id ?? "");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -157,20 +180,6 @@ type RoomValues = {
     mutation.mutate();
   }
 
-  const grouped = useMemo(() => {
-    const options = amenities.data ?? [];
-    const groups = new Map<string, { label: string; items: typeof options }>();
-    for (const option of options) {
-      const entry = groups.get(option.group) ?? {
-        label: option.group_label,
-        items: [] as typeof options,
-      };
-      entry.items.push(option);
-      groups.set(option.group, entry);
-    }
-    return [...groups.values()];
-  }, [amenities.data]);
-
   const rate = Number(values.base_rate === "" ? "0" : values.base_rate);
   const sampleTotal = Number.isFinite(rate) ? rate * 3 : 0;
 
@@ -178,20 +187,40 @@ type RoomValues = {
     <SlideOver
       isOpen={open}
       onClose={onClose}
-      title={room ? "Edit room" : "Add room"}
+      title={room ? `Room ${room.room_number}` : "Add room"}
       description="These details feed reservations, availability and housekeeping."
     >
-      <form onSubmit={submit} className="space-y-6">
+      <form onSubmit={submit} className="space-y-5">
         {!canEdit ? (
           <InlineAlert tone="warning">
             You can review this form but do not have permission to save it.
           </InlineAlert>
         ) : null}
 
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
-            The room
-          </legend>
+        {room ? (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowDetails((current) => !current)}
+              aria-expanded={showDetails}
+            >
+              {showDetails ? (
+                <EyeOff aria-hidden="true" className="h-3.5 w-3.5" />
+              ) : (
+                <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+              )}
+              {showDetails ? "Hide details" : "View details"}
+            </Button>
+          </div>
+        ) : null}
+
+        {room && showDetails ? (
+          <RoomDetailsPanel room={room} amenityOptions={amenities.data ?? []} />
+        ) : null}
+
+        <Section title="The room">
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Room name"
@@ -207,38 +236,30 @@ type RoomValues = {
               value={values.room_number}
               onChange={onField}
             />
-            <div className="space-y-1.5 text-sm font-medium">
-              <label htmlFor="room-category" className="block">
-                Room category
-              </label>
-              <select
-                id="room-category"
-                name="place_group_id"
-                className="h-[var(--vms-control-height)] w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base sm:text-sm"
-                value={values.place_group_id}
-                onChange={onField}
-              >
-                <option value="">Not categorised</option>
-                {(categories.data ?? []).map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <span className="block text-xs font-normal text-[var(--vms-ink-muted)]">
-                What guests book. Manage the list on Room categories.
-              </span>
-            </div>
+          </div>
+
+          <RoomCategoryField
+            value={values.place_group_id}
+            onChange={(categoryId) =>
+              setValues((current) => ({ ...current, place_group_id: categoryId }))
+            }
+            categories={categories.data ?? []}
+            isLoading={categories.isPending}
+            siteId={siteId}
+            canEdit={canEdit}
+          />
+
+          <div className="grid gap-4 sm:grid-cols-3">
             <Input
               label="Floor"
               name="floor"
               placeholder="Optional"
-              description="Leave blank for a single-storey property."
+              description="Blank for a single-storey property."
               value={values.floor}
               onChange={onField}
             />
             <Input
-              label="Capacity"
+              label="Sleeps"
               name="capacity"
               type="number"
               min={1}
@@ -249,7 +270,7 @@ type RoomValues = {
             />
             {room ? (
               <label className="space-y-1.5 text-sm font-medium">
-                <span>Operational status</span>
+                <span>Status</span>
                 <select
                   name="status"
                   className="h-[var(--vms-control-height)] w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base capitalize sm:text-sm"
@@ -265,16 +286,12 @@ type RoomValues = {
               </label>
             ) : null}
           </div>
-        </fieldset>
+        </Section>
 
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
-            What it costs
-          </legend>
-          <p className="text-xs text-[var(--vms-ink-muted)]">
-            The nightly rate is what the public booking page charges. A rate of
-            zero means the room is not sellable yet.
-          </p>
+        <Section
+          title="What it costs"
+          hint="This is what the public booking page charges. Zero means the room is not sellable yet."
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Nightly rate"
@@ -304,60 +321,24 @@ type RoomValues = {
           </div>
           {rate > 0 ? (
             <p className="text-xs text-[var(--vms-ink-muted)]">
-              A three-night stay would be{" "}
+              Three nights would be{" "}
               <strong className="text-[var(--vms-ink)]">
                 {formatMoney(sampleTotal, values.currency)}
               </strong>
               .
             </p>
           ) : null}
-        </fieldset>
+        </Section>
 
-        <fieldset className="space-y-3">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
-            What it has
-          </legend>
-          {amenities.isPending ? (
-            <p className="text-xs text-[var(--vms-ink-muted)]">
-              Loading amenities…
-            </p>
-          ) : amenities.isError ? (
-            <InlineAlert tone="warning">
-              Amenities could not be loaded. You can still save the room.
-            </InlineAlert>
-          ) : (
-            <div className="space-y-3">
-              {grouped.map((group) => (
-                <div key={group.label} className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-wide text-[var(--vms-ink-muted)]">
-                    {group.label}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {group.items.map((option) => {
-                      const active = values.amenities.includes(option.code);
-                      return (
-                        <button
-                          key={option.code}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => toggleAmenity(option.code)}
-                          className={
-                            "min-h-11 rounded-lg border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-accent)] " +
-                            (active
-                              ? "border-[var(--vms-accent)] bg-[var(--vms-surface-muted)] text-[var(--vms-ink)]"
-                              : "border-[var(--vms-border)] text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-muted)]")
-                          }
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </fieldset>
+        <Section title="What it has">
+          <AmenityPicker
+            options={amenities.data ?? []}
+            selected={values.amenities}
+            onToggle={toggleAmenity}
+            isLoading={amenities.isPending}
+            isError={amenities.isError}
+          />
+        </Section>
 
         {mutation.isError ? (
           <InlineAlert tone="danger" title="Room was not saved">
