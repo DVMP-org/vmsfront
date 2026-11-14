@@ -3,9 +3,58 @@ import { describe, expect, it } from "vitest";
 import {
   bookingStatusLabel,
   bookingStatusTone,
+  filterValue,
   formatBookingWindow,
+  publicBookingUrl,
   toBookingSummary,
 } from "./lib";
+
+describe("filterValue", () => {
+  it("reads the table's filter list into one query value", () => {
+    const filters = [
+      { field: "kind", operator: "eq" as const, value: "reservation" },
+      { field: "status", operator: "eq" as const, value: "requested" },
+    ];
+
+    expect(filterValue(filters, "kind")).toBe("reservation");
+    expect(filterValue(filters, "status")).toBe("requested");
+  });
+
+  it("reports nothing for a filter that is not set", () => {
+    expect(filterValue([], "kind")).toBeUndefined();
+  });
+
+  it("treats an empty value as no filter, not as a filter for nothing", () => {
+    expect(
+      filterValue([{ field: "kind", value: "" }], "kind"),
+    ).toBeUndefined();
+  });
+
+  it("uses the first entry when the table sends a list", () => {
+    expect(
+      filterValue([{ field: "kind", value: ["booking", "reservation"] }], "kind"),
+    ).toBe("booking");
+  });
+});
+
+describe("publicBookingUrl", () => {
+  it("addresses the Site's own booking page on the current origin", () => {
+    expect(publicBookingUrl("harbour-hotel", "https://acme.vms.app")).toBe(
+      "https://acme.vms.app/book/harbour-hotel",
+    );
+  });
+
+  it("does not double the slash when the origin has a trailing one", () => {
+    expect(publicBookingUrl("harbour-hotel", "https://acme.vms.app/")).toBe(
+      "https://acme.vms.app/book/harbour-hotel",
+    );
+  });
+
+  it("has no link without a slug, rather than a broken one", () => {
+    expect(publicBookingUrl(null, "https://acme.vms.app")).toBeNull();
+    expect(publicBookingUrl("   ", "https://acme.vms.app")).toBeNull();
+  });
+});
 
 describe("bookingStatusTone", () => {
   it("maps approval and lifecycle states to semantic tones", () => {

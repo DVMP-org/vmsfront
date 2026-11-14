@@ -13,6 +13,16 @@ export interface PublicBookablePlace {
   name: string;
   kind: string;
   building_type: string | null;
+  /**
+   * A hospitality room is the priceable thing: it carries its own nightly rate,
+   * currency, capacity and room type. Null for a space that is not sold by the
+   * night, which is why every one of these is nullable rather than defaulted to
+   * zero — zero is a price, absence is not.
+   */
+  nightly_rate: string | null;
+  currency: string | null;
+  capacity: number | null;
+  room_type: string | null;
 }
 
 export interface PublicBookingHost {
@@ -57,6 +67,21 @@ export interface PublicBookingCreated {
   check_in_at: string;
   check_out_at: string;
   guest_count: number;
+  /** What the stay costs, priced by the server. Absent when the stay has no
+   *  rate yet (a reservation holding no room), and `payable` says so. */
+  nights: number | null;
+  nightly_rate: string | null;
+  currency: string | null;
+  amount_due: string | null;
+  payable: boolean;
+}
+
+/** A gateway hand-off, exactly as the payment provider returns it. */
+export interface PublicBookingPayment {
+  access_code: string;
+  reference: string;
+  authorization_url: string;
+  status: string;
 }
 
 /** A visitor may hold a room without naming one only where reservations exist. */
