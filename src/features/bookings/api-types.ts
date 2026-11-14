@@ -13,6 +13,7 @@ import type {
   BookingSource,
   BookingStatus,
 } from "./types";
+import type { BookingItemDto, ReservationDto } from "@/features/reservations/api-types";
 
 export interface BookingActivityDto {
   id: string;
@@ -49,6 +50,10 @@ export interface BookingDto {
 
 export interface BookingDetailDto extends BookingDto {
   activities: BookingActivityDto[];
+  /** What was bought, priced when it was bought. */
+  items: BookingItemDto[];
+  /** Capacity held against it — one per room, not one per booking. */
+  reservations: ReservationDto[];
 }
 
 export type BookingPaymentStatus = "captured" | "refunded" | "void";

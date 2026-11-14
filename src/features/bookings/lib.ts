@@ -85,13 +85,17 @@ export type BookingFilterField = (typeof BOOKING_FILTER_FIELDS)[number];
 /**
  * Read one filter's value out of the table's filter list.
  *
- * The table speaks a generic `{field, operator, value}` shape while the register
- * speaks the API's query parameters. Translating here, once, keeps the mapping
- * out of the component and makes it testable without rendering a table.
+ * The table speaks a generic `{field, operator, value}` shape while every register
+ * speaks the API's query parameters. Translating here, once, keeps the mapping out
+ * of the components and makes it testable without rendering a table.
+ *
+ * The field is a plain string rather than the bookings register's own field list:
+ * reservations filter on fields bookings do not have, and a second copy of this
+ * helper in that feature would be the same logic drifting apart.
  */
 export function filterValue(
   filters: ReadonlyArray<{ field: string; value: unknown }>,
-  field: BookingFilterField,
+  field: string,
 ): string | undefined {
   const match = filters.find((entry) => entry.field === field);
   if (!match) return undefined;

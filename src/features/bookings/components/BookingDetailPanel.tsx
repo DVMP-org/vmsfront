@@ -10,6 +10,8 @@ import { formatDateTime } from "@/lib/datetime";
 import { formatMoney } from "@/lib/currency";
 import { BookingApprovalActions } from "./BookingApprovalActions";
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { ReservationStatusBadge } from "@/features/reservations/components/ReservationStatusBadge";
+import { holdsReason, itemQuantityLabel, reservationWindow } from "@/features/reservations/lib";
 import { canDecide } from "../api-types";
 import type { BookingDetailDto } from "../api-types";
 import {
@@ -233,6 +235,68 @@ export function BookingDetailPanel({ booking }: { booking: BookingDetailDto }) {
           ) : null}
         </section>
       ) : null}
+
+      <section className="flex flex-col gap-2">
+        <span className="text-xs font-semibold text-[var(--vms-ink)]">
+          What was bought
+        </span>
+        {booking.items.length === 0 ? (
+          <p className="text-xs text-[var(--vms-ink-muted)]">
+            Nothing priced yet — the stay has no rate, so there is nothing to
+            charge.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1 text-xs">
+            {booking.items.map((item) => (
+              <li key={item.id} className="flex items-baseline justify-between gap-2">
+                <span>
+                  {item.name}
+                  <span className="text-[var(--vms-ink-muted)]">
+                    {" · "}
+                    {itemQuantityLabel(item.quantity, item.service_kind)}
+                  </span>
+                </span>
+                <span className="font-medium">
+                  {formatMoney(item.total, item.currency)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <span className="text-xs font-semibold text-[var(--vms-ink)]">
+          Capacity held
+        </span>
+        {booking.reservations.length === 0 ? (
+          <p className="text-xs text-[var(--vms-ink-muted)]">
+            Nothing is being held for this booking.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {booking.reservations.map((reservation) => (
+              <li
+                key={reservation.id}
+                className="flex flex-col gap-1 rounded-lg border border-[var(--vms-border)] px-3 py-2 text-xs"
+              >
+                <span className="flex flex-wrap items-center gap-2">
+                  <ReservationStatusBadge status={reservation.status} />
+                  {/* A row can say "Held" and still be blocking nothing. */}
+                  {holdsReason(reservation) ? (
+                    <span className="text-[10px] uppercase tracking-wide text-[var(--vms-ink-muted)]">
+                      {holdsReason(reservation)}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-[var(--vms-ink-muted)]">
+                  {reservationWindow(reservation)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-2">
         <span className="text-xs font-semibold text-[var(--vms-ink)]">Trail</span>
