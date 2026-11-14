@@ -77,6 +77,17 @@ export function useDeclineBooking(bookingId: string) {
   );
 }
 
+/**
+ * Cancelling ends an agreed booking, so it releases capacity as well as changing
+ * a status. Invalidating `bookingKeys.all` refreshes the reservations surfaces
+ * too, because the room is sellable again the moment this succeeds.
+ */
+export function useCancelBooking(bookingId: string) {
+  return useDecisionMutation(bookingId, async (reason: string) =>
+    unwrap(await bookingsService.cancel(bookingId, reason)),
+  );
+}
+
 export function useAssignBookingRoom(bookingId: string) {
   return useDecisionMutation(bookingId, async (placeId: string) =>
     unwrap(await bookingsService.assignRoom(bookingId, placeId)),

@@ -45,6 +45,16 @@ export interface BookingDto {
   approved_by: "host" | "site_admin" | null;
   /** What approval produced: invitation, stay, badge, guest party. */
   outcome: Record<string, unknown> | null;
+  /** The reference the guest quotes on the phone, once one is assigned. */
+  reference: string | null;
+  currency: string;
+  /**
+   * What the booking was agreed at. `null` means no price was recorded, which is
+   * neither zero nor "free" — the priced lines on `items` are the truth.
+   */
+  total: string | null;
+  /** `null` while nobody has recorded a payment against this booking. */
+  payment_status: string | null;
   created_at: string;
 }
 
@@ -125,4 +135,21 @@ export function canDecide(booking: Pick<BookingDto, "status" | "domain">): boole
     return false;
   }
   return booking.status === "requested";
+}
+
+/**
+ * A booking may be called off until the guest has arrived.
+ *
+ * Once checked in the arrangement has become an occupancy, and ending that is a
+ * check-out. The server refuses these same statuses; this mirror exists so the
+ * button is not offered for an action that will bounce.
+ */
+export function canCancel(
+  booking: Pick<BookingDto, "status">,
+): boolean {
+  return (
+    booking.status === "requested" ||
+    booking.status === "pending_payment" ||
+    booking.status === "confirmed"
+  );
 }
