@@ -10,6 +10,7 @@ import { humanize } from "@/lib/strings";
 import type { BookingStatus } from "./types";
 
 const toneByStatus: Record<BookingStatus, StatusTone> = {
+  pending_payment: "warning",
   requested: "warning",
   confirmed: "info",
   declined: "danger",
