@@ -47,6 +47,14 @@ export const bookingsService = {
     return apiClient.post(`/admin/bookings/${bookingId}/decline`, { reason });
   },
 
+  /** Call off a booking that was already agreed. Releases its rooms. */
+  async cancel(
+    bookingId: string,
+    reason: string,
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/cancel`, { reason });
+  },
+
   async assignRoom(
     bookingId: string,
     placeId: string,

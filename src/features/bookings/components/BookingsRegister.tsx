@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import {
@@ -7,21 +8,17 @@ import {
   type Column,
   type FilterConfig,
 } from "@/components/ui/DataTable";
-import { DetailPanel } from "@/components/ui/DetailPanel";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
-import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { formatDateTime } from "@/lib/datetime";
 import { BookingCreateForm } from "./BookingCreateForm";
-import { BookingDetailPanel } from "./BookingDetailPanel";
 import { BookingPageLink } from "./BookingPageLink";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { RequesterCell } from "./RequesterCell";
 import { filterValue } from "../lib";
 import type { BookingDto, BookingListParams } from "../api-types";
-import { useBooking, useBookings } from "../queries";
+import { useBookings } from "../queries";
 
 const PAGE_SIZE = 20;
 
@@ -52,16 +49,14 @@ const SOURCE_LABELS: Record<string, string> = {
  * only the twenty rows on screen would quietly hide a match on page two. The
  * table is told not to filter client-side for exactly that reason.
  *
- * The detail is a sticky sidebar from `xl` up and a drawer below it — never
- * both, which is why the sidebar is rendered conditionally rather than hidden.
+ * The detail lives on its own route, so opening a booking is a navigation rather
+ * than a panel: an address can be shared, reloaded and linked to from a call.
  */
 export function BookingsRegister() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterConfig[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const isWide = useMediaQuery("(min-width: 1280px)", true);
 
   const context = useWorkspaceContext();
   const siteSlug = context.data?.site_slug ?? null;
@@ -81,9 +76,7 @@ export function BookingsRegister() {
   }, [page, search, filters]);
 
   const list = useBookings(params);
-  const detail = useBooking(selectedId);
   const bookings = list.data?.items ?? [];
-  const close = () => setSelectedId(null);
 
   const columns: Column<BookingDto>[] = [
     {
@@ -143,15 +136,13 @@ export function BookingsRegister() {
       minWidth: 90,
       mobileHide: true,
       accessor: (booking) => (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setSelectedId(booking.id)}
+        <Link
+          href={`/admin/bookings/${booking.id}`}
+          className="inline-flex min-h-9 items-center rounded-lg border border-[var(--vms-border)] px-3 text-xs font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-accent)]"
           aria-label={`Open the booking from ${booking.requester_name}`}
         >
           Open
-        </Button>
+        </Link>
       ),
     },
   ];
@@ -249,9 +240,8 @@ export function BookingsRegister() {
           onRetry={() => void list.refetch()}
           emptyMessage="No bookings match this search for the selected Site."
           mobileSummary={(booking) => (
-            <button
-              type="button"
-              onClick={() => setSelectedId(booking.id)}
+            <Link
+              href={`/admin/bookings/${booking.id}`}
               className="flex min-h-11 w-full flex-col gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-accent)]"
               aria-label={`Open the booking from ${booking.requester_name}`}
             >
@@ -267,52 +257,10 @@ export function BookingsRegister() {
                 <span>{KIND_LABELS[booking.kind] ?? booking.kind}</span>
                 <span>{formatDateTime(booking.check_in_at)}</span>
               </span>
-            </button>
+            </Link>
           )}
         />
       </div>
-
-      {isWide ? (
-        selectedId ? (
-          <aside className="sticky top-4 w-96 shrink-0">
-            <DetailPanel
-              title="Booking"
-              description="Decision, trail and payments"
-              onClose={close}
-            >
-              {detail.isPending ? (
-                <PanelState
-                  kind="loading"
-                  compact
-                  title="Loading booking"
-                  description="Fetching the decision trail."
-                />
-              ) : detail.isError || !detail.data ? (
-                <PanelState
-                  kind="error"
-                  compact
-                  title="Booking could not be loaded"
-                  description="Try selecting it again."
-                  onRetry={() => void detail.refetch()}
-                  isRetrying={detail.isFetching}
-                  retryLabel="Retry booking"
-                />
-              ) : (
-                <BookingDetailPanel booking={detail.data} />
-              )}
-            </DetailPanel>
-          </aside>
-        ) : null
-      ) : (
-        <Drawer
-          isOpen={Boolean(selectedId)}
-          onClose={close}
-          title="Booking"
-          description="Decision, trail and payments"
-        >
-          {detail.data ? <BookingDetailPanel booking={detail.data} /> : null}
-        </Drawer>
-      )}
 
       <Drawer
         isOpen={creating}

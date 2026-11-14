@@ -123,3 +123,31 @@ export function publicBookingUrl(
   if (!slug) return null;
   return `${origin.replace(/\/+$/, "")}/book/${encodeURIComponent(slug)}`;
 }
+
+/**
+ * What the guest still owes, or `null` when no total was ever agreed.
+ *
+ * `null` and zero are different answers: no recorded price means there is
+ * nothing to owe (a complimentary stay, or a legacy booking), while zero means
+ * the bill is settled. Returning 0 for both would tell a guest they are paid up
+ * when nobody ever wrote down a price.
+ *
+ * Only `captured` payments count. A refunded or voided row is money that is no
+ * longer with the Site, and subtracting it would report a balance the guest has
+ * already met.
+ */
+export function outstandingBalance(
+  total: string | null,
+  payments: ReadonlyArray<{ amount: string; status: string }>,
+): number | null {
+  if (total === null) return null;
+  const agreed = Number(total);
+  if (!Number.isFinite(agreed)) return null;
+  const paid = payments
+    .filter((payment) => payment.status === "captured")
+    .reduce((sum, payment) => {
+      const value = Number(payment.amount);
+      return Number.isFinite(value) ? sum + value : sum;
+    }, 0);
+  return agreed - paid;
+}
