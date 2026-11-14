@@ -73,6 +73,27 @@ export interface RecordBookingPaymentInput {
   reference?: string | null;
 }
 
+/**
+ * A booking taken by staff.
+ *
+ * The domain is absent on purpose: it is the Site's, and the server refuses a
+ * payload that tries to assert one.
+ */
+export interface AdminBookingCreateInput {
+  kind: "booking" | "reservation";
+  source: "phone" | "walk_in" | "staff";
+  place_id?: string | null;
+  host_party_id?: string | null;
+  check_in_at: string;
+  check_out_at: string;
+  guest_count: number;
+  requester_name: string;
+  requester_email?: string | null;
+  requester_phone?: string | null;
+  purpose?: string | null;
+  notes?: string | null;
+}
+
 export const BOOKING_DOMAIN_LABEL: Record<BookingDomain, string> = {
   residential: "Residential",
   commercial: "Commercial",
