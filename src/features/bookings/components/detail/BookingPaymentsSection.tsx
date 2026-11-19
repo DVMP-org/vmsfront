@@ -72,13 +72,45 @@ export function BookingPaymentsSection({
 
   return (
     <section aria-label="Payments" className="flex flex-col gap-6">
-      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <div className="flex flex-col gap-0.5">
           <dt className="text-[11px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
-            Agreed
+            Accommodation
           </dt>
           <dd className="text-sm font-medium text-[var(--vms-ink)]">
-            {booking.total === null ? (
+            {booking.total === null && !booking.financials?.priced ? (
+              <span className="font-normal text-[var(--vms-ink-muted)]">
+                No price recorded
+              </span>
+            ) : (
+              formatMoney(
+                booking.financials?.accommodation ?? booking.total,
+                booking.financials?.currency ?? booking.currency,
+              )
+            )}
+          </dd>
+        </div>
+        {booking.financials ? (
+          <div className="flex flex-col gap-0.5">
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
+              Additional charges
+            </dt>
+            <dd className="text-sm font-medium text-[var(--vms-ink)]">
+              {formatMoney(
+                booking.financials.additional,
+                booking.financials.currency,
+              )}
+            </dd>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-[11px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
+            Total payable
+          </dt>
+          <dd className="text-sm font-semibold text-[var(--vms-ink)]">
+            {booking.financials ? (
+              formatMoney(booking.financials.total, booking.financials.currency)
+            ) : booking.total === null ? (
               <span className="font-normal text-[var(--vms-ink-muted)]">
                 No price recorded
               </span>
@@ -105,7 +137,12 @@ export function BookingPaymentsSection({
             Balance
           </dt>
           <dd className="text-sm font-medium text-[var(--vms-ink)]">
-            {balance === null ? (
+            {booking.financials ? (
+              formatMoney(
+                booking.financials.balance,
+                booking.financials.currency,
+              )
+            ) : balance === null ? (
               <span className="font-normal text-[var(--vms-ink-muted)]">
                 Unknown
               </span>
@@ -249,7 +286,10 @@ export function BookingPaymentsSection({
                 </span>
                 <span className="text-xs text-[var(--vms-ink-muted)]">
                   {payment.folio_line_id ? "On the folio · " : "Not posted · "}
-                  {formatDateTime(payment.created_at)}
+                  {/* When the money was taken, not when it was typed in. */}
+                  {formatDateTime(payment.paid_at ?? payment.created_at)}
+                  {payment.reference ? ` · ${payment.reference}` : ""}
+                  {payment.note ? ` · ${payment.note}` : ""}
                 </span>
               </li>
             ))}

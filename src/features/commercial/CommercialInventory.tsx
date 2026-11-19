@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BriefcaseBusiness, Building2, Plus, Store } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
@@ -84,8 +84,9 @@ export default function CommercialInventory() {
         ) : undefined
       }
     >
-      <SummaryStrip
-        items={[
+      <MetricStrip
+        label="Commercial inventory summary"
+        metrics={[
           {
             icon: Building2,
             label: "Buildings",
@@ -110,7 +111,12 @@ export default function CommercialInventory() {
             value: rows.filter((row) => row.occupancy === "vacant").length,
             detail: "Available for a business tenant",
           },
-        ]}
+        ].map((metric) => ({
+          ...metric,
+          state: tree.isPending || relationships.isPending
+            ? "loading" as const
+            : tree.isError || relationships.isError ? "error" as const : "ready" as const,
+        }))}
       />
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <CommercialInventoryTable
@@ -157,34 +163,5 @@ export default function CommercialInventory() {
         }}
       />
     </CommercialShell>
-  );
-}
-
-function SummaryStrip({
-  items,
-}: {
-  items: Array<{
-    icon: LucideIcon;
-    label: string;
-    value: number;
-    detail: string;
-  }>;
-}) {
-  return (
-    <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
-      {items.map(({ icon: Icon, label, value, detail }) => (
-        <div
-          key={label}
-          className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
-        >
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-            <Icon className="h-4 w-4 text-[var(--vms-coral)]" aria-hidden />
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
-          <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
-        </div>
-      ))}
-    </section>
   );
 }

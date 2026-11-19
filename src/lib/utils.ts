@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge";
 
 import { formatDateTime } from "./datetime";
 import { initials } from "./strings";
+import { DEFAULT_CURRENCY } from "./currency";
 
 // Formatting helpers live in focused modules and are re-exported here so
 // existing imports keep working while new code imports the specific module.
@@ -31,7 +32,7 @@ export {
   titleCase,
   truncate,
 } from "./strings";
-export { formatAmount, formatMoney, sumAmounts } from "./currency";
+export { DEFAULT_CURRENCY, formatAmount, formatMoney, sumAmounts } from "./currency";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -228,7 +229,7 @@ export const formatPrice = (price: number, currency?: string) => {
   if (price === 0) return "Free";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency || "USD",
+    currency: currency || DEFAULT_CURRENCY,
   }).format(price);
 };
 

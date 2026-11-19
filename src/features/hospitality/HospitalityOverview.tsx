@@ -20,6 +20,7 @@ import { formatDateTime } from "@/lib/datetime";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
+import { HospitalityMetricStrip } from "@/features/hospitality/HospitalityMetricStrip";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
 import { StayStatusBadge } from "@/features/hospitality/components/StayStatusBadge";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
@@ -31,12 +32,13 @@ import {
   statusLabel,
 } from "@/features/hospitality/contracts";
 import "@/app/admin/hospitality/styles.css";
+import PageLoader from "@/components/ui/PageLoader";
 
 export default function HospitalityOverview() {
   const organization = useAppStore((s) => s.organization);
   const selectedSite = useAppStore((s) => s.selectedSite);
   const user = useAuthStore((s) => s.user);
-  const context = `${organization?.id}:${user?.id}`;
+  const context = `${organization?.id}:${selectedSite?.id}:${user?.id}`;
   return (
     <HospitalityWorkspace
       key={context}
@@ -88,6 +90,11 @@ function HospitalityWorkspace({
     queryFn: () => hospitalityApi.list(page, status),
     enabled: allowed("list"),
   });
+  const reserved = useQuery({
+    queryKey: ["hospitality", context, "list", 1, "reserved"],
+    queryFn: () => hospitalityApi.list(1, "reserved"),
+    enabled: allowed("list"),
+  });
   const detail = useQuery({
     queryKey: ["hospitality", context, "detail", selected],
     queryFn: () => hospitalityApi.get(selected!),
@@ -112,7 +119,11 @@ function HospitalityWorkspace({
     await client.invalidateQueries({ queryKey: ["hospitality", context] });
   };
   if (!enabled || profile.isPending || !profile.isFetchedAfterMount)
-    return <p role="status">Loading hospitality permissions…</p>;
+    return (
+      <main className="mx-auto w-full max-w-[1440px] pb-10 pt-3 text-[var(--vms-ink)]">
+        <PageLoader message="Loading hospitality permissions…" />
+      </main>
+    );
   if (profile.isError)
     return (
       <div
@@ -241,21 +252,22 @@ function HospitalityWorkspace({
             ? `Manage ${propertyName}, its people, room assignments, stays and guest arrivals.`
             : "Manage the selected site, its people, room assignments, stays and guest arrivals."
         }
-        primaryAction={
-          allowed("create") ? (
-            <Button
-              onClick={() => {
-                setCreating(true);
-                setSelected(null);
-                setNotice("");
-              }}
-            >
-              New reservation
-            </Button>
-          ) : null
-        }
+
       />
 
+      <div className="mt-5">
+        <HospitalityMetricStrip
+          administratorCount={workspaceContext.data?.management?.administrators.length ?? 0}
+          relationships={people.data?.items ?? []}
+          reservedCount={reserved.data?.total ?? 0}
+          peopleLoading={people.isPending}
+          peopleError={people.isError}
+          administratorsLoading={workspaceContext.isPending}
+          administratorsError={workspaceContext.isError}
+          staysLoading={reserved.isPending}
+          staysError={reserved.isError}
+        />
+      </div>
       <div className="mt-4 mb-2">
         <AttentionQueueSection
           useCase="hospitality"
@@ -276,10 +288,10 @@ function HospitalityWorkspace({
           workspaceContext.data?.management?.authoritative_site?.name
         }
         relationships={people.data?.items || []}
-        stays={list.data?.items || []}
-        staysLoading={list.isPending}
-        staysError={list.isError ? parseApiError(list.error).message : null}
-        onRetryStays={() => void list.refetch()}
+        stays={reserved.data?.items || []}
+        staysLoading={reserved.isPending}
+        staysError={reserved.isError ? parseApiError(reserved.error).message : null}
+        onRetryStays={() => void reserved.refetch()}
         loading={
           people.isPending || (!!propertyId && workspaceContext.isPending)
         }
@@ -395,193 +407,12 @@ function HospitalityWorkspace({
             )}
           />
         </section>
-        {(creating || selected) && (
-          <section
-            ref={detailPanel}
-            tabIndex={-1}
-            className="stay-panel stay-detail"
-            aria-label="Reservation details"
-          >
-            {!creating ? (
-              <div className="mb-4 flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelected(null);
-                    stayList.current?.focus();
-                  }}
-                >
-                  Close details
-                </Button>
-              </div>
-            ) : null}
-            {creating && allowed("create") ? (
-              <ReservationForm
-                context={context}
-                siteId={propertyId}
-                onCancel={() => {
-                  setCreating(false);
-                  stayList.current?.focus();
-                }}
-                onSaved={(s) => changed(s, "Reservation created.")}
-              />
-            ) : selected && allowed("show") ? (
-              detail.isPending ? (
-                <p role="status">Loading reservation…</p>
-              ) : detail.isError ? (
-                <div role="alert">
-                  {parseApiError(detail.error).message}
-                  <Button variant="outline" onClick={() => detail.refetch()}>
-                    Retry details
-                  </Button>
-                </div>
-              ) : detail.data ? (
-                <StayDetail
-                  key={`${detail.data.id}:${detail.data.planned_check_in}:${detail.data.planned_check_out}:${detail.data.status}`}
-                  stay={detail.data}
-                  context={context}
-                  allowed={allowed}
-                  onSaved={changed}
-                />
-              ) : null
-            ) : null}
-          </section>
-        )}
+
       </div>
     </main>
   );
 }
-function ReservationForm({
-  context,
-  siteId,
-  onSaved,
-  onCancel,
-}: {
-  context: string;
-  siteId?: string;
-  onSaved: (stay: Stay) => void;
-  onCancel: () => void;
-}) {
-  const [guest, setGuest] = useState<FacetItem | null>(null);
-  const [room, setRoom] = useState<FacetItem | null>(null);
-  const [additional, setAdditional] = useState<FacetItem[]>([]);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [notes, setNotes] = useState("");
-  const [validation, setValidation] = useState("");
-  const mutation = useMutation({
-    mutationFn: async () => {
-      if (!siteId) throw new Error("Select a Site first.");
-      if (!guest) throw new Error("Choose a primary guest.");
-      return hospitalityApi.create({
-        site_id: siteId,
-        ...interval(start, end),
-        primary_guest_party_id: guest.value,
-        additional_guest_party_ids: additional
-          .filter((p) => p.value !== guest.value)
-          .map((p) => p.value),
-        room_place_id: room?.value || null,
-        notes,
-      });
-    },
-    onSuccess: onSaved,
-  });
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    try {
-      interval(start, end);
-      if (!guest) throw new Error("Choose a primary guest.");
-      setValidation("");
-      mutation.mutate();
-    } catch (error) {
-      setValidation((error as Error).message);
-    }
-  }
-  return (
-    <form onSubmit={submit}>
-      <h2>New reservation</h2>
-      <p className="stay-muted">
-        Dates use this device’s timezone:{" "}
-        {Intl.DateTimeFormat().resolvedOptions().timeZone}.
-      </p>
-      <fieldset disabled={mutation.isPending}>
-        <FacetPicker
-          contextKey={context}
-          facet="parties"
-          kind="person"
-          label="Primary guest"
-          value={guest}
-          onChange={setGuest}
-        />
-        <FacetPicker
-          contextKey={context}
-          facet="parties"
-          kind="person"
-          label="Additional guest"
-          value={null}
-          onChange={(item) => {
-            if (
-              item &&
-              item.value !== guest?.value &&
-              !additional.some((p) => p.value === item.value)
-            )
-              setAdditional([...additional, item]);
-          }}
-        />
-        {additional.map((item) => (
-          <p key={item.value}>
-            {item.label}
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() =>
-                setAdditional(additional.filter((p) => p.value !== item.value))
-              }
-            >
-              Remove
-            </Button>
-          </p>
-        ))}
-        <DateFields start={start} end={end} onStart={setStart} onEnd={setEnd} />
-        <FacetPicker
-          contextKey={context}
-          facet="places"
-          kind="room"
-          label="Room (optional)"
-          value={room}
-          onChange={setRoom}
-        />
-        <label>
-          Reservation notes
-          <textarea
-            maxLength={2000}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </label>
-      </fieldset>
-      {(validation || mutation.isError) && (
-        <p role="alert" className="stay-error">
-          {validation || parseApiError(mutation.error).message}
-        </p>
-      )}
-      <div className="stay-actions">
-        <Button
-          variant="outline"
-          type="button"
-          disabled={mutation.isPending}
-          onClick={onCancel}
-        >
-          Close
-        </Button>
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating…" : "Create reservation"}
-        </Button>
-      </div>
-    </form>
-  );
-}
+
 function DateFields({
   start,
   end,
@@ -617,307 +448,5 @@ function DateFields({
         />
       </label>
     </div>
-  );
-}
-function StayDetail({
-  stay,
-  context,
-  allowed,
-  onSaved,
-}: {
-  stay: Stay;
-  context: string;
-  allowed: (action: string) => boolean;
-  onSaved: (stay: Stay, message: string) => void;
-}) {
-  const [mode, setMode] = useState<"dates" | "room" | null>(null);
-  const [start, setStart] = useState(localInput(stay.planned_check_in));
-  const [end, setEnd] = useState(localInput(stay.planned_check_out));
-  const [notes, setNotes] = useState(stay.notes || "");
-  const [room, setRoom] = useState<FacetItem | null>(null);
-  const [effective, setEffective] = useState("");
-  const [validation, setValidation] = useState("");
-  const [confirm, setConfirm] = useState<string | null>(null);
-  const active = stay.status === "reserved" || stay.status === "checked_in";
-  const mutation = useMutation({
-    mutationFn: async ({ action, body }: { action: string; body?: unknown }) =>
-      action === "update"
-        ? hospitalityApi.update(stay.id, body)
-        : hospitalityApi.action(stay.id, action, body),
-    onSuccess: (s) => {
-      setMode(null);
-      setConfirm(null);
-      onSaved(s, "Reservation updated.");
-    },
-  });
-  function dates(e: FormEvent) {
-    e.preventDefault();
-    try {
-      const dates = interval(start, end);
-      setValidation("");
-      mutation.mutate({
-        action: "update",
-        body: {
-          ...(stay.status === "reserved"
-            ? dates
-            : { planned_check_out: dates.planned_check_out }),
-          notes,
-        },
-      });
-    } catch (error) {
-      setValidation((error as Error).message);
-    }
-  }
-  return (
-    <>
-      <div className="stay-detail-heading">
-        <div>
-          <StayStatusBadge status={stay.status} />
-          <h2>{guestName(stay)}</h2>
-        </div>
-      </div>
-      <dl className="stay-facts">
-        <div>
-          <dt>Planned arrival</dt>
-          <dd>{formatDateTime(stay.planned_check_in)}</dd>
-        </div>
-        <div>
-          <dt>Planned departure</dt>
-          <dd>{formatDateTime(stay.planned_check_out)}</dd>
-        </div>
-        {stay.actual_check_in && (
-          <div>
-            <dt>Checked in</dt>
-            <dd>{formatDateTime(stay.actual_check_in)}</dd>
-          </div>
-        )}
-        {stay.actual_check_out && (
-          <div>
-            <dt>Checked out</dt>
-            <dd>{formatDateTime(stay.actual_check_out)}</dd>
-          </div>
-        )}
-      </dl>
-      <h3>Guests</h3>
-      <ul>
-        {stay.guests.map((g) => (
-          <li key={g.id}>
-            {g.party.display_name} <small>({g.role})</small>
-          </li>
-        ))}
-      </ul>
-      {stay.notes && <p className="stay-notes">{stay.notes}</p>}
-      <h3>Room history</h3>
-      {stay.room_assignments.length ? (
-        <ol className="stay-history">
-          {stay.room_assignments.map((a) => (
-            <li key={a.id}>
-              <strong>{a.room.name}</strong>
-              <small>
-                {formatDateTime(a.assigned_from)} →{" "}
-                {a.assigned_to
-                  ? formatDateTime(a.assigned_to)
-                  : "Open"}
-              </small>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="stay-muted">
-          No room assigned. Assign one before check-in.
-        </p>
-      )}
-      <div className="stay-actions">
-        {allowed("show") ? (
-          <Button asChild variant="secondary">
-            <Link href={`/admin/hospitality/billing?stay=${stay.id}`}>
-              Guest billing
-            </Link>
-          </Button>
-        ) : null}
-        {active && allowed("update") && (
-          <Button
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() => {
-              setMode("dates");
-              setValidation("");
-            }}
-          >
-            {stay.status === "reserved" ? "Reschedule / edit" : "Extend / edit"}
-          </Button>
-        )}
-        {active && allowed("assign_room") && (
-          <Button
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() => {
-              setMode("room");
-              setValidation("");
-            }}
-          >
-            {stay.room_assignments.length ? "Move room" : "Assign room"}
-          </Button>
-        )}
-        {stay.status === "reserved" && allowed("checkin") && (
-          <Button
-            disabled={mutation.isPending || !stay.room_assignments.length}
-            onClick={() => setConfirm("check-in")}
-          >
-            Check in
-          </Button>
-        )}
-        {stay.status === "checked_in" && allowed("checkout") && (
-          <Button
-            disabled={mutation.isPending}
-            onClick={() => setConfirm("check-out")}
-          >
-            Check out
-          </Button>
-        )}
-        {stay.status === "reserved" && allowed("cancel") && (
-          <Button
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() => setConfirm("cancel")}
-          >
-            Cancel reservation
-          </Button>
-        )}
-      </div>
-      {confirm && (
-        <section className="stay-inline-confirm" aria-label="Confirm action">
-          <h3>Confirm {confirm.replaceAll("-", " ")}</h3>
-          <p>
-            {confirm === "cancel"
-              ? "This releases the reserved room interval."
-              : confirm === "check-in"
-                ? "Confirm the guests have arrived."
-                : "Confirm the guests have departed."}
-          </p>
-          <div className="stay-actions">
-            <Button
-              variant="outline"
-              disabled={mutation.isPending}
-              onClick={() => setConfirm(null)}
-            >
-              Keep reservation
-            </Button>
-            <Button
-              disabled={mutation.isPending}
-              onClick={() => mutation.mutate({ action: confirm })}
-            >
-              {mutation.isPending ? "Saving…" : "Confirm action"}
-            </Button>
-          </div>
-        </section>
-      )}
-      {mode === "dates" && (
-        <form className="stay-edit" onSubmit={dates}>
-          <h3>
-            {stay.status === "reserved"
-              ? "Reschedule reservation"
-              : "Update departure"}
-          </h3>
-          <p className="stay-muted">
-            Times are displayed in{" "}
-            {Intl.DateTimeFormat().resolvedOptions().timeZone}. Existing room
-            moves retain their scheduled times.
-          </p>
-          <fieldset disabled={mutation.isPending}>
-            <DateFields
-              start={start}
-              end={end}
-              onStart={setStart}
-              onEnd={setEnd}
-              lockStart={stay.status === "checked_in"}
-            />
-            <label>
-              Notes
-              <textarea
-                value={notes}
-                maxLength={2000}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </label>
-          </fieldset>
-          <div className="stay-actions">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setMode(null)}
-            >
-              Close editor
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              Save dates and notes
-            </Button>
-          </div>
-        </form>
-      )}
-      {mode === "room" && (
-        <form
-          className="stay-edit"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!room) {
-              setValidation("Choose a room.");
-              return;
-            }
-            setValidation("");
-            mutation.mutate({
-              action: "room-assignments",
-              body: {
-                room_place_id: room.value,
-                ...(effective
-                  ? { effective_from: new Date(effective).toISOString() }
-                  : {}),
-              },
-            });
-          }}
-        >
-          <h3>Assign or move room</h3>
-          <fieldset disabled={mutation.isPending}>
-            <FacetPicker
-              contextKey={context}
-              facet="places"
-              kind="room"
-              label="Room"
-              value={room}
-              onChange={setRoom}
-            />
-            <label>
-              Effective from (optional)
-              <input
-                type="datetime-local"
-                value={effective}
-                onChange={(e) => setEffective(e.target.value)}
-              />
-            </label>
-            <p className="stay-muted">
-              Leave blank for planned arrival on a future reservation, or now
-              for a current stay.
-            </p>
-          </fieldset>
-          <div className="stay-actions">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setMode(null)}
-            >
-              Close editor
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              Save room assignment
-            </Button>
-          </div>
-        </form>
-      )}
-      {(validation || mutation.isError) && (
-        <p role="alert" className="stay-error">
-          {validation || parseApiError(mutation.error).message}
-        </p>
-      )}
-    </>
   );
 }

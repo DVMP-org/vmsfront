@@ -21,7 +21,7 @@ import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import type { WorkspaceRelationship } from "@/types";
-import { placesApi, placeRelationshipsApi } from "./api";
+import { placeKinds, placesApi, placeRelationshipsApi } from "./api";
 import { PlaceAssignmentModal } from "./PlaceAssignmentModal";
 import { placeAssignmentCopyFor } from "./roles";
 
@@ -109,17 +109,22 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
         This place does not belong to the selected workspace.
       </InlineAlert>
     );
+  const ancestors = [...currentPlace.ancestors].reverse();
   return (
     <main className="space-y-5 pb-10">
       <PageHeader
         title={currentPlace.name}
-        description={`${currentPlace.kind.charAt(0).toUpperCase() + currentPlace.kind.slice(1)} · ${site.name}`}
+        description={`${placeKinds[currentPlace.kind]} · ${site.name}`}
         breadcrumbs={
           <Breadcrumbs
             className="mb-4"
             items={[
               { label: "Overview", href: "/admin" },
               { label: "Places", href: "/admin/places" },
+              ...ancestors.map((ancestor) => ({
+                label: ancestor.name,
+                href: `/admin/places/${ancestor.id}`,
+              })),
               { label: currentPlace.name },
             ]}
           />
@@ -146,17 +151,29 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
         <CardContent>
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-[var(--vms-ink-muted)]">Building / parent</dt>
+              <dt className="text-[var(--vms-ink-muted)]">Within</dt>
               <dd className="mt-1 font-medium">
-                {currentPlace.ancestors
-                  ?.map((ancestor) => ancestor.name)
-                  .join(" / ") || site.name}
+                {ancestors.length ? (
+                  <Link
+                    href={`/admin/places/${ancestors.at(-1)!.id}`}
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {ancestors.map((ancestor) => ancestor.name).join(" / ")}
+                  </Link>
+                ) : (
+                  site.name
+                )}
               </dd>
             </div>
             <div>
-              <dt className="text-[var(--vms-ink-muted)]">Type</dt>
+              <dt className="text-[var(--vms-ink-muted)]">
+                Structure / category
+              </dt>
               <dd className="mt-1 font-medium">
-                {currentPlace.building_type || currentPlace.kind}
+                {placeKinds[currentPlace.kind]}
+                {currentPlace.building_type
+                  ? ` · ${currentPlace.building_type.replaceAll("_", " ")}`
+                  : ""}
               </dd>
             </div>
             <div>

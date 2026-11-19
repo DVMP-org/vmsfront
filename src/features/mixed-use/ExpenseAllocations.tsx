@@ -198,6 +198,9 @@ export function ExpenseAllocations() {
       void client.invalidateQueries({
         queryKey: ["mixed-use-expense-allocations"],
       });
+      void client.invalidateQueries({
+        queryKey: ["mixed-use-overview-allocations"],
+      });
     },
     onError: (error) => toast.error(parseApiError(error).message),
   });

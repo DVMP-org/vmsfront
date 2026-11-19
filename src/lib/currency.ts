@@ -8,6 +8,15 @@
 
 export type AmountInput = string | number | null | undefined;
 
+/**
+ * The platform's currency.
+ *
+ * VMS Core bills in Nigerian Naira, so this is what a form starts on and what an
+ * amount means when nobody recorded a code. Declared once: a screen that hard-
+ * codes its own default eventually disagrees with the ledger.
+ */
+export const DEFAULT_CURRENCY = "NGN";
+
 function toAmount(value: AmountInput): number | null {
   if (value === null || value === undefined || value === "") return null;
   const amount = Number(value);

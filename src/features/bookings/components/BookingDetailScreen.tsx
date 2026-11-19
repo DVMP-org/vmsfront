@@ -5,8 +5,11 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
+import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatMoney } from "@/lib/currency";
-import { formatDateTime } from "@/lib/datetime";
+import { formatDate } from "@/lib/datetime";
+import { BookingEditDialog } from "./BookingEditDialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { BookingActivitySection } from "./detail/BookingActivitySection";
 import { BookingDetailActions } from "./detail/BookingDetailActions";
@@ -14,16 +17,19 @@ import {
   BookingDetailTabs,
   type BookingDetailTab,
 } from "./detail/BookingDetailTabs";
+import { BookingFolioSection } from "./detail/BookingFolioSection";
 import { BookingOverviewSection } from "./detail/BookingOverviewSection";
 import { BookingPaymentsSection } from "./detail/BookingPaymentsSection";
 import { BookingRoomsSection } from "./detail/BookingRoomsSection";
+import { BookingStayActions } from "./detail/BookingStayActions";
 import type { BookingDetailDto } from "../api-types";
 import { useBooking, useBookingPayments } from "../queries";
-import { outstandingBalance } from "../lib";
+import { outstandingBalance, paymentStatusView, stayNights } from "../lib";
 
 const TABS: BookingDetailTab[] = [
   { key: "overview", label: "Overview" },
   { key: "rooms", label: "Rooms & charges" },
+  { key: "folio", label: "Folio" },
   { key: "payments", label: "Payments" },
   { key: "activity", label: "Activity" },
 ];
@@ -43,6 +49,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
   const booking = useBooking(bookingId);
   const payments = useBookingPayments(bookingId);
   const [tab, setTab] = useState("overview");
+  const [editing, setEditing] = useState(false);
 
   if (booking.isPending) {
     return (
@@ -69,6 +76,8 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
 
   const data: BookingDetailDto = booking.data;
   const balance = outstandingBalance(data.total, payments.data ?? []);
+  const payment = paymentStatusView(data.financials);
+  const nights = stayNights(data.check_in_at, data.check_out_at);
   const heading = data.reference ?? data.requester_name;
 
   return (
@@ -86,11 +95,15 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
             {heading}
           </h1>
           <BookingStatusBadge status={data.status} />
+          <StatusBadge tone={payment.tone}>{payment.label}</StatusBadge>
         </div>
         <p className="text-xs text-[var(--vms-ink-muted)]">
-          {data.requester_name} · {formatDateTime(data.check_in_at)} →{" "}
-          {formatDateTime(data.check_out_at)} · {data.guest_count}{" "}
-          {data.guest_count === 1 ? "guest" : "guests"}
+          {data.requester_name} · {formatDate(data.check_in_at)} →{" "}
+          {formatDate(data.check_out_at)}
+          {nights !== null
+            ? ` · ${nights} ${nights === 1 ? "night" : "nights"}`
+            : ""}{" "}
+          · {data.guest_count} {data.guest_count === 1 ? "guest" : "guests"}
         </p>
       </div>
 
@@ -114,6 +127,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
               <BookingOverviewSection booking={data} />
             ) : null}
             {tab === "rooms" ? <BookingRoomsSection booking={data} /> : null}
+            {tab === "folio" ? <BookingFolioSection booking={data} /> : null}
             {tab === "payments" ? (
               <BookingPaymentsSection booking={data} />
             ) : null}
@@ -124,7 +138,18 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
         </div>
 
         <aside className="flex flex-col gap-4 xl:sticky xl:top-4">
-          <div className="flex flex-col gap-3 rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+          <div className="flex flex-col gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setEditing(true)}
+              >
+                Edit booking
+              </Button>
+            </div>
+            <BookingStayActions booking={data} />
             <BookingDetailActions booking={data} />
             {data.payment_status ? (
               <p className="text-xs text-[var(--vms-ink-muted)]">
@@ -132,24 +157,90 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
               </p>
             ) : null}
             <dl className="flex flex-col gap-2 border-t border-[var(--vms-line)] pt-3 text-sm">
-              <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-xs text-[var(--vms-ink-muted)]">Agreed</dt>
-                <dd className="font-medium text-[var(--vms-ink)]">
-                  {data.total === null
-                    ? "—"
-                    : formatMoney(data.total, data.currency)}
-                </dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-xs text-[var(--vms-ink-muted)]">Balance</dt>
-                <dd className="font-medium text-[var(--vms-ink)]">
-                  {balance === null ? "—" : formatMoney(balance, data.currency)}
-                </dd>
-              </div>
+              {data.financials ? (
+                <>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">
+                      Accommodation
+                    </dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(
+                        data.financials.accommodation,
+                        data.financials.currency,
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">
+                      Additional charges
+                    </dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(
+                        data.financials.additional,
+                        data.financials.currency,
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2 border-t border-[var(--vms-line)] pt-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">
+                      Total payable
+                    </dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatMoney(data.financials.total, data.financials.currency)}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">Paid</dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(data.financials.paid, data.financials.currency)}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">
+                      Outstanding
+                    </dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatMoney(
+                        data.financials.balance,
+                        data.financials.currency,
+                      )}
+                    </dd>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <dt className="text-xs text-[var(--vms-ink-muted)]">
+                      Agreed
+                    </dt>
+                    <dd className="font-medium text-[var(--vms-ink)]">
+                      {data.total === null
+                        ? "—"
+                        : formatMoney(data.total, data.currency)}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                      <dt className="text-xs text-[var(--vms-ink-muted)]">
+                        Balance
+                      </dt>
+                      <dd className="font-medium text-[var(--vms-ink)]">
+                        {balance === null
+                          ? "—"
+                          : formatMoney(balance, data.currency)}
+                      </dd>
+                    </div>
+                </>
+              )}
             </dl>
           </div>
         </aside>
       </div>
+
+      <BookingEditDialog
+        isOpen={editing}
+        onClose={() => setEditing(false)}
+        booking={data}
+      />
     </div>
   );
 }

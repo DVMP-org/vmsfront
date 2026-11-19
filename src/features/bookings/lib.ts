@@ -7,7 +7,7 @@
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
 import { humanize } from "@/lib/strings";
-import type { BookingDto } from "./api-types";
+import type { BookingDto, BookingFinancialsDto } from "./api-types";
 import type { BookingStatus, BookingSummary } from "./types";
 
 const toneByStatus: Record<BookingStatus, StatusTone> = {
@@ -106,6 +106,66 @@ export function filterValue(
       : undefined;
   }
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/**
+ * Whether the bill is settled, part paid, or untouched.
+ *
+ * Derived from the server's financial summary rather than from `payment_status`,
+ * which is a column somebody has to remember to update. "No price recorded" is
+ * its own answer: it is not the same as paid and not the same as unpaid.
+ */
+export function paymentStatusView(
+  financials: BookingFinancialsDto | null | undefined,
+): {
+  label: string;
+  tone: StatusTone;
+} {
+  if (!financials || !financials.priced) {
+    return { label: "No price recorded", tone: "neutral" };
+  }
+  const balance = Number(financials.balance);
+  const paid = Number(financials.paid);
+  if (!Number.isFinite(balance) || !Number.isFinite(paid)) {
+    return { label: "Unknown", tone: "neutral" };
+  }
+  if (balance <= 0) return { label: "Paid", tone: "success" };
+  if (paid > 0) return { label: "Part paid", tone: "warning" };
+  return { label: "Unpaid", tone: "danger" };
+}
+
+/** Whole nights between two timestamps, or `null` when the window is unusable. */
+export function stayNights(checkIn: string, checkOut: string): number | null {
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const nights = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+  return Number.isFinite(nights) ? Math.max(nights, 0) : null;
+}
+
+/**
+ * Both ends of a `date-range` table filter.
+ *
+ * The table emits one entry per end (`gte` for the start, `lte` for the end) and
+ * `filterValue` only ever returns the first, so reading a range needs its own
+ * helper rather than silently dropping the second bound.
+ */
+export function filterRange(
+  filters: ReadonlyArray<{ field: string; operator?: string; value: unknown }>,
+  field: string,
+): { from?: string; to?: string } {
+  const result: { from?: string; to?: string } = {};
+  for (const entry of filters) {
+    if (entry.field !== field) continue;
+    const value =
+      typeof entry.value === "string" && entry.value.length > 0
+        ? entry.value
+        : undefined;
+    if (!value) continue;
+    if (entry.operator === "lte") result.to = value;
+    else result.from = value;
+  }
+  return result;
 }
 
 /**

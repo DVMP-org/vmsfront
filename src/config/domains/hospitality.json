@@ -14,7 +14,7 @@
       "label": "Front office",
       "items": [
         {
-          "label": "Hospitality overview",
+          "label": "Overview",
           "href": "/admin",
           "icon": "bed",
           "module": "hospitality"

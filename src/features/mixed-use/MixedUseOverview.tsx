@@ -12,8 +12,18 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { contextualAdminLinks } from "@/config/admin-routes";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
+import {
+  PanelState,
+  ReportPanel,
+} from "@/features/dashboard/DashboardPrimitives";
+import {
+  MetricStrip,
+  type MetricDefinition,
+} from "@/features/dashboard/MetricStrip";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { mixedUseApi } from "./api";
@@ -34,8 +44,9 @@ const modules = [
   },
   {
     href: "/admin/charges",
-    label: "Revenue & charges",
-    description: "Consolidated profile charges, balances and collections.",
+    label: "Charge definitions",
+    description:
+      "Define reusable amounts and schedules, then assign them to spaces.",
     icon: Receipt,
   },
   {
@@ -60,94 +71,176 @@ const modules = [
 
 export function MixedUseOverview() {
   const selectedSite = useAppStore((state) => state.selectedSite);
+  const access = useSiteAccess();
+  const navigation = contextualAdminLinks(
+    access.workspace.data?.modules,
+    access.workspace.data?.module_groups,
+    "mixed_use",
+  );
+  const availableRoutes = new Set(
+    navigation
+      .flatMap((item) => [item, ...(item.children ?? [])])
+      .filter(
+        (item) =>
+          (!item.permission || access.allowed(item.permission)) &&
+          (item.href !== "/admin/places" || access.allowed("places.list")),
+      )
+      .map((item) => item.href),
+  );
+  const canViewPlaces = availableRoutes.has("/admin/places");
+  const canViewFacilities =
+    availableRoutes.has("/admin/mixed-use/facilities") &&
+    access.allowed("places.show");
+  const canViewAllocations =
+    availableRoutes.has("/admin/mixed-use/expenses") &&
+    access.allowed("charges.show");
+  const visibleModules = modules.filter(
+    (item) =>
+      availableRoutes.has(item.href) &&
+      (item.href !== "/admin/mixed-use/facilities" || canViewFacilities) &&
+      (item.href !== "/admin/mixed-use/expenses" || canViewAllocations),
+  );
   const facilities = useQuery({
-    queryKey: ["mixed-use-overview-facilities", selectedSite?.id],
+    queryKey: ["mixed-use-overview-facilities", access.contextKey],
     queryFn: () =>
       mixedUseApi.listFacilities(selectedSite!.id, {
         page: 1,
-        page_size: 100,
+        page_size: 1,
         active: true,
       }),
-    enabled: !!selectedSite?.id,
+    enabled: !!selectedSite?.id && canViewFacilities,
     retry: false,
   });
   const allocations = useQuery({
-    queryKey: ["mixed-use-overview-allocations", selectedSite?.id],
+    queryKey: ["mixed-use-overview-allocations", access.contextKey],
     queryFn: () =>
       mixedUseApi.listAllocations(selectedSite!.id, {
         page: 1,
-        page_size: 100,
+        page_size: 1,
+        status: "approved",
       }),
-    enabled: !!selectedSite?.id,
+    enabled: !!selectedSite?.id && canViewAllocations,
     retry: false,
   });
   const tree = useQuery({
-    queryKey: ["mixed-use-overview-tree", selectedSite?.id],
+    queryKey: ["mixed-use-overview-tree", access.contextKey],
     queryFn: () =>
       selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
+    enabled: !!selectedSite?.id && canViewPlaces,
     retry: false,
   });
-  const selectedTree = findNode(tree.data ?? [], selectedSite?.id);
-  const spaceCount = selectedTree ? countDescendants(selectedTree) : 0;
-  const approvedAllocations =
-    allocations.data?.items.filter((item) => item.status === "approved")
-      .length ?? 0;
+  const spaceCount = (tree.data ?? []).reduce(
+    (count, node) => count + 1 + countDescendants(node),
+    0,
+  );
+  const firstUse = canViewPlaces && tree.isSuccess && spaceCount === 0;
+  const summaryMetrics: MetricDefinition[] = [];
+  if (canViewPlaces) {
+    summaryMetrics.push({
+      label: "Spaces in scope",
+      value: spaceCount,
+      detail: "Buildings, units, rooms and shared spaces in this Site",
+      icon: Building2,
+      state: tree.isPending ? "loading" : tree.isError ? "error" : "ready",
+    });
+  }
+  if (canViewFacilities) {
+    summaryMetrics.push({
+      label: "Active shared facilities",
+      value: facilities.data?.total ?? 0,
+      detail: "Facilities currently enabled for this Site",
+      icon: Share2,
+      state: facilities.isPending
+        ? "loading"
+        : facilities.isError
+          ? "error"
+          : "ready",
+    });
+  }
+  if (canViewAllocations) {
+    summaryMetrics.push({
+      label: "Approved allocations",
+      value: allocations.data?.total ?? 0,
+      detail: "Approved shared cost allocations at this Site",
+      icon: Calculator,
+      state: allocations.isPending
+        ? "loading"
+        : allocations.isError
+          ? "error"
+          : "ready",
+    });
+  }
 
   return (
     <MixedUseShell
       title="Operations"
       description="One operating view across residential, commercial, hospitality and shared spaces."
-      primaryAction={
-        <Badge variant="success">
-          {selectedSite?.name || "Mixed-use property"}
-        </Badge>
-      }
     >
-      <section
-        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-        aria-label="Mixed-use operating summary"
-      >
-        <Metric
-          label="Spaces in scope"
-          value={spaceCount}
-          unavailable={tree.isPending || tree.isError || !selectedSite?.id}
-        />
-        <Metric
-          label="Shared facilities"
-          value={facilities.data?.total ?? 0}
-          unavailable={facilities.isError}
-        />
-        <Metric
-          label="Approved allocations"
-          value={approvedAllocations}
-          unavailable={allocations.isError}
-        />
-        <article className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-            Context
+      {access.workspace.isPending ? (
+        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+          <PanelState
+            compact
+            kind="loading"
+            title="Loading Site operations"
+            description="Checking the available modules and operating summary."
+          />
+        </section>
+      ) : firstUse ? (
+        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:p-6">
+          <h2 className="text-lg font-semibold">
+            Set up your mixed-use spaces
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
+            Start with buildings, units, rooms or shared spaces. Use Places to
+            organize the people and work at each location; the Site's enabled
+            modules determine which workflows are available.
           </p>
-          <p className="mt-3 text-lg font-semibold">Mixed-use</p>
-          <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-            Domain classification follows each space and occupancy.
-          </p>
-        </article>
-      </section>
+          {access.allowed("places.create") ? (
+            <Button asChild className="mt-4">
+              <Link href="/admin/places">Set up places</Link>
+            </Button>
+          ) : (
+            <p className="mt-3 text-sm text-[var(--vms-ink-muted)]">
+              Ask a Site administrator to configure the place inventory.
+            </p>
+          )}
+        </section>
+      ) : (
+        <MetricStrip
+          label="Mixed-use operating summary"
+          metrics={summaryMetrics}
+        />
+      )}
+      {tree.isError || facilities.isError || allocations.isError ? (
+        <PanelState
+          compact
+          kind="error"
+          title="Some mixed-use data is unavailable"
+          description="Retry the unavailable Site operations data."
+          isRetrying={
+            tree.isFetching || facilities.isFetching || allocations.isFetching
+          }
+          onRetry={() => {
+            if (canViewPlaces && tree.isError) void tree.refetch();
+            if (canViewFacilities && facilities.isError)
+              void facilities.refetch();
+            if (canViewAllocations && allocations.isError)
+              void allocations.refetch();
+          }}
+        />
+      ) : null}
 
       <AttentionQueueSection
         useCase="mixed_use"
         propertyName={selectedSite?.name || "this property"}
       />
 
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-        <header className="border-b border-[var(--vms-line)] p-5">
-          <h2 className="text-lg font-semibold">Place modules</h2>
-          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-            One cohesive property-management experience, backed by shared
-            operational services.
-          </p>
-        </header>
+      <ReportPanel
+        title="Site operations"
+        description="Open the inventory, relationships and shared operations for this Site."
+      >
         <div className="grid gap-px bg-[var(--vms-line)] sm:grid-cols-2 xl:grid-cols-3">
-          {modules.map(({ href, label, description, icon: Icon }) => (
+          {visibleModules.map(({ href, label, description, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -165,43 +258,16 @@ export function MixedUseOverview() {
             </Link>
           ))}
         </div>
-      </section>
+        {!visibleModules.length ? (
+          <p className="p-5 text-sm text-[var(--vms-ink-muted)]">
+            {access.workspace.isPending
+              ? "Loading available operations…"
+              : "No operation shortcuts are available for your current Site access."}
+          </p>
+        ) : null}
+      </ReportPanel>
     </MixedUseShell>
   );
-}
-
-function Metric({
-  label,
-  value,
-  unavailable = false,
-}: {
-  label: string;
-  value: number;
-  unavailable?: boolean;
-}) {
-  return (
-    <article className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-        {label}
-      </p>
-      <p className="mt-3 text-2xl font-semibold">
-        {unavailable ? "Unavailable" : value}
-      </p>
-    </article>
-  );
-}
-
-function findNode(
-  nodes: PlaceTreeNode[],
-  selectedId?: string,
-): PlaceTreeNode | null {
-  if (!selectedId) return null;
-  for (const node of nodes) {
-    if (node.id === selectedId) return node;
-    const child = findNode(node.children, selectedId);
-    if (child) return child;
-  }
-  return null;
 }
 
 function countDescendants(node: PlaceTreeNode): number {

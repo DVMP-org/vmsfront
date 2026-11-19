@@ -13,8 +13,8 @@ import {
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/Input";
 import { SlideOver } from "@/components/ui/SlideOver";
-import { parseApiError } from "@/lib/error-utils";
-import { hospitalityApi } from "@/features/hospitality/api";
+import { DEFAULT_CURRENCY } from "@/lib/currency";
+import { parseApiError } from "@/lib/error-utils"; import { hospitalityApi } from "@/features/hospitality/api";
 import { RoomEditor } from "@/features/hospitality/components/RoomEditor";
 import {
   HospitalityAdminPage,
@@ -48,7 +48,7 @@ const emptyRoom = {
   floor: "",
   capacity: "2",
   base_rate: "",
-  currency: "USD",
+  currency: DEFAULT_CURRENCY,
 };
 
 export default function HospitalityRoomsPage() {

@@ -151,6 +151,13 @@ interface DataTableProps<T> {
   /** Show the shared columns and density controls. */
   enableViewControls?: boolean;
   /**
+   * Wrap search, filters, actions and rows in one bordered surface.
+   *
+   * Directories use this so the controls and the table read as a single panel
+   * rather than a floating toolbar above a detached table.
+   */
+  card?: boolean;
+  /**
    * Optional tree rendering. `data` must already be in depth-first tree order.
    * Descendants of collapsed rows are hidden; a search or a filter keeps its
    * matches together with the ancestor rows that give them context, so a match
@@ -209,6 +216,7 @@ export function DataTable<T extends Record<string, any>>({
   rowClassName,
   enableRowStriping = false,
   enableViewControls = true,
+  card = false,
   hierarchy,
 }: DataTableProps<T>) {
   // Validate and normalize inputs to prevent runtime errors
@@ -949,7 +957,14 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <div className={cn("space-y-3 xs:space-y-4", className)}>
+    <div
+      className={cn(
+        "space-y-3 xs:space-y-4",
+        card &&
+        "overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]",
+        className,
+      )}
+    >
       {confirmationDialog}
       {(searchable || availableFilters.length > 0 || enableViewControls) && (
         <div className="m-2 flex flex-wrap items-center gap-2 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">

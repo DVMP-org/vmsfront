@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/Input";
 import { SlideOver } from "@/components/ui/SlideOver";
-import { formatMoney } from "@/lib/currency";
+import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { hospitalityApi } from "../api";
@@ -29,7 +29,7 @@ const roomStatusOptions: Array<{
   { value: "out_of_service", label: "Out of service" },
 ];
 
-const CURRENCIES = ["USD", "EUR", "GBP", "NGN", "KES", "ZAR", "AED"];
+const CURRENCIES = ["NGN", "USD", "EUR", "GBP", "KES", "ZAR", "AED"];
 
 const emptyRoom = {
   name: "",
@@ -38,7 +38,7 @@ const emptyRoom = {
   floor: "",
   capacity: "2",
   base_rate: "",
-  currency: "USD",
+  currency: DEFAULT_CURRENCY,
 };
 
 type RoomValues = {

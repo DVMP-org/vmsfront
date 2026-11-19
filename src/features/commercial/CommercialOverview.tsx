@@ -21,6 +21,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MetricStrip } from "@/features/dashboard/MetricStrip";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
+import { formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
@@ -79,11 +80,16 @@ export default function CommercialOverview() {
       (left, right) =>
         Number(right.outstanding_amount) - Number(left.outstanding_amount),
     );
-  const currency = outstandingAssignments[0]?.charge_definition.currency;
-  const openBalance = outstandingAssignments.reduce(
-    (total, assignment) => total + Number(assignment.outstanding_amount || 0),
-    0,
-  );
+  const balancesByCurrency = new Map<string, number>();
+  for (const assignment of outstandingAssignments) {
+    const code = assignment.charge_definition.currency.toUpperCase();
+    balancesByCurrency.set(code, (balancesByCurrency.get(code) ?? 0) + Number(assignment.outstanding_amount || 0));
+  }
+  const outstandingLabel = [...balancesByCurrency]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([code, amount]) => formatMoneyWithCode(amount, code))
+    .join(" · ") || "No balance due";
+
 
   const occupancy = buildOccupancy(inventory, places, scopedRelationships);
   const occupiedCount = occupancy.reduce((sum, row) => sum + row.occupied, 0);
@@ -200,7 +206,7 @@ export default function CommercialOverview() {
           {
             icon: WalletCards,
             label: "Outstanding",
-            value: formatMoney(openBalance, currency),
+            value: outstandingLabel,
             detail: `${outstandingAssignments.length} assignments with a positive balance`,
             attention: outstandingAssignments.length > 0,
             state: tree.isPending || assignments.isPending ? "loading" : tree.isError || assignments.isError ? "error" : "ready",

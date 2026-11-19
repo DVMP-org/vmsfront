@@ -7,6 +7,7 @@
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
 import { formatDateTime } from "@/lib/datetime";
+import type { BookingStatus } from "@/features/bookings/types";
 import type { ReservationDto, ReservationStatus } from "./api-types";
 
 const toneByStatus: Record<ReservationStatus, StatusTone> = {
@@ -90,4 +91,64 @@ export function itemQuantityLabel(
         ? "unit"
         : "units";
   return `${value} ${noun}`;
+}
+
+/**
+ * A reservation's state, in the words a desk uses.
+ *
+ * Reservations are bookings whose room is not named yet, so they carry booking
+ * statuses — but "requested" reads as "pending" to a person taking a call, and
+ * "awaiting a deposit" is what `pending_payment` actually means here. There is no
+ * "converted" status to map: conversion promotes the row to a booking, so it
+ * leaves this directory rather than sitting in it labelled converted.
+ */
+const bookingStatusLabel: Record<BookingStatus, string> = {
+  requested: "Pending",
+  pending_payment: "Awaiting deposit",
+  confirmed: "Confirmed",
+  declined: "Declined",
+  cancelled: "Cancelled",
+  checked_in: "Checked in",
+  checked_out: "Checked out",
+  no_show: "No show",
+  expired: "Expired",
+};
+
+export function reservationBookingStatusLabel(status: BookingStatus): string {
+  return bookingStatusLabel[status] ?? status;
+}
+
+const bookingStatusTone: Record<BookingStatus, StatusTone> = {
+  requested: "warning",
+  pending_payment: "warning",
+  confirmed: "info",
+  declined: "danger",
+  cancelled: "neutral",
+  checked_in: "success",
+  checked_out: "neutral",
+  no_show: "danger",
+  expired: "neutral",
+};
+
+export function reservationBookingStatusTone(
+  status: BookingStatus,
+): StatusTone {
+  return bookingStatusTone[status] ?? "neutral";
+}
+
+/** The states the reservations directory offers as filters. */
+export const RESERVATION_DIRECTORY_STATUSES: BookingStatus[] = [
+  "requested",
+  "pending_payment",
+  "confirmed",
+  "expired",
+  "cancelled",
+  "declined",
+];
+
+/** A reservation may be converted only while it is still awaiting a decision. */
+export function canConvertReservation(
+  reservation: Pick<{ kind: string; status: string }, "kind" | "status">,
+): boolean {
+  return reservation.kind === "reservation" && reservation.status === "requested";
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useHospitalityRooms } from "@/features/hospitality/queries";
+import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import {
   useAllocateReservation,
@@ -27,9 +28,12 @@ import type { ReservationDto } from "../api-types";
  */
 export function ReservationActions({
   reservation,
+  resourceLabel,
 }: {
   reservation: ReservationDto;
+  resourceLabel: string;
 }) {
+  const [confirming, setConfirming] = useState(false);
   const [releasing, setReleasing] = useState(false);
   const [roomId, setRoomId] = useState("");
   const rooms = useHospitalityRooms();
@@ -43,27 +47,66 @@ export function ReservationActions({
   // already be sold. The server refuses it too — this only keeps the button off
   // the screen rather than inviting a refusal.
   const canConfirm = reservation.status === "held" && reservation.is_holding;
-  const needsRoom = Boolean(reservation.place_type) && !reservation.place_id;
+  const needsRoom =
+    Boolean(reservation.place_type) &&
+    !reservation.place_id &&
+    reservation.is_holding;
   const canRelease =
     reservation.status === "held" || reservation.status === "confirmed";
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        {canConfirm ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={pending}
-            aria-busy={confirm.isPending}
-            onClick={() => confirm.mutate(reservation.id)}
-          >
-            Confirm
-          </Button>
+        {canConfirm && !releasing ? (
+          confirming ? (
+            <div className="w-full space-y-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-2.5">
+              <p className="text-xs leading-5 text-[var(--vms-ink-muted)]">
+                Confirm {resourceLabel} for{" "}
+                {formatDateTime(reservation.start_at)} to{" "}
+                {formatDateTime(reservation.end_at)}?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={pending}
+                  aria-busy={confirm.isPending}
+                  onClick={() =>
+                    confirm.mutate(reservation.id, {
+                      onSuccess: () => setConfirming(false),
+                    })
+                  }
+                >
+                  Confirm hold
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => setConfirming(false)}
+                >
+                  Keep held
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => {
+                setReleasing(false);
+                setConfirming(true);
+              }}
+            >
+              Confirm
+            </Button>
+          )
         ) : null}
 
-        {needsRoom ? (
+        {needsRoom && !confirming && !releasing ? (
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
               <span className="sr-only">Assign a room</span>
@@ -99,19 +142,22 @@ export function ReservationActions({
           </div>
         ) : null}
 
-        {canRelease ? (
+        {canRelease && !confirming ? (
           releasing ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-[var(--vms-ink-muted)]">
-                Put the room back on sale?
+                Release {resourceLabel} for{" "}
+                {formatDateTime(reservation.start_at)} to{" "}
+                {formatDateTime(reservation.end_at)}?
               </span>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
+                disabled={pending}
                 onClick={() => setReleasing(false)}
               >
-                Keep it
+                Keep hold
               </Button>
               <Button
                 type="button"
@@ -119,7 +165,10 @@ export function ReservationActions({
                 disabled={pending}
                 aria-busy={release.isPending}
                 onClick={() =>
-                  release.mutate({ reservationId: reservation.id })
+                  release.mutate(
+                    { reservationId: reservation.id },
+                    { onSuccess: () => setReleasing(false) },
+                  )
                 }
               >
                 Release
@@ -131,7 +180,10 @@ export function ReservationActions({
               size="sm"
               variant="outline"
               disabled={pending}
-              onClick={() => setReleasing(true)}
+              onClick={() => {
+                setConfirming(false);
+                setReleasing(true);
+              }}
             >
               Release
             </Button>

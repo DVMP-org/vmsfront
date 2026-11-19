@@ -33,6 +33,7 @@ import {
   type MaintenanceRequest,
 } from "@/features/maintenance/api";
 import type { WorkspaceRelationship } from "@/types";
+import { formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import { formatCurrency } from "@/lib/utils";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
@@ -122,10 +123,15 @@ export default function ResidentialOverview() {
   const outstandingAssignments = scopedAssignments.filter(
     (assignment) => Number(assignment.outstanding_amount || 0) > 0,
   );
-  const totalChargesDue = outstandingAssignments.reduce(
-    (total, assignment) => total + Number(assignment.outstanding_amount || 0),
-    0,
-  );
+  const balancesByCurrency = new Map<string, number>();
+  for (const assignment of outstandingAssignments) {
+    const code = assignment.charge_definition.currency.toUpperCase();
+    balancesByCurrency.set(code, (balancesByCurrency.get(code) ?? 0) + Number(assignment.outstanding_amount || 0));
+  }
+  const outstandingLabel = [...balancesByCurrency]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([code, amount]) => formatMoneyWithCode(amount, code))
+    .join(" · ") || "No balance due";
   const overdueAssignments = outstandingAssignments.filter(
     (assignment) =>
       !!assignment.next_due_date &&
@@ -226,7 +232,7 @@ export default function ResidentialOverview() {
           {
             icon: WalletCards,
             label: "Charges due",
-            value: formatCompactMoney(totalChargesDue),
+            value: outstandingLabel,
             detail: "Outstanding assigned charges in this Site",
             state: tree.isPending || chargeAssignments.isPending ? "loading" : tree.isError || chargeAssignments.isError ? "error" : "ready",
           },
@@ -302,8 +308,8 @@ export default function ResidentialOverview() {
               tone="danger"
               title="Overdue charges"
               detail={
-                outstandingAssignments.length
-                  ? `${overdueAssignments.length} assigned charges are past due · ${formatCurrency(totalChargesDue)} outstanding`
+                overdueAssignments.length
+                  ? `${overdueAssignments.length} assigned charge${overdueAssignments.length === 1 ? " is" : "s are"} past due and need follow-up.`
                   : "No assigned charge is currently overdue."
               }
               count={overdueAssignments.length}
@@ -838,21 +844,4 @@ function relativeTime(value: string) {
   if (days === 0) return `Today, ${format(date, "HH:mm")}`;
   if (days === 1) return `Yesterday, ${format(date, "HH:mm")}`;
   return formatDistanceToNowStrict(date, { addSuffix: true });
-}
-
-function formatCompactMoney(value: number) {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    currencyDisplay: "code",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
-export function priorityTone(priority: string): StatusTone {
-  if (priority === "urgent") return "danger";
-  if (priority === "high") return "warning";
-  if (priority === "normal") return "info";
-  return "neutral";
 }

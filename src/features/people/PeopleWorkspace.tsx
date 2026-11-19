@@ -189,12 +189,7 @@ export default function PeopleWorkspace() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <Link href="/admin/managers">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                Managers
-              </Link>
-            </Button>
+
             {canManage ? (
               <Button onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
@@ -233,23 +228,7 @@ export default function PeopleWorkspace() {
         </InlineAlert>
       ) : (
         <section className="space-y-3">
-          <label className="flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3">
-            <span className="text-xs font-semibold text-[var(--vms-ink-muted)]">
-              Party role
-            </span>
-            <select
-              value={role}
-              onChange={(event) => setRole(event.target.value)}
-              className="min-h-9 flex-1 bg-transparent text-sm"
-            >
-              <option value="">All roles</option>
-              {roles.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+
           <DataTable
             data={rows}
             columns={columns}

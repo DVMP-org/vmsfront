@@ -162,7 +162,9 @@ describe("hospitality room inventory", () => {
         // `room_type` from it so the two cannot disagree.
         place_group_id: "group-deluxe",
         base_rate: "95.00",
-        currency: "USD",
+        // NGN is the platform default, so a room entered without choosing a
+        // currency is priced in Naira.
+        currency: "NGN",
       }),
     );
   });

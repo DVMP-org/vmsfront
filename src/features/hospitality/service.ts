@@ -23,6 +23,9 @@ export interface AssignableRoom {
    * asking the server for a count that would then have to be kept in step.
    */
   place_group_id: string | null;
+  /** The category's name, when the room has one; the server sends both. */
+  place_group_name?: string | null;
+  room_type?: string;
 }
 
 export const hospitalityService = {

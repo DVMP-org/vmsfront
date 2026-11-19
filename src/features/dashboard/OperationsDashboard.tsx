@@ -202,14 +202,12 @@ export function OperationsDashboard({
             value: activeProperties.length,
             detail: `${data.root_places.length} portfolio roots`,
             icon: Building2,
-            tone: "coral",
           },
           {
             label: "People",
             value: metrics.total_parties,
             detail: `${metrics.active_relationships} active relationships`,
             icon: Users,
-            tone: "ink",
           },
           {
             label: "Pending approvals",
@@ -217,7 +215,6 @@ export function OperationsDashboard({
             detail: `${metrics.active_visit_authorizations} valid invitations`,
             icon: ShieldAlert,
             attention: metrics.pending_visit_authorizations > 0,
-            tone: "warning",
             href: "/admin/invitations",
           },
           {
@@ -225,7 +222,6 @@ export function OperationsDashboard({
             value: metrics.active_checkpoint_presences,
             detail: `${metrics.active_visit_sessions} active visit sessions`,
             icon: UsersRound,
-            tone: "success",
             href: "/admin/checkpoints",
           },
           {
@@ -233,7 +229,6 @@ export function OperationsDashboard({
             value: countDirection(data, "entry"),
             detail: `${countDirection(data, "exit")} exits in the recent feed`,
             icon: DoorOpen,
-            tone: "info",
             href: "/admin/checkpoints",
           },
           {
@@ -241,7 +236,6 @@ export function OperationsDashboard({
             value: metrics.checkpoint_events_today,
             detail: "Recorded today across the property",
             icon: Clock3,
-            tone: "ink",
             href: "/admin/checkpoints",
           },
         ]}

@@ -26,6 +26,24 @@ export interface BookingActivityDto {
   occurred_at: string;
 }
 
+/**
+ * The bill, as the server derived it from persisted lines.
+ *
+ * Decimal strings, not numbers: money is never rounded on the way to the screen.
+ * `priced` separates "nothing owed" from "no price agreed"; `billed` says a stay
+ * (and so a folio) exists and `additional` covers what was bought on top.
+ */
+export interface BookingFinancialsDto {
+  currency: string;
+  accommodation: string;
+  additional: string;
+  total: string;
+  paid: string;
+  balance: string;
+  priced: boolean;
+  billed: boolean;
+}
+
 export interface BookingDto {
   id: string;
   site_id: string;
@@ -59,6 +77,8 @@ export interface BookingDto {
   /** `null` while nobody has recorded a payment against this booking. */
   payment_status: string | null;
   created_at: string;
+  /** Derived from the recorded lines by the server, never from a counter. */
+  financials?: BookingFinancialsDto | null;
 }
 
 export interface BookingDetailDto extends BookingDto {
@@ -67,6 +87,9 @@ export interface BookingDetailDto extends BookingDto {
   items: BookingItemDto[];
   /** Capacity held against it — one per room, not one per booking. */
   reservations: ReservationDto[];
+  /** The stay approval opened: what check-in, check-out and the folio act on. */
+  hospitality_stay_id?: string | null;
+  hospitality_stay_status?: string | null;
 }
 
 export type BookingPaymentStatus = "captured" | "refunded" | "void";
@@ -81,6 +104,10 @@ export interface BookingPaymentDto {
   reference: string | null;
   /** Set once the money has been posted into the stay's folio. */
   folio_line_id: string | null;
+  /** When it was taken; falls back to `created_at` on older rows. */
+  paid_at?: string | null;
+  note?: string | null;
+  recorded_by_admin_id?: string | null;
   created_at: string;
 }
 
@@ -95,6 +122,13 @@ export interface BookingListParams {
   place_id?: string;
   /** Matches the guest's name, email, phone or stated purpose, server-side. */
   search?: string;
+  /**
+   * Overlap filter on the stay window, not on the creation date. Anything whose
+   * period intersects the window is returned — half-open, so a check-out morning
+   * does not collide with the same day's check-in.
+   */
+  overlaps_from?: string;
+  overlaps_to?: string;
 }
 
 export interface RecordBookingPaymentInput {
@@ -102,6 +136,35 @@ export interface RecordBookingPaymentInput {
   currency?: string;
   method?: "card" | "transfer" | "cash" | "other";
   reference?: string | null;
+  /** When the money changed hands; omitted means now. */
+  paid_at?: string | null;
+  note?: string | null;
+}
+
+/** Fields a desk may correct without cancelling and re-taking the booking. */
+export interface BookingUpdateInput {
+  requester_name?: string;
+  requester_email?: string;
+  requester_phone?: string;
+  guest_count?: number;
+  purpose?: string;
+  notes?: string;
+  check_in_at?: string;
+  check_out_at?: string;
+}
+
+/**
+ * Something bought during the stay, posted to the guest's folio.
+ *
+ * Either an amount, or a quantity and a unit price — the server derives the line
+ * total so the desk enters what the receipt says rather than doing arithmetic.
+ */
+export interface BookingChargeInput {
+  description: string;
+  category?: "room" | "service" | "charge";
+  amount?: string;
+  quantity?: string;
+  unit_price?: string;
 }
 
 /**

@@ -13,7 +13,9 @@ import { unwrap } from "@/lib/api-envelope";
 import { bookingsService } from "./service";
 import type {
   AdminBookingCreateInput,
+  BookingChargeInput,
   BookingListParams,
+  BookingUpdateInput,
   RecordBookingPaymentInput,
 } from "./api-types";
 
@@ -24,6 +26,8 @@ export const bookingKeys = {
     ["bookings", "detail", bookingId] as const,
   payments: (bookingId: string | null) =>
     ["bookings", "payments", bookingId] as const,
+  folio: (bookingId: string | null) =>
+    ["bookings", "folio", bookingId] as const,
 };
 
 export function useBookings(params: BookingListParams = {}) {
@@ -47,6 +51,22 @@ export function useBookingPayments(bookingId: string | null) {
     queryKey: bookingKeys.payments(bookingId),
     queryFn: async () =>
       unwrap(await bookingsService.listPayments(bookingId as string)),
+    enabled: Boolean(bookingId),
+  });
+}
+
+/**
+ * The guest's bill, loaded only where it is shown.
+ *
+ * The directory and the quick-view drawer read the financial summary that comes
+ * with the booking; this is for the details page's folio tab, so opening a
+ * register does not download every guest's line items.
+ */
+export function useBookingFolio(bookingId: string | null) {
+  return useQuery({
+    queryKey: bookingKeys.folio(bookingId),
+    queryFn: async () =>
+      unwrap(await bookingsService.folio(bookingId as string)),
     enabled: Boolean(bookingId),
   });
 }
@@ -88,6 +108,19 @@ export function useCancelBooking(bookingId: string) {
   );
 }
 
+/**
+ * Correct a booking without cancelling it.
+ *
+ * The server may move capacity or the stay as part of a date change, so the whole
+ * booking cache is invalidated: the row, its trail and the reservations surfaces
+ * all describe the same thing.
+ */
+export function useUpdateBooking(bookingId: string) {
+  return useDecisionMutation(bookingId, async (input: BookingUpdateInput) =>
+    unwrap(await bookingsService.update(bookingId, input)),
+  );
+}
+
 export function useAssignBookingRoom(bookingId: string) {
   return useDecisionMutation(bookingId, async (placeId: string) =>
     unwrap(await bookingsService.assignRoom(bookingId, placeId)),
@@ -99,6 +132,32 @@ export function useRecordBookingPayment(bookingId: string) {
     bookingId,
     async (input: RecordBookingPaymentInput) =>
       unwrap(await bookingsService.recordPayment(bookingId, input)),
+  );
+}
+
+/**
+ * Post something bought during the stay to the guest's folio.
+ *
+ * Not optimistic: the bill is what the desk collects, so the summary shown after
+ * saving is the server's — a line that failed to persist must never appear in a
+ * total somebody is about to charge for.
+ */
+export function useAddBookingCharge(bookingId: string) {
+  return useDecisionMutation(bookingId, async (input: BookingChargeInput) =>
+    unwrap(await bookingsService.addCharge(bookingId, input)),
+  );
+}
+
+/**
+ * Confirm a reservation into a booking by naming its room.
+ *
+ * The server does both steps, so success means a booking with a stay, a badge
+ * and the reservation's money already posted. The whole booking cache is
+ * invalidated: the row leaves the reservations register in the same breath.
+ */
+export function useConvertReservation(bookingId: string) {
+  return useDecisionMutation(bookingId, async (placeIds: string[]) =>
+    unwrap(await bookingsService.convert(bookingId, placeIds)),
   );
 }
 

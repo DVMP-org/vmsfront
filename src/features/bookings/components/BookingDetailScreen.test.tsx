@@ -9,6 +9,10 @@ const cancelMutate = vi.fn();
 
 vi.mock("@/features/hospitality/queries", () => ({
   useHospitalityRooms: () => ({ data: [], isPending: false }),
+  // The details page can drive the stay's own transitions; these render only
+  // when the server says the stay is in a state that accepts them.
+  useCheckInStay: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCheckOutStay: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 // The hooks are mocked at module scope, so the fixture has to be reachable from
@@ -141,6 +145,27 @@ describe("booking detail", () => {
 
     // "Unknown" rather than zero: nobody agreed a price, so nothing is settled.
     expect(screen.getAllByText("Unknown").length).toBeGreaterThan(0);
+  });
+
+  it("shows the total payable, including what was bought on top", () => {
+    mount({
+      financials: {
+        currency: "NGN",
+        accommodation: "240000.00",
+        additional: "45000.00",
+        total: "285000.00",
+        paid: "240000.00",
+        balance: "45000.00",
+        priced: true,
+        billed: true,
+      },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Payments" }));
+
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getByText("Total payable")).toBeTruthy();
+    expect(within(panel).getByText(/285/)).toBeTruthy();
+    expect(within(panel).getByText("Additional charges")).toBeTruthy();
   });
 
   it("will not cancel without a reason", () => {

@@ -43,7 +43,13 @@ function defaultWindow() {
  * whether it is allowed at all — a commercial Site is refused, and the form says
  * so rather than offering fields that would fail.
  */
-export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
+export function BookingCreateForm({
+  onCreated,
+  initialKind = "booking",
+}: {
+  onCreated: () => void;
+  initialKind?: AdminBookingCreateInput["kind"];
+}) {
   const context = useWorkspaceContext();
   const domain = context.data?.effective_use_case ?? null;
   const allowedKinds = domain ? (KINDS_BY_DOMAIN[domain] ?? []) : [];
@@ -53,7 +59,8 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
   const defaults = defaultWindow();
   const [source, setSource] =
     useState<AdminBookingCreateInput["source"]>("phone");
-  const [kind, setKind] = useState<AdminBookingCreateInput["kind"]>("booking");
+  const [kind, setKind] =
+    useState<AdminBookingCreateInput["kind"]>(initialKind);
   const [placeId, setPlaceId] = useState("");
   const [hostId, setHostId] = useState("");
   const [checkIn, setCheckIn] = useState(defaults.checkIn);
@@ -271,6 +278,7 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
           <input
             {...control}
             className={fieldControlClassName}
+            placeholder="Ilori Ayodeji"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
@@ -284,6 +292,7 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
               {...control}
               type="email"
               className={fieldControlClassName}
+              placeholder="name@ilori.com.ng"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
@@ -295,6 +304,7 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
               {...control}
               type="tel"
               className={fieldControlClassName}
+              placeholder="+234 08080..."
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
             />
@@ -304,12 +314,14 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
 
       <Field id="booking-purpose" label="Purpose" description="Optional.">
         {(control) => (
-          <input
+          <textarea
             {...control}
+            rows={10}
+            placeholder="Why are they coming?"
             className={fieldControlClassName}
             value={purpose}
             onChange={(event) => setPurpose(event.target.value)}
-          />
+          ></textarea>
         )}
       </Field>
 

@@ -12,16 +12,15 @@ export interface MetricDefinition {
   href?: string;
   attention?: boolean;
   icon?: LucideIcon;
-  tone?: "coral" | "ink" | "info" | "success" | "warning";
   state?: "ready" | "loading" | "error";
 }
 
 const columns: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-1 sm:grid-cols-2",
-  3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  3: "grid-cols-1 sm:grid-cols-3",
   4: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
-  5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5",
+  5: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5",
   6: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6",
 };
 
@@ -42,7 +41,7 @@ export function MetricStrip({
         columns[Math.min(metrics.length, 6)],
       )}
     >
-      {metrics.map((metric) => {
+      {metrics.map((metric, index) => {
         const Icon = metric.icon;
         const state = metric.state ?? "ready";
         const content = (
@@ -64,7 +63,7 @@ export function MetricStrip({
             <dd
               className={cn(
                 "mt-1 text-xs leading-[18px]",
-                state === "ready" && (metric.attention || metric.tone === "warning")
+                state === "ready" && metric.attention
                   ? "text-[var(--vms-warning)]"
                   : "text-[var(--vms-ink-muted)]",
               )}
@@ -77,16 +76,26 @@ export function MetricStrip({
             </dd>
           </dl>
         );
-        const classes = "min-w-0 bg-[var(--vms-surface)] p-4 sm:p-5";
+        const classes = cn(
+          "min-w-0 bg-[var(--vms-surface)] p-4 sm:p-5",
+          metrics.length === 5 && index === 4 && "sm:col-span-2 xl:col-span-1",
+        );
         return metric.href ? (
           <Link
             key={metric.label}
             href={metric.href}
-            className={cn(classes, "transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] motion-reduce:transition-none")}
+            className={cn(
+              classes,
+              "transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] motion-reduce:transition-none",
+            )}
           >
             {content}
           </Link>
-        ) : <div key={metric.label} className={classes}>{content}</div>;
+        ) : (
+          <div key={metric.label} className={classes}>
+            {content}
+          </div>
+        );
       })}
     </section>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import {
@@ -8,71 +7,104 @@ import {
   type Column,
   type FilterConfig,
 } from "@/components/ui/DataTable";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
-import { formatDateTime } from "@/lib/datetime";
+import { useHospitalityRooms } from "@/features/hospitality/queries";
+import { formatMoney } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 import { BookingCreateForm } from "./BookingCreateForm";
 import { BookingPageLink } from "./BookingPageLink";
+import { BookingQuickViewDrawer } from "./BookingQuickViewDrawer";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { RequesterCell } from "./RequesterCell";
-import { filterValue } from "../lib";
+import {
+  filterRange,
+  filterValue,
+  paymentStatusView,
+  stayNights,
+} from "../lib";
 import type { BookingDto, BookingListParams } from "../api-types";
 import { useBookings } from "../queries";
 
 const PAGE_SIZE = 20;
 
-const KIND_LABELS: Record<string, string> = {
-  booking: "Booking",
-  reservation: "Reservation",
-};
-
-const SOURCE_LABELS: Record<string, string> = {
-  public: "Public page",
-  phone: "Phone",
-  walk_in: "Walk-in",
-  staff: "Staff",
-};
+const STATUS_OPTIONS: Array<{
+  value: NonNullable<BookingListParams["status"]>;
+  label: string;
+}> = [
+    { value: "pending_payment", label: "Awaiting payment" },
+    { value: "requested", label: "To decide" },
+    { value: "confirmed", label: "Confirmed" },
+    { value: "checked_in", label: "Checked in" },
+    { value: "checked_out", label: "Checked out" },
+    { value: "declined", label: "Declined" },
+    { value: "cancelled", label: "Cancelled" },
+    { value: "no_show", label: "No show" },
+  ];
 
 /**
- * One Site's booking register.
+ * The Site's bookings directory — confirmed arrangements, and nothing else.
  *
- * The Site comes from the API client's selected Site, so this page can never
- * show another Site's bookings even by accident.
+ * Reservations are deliberately absent. They hold capacity without naming a room
+ * and without a bill, so they are a different question with their own screen.
+ * `kind` is fixed here rather than offered as a control: a directory that can
+ * show both is a directory nobody can trust to show one.
  *
- * Both bookings and reservations live here. A reservation is not a different
- * entity — it is a booking whose room is not named yet — so the register shows
- * one list and the Kind filter is what narrows it. Two screens would have made a
- * desk check two places to answer one question.
+ * Search, filters and pagination run on the server — filtering the twenty rows
+ * on screen would quietly hide a match on page two. The money columns come from
+ * the server's derived summary, so a row, its drawer and its details page cannot
+ * disagree about a balance.
  *
- * Search and filters run on the server, because the list is paged: filtering
- * only the twenty rows on screen would quietly hide a match on page two. The
- * table is told not to filter client-side for exactly that reason.
- *
- * The detail lives on its own route, so opening a booking is a navigation rather
- * than a panel: an address can be shared, reloaded and linked to from a call.
+ * Opening a row is a drawer, not a navigation: the drawer answers the common
+ * questions and carries the actions, while the full record keeps its own address
+ * for the work that needs it.
  */
 export function BookingsRegister() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterConfig[]>([]);
   const [creating, setCreating] = useState(false);
+  const [openBookingId, setOpenBookingId] = useState<string | null>(null);
 
   const context = useWorkspaceContext();
   const siteSlug = context.data?.site_slug ?? null;
+  const rooms = useHospitalityRooms();
+  const roomNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const room of rooms.data ?? []) map.set(room.id, room.name);
+    return map;
+  }, [rooms.data]);
 
   const params: BookingListParams = useMemo(() => {
-    const kind = filterValue(filters, "kind");
     const status = filterValue(filters, "status");
     const source = filterValue(filters, "source");
+    const placeId = filterValue(filters, "place_id");
+    const stay = filterRange(filters, "stay");
     return {
       page,
       page_size: PAGE_SIZE,
+      // Fixed, not a filter: this directory shows bookings.
+      kind: "booking",
       ...(search.trim() ? { search: search.trim() } : {}),
-      ...(kind ? { kind: kind as BookingListParams["kind"] } : {}),
       ...(status ? { status: status as BookingListParams["status"] } : {}),
       ...(source ? { source: source as BookingListParams["source"] } : {}),
+      ...(placeId ? { place_id: placeId } : {}),
+      // A date input is a day. The window it means starts at the beginning of
+      // that day and ends at the beginning of the next; these are overlap
+      // filters, so a stay that began before the window still matches.
+      ...(stay.from
+        ? { overlaps_from: new Date(`${stay.from}T00:00:00`).toISOString() }
+        : {}),
+      ...(stay.to
+        ? {
+          overlaps_to: new Date(
+            new Date(`${stay.to}T00:00:00`).getTime() + 86_400_000,
+          ).toISOString(),
+        }
+        : {}),
     };
   }, [page, search, filters]);
 
@@ -80,6 +112,21 @@ export function BookingsRegister() {
   const bookings = list.data?.items ?? [];
 
   const columns: Column<BookingDto>[] = [
+    {
+      key: "reference",
+      header: "Booking",
+      minWidth: 140,
+      accessor: (booking) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-xs font-semibold">
+            {booking.reference ?? "No reference"}
+          </span>
+          <span className="text-[11px] text-[var(--vms-ink-muted)]">
+            Booked {formatDate(booking.created_at)}
+          </span>
+        </div>
+      ),
+    },
     {
       key: "requester",
       header: "Guest",
@@ -94,42 +141,106 @@ export function BookingsRegister() {
       ),
     },
     {
-      key: "kind",
-      header: "Kind",
-      minWidth: 110,
-      accessor: (booking) => KIND_LABELS[booking.kind] ?? booking.kind,
-    },
-    {
-      key: "window",
-      header: "Stay",
-      minWidth: 190,
+      key: "accommodation",
+      header: "Accommodation",
+      minWidth: 160,
       accessor: (booking) => (
-        <div className="flex flex-col gap-0.5 text-xs">
-          <span>{formatDateTime(booking.check_in_at)}</span>
-          <span className="text-[var(--vms-ink-muted)]">
-            to {formatDateTime(booking.check_out_at)}
+        <div className="flex flex-col gap-0.5">
+          <span>
+            {booking.place_id
+              ? (roomNames.get(booking.place_id) ?? "Room assigned")
+              : "Room not assigned"}
+          </span>
+          <span className="text-[11px] text-[var(--vms-ink-muted)]">
+            {booking.guest_count}{" "}
+            {booking.guest_count === 1 ? "guest" : "guests"}
           </span>
         </div>
       ),
     },
     {
+      key: "window",
+      header: "Stay",
+      minWidth: 180,
+      accessor: (booking) => {
+        const nights = stayNights(booking.check_in_at, booking.check_out_at);
+        return (
+          <div className="flex flex-col gap-0.5 text-xs">
+            <span>{formatDate(booking.check_in_at)}</span>
+            <span className="text-[var(--vms-ink-muted)]">
+              to {formatDate(booking.check_out_at)}
+              {nights !== null
+                ? ` · ${nights} ${nights === 1 ? "night" : "nights"}`
+                : ""}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      minWidth: 120,
+      accessor: (booking) =>
+        booking.financials?.priced ? (
+          <span className="tabular-nums">
+            {formatMoney(
+              booking.financials.total,
+              booking.financials.currency,
+            )}
+          </span>
+        ) : (
+          <span className="text-xs text-[var(--vms-ink-muted)]">Not priced</span>
+        ),
+    },
+    {
+      key: "paid",
+      header: "Paid",
+      minWidth: 120,
+      accessor: (booking) =>
+        booking.financials && Number(booking.financials.paid) > 0 ? (
+          <span className="tabular-nums text-[var(--vms-ink-muted)]">
+            {formatMoney(booking.financials.paid, booking.financials.currency)}
+          </span>
+        ) : (
+          <span className="text-xs text-[var(--vms-ink-muted)]">—</span>
+        ),
+    },
+    {
+      key: "balance",
+      header: "Balance",
+      minWidth: 130,
+      accessor: (booking) => {
+        if (!booking.financials?.priced) {
+          return (
+            <span className="text-xs text-[var(--vms-ink-muted)]">
+              {paymentStatusView(booking.financials).label}
+            </span>
+          );
+        }
+        return (
+          <span className="tabular-nums text-[var(--vms-ink)]">
+            {formatMoney(
+              booking.financials.balance,
+              booking.financials.currency,
+            )}
+          </span>
+        );
+      },
+    },
+    {
       key: "status",
       header: "Status",
-      minWidth: 140,
-      accessor: (booking) => <BookingStatusBadge status={booking.status} />,
-    },
-    {
-      key: "source",
-      header: "Channel",
-      minWidth: 110,
-      hiddenByDefault: true,
-      accessor: (booking) => SOURCE_LABELS[booking.source] ?? booking.source,
-    },
-    {
-      key: "guest_count",
-      header: "Guests",
-      minWidth: 80,
-      accessor: (booking) => String(booking.guest_count),
+      minWidth: 150,
+      accessor: (booking) => {
+        const payment = paymentStatusView(booking.financials);
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <BookingStatusBadge status={booking.status} />
+            <StatusBadge tone={payment.tone}>{payment.label}</StatusBadge>
+          </div>
+        );
+      },
     },
     {
       key: "open",
@@ -137,106 +248,105 @@ export function BookingsRegister() {
       minWidth: 90,
       mobileHide: true,
       accessor: (booking) => (
-        <Link
-          href={`/admin/bookings/${booking.id}`}
-          className="inline-flex min-h-9 items-center rounded-lg border border-[var(--vms-border)] px-3 text-xs font-semibold text-[var(--vms-ink)] hover:bg-[var(--vms-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-accent)]"
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setOpenBookingId(booking.id)}
           aria-label={`Open the booking from ${booking.requester_name}`}
         >
           Open
-        </Link>
+        </Button>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <PageHeader
-          eyebrow="Hospitality"
-          title="Bookings"
-          description="Guest requests and confirmed stays at this Site."
-          primaryAction={
-            <Button type="button" onClick={() => setCreating(true)}>
-              New booking
-            </Button>
-          }
-        />
-        <div>
-          <BookingPageLink siteSlug={siteSlug} />
-        </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        eyebrow="Hospitality"
+        title="Bookings"
+        description="Confirmed arrangements at this Site: who is staying, what they are paying, and what is still owed. Holds without a room live under Reservations."
+        primaryAction={
+          <Button type="button" onClick={() => setCreating(true)}>
+            New booking
+          </Button>
+        }
+        secondaryActions={<BookingPageLink siteSlug={siteSlug} />}
+      />
 
-        <DataTable
-          data={bookings}
-          columns={columns}
-          getRowId={(booking) => booking.id}
-          tableLabel="Site bookings"
-          searchPlaceholder="Search by guest name, email or phone"
-          serverSide
-          total={list.data?.total ?? 0}
-          currentPage={page}
-          onPageChange={setPage}
-          pageSize={PAGE_SIZE}
-          pageSizeOptions={[PAGE_SIZE]}
-          onSearchChange={(value) => {
-            setSearch(value);
-            setPage(1);
-          }}
-          /* The server applies the filters, so the table must not apply them a
-             second time to the twenty rows it was given. */
-          disableClientSideFiltering
-          disableClientSideSorting
-          availableFilters={[
-            {
-              field: "kind",
-              label: "Kind",
-              type: "select",
-              options: [
-                { value: "booking", label: "Booking" },
-                { value: "reservation", label: "Reservation" },
-              ],
-            },
-            {
-              field: "status",
-              label: "Status",
-              type: "select",
-              options: [
-                { value: "pending_payment", label: "Awaiting payment" },
-                { value: "requested", label: "To decide" },
-                { value: "confirmed", label: "Confirmed" },
-                { value: "declined", label: "Declined" },
-              ],
-            },
-            {
-              field: "source",
-              label: "Channel",
-              type: "select",
-              options: [
-                { value: "public", label: "Public page" },
-                { value: "phone", label: "Phone" },
-                { value: "walk_in", label: "Walk-in" },
-                { value: "staff", label: "Staff" },
-              ],
-            },
-          ]}
-          onFiltersChange={(next) => {
-            setFilters(next);
-            setPage(1);
-          }}
-          isLoading={list.isPending}
-          errorMessage={
-            list.isError && !list.data
-              ? "The register is unavailable right now."
-              : undefined
-          }
-          isStale={list.isError && Boolean(list.data)}
-          onRetry={() => void list.refetch()}
-          emptyMessage="No bookings match this search for the selected Site."
-          mobileSummary={(booking) => (
-            <Link
-              href={`/admin/bookings/${booking.id}`}
-              className="flex min-h-11 w-full flex-col gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-accent)]"
-              aria-label={`Open the booking from ${booking.requester_name}`}
-            >
+      <DataTable
+        card
+        data={bookings}
+        columns={columns}
+        getRowId={(booking) => booking.id}
+        tableLabel="Site bookings"
+        searchPlaceholder="Search by guest name, email or phone"
+        serverSide
+        total={list.data?.total ?? 0}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        /* The server applies the filters, so the table must not apply them a
+           second time to the twenty rows it was given. */
+        disableClientSideFiltering
+        disableClientSideSorting
+        availableFilters={[
+          {
+            field: "status",
+            label: "Status",
+            type: "select",
+            options: STATUS_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            })),
+          },
+          {
+            field: "source",
+            label: "Channel",
+            type: "select",
+            options: [
+              { value: "public", label: "Public page" },
+              { value: "phone", label: "Phone" },
+              { value: "walk_in", label: "Walk-in" },
+              { value: "staff", label: "Staff" },
+            ],
+          },
+          {
+            field: "place_id",
+            label: "Room",
+            type: "select",
+            isSearchable: true,
+            options: (rooms.data ?? []).map((room) => ({
+              value: room.id,
+              label: room.name,
+            })),
+          },
+          { field: "stay", label: "Stay dates", type: "date-range" },
+        ]}
+        onFiltersChange={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+        isLoading={list.isPending}
+        errorMessage={
+          list.isError && !list.data
+            ? "The bookings register is unavailable right now."
+            : undefined
+        }
+        isStale={list.isError && Boolean(list.data)}
+        onRetry={() => void list.refetch()}
+        emptyMessage="No bookings match this search for the selected Site."
+        mobileSummary={(booking) => {
+          const payment = paymentStatusView(booking.financials);
+          const nights = stayNights(booking.check_in_at, booking.check_out_at);
+          return (
+            <div className="flex flex-col gap-2">
               <RequesterCell
                 requester={{
                   name: booking.requester_name,
@@ -246,13 +356,42 @@ export function BookingsRegister() {
               />
               <span className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
                 <BookingStatusBadge status={booking.status} />
-                <span>{KIND_LABELS[booking.kind] ?? booking.kind}</span>
-                <span>{formatDateTime(booking.check_in_at)}</span>
+                <StatusBadge tone={payment.tone}>{payment.label}</StatusBadge>
+                {booking.reference ? (
+                  <span className="font-mono">{booking.reference}</span>
+                ) : null}
               </span>
-            </Link>
-          )}
-        />
-      </div>
+              <span className="text-xs text-[var(--vms-ink-muted)]">
+                {formatDate(booking.check_in_at)} →{" "}
+                {formatDate(booking.check_out_at)}
+                {nights !== null
+                  ? ` · ${nights} ${nights === 1 ? "night" : "nights"}`
+                  : ""}
+              </span>
+              <span className="text-xs text-[var(--vms-ink-muted)]">
+                {booking.place_id
+                  ? (roomNames.get(booking.place_id) ?? "Room assigned")
+                  : "Room not assigned"}
+                {booking.financials?.priced
+                  ? ` · ${formatMoney(
+                    booking.financials.balance,
+                    booking.financials.currency,
+                  )} outstanding`
+                  : ""}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setOpenBookingId(booking.id)}
+                aria-label={`Open the booking from ${booking.requester_name}`}
+              >
+                Open
+              </Button>
+            </div>
+          );
+        }}
+      />
 
       <Drawer
         isOpen={creating}
@@ -262,6 +401,11 @@ export function BookingsRegister() {
       >
         <BookingCreateForm onCreated={() => setCreating(false)} />
       </Drawer>
+
+      <BookingQuickViewDrawer
+        bookingId={openBookingId}
+        onClose={() => setOpenBookingId(null)}
+      />
     </div>
   );
 }

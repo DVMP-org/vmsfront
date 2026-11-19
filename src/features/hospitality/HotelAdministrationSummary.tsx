@@ -1,33 +1,14 @@
 import {
   ArrowRight,
   Building2,
-  CalendarClock,
   ConciergeBell,
   ShieldCheck,
   UserRound,
-  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { WorkspaceRelationship } from "@/types";
 import { formatDateTime } from "@/lib/datetime";
 import { guestName, type Stay } from "./contracts";
-
-const OCCUPANCY_ROLES = new Set([
-  "resident",
-  "resident_of",
-  "owner",
-  "tenant",
-  "member",
-  "member_of",
-]);
-const STAFF_ROLES = new Set([
-  "employee",
-  "staff",
-  "hotel_staff",
-  "operator",
-  "manager",
-]);
-const GUEST_ROLES = new Set(["guest", "guest_of"]);
 
 export interface SiteAdministrator {
   site_admin_id: string;
@@ -64,7 +45,6 @@ export function HotelAdministrationSummary({
   onRetry: () => void;
   onOpenStay: (id: string) => void;
 }) {
-  const people = groupPeople(relationships);
   const arrivals = stays
     .filter((stay) => stay.status === "reserved")
     .sort(
@@ -72,12 +52,6 @@ export function HotelAdministrationSummary({
         new Date(left.planned_check_in).getTime() -
         new Date(right.planned_check_in).getTime(),
     );
-  const peopleUnavailable = loading ? "—" : error ? "Unavailable" : null;
-  const staysUnavailable = staysLoading
-    ? "—"
-    : staysError
-      ? "Unavailable"
-      : null;
 
   return (
     <section className="hotel-admin-overview" aria-label="Hotel administration">
@@ -94,29 +68,6 @@ export function HotelAdministrationSummary({
           <Building2 className="h-3.5 w-3.5" />
           Selected property context
         </span>
-      </div>
-
-      <div className="hotel-metrics">
-        <Metric
-          icon={ShieldCheck}
-          label="Administrators"
-          value={peopleUnavailable ?? administrators.length}
-        />
-        <Metric
-          icon={UserRound}
-          label="Occupants"
-          value={peopleUnavailable ?? people.occupants.length}
-        />
-        <Metric
-          icon={Users}
-          label="Staff & guests"
-          value={peopleUnavailable ?? people.staff.length + people.guests.length}
-        />
-        <Metric
-          icon={CalendarClock}
-          label="Reserved on this page"
-          value={staysUnavailable ?? arrivals.length}
-        />
       </div>
 
       <div className="hotel-overview-grid">
@@ -190,7 +141,7 @@ export function HotelAdministrationSummary({
           <div className="hotel-panel-heading">
             <div>
               <h3>Reserved stays</h3>
-              <p>Up to five arrivals from the current stay result page.</p>
+              <p>Up to five arrivals from the reserved stay queue.</p>
             </div>
             <ConciergeBell className="h-5 w-5" />
           </div>
@@ -233,50 +184,15 @@ export function HotelAdministrationSummary({
           ) : (
             <div className="hotel-arrival-empty">
               <ConciergeBell className="h-6 w-6" />
-              <p>No reserved arrivals in the current result set.</p>
+              <p>No reserved stays in this Site.</p>
               <small>
-                Choose “Reserved” in the stay filter to review the queue.
+                New reservations will appear here for arrival review.
               </small>
             </div>
           )}
         </div>
       </div>
     </section>
-  );
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number | string;
-}) {
-  return (
-    <div className="hotel-metric">
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function groupPeople(relationships: WorkspaceRelationship[]) {
-  return relationships.reduce(
-    (groups, relationship) => {
-      const role = relationship.role.toLowerCase();
-      if (OCCUPANCY_ROLES.has(role)) groups.occupants.push(relationship);
-      else if (STAFF_ROLES.has(role)) groups.staff.push(relationship);
-      else if (GUEST_ROLES.has(role)) groups.guests.push(relationship);
-      return groups;
-    },
-    {
-      occupants: [] as WorkspaceRelationship[],
-      staff: [] as WorkspaceRelationship[],
-      guests: [] as WorkspaceRelationship[],
-    },
   );
 }
 

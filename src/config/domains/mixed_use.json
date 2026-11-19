@@ -26,13 +26,13 @@
           "module": "properties",
           "children": [
             {
-              "label": "Residency directory",
+              "label": "Places directory",
               "href": "/admin/places",
               "icon": "building",
               "module": "properties"
             },
             {
-              "label": "Residency group",
+              "label": "Place group",
               "href": "/admin/place-groups",
               "icon": "layers",
               "module": "properties"

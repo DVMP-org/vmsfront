@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { unwrap } from "@/lib/api-envelope";
 import { placeGroupsApi } from "@/features/place-groups/api";
@@ -18,6 +18,33 @@ export function useHospitalityRooms(enabled = true) {
     queryFn: async () => unwrap(await hospitalityService.listRooms()),
     enabled,
   });
+}
+
+/**
+ * Move a stay between reserved and checked in/out.
+ *
+ * The stay is the thing that actually changes state, and both the rooms screens
+ * and the booking that opened it read that state, so both caches are refreshed.
+ * A booking that still offered "Check in" after the guest had arrived would send
+ * the desk into an action the server refuses.
+ */
+function useStayTransition(action: "check-in" | "check-out") {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (stayId: string) => hospitalityApi.action(stayId, action),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      await queryClient.invalidateQueries({ queryKey: hospitalityRoomKeys.all });
+    },
+  });
+}
+
+export function useCheckInStay() {
+  return useStayTransition("check-in");
+}
+
+export function useCheckOutStay() {
+  return useStayTransition("check-out");
 }
 
 export const hospitalityAmenityKeys = {

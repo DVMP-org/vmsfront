@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BedDouble,
@@ -9,6 +9,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -35,14 +36,18 @@ function addDays(date: Date, days: number) {
 }
 
 function validRange(from: string, to: string) {
-  if (!from || !to) return false;
-  const first = new Date(`${from}T12:00:00`);
-  const last = new Date(`${to}T12:00:00`);
-  return (
-    Number.isFinite(first.getTime()) &&
-    Number.isFinite(last.getTime()) &&
-    last >= first
-  );
+  if (requestedDate(from) !== from || requestedDate(to) !== to) return false;
+  const first = Date.parse(`${from}T00:00:00Z`);
+  const last = Date.parse(`${to}T00:00:00Z`);
+  return last >= first && last - first <= 44 * 86_400_000;
+}
+
+function requestedDate(value: string | null): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T12:00:00`);
+  return Number.isFinite(parsed.getTime()) && dateInput(parsed) === value
+    ? value
+    : null;
 }
 
 function cellLabel(cell: AvailabilityCell) {
@@ -53,10 +58,28 @@ function cellLabel(cell: AvailabilityCell) {
 }
 
 export default function HospitalityAvailabilityPage() {
+  return (
+    <Suspense fallback={<p role="status">Loading room availability…</p>}>
+      <HospitalityAvailabilityContent />
+    </Suspense>
+  );
+}
+
+function HospitalityAvailabilityContent() {
   const access = useHospitalityAccess();
+  const searchParams = useSearchParams();
   const today = useMemo(() => new Date(), []);
-  const [from, setFrom] = useState(dateInput(today));
-  const [to, setTo] = useState(dateInput(addDays(today, 13)));
+  const requestedFrom = requestedDate(searchParams?.get("from") ?? null);
+  const requestedTo = requestedDate(searchParams?.get("to") ?? null);
+  const initialFrom =
+    requestedFrom ||
+    (requestedTo
+      ? dateInput(addDays(new Date(`${requestedTo}T12:00:00`), -13))
+      : dateInput(today));
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(
+    requestedTo || dateInput(addDays(new Date(`${initialFrom}T12:00:00`), 13)),
+  );
   const [roomSearch, setRoomSearch] = useState("");
   const [status, setStatus] = useState("");
   const rangeValid = validRange(from, to);
@@ -200,7 +223,8 @@ export default function HospitalityAvailabilityPage() {
           </div>
           {!rangeValid ? (
             <InlineAlert tone="danger">
-              Choose an end date on or after the start date.
+              Choose an end date on or after the start date, within a 45-day
+              window.
             </InlineAlert>
           ) : availability.isError ? (
             <InlineAlert

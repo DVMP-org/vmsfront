@@ -96,6 +96,7 @@ export function SharedFacilities() {
       setEditing(null);
       setForm(emptyForm);
       void client.invalidateQueries({ queryKey: ["mixed-use-facilities"] });
+      void client.invalidateQueries({ queryKey: ["mixed-use-overview-facilities"] });
     },
     onError: (error) => setFormError(parseApiError(error).message),
   });
@@ -115,6 +116,7 @@ export function SharedFacilities() {
     },
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["mixed-use-facilities"] });
+      void client.invalidateQueries({ queryKey: ["mixed-use-overview-facilities"] });
     },
     onError: (error) => toast.error(parseApiError(error).message),
   });

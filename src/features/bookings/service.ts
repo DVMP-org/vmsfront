@@ -8,12 +8,16 @@
 
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
+import type { GuestFolio } from "@/features/hospitality/contracts";
 import type {
   AdminBookingCreateInput,
+  BookingChargeInput,
   BookingDetailDto,
   BookingDto,
+  BookingFinancialsDto,
   BookingListParams,
   BookingPaymentDto,
+  BookingUpdateInput,
   RecordBookingPaymentInput,
 } from "./api-types";
 
@@ -34,6 +38,14 @@ export const bookingsService = {
 
   async detail(bookingId: string): Promise<ApiResponse<BookingDetailDto>> {
     return apiClient.get(`/admin/bookings/${bookingId}`);
+  },
+
+  /** Correct guest details, or move the stay before it starts. */
+  async update(
+    bookingId: string,
+    input: BookingUpdateInput,
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.patch(`/admin/bookings/${bookingId}`, input);
   },
 
   async approve(bookingId: string): Promise<ApiResponse<BookingDto>> {
@@ -75,5 +87,33 @@ export const bookingsService = {
     input: RecordBookingPaymentInput,
   ): Promise<ApiResponse<BookingPaymentDto>> {
     return apiClient.post(`/admin/bookings/${bookingId}/payments`, input);
+  },
+
+  /**
+   * The guest's bill, or `null` before acceptance opened a stay.
+   *
+   * Read separately from the booking so a register or a drawer never downloads
+   * a complete financial history it does not show.
+   */
+  async folio(bookingId: string): Promise<ApiResponse<GuestFolio | null>> {
+    return apiClient.get(`/admin/bookings/${bookingId}/folio`);
+  },
+
+  /** Post something bought during the stay to the folio. */
+  async addCharge(
+    bookingId: string,
+    input: BookingChargeInput,
+  ): Promise<ApiResponse<BookingFinancialsDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/charges`, input);
+  },
+
+  /** Promote a reservation to a booking for every room it will occupy. */
+  async convert(
+    bookingId: string,
+    placeIds: string[],
+  ): Promise<ApiResponse<BookingDto>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/convert`, {
+      place_ids: placeIds,
+    });
   },
 };

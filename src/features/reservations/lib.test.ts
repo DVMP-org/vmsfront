@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canConvertReservation,
   holdsReason,
   itemQuantityLabel,
+  reservationBookingStatusLabel,
+  reservationBookingStatusTone,
   reservationResourceLabel,
   reservationStatusLabel,
   reservationStatusTone,
@@ -104,5 +107,27 @@ describe("itemQuantityLabel", () => {
   it("counts units for anything else", () => {
     expect(itemQuantityLabel("3", "service")).toBe("3 units");
     expect(itemQuantityLabel("1", "event_space")).toBe("1 unit");
+  });
+});
+
+describe("reservation directory status", () => {
+  it("uses the words a desk uses, not the stored status", () => {
+    expect(reservationBookingStatusLabel("requested")).toBe("Pending");
+    expect(reservationBookingStatusLabel("pending_payment")).toBe(
+      "Awaiting deposit",
+    );
+    expect(reservationBookingStatusTone("requested")).toBe("warning");
+  });
+
+  it("only converts a reservation that is still pending", () => {
+    expect(canConvertReservation({ kind: "reservation", status: "requested" })).toBe(
+      true,
+    );
+    expect(canConvertReservation({ kind: "booking", status: "requested" })).toBe(
+      false,
+    );
+    expect(canConvertReservation({ kind: "reservation", status: "cancelled" })).toBe(
+      false,
+    );
   });
 });
