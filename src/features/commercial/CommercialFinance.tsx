@@ -22,7 +22,7 @@ import {
   type FilterDefinition,
 } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { formatMoney } from "@/lib/currency";
+import { formatMoney, formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import type { Assignment } from "@/features/charges/api";
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
@@ -50,6 +50,14 @@ type FinanceRow = {
 };
 
 export default function CommercialFinance() {
+  return <CommercialFinanceView view="register" />;
+}
+
+export function CommercialArrears() {
+  return <CommercialFinanceView view="arrears" />;
+}
+
+function CommercialFinanceView({ view }: { view: "register" | "arrears" }) {
   const { selectedSite, contextKey, canManageFinance } = useCommercialAccess();
   const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -78,7 +86,12 @@ export default function CommercialFinance() {
         (relationships.data?.items || []).filter((row) =>
           scopeIds.has(row.place.id),
         ),
-        assignments.data || [],
+        (assignments.data || []).map((assignment) => ({
+          target_place: assignment.target_place,
+          outstanding_amount: assignment.outstanding_amount,
+          currency: assignment.charge_definition.currency,
+          next_due_date: assignment.next_due_date,
+        })),
       ),
     [assignments.data, lettableSpaces, relationships.data?.items, scopeIds],
   );
@@ -105,8 +118,17 @@ export default function CommercialFinance() {
         }),
     [assignments.data, scopeIds],
   );
-  const currency = rows[0]?.currency || "USD";
-  const openBalance = rows.reduce((sum, row) => sum + row.outstanding, 0);
+  const openBalances = new Map<string, number>();
+  for (const row of rows) {
+    openBalances.set(
+      row.currency,
+      (openBalances.get(row.currency) ?? 0) + row.outstanding,
+    );
+  }
+  const openBalanceLabel = [...openBalances]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([code, amount]) => formatMoneyWithCode(amount, code))
+    .join(" · ");
   const columns: Column<FinanceRow>[] = [
     {
       key: "charge",
@@ -229,10 +251,14 @@ export default function CommercialFinance() {
 
   return (
     <CommercialShell
-      title="Rent & service charges"
-      description="Commercial charge assignments, responsible business Parties, balances and payment records."
+      title={view === "arrears" ? "Rent roll & arrears" : "Charge register"}
+      description={
+        view === "arrears"
+          ? "Review occupied commercial spaces and prioritize balances by how long they have been outstanding."
+          : "Review charge assignments, responsible business Parties, balances and collection status across this property."
+      }
       primaryAction={
-        canManageFinance ? (
+        view === "register" && canManageFinance ? (
           <Button asChild>
             <Link href="/admin/charges/new">
               <FilePlus2 className="h-4 w-4" aria-hidden="true" />
@@ -242,58 +268,90 @@ export default function CommercialFinance() {
         ) : undefined
       }
     >
-      <SummaryStrip
-        items={[
-          {
-            icon: ReceiptText,
-            label: "Assignments",
-            value: String(rows.length),
-            detail: "For the selected property hierarchy",
-          },
-          {
-            icon: WalletCards,
-            label: "Outstanding",
-            value: String(
-              rows.filter((row) => row.state === "outstanding").length,
-            ),
-            detail: "Assignments with a positive balance",
-          },
-          {
-            icon: CircleDollarSign,
-            label: "Open balance",
-            value: rows.length ? formatMoney(openBalance, currency) : "—",
-            detail: "Uses each charge’s published currency",
-          },
-        ]}
-      />
-      <RentRollSection
-        rows={rentRoll}
-        currency={currency}
-        isLoading={
-          tree.isPending || relationships.isPending || assignments.isPending
-        }
-        errorMessage={
-          tree.isError || relationships.isError || assignments.isError
-            ? parseApiError(
-                tree.error || relationships.error || assignments.error,
-              ).message
-            : null
-        }
-        onRetry={() => {
-          void tree.refetch();
-          void relationships.refetch();
-          void assignments.refetch();
-        }}
-      />
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
+      {view === "arrears" ? (
+        <>
+          <SummaryStrip
+            items={[
+              {
+                icon: Landmark,
+                label: "Spaces on rent roll",
+                value: String(rentRoll.length),
+                detail: "Occupied spaces and vacant spaces with a balance",
+              },
+              {
+                icon: WalletCards,
+                label: "Spaces with arrears",
+                value: String(rentRoll.filter((row) => row.balance > 0).length),
+                detail: "Balances still needing collection",
+              },
+              {
+                icon: ReceiptText,
+                label: "Past-due spaces",
+                value: String(
+                  rentRoll.filter(
+                    (row) => row.bucket !== "current" && row.balance > 0,
+                  ).length,
+                ),
+                detail: "At least one balance is past its due date",
+              },
+            ]}
+          />
+          <RentRollSection
+            rows={rentRoll}
+            isLoading={
+              tree.isPending ||
+              relationships.isPending ||
+              assignments.isPending
+            }
+            errorMessage={
+              tree.isError || relationships.isError || assignments.isError
+                ? parseApiError(
+                    tree.error || relationships.error || assignments.error,
+                  ).message
+                : null
+            }
+            onRetry={() => {
+              void tree.refetch();
+              void relationships.refetch();
+              void assignments.refetch();
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <SummaryStrip
+            items={[
+              {
+                icon: ReceiptText,
+                label: "Assignments",
+                value: String(rows.length),
+                detail: "For the selected property hierarchy",
+              },
+              {
+                icon: WalletCards,
+                label: "Outstanding",
+                value: String(
+                  rows.filter((row) => row.state === "outstanding").length,
+                ),
+                detail: "Assignments with a positive balance",
+              },
+              {
+                icon: CircleDollarSign,
+                label: "Open balance by currency",
+                value: openBalanceLabel || "—",
+                detail: "Each charge currency is totaled separately",
+              },
+            ]}
+          />
+          <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-semibold">
-              Commercial charge register
+              Assignments
             </h2>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              Rent and service charges remain shared canonical finance records,
-              filtered to this commercial property.
+              Review each assigned charge, responsible Party, balance and
+              collection status for this commercial property.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -357,7 +415,9 @@ export default function CommercialFinance() {
             </div>
           )}
         />
-      </section>
+          </section>
+        </>
+      )}
     </CommercialShell>
   );
 }
@@ -377,13 +437,15 @@ function SummaryStrip({
       {items.map(({ icon: Icon, label, value, detail }) => (
         <div
           key={label}
-          className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+          className="min-w-0 border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
         >
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
             <Icon className="h-4 w-4 text-[var(--vms-coral)]" aria-hidden />
             {label}
           </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+          <p className="mt-2 break-words text-2xl font-semibold tabular-nums">
+            {value}
+          </p>
           <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
         </div>
       ))}

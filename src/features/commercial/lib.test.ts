@@ -82,9 +82,15 @@ const relationship = (
   place: { id: overrides.placeId ?? "suite-1" },
 });
 
-const assignment = (placeId: string, outstanding: number, due?: string) => ({
+const assignment = (
+  placeId: string,
+  outstanding: number,
+  due?: string,
+  currency = "USD",
+) => ({
   target_place: { id: placeId },
   outstanding_amount: outstanding.toFixed(2),
+  currency,
   next_due_date: due ?? null,
 });
 
@@ -111,11 +117,13 @@ describe("commercial rent roll", () => {
     );
     expect(rows).toEqual([
       {
-        id: "suite-1",
+        id: "suite-1:USD",
+        place_id: "suite-1",
         space: "Suite 1",
         tenant: "Acme Studio",
         lease_ends_at: "2027-01-01T00:00:00Z",
         balance: 750,
+        currency: "USD",
         oldest_due: "2026-08-01",
         bucket: "90_plus",
       },
@@ -129,7 +137,7 @@ describe("commercial rent roll", () => {
       [assignment("suite-2", 300, "2026-11-05")],
       today,
     );
-    const former = rows.find((row) => row.id === "suite-2");
+    const former = rows.find((row) => row.place_id === "suite-2");
     expect(former).toMatchObject({
       tenant: null,
       balance: 300,
@@ -148,7 +156,7 @@ describe("commercial rent roll", () => {
       [assignment("suite-3", 100), assignment("suite-1", 900)],
       today,
     );
-    expect(rows.map((row) => row.id)).toEqual(["suite-1", "suite-3"]);
+    expect(rows.map((row) => row.place_id)).toEqual(["suite-1", "suite-3"]);
     expect(rows[1]).toMatchObject({ tenant: null, balance: 100 });
   });
 
@@ -164,9 +172,15 @@ describe("commercial rent roll", () => {
       today,
     );
     const totals = ageingTotals(rows);
-    expect(totals.find((bucket) => bucket.key === "90_plus")?.amount).toBe(750);
-    expect(totals.find((bucket) => bucket.key === "1_30")?.amount).toBe(300);
-    expect(totals.find((bucket) => bucket.key === "current")?.amount).toBe(50);
+    expect(
+      totals.find((bucket) => bucket.key === "90_plus")?.amounts,
+    ).toEqual([{ currency: "USD", amount: 750 }]);
+    expect(totals.find((bucket) => bucket.key === "1_30")?.amounts).toEqual([
+      { currency: "USD", amount: 300 },
+    ]);
+    expect(totals.find((bucket) => bucket.key === "current")?.amounts).toEqual([
+      { currency: "USD", amount: 50 },
+    ]);
   });
 });
 

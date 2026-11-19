@@ -55,9 +55,34 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
+    currencyDisplay: "code",
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(price);
+}
+
+function formatFeatureLabel(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[._-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function getFeatureText(key: string, value: unknown): string | null {
+  if (value === true) return formatFeatureLabel(key);
+  if (value === false || value == null || value === "") return null;
+
+  const displayValue = Array.isArray(value)
+    ? value.filter((item) => ["string", "number"].includes(typeof item)).join(", ")
+    : typeof value === "string" || typeof value === "number"
+      ? String(value)
+      : null;
+
+  return displayValue
+    ? `${formatFeatureLabel(key)}: ${displayValue}`
+    : null;
 }
 
 function StatusBadge({ status }: { status: SubscriptionStatus }) {
@@ -417,7 +442,7 @@ export function SubscriptionSection() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Plan Details */}
-          <div className="p-6 rounded-xl    border border-[var(--vms-line)]">
+          <div className="p-6 rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)]">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-xl font-bold text-[var(--vms-ink)] ">
@@ -443,14 +468,25 @@ export function SubscriptionSection() {
               <div className="mt-4 pt-4 border-t border-[var(--vms-line)]">
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(plan.features)
+                    .map(([key, value]) => ({
+                      key,
+                      text: getFeatureText(key, value),
+                    }))
+                    .filter(
+                      (feature): feature is { key: string; text: string } =>
+                        Boolean(feature.text),
+                    )
                     .slice(0, 5)
-                    .map(([key, value]) => (
+                    .map(({ key, text }) => (
                       <span
                         key={key}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--vms-surface)] text-sm text-[var(--vms-ink-muted)] "
+                        className="inline-flex items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 py-1.5 text-sm leading-5 text-[var(--vms-ink-muted)]"
                       >
-                        <Check className="h-3.5 w-3.5 text-green-500" />
-                        {typeof value === "boolean" ? key : `${key}: ${value}`}
+                        <Check
+                          aria-hidden="true"
+                          className="h-3.5 w-3.5 shrink-0 text-emerald-700"
+                        />
+                        {text}
                       </span>
                     ))}
                 </div>

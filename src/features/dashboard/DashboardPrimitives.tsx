@@ -3,91 +3,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowUpRight, RefreshCcw } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-
-export interface MetricDefinition {
-  label: string;
-  value: number | string;
-  detail: string;
-  href?: string;
-  attention?: boolean;
-  icon?: LucideIcon;
-  tone?: "coral" | "ink" | "info" | "success" | "warning";
-}
-
-export function MetricStrip({ metrics }: { metrics: MetricDefinition[] }) {
-  const toneClasses = {
-    coral: "bg-[var(--vms-coral-soft)] text-[var(--vms-coral)]",
-    ink: "bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
-    info: "bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
-    success: "bg-[var(--vms-success-subtle)] text-[var(--vms-success)]",
-    warning: "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
-  } as const;
-
-  return (
-    <section
-      aria-label="Property operating metrics"
-      className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
-    >
-      {metrics.map((metric) => {
-        const Icon = metric.icon;
-        const tone = metric.tone || (metric.attention ? "warning" : "ink");
-        const content = (
-          <>
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold leading-4 text-[var(--vms-ink-muted)]">
-                  {metric.label}
-                </p>
-                <p className="mt-2 text-[26px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-[var(--vms-ink)]">
-                  {metric.value}
-                </p>
-              </div>
-              {Icon ? (
-                <span
-                  className={cn(
-                    "grid h-8 w-8 shrink-0 place-items-center rounded-[8px]",
-                    toneClasses[tone],
-                  )}
-                >
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-2 text-[11px] leading-4 text-[var(--vms-ink-muted)]">
-              {metric.detail}
-            </p>
-          </>
-        );
-
-        const classes = cn(
-          "group relative min-w-0 overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3.5",
-          "transition-[border-color,background-color]",
-        );
-
-        return metric.href ? (
-          <Link
-            key={metric.label}
-            href={metric.href}
-            className={cn(
-              classes,
-              "hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]",
-            )}
-          >
-            {content}
-          </Link>
-        ) : (
-          <div key={metric.label} className={classes}>
-            {content}
-          </div>
-        );
-      })}
-    </section>
-  );
-}
 
 export function ReportPanel({
   title,

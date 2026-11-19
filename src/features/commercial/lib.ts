@@ -170,11 +170,13 @@ export function ageingBucket(
 
 export type RentRollRow = {
   id: string;
+  place_id: string;
   space: string;
   /** The live business tenant, or null when the space has none. */
   tenant: string | null;
   lease_ends_at: string | null;
   balance: number;
+  currency: string | null;
   /** Oldest unpaid due date behind the balance. */
   oldest_due: string | null;
   bucket: AgeingBucket;
@@ -192,6 +194,7 @@ type RentRollRelationship = {
 type RentRollAssignment = {
   target_place: { id: string };
   outstanding_amount: string | number;
+  currency: string;
   next_due_date?: string | null;
 };
 
@@ -221,52 +224,78 @@ export function buildRentRoll(
 
   const balances = new Map<
     string,
-    { balance: number; oldest: string | null }
+    Map<string, { balance: number; oldest: string | null }>
   >();
   for (const assignment of assignments) {
     const amount = Number(assignment.outstanding_amount || 0);
     if (!(amount > 0)) continue;
-    const entry = balances.get(assignment.target_place.id) ?? {
-      balance: 0,
-      oldest: null,
-    };
+    const currency = assignment.currency.toUpperCase();
+    const byCurrency = balances.get(assignment.target_place.id) ?? new Map();
+    const entry = byCurrency.get(currency) ?? { balance: 0, oldest: null };
     entry.balance += amount;
     const due = assignment.next_due_date ?? null;
     if (due && (!entry.oldest || due < entry.oldest)) entry.oldest = due;
-    balances.set(assignment.target_place.id, entry);
+    byCurrency.set(currency, entry);
+    balances.set(assignment.target_place.id, byCurrency);
   }
 
   return spaces
-    .map((space): RentRollRow => {
+    .flatMap((space): RentRollRow[] => {
       const tenant = tenants.get(space.id) ?? null;
-      const money = balances.get(space.id) ?? { balance: 0, oldest: null };
-      return {
-        id: space.id,
+      const spaceBalances = Array.from(balances.get(space.id) ?? []);
+      const entries: Array<
+        [string, { balance: number; oldest: string | null }]
+      > = spaceBalances.length
+        ? spaceBalances
+        : [["", { balance: 0, oldest: null }]];
+      return entries.map(([currency, money]) => ({
+        id: `${space.id}:${currency || "occupied"}`,
+        place_id: space.id,
         space: space.name,
         tenant: tenant?.party.display_name ?? null,
         lease_ends_at: tenant?.effective_to ?? null,
         balance: money.balance,
+        currency: currency || null,
         oldest_due: money.oldest,
         bucket: ageingBucket(money.oldest, today),
-      };
+      }));
     })
     .filter((row) => row.tenant !== null || row.balance > 0)
     .sort((left, right) => {
-      if (right.balance !== left.balance) return right.balance - left.balance;
-      return left.space.localeCompare(right.space);
+      const spaceOrder = left.space.localeCompare(right.space);
+      return (
+        spaceOrder ||
+        (left.currency ?? "").localeCompare(right.currency ?? "")
+      );
     });
 }
 
-/** Outstanding money per ageing bucket, for the collections headline. */
+/** Outstanding money by age and currency; different currencies are never summed. */
 export function ageingTotals(
   rows: RentRollRow[],
-): Array<{ key: AgeingBucket; label: string; amount: number }> {
-  return ageingBuckets.map((bucket) => ({
-    ...bucket,
-    amount: rows
-      .filter((row) => row.bucket === bucket.key)
-      .reduce((total, row) => total + row.balance, 0),
-  }));
+): Array<{
+  key: AgeingBucket;
+  label: string;
+  amounts: Array<{ currency: string; amount: number }>;
+}> {
+  return ageingBuckets.map((bucket) => {
+    const amounts = new Map<string, number>();
+    for (const row of rows) {
+      if (row.bucket !== bucket.key || !row.currency || row.balance <= 0) {
+        continue;
+      }
+      amounts.set(
+        row.currency,
+        (amounts.get(row.currency) ?? 0) + row.balance,
+      );
+    }
+    return {
+      ...bucket,
+      amounts: [...amounts]
+        .map(([currency, amount]) => ({ currency, amount }))
+        .sort((left, right) => left.currency.localeCompare(right.currency)),
+    };
+  });
 }
 
 export type InventoryRow = Place & {

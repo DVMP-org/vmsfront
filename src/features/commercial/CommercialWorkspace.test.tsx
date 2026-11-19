@@ -272,7 +272,7 @@ describe("commercial operations", () => {
     mount(<CommercialOverview />);
 
     expect(
-      await screen.findByRole("heading", { name: "Commercial overview" }),
+      await screen.findByRole("heading", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("100% occupied")).toBeInTheDocument();
     expect((await screen.findAllByText("Acme Studio")).length).toBeGreaterThan(

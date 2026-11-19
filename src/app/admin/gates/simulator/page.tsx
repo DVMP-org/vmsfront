@@ -34,10 +34,12 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { parseApiError } from "@/lib/error-utils";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { adminGateService } from "@/services/admin-gate-service";
 import {
   AccessCommand,
@@ -298,6 +300,11 @@ function LaneSetupModal({
 
 export default function AccessControlSimulatorPage() {
   const queryClient = useQueryClient();
+  const siteAccess = useSiteAccess();
+  const simulatorEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_ACCESS_CONTROL_SIMULATOR === "true";
+  const canUseSimulator =
+    simulatorEnabled && siteAccess.allowed("gates.update");
   const [selectedLaneId, setSelectedLaneId] = useState("");
   const [reasonCode, setReasonCode] = useState("visitor_pass_valid");
   const [timeoutSeconds, setTimeoutSeconds] = useState(15);
@@ -310,6 +317,7 @@ export default function AccessControlSimulatorPage() {
   const topologyQuery = useQuery({
     queryKey: ["access-control", "topology"],
     queryFn: accessControlService.getTopology,
+    enabled: canUseSimulator,
   });
   const gatesQuery = useQuery({
     queryKey: ["access-control", "gates"],
@@ -320,6 +328,7 @@ export default function AccessControlSimulatorPage() {
       });
       return response.data.items;
     },
+    enabled: canUseSimulator,
   });
 
   const sites = topologyQuery.data?.places || [];
@@ -356,7 +365,7 @@ export default function AccessControlSimulatorPage() {
     queryKey: ["access-control", "commands", selectedLaneId],
     queryFn: () =>
       accessControlService.listCommands({ laneId: selectedLaneId }),
-    enabled: Boolean(selectedLaneId),
+    enabled: canUseSimulator && Boolean(selectedLaneId),
     refetchInterval: lastSimulation ? 5000 : false,
   });
 
@@ -495,6 +504,36 @@ export default function AccessControlSimulatorPage() {
     },
     onError: (error) => toast.error(parseApiError(error).message),
   });
+
+  if (siteAccess.workspace.isPending) {
+    return <p role="status">Checking Site access…</p>;
+  }
+
+  if (siteAccess.workspace.isError) {
+    return (
+      <InlineAlert tone="danger" title="Site access could not be verified">
+        {parseApiError(siteAccess.workspace.error).message}
+      </InlineAlert>
+    );
+  }
+
+  if (!simulatorEnabled) {
+    return (
+      <InlineAlert tone="warning" title="Technical tool unavailable">
+        The access-control simulator is enabled only in authorized technical
+        environments.
+      </InlineAlert>
+    );
+  }
+
+  if (!siteAccess.allowed("gates.update")) {
+    return (
+      <InlineAlert tone="warning" title="Technical access required">
+        You need Site gate-management permission to use the access-control
+        simulator.
+      </InlineAlert>
+    );
+  }
 
   if (topologyQuery.isLoading || gatesQuery.isLoading) {
     return (

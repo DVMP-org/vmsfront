@@ -257,7 +257,7 @@ export default function RolesPage() {
           </div>
           <Button
             type="button"
-            onClick={() => router.push("/organization/roles/create")}
+            onClick={() => router.push("/admin/admins/roles/create")}
           >
             <Plus className="h-4 w-4" />
             Create role

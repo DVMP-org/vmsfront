@@ -7,10 +7,12 @@ const row = (
   overrides: Partial<Parameters<typeof RentRollSection>[0]["rows"][number]>,
 ) => ({
   id: "suite-1",
+  place_id: "suite-1",
   space: "Suite 1",
   tenant: "Acme Studio",
   lease_ends_at: "2027-01-01T00:00:00Z",
   balance: 0,
+  currency: "NGN",
   oldest_due: null,
   bucket: "current" as const,
   ...overrides,
@@ -24,6 +26,7 @@ describe("commercial rent roll section", () => {
           row({ balance: 750, oldest_due: "2026-08-01", bucket: "90_plus" }),
           row({
             id: "suite-2",
+            place_id: "suite-2",
             space: "Suite 2",
             tenant: null,
             lease_ends_at: null,
@@ -31,14 +34,13 @@ describe("commercial rent roll section", () => {
             bucket: "1_30",
           }),
         ]}
-        currency="NGN"
         isLoading={false}
         errorMessage={null}
         onRetry={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Rent roll & arrears ageing")).toBeInTheDocument();
+    expect(screen.getByText("Balance by arrears age")).toBeInTheDocument();
     expect(screen.getAllByText("Suite 1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Acme Studio").length).toBeGreaterThan(0);
     expect(screen.getAllByText("90+ days").length).toBeGreaterThan(0);

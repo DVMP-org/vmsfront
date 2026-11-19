@@ -19,6 +19,7 @@ import { format } from "date-fns/format";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -168,7 +169,7 @@ export default function CommercialOverview() {
 
   return (
     <CommercialShell
-      title="Commercial overview"
+      title="Overview"
       description="Occupancy, lease expiry, collections, maintenance and contractor access for the selected property."
       primaryAction={
         <Button asChild>
@@ -179,43 +180,41 @@ export default function CommercialOverview() {
         </Button>
       }
     >
-      <section
-        aria-label="Commercial operating summary"
-        className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <Metric
-          icon={Building2}
-          label="Spaces"
-          value={tree.isPending ? "—" : `${occupiedCount}/${inventory.length}`}
-          detail={`${occupancyRate}% occupied`}
-        />
-        <Metric
-          icon={BriefcaseBusiness}
-          label="Tenants"
-          value={relationships.isPending ? "—" : String(tenants.length)}
-          detail={`${leases.length} active agreements`}
-        />
-        <Metric
-          icon={WalletCards}
-          label="Outstanding"
-          value={
-            assignments.isPending ? "—" : formatMoney(openBalance, currency)
-          }
-          detail={`${outstandingAssignments.length} assignments in arrears`}
-          attention={outstandingAssignments.length > 0}
-        />
-        <Metric
-          icon={ClipboardList}
-          label="Work orders"
-          value={maintenance.isPending ? "—" : String(openWorkOrders.length)}
-          detail={
-            overdueWorkOrders.length
-              ? `${overdueWorkOrders.length} past their due date`
-              : "Nothing overdue"
-          }
-          attention={overdueWorkOrders.length > 0}
-        />
-      </section>
+      <MetricStrip
+        label="Commercial operating summary"
+        metrics={[
+          {
+            icon: Building2,
+            label: "Spaces",
+            value: `${occupiedCount}/${inventory.length}`,
+            detail: inventory.length ? `${occupancyRate}% occupied` : "No lettable spaces configured",
+            state: tree.isPending || relationships.isPending ? "loading" : tree.isError || relationships.isError ? "error" : "ready",
+          },
+          {
+            icon: BriefcaseBusiness,
+            label: "Tenants",
+            value: tenants.length,
+            detail: `${leases.length} active agreements`,
+            state: tree.isPending || relationships.isPending ? "loading" : tree.isError || relationships.isError ? "error" : "ready",
+          },
+          {
+            icon: WalletCards,
+            label: "Outstanding",
+            value: formatMoney(openBalance, currency),
+            detail: `${outstandingAssignments.length} assignments with a positive balance`,
+            attention: outstandingAssignments.length > 0,
+            state: tree.isPending || assignments.isPending ? "loading" : tree.isError || assignments.isError ? "error" : "ready",
+          },
+          {
+            icon: ClipboardList,
+            label: "Work orders",
+            value: openWorkOrders.length,
+            detail: overdueWorkOrders.length ? `${overdueWorkOrders.length} past their due date` : "No overdue orders in loaded results",
+            attention: overdueWorkOrders.length > 0,
+            state: maintenance.isPending ? "loading" : maintenance.isError ? "error" : "ready",
+          },
+        ]}
+      />
 
       <AttentionQueueSection
         useCase="commercial"
@@ -542,39 +541,6 @@ export default function CommercialOverview() {
         />
       </section>
     </CommercialShell>
-  );
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  attention = false,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  detail: string;
-  attention?: boolean;
-}) {
-  return (
-    <div className="border-b border-[var(--vms-line)] p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        {label}
-      </p>
-      <p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>
-      <p
-        className={
-          attention
-            ? "mt-0.5 text-xs font-medium text-[var(--vms-warning)]"
-            : "mt-0.5 text-xs text-[var(--vms-ink-muted)]"
-        }
-      >
-        {detail}
-      </p>
-    </div>
   );
 }
 

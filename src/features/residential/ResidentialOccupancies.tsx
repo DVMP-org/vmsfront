@@ -177,6 +177,7 @@ export default function ResidentialOccupancies() {
       key: "person_name",
       header: "Name",
       sortable: true,
+      minWidth: 220,
       accessor: (row) => (
         <button
           type="button"
@@ -205,12 +206,14 @@ export default function ResidentialOccupancies() {
       key: "unit_name",
       header: "Unit",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => <span className="font-medium">{row.unit_name}</span>,
     },
     {
       key: "role",
       header: "Role",
       sortable: true,
+      minWidth: 110,
       accessor: (row) => (
         <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-900">
           {titleCase(row.role)}
@@ -220,6 +223,7 @@ export default function ResidentialOccupancies() {
     {
       key: "household",
       header: "Household",
+      responsiveHide: "xl",
       accessor: (row) => (
         <span>
           {row.unit_name}
@@ -238,6 +242,7 @@ export default function ResidentialOccupancies() {
     {
       key: "effective_from",
       header: "Occupancy dates",
+      minWidth: 180,
       accessor: (row) => (
         <span>
           {row.effective_from
@@ -254,6 +259,7 @@ export default function ResidentialOccupancies() {
       key: "status",
       header: "Account status",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge tone={relationshipTone(row.status)}>
           {titleCase(row.status)}
@@ -264,6 +270,7 @@ export default function ResidentialOccupancies() {
       key: "actions",
       header: "Actions",
       className: "text-right",
+      minWidth: 76,
       mobileHide: true,
       accessor: (row) => (
         <Button

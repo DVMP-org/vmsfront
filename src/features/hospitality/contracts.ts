@@ -100,7 +100,10 @@ export interface HospitalityMaintenanceRequest {
   created_at: string;
   updated_at: string;
 }
-export const statusLabel = (status: string) => status.replaceAll("_", " ");
+export const statusLabel = (status: string) =>
+  status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 export const roomStatusLabel = (status: RoomOperationalStatus) =>
   status.replaceAll("_", " ");
 export function localInput(iso: string) {

@@ -10,20 +10,40 @@
   },
   "navigation": [
     {
-      "id": "property",
-      "label": "Property",
+      "id": "overview",
+      "label": "Overview",
       "items": [
         {
-          "label": "Property overview",
+          "label": "Overview",
           "href": "/admin",
-          "icon": "building",
+          "icon": "home",
           "module": "mixed_use"
         },
         {
-          "label": "Contractors",
-          "href": "/admin/contractors",
-          "icon": "shield",
-          "module": "contractors"
+          "label": "Places",
+          "href": "/admin/places",
+          "icon": "building",
+          "module": "properties",
+          "children": [
+            {
+              "label": "Residency directory",
+              "href": "/admin/places",
+              "icon": "building",
+              "module": "properties"
+            },
+            {
+              "label": "Residency group",
+              "href": "/admin/place-groups",
+              "icon": "layers",
+              "module": "properties"
+            }
+          ]
+        },
+        {
+          "label": "People & tenancies",
+          "href": "/admin/people",
+          "icon": "users",
+          "module": "people"
         }
       ]
     },
@@ -37,31 +57,12 @@
           "icon": "document",
           "module": "leases"
         },
+
         {
-          "label": "Parties & tenancies",
-          "href": "/admin/commercial/tenants",
-          "icon": "users",
-          "module": "people"
-        },
-        {
-          "label": "Revenue & charges",
+          "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
-          "module": "charges",
-          "children": [
-            {
-              "label": "Charge definitions",
-              "href": "/admin/charges",
-              "icon": "receipt",
-              "module": "charges"
-            },
-            {
-              "label": "Place groups",
-              "href": "/admin/place-groups",
-              "icon": "layers",
-              "module": "properties"
-            }
-          ]
+          "module": "charges"
         },
         {
           "label": "Shared expense allocation",
@@ -86,6 +87,12 @@
           "href": "/admin/mixed-use/facilities",
           "icon": "share",
           "module": "shared_facilities"
+        },
+        {
+          "label": "Contractors",
+          "href": "/admin/contractors",
+          "icon": "shield",
+          "module": "contractors"
         }
       ]
     },

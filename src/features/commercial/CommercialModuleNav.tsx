@@ -62,7 +62,7 @@ export function CommercialModuleNav() {
   const pathname = usePathname();
   return (
     <nav
-      aria-label="Commercial operations"
+      aria-label="Operations"
       className="-mx-1 overflow-x-auto border-b border-[var(--vms-line)] pb-2"
     >
       <ul className="flex min-w-max gap-1 px-1">

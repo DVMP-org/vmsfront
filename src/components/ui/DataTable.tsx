@@ -178,7 +178,7 @@ export function DataTable<T extends Record<string, any>>({
   pageSizeOptions = [10, 20, 30, 50, 100],
   onPageSizeChange,
   showPagination = true,
-  emptyMessage = "No data available",
+  emptyMessage = "No records match your current view.",
   className,
   selectable = false,
   getRowId = (row: T) => (row as any).id || String(row),
@@ -1310,7 +1310,7 @@ export function DataTable<T extends Record<string, any>>({
                               size="sm"
                               onClick={clearAllFilters}
                             >
-                              Clear filters to see all results
+                              Clear search and filters
                             </Button>
                           )}
                         </div>
@@ -1392,16 +1392,20 @@ export function DataTable<T extends Record<string, any>>({
               aria-label={`${tableLabel} row summaries`}
             >
               {paginatedData.length === 0 ? (
-                <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  <p>{emptyMessage}</p>
+                <li className="flex flex-col items-center justify-center gap-3 px-4 py-8 text-center text-sm text-muted-foreground">
+                  {hasActiveFilters ? (
+                    <SearchX className="h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Inbox className="h-6 w-6" aria-hidden="true" />
+                  )}
+                  <p className="font-medium text-foreground">{emptyMessage}</p>
                   {hasActiveFilters ? (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={clearAllFilters}
-                      className="mt-3"
                     >
-                      Clear filters to see all results
+                      Clear search and filters
                     </Button>
                   ) : null}
                 </li>

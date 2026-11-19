@@ -21,6 +21,7 @@ import {
   FolderTree,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { Skeleton } from "../ui/Skeleton";
 import { useAppStore } from "@/store/app-store";
 import { loadPlugins } from "@/lib/plugin_loader";
 import type { LoadedPlugin } from "@/types/plugin";
@@ -41,6 +42,52 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 interface SidebarProps {
   type: "resident" | "admin";
   onMobileClose?: () => void;
+}
+
+function NavigationSkeleton({
+  collapsed,
+  isMobile,
+}: {
+  collapsed: boolean;
+  isMobile: boolean;
+}) {
+  const groups = [3, 4, 3];
+  const showLabels = isMobile || !collapsed;
+
+  return (
+    <div
+      role="status"
+      aria-label="Loading workspace navigation"
+      aria-busy="true"
+      className="space-y-4"
+    >
+      <span className="sr-only">Loading workspace navigation</span>
+      {groups.map((rowCount, groupIndex) => (
+        <div key={groupIndex} className="space-y-1.5">
+          {showLabels ? <Skeleton className="mb-2 ml-3 h-2.5 w-20" /> : null}
+          {Array.from({ length: rowCount }).map((_, rowIndex) => (
+            <div
+              key={rowIndex}
+              className={cn(
+                "flex h-10 items-center gap-3 rounded-[var(--vms-radius-control)] px-3",
+                !showLabels && "justify-center px-2",
+              )}
+            >
+              <Skeleton className="h-4 w-4 shrink-0" />
+              {showLabels ? (
+                <Skeleton
+                  className={cn(
+                    "h-3",
+                    rowIndex % 2 === 0 ? "w-28" : "w-36",
+                  )}
+                />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // Personal Place navigation is owned by PlaceWorkspaceShell. Keep the shared
@@ -379,6 +426,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       }) || null
     );
   }, [links, pathname]);
+  const showNavigationSkeleton =
+    actualType === "admin" &&
+    workspaceContext.isPending &&
+    !workspaceContext.data;
 
   // Auto-collapse on smaller screens, but keep sidebar visible
   useEffect(() => {
@@ -552,7 +603,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           isMobile || !collapsed ? "p-3" : "py-4 px-0",
         )}
       >
-        {links.map((link: any, index: number) => {
+        {showNavigationSkeleton ? (
+          <NavigationSkeleton collapsed={collapsed} isMobile={isMobile} />
+        ) : (
+          links.map((link: any, index: number) => {
           const Icon = link.icon;
           const isParentActive =
             activeLink?.href === link.href ||
@@ -699,7 +753,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
               />
             </div>
           );
-        })}
+          })
+        )}
         <>
           {filteredPlugins.map((plugin) => {
             const isExpanded = expandedPlugins.has(plugin.name);

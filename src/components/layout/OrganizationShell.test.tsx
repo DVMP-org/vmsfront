@@ -31,26 +31,6 @@ vi.mock("@/hooks/use-admin", () => ({
 
 describe("OrganizationShell", () => {
   it.each([
-    "/organization/roles",
-    "/organization/roles/create",
-    "/organization/roles/role-1/edit",
-  ])("keeps Members & Roles active at %s", (pathname) => {
-    navigation.pathname = pathname;
-    navigation.permissions = ["*"];
-    const view = render(
-      <OrganizationShell>
-        <div>Roles</div>
-      </OrganizationShell>,
-    );
-    const active = view.container.querySelectorAll('a[aria-current="page"]');
-    expect(active).toHaveLength(2);
-    active.forEach((link) =>
-      expect(link).toHaveAttribute("href", "/organization/administrators"),
-    );
-    navigation.pathname = "/organization/sites";
-    navigation.permissions = ["places.list"];
-  });
-  it.each([
     "/organization/sites/child",
     "/organization/sites/child/edit",
     "/organization/sites/child/move",

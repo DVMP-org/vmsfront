@@ -58,7 +58,7 @@ export default function CreateRolePage() {
       },
       {
         onSuccess: () => {
-          router.push("/organization/roles");
+          router.push("/admin/admins/roles");
         },
       },
     );
@@ -76,7 +76,7 @@ export default function CreateRolePage() {
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Link
-                href="/admin/roles"
+                href="/admin/admins/roles"
                 className="text-primary hover:underline"
               >
                 Roles
@@ -95,7 +95,7 @@ export default function CreateRolePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/admin/roles")}
+            onClick={() => router.push("/admin/admins/roles")}
           >
             Back to roles
           </Button>
@@ -206,7 +206,7 @@ export default function CreateRolePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/admin/roles")}
+                  onClick={() => router.push("/admin/admins/roles")}
                 >
                   Cancel
                 </Button>

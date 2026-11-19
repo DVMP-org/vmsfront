@@ -14,7 +14,7 @@
       "label": "Overview",
       "items": [
         {
-          "label": "Residential overview",
+          "label": "Overview",
           "href": "/admin",
           "icon": "home",
           "module": "residential"
@@ -58,17 +58,11 @@
           "module": "leases"
         },
         {
-          "label": "Bills & collections",
+          "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
           "module": "charges",
           "children": [
-            {
-              "label": "Charge definitions",
-              "href": "/admin/charges",
-              "icon": "receipt",
-              "module": "charges"
-            },
             {
               "label": "Charge register",
               "href": "/admin/residential/finance",

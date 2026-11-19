@@ -52,7 +52,6 @@ const navigationGroups: { label: string; items: OrganizationNavItem[] }[] = [
       {
         href: "/organization/administrators",
         label: "Members & Roles",
-        activePaths: ["/organization/roles"],
         icon: Users,
         permissions: ["admins.list"],
       },

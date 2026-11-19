@@ -588,11 +588,19 @@ export function ExpenseAllocations() {
           </div>
 
           <section>
+            <InlineAlert
+              tone="warning"
+              title="Editable starter split"
+              className="mb-3"
+            >
+              The form starts at 50% Residential and 50% Commercial. Confirm or
+              change each share to match this expense before creating the draft.
+            </InlineAlert>
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h3 className="font-semibold">Allocation shares</h3>
                 <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                  Percentages must total 100. Targets must belong to this
+                  Keep total shares at 100%. Targets must belong to this
                   property.
                 </p>
               </div>

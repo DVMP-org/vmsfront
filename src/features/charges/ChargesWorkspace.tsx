@@ -265,9 +265,9 @@ function Directory({
           icon={FileText}
         />
         <SummaryMetric
-          label="Active on this page"
+          label="Active definitions"
           value={query.data ? activeOnPage : "—"}
-          detail="Ready for future assignments"
+          detail="In the current result page"
           icon={CheckCircle2}
         />
         <SummaryMetric

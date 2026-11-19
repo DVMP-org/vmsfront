@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 import { PlacePicker } from "@/components/sites/PlacePicker";
-import { SitePicker } from "@/components/sites/SitePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -39,7 +38,6 @@ const OCCUPANCY_ROLES = {
 export default function PeopleWorkspace() {
   const organization = useAppStore((state) => state.organization);
   const selectedSite = useAppStore((state) => state.selectedSite);
-  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const queryClient = useQueryClient();
   const access = useSiteAccess();
   const profile = access.workspace;
@@ -206,34 +204,7 @@ export default function PeopleWorkspace() {
           </div>
         </div>
       </header>
-      <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
-        {selectedSite ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-3">
-              <Building2 className="h-5 w-5" aria-hidden="true" />
-              <span>
-                <small className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-                  Site context
-                </small>
-                <strong>{selectedSite.name}</strong>
-              </span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedSite(null)}
-            >
-              Change Site
-            </Button>
-          </div>
-        ) : (
-          <SitePicker
-            label="Choose a Site workspace"
-            value={selectedSite}
-            onChange={setSelectedSite}
-          />
-        )}
-      </section>
+
       {notice ? (
         <InlineAlert tone="success" title="People updated">
           <CheckCircle2 className="mr-1 inline h-4 w-4" aria-hidden="true" />

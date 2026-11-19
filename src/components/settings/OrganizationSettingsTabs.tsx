@@ -3,16 +3,6 @@ import Link from "next/link";
 const sections = [
   { id: "general", label: "General details", href: "/organization/settings" },
   {
-    id: "administrators",
-    label: "Administrators",
-    href: "/organization/settings/administrators",
-  },
-  {
-    id: "roles",
-    label: "Roles & permissions",
-    href: "/organization/settings/roles",
-  },
-  {
     id: "branding",
     label: "Branding",
     href: "/organization/settings/branding",
@@ -79,10 +69,6 @@ export function OrganizationSettingsTabs({
 export function organizationSettingsSectionFromPath(
   pathname: string | null,
 ): OrganizationSettingsSection {
-  if (pathname?.startsWith("/organization/settings/administrators")) {
-    return "administrators";
-  }
-  if (pathname?.startsWith("/organization/settings/roles")) return "roles";
   if (pathname?.startsWith("/organization/settings/branding"))
     return "branding";
   if (pathname?.startsWith("/organization/settings/templates")) {

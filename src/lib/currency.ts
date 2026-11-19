@@ -32,6 +32,27 @@ export function formatMoney(amount: AmountInput, currency?: string): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+/** Currency code remains visible where values from multiple currencies share a view. */
+export function formatMoneyWithCode(
+  amount: AmountInput,
+  currency: string,
+): string {
+  const value = toAmount(amount);
+  if (value === null) return "—";
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      currencyDisplay: "code",
+      maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+    }).format(value);
+  } catch {
+    return `${currency.toUpperCase()} ${value.toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })}`;
+  }
+}
+
 /** Plain decimal without a currency symbol, for inputs and totals. */
 export function formatAmount(amount: AmountInput): string {
   const value = toAmount(amount);

@@ -120,24 +120,14 @@ export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-[var(--vms-ink)]">
-            Room categories
-          </h2>
-          <p className="text-xs text-[var(--vms-ink-muted)]">
-            What guests book — “Deluxe Super”, “Executive Suite”. A category can
-            be created before any room belongs to it, and a room belongs to one
-            category.
-          </p>
-        </div>
-        {canManage ? (
+      {canManage ? (
+        <div className="flex justify-end">
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             New category
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <DataTable
         data={categories.data ?? []}

@@ -102,6 +102,7 @@ export default function HospitalityRoomsPage() {
       key: "name",
       header: "Room",
       sortable: true,
+      minWidth: 180,
       accessor: (room) => (
         <div className="min-w-0">
           <strong className="block truncate">{room.name}</strong>
@@ -116,6 +117,7 @@ export default function HospitalityRoomsPage() {
       key: "room_type",
       header: "Type",
       sortable: true,
+      minWidth: 120,
       accessor: (room) => (
         // show room category here instead of room_type
         <div>
@@ -130,12 +132,14 @@ export default function HospitalityRoomsPage() {
       key: "base_rate",
       header: "Nightly rate",
       sortable: true,
+      responsiveHide: "xl",
       accessor: (room) => money(room.base_rate, room.currency),
     },
     {
       key: "status",
       header: "Operational state",
       sortable: true,
+      minWidth: 155,
       accessor: (room) => (
         <RoomStatus
           status={room.status}
@@ -146,6 +150,7 @@ export default function HospitalityRoomsPage() {
     {
       key: "guest",
       header: "Guest / next arrival",
+      minWidth: 150,
       accessor: (room) => (
         <div className="max-w-44">
           <span className="block truncate">
@@ -163,6 +168,7 @@ export default function HospitalityRoomsPage() {
       key: "maintenance_open",
       header: "Issues",
       sortable: true,
+      minWidth: 80,
       accessor: (room) =>
         room.maintenance_open ? (
           <span className="font-semibold text-[var(--vms-danger)]">
@@ -175,6 +181,7 @@ export default function HospitalityRoomsPage() {
     {
       key: "actions",
       header: "",
+      minWidth: 140,
       mobileHide: true,
       accessor: (room) => (
         <div className="flex items-center justify-end gap-1">

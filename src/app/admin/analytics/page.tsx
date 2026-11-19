@@ -1,5 +1,7 @@
 "use client";
 
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
+
 import { useMemo, type ReactNode } from "react";
 import {
   Activity,
@@ -30,7 +32,6 @@ import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
-  MetricStrip,
   PanelState,
   ReportPanel,
   StaleDataBanner,

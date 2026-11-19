@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Download,
@@ -83,11 +83,8 @@ function isProtected(admin: Admin) {
 }
 
 export default function OrganizationAdministratorsPage() {
-  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const embedded =
-    pathname?.startsWith("/organization/settings/administrators") === true;
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("created_at|desc");
@@ -133,9 +130,12 @@ export default function OrganizationAdministratorsPage() {
     if (searchParams?.get("create") !== "administrator") return;
     const next = new URLSearchParams(searchParams.toString());
     next.delete("create");
-    router.replace(`${pathname}${next.size ? `?${next}` : ""}`, {
-      scroll: false,
-    });
+    router.replace(
+      `/organization/administrators${next.size ? `?${next}` : ""}`,
+      {
+        scroll: false,
+      },
+    );
   }
 
   function openCreate() {
@@ -344,26 +344,19 @@ export default function OrganizationAdministratorsPage() {
 
   return (
     <div className="space-y-5">
-      {!embedded ? (
-        <OrganizationAdminHeader
-          eyebrow="Organization administration"
-          title="Members & Roles"
-          description="Manage organization-level members and the roles that delegate administration. Site administration and occupancy relationships remain separate in Places and People."
-          actions={
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline">
-                <Link href="/organization/roles">Review roles</Link>
-              </Button>
-              {canCreate ? (
-                <Button onClick={openCreate}>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Add administrator
-                </Button>
-              ) : null}
-            </div>
-          }
-        />
-      ) : null}
+      <OrganizationAdminHeader
+        eyebrow="Organization administration"
+        title="Members & Roles"
+        description="Manage organization-level members and the roles that delegate administration. Site administration and occupancy relationships remain separate in Places and People."
+        actions={
+          canCreate ? (
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add administrator
+            </Button>
+          ) : undefined
+        }
+      />
 
       {notice ? (
         <div

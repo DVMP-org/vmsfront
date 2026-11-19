@@ -89,7 +89,7 @@
       "items": [
         {
           "label": "Guest folios & billing",
-          "href": "/admin/charges",
+          "href": "/admin/hospitality/billing",
           "icon": "receipt",
           "module": "charges",
           "children": [
@@ -97,12 +97,6 @@
               "label": "Charge definitions",
               "href": "/admin/charges",
               "icon": "receipt",
-              "module": "charges"
-            },
-            {
-              "label": "Guest folios & billing",
-              "href": "/admin/hospitality/billing",
-              "icon": "calculator",
               "module": "charges"
             }
           ]

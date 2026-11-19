@@ -149,10 +149,10 @@ it("shows site administrators, occupants and the live arrival queue", async () =
   expect(
     await screen.findByText("Administration and occupancy"),
   ).toBeInTheDocument();
-  expect(screen.getByText("Dana Admin")).toBeInTheDocument();
+  expect(await screen.findByText("Dana Admin")).toBeInTheDocument();
   expect(mocks.context).toHaveBeenCalledWith("hotel");
   expect(screen.getByText("Gina Guest")).toBeInTheDocument();
-  expect(screen.getAllByText("Expected arrivals").length).toBeGreaterThan(0);
+  expect(screen.getByText("Reserved on this page")).toBeInTheDocument();
   expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
 });
 it("shows inherited site administration provenance", async () => {

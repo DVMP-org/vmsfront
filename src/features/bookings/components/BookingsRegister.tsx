@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/DataTable";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { formatDateTime } from "@/lib/datetime";
 import { BookingCreateForm } from "./BookingCreateForm";
@@ -149,29 +150,20 @@ export function BookingsRegister() {
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <header className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-lg font-semibold text-[var(--vms-ink)]">
-                Bookings
-              </h1>
-              <p className="text-xs text-[var(--vms-ink-muted)]">
-                Every booking and reservation at this Site, with who asked and
-                what was decided.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setCreating(true)}
-            >
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <PageHeader
+          eyebrow="Hospitality"
+          title="Bookings"
+          description="Guest requests and confirmed stays at this Site."
+          primaryAction={
+            <Button type="button" onClick={() => setCreating(true)}>
               New booking
             </Button>
-          </div>
+          }
+        />
+        <div>
           <BookingPageLink siteSlug={siteSlug} />
-        </header>
+        </div>
 
         <DataTable
           data={bookings}

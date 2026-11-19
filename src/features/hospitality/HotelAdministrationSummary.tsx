@@ -7,7 +7,9 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import type { WorkspaceRelationship } from "@/types";
+import { formatDateTime } from "@/lib/datetime";
 import { guestName, type Stay } from "./contracts";
 
 const OCCUPANCY_ROLES = new Set([
@@ -41,6 +43,9 @@ export function HotelAdministrationSummary({
   authoritativePlaceName,
   relationships,
   stays,
+  staysLoading,
+  staysError,
+  onRetryStays,
   loading,
   error,
   onRetry,
@@ -51,6 +56,9 @@ export function HotelAdministrationSummary({
   authoritativePlaceName?: string | null;
   relationships: WorkspaceRelationship[];
   stays: Stay[];
+  staysLoading: boolean;
+  staysError: string | null;
+  onRetryStays: () => void;
   loading: boolean;
   error?: string | null;
   onRetry: () => void;
@@ -63,8 +71,13 @@ export function HotelAdministrationSummary({
       (left, right) =>
         new Date(left.planned_check_in).getTime() -
         new Date(right.planned_check_in).getTime(),
-    )
-    .slice(0, 5);
+    );
+  const peopleUnavailable = loading ? "—" : error ? "Unavailable" : null;
+  const staysUnavailable = staysLoading
+    ? "—"
+    : staysError
+      ? "Unavailable"
+      : null;
 
   return (
     <section className="hotel-admin-overview" aria-label="Hotel administration">
@@ -87,22 +100,22 @@ export function HotelAdministrationSummary({
         <Metric
           icon={ShieldCheck}
           label="Administrators"
-          value={administrators.length}
+          value={peopleUnavailable ?? administrators.length}
         />
         <Metric
           icon={UserRound}
           label="Occupants"
-          value={people.occupants.length}
+          value={peopleUnavailable ?? people.occupants.length}
         />
         <Metric
           icon={Users}
           label="Staff & guests"
-          value={people.staff.length + people.guests.length}
+          value={peopleUnavailable ?? people.staff.length + people.guests.length}
         />
         <Metric
           icon={CalendarClock}
-          label="Expected arrivals"
-          value={arrivals.length}
+          label="Reserved on this page"
+          value={staysUnavailable ?? arrivals.length}
         />
       </div>
 
@@ -125,9 +138,9 @@ export function HotelAdministrationSummary({
           ) : error ? (
             <div role="alert" className="stay-error">
               {error}
-              <button type="button" onClick={onRetry}>
+              <Button variant="outline" size="sm" type="button" onClick={onRetry}>
                 Retry people
-              </button>
+              </Button>
             </div>
           ) : administrators.length || relationships.length ? (
             <ul className="hotel-people-list">
@@ -176,14 +189,25 @@ export function HotelAdministrationSummary({
         <div className="hotel-overview-panel">
           <div className="hotel-panel-heading">
             <div>
-              <h3>Expected arrivals</h3>
-              <p>Reserved stays waiting for hotel admission.</p>
+              <h3>Reserved stays</h3>
+              <p>Up to five arrivals from the current stay result page.</p>
             </div>
             <ConciergeBell className="h-5 w-5" />
           </div>
-          {arrivals.length ? (
+          {staysLoading ? (
+            <p role="status" className="stay-muted">
+              Loading reserved stays…
+            </p>
+          ) : staysError ? (
+            <div role="alert" className="stay-error">
+              {staysError}
+              <Button variant="outline" size="sm" type="button" onClick={onRetryStays}>
+                Retry stays
+              </Button>
+            </div>
+          ) : arrivals.length ? (
             <ul className="hotel-arrival-list">
-              {arrivals.map((stay) => (
+              {arrivals.slice(0, 5).map((stay) => (
                 <li key={stay.id}>
                   <a
                     href={`?stay=${stay.id}`}
@@ -195,7 +219,7 @@ export function HotelAdministrationSummary({
                     <span>
                       <strong>{guestName(stay)}</strong>
                       <small>
-                        {new Date(stay.planned_check_in).toLocaleString()}
+                        {formatDateTime(stay.planned_check_in)}
                       </small>
                     </span>
                     <span>
@@ -228,7 +252,7 @@ function Metric({
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  value: number;
+  value: number | string;
 }) {
   return (
     <div className="hotel-metric">

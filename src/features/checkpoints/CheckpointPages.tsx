@@ -31,6 +31,7 @@ import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import {
   AccessCommand,
@@ -188,6 +189,10 @@ function consoleInitials(value?: string | null) {
       .map((part) => part[0]?.toUpperCase())
       .join("") || "?"
   );
+}
+
+function hasNoAssignedCheckpoint(error: unknown) {
+  return /no checkpoint is assigned/i.test(parseApiError(error).message);
 }
 
 /** Compact visit-window date, e.g. "10 Nov, 09:00". */
@@ -821,7 +826,7 @@ function Console({
         <span>Validate access at the assigned checkpoint.</span>
       </header>
 
-      {gate.isError ? (
+      {gate.isError && !hasNoAssignedCheckpoint(gate.error) ? (
         <Failure error={gate.error} retry={() => gate.refetch()} />
       ) : null}
       <section
@@ -879,6 +884,23 @@ function Console({
           </span>
         </div>
       </section>
+      {gate.isError && hasNoAssignedCheckpoint(gate.error) ? (
+        <InlineAlert
+          tone="warning"
+          title="Checkpoint assignment required"
+          action={
+            <Link
+              href="/admin/gates"
+              className="inline-flex min-h-10 items-center px-2 text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+            >
+              Manage checkpoints
+            </Link>
+          }
+        >
+          This operator has no assigned checkpoint. The browser is online, but
+          access decisions cannot be recorded until a checkpoint is assigned.
+        </InlineAlert>
+      ) : null}
       {queued.length ? (
         <section className="checkpoint-queue" aria-live="polite">
           <strong>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Column } from "@/components/ui/DataTable";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
-import { formatMoney } from "@/lib/currency";
+import { formatMoneyWithCode } from "@/lib/currency";
 import { formatDate } from "@/lib/datetime";
 import {
   ageingBuckets,
@@ -32,13 +32,11 @@ function bucketLabel(bucket: AgeingBucket) {
  */
 export function RentRollSection({
   rows,
-  currency,
   isLoading,
   errorMessage,
   onRetry,
 }: {
   rows: RentRollRow[];
-  currency: string;
   isLoading: boolean;
   errorMessage: string | null;
   onRetry: () => void;
@@ -51,7 +49,7 @@ export function RentRollSection({
       sortable: true,
       accessor: (row) => (
         <Link
-          href={`/admin/places/${row.id}`}
+          href={`/admin/places/${row.place_id}`}
           className="font-semibold underline-offset-4 hover:underline"
         >
           {row.space}
@@ -79,10 +77,12 @@ export function RentRollSection({
     {
       key: "balance",
       header: "Balance",
-      sortable: true,
+      sortable: false,
       accessor: (row) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(row.balance, currency)}
+          {row.currency
+            ? formatMoneyWithCode(row.balance, row.currency)
+            : "—"}
         </span>
       ),
     },
@@ -101,12 +101,9 @@ export function RentRollSection({
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
       <div className="mb-3 border-b border-[var(--vms-line)] pb-4">
-        <h2 className="text-base font-semibold">
-          Rent roll &amp; arrears ageing
-        </h2>
+        <h2 className="text-base font-semibold">Balance by arrears age</h2>
         <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-          Who owes what, how long it has been owed, and when the tenancy that
-          owes it ends.
+          Compare occupied spaces and vacant spaces with a remaining balance.
         </p>
       </div>
       <ul
@@ -121,16 +118,27 @@ export function RentRollSection({
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
               {bucket.label}
             </p>
-            <p
-              className={
-                (bucket.key === "61_90" || bucket.key === "90_plus") &&
-                bucket.amount > 0
-                  ? "mt-1 text-lg font-semibold tabular-nums text-[var(--vms-danger)]"
-                  : "mt-1 text-lg font-semibold tabular-nums"
-              }
-            >
-              {formatMoney(bucket.amount, currency)}
-            </p>
+            <div className="mt-1 space-y-1">
+              {bucket.amounts.length ? (
+                bucket.amounts.map(({ currency, amount }) => (
+                  <p
+                    key={currency}
+                    className={
+                      (bucket.key === "61_90" || bucket.key === "90_plus") &&
+                      amount > 0
+                        ? "text-sm font-semibold tabular-nums text-[var(--vms-danger)]"
+                        : "text-sm font-semibold tabular-nums"
+                    }
+                  >
+                    {formatMoneyWithCode(amount, currency)}
+                  </p>
+                ))
+              ) : (
+                <p className="text-sm font-medium text-[var(--vms-ink-muted)]">
+                  —
+                </p>
+              )}
+            </div>
           </li>
         ))}
       </ul>
@@ -148,7 +156,7 @@ export function RentRollSection({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <Link
-                  href={`/admin/places/${row.id}`}
+                  href={`/admin/places/${row.place_id}`}
                   className="font-semibold underline-offset-4 hover:underline"
                 >
                   {row.space}
@@ -162,7 +170,9 @@ export function RentRollSection({
               </StatusBadge>
             </div>
             <p className="text-sm font-semibold tabular-nums">
-              {formatMoney(row.balance, currency)}
+              {row.currency
+                ? formatMoneyWithCode(row.balance, row.currency)
+                : "—"}
               <span className="ml-2 text-xs font-normal text-[var(--vms-ink-muted)]">
                 {row.lease_ends_at
                   ? `lease ends ${formatDate(row.lease_ends_at)}`

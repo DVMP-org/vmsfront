@@ -1,5 +1,7 @@
 "use client";
 
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
+
 import Link from "next/link";
 import {
   Building2,
@@ -24,7 +26,6 @@ import type {
 import { AccessTrendPanel, type DashboardRange } from "./AccessTrendPanel";
 import { AttentionQueue } from "./AttentionQueue";
 import {
-  MetricStrip,
   PanelState,
   ReportPanel,
   SeeAllLink,

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/DataTable";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useHospitalityRooms } from "@/features/hospitality/queries";
 import { formatDateTime } from "@/lib/datetime";
 import { ReservationActions } from "./ReservationActions";
@@ -148,15 +149,12 @@ export function ReservationsBoard() {
   ];
 
   return (
-    <div className="flex flex-col gap-3">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-lg font-semibold text-[var(--vms-ink)]">
-          Reservations
-        </h1>
-        <p className="text-xs text-[var(--vms-ink-muted)]">
-          Capacity held at this Site, whether or not it has been sold yet.
-        </p>
-      </header>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Hospitality"
+        title="Reservations"
+        description="Capacity held at this Site, whether or not it has been sold yet."
+      />
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-xs font-medium text-[var(--vms-ink-muted)]">

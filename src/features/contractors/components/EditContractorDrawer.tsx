@@ -176,7 +176,7 @@ export function EditContractorDrawer({
         title="Access window"
         description="The gate honours this window only; extend it before the current one ends."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <Field id="contractor-edit-from" label="Allowed from" required>
             {(control) => (
               <input

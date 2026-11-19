@@ -194,6 +194,22 @@ export function AttentionQueue({
     (category) => category.count > 0,
   );
 
+  if (!isLoading && !isError && queue?.total === 0) {
+    return (
+      <section
+        aria-label="Attention required"
+        role="status"
+        className="flex items-center gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-4 py-3 text-sm text-[var(--vms-ink-muted)] sm:px-5"
+      >
+        <CheckCircle2
+          className="h-4 w-4 shrink-0 text-[var(--vms-success)]"
+          aria-hidden
+        />
+        Nothing is overdue or waiting for a decision.
+      </section>
+    );
+  }
+
   return (
     <ReportPanel
       title="Attention required"
@@ -213,7 +229,7 @@ export function AttentionQueue({
           description="Checking approvals, charges, maintenance and leases for this property."
           compact
         />
-      ) : isError ? (
+      ) : isError || !queue ? (
         <PanelState
           kind="error"
           title="The work queue could not be loaded"
@@ -223,14 +239,6 @@ export function AttentionQueue({
           retryLabel="Retry work queue"
           compact
         />
-      ) : !queue || queue.total === 0 ? (
-        <div className="flex min-h-32 items-center gap-3 px-5 py-6 text-sm text-[var(--vms-ink-muted)]">
-          <CheckCircle2
-            className="h-5 w-5 shrink-0 text-[var(--vms-success)]"
-            aria-hidden
-          />
-          Nothing is overdue or waiting for a decision.
-        </div>
       ) : (
         <div>
           {categories.map((category) => (

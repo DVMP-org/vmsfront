@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
@@ -16,10 +16,12 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { formatDateTime } from "@/lib/datetime";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
+import { StayStatusBadge } from "@/features/hospitality/components/StayStatusBadge";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import {
   guestName,
@@ -62,6 +64,14 @@ function HospitalityWorkspace({
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
+  const detailPanel = useRef<HTMLElement>(null);
+  const stayList = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (creating || selected) {
+      detailPanel.current?.focus({ preventScroll: true });
+      detailPanel.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [creating, selected]);
   const profile = useQuery({
     queryKey: ["hospitality-profile", context],
     queryFn: async () => (await adminService.getAdminProfile()).data,
@@ -144,8 +154,8 @@ function HospitalityWorkspace({
       sortable: true,
       accessor: (stay) => (
         <span className="text-sm">
-          {new Date(stay.planned_check_in).toLocaleDateString()} →{" "}
-          {new Date(stay.planned_check_out).toLocaleDateString()}
+          {formatDateTime(stay.planned_check_in)} →{" "}
+          {formatDateTime(stay.planned_check_out)}
         </span>
       ),
     },
@@ -163,11 +173,7 @@ function HospitalityWorkspace({
       key: "status",
       header: "Status",
       sortable: true,
-      accessor: (stay) => (
-        <span className={`stay-status ${stay.status}`}>
-          {statusLabel(stay.status)}
-        </span>
-      ),
+      accessor: (stay) => <StayStatusBadge status={stay.status} />,
     },
     {
       key: "actions",
@@ -261,39 +267,50 @@ function HospitalityWorkspace({
           {notice}
         </p>
       )}
-      {!list.isPending ? (
-        <HotelAdministrationSummary
-          administrators={
-            workspaceContext.data?.management?.administrators || []
-          }
-          authorityMode={workspaceContext.data?.management?.mode}
-          authoritativePlaceName={
-            workspaceContext.data?.management?.authoritative_site?.name
-          }
-          relationships={people.data?.items || []}
-          stays={list.data?.items || []}
-          loading={
-            people.isPending || (!!propertyId && workspaceContext.isPending)
-          }
-          error={
-            people.isError
-              ? parseApiError(people.error).message
-              : workspaceContext.isError
-                ? parseApiError(workspaceContext.error).message
-                : null
-          }
-          onRetry={() => people.refetch()}
-          onOpenStay={(id) => {
-            setSelected(id);
-            setCreating(false);
-            setNotice("");
-          }}
-        />
-      ) : null}
-      <div className="stay-layout">
-        <section className="stay-panel" aria-label="Stay list">
+      <HotelAdministrationSummary
+        administrators={
+          workspaceContext.data?.management?.administrators || []
+        }
+        authorityMode={workspaceContext.data?.management?.mode}
+        authoritativePlaceName={
+          workspaceContext.data?.management?.authoritative_site?.name
+        }
+        relationships={people.data?.items || []}
+        stays={list.data?.items || []}
+        staysLoading={list.isPending}
+        staysError={list.isError ? parseApiError(list.error).message : null}
+        onRetryStays={() => void list.refetch()}
+        loading={
+          people.isPending || (!!propertyId && workspaceContext.isPending)
+        }
+        error={
+          people.isError
+            ? parseApiError(people.error).message
+            : workspaceContext.isError
+              ? parseApiError(workspaceContext.error).message
+              : null
+        }
+        onRetry={() => {
+          void people.refetch();
+          void workspaceContext.refetch();
+        }}
+        onOpenStay={(id) => {
+          setSelected(id);
+          setCreating(false);
+          setNotice("");
+        }}
+      />
+      <div
+        className={`stay-layout${creating || selected ? " stay-layout-open" : ""}`}
+      >
+        <section
+          ref={stayList}
+          tabIndex={-1}
+          className="stay-panel"
+          aria-label="Stay list"
+        >
           <div className="stay-list-heading">
-            <h2>Reservations</h2>
+            <h2>Stays</h2>
             <label>
               Status
               <select
@@ -338,7 +355,7 @@ function HospitalityWorkspace({
             isStale={list.isError && !!list.data}
             onRetry={() => list.refetch()}
             emptyMessage={
-              status ? "No stays match this status" : "No reservations yet"
+              status ? "No stays match this status" : "No stays yet"
             }
             selectable
             getRowId={(stay) => stay.id}
@@ -349,13 +366,11 @@ function HospitalityWorkspace({
                   <div>
                     <strong className="block text-sm">{guestName(stay)}</strong>
                     <span className="text-xs text-[var(--vms-ink-muted)]">
-                      {new Date(stay.planned_check_in).toLocaleDateString()} →{" "}
-                      {new Date(stay.planned_check_out).toLocaleDateString()}
+                      {formatDateTime(stay.planned_check_in)} →{" "}
+                      {formatDateTime(stay.planned_check_out)}
                     </span>
                   </div>
-                  <span className={`stay-status ${stay.status}`}>
-                    {statusLabel(stay.status)}
-                  </span>
+                  <StayStatusBadge status={stay.status} />
                 </div>
                 <p className="mt-2 text-xs text-[var(--vms-ink-muted)]">
                   {stay.room_assignments.at(-1)?.room.name
@@ -380,44 +395,59 @@ function HospitalityWorkspace({
             )}
           />
         </section>
-        <section
-          className="stay-panel stay-detail"
-          aria-label="Reservation details"
-        >
-          {creating && allowed("create") ? (
-            <ReservationForm
-              context={context}
-              siteId={propertyId}
-              onCancel={() => setCreating(false)}
-              onSaved={(s) => changed(s, "Reservation created.")}
-            />
-          ) : selected && allowed("show") ? (
-            detail.isPending ? (
-              <p role="status">Loading reservation…</p>
-            ) : detail.isError ? (
-              <div role="alert">
-                {parseApiError(detail.error).message}
-                <button onClick={() => detail.refetch()}>Retry details</button>
+        {(creating || selected) && (
+          <section
+            ref={detailPanel}
+            tabIndex={-1}
+            className="stay-panel stay-detail"
+            aria-label="Reservation details"
+          >
+            {!creating ? (
+              <div className="mb-4 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelected(null);
+                    stayList.current?.focus();
+                  }}
+                >
+                  Close details
+                </Button>
               </div>
-            ) : detail.data ? (
-              <StayDetail
-                key={`${detail.data.id}:${detail.data.planned_check_in}:${detail.data.planned_check_out}:${detail.data.status}`}
-                stay={detail.data}
+            ) : null}
+            {creating && allowed("create") ? (
+              <ReservationForm
                 context={context}
-                allowed={allowed}
-                onSaved={changed}
+                siteId={propertyId}
+                onCancel={() => {
+                  setCreating(false);
+                  stayList.current?.focus();
+                }}
+                onSaved={(s) => changed(s, "Reservation created.")}
               />
-            ) : null
-          ) : (
-            <div className="stay-empty">
-              <h2>Every arrival, in context</h2>
-              <p>
-                Select a reservation to review its guests, room history and next
-                action.
-              </p>
-            </div>
-          )}
-        </section>
+            ) : selected && allowed("show") ? (
+              detail.isPending ? (
+                <p role="status">Loading reservation…</p>
+              ) : detail.isError ? (
+                <div role="alert">
+                  {parseApiError(detail.error).message}
+                  <Button variant="outline" onClick={() => detail.refetch()}>
+                    Retry details
+                  </Button>
+                </div>
+              ) : detail.data ? (
+                <StayDetail
+                  key={`${detail.data.id}:${detail.data.planned_check_in}:${detail.data.planned_check_out}:${detail.data.status}`}
+                  stay={detail.data}
+                  context={context}
+                  allowed={allowed}
+                  onSaved={changed}
+                />
+              ) : null
+            ) : null}
+          </section>
+        )}
       </div>
     </main>
   );
@@ -502,14 +532,15 @@ function ReservationForm({
         {additional.map((item) => (
           <p key={item.value}>
             {item.label}
-            <button
+            <Button
+              variant="outline"
               type="button"
               onClick={() =>
                 setAdditional(additional.filter((p) => p.value !== item.value))
               }
             >
               Remove
-            </button>
+            </Button>
           </p>
         ))}
         <DateFields start={start} end={end} onStart={setStart} onEnd={setEnd} />
@@ -536,12 +567,17 @@ function ReservationForm({
         </p>
       )}
       <div className="stay-actions">
-        <button type="button" disabled={mutation.isPending} onClick={onCancel}>
+        <Button
+          variant="outline"
+          type="button"
+          disabled={mutation.isPending}
+          onClick={onCancel}
+        >
           Close
-        </button>
-        <button className="stay-primary" disabled={mutation.isPending}>
+        </Button>
+        <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? "Creating…" : "Create reservation"}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -636,31 +672,29 @@ function StayDetail({
     <>
       <div className="stay-detail-heading">
         <div>
-          <span className={`stay-status ${stay.status}`}>
-            {statusLabel(stay.status)}
-          </span>
+          <StayStatusBadge status={stay.status} />
           <h2>{guestName(stay)}</h2>
         </div>
       </div>
       <dl className="stay-facts">
         <div>
           <dt>Planned arrival</dt>
-          <dd>{new Date(stay.planned_check_in).toLocaleString()}</dd>
+          <dd>{formatDateTime(stay.planned_check_in)}</dd>
         </div>
         <div>
           <dt>Planned departure</dt>
-          <dd>{new Date(stay.planned_check_out).toLocaleString()}</dd>
+          <dd>{formatDateTime(stay.planned_check_out)}</dd>
         </div>
         {stay.actual_check_in && (
           <div>
             <dt>Checked in</dt>
-            <dd>{new Date(stay.actual_check_in).toLocaleString()}</dd>
+            <dd>{formatDateTime(stay.actual_check_in)}</dd>
           </div>
         )}
         {stay.actual_check_out && (
           <div>
             <dt>Checked out</dt>
-            <dd>{new Date(stay.actual_check_out).toLocaleString()}</dd>
+            <dd>{formatDateTime(stay.actual_check_out)}</dd>
           </div>
         )}
       </dl>
@@ -680,9 +714,9 @@ function StayDetail({
             <li key={a.id}>
               <strong>{a.room.name}</strong>
               <small>
-                {new Date(a.assigned_from).toLocaleString()} →{" "}
+                {formatDateTime(a.assigned_from)} →{" "}
                 {a.assigned_to
-                  ? new Date(a.assigned_to).toLocaleString()
+                  ? formatDateTime(a.assigned_to)
                   : "Open"}
               </small>
             </li>
@@ -702,7 +736,8 @@ function StayDetail({
           </Button>
         ) : null}
         {active && allowed("update") && (
-          <button
+          <Button
+            variant="outline"
             disabled={mutation.isPending}
             onClick={() => {
               setMode("dates");
@@ -710,10 +745,11 @@ function StayDetail({
             }}
           >
             {stay.status === "reserved" ? "Reschedule / edit" : "Extend / edit"}
-          </button>
+          </Button>
         )}
         {active && allowed("assign_room") && (
-          <button
+          <Button
+            variant="outline"
             disabled={mutation.isPending}
             onClick={() => {
               setMode("room");
@@ -721,33 +757,32 @@ function StayDetail({
             }}
           >
             {stay.room_assignments.length ? "Move room" : "Assign room"}
-          </button>
+          </Button>
         )}
         {stay.status === "reserved" && allowed("checkin") && (
-          <button
-            className="stay-primary"
+          <Button
             disabled={mutation.isPending || !stay.room_assignments.length}
             onClick={() => setConfirm("check-in")}
           >
             Check in
-          </button>
+          </Button>
         )}
         {stay.status === "checked_in" && allowed("checkout") && (
-          <button
-            className="stay-primary"
+          <Button
             disabled={mutation.isPending}
             onClick={() => setConfirm("check-out")}
           >
             Check out
-          </button>
+          </Button>
         )}
         {stay.status === "reserved" && allowed("cancel") && (
-          <button
+          <Button
+            variant="outline"
             disabled={mutation.isPending}
             onClick={() => setConfirm("cancel")}
           >
             Cancel reservation
-          </button>
+          </Button>
         )}
       </div>
       {confirm && (
@@ -761,19 +796,19 @@ function StayDetail({
                 : "Confirm the guests have departed."}
           </p>
           <div className="stay-actions">
-            <button
+            <Button
+              variant="outline"
               disabled={mutation.isPending}
               onClick={() => setConfirm(null)}
             >
               Keep reservation
-            </button>
-            <button
-              className="stay-primary"
+            </Button>
+            <Button
               disabled={mutation.isPending}
               onClick={() => mutation.mutate({ action: confirm })}
             >
               {mutation.isPending ? "Saving…" : "Confirm action"}
-            </button>
+            </Button>
           </div>
         </section>
       )}
@@ -807,12 +842,16 @@ function StayDetail({
             </label>
           </fieldset>
           <div className="stay-actions">
-            <button type="button" onClick={() => setMode(null)}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setMode(null)}
+            >
               Close editor
-            </button>
-            <button className="stay-primary" disabled={mutation.isPending}>
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
               Save dates and notes
-            </button>
+            </Button>
           </div>
         </form>
       )}
@@ -861,12 +900,16 @@ function StayDetail({
             </p>
           </fieldset>
           <div className="stay-actions">
-            <button type="button" onClick={() => setMode(null)}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setMode(null)}
+            >
               Close editor
-            </button>
-            <button className="stay-primary" disabled={mutation.isPending}>
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
               Save room assignment
-            </button>
+            </Button>
           </div>
         </form>
       )}

@@ -175,7 +175,7 @@
   gap: 8px;
   border-bottom: 1px solid var(--vms-line);
   padding: 10px 16px 14px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .movement-filter,
@@ -230,7 +230,7 @@
 
 .movement-table {
   width: 100%;
-  min-width: 1080px;
+  min-width: 960px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -951,8 +951,16 @@
     padding-right: 0;
   }
 
-  .movement-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1350px) {
+  /* Keep the identity, decision and time visible; credential/operator details
+     remain available in the selected movement's detail panel. */
+  .movement-table th:nth-child(3),
+  .movement-table td:nth-child(3),
+  .movement-table th:nth-child(10),
+  .movement-table td:nth-child(10) {
+    display: none;
   }
 }
 

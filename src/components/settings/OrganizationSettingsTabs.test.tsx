@@ -7,17 +7,17 @@ import {
 
 describe("OrganizationSettingsTabs", () => {
   it("uses organization routes and marks the active configuration section", () => {
-    render(<OrganizationSettingsTabs active="roles" />);
+    render(<OrganizationSettingsTabs active="general" />);
 
     expect(
       screen.getByRole("link", { name: "General details" }),
     ).toHaveAttribute("href", "/organization/settings");
     expect(
-      screen.getByRole("link", { name: "Roles & permissions" }),
-    ).toHaveAttribute("aria-current", "page");
+      screen.queryByRole("link", { name: "Roles & permissions" }),
+    ).toBeNull();
     expect(
-      screen.getByRole("link", { name: "Administrators" }),
-    ).toHaveAttribute("href", "/organization/settings/administrators");
+      screen.queryByRole("link", { name: "Administrators" }),
+    ).toBeNull();
     expect(
       screen.getByRole("link", { name: "Email templates" }),
     ).toHaveAttribute("href", "/organization/settings/templates");
@@ -41,10 +41,10 @@ describe("OrganizationSettingsTabs", () => {
       organizationSettingsSectionFromPath(
         "/organization/settings/administrators",
       ),
-    ).toBe("administrators");
+    ).toBe("general");
     expect(
       organizationSettingsSectionFromPath("/organization/settings/roles"),
-    ).toBe("roles");
+    ).toBe("general");
     expect(
       organizationSettingsSectionFromPath("/organization/settings/templates"),
     ).toBe("templates");

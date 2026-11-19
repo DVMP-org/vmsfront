@@ -53,6 +53,7 @@ function formatCurrency(amount: number, currency: string = "USD"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
+    currencyDisplay: "code",
     minimumFractionDigits: 2,
   }).format(amount / 100);
 }
@@ -105,10 +106,13 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
           {invoice.created_at ? formatDateLong(invoice.created_at) : "—"}
         </div>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-[var(--vms-ink-muted)]" />
-          <span className="font-medium text-[var(--vms-ink)] ">
+      <TableCell className="text-right">
+        <div className="flex items-center justify-end gap-2">
+          <DollarSign
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--vms-ink-muted)]"
+          />
+          <span className="font-medium tabular-nums text-[var(--vms-ink)]">
             {formatCurrency(invoice.amount_due, invoice.currency)}
           </span>
         </div>
@@ -167,7 +171,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
           <span className="text-xs text-[var(--vms-ink-muted)] uppercase tracking-wide">
             Amount
           </span>
-          <div className="font-semibold text-[var(--vms-ink)] ">
+          <div className="font-semibold tabular-nums text-[var(--vms-ink)]">
             {formatCurrency(invoice.amount_due, invoice.currency)}
           </div>
         </div>
@@ -256,7 +260,7 @@ export function InvoicesSection() {
                     <TableRow>
                       <TableHead>Invoice</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Paid</TableHead>
                       <TableHead className="text-right">Actions</TableHead>

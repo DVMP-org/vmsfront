@@ -82,7 +82,7 @@ export function MixedUseOverview() {
     retry: false,
   });
   const tree = useQuery({
-    queryKey: ["mixed-use-overview-tree"],
+    queryKey: ["mixed-use-overview-tree", selectedSite?.id],
     queryFn: () =>
       selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
     retry: false,
@@ -95,7 +95,7 @@ export function MixedUseOverview() {
 
   return (
     <MixedUseShell
-      title="Place operations"
+      title="Operations"
       description="One operating view across residential, commercial, hospitality and shared spaces."
       primaryAction={
         <Badge variant="success">
@@ -107,7 +107,11 @@ export function MixedUseOverview() {
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Mixed-use operating summary"
       >
-        <Metric label="Spaces in scope" value={spaceCount} />
+        <Metric
+          label="Spaces in scope"
+          value={spaceCount}
+          unavailable={tree.isPending || tree.isError || !selectedSite?.id}
+        />
         <Metric
           label="Shared facilities"
           value={facilities.data?.total ?? 0}

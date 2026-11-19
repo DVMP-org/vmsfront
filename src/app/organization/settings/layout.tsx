@@ -16,16 +16,6 @@ const headings: Record<
     description:
       "Manage the identity, operating context and configuration above your Sites and workspaces.",
   },
-  administrators: {
-    title: "Administrators",
-    description:
-      "Manage organization-level administrators without implying Place occupancy or site administration.",
-  },
-  roles: {
-    title: "Roles & permissions",
-    description:
-      "Review organization roles and explore permission composition in this release.",
-  },
   branding: {
     title: "Brand and theme",
     description:

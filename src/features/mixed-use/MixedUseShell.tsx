@@ -53,7 +53,7 @@ export function MixedUseShell({
         eyebrow={
           <span className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--vms-coral)]" />
-            Mixed-use operations
+            Operations
           </span>
         }
         title={title}

@@ -251,7 +251,7 @@ export function CreateContractorDrawer({
         title="Access window"
         description="Contractors are time-bounded by definition; the window is enforced at the gate."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <Field id="contractor-access-from" label="Allowed from" required>
             {(control) => (
               <input

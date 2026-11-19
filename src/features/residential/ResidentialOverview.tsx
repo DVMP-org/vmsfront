@@ -23,7 +23,7 @@ import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 import { format } from "date-fns/format";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 
-import { MetricCard } from "@/components/ui/MetricCard";
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
@@ -192,7 +192,7 @@ export default function ResidentialOverview() {
 
   return (
     <ResidentialShell
-      title="Residential overview"
+      title="Overview"
       description={`Units, occupancy, finance and operations for ${selectedSite?.name || "the selected property"}.`}
       primaryAction={
         canManageUnits ? (
@@ -206,37 +206,39 @@ export default function ResidentialOverview() {
         ) : undefined
       }
     >
-      <section
-        aria-label="Residential operating summary"
-        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <MetricCard
-          icon={Building2}
-          label="Units"
-          value={loading ? "—" : String(units.length)}
-        />
-        <MetricCard
-          icon={UsersRound}
-          label="Occupied"
-          value={loading ? "—" : String(occupiedUnitIds.size)}
-        />
-        <MetricCard
-          icon={WalletCards}
-          label="Charges due"
-          value={
-            chargeAssignments.isPending
-              ? "—"
-              : chargeAssignments.isError
-                ? "Unavailable"
-                : formatCompactMoney(totalChargesDue)
-          }
-        />
-        <MetricCard
-          icon={Wrench}
-          label="Open requests"
-          value={maintenance.isPending ? "—" : String(openMaintenance.length)}
-        />
-      </section>
+      <MetricStrip
+        label="Residential operating summary"
+        metrics={[
+          {
+            icon: Building2,
+            label: "Units",
+            value: units.length,
+            detail: "Units in the selected Site hierarchy",
+            state: tree.isPending ? "loading" : tree.isError ? "error" : "ready",
+          },
+          {
+            icon: UsersRound,
+            label: "Occupied",
+            value: occupiedUnitIds.size,
+            detail: units.length ? `${occupancyPercent}% of units occupied` : "No units configured",
+            state: tree.isPending || relationships.isPending ? "loading" : tree.isError || relationships.isError ? "error" : "ready",
+          },
+          {
+            icon: WalletCards,
+            label: "Charges due",
+            value: formatCompactMoney(totalChargesDue),
+            detail: "Outstanding assigned charges in this Site",
+            state: tree.isPending || chargeAssignments.isPending ? "loading" : tree.isError || chargeAssignments.isError ? "error" : "ready",
+          },
+          {
+            icon: Wrench,
+            label: "Open requests",
+            value: openMaintenance.length,
+            detail: "Open requests in the loaded maintenance results",
+            state: maintenance.isPending ? "loading" : maintenance.isError ? "error" : "ready",
+          },
+        ]}
+      />
 
       <AttentionQueueSection
         useCase="residential"

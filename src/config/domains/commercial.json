@@ -14,7 +14,7 @@
       "label": "Portfolio",
       "items": [
         {
-          "label": "Commercial overview",
+          "label": "Overview",
           "href": "/admin",
           "icon": "briefcase",
           "module": "commercial"
@@ -23,6 +23,12 @@
           "label": "Spaces & inventory",
           "href": "/admin/commercial/inventory",
           "icon": "building",
+          "module": "properties"
+        },
+        {
+          "label": "Place groups",
+          "href": "/admin/place-groups",
+          "icon": "layers",
           "module": "properties"
         },
         {
@@ -44,28 +50,22 @@
       "label": "Finance",
       "items": [
         {
-          "label": "Collections & recoveries",
+          "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
           "module": "charges",
           "children": [
             {
-              "label": "Charge definitions",
-              "href": "/admin/charges",
-              "icon": "receipt",
-              "module": "charges"
-            },
-            {
               "label": "Charge register",
-              "href": "/admin/commercial/finance",
+              "href": "/admin/commercial/charges",
               "icon": "calculator",
               "module": "charges"
             },
             {
-              "label": "Place groups",
-              "href": "/admin/place-groups",
-              "icon": "layers",
-              "module": "properties"
+              "label": "Rent roll & arrears",
+              "href": "/admin/commercial/finance",
+              "icon": "calculator",
+              "module": "charges"
             }
           ]
         }
