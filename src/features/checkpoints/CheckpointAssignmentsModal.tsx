@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { managersApi } from "@/features/managers/api";
 import { parseApiError } from "@/lib/error-utils";
 import { checkpointsApi } from "./api";
+import PageLoader from "@/components/ui/PageLoader";
 
 export function CheckpointAssignmentsModal({
   gate,
@@ -78,7 +79,10 @@ export function CheckpointAssignmentsModal({
           if (!loading && !failed) save.mutate();
         }}
       >
-        {loading && <p role="status">Loading Site managers…</p>}
+        {loading && <main className="mx-auto w-full max-w-[1440px] pb-10 pt-3 text-[var(--vms-ink)]">
+          <PageLoader message="Loading Site managers…" />
+        </main>
+        }
         {failed && (
           <div role="alert">
             <p>{parseApiError(managers.error || assignments.error).message}</p>

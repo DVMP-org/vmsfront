@@ -19,7 +19,32 @@ vi.mock("@/hooks/use-admin", () => ({
 }));
 
 vi.mock("@/hooks/use-auth", () => ({
-  useVerifyToken: () => ({ data: { workspaces: [] } }),
+  useVerifyToken: () => ({
+    data: {
+      workspaces: [
+        {
+          id: "stay",
+          role: "guest",
+          site_id: "office",
+          place: {
+            id: "hotel",
+            name: "Harbour Hotel",
+            site_name: "Harbour Offices",
+          },
+        },
+        {
+          id: "other-stay",
+          role: "resident",
+          site_id: "other-site",
+          place: {
+            id: "cadwell-flat",
+            name: "Suite A",
+            site_name: "Cadwell Close",
+          },
+        },
+      ],
+    },
+  }),
 }));
 
 vi.mock("@/features/context/use-workspace-context", () => ({
@@ -27,7 +52,7 @@ vi.mock("@/features/context/use-workspace-context", () => ({
     data: {
       management: {
         is_administrator: true,
-        authoritative_place: {
+        authoritative_site: {
           id: "office",
           name: "Harbour Offices",
           slug: "harbour-offices",
@@ -47,29 +72,37 @@ vi.mock("@/store/app-store", () => ({
 }));
 
 vi.mock("@/features/workspaces/catalog", () => ({
-  buildWorkspaceCards: () => [
-    {
-      key: "management:office",
-      area: "management",
-      title: "Harbour Offices management",
-      subtitle: "Property operations",
-      roleLabel: "Administrator",
-      href: "/admin",
-      place: { id: "office", name: "Harbour Offices" },
-    },
-    {
-      key: "guest:stay",
+  buildWorkspaceCards: (
+    _admin: unknown,
+    relationships: Array<{
+      id: string;
+      role: string;
+      place: { id: string; name: string };
+    }>,
+    managementPlace?: { id: string; name: string } | null,
+  ) => [
+      ...(managementPlace
+        ? [
+          {
+          key: `management:${managementPlace.id}`,
+          area: "management",
+          title: `${managementPlace.name} management`,
+          subtitle: "Property operations",
+          roleLabel: "Administrator",
+          href: "/admin",
+          place: managementPlace,
+        },
+        ]
+        : []),
+      ...relationships.map((relationship) => ({
+        key: `guest:${relationship.id}`,
       area: "guest",
-      title: "Stay at Harbour Hotel",
+      title: `Stay at ${relationship.place.name}`,
       subtitle: "Guest stay",
       roleLabel: "Guest",
-      href: "/workspace/hotel",
-      relationship: {
-        id: "stay",
-        role: "guest",
-        place: { id: "hotel", name: "Harbour Hotel" },
-      },
-    },
+      href: `/workspace/${relationship.place.id}`,
+      relationship,
+    })),
   ],
   workspaceAreaMeta: {
     management: { title: "Management" },
@@ -85,7 +118,7 @@ describe("WorkspaceSwitcher", () => {
     mocks.setSelectedSite.mockReset();
   });
 
-  it("lists only place-backed management and personal access", () => {
+  it("lists only place-backed management and personal access for the active Site", () => {
     render(<WorkspaceSwitcher />);
 
     fireEvent.click(
@@ -95,6 +128,7 @@ describe("WorkspaceSwitcher", () => {
     expect(screen.getByText("Place-backed workspaces")).toBeInTheDocument();
     expect(screen.getByText("Harbour Offices management")).toBeInTheDocument();
     expect(screen.getByText("Stay at Harbour Hotel")).toBeInTheDocument();
+    expect(screen.queryByText("Stay at Suite A")).toBeNull();
     expect(screen.queryByText("Organization overview")).toBeNull();
     expect(
       screen.getByRole("link", { name: /View all workspaces/i }),
@@ -115,5 +149,21 @@ describe("WorkspaceSwitcher", () => {
       name: "Harbour Offices",
     });
     expect(mocks.push).toHaveBeenCalledWith("/admin?site_id=office");
+  });
+
+  it("keeps the Site context when opening a place workspace", () => {
+    render(<WorkspaceSwitcher />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Workspace Harbour Offices/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Stay at Harbour Hotel/i }),
+    );
+
+    expect(mocks.setSelectedSite).toHaveBeenCalledWith({
+      id: "office",
+      name: "Harbour Offices",
+    });
+    expect(mocks.push).toHaveBeenCalledWith("/workspace/hotel");
   });
 });

@@ -126,12 +126,17 @@ export default function ResidentialOverview() {
   const balancesByCurrency = new Map<string, number>();
   for (const assignment of outstandingAssignments) {
     const code = assignment.charge_definition.currency.toUpperCase();
-    balancesByCurrency.set(code, (balancesByCurrency.get(code) ?? 0) + Number(assignment.outstanding_amount || 0));
+    balancesByCurrency.set(
+      code,
+      (balancesByCurrency.get(code) ?? 0) +
+        Number(assignment.outstanding_amount || 0),
+    );
   }
-  const outstandingLabel = [...balancesByCurrency]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([code, amount]) => formatMoneyWithCode(amount, code))
-    .join(" · ") || "No balance due";
+  const outstandingLabel =
+    [...balancesByCurrency]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([code, amount]) => formatMoneyWithCode(amount, code))
+      .join(" · ") || "No balance due";
   const overdueAssignments = outstandingAssignments.filter(
     (assignment) =>
       !!assignment.next_due_date &&
@@ -220,28 +225,48 @@ export default function ResidentialOverview() {
             label: "Units",
             value: units.length,
             detail: "Units in the selected Site hierarchy",
-            state: tree.isPending ? "loading" : tree.isError ? "error" : "ready",
+            state: tree.isPending
+              ? "loading"
+              : tree.isError
+                ? "error"
+                : "ready",
           },
           {
             icon: UsersRound,
             label: "Occupied",
             value: occupiedUnitIds.size,
-            detail: units.length ? `${occupancyPercent}% of units occupied` : "No units configured",
-            state: tree.isPending || relationships.isPending ? "loading" : tree.isError || relationships.isError ? "error" : "ready",
+            detail: units.length
+              ? `${occupancyPercent}% of units occupied`
+              : "No units configured",
+            state:
+              tree.isPending || relationships.isPending
+                ? "loading"
+                : tree.isError || relationships.isError
+                  ? "error"
+                  : "ready",
           },
           {
             icon: WalletCards,
             label: "Charges due",
             value: outstandingLabel,
             detail: "Outstanding assigned charges in this Site",
-            state: tree.isPending || chargeAssignments.isPending ? "loading" : tree.isError || chargeAssignments.isError ? "error" : "ready",
+            state:
+              tree.isPending || chargeAssignments.isPending
+                ? "loading"
+                : tree.isError || chargeAssignments.isError
+                  ? "error"
+                  : "ready",
           },
           {
             icon: Wrench,
             label: "Open requests",
             value: openMaintenance.length,
             detail: "Open requests in the loaded maintenance results",
-            state: maintenance.isPending ? "loading" : maintenance.isError ? "error" : "ready",
+            state: maintenance.isPending
+              ? "loading"
+              : maintenance.isError
+                ? "error"
+                : "ready",
           },
         ]}
       />
@@ -315,7 +340,7 @@ export default function ResidentialOverview() {
               count={overdueAssignments.length}
               action={
                 <Button asChild size="sm">
-                  <Link href="/admin/residential/finance">Review charges</Link>
+                  <Link href="/admin/residential/arrears">Review arrears</Link>
                 </Button>
               }
             />

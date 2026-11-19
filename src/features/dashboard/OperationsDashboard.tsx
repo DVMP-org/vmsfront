@@ -222,21 +222,21 @@ export function OperationsDashboard({
             value: metrics.active_checkpoint_presences,
             detail: `${metrics.active_visit_sessions} active visit sessions`,
             icon: UsersRound,
-            href: "/admin/checkpoints",
+            href: "/admin/passages",
           },
           {
             label: "Recent entries",
             value: countDirection(data, "entry"),
             detail: `${countDirection(data, "exit")} exits in the recent feed`,
             icon: DoorOpen,
-            href: "/admin/checkpoints",
+            href: "/admin/passages",
           },
           {
             label: "Checkpoint events",
             value: metrics.checkpoint_events_today,
             detail: "Recorded today across the property",
             icon: Clock3,
-            href: "/admin/checkpoints",
+            href: "/admin/passages",
           },
         ]}
       />
@@ -327,7 +327,7 @@ function ActivityRegister({
     <ReportPanel
       title="Recent checkpoint activity"
       description="The latest access decisions and observed movement for this property."
-      action={<SeeAllLink href="/admin/checkpoints">Open register</SeeAllLink>}
+      action={<SeeAllLink href="/admin/passages">Open register</SeeAllLink>}
       footer={`Showing ${events.length} of ${data.recent_checkpoint_events.length} recent checkpoint events.`}
     >
       {events.length ? (

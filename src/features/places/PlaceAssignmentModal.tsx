@@ -14,11 +14,9 @@ import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
 import { leasesApi, type ChargeRecurrence } from "@/features/leases/api";
 import { peopleApi } from "@/features/people/api";
-import { partiesApi } from "@/features/parties/api";
 import { placeRelationshipsApi } from "./api";
 import {
   placeAssignmentCopyFor,
-  placePartyKindFor,
   placeRolesFor,
   type PlaceAssignmentCopy,
   type PlaceRole,
@@ -31,7 +29,6 @@ export function PlaceAssignmentModal({
   title,
   placeLabel,
   roles,
-  partyKind,
   closedPlaceName,
   defaultPlaceId,
   siteId,
@@ -41,14 +38,13 @@ export function PlaceAssignmentModal({
   onSaved,
 }: {
   open: boolean;
-  /** Site use case: chooses the domain's roles, wording and party kinds. */
+    /** Site use case: chooses the domain's roles and wording. */
   useCase?: string | null;
   /** Explicit overrides on top of the use case defaults. */
   copy?: Partial<PlaceAssignmentCopy>;
   title?: string;
   placeLabel?: string;
-  roles?: PlaceRole[];
-  partyKind?: "person" | "any";
+    roles?: PlaceRole[];
   /** Shown instead of a one-option select when the place is already fixed. */
   closedPlaceName?: string;
   defaultPlaceId?: string;
@@ -59,7 +55,6 @@ export function PlaceAssignmentModal({
   onSaved: () => void;
 }) {
   const client = useQueryClient();
-  const resolvedPartyKind = partyKind ?? placePartyKindFor(useCase);
   const roleOptions = roles?.length ? roles : placeRolesFor(useCase);
   const labels = {
     ...placeAssignmentCopyFor(useCase),
@@ -93,36 +88,16 @@ export function PlaceAssignmentModal({
       let partyId: string;
       let result;
       if (personMode === "new") {
-        if (resolvedPartyKind === "person") {
-          const added = await peopleApi.add(siteId, {
-            place_id: placeId,
-            display_name: displayName.trim(),
-            email: email.trim().toLowerCase(),
-            phone: phone.trim() || undefined,
-            kind: "person",
-            role,
-            ...effective,
-          });
-          partyId = added.party.id;
-          result = added;
-        } else {
-          // A business tenant is a Party in its own right: create the Party, then
-          // attach it, so the same record can hold charges, leases and contacts.
-          const created = await partiesApi.create({
-            kind: "organization",
-            display_name: displayName.trim(),
-            email: email.trim().toLowerCase() || null,
-            phone: phone.trim() || null,
-          });
-          partyId = created.id;
-          result = await placeRelationshipsApi.create({
-            party_id: partyId,
-            place_id: placeId,
-            role,
-            status: "active",
-            ...effective,
-          });
-        }
+        const added = await peopleApi.add(siteId, {
+          place_id: placeId,
+          display_name: displayName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim() || undefined,
+          role,
+          ...effective,
+        });
+        partyId = added.party.id;
+        result = added;
       } else {
         partyId = party!.value;
         result = await placeRelationshipsApi.create({
@@ -161,11 +136,7 @@ export function PlaceAssignmentModal({
       return result;
     },
     onSuccess: () => {
-      toast.success(
-        resolvedPartyKind === "person"
-          ? "Household relationship created."
-          : "Party attached to the place.",
-      );
+      toast.success("Party attached to the place.");
       if (withLease) {
         toast.success("Draft lease created — confirm it to start billing.");
       }
@@ -195,10 +166,7 @@ export function PlaceAssignmentModal({
       next.party = `Choose the ${labels.partyLabel.toLowerCase()} joining this place.`;
     }
     if (personMode === "new" && !displayName.trim()) {
-      next["resident-name"] =
-        resolvedPartyKind === "person"
-          ? "Enter the resident's full name."
-          : "Enter the party's name.";
+      next["resident-name"] = "Enter the party's name.";
     }
     if (
       personMode === "new" &&
@@ -301,17 +269,11 @@ export function PlaceAssignmentModal({
         {personMode === "existing" ? (
           <FacetPicker
             facet="parties"
-            kind={resolvedPartyKind === "person" ? "person" : undefined}
             label={labels.partyLabel}
             value={party}
             onChange={setParty}
             contextKey={contextKey}
             error={errors.party}
-            description={
-              resolvedPartyKind === "any"
-                ? "Search people and organizations. A business tenant is normally an organization."
-                : undefined
-            }
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">

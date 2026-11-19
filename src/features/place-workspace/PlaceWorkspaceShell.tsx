@@ -86,7 +86,11 @@ export function PlaceWorkspaceShell({
       <Drawer
         isOpen={open}
         onClose={() => setOpen(false)}
-        title="Place workspace"
+        title={
+          context?.effective_use_case === "hospitality"
+            ? "Your stay"
+            : "Place workspace"
+        }
         side="left"
         className="max-w-[17rem]"
         contentClassName="p-0 overflow-y-auto"

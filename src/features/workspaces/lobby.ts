@@ -18,7 +18,6 @@ export interface LobbyWorkspace {
   type: LobbyWorkspaceType;
   category: string;
   title: string;
-  description: string;
   roleLabel: string;
   destination: string;
   useCase?: string | null;
@@ -35,45 +34,6 @@ const PARTY_CATEGORY: Record<string, string> = {
   occupancy: "PERSONAL ACCESS",
   staff: "STAFF ACCESS",
   guest: "GUEST STAY",
-};
-
-const PARTY_DESCRIPTION: Record<string, string> = {
-  occupancy: "Your access, payments and requests.",
-  staff: "Assigned operational tools for your role.",
-  guest: "Stay, arrival and guest access details.",
-};
-
-const SITE_DESCRIPTION: Record<DomainUseCase, string> = {
-  residential: "Homes, residents, visitors and property requests.",
-  commercial: "Business spaces, tenants, leases and facilities.",
-  hospitality: "Rooms, bookings, arrivals and guest services.",
-  mixed_use: "Homes, business spaces and shared property operations.",
-};
-
-const PERSONAL_DESCRIPTION: Record<
-  DomainUseCase,
-  Record<"occupancy" | "staff" | "guest", string>
-> = {
-  residential: {
-    occupancy: "Your home, visitors, charges and maintenance requests.",
-    staff: "Assigned residential property work and access.",
-    guest: "Visit details and access for this residential property.",
-  },
-  commercial: {
-    occupancy: "Your business space, access, payments and requests.",
-    staff: "Assigned commercial space and facilities work.",
-    guest: "Visit details and access for this business space.",
-  },
-  hospitality: {
-    occupancy: "Your room, stay details and guest services.",
-    staff: "Room operations, arrivals and guest services.",
-    guest: "Your stay, arrival details and guest access.",
-  },
-  mixed_use: {
-    occupancy: "Your space, access, payments and requests.",
-    staff: "Assigned work across this mixed-use property.",
-    guest: "Visit details and access for this property.",
-  },
 };
 
 const PERSONAL_SPACE_LABEL: Record<DomainUseCase, string> = {
@@ -97,7 +57,6 @@ function organizationCard(
     type: "organization",
     category: "ORGANIZATION",
     title: "Organization administration",
-    description: "Manage members, organization settings and integrations.",
     roleLabel: context.admin?.role?.name || "Organization administrator",
     destination: "/organization",
   };
@@ -115,9 +74,6 @@ function siteCard(
       ? `${experience.label.toUpperCase()} PROPERTY`
       : "PROPERTY",
     title: siteWorkspace.site.name,
-    description: experience
-      ? SITE_DESCRIPTION[experience.domain]
-      : "Open this property's operations.",
     roleLabel: "Site administrator",
     destination: `${managementDestination(useCase)}${
       managementDestination(useCase).includes("?") ? "&" : "?"
@@ -165,9 +121,6 @@ function partyCard(workspace: PropertyWorkspace): LobbyWorkspace | null {
       ? `${experience.label.toUpperCase()} ${areaLabel}`
       : PARTY_CATEGORY[primaryArea],
     title: selectionName,
-    description: experience
-      ? PERSONAL_DESCRIPTION[experience.domain][primaryArea]
-      : PARTY_DESCRIPTION[primaryArea],
     roleLabel: roleLabels.join(" · "),
     destination: `/workspace/${workspace.place.id}`,
     useCase,

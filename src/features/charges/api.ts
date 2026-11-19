@@ -51,15 +51,19 @@ export interface Assignment {
 
 export interface Schedule {
   id: string;
+  charge_assignment_id: string;
   due_date: string;
   amount: string;
+  amount_paid: string;
   balance: string;
   currency: string;
   status: string;
+  charge_definition: Definition;
+  target_place: { id: string; name: string };
   current_responsibility?: {
     id: string;
     responsible_party: { display_name: string };
-  };
+  } | null;
 }
 
 export interface AssignmentSkip {
@@ -117,6 +121,12 @@ export const chargesApi = {
       assignment_id: id,
       page,
       page_size: 20,
+    }),
+  allSchedules: (page = 1, status?: string) =>
+    get<PaginatedResponse<Schedule>>("/schedules", {
+      page,
+      page_size: 20,
+      ...(status ? { status } : {}),
     }),
   generate: (id: string, body: object) =>
     post<Schedule[]>(`/assignments/${id}/schedules`, body),

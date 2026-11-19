@@ -3,7 +3,32 @@ import { describe, expect, it } from "vitest";
 import { contextualAdminLinks, isModuleEnabled } from "./admin-routes";
 
 describe("residential administration routing", () => {
-  it("shows the specialist module only when the effective property context enables it", () => {
+  it("keeps shared Access links under one contiguous section", () => {
+    const links = contextualAdminLinks(
+      ["properties", "people", "access_control", "billing", "forum"],
+      [],
+    );
+    const groups = links.map((link) => link.group);
+    expect(groups.filter((group) => group === "Access")).toHaveLength(3);
+    expect(
+      groups.slice(groups.indexOf("Access"), groups.lastIndexOf("Access") + 1),
+    ).toEqual(["Access", "Access", "Access"]);
+  });
+
+  it("keeps Overview available in every Site domain independently of optional modules", () => {
+    for (const useCase of [
+      "residential",
+      "commercial",
+      "hospitality",
+      "mixed_use",
+    ]) {
+      const overview = contextualAdminLinks([], [], useCase).find(
+        (link) => link.href === "/admin",
+      );
+      expect(overview).toMatchObject({ label: "Overview" });
+      expect(overview?.module).toBeUndefined();
+    }
+
     const enabled = contextualAdminLinks(
       ["residential"],
       [
@@ -16,9 +41,6 @@ describe("residential administration routing", () => {
       "residential",
     );
     expect(enabled.map((link) => link.href)).toContain("/admin");
-
-    const disabled = contextualAdminLinks([], [], "residential");
-    expect(disabled.map((link) => link.href)).not.toContain("/admin");
   });
 
   it("shows mixed-use facilities and expense allocation only when enabled", () => {
@@ -60,7 +82,7 @@ describe("residential administration routing", () => {
     const enabled = contextualAdminLinks(["access_control"], [], "residential");
     expect(enabled.map((link) => link.href)).toEqual(
       expect.arrayContaining([
-        "/admin/checkpoints",
+        "/admin/gates",
         "/admin/checkpoints/console",
         "/admin/invitations",
         "/admin/passages",
@@ -70,11 +92,11 @@ describe("residential administration routing", () => {
       contextualAdminLinks(["residential"], [], "residential").map(
         (link) => link.href,
       ),
-    ).not.toContain("/admin/checkpoints");
+    ).not.toContain("/admin/gates");
   });
   it("exposes leases in the residential sidebar only when the leases module is enabled", () => {
     const enabled = contextualAdminLinks(
-      ["residential", "leases", "charges"],
+      ["residential", "leases", "billing"],
       [],
       "residential",
     );
@@ -88,15 +110,13 @@ describe("residential administration routing", () => {
     });
 
     expect(
-      contextualAdminLinks(["residential", "charges"], [], "residential").map(
+      contextualAdminLinks(["residential", "billing"], [], "residential").map(
         (link) => link.href,
       ),
     ).not.toContain("/admin/residential/leases");
   });
 
-  it("resolves legacy navigation module keys against the site module catalogue", () => {
-    // Site modules report "billing"; the residential Finance group still asks
-    // for "charges". Both must resolve to the same enabled module.
+  it("filters Finance and Access using canonical Site module keys", () => {
     const links = contextualAdminLinks(
       ["residential", "billing", "access_control", "communication", "forum"],
       [],
@@ -106,18 +126,59 @@ describe("residential administration routing", () => {
     expect(hrefs).toEqual(
       expect.arrayContaining([
         "/admin/charges",
-        "/admin/checkpoints",
+        "/admin/gates",
         "/admin/invitations",
         "/admin/passages",
       ]),
     );
-    const billing = links.find((link) => link.href === "/admin/charges");
-    expect(billing?.children?.map((child) => child.href)).toEqual([
-      "/admin/charges",
-      "/admin/residential/finance",
-    ]);
-    expect(isModuleEnabled("charges", ["billing"])).toBe(true);
-    expect(isModuleEnabled("charges", ["residential"])).toBe(false);
+    const finance = links.filter((link) => link.group === "Finance");
+    expect(finance.map((link) => link.href)).toEqual(
+      expect.arrayContaining([
+        "/admin/charges",
+        "/admin/charges/schedules",
+        "/admin/residential/finance",
+        "/admin/residential/arrears",
+      ]),
+    );
+    expect(finance.every((link) => !link.children)).toBe(true);
+    expect(isModuleEnabled("billing", ["billing"])).toBe(true);
+    expect(isModuleEnabled("billing", ["residential"])).toBe(false);
+    expect(isModuleEnabled("charges", ["billing"])).toBe(false);
     expect(isModuleEnabled(undefined, [])).toBe(true);
+  });
+
+  it("shows Mixed-use Overview, Finance and Access for canonical modules", () => {
+    const links = contextualAdminLinks(
+      ["properties", "billing", "access_control"],
+      [],
+      "mixed_use",
+    );
+    const hrefs = links.map((link) => link.href);
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        "/admin",
+        "/admin/places",
+        "/admin/charges",
+        "/admin/gates",
+        "/admin/checkpoints/console",
+        "/admin/invitations",
+        "/admin/passages",
+      ]),
+    );
+  });
+
+  it("keeps commercial Finance destinations separate and visible", () => {
+    const finance = contextualAdminLinks(
+      ["commercial", "billing"],
+      [],
+      "commercial",
+    ).filter((link) => link.group === "Finance");
+    expect(finance.map((link) => link.href)).toEqual([
+      "/admin/charges",
+      "/admin/charges/schedules",
+      "/admin/commercial/charges",
+      "/admin/commercial/finance",
+    ]);
+    expect(finance.every((link) => !link.children)).toBe(true);
   });
 });

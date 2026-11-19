@@ -37,6 +37,7 @@ export function useCommercialAccess() {
       administrator ||
       can("place_relationships.create") ||
       can("visit_authorizations.approve"),
+    canReadInvitations: administrator || can("visit_authorizations.list"),
     canManageMaintenance:
       administrator ||
       can("maintenance.create") ||

@@ -12,13 +12,12 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { useHospitalityRooms } from "@/features/hospitality/queries";
 import { BookingPageSettings } from "@/features/hospitality/components/BookingPageSettings";
+import { GuestStatusBadge } from "@/features/hospitality/components/GuestStatusBadge";
 import { formatMoney } from "@/lib/currency";
 import { formatDate } from "@/lib/datetime";
 import { BookingCreateForm } from "./BookingCreateForm";
-import { BookingPageLink } from "./BookingPageLink";
 import { BookingQuickViewDrawer } from "./BookingQuickViewDrawer";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { RequesterCell } from "./RequesterCell";
@@ -72,8 +71,6 @@ export function BookingsRegister() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openBookingId, setOpenBookingId] = useState<string | null>(null);
 
-  const context = useWorkspaceContext();
-  const siteSlug = context.data?.site_slug ?? null;
   const rooms = useHospitalityRooms();
   const roomNames = useMemo(() => {
     const map = new Map<string, string>();
@@ -141,6 +138,14 @@ export function BookingsRegister() {
             {booking.requester_email || booking.requester_phone || "No contact"}
           </span>
         </div>
+      ),
+    },
+    {
+      key: "guest_status",
+      header: "Guest status",
+      minWidth: 130,
+      accessor: (booking) => (
+        <GuestStatusBadge status={booking.hospitality_stay_status} />
       ),
     },
     {
@@ -276,17 +281,14 @@ export function BookingsRegister() {
           </Button>
         }
         secondaryActions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings2 aria-hidden className="size-4" />
-              Booking page
-            </Button>
-            <BookingPageLink siteSlug={siteSlug} />
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings2 aria-hidden className="size-4" />
+            Booking page
+          </Button>
         }
       />
 

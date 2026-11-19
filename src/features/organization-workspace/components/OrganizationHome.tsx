@@ -12,9 +12,9 @@ import { parseApiError } from "@/lib/error-utils";
 
 import type { CreatedOrganizationSite } from "../api";
 import { useOrganizationOverview } from "../queries";
-import { AdministrationLinks } from "./AdministrationLinks";
 import { CreateSiteDrawer } from "./CreateSiteDrawer";
 import { OrganizationHeader } from "./OrganizationHeader";
+import { PortfolioSetup } from "./PortfolioSetup";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { RecentActivity } from "./RecentActivity";
 import { SiteDirectoryPreview } from "./SiteDirectoryPreview";
@@ -47,7 +47,7 @@ export function OrganizationHome() {
     );
   }
 
-  if (overview.isLoading || !organization) {
+  if (overview.isLoading || overview.sites.isPending || !organization) {
     return <OrganizationHomeSkeleton />;
   }
 
@@ -56,7 +56,7 @@ export function OrganizationHome() {
       <OrganizationHeader
         name={organization.name}
         description={organization.description}
-        canCreate={canCreate}
+        canCreate={canCreate && sites.length > 0}
         onCreate={() => setCreateOpen(true)}
       />
 
@@ -98,7 +98,11 @@ export function OrganizationHome() {
         </InlineAlert>
       ) : null}
 
-      <PortfolioSummary metrics={overview.metrics} />
+      <PortfolioSummary
+        metrics={overview.metrics}
+        sitesAvailable={overview.sites.isSuccess}
+        integrationsAvailable={overview.integrations.isSuccess}
+      />
 
       {overview.sites.isError ? (
         <InlineAlert
@@ -118,17 +122,25 @@ export function OrganizationHome() {
         </InlineAlert>
       ) : null}
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,1fr)]">
+      <div
+        className={
+          overview.sites.isError
+            ? "grid items-start gap-4"
+            : "grid items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,1fr)]"
+        }
+      >
+        {!overview.sites.isError ? (
+          <div className="space-y-4">
+            <PortfolioSetup
+              sites={sites}
+              canCreate={canCreate}
+              onCreate={() => setCreateOpen(true)}
+            />
+            <SiteDirectoryPreview sites={sites} />
+          </div>
+        ) : null}
         <div className="space-y-4">
-          <SiteDirectoryPreview
-            sites={sites}
-            canCreate={canCreate}
-            onCreate={() => setCreateOpen(true)}
-          />
-        </div>
-        <div className="space-y-4">
-          <AdministrationLinks profile={overview.profile.data} />
-          <RecentActivity events={overview.activity} />
+          <RecentActivity events={overview.activity.slice(0, 4)} />
         </div>
       </div>
 

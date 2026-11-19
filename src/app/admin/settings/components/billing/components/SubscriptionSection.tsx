@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubscriptionStatus, Plan } from "@/types/subscription";
+import { planEntitlements } from "@/features/subscription/plan-entitlements";
 
 function formatDateShort(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {
@@ -59,30 +60,6 @@ function formatPrice(price: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(price);
-}
-
-function formatFeatureLabel(key: string): string {
-  return key
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/[._-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function getFeatureText(key: string, value: unknown): string | null {
-  if (value === true) return formatFeatureLabel(key);
-  if (value === false || value == null || value === "") return null;
-
-  const displayValue = Array.isArray(value)
-    ? value.filter((item) => ["string", "number"].includes(typeof item)).join(", ")
-    : typeof value === "string" || typeof value === "number"
-      ? String(value)
-      : null;
-
-  return displayValue
-    ? `${formatFeatureLabel(key)}: ${displayValue}`
-    : null;
 }
 
 function StatusBadge({ status }: { status: SubscriptionStatus }) {
@@ -421,6 +398,7 @@ export function SubscriptionSection() {
     subscription.billing_cycle === "yearly"
       ? plan?.price_yearly
       : plan?.price_monthly;
+  const entitlements = planEntitlements(plan?.features);
 
   return (
     <div className="space-y-6">
@@ -454,7 +432,7 @@ export function SubscriptionSection() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-[var(--vms-ink)] ">
-                  {currentPrice ? formatPrice(currentPrice) : "—"}
+                  {currentPrice != null ? formatPrice(currentPrice) : "—"}
                 </div>
                 <div className="text-sm text-[var(--vms-ink-muted)]">
                   per{" "}
@@ -463,35 +441,34 @@ export function SubscriptionSection() {
               </div>
             </div>
 
-            {/* Features */}
-            {plan?.features && (
-              <div className="mt-4 pt-4 border-t border-[var(--vms-line)]">
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(plan.features)
-                    .map(([key, value]) => ({
-                      key,
-                      text: getFeatureText(key, value),
-                    }))
-                    .filter(
-                      (feature): feature is { key: string; text: string } =>
-                        Boolean(feature.text),
-                    )
-                    .slice(0, 5)
-                    .map(({ key, text }) => (
-                      <span
-                        key={key}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-[var(--vms-line)] bg-[var(--vms-surface)] px-2.5 py-1.5 text-sm leading-5 text-[var(--vms-ink-muted)]"
-                      >
-                        <Check
-                          aria-hidden="true"
-                          className="h-3.5 w-3.5 shrink-0 text-emerald-700"
-                        />
-                        {text}
-                      </span>
-                    ))}
-                </div>
+            {entitlements.length > 0 ? (
+              <div className="mt-5 border-t border-[var(--vms-line)] pt-5">
+                <h4 className="text-sm font-semibold text-[var(--vms-ink)]">
+                  Plan limits and benefits
+                </h4>
+                <dl className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                  {entitlements.map((feature) => (
+                    <div
+                      key={feature.key}
+                      className="flex items-start gap-2 text-sm"
+                    >
+                      <Check
+                        aria-hidden="true"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-[var(--vms-success)]"
+                      />
+                      <div>
+                        <dt className="font-medium text-[var(--vms-ink)]">
+                          {feature.label}
+                        </dt>
+                        <dd className="text-[var(--vms-ink-muted)]">
+                          {feature.detail}
+                        </dd>
+                      </div>
+                    </div>
+                  ))}
+                </dl>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Billing Info */}

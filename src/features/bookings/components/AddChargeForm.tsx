@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DEFAULT_CURRENCY, formatMoney, toAmount } from "@/lib/currency";
+import { parseApiError } from "@/lib/error-utils";
 import type { BookingChargeInput } from "../api-types";
 import { useAddBookingCharge } from "../queries";
 
@@ -73,11 +74,7 @@ export function AddChargeForm({
             });
             onDone?.();
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That charge could not be added.",
-            );
+            setError(parseApiError(cause).message);
         }
     }
 

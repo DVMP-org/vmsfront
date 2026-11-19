@@ -173,9 +173,7 @@ export function PlaceWorkspaceSwitcher({
 
   return (
     <div className="relative" ref={containerRef}>
-      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-        Place workspace
-      </p>
+
       <button
         type="button"
         id="place-workspace-switcher-trigger"

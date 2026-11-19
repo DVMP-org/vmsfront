@@ -12,7 +12,12 @@ export interface Stay {
   guests: {
     id: string;
     role: string;
-    party: { id: string; display_name: string };
+    party: {
+      id: string;
+      display_name: string;
+      email?: string | null;
+      is_active?: boolean;
+    };
   }[];
   room_assignments: {
     id: string;
@@ -21,6 +26,31 @@ export interface Stay {
     room: { id: string; name: string };
   }[];
 }
+export interface GuestSummary {
+  party_id: string;
+  display_name: string;
+  email: string | null;
+  phone: string | null;
+  is_active: boolean;
+  stays_count: number;
+  stay_id: string | null;
+  stay_status: StayStatus | null;
+  planned_check_in: string | null;
+  planned_check_out: string | null;
+  actual_check_in: string | null;
+  actual_check_out: string | null;
+}
+
+export interface GuestDetail extends GuestSummary {
+  stays: Stay[];
+}
+
+/** Where a guest's onboarding magic link was delivered. */
+export interface GuestOnboardingReceipt {
+  sent: boolean;
+  email: string;
+}
+
 export type RoomOperationalStatus =
   "available" | "reserved" | "occupied" | "cleaning" | "out_of_service";
 export type HousekeepingStatus =
@@ -44,6 +74,7 @@ export interface HospitalityRoom {
   current_stay_id: string | null;
   current_guest_name: string | null;
   next_arrival: string | null;
+  next_guest_name: string | null;
   maintenance_open: number;
   updated_at: string;
 }
@@ -67,6 +98,33 @@ export interface HousekeepingTask {
   notes: string | null;
   due_at: string | null;
   updated_at: string;
+}
+export interface HousekeepingEvent {
+  id: string;
+  event_type:
+  | "housekeeping_updated"
+  | "stay_checked_in"
+  | "stay_checked_out"
+  | "imported_snapshot";
+  from_status: HousekeepingStatus | null;
+  to_status: HousekeepingStatus | null;
+  from_operational_status: RoomOperationalStatus | null;
+  to_operational_status: RoomOperationalStatus | null;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  previous_assigned_to: string | null;
+  previous_assigned_to_name: string | null;
+  priority: "normal" | "high" | "urgent" | null;
+  previous_priority: "normal" | "high" | "urgent" | null;
+  notes: string | null;
+  due_at: string | null;
+  actor_name: string | null;
+  created_at: string;
+}
+export interface HousekeepingRoomDetail {
+  room: HospitalityRoom;
+  task: HousekeepingTask;
+  history: HousekeepingEvent[];
 }
 export interface GuestFolioLine {
   id: string;

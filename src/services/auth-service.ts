@@ -57,6 +57,9 @@ export const authService = {
   async onboard(data: any): Promise<ApiResponse<AuthResponse>> {
     return apiClient.post("/auth/onboard", data);
   },
+  async onboardingLogin(token: string): Promise<ApiResponse<AuthResponse>> {
+    return apiClient.post("/auth/onboarding", { token });
+  },
   async resendVerification(): Promise<ApiResponse<{ message: string }>> {
     return apiClient.post("/auth/resend/email/verify");
   },

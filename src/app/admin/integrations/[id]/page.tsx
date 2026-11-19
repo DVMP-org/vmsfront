@@ -195,11 +195,9 @@ export default function IntegrationDetailsPage() {
   const handleToggle = () => {
     if (!integration) return;
 
-    if (!integration.enabled && !integration.configured) {
-      toast.error("Please configure credentials before enabling");
-      return;
-    }
-
+    // Setup and enablement are deliberately independent: an operator may enable
+    // the provider first and fill its credentials in after, or the other way
+    // round. Refusing enable here would make the supported order unreachable.
     if (integration.enabled) {
       disableMutation.mutate(integration.name);
     } else {
@@ -312,9 +310,7 @@ export default function IntegrationDetailsPage() {
             <IntegrationStatusToggle
               enabled={integration.enabled}
               onToggle={handleToggle}
-              disabled={
-                isToggling || (!integration.configured && !integration.enabled)
-              }
+              disabled={isToggling}
               showLabel
               size="md"
             />

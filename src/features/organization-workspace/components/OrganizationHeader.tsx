@@ -27,8 +27,7 @@ export function OrganizationHeader({
             {name}
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            {description ||
-              "Own the organization portfolio: Sites, operating boundaries, membership and shared integrations."}
+            {description || "Manage Sites, members and shared services."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BedDouble, Sparkles, Wrench, UsersRound } from "lucide-react";
+import { BedDouble, Pencil, Sparkles, UsersRound, Wrench } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -11,10 +11,9 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { Input } from "@/components/ui/Input";
-import { SlideOver } from "@/components/ui/SlideOver";
-import { DEFAULT_CURRENCY } from "@/lib/currency";
-import { parseApiError } from "@/lib/error-utils"; import { hospitalityApi } from "@/features/hospitality/api";
+import { parseApiError } from "@/lib/error-utils";
+import { hospitalityApi } from "@/features/hospitality/api";
+import { HousekeepingDrawer } from "@/features/hospitality/components/HousekeepingDrawer";
 import { RoomEditor } from "@/features/hospitality/components/RoomEditor";
 import {
   HospitalityAdminPage,
@@ -28,6 +27,7 @@ import type {
   HospitalityRoom,
   RoomOperationalStatus,
 } from "@/features/hospitality/contracts";
+import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import { useHospitalityAccess } from "@/features/hospitality/use-hospitality-access";
 
 const roomStatusOptions: Array<{
@@ -41,26 +41,24 @@ const roomStatusOptions: Array<{
   { value: "out_of_service", label: "Out of service" },
 ];
 
-const emptyRoom = {
-  name: "",
-  room_number: "",
-  room_type: "",
-  floor: "",
-  capacity: "2",
-  base_rate: "",
-  currency: DEFAULT_CURRENCY,
-};
-
 export default function HospitalityRoomsPage() {
   const access = useHospitalityAccess();
   const client = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<HospitalityRoom | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [housekeepingRoomId, setHousekeepingRoomId] = useState<string | null>(
+    null,
+  );
   const [notice, setNotice] = useState("");
   const rooms = useQuery({
     queryKey: ["hospitality-rooms", access.contextKey],
     queryFn: () => hospitalityApi.rooms.list(),
+    enabled: !!access.organization?.id && access.allowed("list"),
+  });
+  const people = useQuery({
+    queryKey: ["hospitality-people", access.contextKey],
+    queryFn: hospitalityPeopleApi.list,
     enabled: !!access.organization?.id && access.allowed("list"),
   });
   const statusMutation = useMutation({
@@ -80,6 +78,15 @@ export default function HospitalityRoomsPage() {
       });
     },
   });
+  const assignees = useMemo(() => {
+    const unique = new Map<string, string>();
+    for (const relationship of people.data?.items ?? []) {
+      if (relationship.party?.id) {
+        unique.set(relationship.party.id, relationship.party.display_name);
+      }
+    }
+    return Array.from(unique, ([value, label]) => ({ value, label }));
+  }, [people.data?.items]);
   const data = useMemo(() => rooms.data ?? [], [rooms.data]);
   const summary = useMemo(
     () => ({
@@ -117,6 +124,7 @@ export default function HospitalityRoomsPage() {
       key: "room_type",
       header: "Type",
       sortable: true,
+      responsiveHide: "xl",
       minWidth: 120,
       accessor: (room) => (
         // show room category here instead of room_type
@@ -150,7 +158,7 @@ export default function HospitalityRoomsPage() {
     {
       key: "guest",
       header: "Guest / next arrival",
-      minWidth: 150,
+      minWidth: 145,
       accessor: (room) => (
         <div className="max-w-44">
           <span className="block truncate">
@@ -158,7 +166,7 @@ export default function HospitalityRoomsPage() {
           </span>
           <span className="text-xs text-[var(--vms-ink-muted)]">
             {room.next_arrival
-              ? `Next ${displayDate(room.next_arrival)}`
+              ? `${room.next_guest_name ? `${room.next_guest_name} · ` : "Next "}${displayDate(room.next_arrival)}`
               : "No upcoming arrival"}
           </span>
         </div>
@@ -168,6 +176,7 @@ export default function HospitalityRoomsPage() {
       key: "maintenance_open",
       header: "Issues",
       sortable: true,
+      responsiveHide: "xl",
       minWidth: 80,
       accessor: (room) =>
         room.maintenance_open ? (
@@ -180,48 +189,32 @@ export default function HospitalityRoomsPage() {
     },
     {
       key: "actions",
-      header: "",
-      minWidth: 140,
+      header: "Actions",
+      minWidth: 150,
       mobileHide: true,
       accessor: (room) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="sm"
-            disabled={!access.allowed("update")}
+            size="icon-sm"
+            aria-label={`Open housekeeping for ${room.name}`}
+            title="Housekeeping"
+            onClick={() => setHousekeepingRoomId(room.id)}
+          >
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`View ${room.name} details`}
+            title="Room details"
             onClick={() => {
               setEditing(room);
               setFormOpen(true);
             }}
           >
-            Edit
+            <Pencil className="h-4 w-4" aria-hidden="true" />
           </Button>
-          {room.status !== "out_of_service" && room.status !== "occupied" ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!access.allowed("update") || statusMutation.isPending}
-              onClick={() =>
-                statusMutation.mutate({
-                  id: room.id,
-                  status: "out_of_service",
-                })
-              }
-            >
-              Block
-            </Button>
-          ) : room.status === "out_of_service" ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!access.allowed("update") || statusMutation.isPending}
-              onClick={() =>
-                statusMutation.mutate({ id: room.id, status: "available" })
-              }
-            >
-              Return
-            </Button>
-          ) : null}
         </div>
       ),
     },
@@ -386,22 +379,47 @@ export default function HospitalityRoomsPage() {
                     In house: {room.current_guest_name}
                   </p>
                 ) : null}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!access.allowed("update")}
-                  onClick={() => {
-                    setEditing(room);
-                    setFormOpen(true);
-                  }}
-                >
-                  Edit room
-                </Button>
+                {!room.current_guest_name && room.next_arrival ? (
+                  <p className="text-xs text-[var(--vms-ink-muted)]">
+                    Arriving: {room.next_guest_name ?? "Guest"} ·{" "}
+                    {displayDate(room.next_arrival)}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`Open housekeeping for ${room.name}`}
+                    title="Housekeeping"
+                    onClick={() => setHousekeepingRoomId(room.id)}
+                  >
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`View ${room.name} details`}
+                    title="Room details"
+                    onClick={() => {
+                      setEditing(room);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
               </div>
             )}
           />
         </ModulePanel>
       </div>
+      <HousekeepingDrawer
+        roomId={housekeepingRoomId}
+        contextKey={access.contextKey}
+        onClose={() => setHousekeepingRoomId(null)}
+        canEdit={access.allowed("update")}
+        assignees={assignees}
+      />
       <RoomEditor
         key={editing?.id || "new-room"}
         open={formOpen}

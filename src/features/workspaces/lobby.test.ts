@@ -117,7 +117,6 @@ describe("buildLobbyWorkspaces", () => {
     expect(siteCard).toMatchObject({
       title: "Pebble Court",
       category: "RESIDENTIAL PROPERTY",
-      description: "Homes, residents, visitors and property requests.",
       destination: "/admin?site_id=site-1",
       roleLabel: "Site administrator",
       selection: { id: "site-1", name: "Pebble Court" },
@@ -125,7 +124,6 @@ describe("buildLobbyWorkspaces", () => {
     expect(partyCard).toMatchObject({
       title: "Pebble Court - APT 01",
       category: "RESIDENTIAL HOME",
-      description: "Your home, visitors, charges and maintenance requests.",
       roleLabel: "Resident",
       destination: "/workspace/place-1",
       selection: { id: "place-1", name: "Pebble Court - APT 01" },
@@ -173,7 +171,6 @@ describe("resolveLobbyWorkspaces", () => {
     type: "organization" as const,
     category: "ORGANIZATION",
     title: "Organization administration",
-    description: "",
     roleLabel: "Owner",
     destination: "/organization",
   };

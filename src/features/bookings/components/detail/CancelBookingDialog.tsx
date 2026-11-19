@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { parseApiError } from "@/lib/error-utils";
 
 const MIN_REASON = 3;
 
@@ -41,11 +42,7 @@ export function CancelBookingDialog({
       setReason("");
       onClose();
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "That cancellation did not go through.",
-      );
+      setError(parseApiError(cause).message);
     }
   }
 

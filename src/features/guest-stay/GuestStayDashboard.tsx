@@ -14,8 +14,15 @@ import {
   statusLabel,
   type Stay,
 } from "@/features/hospitality/contracts";
+import { GuestStayAttention } from "./GuestStayAttention";
 import { GuestStayFolio } from "./GuestStayFolio";
 import { useGuestStays } from "./queries";
+
+const STAY_RANK: Record<string, number> = {
+  checked_in: 0,
+  reserved: 1,
+  checked_out: 2,
+};
 
 export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
   const stays = useGuestStays();
@@ -29,11 +36,18 @@ export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
     )
     .sort(
       (left, right) =>
-        new Date(left.planned_check_in).getTime() -
-        new Date(right.planned_check_in).getTime(),
+        (STAY_RANK[left.status] ?? 3) - (STAY_RANK[right.status] ?? 3) ||
+        new Date(right.planned_check_in).getTime() -
+        new Date(left.planned_check_in).getTime(),
     );
 
   return (
+    <>
+      {!stays.isPending && !stays.isError ? (
+        <div className="mb-4">
+          <GuestStayAttention stays={items} />
+        </div>
+      ) : null}
     <section
       aria-labelledby="guest-stays-title"
       className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
@@ -106,6 +120,7 @@ export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
         </div>
       )}
     </section>
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { parseApiError } from "@/lib/error-utils";
 import { BookingApprovalActions } from "../BookingApprovalActions";
 import { CancelBookingDialog } from "./CancelBookingDialog";
 import { canCancel, canDecide } from "../../api-types";
@@ -12,6 +13,7 @@ import {
   useApproveBooking,
   useCancelBooking,
   useDeclineBooking,
+  useResendBookingOnboarding,
 } from "../../queries";
 
 /**
@@ -31,6 +33,7 @@ export function BookingDetailActions({
   const approve = useApproveBooking(booking.id);
   const decline = useDeclineBooking(booking.id);
   const cancel = useCancelBooking(booking.id);
+  const resendOnboarding = useResendBookingOnboarding(booking.id);
 
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
@@ -41,6 +44,8 @@ export function BookingDetailActions({
     booking.kind === "reservation" && booking.status === "requested";
   const decidable = canDecide(booking) && !needsRoom;
   const cancellable = canCancel(booking);
+  const onboardable =
+    booking.status === "confirmed" || booking.status === "checked_in";
 
   async function run(action: () => Promise<unknown>) {
     setError(null);
@@ -49,15 +54,11 @@ export function BookingDetailActions({
       setDeclining(false);
       setDeclineReason("");
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "That action did not go through.",
-      );
+      setError(parseApiError(cause).message);
     }
   }
 
-  if (!decidable && !cancellable && !needsRoom) {
+  if (!decidable && !cancellable && !needsRoom && !onboardable) {
     return null;
   }
 
@@ -79,6 +80,17 @@ export function BookingDetailActions({
             onClick={() => setCancelling(true)}
           >
             Cancel booking
+          </Button>
+        ) : null}
+        {onboardable ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            isLoading={resendOnboarding.isPending}
+            onClick={() => resendOnboarding.mutate()}
+          >
+            Resend magic link
           </Button>
         ) : null}
       </div>

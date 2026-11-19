@@ -44,7 +44,7 @@ export function FacetPicker({
     queryFn: ({ signal }) =>
       loadFacets(facet, {
         filters: {
-          ...(kind ? { kind: kind as "person" | "organization" } : {}),
+          ...(facet === "places" && kind ? { kind } : {}),
           ...(facet === "parties" && placeId ? { place_id: placeId } : {}),
           is_active: true,
         },
@@ -60,7 +60,7 @@ export function FacetPicker({
     queryFn: ({ signal }) =>
       loadFacets(facet, {
         filters: {
-          ...(kind ? { kind: kind as "person" | "organization" } : {}),
+          ...(facet === "places" && kind ? { kind } : {}),
           is_active: true,
         },
         ids: [value!.value],

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
   ArrowLeftRight,
@@ -30,10 +29,11 @@ import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import {
-  checkpointsApi,
   type AccessEventFilters,
   type Passage,
 } from "@/features/checkpoints/api";
+import { formatDateTime } from "@/lib/datetime";
+import { useMovementQueries } from "./queries";
 import "./passages.css";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -462,6 +462,7 @@ export function PassagesDirectory() {
   const [pageSize, setPageSize] = useState(20);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [dateValue, setDateValue] = useState("");
   const [filters, setFilters] = useState<AccessEventFilters>({});
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -471,59 +472,20 @@ export function PassagesDirectory() {
     return start.toISOString();
   }, []);
 
-  const gates = useQuery({
-    queryKey: ["movement-gate-options"],
-    queryFn: () => checkpointsApi.gates(1, ""),
-    staleTime: 60_000,
-  });
-  const query = useQuery({
-    queryKey: ["access-events", page, pageSize, search, filters],
-    queryFn: () =>
-      checkpointsApi.accessEvents({
-        ...filters,
-        page,
-        page_size: pageSize,
-        search: search.trim() || undefined,
-        sort: "occurred_at:desc",
-      }),
-  });
-  const presence = useQuery({
-    queryKey: ["access-presence", filters.place_id, filters.gate_id],
-    queryFn: () =>
-      checkpointsApi.presence({
-        place_id: filters.place_id,
-        gate_id: filters.gate_id,
-      }),
-  });
-  const entriesToday = useQuery({
-    queryKey: ["movement-kpi", "entry", dayStart],
-    queryFn: () =>
-      checkpointsApi.accessEvents({
-        direction: "entry",
-        occurred_from: dayStart,
-        page: 1,
-        page_size: 1,
-      }),
-  });
-  const exitsToday = useQuery({
-    queryKey: ["movement-kpi", "exit", dayStart],
-    queryFn: () =>
-      checkpointsApi.accessEvents({
-        direction: "exit",
-        occurred_from: dayStart,
-        page: 1,
-        page_size: 1,
-      }),
-  });
-  const deniedToday = useQuery({
-    queryKey: ["movement-kpi", "denied", dayStart],
-    queryFn: () =>
-      checkpointsApi.accessEvents({
-        outcome: "denied",
-        occurred_from: dayStart,
-        page: 1,
-        page_size: 1,
-      }),
+  const {
+    gates,
+    events: query,
+    presence,
+    entriesToday,
+    exitsToday,
+    deniedToday,
+  } = useMovementQueries({
+    siteId: selectedSite?.id,
+    page,
+    pageSize,
+    search,
+    filters,
+    dayStart,
   });
 
   const events = useMemo(() => query.data?.items ?? [], [query.data?.items]);
@@ -549,6 +511,17 @@ export function PassagesDirectory() {
     ? journeys.get(journeyKey(selected)) || [selected]
     : [];
   const totalPages = query.data?.total_pages ?? 0;
+  const activeFilterCount =
+    [
+      filters.subject_type,
+      filters.credential_type,
+      filters.gate_id,
+      filters.direction,
+      filters.outcome,
+      filters.place_id,
+    ].filter(Boolean).length +
+    (filters.occurred_from ? 1 : 0) +
+    (search ? 1 : 0);
 
   function updateFilter(key: keyof AccessEventFilters, value: string) {
     setFilters((current) => ({ ...current, [key]: value || undefined }));
@@ -556,6 +529,8 @@ export function PassagesDirectory() {
   }
 
   function updateDate(value: string) {
+    setDateValue(value);
+    setPage(1);
     if (!value) {
       setFilters((current) => ({
         ...current,
@@ -571,6 +546,13 @@ export function PassagesDirectory() {
       occurred_from: start.toISOString(),
       occurred_to: end.toISOString(),
     }));
+  }
+
+  function clearFilters() {
+    setFilters({});
+    setSearch("");
+    setSearchInput("");
+    setDateValue("");
     setPage(1);
   }
 
@@ -688,8 +670,18 @@ export function PassagesDirectory() {
         </div>
 
         <div className="movement-filters">
+          <div className="movement-filter-heading">
+            <span>
+              Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+            </span>
+            {activeFilterCount ? (
+              <button type="button" onClick={clearFilters}>
+                Clear all
+              </button>
+            ) : null}
+          </div>
           <FilterSelect
-            label="Person"
+            label="Person type"
             value={filters.subject_type || ""}
             onChange={(value) => updateFilter("subject_type", value)}
             options={[
@@ -746,6 +738,7 @@ export function PassagesDirectory() {
             <span>Date range</span>
             <input
               type="date"
+              value={dateValue}
               onChange={(event) => updateDate(event.target.value)}
               aria-label="Movement date"
             />
@@ -761,20 +754,20 @@ export function PassagesDirectory() {
           </div>
         ) : null}
 
-        <div className="movement-table-scroll">
+        <div
+          className="movement-table-scroll"
+          role="region"
+          aria-label="Movement events"
+        >
           <table className="movement-table">
             <thead>
               <tr>
                 <th aria-label="Expand movement" />
-                <th>Person / Party</th>
-                <th>Credential</th>
-                <th>Type</th>
+                <th>Person / Place</th>
+                <th>Time</th>
                 <th>Checkpoint</th>
                 <th>Direction</th>
-                <th>Access state</th>
                 <th>Result</th>
-                <th>Timestamp</th>
-                <th>Operator</th>
                 <th aria-label="Movement details" />
               </tr>
             </thead>
@@ -782,7 +775,7 @@ export function PassagesDirectory() {
               {query.isPending ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <tr key={index} className="movement-skeleton-row">
-                    <td colSpan={11}>
+                    <td colSpan={7}>
                       <span />
                     </td>
                   </tr>
@@ -830,48 +823,28 @@ export function PassagesDirectory() {
                         </span>
                       </td>
                       <td>
-                        <span className="movement-credential">
-                          <strong>
-                            {event.credential_reference || "Redacted"}
-                          </strong>
-                          <small>{readable(event.credential_type)}</small>
-                        </span>
-                      </td>
-                      <td>
-                        <Badge variant="neutral">
-                          {readable(event.subject_type)}
-                        </Badge>
+                        <time dateTime={event.occurred_at}>
+                          {formatDateTime(event.occurred_at)}
+                        </time>
                       </td>
                       <td>{event.gate_name || "Unknown checkpoint"}</td>
                       <td>
-                        <span className="movement-direction">
-                          {event.direction === "entry" ? (
-                            <LogIn aria-hidden="true" />
-                          ) : (
-                            <LogOut aria-hidden="true" />
-                          )}
-                          {movementLabel(event)}
+                        <span className="movement-direction-cell">
+                          <span className="movement-direction">
+                            {event.direction === "entry" ? (
+                              <LogIn aria-hidden="true" />
+                            ) : (
+                              <LogOut aria-hidden="true" />
+                            )}
+                            {movementLabel(event)}
+                          </span>
+                          <small>{readable(stateLabel(event))}</small>
                         </span>
-                      </td>
-                      <td>
-                        <Badge variant={movementTone(event)}>
-                          {readable(stateLabel(event))}
-                        </Badge>
                       </td>
                       <td>
                         <Badge variant={outcomeVariant(event)}>
                           {event.outcome === "allowed" ? "Granted" : "Denied"}
                         </Badge>
-                      </td>
-                      <td>
-                        <time dateTime={event.occurred_at}>
-                          {format(new Date(event.occurred_at), "HH:mm")}
-                        </time>
-                      </td>
-                      <td>
-                        <span className="movement-operator">
-                          {initials(event.operator_name)}
-                        </span>
                       </td>
                       <td>
                         <Link
@@ -888,7 +861,7 @@ export function PassagesDirectory() {
                         key={`${event.id}:progress`}
                         className="movement-progress-row"
                       >
-                        <td colSpan={11}>
+                        <td colSpan={7}>
                           <JourneyProgress events={journey} />
                         </td>
                       </tr>
@@ -897,7 +870,7 @@ export function PassagesDirectory() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={11} className="movement-empty">
+                  <td colSpan={7} className="movement-empty">
                     <ShieldCheck aria-hidden="true" />
                     <strong>No movements match these filters</strong>
                     <span>Adjust the search, checkpoint or date range.</span>

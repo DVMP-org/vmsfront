@@ -32,12 +32,6 @@ const iconByDomain: Record<
   mixed_use: Building,
 };
 
-const actionLabelByType: Record<LobbyWorkspaceType, string> = {
-  organization: "Open",
-  site_admin: "Open workspace",
-  party: "Open",
-};
-
 export function LobbyWorkspaceCard({
   workspace,
   emphasized = false,
@@ -58,9 +52,10 @@ export function LobbyWorkspaceCard({
   return (
     <button
       type="button"
+      aria-label={`Open ${workspace.title} workspace`}
       onClick={() => onOpen(workspace)}
       className={cn(
-        "group relative flex w-full items-center gap-3 overflow-hidden rounded-[var(--vms-radius-surface)] border bg-[var(--vms-surface)] px-4 py-1.5 text-left shadow-[var(--vms-shadow-raised)] transition-colors duration-[var(--vms-motion)] hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2 sm:gap-4 sm:px-5",
+        "group relative flex w-full items-center gap-3 overflow-hidden rounded-[var(--vms-radius-surface)] border bg-[var(--vms-surface)] px-4 py-1.5 text-left shadow-[var(--vms-shadow-raised)] transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-px hover:border-[var(--vms-line-strong)] hover:bg-[var(--vms-surface-subtle)] hover:shadow-[0_4px_12px_rgb(31_41_51_/_0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none sm:gap-4 sm:px-5",
         emphasized
           ? "min-h-[92px] border-[var(--vms-coral-accent)] bg-[color-mix(in_srgb,var(--vms-coral-accent)_4%,white)] "
           : "min-h-[72px] border-[var(--vms-line)]",
@@ -99,25 +94,21 @@ export function LobbyWorkspaceCard({
             </span>
           ) : null}
         </span>
-        <span className="mt-0.5 block truncate text-sm font-semibold tracking-[-0.02em] text-[var(--vms-ink)] sm:text-base">
+        <span className="mt-0.5 block line-clamp-2 break-words text-sm font-semibold leading-5 tracking-[-0.02em] text-[var(--vms-ink)] sm:text-base">
           {workspace.title}
-        </span>
-        <span className="block truncate text-xs leading-4 text-[var(--vms-ink-muted)] sm:text-[13px]">
-          {workspace.description}
         </span>
       </span>
 
-      <span className="flex shrink-0 items-center">
+      <span aria-hidden="true" className="flex shrink-0 items-center">
         <span
           className={cn(
-            "hidden min-h-9 items-center gap-2 rounded-[var(--vms-radius-control)] px-4 text-xs font-semibold transition-colors duration-[var(--vms-motion)] sm:inline-flex",
+            "hidden h-9 w-9 items-center justify-center rounded-[var(--vms-radius-control)] transition-colors duration-150 sm:inline-flex",
             emphasized
               ? "bg-[var(--vms-action)] text-[var(--vms-on-action)] group-hover:bg-[var(--vms-action-hover)]"
               : "border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] text-[var(--vms-ink)] group-hover:bg-[var(--vms-surface-subtle)]",
           )}
         >
-          {actionLabelByType[workspace.type]}
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transform-none" />
         </span>
         <ArrowRight
           aria-hidden="true"

@@ -34,14 +34,13 @@ function LobbySkeleton() {
   return (
     <div role="status" aria-label="Loading workspaces" className="space-y-5">
       <span className="sr-only">Loading workspaces</span>
-      <div className="mx-auto h-9 w-72 animate-pulse rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]" />
-      <div className="mx-auto h-4 w-full max-w-md animate-pulse rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]" />
+      <div className="mx-auto h-9 w-48 animate-pulse rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]" />
       <div className="mt-8 h-[92px] animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />
       <div className="space-y-4 pt-4">
         {[0, 1].map((index) => (
           <div
             key={index}
-            className="h-[136px] animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]"
+            className="h-[80px] animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]"
           />
         ))}
       </div>
@@ -104,7 +103,6 @@ export function WorkspaceLobbyPage() {
     {
       id: "organization-workspaces",
       title: "Organization",
-      description: "Organization-wide administration and settings.",
       icon: Layers3,
       items: workspaces.filter(
         (workspace) => workspace.type === "organization",
@@ -113,14 +111,12 @@ export function WorkspaceLobbyPage() {
     {
       id: "site-workspaces",
       title: "Properties you manage",
-      description: "Choose a property to open its operations.",
       icon: Building2,
       items: workspaces.filter((workspace) => workspace.type === "site_admin"),
     },
     {
       id: "place-workspaces",
       title: "My workspaces",
-      description: "Access linked to your home, stay or business space.",
       icon: Home,
       items: workspaces.filter((workspace) => workspace.type === "party"),
     },
@@ -201,12 +197,8 @@ export function WorkspaceLobbyPage() {
                 className="mx-auto mb-4 block h-1.5 w-10 rounded-full bg-[var(--vms-coral-accent)]"
               />
               <h1 className="text-[32px] font-semibold tracking-[-0.045em] sm:text-[40px] sm:leading-[1.1]">
-                Choose your workspace
+                Workspaces
               </h1>
-              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)] sm:text-base">
-                Continue to the workspace you need to manage your places, people
-                and operations.
-              </p>
             </header>
 
             <section aria-labelledby="available-workspaces" className="mt-7">
@@ -251,9 +243,6 @@ export function WorkspaceLobbyPage() {
                             >
                               {group.title}
                             </h3>
-                            <p className="mt-0.5 text-xs leading-4 text-[var(--vms-ink-muted)] sm:text-sm">
-                              {group.description}
-                            </p>
                           </div>
                           <span className="hidden shrink-0 rounded-full bg-[var(--vms-surface-subtle)] px-3 py-1 text-xs text-[var(--vms-ink-muted)] sm:inline-flex">
                             {group.items.length}{" "}

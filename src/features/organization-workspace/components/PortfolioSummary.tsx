@@ -3,7 +3,15 @@
 import { Metric } from "./organization-ui";
 import type { PortfolioMetrics } from "../lib";
 
-export function PortfolioSummary({ metrics }: { metrics: PortfolioMetrics }) {
+export function PortfolioSummary({
+  metrics,
+  sitesAvailable,
+  integrationsAvailable,
+}: {
+  metrics: PortfolioMetrics;
+  sitesAvailable: boolean;
+  integrationsAvailable: boolean;
+}) {
   return (
     <section
       aria-label="Portfolio summary"
@@ -12,14 +20,14 @@ export function PortfolioSummary({ metrics }: { metrics: PortfolioMetrics }) {
       <div className="border-b border-[var(--vms-line)] sm:border-r xl:border-b-0">
         <Metric
           label="Total Sites"
-          value={metrics.totalSites}
+          value={sitesAvailable ? metrics.totalSites : "—"}
           detail="Operating boundaries"
         />
       </div>
       <div className="border-b border-[var(--vms-line)] xl:border-b-0 xl:border-r">
         <Metric
           label="Total Places"
-          value={metrics.totalPlaces}
+          value={sitesAvailable ? metrics.totalPlaces : "—"}
           detail="Managed units and spaces"
         />
       </div>
@@ -33,8 +41,12 @@ export function PortfolioSummary({ metrics }: { metrics: PortfolioMetrics }) {
       <div>
         <Metric
           label="Active Integrations"
-          value={metrics.activeIntegrations}
-          detail="Connected providers"
+          value={integrationsAvailable ? metrics.activeIntegrations : "—"}
+          detail={
+            integrationsAvailable
+              ? "Connected providers"
+              : "Unavailable or restricted"
+          }
         />
       </div>
     </section>

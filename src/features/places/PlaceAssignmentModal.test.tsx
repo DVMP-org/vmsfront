@@ -4,17 +4,14 @@ import { expect, it, vi } from "vitest";
 import { PlaceAssignmentModal } from "./PlaceAssignmentModal";
 
 const create = vi.hoisted(() => vi.fn());
-const createParty = vi.hoisted(() => vi.fn());
+const addPerson = vi.hoisted(() => vi.fn());
 const createLease = vi.hoisted(() => vi.fn());
 vi.mock("./api", () => ({ placeRelationshipsApi: { create } }));
-vi.mock("@/features/parties/api", () => ({
-  partiesApi: { create: createParty },
-}));
 vi.mock("@/features/leases/api", async () => {
   const actual = await vi.importActual<object>("@/features/leases/api");
   return { ...actual, leasesApi: { create: createLease } };
 });
-vi.mock("@/features/people/api", () => ({ peopleApi: { add: vi.fn() } }));
+vi.mock("@/features/people/api", () => ({ peopleApi: { add: addPerson } }));
 vi.mock("@/components/facets/FacetPicker", () => ({
   FacetPicker: ({ onChange }: any) => (
     <button
@@ -68,9 +65,9 @@ it("assigns dates at local midnight and refreshes workspace memberships", async 
   );
 });
 
-it("creates a business Party and attaches it for commercial spaces", async () => {
+it("creates a Party and attaches it for commercial spaces", async () => {
   create.mockResolvedValue({ id: "relationship" });
-  createParty.mockResolvedValue({ id: "party-new", kind: "organization" });
+  addPerson.mockResolvedValue({ party: { id: "party-new" } });
   render(
     <QueryClientProvider client={new QueryClient()}>
       <PlaceAssignmentModal
@@ -103,20 +100,13 @@ it("creates a business Party and attaches it for commercial spaces", async () =>
   fireEvent.click(screen.getByRole("button", { name: "Add party" }));
 
   await waitFor(() =>
-    expect(createParty).toHaveBeenCalledWith({
-      kind: "organization",
-      display_name: "Acme Studio",
-      email: "lease@acme.test",
-      phone: null,
-    }),
-  );
-  await waitFor(() =>
-    expect(create).toHaveBeenCalledWith(
+    expect(addPerson).toHaveBeenCalledWith(
+      "site",
       expect.objectContaining({
-        party_id: "party-new",
+        display_name: "Acme Studio",
+        email: "lease@acme.test",
         place_id: "suite",
         role: "tenant",
-        status: "active",
       }),
     ),
   );
@@ -124,7 +114,7 @@ it("creates a business Party and attaches it for commercial spaces", async () =>
 
 it("drafts the lease from the add-party flow, after the party is attached", async () => {
   create.mockResolvedValue({ id: "relationship" });
-  createParty.mockResolvedValue({ id: "party-new", kind: "organization" });
+  addPerson.mockResolvedValue({ party: { id: "party-new" } });
   createLease.mockResolvedValue({ id: "lease" });
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -176,7 +166,7 @@ it("drafts the lease from the add-party flow, after the party is attached", asyn
     ),
   );
   // The party occupies the space before any lease is drafted for it.
-  expect(create.mock.invocationCallOrder[0]).toBeLessThan(
+  expect(addPerson.mock.invocationCallOrder[0]).toBeLessThan(
     createLease.mock.invocationCallOrder[0],
   );
 });

@@ -36,7 +36,7 @@ const nextConfig = {
     localBaseDomain,
     `*.${localBaseDomain}`,
     "vmsfront.to",
-    "dashboard.vmscore.to",
+    "*.vmscore.to",
   ],
   logging: {
     fetches: {

@@ -178,6 +178,32 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.movement-filter-heading {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 26px;
+  color: var(--vms-ink-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.movement-filter-heading button {
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--vms-ink);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.movement-filter-heading button:focus-visible {
+  outline: 2px solid var(--vms-focus);
+  outline-offset: 2px;
+}
+
 .movement-filter,
 .movement-date {
   position: relative;
@@ -230,9 +256,25 @@
 
 .movement-table {
   width: 100%;
-  min-width: 960px;
+  table-layout: fixed;
   border-collapse: collapse;
   text-align: left;
+}
+
+.movement-table th:nth-child(2) {
+  width: 24%;
+}
+.movement-table th:nth-child(3) {
+  width: 20%;
+}
+.movement-table th:nth-child(4) {
+  width: 18%;
+}
+.movement-table th:nth-child(5) {
+  width: 16%;
+}
+.movement-table th:nth-child(6) {
+  width: 10%;
 }
 
 .movement-table th {
@@ -333,9 +375,7 @@
 }
 
 .movement-person-cell strong,
-.movement-person-cell small,
-.movement-credential strong,
-.movement-credential small {
+.movement-person-cell small {
   display: block;
 }
 
@@ -347,18 +387,11 @@
   white-space: nowrap;
 }
 
-.movement-person-cell small,
-.movement-credential small {
+.movement-person-cell small {
   margin-top: 2px;
   color: var(--vms-ink-muted);
   font-size: 10px;
   white-space: nowrap;
-}
-
-.movement-credential strong {
-  font-family: var(--vms-font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .movement-direction {
@@ -374,17 +407,11 @@
   color: var(--vms-ink-muted);
 }
 
-.movement-operator {
-  display: grid;
-  width: 27px;
-  height: 27px;
-  place-items: center;
-  border: 1px solid var(--vms-line);
-  border-radius: 50%;
-  background: var(--vms-surface-subtle);
+.movement-direction-cell small {
+  display: block;
+  margin-top: 3px;
   color: var(--vms-ink-muted);
-  font-size: 8px;
-  font-weight: 700;
+  font-size: 10px;
 }
 
 .movement-table td > a {
@@ -946,21 +973,13 @@
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1600px) {
   .movement-page.has-detail {
     padding-right: 0;
   }
 
-}
-
-@media (max-width: 1350px) {
-  /* Keep the identity, decision and time visible; credential/operator details
-     remain available in the selected movement's detail panel. */
-  .movement-table th:nth-child(3),
-  .movement-table td:nth-child(3),
-  .movement-table th:nth-child(10),
-  .movement-table td:nth-child(10) {
-    display: none;
+  .movement-detail-scrim {
+    background: rgb(15 23 42 / 26%);
   }
 }
 
@@ -1077,18 +1096,15 @@
   }
 
   .movement-table td:nth-child(4),
-  .movement-table td:nth-child(7),
-  .movement-table td:nth-child(8),
-  .movement-table td:nth-child(10) {
+  .movement-table td:nth-child(5),
+  .movement-table td:nth-child(6) {
     display: inline-flex;
     width: auto !important;
     margin: 5px 7px 0 0;
   }
 
   .movement-table td:nth-child(3)::before,
-  .movement-table td:nth-child(5)::before,
-  .movement-table td:nth-child(6)::before,
-  .movement-table td:nth-child(9)::before {
+  .movement-table td:nth-child(4)::before {
     display: inline-block;
     min-width: 76px;
     color: var(--vms-ink-muted);
@@ -1098,23 +1114,11 @@
   }
 
   .movement-table td:nth-child(3)::before {
-    content: "Credential";
-  }
-
-  .movement-table td:nth-child(5)::before {
-    content: "Checkpoint";
-  }
-
-  .movement-table td:nth-child(6)::before {
-    content: "Movement";
-  }
-
-  .movement-table td:nth-child(9)::before {
     content: "Time";
   }
 
-  .movement-table td:nth-child(10) {
-    display: none;
+  .movement-table td:nth-child(4)::before {
+    content: "Checkpoint";
   }
 
   .movement-person-cell {

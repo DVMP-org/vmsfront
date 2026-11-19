@@ -85,7 +85,13 @@ export function InvitationApprovals() {
   const canCreate = allowed("create");
 
   const invitations = useQuery({
-    queryKey: ["admin-invitation-approvals", status, page, search],
+    queryKey: [
+      "admin-invitation-approvals",
+      access.contextKey,
+      status,
+      page,
+      search,
+    ],
     queryFn: () =>
       invitationApprovalsApi.list({
         status,
@@ -98,7 +104,7 @@ export function InvitationApprovals() {
     retry: false,
   });
   const summary = useQuery({
-    queryKey: ["admin-invitation-approvals", "summary"],
+    queryKey: ["admin-invitation-approvals", access.contextKey, "summary"],
     queryFn: async () => {
       const [all, requested, approved, declined] = await Promise.all([
         invitationApprovalsApi.list({ status: "all", page: 1, pageSize: 1 }),
@@ -631,7 +637,6 @@ function CreateInvitationDrawer({
         </fieldset>
         <FacetPicker
           facet="parties"
-          kind="person"
           label="Host Party"
           value={host}
           onChange={setHost}

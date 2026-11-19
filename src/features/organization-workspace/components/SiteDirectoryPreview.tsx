@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Building2, MapPin, Plus } from "lucide-react";
-
-import { Button } from "@/components/ui/Button";
+import { ArrowUpRight, Building2, MapPin } from "lucide-react";
 
 import type { OrganizationSiteSummary } from "../api";
 import {
@@ -18,12 +16,8 @@ import { ORGANIZATION_SITES_PATH, operatingTypeLabel } from "../lib";
 
 export function SiteDirectoryPreview({
   sites,
-  canCreate,
-  onCreate,
 }: {
   sites: OrganizationSiteSummary[];
-  canCreate: boolean;
-  onCreate: () => void;
 }) {
   const preview = sites.slice(0, 5);
 
@@ -35,11 +29,6 @@ export function SiteDirectoryPreview({
         action={
           sites.length > 0 ? (
             <ViewAllLink href={ORGANIZATION_SITES_PATH} />
-          ) : canCreate ? (
-            <Button size="sm" variant="outline" onClick={onCreate}>
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              Create Site
-            </Button>
           ) : null
         }
       />
@@ -47,14 +36,6 @@ export function SiteDirectoryPreview({
         <EmptyPanel
           title="No Sites yet"
           description="Create the first Site to open an operating boundary for Places, staff and access control."
-          action={
-            canCreate ? (
-              <Button size="sm" onClick={onCreate}>
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                Create Site
-              </Button>
-            ) : null
-          }
         />
       ) : (
         <ul className="divide-y divide-[var(--vms-line)]">

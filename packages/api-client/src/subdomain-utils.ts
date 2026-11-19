@@ -3,6 +3,7 @@ export const RESERVED_SUBDOMAINS: string[] = [
   "app",
   "api",
   "admin",
+  "dashboard",
   "visit",
 ];
 
@@ -51,12 +52,17 @@ export function createSubdomainUtilities(
     }
 
     const baseSuffix = `.${baseDomain}`;
+    // A host outside the configured base domain is not one of this app's
+    // tenants. Treating its first label as a slug (for example
+    // `dashboard.vmscore.to` -> `dashboard`) sends an X-Organization header
+    // for an organization that does not exist, so every API call 404s.
+    if (hostname !== baseDomain && !hostname.endsWith(baseSuffix)) {
+      return null;
+    }
     const relativeHostname =
       hostname === baseDomain
         ? ""
-        : hostname.endsWith(baseSuffix)
-          ? hostname.slice(0, -baseSuffix.length)
-          : hostname;
+        : hostname.slice(0, -baseSuffix.length);
     const parts = relativeHostname.split(".").filter(Boolean);
 
     if (parts.length > 0 && !reservedSubdomains.includes(parts[0])) {

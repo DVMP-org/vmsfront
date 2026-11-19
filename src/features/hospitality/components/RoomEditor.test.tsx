@@ -88,6 +88,7 @@ const room: HospitalityRoom = {
   current_stay_id: null,
   current_guest_name: null,
   next_arrival: null,
+  next_guest_name: null,
   maintenance_open: 0,
   updated_at: "2026-11-14T10:00:00Z",
 };

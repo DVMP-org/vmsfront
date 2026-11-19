@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BedDouble,
   CheckCircle2,
   CreditCard,
   FileClock,
@@ -30,6 +31,7 @@ const CODE_COPY: Record<string, string> = {
   "maintenance.sla_response_breached": "Maintenance not picked up in time",
   "maintenance.sla_resolution_breached":
     "Maintenance past its resolution target",
+  "stay.expiring": "Guest stay ending soon",
   "lease.expiring": "Lease ending soon",
 };
 
@@ -51,6 +53,11 @@ const KIND_COPY: Record<
     label: "Maintenance",
     href: "/admin/residential/maintenance",
     Icon: Wrench,
+  },
+  stay: {
+    label: "Stays",
+    href: "/admin/hospitality/calendar",
+    Icon: BedDouble,
   },
   lease: {
     label: "Leases",

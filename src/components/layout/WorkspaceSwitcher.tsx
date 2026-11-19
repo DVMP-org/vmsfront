@@ -51,9 +51,18 @@ export function WorkspaceSwitcher({
   const managementPlace = workspaceContext.data?.management?.is_administrator
     ? workspaceContext.data.management.authoritative_site
     : null;
+  // The picker lives in the Site-scoped admin shell: only offer the current
+  // Site's management workspace and its place-backed workspaces. Other Sites
+  // are reached from the lobby ("View all workspaces").
+  const activeSiteId = selectedSite?.id ?? managementPlace?.id ?? null;
+  const siteRelationships = activeSiteId
+    ? (currentUser.data?.workspaces || []).filter(
+      (relationship) => relationship.site_id === activeSiteId,
+    )
+    : [];
   const cards = buildWorkspaceCards(
-    adminProfile,
-    currentUser.data?.workspaces || [],
+    activeSiteId ? adminProfile : null,
+    siteRelationships,
     managementPlace,
   );
   const management = cards.find((card) => card.area === "management");
@@ -83,13 +92,28 @@ export function WorkspaceSwitcher({
   }, [open]);
 
   function chooseWorkspace(card: WorkspaceCard) {
-    const place =
-      card.area === "management" ? card.place : card.relationship?.place;
-    setSelectedSite(place ? { id: place.id, name: place.name } : null);
+    const relationship = card.relationship;
+    const managementSite = card.area === "management" ? card.place : null;
+    const relationshipSiteId = relationship?.site_id ?? null;
+    // A personal workspace keeps its Site as the operating context; the user
+    // is only a member of the Place, never of the Site as a principal.
+    const relationshipSiteName =
+      relationship?.place.site_name ??
+      (relationshipSiteId === selectedSite?.id ? selectedSite?.name : null);
+
+    if (managementSite) {
+      setSelectedSite({ id: managementSite.id, name: managementSite.name });
+    } else if (relationshipSiteId && relationshipSiteName) {
+      setSelectedSite({ id: relationshipSiteId, name: relationshipSiteName });
+    } else {
+      setSelectedSite(null);
+    }
     setOpen(false);
     onMobileClose?.();
     router.push(
-      card.area === "management" ? withSite(card.href, place?.id) : card.href,
+      card.area === "management"
+        ? withSite(card.href, managementSite?.id)
+        : card.href,
     );
   }
 
@@ -135,10 +159,8 @@ export function WorkspaceSwitcher({
             )}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-[#667280]">
-              Workspace
-            </span>
-            <span className="mt-0.5 block truncate text-xs font-semibold text-[#1F2933]">
+
+            <span className="mt-0.5 block line-clamp-2 break-words text-sm font-semibold leading-5 text-[#1F2933]">
               {selectedSite?.name || "Choose a property"}
             </span>
           </span>
@@ -177,9 +199,9 @@ export function WorkspaceSwitcher({
           id="place-workspace-switcher"
           className="absolute left-3 right-3 z-50 mt-2 max-h-[min(30rem,calc(100vh-8rem))] overflow-y-auto rounded-lg border border-[#DDE2E6] bg-white p-2 shadow-xl"
         >
-          <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667280]">
+          {/* <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667280]">
             Place-backed workspaces
-          </p>
+          </p> */}
 
           {management ? (
             <button
@@ -189,10 +211,10 @@ export function WorkspaceSwitcher({
             >
               <Shield className="h-4 w-4 shrink-0 text-[#1F2933]" />
               <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-[#1F2933]">
+                <span className="block line-clamp-2 break-words text-sm font-semibold leading-5 text-[#1F2933]">
                   {management.title}
                 </span>
-                <span className="block truncate text-[10px] text-[#667280]">
+                <span className="block line-clamp-2 break-words text-[11px] leading-4 text-[#667280]">
                   {management.roleLabel}
                 </span>
               </span>
@@ -213,10 +235,10 @@ export function WorkspaceSwitcher({
                 >
                   <Building2 className="h-4 w-4 shrink-0 text-[#596675]" />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-[#1F2933]">
+                    <span className="block line-clamp-2 break-words text-sm font-medium leading-5 text-[#1F2933]">
                       {card.title}
                     </span>
-                    <span className="block truncate text-[10px] text-[#667280]">
+                    <span className="block line-clamp-2 break-words text-[11px] leading-4 text-[#667280]">
                       {card.roleLabel}
                     </span>
                   </span>
@@ -227,7 +249,8 @@ export function WorkspaceSwitcher({
 
           {!management && personalGroups.length === 0 ? (
             <p className="px-2 py-3 text-xs leading-5 text-[#667280]">
-              No active place relationships were found in this organization.
+              No place-backed workspaces in this Site. Use “View all workspaces”
+              to switch Site.
             </p>
           ) : null}
 

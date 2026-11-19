@@ -517,13 +517,12 @@ function AssignTenantModal({
         </Field>
         <FacetPicker
           facet="parties"
-          kind="organization"
-          label="Business organization"
+          label="Business party"
           value={party}
           contextKey={contextKey}
           onChange={setParty}
           error={errors.party}
-          description="Choose an active organization Party already visible in this tenant."
+          description="Choose an active Party already visible in this tenant."
         />
         <div className="grid gap-4 sm:grid-cols-3">
           <Field id="tenant-role" label="Role">

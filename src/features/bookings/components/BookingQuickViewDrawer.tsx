@@ -2,12 +2,22 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Banknote, LogIn, LogOut, Pencil, PlusCircle } from "lucide-react";
+import {
+    Ban,
+    Banknote,
+    LogIn,
+    LogOut,
+    Mail,
+    Pencil,
+    PlusCircle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
+import { Input } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useSiteAccess } from "@/features/context/use-site-access";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import {
     useCheckInStay,
@@ -16,13 +26,20 @@ import {
 } from "@/features/hospitality/queries";
 import { formatMoney } from "@/lib/currency";
 import { formatDate, formatDateTime } from "@/lib/datetime";
+import { parseApiError } from "@/lib/error-utils";
 import { humanize } from "@/lib/strings";
 import { AddChargeForm } from "./AddChargeForm";
 import { BookingEditForm } from "./BookingEditForm";
+import { BookingPageLink } from "./BookingPageLink";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { RecordPaymentForm } from "./RecordPaymentForm";
 import { paymentStatusView, stayNights } from "../lib";
-import { useBooking } from "../queries";
+import { canCancel } from "../api-types";
+import {
+    useBooking,
+    useCancelBooking,
+    useResendBookingOnboarding,
+} from "../queries";
 
 const SOURCE_LABELS: Record<string, string> = {
     public: "Public page",
@@ -77,13 +94,18 @@ export function BookingQuickViewDrawer({
     const booking = useBooking(bookingId);
     const rooms = useHospitalityRooms(Boolean(bookingId));
     const access = useSiteAccess();
+    const context = useWorkspaceContext();
+    const siteSlug = context.data?.site_slug ?? null;
     const checkIn = useCheckInStay();
     const checkOut = useCheckOutStay();
+    const resendOnboarding = useResendBookingOnboarding(bookingId ?? "");
+    const cancelBooking = useCancelBooking(bookingId ?? "");
 
-    const [panel, setPanel] = useState<"detail" | "payment" | "charge" | "edit">(
-        "detail",
-    );
+    const [panel, setPanel] = useState<
+        "detail" | "payment" | "charge" | "edit" | "cancel"
+    >("detail");
     const [actionError, setActionError] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState("");
 
     const data = booking.data;
     const stayId = data?.hospitality_stay_id ?? null;
@@ -95,6 +117,7 @@ export function BookingQuickViewDrawer({
     const canManageMoney =
         access.isAdministrator || access.allowed("bookings.approve");
     const closed = data ? CLOSED_STATUSES.has(data.status) : false;
+    const cancellable = data ? canCancel(data) : false;
     const canCheckIn =
         Boolean(stayId) &&
         data?.hospitality_stay_status === "reserved" &&
@@ -104,17 +127,29 @@ export function BookingQuickViewDrawer({
         Boolean(stayId) &&
         data?.hospitality_stay_status === "checked_in" &&
         access.allowed("hospitality_stays.checkout");
+    // Acceptance sends the first magic link. Offering the resend only after that
+    // keeps it honest: there is no identity to link to before a decision.
+    const canResendOnboarding =
+        Boolean(data) &&
+        (data?.status === "confirmed" || data?.status === "checked_in");
 
     async function runStay(action: () => Promise<unknown>) {
         setActionError(null);
         try {
             await action();
         } catch (cause) {
-            setActionError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That action did not go through.",
-            );
+            setActionError(parseApiError(cause).message);
+        }
+    }
+
+    async function confirmCancel() {
+        setActionError(null);
+        try {
+            await cancelBooking.mutateAsync(cancelReason.trim());
+            setCancelReason("");
+            onClose();
+        } catch (cause) {
+            setActionError(parseApiError(cause).message);
         }
     }
 
@@ -179,6 +214,67 @@ export function BookingQuickViewDrawer({
                                 onCancel={() => setPanel("detail")}
                             />
                         ) : null}
+                            {panel === "cancel" ? (
+                                <div className="flex flex-col gap-3 rounded-lg border border-[var(--vms-line)] p-3">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-[var(--vms-ink)]">
+                                            Cancel this booking?
+                                        </h3>
+                                        <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                                            {data.requester_name}&apos;s booking will be cancelled,
+                                            its rooms released and any guest badge revoked. This
+                                            cannot be undone.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label
+                                            htmlFor="drawer-cancel-reason"
+                                            className="text-xs font-medium text-[var(--vms-ink)]"
+                                        >
+                                            Why is it being cancelled?
+                                        </label>
+                                        <Input
+                                            id="drawer-cancel-reason"
+                                            value={cancelReason}
+                                            onChange={(event) =>
+                                                setCancelReason(event.currentTarget.value)
+                                            }
+                                            placeholder="Guest's flight was cancelled"
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setPanel("detail")}
+                                        >
+                                            Keep it
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={
+                                                cancelReason.trim().length < 3 ||
+                                                cancelBooking.isPending
+                                            }
+                                            isLoading={cancelBooking.isPending}
+                                            onClick={() => void confirmCancel()}
+                                        >
+                                            Confirm cancellation
+                                        </Button>
+                                    </div>
+                                    {actionError ? (
+                                        <p
+                                            role="alert"
+                                            className="text-xs font-medium text-[var(--vms-danger)]"
+                                        >
+                                            {actionError}
+                                        </p>
+                                    ) : null}
+                                </div>
+                            ) : null}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-5">
@@ -242,6 +338,32 @@ export function BookingQuickViewDrawer({
                                         Edit booking
                                     </Button>
                                 ) : null}
+                                        {canManageMoney && canResendOnboarding ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                isLoading={resendOnboarding.isPending}
+                                                onClick={() => resendOnboarding.mutate()}
+                                            >
+                                                <Mail className="h-4 w-4" aria-hidden="true" />
+                                                Resend magic link
+                                            </Button>
+                                        ) : null}
+                                        {canManageMoney && cancellable ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setActionError(null);
+                                                    setPanel("cancel");
+                                                }}
+                                            >
+                                                <Ban className="h-4 w-4" aria-hidden="true" />
+                                                Cancel booking
+                                            </Button>
+                                        ) : null}
                             </div>
                             {canManageMoney && !closed && !data.financials?.billed ? (
                                 <p className="text-[11px] text-[var(--vms-ink-muted)]">
@@ -265,6 +387,12 @@ export function BookingQuickViewDrawer({
                                 {SOURCE_LABELS[data.source] ?? humanize(data.source)}
                             </span>
                         </div>
+
+                                {/* The page the guest books through belongs with the
+                            booking it produced, not in the register's chrome. */}
+                                <section aria-label="Booking page">
+                                    <BookingPageLink siteSlug={siteSlug} />
+                                </section>
 
                         <section aria-label="Guest" className="flex flex-col gap-1">
                             <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">

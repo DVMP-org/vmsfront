@@ -74,6 +74,7 @@ const OCCUPANCY_ROLES = new Set([
   "tenant",
   "member",
   "member_of",
+  "household_member",
 ]);
 const STAFF_ROLES = new Set([
   "employee",

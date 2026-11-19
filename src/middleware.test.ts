@@ -195,6 +195,40 @@ describe("organization routing", () => {
     expect(location.searchParams.get("source")).toBe("invite");
   });
 
+  it("renders the onboarding magic link for an already-authenticated user", () => {
+    const request = new NextRequest(
+      "https://vmsfront.to/auth/onboarding?token=invitation",
+      {
+        headers: {
+          host: "vmsfront.to",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("keeps the onboarding magic link on the dashboard host", () => {
+    const request = new NextRequest(
+      "https://dashboard.vmsfront.to/auth/onboarding?token=invitation",
+      {
+        headers: {
+          host: "dashboard.vmsfront.to",
+          cookie: "auth-token=valid-token",
+        },
+      },
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
   it("allows login on a tenant domain", () => {
     const request = new NextRequest("https://harbour.vmsfront.to/auth/login", {
       headers: { host: "harbour.vmsfront.to" },

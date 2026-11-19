@@ -13,6 +13,7 @@ import {
 } from "@/features/reservations/lib";
 import { formatMoney } from "@/lib/currency";
 import { formatDateTime } from "@/lib/datetime";
+import { parseApiError } from "@/lib/error-utils";
 import { humanize } from "@/lib/strings";
 import type { BookingDetailDto } from "../../api-types";
 import { useAssignBookingRoom } from "../../queries";
@@ -46,11 +47,7 @@ export function BookingRoomsSection({
       await assignRoom.mutateAsync(roomId);
       setRoomId("");
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "That room could not be assigned.",
-      );
+      setError(parseApiError(cause).message);
     }
   }
 

@@ -26,7 +26,6 @@ export interface FacetPage {
 }
 export type FacetFilters = {
   parties: {
-    kind?: "person" | "organization";
     is_active?: boolean;
     place_id?: string;
     role?: string;

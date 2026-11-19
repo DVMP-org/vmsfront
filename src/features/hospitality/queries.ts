@@ -1,11 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { unwrap } from "@/lib/api-envelope";
+import { parseApiError } from "@/lib/error-utils";
 import { placeGroupsApi } from "@/features/place-groups/api";
 import { hospitalityApi } from "./api";
 import { hospitalityService } from "./service";
+import type { GuestDetail } from "./contracts";
 
 export const hospitalityRoomKeys = {
   all: ["hospitality", "rooms"] as const,
@@ -32,9 +35,18 @@ function useStayTransition(action: "check-in" | "check-out") {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (stayId: string) => hospitalityApi.action(stayId, action),
+    onError: (error) => {
+      // Surface the server's sentence (e.g. "cannot be checked in before its
+      // planned start") instead of the axios status text.
+      toast.error(parseApiError(error).message);
+    },
     onSuccess: async () => {
+      toast.success(
+        action === "check-in" ? "Guest checked in" : "Guest checked out",
+      );
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
       await queryClient.invalidateQueries({ queryKey: hospitalityRoomKeys.all });
+      await queryClient.invalidateQueries({ queryKey: guestKeys.all });
     },
   });
 }
@@ -45,6 +57,56 @@ export function useCheckInStay() {
 
 export function useCheckOutStay() {
   return useStayTransition("check-out");
+}
+
+export const guestKeys = {
+  all: ["hospitality", "guests"] as const,
+  list: (params: {
+    page: number;
+    page_size: number;
+    search?: string;
+    status?: string;
+  }) => ["hospitality", "guests", "list", params] as const,
+  detail: (partyId: string | null) =>
+    ["hospitality", "guests", "detail", partyId] as const,
+};
+
+/** Guests attached to this Site's stays, one row per person. */
+export function useHospitalityGuests(params: {
+  page: number;
+  page_size: number;
+  search?: string;
+  status?: string;
+}) {
+  return useQuery({
+    queryKey: guestKeys.list(params),
+    queryFn: async () => hospitalityApi.guests.list(params),
+  });
+}
+
+/** One guest and their stay history at this Site. */
+export function useHospitalityGuest(partyId: string | null) {
+  return useQuery({
+    queryKey: guestKeys.detail(partyId),
+    queryFn: async () =>
+      (await hospitalityApi.guests.get(partyId as string)) as GuestDetail,
+    enabled: Boolean(partyId),
+  });
+}
+
+/** Send the guest's workspace magic link again, from the guest record. */
+export function useResendGuestOnboarding(partyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => hospitalityApi.guests.resendOnboarding(partyId),
+    onSuccess: async (receipt) => {
+      toast.success(`Magic link sent to ${receipt.email}`);
+      await queryClient.invalidateQueries({ queryKey: guestKeys.all });
+    },
+    onError: (error) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
 }
 
 export const hospitalityAmenityKeys = {

@@ -31,6 +31,7 @@ import type {
   SiteDetail,
   SiteNotificationSettings,
 } from "@/features/sites/api";
+import PageLoader from "@/components/ui/PageLoader";
 
 export function SiteConfiguration() {
   const [activeTab, setActiveTab] = useState<
@@ -77,7 +78,11 @@ export function SiteConfiguration() {
   }
 
   if (property.isPending) {
-    return <p role="status">Loading site configuration…</p>;
+    return (
+      <main className="mx-auto w-full max-w-[1440px] pb-10 pt-3 text-[var(--vms-ink)]">
+        <PageLoader message="Loading site configuration…" />
+      </main>
+    );
   }
   if (property.isError) {
     return (

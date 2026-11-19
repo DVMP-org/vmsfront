@@ -135,6 +135,9 @@ export function middleware(request: NextRequest) {
   const isLandingAlias =
     pathname === "/landing" || pathname.startsWith("/landing/");
   const isTenantLoginPath = normalizedPathname === "/auth/login";
+  // A magic link is opened from an email, not from an authenticated session.
+  // It must render so the page can clear the old session and redeem its token.
+  const isOnboardingPath = normalizedPathname === "/auth/onboarding";
   const isCommunityPath =
     pathname === "/community" || pathname.startsWith("/community/");
   const isProfilePath =
@@ -210,8 +213,10 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  // RULE 3: Authenticated users should not access auth pages (except verify-email handled above)
-  if (isAuthenticated && isAuthPath) {
+  // RULE 3: Authenticated users should not access auth pages. Onboarding is
+  // the exception: its token is the credential, and the page clears whatever
+  // session the browser already had before verifying it.
+  if (isAuthenticated && isAuthPath && !isOnboardingPath) {
     const destinationUrl = isOnSubdomain
       ? new URL("/", request.url)
       : getBaseDomainUrl("/organizations", "", request);

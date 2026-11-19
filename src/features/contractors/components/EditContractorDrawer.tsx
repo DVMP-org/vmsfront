@@ -165,6 +165,7 @@ export function EditContractorDrawer({
       isSubmitting={mutation.isPending}
       canSubmit={!terminal}
       error={serverError}
+      size="lg"
       footerNote={
         terminal
           ? "Revoked contractors are read-only records kept for audit."
@@ -183,7 +184,7 @@ export function EditContractorDrawer({
               <input
                 {...control}
                 type="datetime-local"
-                className={fieldControlClassName}
+                className={`${fieldControlClassName} min-w-0`}
                 value={draft.access_from}
                 onChange={(event) => update("access_from", event.target.value)}
                 disabled={terminal}
@@ -200,7 +201,7 @@ export function EditContractorDrawer({
               <input
                 {...control}
                 type="datetime-local"
-                className={fieldControlClassName}
+                className={`${fieldControlClassName} min-w-0`}
                 value={draft.access_to}
                 onChange={(event) => update("access_to", event.target.value)}
                 disabled={terminal}

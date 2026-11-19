@@ -346,7 +346,7 @@ it("queues offline passages provisionally and verifies them after reconnect", as
   await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
   expect(screen.queryByText(/provisional passage queued/i)).toBeNull();
 });
-it("keeps the console visible and lets the API enforce recording permission", async () => {
+it("keeps an unassigned console visible but blocks scans until assignment", async () => {
   m.permissions = [];
   m.console.mockRejectedValue(
     new Error("No checkpoint is assigned to the signed-in Site manager"),
@@ -359,11 +359,15 @@ it("keeps the console visible and lets the API enforce recording permission", as
   expect(
     screen.getByRole("heading", { name: "Check-in console" }),
   ).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Credential"), {
-    target: { value: "VISIT123" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Check in" }));
-  await waitFor(() => expect(m.record).toHaveBeenCalledTimes(1));
+  expect(screen.getByText("Assignment required")).toBeVisible();
+  expect(screen.getByText("Connected")).toBeVisible();
+  expect(screen.getByLabelText("Credential")).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Check in" })).toBeDisabled();
+  expect(
+    screen.getByText("Assign a checkpoint to view its recent scans."),
+  ).toBeVisible();
+  expect(m.record).not.toHaveBeenCalled();
+  expect(m.preview).not.toHaveBeenCalled();
   expect(m.console).toHaveBeenCalledWith();
 });
 it("does not show a passage fetched under another gate route", async () => {
@@ -380,8 +384,13 @@ it("does not show a passage fetched under another gate route", async () => {
 it("resolves the assigned console without fetching gates or sending a gate ID", async () => {
   mount(<CheckpointConsole />);
   await screen.findAllByText("Main entrance");
+  expect(screen.getByText("Ready to scan")).toBeVisible();
+  expect(screen.getByLabelText("Credential")).toBeEnabled();
   expect(m.console).toHaveBeenCalledWith();
   expect(m.gates).not.toHaveBeenCalled();
+  expect(m.accessEvents).toHaveBeenCalledWith(
+    expect.objectContaining({ gate_id: "gate" }),
+  );
 });
 
 it("lists every visitor on a group invitation and records the chosen suffix", async () => {

@@ -36,7 +36,7 @@ describe("command navigation", () => {
     ];
     const commands = permittedCommands(
       role(["*"]),
-      ["charges", "hospitality", "reservations"],
+      ["billing", "hospitality", "reservations"],
       moduleGroups,
       false,
       "hospitality",
@@ -45,7 +45,7 @@ describe("command navigation", () => {
       commands.find((entry) => entry.label === "Guest folios & billing")?.group,
     ).toBe("Billing");
     expect(
-      commands.find((entry) => entry.label === "Reservations & stays")?.group,
+      commands.find((entry) => entry.label === "Reservations")?.group,
     ).toBe("Front office");
   });
   it("supports the current single-role payload until RBAC union grants land", () => {

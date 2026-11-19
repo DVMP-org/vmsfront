@@ -34,12 +34,10 @@ import {
   Hash,
   ShieldCheck,
   Sparkles,
-  Check,
   Trash2,
-  Star,
-  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseApiError } from "@/lib/error-utils";
 import type { BillingFormState } from "@/features/organization-onboarding/lib";
 
 // Popular countries for the dropdown
@@ -65,26 +63,6 @@ const COUNTRIES = [
   { code: "GH", name: "Ghana", flag: "🇬🇭" },
 ];
 
-// Card brand logos/icons
-const BRAND_CONFIG: Record<string, { gradient: string; logo: string }> = {
-  visa: {
-    gradient: "from-[#1a1f71] to-[#2d4db3]",
-    logo: "VISA",
-  },
-  mastercard: {
-    gradient: "from-[#eb001b] to-[#f79e1b]",
-    logo: "MC",
-  },
-  amex: {
-    gradient: "from-[#006fcf] to-[#00a3e0]",
-    logo: "AMEX",
-  },
-  discover: {
-    gradient: "from-[#ff6000] to-[#ffb300]",
-    logo: "DISCOVER",
-  },
-};
-
 function SinglePaymentCard({
   paymentMethod,
   isDefault = false,
@@ -101,154 +79,69 @@ function SinglePaymentCard({
   isDeleting?: boolean;
 }) {
   const { confirmAction, confirmationDialog } = useConfirmAction();
-  const [showActions, setShowActions] = useState(false);
-  const brandConfig = BRAND_CONFIG[
-    paymentMethod.brand?.toLowerCase() || ""
-  ] || {
-    gradient: " ",
-    logo: paymentMethod.brand?.toUpperCase() || "CARD",
-  };
+  const brand = paymentMethod.brand?.trim() || "Card";
+  const expiry =
+    paymentMethod.exp_month && paymentMethod.exp_year
+      ? `${String(paymentMethod.exp_month).padStart(2, "0")}/${paymentMethod.exp_year}`
+      : "Unavailable";
 
   return (
-    <div className="group relative">
-      {/* Default badge */}
-      {isDefault && (
-        <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-medium shadow-[var(--vms-shadow-raised)]">
-          <Star className="h-3 w-3 fill-current" />
-          Default
+    <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4 sm:flex sm:items-center sm:gap-4">
+      <span
+        aria-hidden="true"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]"
+      >
+        <CreditCard className="h-5 w-5" />
+      </span>
+      <div className="mt-3 min-w-0 flex-1 sm:mt-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-[var(--vms-ink)]">
+            {brand} ending in {paymentMethod.last4 || "••••"}
+          </p>
+          {isDefault ? (
+            <span className="rounded-full border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--vms-ink)]">
+              Default
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+          Expires {expiry}
+        </p>
+      </div>
+      {(onSetDefault || onDelete) && (
+        <div className="mt-4 flex flex-wrap gap-2 sm:mt-0 sm:justify-end">
+          {onSetDefault && !isDefault ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onSetDefault}
+              disabled={isSettingDefault || isDeleting}
+              isLoading={isSettingDefault}
+            >
+              Set as default
+            </Button>
+          ) : null}
+          {onDelete ? (
+            <Button
+              size="sm"
+              variant="destructive-outlined"
+              onClick={() =>
+                confirmAction({
+                  title: "Remove payment method?",
+                  description: `Remove the saved card ending in ${paymentMethod.last4}? It will no longer be available for billing.`,
+                  confirmLabel: "Remove payment method",
+                  onConfirm: () => onDelete?.(),
+                })
+              }
+              disabled={isDeleting || isSettingDefault}
+              isLoading={isDeleting}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Remove
+            </Button>
+          ) : null}
         </div>
       )}
-
-      <div
-        className={cn(
-          "relative w-full h-44 rounded-[var(--vms-radius-surface)] text-white overflow-hidden shadow-[var(--vms-shadow-raised)] transition-all duration-300",
-          "",
-          brandConfig.gradient,
-          isDefault
-            ? "ring-2 ring-green-500 ring-offset-2 ring-offset-white "
-            : "",
-          "hover:shadow-[var(--vms-shadow-overlay)] hover:scale-[1.02]",
-        )}
-      >
-        {/* Background decorations */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--vms-surface)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-[var(--vms-surface)] rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
-        </div>
-
-        {/* Subtle pattern */}
-        <div className="absolute inset-0 opacity-5 bg-[linear-gradient(135deg,transparent_25%,white_25%,white_50%,transparent_50%,transparent_75%,white_75%)] bg-[length:20px_20px]" />
-
-        {/* Card chip */}
-        <div className="absolute top-4 left-4">
-          <div className="w-10 h-7 rounded  from-amber-200 via-amber-300 to-amber-400 shadow-sm">
-            <div className="w-full h-full rounded flex items-center justify-center border border-amber-400/50">
-              <div className="w-5 h-3 border border-amber-500/40 rounded-sm bg-amber-200/30" />
-            </div>
-          </div>
-        </div>
-
-        {/* Contactless icon */}
-        <div className="absolute top-4 right-4">
-          <svg
-            className="w-6 h-6 text-white/60"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path
-              d="M8.5 14.5C9.5 13.5 10 12 10 10.5C10 9 9.5 7.5 8.5 6.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M12 17C14 15 15 12.5 15 10C15 7.5 14 5 12 3"
-              strokeLinecap="round"
-            />
-            <path
-              d="M15.5 19.5C18.5 17 20 13.5 20 10C20 6.5 18.5 3 15.5 0.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-
-        {/* Card number */}
-        <div className="absolute top-16 left-4 right-4">
-          <div className="text-xl tracking-[0.25em] font-mono font-medium flex items-center gap-3">
-            <span className="opacity-50">••••</span>
-            <span className="opacity-50">••••</span>
-            <span className="opacity-50">••••</span>
-            <span>{paymentMethod.last4 || "****"}</span>
-          </div>
-        </div>
-
-        {/* Bottom section */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-          <div>
-            <span className="text-[10px] uppercase tracking-wider text-white/50 block">
-              Expires
-            </span>
-            <span className="font-mono text-sm">
-              {paymentMethod.exp_month || "••"}/{paymentMethod.exp_year || "••"}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold tracking-wide">
-              {brandConfig.logo}
-            </span>
-          </div>
-        </div>
-
-        {/* Hover actions overlay */}
-        {(onSetDefault || onDelete) && (
-          <div
-            className={cn(
-              "absolute inset-0 flex items-center justify-center gap-3 bg-black/55 transition-opacity duration-200",
-              showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-            )}
-          >
-            {onSetDefault && !isDefault && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={onSetDefault}
-                disabled={isSettingDefault}
-                className="bg-[var(--vms-surface)]/20 hover:bg-[var(--vms-surface)]/30 text-white border-white/30"
-              >
-                {isSettingDefault ? (
-                  <span className="animate-spin mr-2">⏳</span>
-                ) : (
-                  <Check className="h-4 w-4 mr-2" />
-                )}
-                Set Default
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  confirmAction({
-                    title: "Remove payment method?",
-                    description: `Remove the saved card ending in ${paymentMethod.last4}? It will no longer be available for billing.`,
-                    confirmLabel: "Remove payment method",
-                    onConfirm: () => onDelete?.(),
-                  })
-                }
-                disabled={isDeleting}
-                className="bg-red-500/80 hover:bg-red-600 text-white border-red-400"
-              >
-                {isDeleting ? (
-                  <span className="animate-spin mr-2">⏳</span>
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                Remove
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
       {confirmationDialog}
     </div>
   );
@@ -263,37 +156,30 @@ function AddPaymentMethodCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onAdd}
       disabled={isLoading}
-      className={cn(
-        "w-full h-44 rounded-[var(--vms-radius-surface)] border-2 border-dashed border-[var(--vms-line)] ",
-        "   ",
-        "hover:border-[var(--vms-action)] hover:bg-[var(--vms-surface-subtle)] ",
-        "transition-all duration-300 group cursor-pointer",
-        "flex flex-col items-center justify-center gap-3",
-      )}
+      className="flex min-h-14 w-full items-center gap-3 rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-4 py-3 text-left transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] disabled:opacity-50"
     >
-      <div className="w-14 h-14 rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)] shadow-[var(--vms-shadow-raised)] flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-[var(--vms-line)] ">
-        {isLoading ? (
-          <span className="animate-spin text-xl">⏳</span>
-        ) : (
-          <Plus className="h-7 w-7 text-[var(--vms-ink-muted)] group-hover:text-[var(--vms-ink)] transition-colors" />
-        )}
-      </div>
-      <div className="text-center">
-        <p className="font-medium text-[var(--vms-ink)] group-hover:text-[var(--vms-ink)] transition-colors">
-          Add Payment Method
-        </p>
-        <p className="text-xs text-[var(--vms-ink-muted)] mt-1">
-          Credit or debit card
-        </p>
-      </div>
+      <Plus
+        className="h-4 w-4 shrink-0 text-[var(--vms-ink-muted)]"
+        aria-hidden="true"
+      />
+      <span className="text-sm font-semibold text-[var(--vms-ink)]">
+        {isLoading ? "Opening secure checkout…" : "Add payment method"}
+      </span>
     </button>
   );
 }
 
 function PaymentMethodsSection() {
-  const { data: paymentMethods, isLoading } = usePaymentMethods();
+  const {
+    data: paymentMethods,
+    isLoading,
+    isError,
+    error: paymentMethodsError,
+    refetch,
+  } = usePaymentMethods();
   const { mutate: createCheckout, isPending: isCreating } =
     useCreateCheckoutSession();
   const {
@@ -314,10 +200,37 @@ function PaymentMethodsSection() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Skeleton className="h-44 rounded-[var(--vms-radius-surface)]" />
-        <Skeleton className="h-44 rounded-[var(--vms-radius-surface)]" />
-        <Skeleton className="h-44 rounded-[var(--vms-radius-surface)] opacity-50" />
+      <div
+        role="status"
+        aria-label="Loading payment methods"
+        className="space-y-3"
+      >
+        <Skeleton className="h-20 rounded-[var(--vms-radius-surface)]" />
+        <Skeleton className="h-20 rounded-[var(--vms-radius-surface)]" />
+      </div>
+    );
+  }
+
+  if (isError && !paymentMethods) {
+    return (
+      <div
+        role="alert"
+        className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)] p-4 text-sm"
+      >
+        <p className="font-semibold text-[var(--vms-danger)]">
+          Payment methods could not be loaded
+        </p>
+        <p className="mt-1 text-[var(--vms-danger)]">
+          {parseApiError(paymentMethodsError).message}
+        </p>
+        <Button
+          className="mt-3"
+          size="sm"
+          variant="outline"
+          onClick={() => void refetch()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -326,28 +239,25 @@ function PaymentMethodsSection() {
 
   if (!hasPaymentMethods) {
     return (
-      <div className="relative p-8 rounded-[var(--vms-radius-surface)] border-2 border-dashed border-[var(--vms-line)] text-center    ">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)] pointer-events-none" />
-        <div className="relative">
-          <div className="mx-auto w-20 h-20 rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface)] shadow-[var(--vms-shadow-raised)] flex items-center justify-center mb-4 border border-[var(--vms-line)] ">
-            <CreditCard className="h-10 w-10 text-[var(--vms-ink-muted)]" />
-          </div>
-          <h4 className="text-xl font-semibold text-[var(--vms-ink)] mb-2">
-            No Payment Methods
-          </h4>
-          <p className="text-sm text-[var(--vms-ink-muted)] mb-6 max-w-sm mx-auto">
-            Add a payment method to enable automatic billing and ensure
-            uninterrupted service
-          </p>
-          <Button
-            onClick={handleAddPaymentMethod}
-            isLoading={isCreating}
-            size="lg"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Your First Card
-          </Button>
-        </div>
+      <div className="rounded-[var(--vms-radius-surface)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface)] p-6 sm:p-8">
+        <CreditCard
+          className="h-5 w-5 text-[var(--vms-ink-muted)]"
+          aria-hidden="true"
+        />
+        <h4 className="mt-3 text-base font-semibold text-[var(--vms-ink)]">
+          No payment methods yet
+        </h4>
+        <p className="mt-1 max-w-md text-sm text-[var(--vms-ink-muted)]">
+          Add a card for subscription billing.
+        </p>
+        <Button
+          className="mt-5"
+          onClick={handleAddPaymentMethod}
+          isLoading={isCreating}
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add payment method
+        </Button>
       </div>
     );
   }
@@ -364,7 +274,7 @@ function PaymentMethodsSection() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-3">
         {sortedMethods.map((method) => (
           <SinglePaymentCard
             key={method.id}
@@ -566,10 +476,6 @@ export function BillingSettingsSection() {
               <CardDescription className="mt-1">
                 Securely manage your payment information
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 ">
-              <ShieldCheck className="h-4 w-4" />
-              <span className="text-xs font-medium">256-bit SSL</span>
             </div>
           </div>
         </CardHeader>

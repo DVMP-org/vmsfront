@@ -33,7 +33,7 @@ const sections = [
   },
   {
     href: "/admin/commercial/finance",
-    label: "Rent & services",
+    label: "Rent roll & arrears",
     icon: ReceiptText,
   },
   {
@@ -47,8 +47,8 @@ const sections = [
     icon: ClipboardList,
   },
   {
-    href: "/admin/checkpoints",
-    label: "Gate & check-in",
+    href: "/admin/checkpoints/console",
+    label: "Check-in console",
     icon: ScanLine,
   },
   {

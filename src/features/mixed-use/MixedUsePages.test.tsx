@@ -174,6 +174,10 @@ describe("mixed-use pages", () => {
       has_previous: false,
     });
     vi.mocked(mixedUseApi.createAllocation).mockResolvedValue(allocation);
+    vi.mocked(mixedUseApi.approveAllocation).mockResolvedValue({
+      ...allocation,
+      status: "approved",
+    });
   });
 
   it("creates a shared facility inside the selected property", async () => {
@@ -212,6 +216,22 @@ describe("mixed-use pages", () => {
     fireEvent.change(within(dialog).getByLabelText("Total amount"), {
       target: { value: "50000" },
     });
+    expect(within(dialog).getByText(/No shares yet/)).toBeVisible();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Add domain share" }),
+    );
+    fireEvent.change(within(dialog).getByLabelText("Percent"), {
+      target: { value: "50" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Add domain share" }),
+    );
+    const domainFields = within(dialog).getAllByLabelText("Domain");
+    fireEvent.change(domainFields[1], { target: { value: "commercial" } });
+    fireEvent.change(within(dialog).getAllByLabelText("Percent")[1], {
+      target: { value: "50" },
+    });
+    expect(within(dialog).getByText("Ready to create draft")).toBeVisible();
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Create draft" }),
     );
@@ -233,6 +253,29 @@ describe("mixed-use pages", () => {
             }),
           ],
         }),
+      ),
+    );
+  });
+
+  it("requires a share review before approving a draft", async () => {
+    renderPage(<ExpenseAllocations />);
+
+    expect((await screen.findAllByText("Shared security"))[0]).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Review" }));
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText("Total allocated: 100.00% of 100%"),
+    ).toBeVisible();
+    expect(within(dialog).getAllByText(/Entire Site/)).toHaveLength(2);
+    expect(mixedUseApi.approveAllocation).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Approve allocation" }),
+    );
+    await waitFor(() =>
+      expect(mixedUseApi.approveAllocation).toHaveBeenCalledWith(
+        "place-1",
+        "allocation-1",
       ),
     );
   });

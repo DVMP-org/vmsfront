@@ -16,8 +16,7 @@
         {
           "label": "Overview",
           "href": "/admin",
-          "icon": "home",
-          "module": "residential"
+          "icon": "home"
         },
         {
           "label": "Residencies",
@@ -61,15 +60,25 @@
           "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
-          "module": "charges",
-          "children": [
-            {
-              "label": "Charge register",
-              "href": "/admin/residential/finance",
-              "icon": "calculator",
-              "module": "charges"
-            }
-          ]
+          "module": "billing"
+        },
+        {
+          "label": "Charge register",
+          "href": "/admin/charges/schedules",
+          "icon": "calculator",
+          "module": "billing"
+        },
+        {
+          "label": "Assignments",
+          "href": "/admin/residential/finance",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Arrears",
+          "href": "/admin/residential/arrears",
+          "icon": "calculator",
+          "module": "billing"
         }
       ]
     },

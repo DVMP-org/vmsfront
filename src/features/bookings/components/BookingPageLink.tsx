@@ -60,8 +60,8 @@ export function BookingPageLink({ siteSlug }: { siteSlug: string | null }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-[var(--vms-border)] px-3 py-2">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
+    <div className="flex flex-col gap-2 rounded-lg border border-[var(--vms-line)] px-3 py-2">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
         Booking page
       </span>
       <div className="flex flex-wrap items-center gap-2">

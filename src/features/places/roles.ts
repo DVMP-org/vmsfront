@@ -47,10 +47,6 @@ export function placeRolesFor(useCase?: string | null): PlaceRole[] {
  * A household is a person. A business tenant is usually an organization, so
  * business domains may pick either kind and create a business Party inline.
  */
-export function placePartyKindFor(useCase?: string | null): "person" | "any" {
-  return useCase && useCase !== "residential" ? "any" : "person";
-}
-
 export type PlaceAssignmentCopy = {
   title: string;
   description: string;

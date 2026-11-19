@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormDrawer, FormRecordSummary } from "@/components/ui/form/FormDrawer";
 import { FormSection } from "@/components/ui/form/FormSection";
+import { useConfirmAction } from "@/components/ui/useConfirmAction";
 import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export function EmailTemplateDrawer({
   const detail = useEmailTemplate(slug, templateName);
   const save = useSaveEmailTemplate(slug);
   const reset = useResetEmailTemplate(slug);
+  const { confirmAction, confirmationDialog } = useConfirmAction();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -98,16 +100,17 @@ export function EmailTemplateDrawer({
             variant="outline"
             onClick={() => {
               if (!templateName) return;
-              reset.mutate(
-                { name: templateName },
-                {
-                  onSuccess: () => {
-                    setSubject("");
-                    setBody(detail.data?.default_html_body ?? "");
-                    setDirty(false);
-                  },
+              confirmAction({
+                title: "Reset email template?",
+                description: `This removes the organization override for ${detail.data?.label || templateName} and restores the packaged subject and body.`,
+                confirmLabel: "Reset template",
+                onConfirm: async () => {
+                  await reset.mutateAsync({ name: templateName });
+                  setSubject("");
+                  setBody(detail.data?.default_html_body ?? "");
+                  setDirty(false);
                 },
-              );
+              });
             }}
             disabled={reset.isPending || save.isPending}
           >
@@ -172,7 +175,9 @@ export function EmailTemplateDrawer({
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-[var(--vms-ink-muted)]">
-                  {bodyView === "source" ? "Template source" : "Rendered sample"}
+                  {bodyView === "source"
+                    ? "Template source"
+                    : "Rendered sample"}
                 </span>
                 <div className="flex flex-wrap items-center gap-1">
                   <div
@@ -270,9 +275,10 @@ export function EmailTemplateDrawer({
               ) : (
                 <div className="space-y-3">
                   <p className="text-xs leading-5 text-[var(--vms-ink-muted)]">
-                    Example values replace simple template variables. Conditional
-                    branches are not evaluated and may appear together. Preview
-                    scripts and external resources are blocked.
+                    Example values replace simple template variables.
+                    Conditional branches are not evaluated and may appear
+                    together. Preview scripts and external resources are
+                    blocked.
                   </p>
                   <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3 sm:p-4">
                     <div
@@ -313,6 +319,7 @@ export function EmailTemplateDrawer({
           ) : null}
         </div>
       ) : null}
+      {confirmationDialog}
     </FormDrawer>
   );
 }
@@ -343,22 +350,27 @@ function emailPreviewDocument(body: string) {
         : normalized.includes("site") || normalized.includes("property")
           ? sampleValues.site
           : sampleValues[key] || "Sample value";
-      return value.replace(/[&<>"']/g, (character) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        })[character]!,
+      return value.replace(
+        /[&<>"']/g,
+        (character) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[character]!,
       );
     });
   const head =
-    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; font-src data:; base-uri \'none\'; form-action \'none\'">';
+    "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; form-action 'none'\">";
   if (/<html[\s>]/i.test(html)) {
     return /<head[\s>]/i.test(html)
       ? html.replace(/<head([^>]*)>/i, (match) => `${match}${head}`)
-      : html.replace(/<html([^>]*)>/i, (match) => `${match}<head>${head}</head>`);
+      : html.replace(
+          /<html([^>]*)>/i,
+          (match) => `${match}<head>${head}</head>`,
+        );
   }
   return `<!doctype html><html><head>${head}<meta name="viewport" content="width=device-width, initial-scale=1"></head><body>${html}</body></html>`;
 }

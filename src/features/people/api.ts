@@ -5,7 +5,6 @@ export interface PlacePerson {
   assignment_id: string;
   party: {
     id: string;
-    kind: string;
     display_name: string;
     email: string | null;
     avatar_url?: string | null;
@@ -48,7 +47,6 @@ export interface AddPlacePersonInput {
   display_name: string;
   email: string;
   phone?: string;
-  kind: "person";
   role?: string;
   effective_from?: string | null;
   effective_to?: string | null;

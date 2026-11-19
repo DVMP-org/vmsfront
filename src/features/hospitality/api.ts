@@ -1,9 +1,13 @@
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse, PaginatedResponse } from "@/types";
 import {
+  type GuestDetail,
   type GuestFolio,
+  type GuestOnboardingReceipt,
+  type GuestSummary,
   type HospitalityMaintenanceRequest,
   type HospitalityRoom,
+  type HousekeepingRoomDetail,
   type HousekeepingStatus,
   type HousekeepingTask,
   type RoomAvailability,
@@ -45,6 +49,32 @@ export const hospitalityApi = {
     ).data,
   get: async (id: string) =>
     (await apiClient.get<ApiResponse<Stay>>(`${base}/${id}`)).data,
+  guests: {
+    list: async (params: {
+      page: number;
+      page_size: number;
+      search?: string;
+      status?: string;
+    }) =>
+      (
+        await apiClient.get<ApiResponse<PaginatedResponse<GuestSummary>>>(
+          `${moduleBase}/guests`,
+          { params },
+        )
+      ).data,
+    get: async (partyId: string) =>
+      (
+        await apiClient.get<ApiResponse<GuestDetail>>(
+          `${moduleBase}/guests/${partyId}`,
+        )
+      ).data,
+    resendOnboarding: async (partyId: string) =>
+      (
+        await apiClient.post<ApiResponse<GuestOnboardingReceipt>>(
+          `${moduleBase}/guests/${partyId}/resend-onboarding`,
+        )
+      ).data,
+  },
   create: async (body: unknown) =>
     (await apiClient.post<ApiResponse<Stay>>(base, body)).data,
   update: async (id: string, body: unknown) =>
@@ -151,6 +181,12 @@ export const hospitalityApi = {
           { params: { status: status || undefined } },
         )
       ).data,
+    detail: async (roomId: string) =>
+      (
+        await apiClient.get<ApiResponse<HousekeepingRoomDetail>>(
+          `${moduleBase}/housekeeping/${roomId}`,
+        )
+      ).data,
     update: async (
       id: string,
       body: Partial<{
@@ -158,6 +194,7 @@ export const hospitalityApi = {
         assigned_to: string | null;
         priority: "normal" | "high" | "urgent";
         notes: string | null;
+        due_at: string | null;
       }>,
     ) =>
       (

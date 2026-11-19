@@ -61,7 +61,11 @@ function NavigationSkeleton({
       aria-busy="true"
       className="space-y-4"
     >
-      <span className="sr-only">Loading workspace navigation</span>
+      {/* {showLabels ? (
+        <p className="px-3 pt-2 text-xs font-medium text-[var(--vms-ink-muted)]">
+          Loading Site navigation…
+        </p>
+      ) : null} */}
       {groups.map((rowCount, groupIndex) => (
         <div key={groupIndex} className="space-y-1.5">
           {showLabels ? <Skeleton className="mb-2 ml-3 h-2.5 w-20" /> : null}
@@ -76,10 +80,7 @@ function NavigationSkeleton({
               <Skeleton className="h-4 w-4 shrink-0" />
               {showLabels ? (
                 <Skeleton
-                  className={cn(
-                    "h-3",
-                    rowIndex % 2 === 0 ? "w-28" : "w-36",
-                  )}
+                  className={cn("h-3", rowIndex % 2 === 0 ? "w-28" : "w-36")}
                 />
               ) : null}
             </div>
@@ -115,11 +116,12 @@ const SidebarLink = memo(function SidebarLink({
     <Link
       href={link.href}
       onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
+        "flex min-h-11 items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
         "group relative mt-0.5",
         isMobile || !collapsed
-          ? "gap-3 px-3 py-2.5"
+          ? "gap-3 px-3 py-2 lg:py-2.5"
           : "justify-center px-2 py-2.5",
         isActive
           ? "bg-transparent font-semibold text-[var(--vms-ink)]"
@@ -142,7 +144,12 @@ const SidebarLink = memo(function SidebarLink({
       />
 
       {(isMobile || !collapsed) && (
-        <span className={cn("flex-1 truncate", isActive && "font-semibold")}>
+        <span
+          className={cn(
+            "min-w-0 flex-1 line-clamp-2 break-words leading-5",
+            isActive && "font-semibold",
+          )}
+        >
           {link.label}
         </span>
       )}
@@ -577,14 +584,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   ]);
 
   return (
-    <motion.aside
-      animate={{
+    <aside
+      style={{
         width: !isMobile && collapsed ? 72 : 256,
+        minWidth: !isMobile && collapsed ? 72 : 256,
       }}
-      transition={{ type: "spring", stiffness: 300, damping: 35, mass: 1 }}
-      style={{ willChange: "width" }}
       className={cn(
-        "sticky top-0 flex flex-col overflow-hidden border-r border-[var(--vms-line)] bg-[var(--vms-surface)]",
+        "sticky top-0 flex flex-col overflow-hidden border-r border-[var(--vms-line)] bg-[var(--vms-surface)] transition-[width,min-width] duration-[var(--vms-motion)]",
         "h-full flex-shrink-0 z-30",
       )}
     >
@@ -607,26 +613,142 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           <NavigationSkeleton collapsed={collapsed} isMobile={isMobile} />
         ) : (
           links.map((link: any, index: number) => {
-          const Icon = link.icon;
-          const isParentActive =
-            activeLink?.href === link.href ||
-            link.children?.some(
-              (child: any) => child.href === activeLink?.href,
-            );
+            const Icon = link.icon;
+            const isParentActive =
+              activeLink?.href === link.href ||
+              link.children?.some(
+                (child: any) => child.href === activeLink?.href,
+              );
 
-          const isActive = activeLink?.href === link.href;
-          const isExpanded = expandedMenus.has(link.label);
-          const hasChildren = link.children && link.children.length > 0;
+            const isActive = activeLink?.href === link.href;
+            const isExpanded = expandedMenus.has(link.label);
+            const hasChildren = link.children && link.children.length > 0;
 
-          // Use a stable key that combines href and label to ensure uniqueness
-          const linkKey = `${link.href}-${link.label}`;
+            // Use a stable key that combines href and label to ensure uniqueness
+            const linkKey = `${link.href}-${link.label}`;
 
-          if (hasChildren) {
-            const activeChild = link.children.find(
-              (child: any) => child.href === activeLink?.href,
-            );
+            if (hasChildren) {
+              const activeChild = link.children.find(
+                (child: any) => child.href === activeLink?.href,
+              );
+              return (
+                <div key={linkKey} className="mb-0.5">
+                  {actualType === "admin" &&
+                    (!collapsed || isMobile) &&
+                    link.group !== (links[index - 1] as any)?.group && (
+                      <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+                        {link.group}
+                      </p>
+                    )}
+                  <div
+                    className={cn(
+                      "flex min-h-11 w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
+                      "group relative",
+                      isMobile || !collapsed ? "gap-1" : "justify-center",
+                      isParentActive
+                        ? "bg-transparent font-semibold text-[var(--vms-ink)]"
+                        : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                    )}
+                  >
+                    {isParentActive ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-0 h-3/5 w-0.5 rounded-full bg-[var(--vms-active-accent)]"
+                      />
+                    ) : null}
+                    <Link
+                      href={formatAdminHref(link.href)}
+                      onClick={handleLinkClick}
+                      aria-current={isActive ? "page" : undefined}
+                      title={collapsed && !isMobile ? link.label : undefined}
+                      className={cn(
+                        "flex min-h-11 min-w-0 items-center gap-3 rounded-[var(--vms-radius-control)] py-2 lg:min-h-10",
+                        isMobile || !collapsed ? "flex-1 px-3" : "px-2",
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0",
+                          (activeChild || isActive) && "text-[var(--vms-ink)]",
+                        )}
+                      />
+                      {(isMobile || !collapsed) && (
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1 line-clamp-2 break-words text-left leading-5",
+                            (activeChild || isActive) && "font-bold",
+                          )}
+                        >
+                          {link.label}
+                        </span>
+                      )}
+                    </Link>
+                    {(isMobile || !collapsed) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(link.label)}
+                        aria-expanded={isExpanded}
+                        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${link.label}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+                      >
+                        <motion.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          className="flex-shrink-0"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </motion.div>
+                      </button>
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {isExpanded && (isMobile || !collapsed) && (
+                      <motion.ul
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 35,
+                          mass: 0.5,
+                        }}
+                        className="ml-4 mt-1 space-y-0.5 overflow-hidden "
+                      >
+                        {link.children.map((child: any) => {
+                          const ChildIcon = child.icon;
+                          const isChildActive = child.href === activeLink?.href;
+
+                          return (
+                            <li key={child.href} className="pl-3 py-0.5">
+                              <Link
+                                href={formatAdminHref(child.href)}
+                                onClick={handleLinkClick}
+                                className={cn(
+                                  "flex min-h-11 items-center text-[13px] font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
+                                  "gap-3 px-3 py-2",
+                                  isChildActive
+                                    ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
+                                    : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                                )}
+                              >
+                                <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                                <span className="min-w-0 flex-1 line-clamp-2 break-words leading-5">
+                                  {child.label}
+                                </span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             return (
-              <div key={linkKey} className="mb-0.5">
+              <div key={linkKey}>
                 {actualType === "admin" &&
                   (!collapsed || isMobile) &&
                   link.group !== (links[index - 1] as any)?.group && (
@@ -634,125 +756,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                       {link.group}
                     </p>
                   )}
-                <div
-                  className={cn(
-                    "flex w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
-                    "group relative",
-                    isMobile || !collapsed ? "gap-1" : "justify-center",
-                    activeChild || isActive
-                      ? "bg-transparent font-semibold text-[var(--vms-ink)]"
-                      : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
-                  )}
-                >
-                  <Link
-                    href={formatAdminHref(link.href)}
-                    onClick={handleLinkClick}
-                    aria-current={isActive ? "page" : undefined}
-                    title={collapsed && !isMobile ? link.label : undefined}
-                    className={cn(
-                      "flex min-w-0 items-center gap-3 rounded-[var(--vms-radius-control)] py-2.5",
-                      isMobile || !collapsed ? "flex-1 px-3" : "px-2",
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        (activeChild || isActive) && "text-[var(--vms-ink)]",
-                      )}
-                    />
-                    {(isMobile || !collapsed) && (
-                      <span
-                        className={cn(
-                          "flex-1 truncate text-left",
-                          (activeChild || isActive) && "font-bold",
-                        )}
-                      >
-                        {link.label}
-                      </span>
-                    )}
-                  </Link>
-                  {(isMobile || !collapsed) && (
-                    <button
-                      type="button"
-                      onClick={() => toggleMenu(link.label)}
-                      aria-expanded={isExpanded}
-                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${link.label}`}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--vms-radius-control)] text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-                    >
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 180 : 0 }}
-                        className="flex-shrink-0"
-                      >
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      </motion.div>
-                    </button>
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {isExpanded && (isMobile || !collapsed) && (
-                    <motion.ul
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 35,
-                        mass: 0.5,
-                      }}
-                      className="ml-4 mt-1 space-y-0.5 overflow-hidden "
-                    >
-                      {link.children.map((child: any) => {
-                        const ChildIcon = child.icon;
-                        const isChildActive = child.href === activeLink?.href;
-
-                        return (
-                          <li key={child.href} className="pl-3 py-0.5">
-                            <Link
-                              href={formatAdminHref(child.href)}
-                              onClick={handleLinkClick}
-                              className={cn(
-                                "flex items-center  text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
-                                "gap-3 px-3 py-2",
-                                isChildActive
-                                  ? " border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
-                                  : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
-                              )}
-                            >
-                              <ChildIcon className="h-4 w-4 flex-shrink-0" />
-                              <span className="flex-1 truncate">
-                                {child.label}
-                              </span>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </motion.ul>
-                  )}
-                </AnimatePresence>
+                <SidebarLink
+                  link={{ ...link, href: formatAdminHref(link.href) }}
+                  isActive={isActive}
+                  collapsed={collapsed}
+                  isMobile={isMobile}
+                  onClick={handleLinkClick}
+                />
               </div>
             );
-          }
-
-          return (
-            <div key={linkKey}>
-              {actualType === "admin" &&
-                (!collapsed || isMobile) &&
-                link.group !== (links[index - 1] as any)?.group && (
-                  <p className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                    {link.group}
-                  </p>
-                )}
-              <SidebarLink
-                link={{ ...link, href: formatAdminHref(link.href) }}
-                isActive={isActive}
-                collapsed={collapsed}
-                isMobile={isMobile}
-                onClick={handleLinkClick}
-              />
-            </div>
-          );
           })
         )}
         <>
@@ -769,7 +781,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                 <button
                   onClick={() => togglePlugin(plugin.name)}
                   className={cn(
-                    "flex w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)]",
+                    "flex min-h-11 w-full items-center rounded-[var(--vms-radius-control)] text-sm font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
                     "group relative",
                     isMobile || !collapsed
                       ? "gap-3 px-3 py-2.5 justify-between"
@@ -798,7 +810,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                     {(isMobile || !collapsed) && (
                       <span
                         className={cn(
-                          "flex-1 truncate text-left",
+                          "min-w-0 flex-1 line-clamp-2 break-words text-left leading-5",
                           hasActiveRoute && "font-bold",
                         )}
                       >
@@ -847,7 +859,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                             <Link
                               onClick={handleLinkClick}
                               className={cn(
-                                "flex items-center rounded-[var(--vms-radius-control)] text-[13px] font-medium transition-colors duration-[var(--vms-motion)]",
+                                "flex min-h-11 items-center rounded-[var(--vms-radius-control)] text-[13px] font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
                                 "group relative",
                                 "gap-3 px-3 py-2",
                                 isActive
@@ -863,7 +875,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   isActive && "text-primary-foreground",
                                 )}
                               />
-                              <span className="flex-1 truncate">
+                              <span className="min-w-0 flex-1 line-clamp-2 break-words leading-5">
                                 {routeTitle}
                               </span>
                             </Link>
@@ -880,7 +892,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       </nav>
 
       {actualType === "admin" && (isMobile || !collapsed) ? (
-        <div className="border-t border-[var(--vms-line)] p-3">
+        <div className="border-t border-[var(--vms-line)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             href="/organization"
             className="flex min-h-11 items-center rounded-[var(--vms-radius-control)] px-2 text-xs font-medium text-[var(--vms-ink-muted)] transition-colors duration-[var(--vms-motion)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
@@ -889,6 +901,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
           </Link>
         </div>
       ) : null}
-    </motion.aside>
+    </aside>
   );
 });

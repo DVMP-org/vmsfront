@@ -21,7 +21,7 @@ import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSectio
 import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HospitalityMetricStrip } from "@/features/hospitality/HospitalityMetricStrip";
-import { HotelAdministrationSummary } from "@/features/hospitality/HotelAdministrationSummary";
+import { HotelArrivalsPanel } from "@/features/hospitality/HotelArrivalsPanel";
 import { StayStatusBadge } from "@/features/hospitality/components/StayStatusBadge";
 import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
 import {
@@ -93,6 +93,11 @@ function HospitalityWorkspace({
   const reserved = useQuery({
     queryKey: ["hospitality", context, "list", 1, "reserved"],
     queryFn: () => hospitalityApi.list(1, "reserved"),
+    enabled: allowed("list"),
+  });
+  const checkedIn = useQuery({
+    queryKey: ["hospitality", context, "list", 1, "checked_in"],
+    queryFn: () => hospitalityApi.list(1, "checked_in"),
     enabled: allowed("list"),
   });
   const detail = useQuery({
@@ -252,20 +257,19 @@ function HospitalityWorkspace({
             ? `Manage ${propertyName}, its people, room assignments, stays and guest arrivals.`
             : "Manage the selected site, its people, room assignments, stays and guest arrivals."
         }
-
       />
 
       <div className="mt-5">
         <HospitalityMetricStrip
-          administratorCount={workspaceContext.data?.management?.administrators.length ?? 0}
           relationships={people.data?.items ?? []}
           reservedCount={reserved.data?.total ?? 0}
+          checkedInCount={checkedIn.data?.total ?? 0}
           peopleLoading={people.isPending}
           peopleError={people.isError}
-          administratorsLoading={workspaceContext.isPending}
-          administratorsError={workspaceContext.isError}
           staysLoading={reserved.isPending}
           staysError={reserved.isError}
+          checkedInLoading={checkedIn.isPending}
+          checkedInError={checkedIn.isError}
         />
       </div>
       <div className="mt-4 mb-2">
@@ -279,33 +283,15 @@ function HospitalityWorkspace({
           {notice}
         </p>
       )}
-      <HotelAdministrationSummary
-        administrators={
-          workspaceContext.data?.management?.administrators || []
-        }
+      <HotelArrivalsPanel
         authorityMode={workspaceContext.data?.management?.mode}
-        authoritativePlaceName={
+        authoritativeSiteName={
           workspaceContext.data?.management?.authoritative_site?.name
         }
-        relationships={people.data?.items || []}
         stays={reserved.data?.items || []}
-        staysLoading={reserved.isPending}
-        staysError={reserved.isError ? parseApiError(reserved.error).message : null}
-        onRetryStays={() => void reserved.refetch()}
-        loading={
-          people.isPending || (!!propertyId && workspaceContext.isPending)
-        }
-        error={
-          people.isError
-            ? parseApiError(people.error).message
-            : workspaceContext.isError
-              ? parseApiError(workspaceContext.error).message
-              : null
-        }
-        onRetry={() => {
-          void people.refetch();
-          void workspaceContext.refetch();
-        }}
+        isLoading={reserved.isPending}
+        error={reserved.isError ? parseApiError(reserved.error).message : null}
+        onRetry={() => void reserved.refetch()}
         onOpenStay={(id) => {
           setSelected(id);
           setCreating(false);
@@ -316,6 +302,7 @@ function HospitalityWorkspace({
         className={`stay-layout${creating || selected ? " stay-layout-open" : ""}`}
       >
         <section
+          id="stays"
           ref={stayList}
           tabIndex={-1}
           className="stay-panel"
@@ -407,7 +394,6 @@ function HospitalityWorkspace({
             )}
           />
         </section>
-
       </div>
     </main>
   );

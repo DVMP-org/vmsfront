@@ -156,13 +156,19 @@ export default function ChargesWorkspace({
 }
 
 function ChargeHeader({ action }: { action?: ChargeAction }) {
+  const title =
+    action === "assignment"
+      ? "Charge assignment"
+      : action === "definition"
+        ? "Charge definition"
+        : "Charge definitions";
   return (
     <header className="border-b border-[var(--vms-line)] pb-5">
       <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
         <ReceiptText className="h-3.5 w-3.5 text-[var(--vms-action)]" />
         <span>Finance</span>
         <span className="text-[var(--vms-line-strong)]">/</span>
-        <span>Charges</span>
+        <span>Charge definitions</span>
         {action ? (
           <>
             <span className="text-[var(--vms-line-strong)]">/</span>
@@ -173,11 +179,14 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
       <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] sm:text-[36px]">
-            Charges
+            {title}
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-[var(--vms-ink-muted)]">
-            Define what is billed, assign it to a property, and keep the
-            responsible Party and every schedule visible.
+            {action === "assignment"
+              ? "Review the assigned Place, responsible Party and payment schedules."
+              : action === "definition"
+                ? "Review the charge amount, cadence and assigned Places."
+                : "Define billable amounts and schedules for the selected Site. Assign each definition to Places or groups."}
           </p>
         </div>
       </div>
@@ -259,21 +268,21 @@ function Directory({
     <div className="space-y-4">
       <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
         <SummaryMetric
-          label="Definitions"
+          label="Site definitions"
           value={query.data?.total ?? "—"}
-          detail="All charge definitions"
+          detail="Across all result pages in this Site"
           icon={FileText}
         />
         <SummaryMetric
           label="Active definitions"
           value={query.data ? activeOnPage : "—"}
-          detail="In the current result page"
+          detail="On the current result page"
           icon={CheckCircle2}
         />
         <SummaryMetric
-          label="Schedule source"
-          value="Place → Party"
-          detail="Each assignment names its payer"
+          label="Inactive definitions"
+          value={query.data ? query.data.items.length - activeOnPage : "—"}
+          detail="On the current result page"
           icon={Landmark}
         />
       </section>
@@ -281,7 +290,9 @@ function Directory({
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-3 border-b border-[var(--vms-line)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold">Charge definitions</h2>
+            <h2 className="text-base font-semibold">
+              Definitions in this Site
+            </h2>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
               Reusable amounts and schedules. Assignments connect a definition
               to a property and payer.

@@ -826,7 +826,6 @@ function MaintenanceDetailDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <FacetPicker
               facet="parties"
-              kind="person"
               label="Assigned operator"
               value={assignee}
               onChange={setAssignee}
@@ -835,7 +834,6 @@ function MaintenanceDetailDialog({
             />
             <FacetPicker
               facet="parties"
-              kind="person"
               label="Contractor or vendor"
               value={contractor}
               onChange={setContractor}

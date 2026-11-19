@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOnboard } from "@/hooks/use-auth";
 import { authService } from "@/services/auth-service";
@@ -29,9 +29,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
+import { useAppStore } from "@/store/app-store";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LogoFull } from "@/components/LogoFull";
 import { cn } from "@/lib/utils";
+import type { CurrentUserContext } from "@/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,7 +43,8 @@ const onboardingSchema = z
     first_name: z.string().min(1, "First name is required"),
     last_name: z.string().min(1, "Last name is required"),
     phone: z.string().min(1, "Phone number is required"),
-    address: z.string().min(1, "Address is required"),
+    // Address requiredness is the domain's decision; see the profile below.
+    address: z.string().optional(),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirm_password: z.string().min(1, "Please confirm your password"),
   })
@@ -52,22 +55,166 @@ const onboardingSchema = z
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
 
+type OnboardingDomain =
+  | "residential"
+  | "commercial"
+  | "mixed_use"
+  | "hospitality";
+
+interface OnboardingProfile {
+  stepTitle: string;
+  stepDescription: string;
+  securityDescription: string;
+  addressLabel: string;
+  addressPlaceholder: string;
+  addressDescription: string;
+  addressRequired: boolean;
+  addressRequiredMessage: string;
+}
+
+const DEFAULT_ONBOARDING_PROFILE: OnboardingProfile = {
+  stepTitle: "Your Profile",
+  stepDescription:
+    "Let's start with your basic information to get your account ready.",
+  securityDescription: "Secure your account and add an optional address.",
+  addressLabel: "Address",
+  addressPlaceholder: "Street, city, country",
+  addressDescription: "Optional",
+  addressRequired: false,
+  addressRequiredMessage: "",
+};
+
+const ONBOARDING_PROFILES: Record<OnboardingDomain, OnboardingProfile> = {
+  residential: {
+    stepTitle: "Personal Profile",
+    stepDescription:
+      "Let's start with your basic information to get your account ready.",
+    securityDescription:
+      "Secure your account and provide your residence details.",
+    addressLabel: "Residence Address",
+    addressPlaceholder: "Block A, Residency 7, Example Estate",
+    addressDescription: "Required for your resident record.",
+    addressRequired: true,
+    addressRequiredMessage: "Residence address is required",
+  },
+  hospitality: {
+    stepTitle: "Guest Profile",
+    stepDescription:
+      "Tell us who is staying so we can prepare your guest workspace.",
+    securityDescription:
+      "Secure your account and add an optional contact address.",
+    addressLabel: "Your Address",
+    addressPlaceholder: "Street, city, country",
+    addressDescription:
+      "Optional — helpful for your guest profile, but not required.",
+    addressRequired: false,
+    addressRequiredMessage: "",
+  },
+  commercial: {
+    stepTitle: "Business Contact",
+    stepDescription:
+      "Tell us who we should contact for this business workspace.",
+    securityDescription:
+      "Secure your account and add an optional business address.",
+    addressLabel: "Business Address",
+    addressPlaceholder: "Suite, building, street, city",
+    addressDescription: "Optional — used only for this workspace.",
+    addressRequired: false,
+    addressRequiredMessage: "",
+  },
+  mixed_use: {
+    stepTitle: "Your Profile",
+    stepDescription:
+      "Tell us who you are so we can set up the right workspace.",
+    securityDescription: "Secure your account and add an optional address.",
+    addressLabel: "Address",
+    addressPlaceholder: "Street, city, country",
+    addressDescription: "Optional",
+    addressRequired: false,
+    addressRequiredMessage: "",
+  },
+};
+
+/** The domain is a UI hint in the token; unknown/legacy tokens stay optional. */
+function decodeOnboardingDomain(token: string | null): OnboardingDomain | null {
+  if (!token) return null;
+  try {
+    const segment = token.split(".")[1];
+    if (!segment) return null;
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      Math.ceil(normalized.length / 4) * 4,
+      "=",
+    );
+    const claims = JSON.parse(atob(padded)) as { domain?: unknown };
+    return typeof claims.domain === "string" &&
+      claims.domain in ONBOARDING_PROFILES
+      ? (claims.domain as OnboardingDomain)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const OCCUPANCY_ROLES = new Set([
+  "resident",
+  "resident_of",
+  "owner",
+  "tenant",
+  "member",
+  "member_of",
+  "household_member",
+]);
+const GUEST_ROLES = new Set(["guest", "guest_of"]);
+
+/**
+ * The workspace the invitation is for.
+ *
+ * Parties are shared across a tenant, so the same person can be a resident at
+ * one property and a hotel guest at another. A hospitality invitation must open
+ * the guest stay, never whichever relationship happens to come first.
+ */
+function onboardingDestination(
+  context: CurrentUserContext | null,
+  domain: OnboardingDomain | null,
+): string {
+  const relationships = context?.workspaces ?? [];
+  const findPlace = (roles: Set<string>) =>
+    relationships.find(
+      (relationship) =>
+        roles.has(relationship.role.toLowerCase()) && relationship.place?.id,
+    );
+  const occupancy = findPlace(OCCUPANCY_ROLES);
+  const guest = findPlace(GUEST_ROLES);
+  const chosen =
+    domain === "hospitality"
+      ? guest ?? occupancy ?? relationships[0]
+      : occupancy ?? guest ?? relationships[0];
+  return chosen?.place?.id ? `/workspace/${chosen.place.id}` : "/lobby";
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams?.get("token");
+  const domain = useMemo(() => decodeOnboardingDomain(token), [token]);
+  const profile = domain
+    ? ONBOARDING_PROFILES[domain]
+    : DEFAULT_ONBOARDING_PROFILE;
 
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [step, setStep] = useState(1);
+  const [destination, setDestination] = useState("/lobby");
 
-  const onboardMutation = useOnboard();
-  const { clearAuth } = useAuthStore();
+  const onboardMutation = useOnboard(destination);
+  const { clearAuth, setAuth } = useAuthStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
     setValue,
     trigger,
     watch,
@@ -87,12 +234,29 @@ export default function OnboardingPage() {
         clearAuth();
         apiClient.setToken(token);
         const response = await authService.verifyToken();
-        setUserData(response.data.user);
+        const context = response.data;
+        setUserData(context.user);
+        setDestination(onboardingDestination(context, domain));
+
+        // The link is an invitation, not a second registration. Somebody who
+        // already has an account should be signed in and taken to the workspace
+        // the invitation is for, rather than asked to create a password the
+        // server will refuse.
+        if (context.user.onboarded) {
+          const login = await authService.onboardingLogin(token);
+          useAppStore.getState().resetTenantContext();
+          setAuth(login.data.user, login.data.token);
+          apiClient.setToken(login.data.token);
+          toast.success("Welcome back. Opening your workspace.");
+          router.replace(onboardingDestination(context, domain));
+          return;
+        }
+
         // Pre-fill form
-        setValue("first_name", response.data.user.first_name || "");
-        setValue("last_name", response.data.user.last_name || "");
-        setValue("phone", response.data.user.phone || "");
-        setValue("address", response.data.user.address || "");
+        setValue("first_name", context.user.first_name || "");
+        setValue("last_name", context.user.last_name || "");
+        setValue("phone", context.user.phone || "");
+        setValue("address", context.user.address || "");
       } catch (error: any) {
         toast.error("Invalid or expired onboarding link.");
         router.push("/auth/login");
@@ -102,9 +266,10 @@ export default function OnboardingPage() {
     };
 
     verify();
-  }, [token, router, setValue, clearAuth]);
+  }, [token, router, setValue, clearAuth, setAuth, domain]);
 
   const nextStep = async () => {
+    // Address is rendered on the security step, so it is validated at submit.
     const isValid = await trigger(["first_name", "last_name", "phone"]);
     if (isValid) {
       setStep(2);
@@ -116,8 +281,17 @@ export default function OnboardingPage() {
   };
 
   const onSubmit = (data: OnboardingValues) => {
+    const address = data.address?.trim() || null;
+    if (profile.addressRequired && !address) {
+      setError("address", {
+        type: "manual",
+        message: profile.addressRequiredMessage,
+      });
+      return;
+    }
     onboardMutation.mutate({
       ...data,
+      address: address || undefined,
       email: userData?.email,
     });
   };
@@ -177,12 +351,12 @@ export default function OnboardingPage() {
           </div>
           <div>
             <CardTitle className="text-[28px] font-semibold tracking-[-0.035em]">
-              {step === 1 ? "Personal Profile" : "Security Setup"}
+              {step === 1 ? profile.stepTitle : "Security Setup"}
             </CardTitle>
             <CardDescription className="text-base mt-2 max-w-xs mx-auto">
               {step === 1
-                ? "Let's start with your basic information to get your account ready."
-                : "Secure your account and provide your residence details."}
+                ? profile.stepDescription
+                : profile.securityDescription}
             </CardDescription>
           </div>
 
@@ -260,10 +434,11 @@ export default function OnboardingPage() {
               <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
                 <Input
                   id="address"
-                  label="Residence Address"
+                    label={profile.addressLabel}
                   {...register("address")}
                   error={errors.address?.message}
-                  placeholder="Block A, Residency 7, Example Estate"
+                    placeholder={profile.addressPlaceholder}
+                    description={profile.addressDescription}
                   icon={MapPin}
                 />
                 <div className="space-y-4">

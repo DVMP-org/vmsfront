@@ -84,6 +84,28 @@ it("shows the guest stay, arrival state and assigned room", async () => {
   ).not.toBeInTheDocument();
 });
 
+it("raises an expiring stay in the guest's attention section", async () => {
+  const now = Date.now();
+  vi.mocked(guestStayApi.list).mockResolvedValue({
+    items: [
+      {
+        ...stay,
+        status: "checked_in" as const,
+        actual_check_in: new Date(now - 48 * 60 * 60 * 1000).toISOString(),
+        planned_check_out: new Date(now + 2 * 60 * 60 * 1000).toISOString(),
+      },
+    ],
+    total: 1,
+    page: 1,
+    page_size: 20,
+    total_pages: 1,
+  });
+  mount();
+
+  expect(await screen.findByText("Needs attention")).toBeInTheDocument();
+  expect(screen.getByText("Your stay ends soon")).toBeInTheDocument();
+});
+
 it("shows a guest-specific empty state", async () => {
   vi.mocked(guestStayApi.list).mockResolvedValue({
     items: [],

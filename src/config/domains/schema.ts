@@ -8,8 +8,12 @@ const navigationChildSchema = z.object({
   permission: z.string().optional(),
 });
 
-const navigationItemSchema = navigationChildSchema.extend({
-  children: z.array(navigationChildSchema).optional(),
+const siteNavigationChildSchema = navigationChildSchema.extend({
+  module: z.string().min(1).optional(),
+});
+
+const navigationItemSchema = siteNavigationChildSchema.extend({
+  children: z.array(siteNavigationChildSchema).optional(),
 });
 
 const navigationGroupSchema = z.object({

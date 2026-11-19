@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { toDateTimeInputValue } from "@/lib/datetime";
+import { parseApiError } from "@/lib/error-utils";
 import type { BookingDetailDto, BookingUpdateInput } from "../api-types";
 import { useUpdateBooking } from "../queries";
 
@@ -80,11 +81,7 @@ export function BookingEditForm({
             await update.mutateAsync(changes);
             onDone?.();
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That booking could not be saved.",
-            );
+            setError(parseApiError(cause).message);
         }
     }
 

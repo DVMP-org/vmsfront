@@ -15,7 +15,7 @@ module.exports = {
     localBaseDomain,
     `*.${localBaseDomain}`,
     "vmsfront.to",
-    "dashboard.vmscore.to",
+    "*.vmscore.to",
   ],
   logging: {
     fetches: {

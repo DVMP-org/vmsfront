@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DEFAULT_CURRENCY, formatMoney, toAmount } from "@/lib/currency";
 import { toDateInputValue } from "@/lib/datetime";
+import { parseApiError } from "@/lib/error-utils";
 import { humanize } from "@/lib/strings";
 import type { RecordBookingPaymentInput } from "../api-types";
 import { useRecordBookingPayment } from "../queries";
@@ -72,11 +73,7 @@ export function RecordPaymentForm({
             });
             onDone?.();
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That payment could not be recorded.",
-            );
+            setError(parseApiError(cause).message);
         }
     }
 

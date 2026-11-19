@@ -8,6 +8,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { placeRelationshipsApi, placesApi } from "@/features/places/api";
 import type { Place } from "@/features/places/api";
+import { parseApiError } from "@/lib/error-utils";
 import { useCreateBooking } from "../queries";
 import type { AdminBookingCreateInput } from "../api-types";
 
@@ -330,9 +331,7 @@ export function BookingCreateForm({
           role="alert"
           className="text-xs font-medium text-[var(--vms-danger)]"
         >
-          {create.error instanceof Error
-            ? create.error.message
-            : "The booking did not go through."}
+          {parseApiError(create.error).message}
         </p>
       ) : null}
 

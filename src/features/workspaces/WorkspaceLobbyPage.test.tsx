@@ -170,12 +170,16 @@ describe("WorkspaceLobbyPage", () => {
     render(<WorkspaceLobbyPage />);
 
     expect(
-      screen.getByRole("heading", { name: "Choose your workspace" }),
+      screen.getByRole("heading", { name: "Workspaces" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Continue to the workspace you need/),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/Continue to the workspace you need/)).toBeNull();
+    expect(screen.queryByText(/Homes, residents, visitors/)).toBeNull();
     expect(screen.getByText("Organization administration")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Open Pebble Court workspace",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Pebble Court")).toBeInTheDocument();
     expect(screen.getByText("RESIDENTIAL PROPERTY")).toBeInTheDocument();
     expect(screen.getByText("RESIDENTIAL HOME")).toBeInTheDocument();
@@ -224,7 +228,7 @@ describe("WorkspaceLobbyPage", () => {
     render(<WorkspaceLobbyPage />);
 
     expect(
-      screen.getByRole("heading", { name: "Choose your workspace" }),
+      screen.getByRole("heading", { name: "Workspaces" }),
     ).toBeInTheDocument();
     expect(mocks.push).not.toHaveBeenCalled();
   });

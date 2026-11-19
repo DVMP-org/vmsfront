@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import CommercialInventory from "./CommercialInventory";
 import CommercialOverview from "./CommercialOverview";
 import CommercialTenants from "./CommercialTenants";
+import CommercialAccess from "./CommercialAccess";
 
 const mocks = vi.hoisted(() => ({
   tree: vi.fn(),
@@ -294,6 +295,36 @@ describe("commercial operations", () => {
     expect(screen.getAllByText("Suite 4A").length).toBeGreaterThan(0);
   });
 
+  it("uses the Site invitation queue total for visitor approvals", async () => {
+    mocks.profile.effective_permissions.push("visit_authorizations.list");
+    mocks.invitations.mockResolvedValue({ items: [], total: 37 });
+    mount(<CommercialAccess />);
+
+    expect(await screen.findByText("37")).toBeVisible();
+    expect(screen.getByText("Visitor approvals")).toBeVisible();
+    expect(mocks.invitations).toHaveBeenCalledWith({
+      status: "requested",
+      page: 1,
+      pageSize: 1,
+    });
+    expect(
+      screen.getByRole("link", { name: "Visitor invitation queue" }),
+    ).toHaveAttribute("href", "/admin/invitations?status=requested");
+  });
+
+  it("shows a retry only when the invitation count request fails", async () => {
+    mocks.profile.effective_permissions.push("visit_authorizations.list");
+    mocks.invitations.mockRejectedValue(new Error("Queue unavailable"));
+    mount(<CommercialAccess />);
+
+    expect(
+      await screen.findByText("Visitor approval count could not be loaded"),
+    ).toBeVisible();
+    expect(screen.queryByText("Visitor approvals")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(mocks.invitations).toHaveBeenCalledTimes(2));
+  });
+
   it("creates a canonical office space", async () => {
     mount(<CommercialInventory />);
 
@@ -440,9 +471,7 @@ describe("commercial operations", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Add party to a space",
     });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Business organization" }),
-    );
+
     fireEvent.change(within(dialog).getByLabelText(/^Lease end/), {
       target: { value: "2027-12-31" },
     });

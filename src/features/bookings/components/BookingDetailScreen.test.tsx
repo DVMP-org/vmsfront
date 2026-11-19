@@ -40,6 +40,7 @@ vi.mock("../queries", () => ({
   }),
   useApproveBooking: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeclineBooking: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useResendBookingOnboarding: () => ({ mutate: vi.fn(), isPending: false }),
   useAssignBookingRoom: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRecordBookingPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCancelBooking: () => ({ mutateAsync: cancelMutate, isPending: false }),

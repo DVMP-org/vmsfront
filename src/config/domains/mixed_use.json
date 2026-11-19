@@ -16,8 +16,7 @@
         {
           "label": "Overview",
           "href": "/admin",
-          "icon": "home",
-          "module": "mixed_use"
+          "icon": "home"
         },
         {
           "label": "Places",
@@ -62,7 +61,7 @@
           "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
-          "module": "charges"
+          "module": "billing"
         },
         {
           "label": "Shared expense allocation",
@@ -104,19 +103,19 @@
           "label": "Gates",
           "href": "/admin/gates",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Visitors",
@@ -128,7 +127,7 @@
           "label": "Movement log",
           "href": "/admin/passages",
           "icon": "history",
-          "module": "check_in_out"
+          "module": "access_control"
         }
       ]
     },

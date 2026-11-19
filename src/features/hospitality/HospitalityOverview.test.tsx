@@ -143,17 +143,22 @@ beforeEach(() => {
     total_pages: 1,
   });
 });
-it("shows site administrators, occupants and the live arrival queue", async () => {
+it("prioritizes reserved and checked-in stays over generic administration", async () => {
   mount();
   await screen.findByRole("heading", { name: "Hotel operations" });
   expect(
-    await screen.findByText("Administration and occupancy"),
+    await screen.findByText(
+      "The next arrivals in the loaded reservation queue.",
+    ),
   ).toBeInTheDocument();
-  expect(await screen.findByText("Dana Admin")).toBeInTheDocument();
   expect(mocks.context).toHaveBeenCalledWith("hotel");
-  expect(screen.getByText("Gina Guest")).toBeInTheDocument();
-  expect(screen.getByText("Reserved on this page")).toBeInTheDocument();
+  expect(mocks.list).toHaveBeenCalledWith(1, "checked_in");
+  expect(screen.getByText("Checked in")).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Reserved stays" }),
+  ).toBeInTheDocument();
   expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
+  expect(screen.queryByText("Administration and occupancy")).toBeNull();
 });
 it("shows inherited site administration provenance", async () => {
   mocks.context.mockResolvedValue({
@@ -190,9 +195,8 @@ it("shows inherited site administration provenance", async () => {
   mount();
 
   expect(
-    await screen.findByText("Administration is inherited from Harbour Group."),
+    await screen.findByText("Site management is inherited from Harbour Group."),
   ).toBeInTheDocument();
-  expect(screen.getByText("Morgan Manager")).toBeInTheDocument();
 });
 it("renders empty and failed lists explicitly with retry", async () => {
   mocks.list.mockRejectedValueOnce(new Error("unavailable"));

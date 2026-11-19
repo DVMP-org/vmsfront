@@ -161,6 +161,7 @@ export function CreateContractorDrawer({
       canSubmit={Boolean(siteId)}
       error={serverError}
       footerNote="Contractors never appear in the tenant or employee directories."
+      size="lg"
     >
       <FormErrorSummary errors={errors} />
 
@@ -257,7 +258,7 @@ export function CreateContractorDrawer({
               <input
                 {...control}
                 type="datetime-local"
-                className={fieldControlClassName}
+                className={`${fieldControlClassName} min-w-0`}
                 value={draft.access_from}
                 onChange={(event) => update("access_from", event.target.value)}
               />
@@ -273,7 +274,7 @@ export function CreateContractorDrawer({
               <input
                 {...control}
                 type="datetime-local"
-                className={fieldControlClassName}
+                className={`${fieldControlClassName} min-w-0`}
                 value={draft.access_to}
                 onChange={(event) => update("access_to", event.target.value)}
               />

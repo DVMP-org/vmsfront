@@ -38,6 +38,7 @@ vi.mock("@/features/checkpoints/api", async () => {
     checkpointsApi: {
       accessEvents: vi.fn(),
       presence: vi.fn(),
+      gates: mocks.gates,
     },
   };
 });
@@ -77,6 +78,9 @@ function mount() {
 describe("PassagesDirectory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.gates.mockResolvedValue({
+      items: [{ id: "gate-1", name: "Main entrance" }],
+    });
     vi.mocked(placesApi.list).mockResolvedValue({
       items: [],
       page: 1,
@@ -170,5 +174,28 @@ describe("PassagesDirectory", () => {
         }),
       ),
     );
+  });
+
+  it("keeps the decision columns visible and clears active filters together", async () => {
+    mount();
+    await screen.findByText("Ada Okafor");
+    const table = await screen.findByRole("table");
+    expect(table).toHaveTextContent("Ada Okafor");
+    expect(table).toHaveTextContent("Main entrance");
+    expect(table).toHaveTextContent("Check in");
+    expect(table).toHaveTextContent("Granted");
+    expect(
+      screen.queryByRole("columnheader", { name: "Credential" }),
+    ).toBeNull();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Person type" }), {
+      target: { value: "party" },
+    });
+    expect(screen.getByText("Filters (1)")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(screen.getByRole("combobox", { name: "Person type" })).toHaveValue(
+      "",
+    );
+    expect(screen.queryByRole("button", { name: "Clear all" })).toBeNull();
   });
 });

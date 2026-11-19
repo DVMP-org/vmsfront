@@ -302,7 +302,6 @@ function AddPartyModal({
         display_name: displayName.trim(),
         email: email.trim(),
         place_id: place!.id,
-        kind: "person",
         ...(role ? { role } : {}),
       };
       return peopleApi.add(siteId!, body);

@@ -251,11 +251,11 @@ function CommercialFinanceView({ view }: { view: "register" | "arrears" }) {
 
   return (
     <CommercialShell
-      title={view === "arrears" ? "Rent roll & arrears" : "Charge register"}
+      title={view === "arrears" ? "Rent roll & arrears" : "Assignments"}
       description={
         view === "arrears"
           ? "Review occupied commercial spaces and prioritize balances by how long they have been outstanding."
-          : "Review charge assignments, responsible business Parties, balances and collection status across this property."
+          : "Review charge assignments, responsible business Parties, balances and collection status across this Site."
       }
       primaryAction={
         view === "register" && canManageFinance ? (
@@ -299,9 +299,7 @@ function CommercialFinanceView({ view }: { view: "register" | "arrears" }) {
           <RentRollSection
             rows={rentRoll}
             isLoading={
-              tree.isPending ||
-              relationships.isPending ||
-              assignments.isPending
+              tree.isPending || relationships.isPending || assignments.isPending
             }
             errorMessage={
               tree.isError || relationships.isError || assignments.isError
@@ -344,77 +342,75 @@ function CommercialFinanceView({ view }: { view: "register" | "arrears" }) {
             ]}
           />
           <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
-        <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">
-              Assignments
-            </h2>
-            <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              Review each assigned charge, responsible Party, balance and
-              collection status for this commercial property.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/charges">
-                <Landmark className="h-4 w-4" aria-hidden="true" />
-                Definitions
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/transactions">
-                <WalletCards className="h-4 w-4" aria-hidden="true" />
-                Payments
-              </Link>
-            </Button>
-          </div>
-        </div>
-        <DataTable
-          data={rows}
-          columns={columns}
-          availableFilters={filters}
-          searchPlaceholder="Search charges, spaces or responsible parties"
-          selectable
-          selectedRows={selected}
-          onSelectionChange={setSelected}
-          bulkActions={bulkActions}
-          isLoading={tree.isPending || assignments.isPending}
-          errorMessage={
-            tree.isError || assignments.isError
-              ? parseApiError(tree.error || assignments.error).message
-              : null
-          }
-          isStale={(tree.isError || assignments.isError) && rows.length > 0}
-          onRetry={() => {
-            void tree.refetch();
-            void assignments.refetch();
-          }}
-          emptyMessage="No commercial charge assignments match this property."
-          tableLabel="Commercial charge assignments"
-          mobileSummary={(row) => (
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <strong>{row.charge}</strong>
-                  <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    {row.target} · {row.payer}
-                  </p>
-                </div>
-                <StatusBadge
-                  tone={row.state === "outstanding" ? "warning" : "success"}
-                >
-                  {formatMoney(row.outstanding, row.currency)}
-                </StatusBadge>
+            <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold">Assignments</h2>
+                <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                  Review each assigned charge, responsible Party, balance and
+                  collection status for this commercial property.
+                </p>
               </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/charges/assignments/${row.id}`}>
-                  Open assignment
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/charges">
+                    <Landmark className="h-4 w-4" aria-hidden="true" />
+                    Definitions
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/transactions">
+                    <WalletCards className="h-4 w-4" aria-hidden="true" />
+                    Payments
+                  </Link>
+                </Button>
+              </div>
             </div>
-          )}
-        />
+            <DataTable
+              data={rows}
+              columns={columns}
+              availableFilters={filters}
+              searchPlaceholder="Search charges, spaces or responsible parties"
+              selectable
+              selectedRows={selected}
+              onSelectionChange={setSelected}
+              bulkActions={bulkActions}
+              isLoading={tree.isPending || assignments.isPending}
+              errorMessage={
+                tree.isError || assignments.isError
+                  ? parseApiError(tree.error || assignments.error).message
+                  : null
+              }
+              isStale={(tree.isError || assignments.isError) && rows.length > 0}
+              onRetry={() => {
+                void tree.refetch();
+                void assignments.refetch();
+              }}
+              emptyMessage="No commercial charge assignments match this property."
+              tableLabel="Commercial charge assignments"
+              mobileSummary={(row) => (
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <strong>{row.charge}</strong>
+                      <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
+                        {row.target} · {row.payer}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      tone={row.state === "outstanding" ? "warning" : "success"}
+                    >
+                      {formatMoney(row.outstanding, row.currency)}
+                    </StatusBadge>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/admin/charges/assignments/${row.id}`}>
+                      Open assignment
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            />
           </section>
         </>
       )}

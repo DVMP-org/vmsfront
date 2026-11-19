@@ -3,12 +3,9 @@
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types";
 
-export type PartyKind = "person" | "organization";
-
 export interface PartySummary {
   id: string;
   organization_id?: string;
-  kind: PartyKind;
   display_name: string;
   email: string | null;
   phone?: string | null;
@@ -16,7 +13,6 @@ export interface PartySummary {
 }
 
 export interface PartyInput {
-  kind: PartyKind;
   display_name: string;
   email?: string | null;
   phone?: string | null;

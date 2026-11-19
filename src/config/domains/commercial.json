@@ -16,8 +16,7 @@
         {
           "label": "Overview",
           "href": "/admin",
-          "icon": "briefcase",
-          "module": "commercial"
+          "icon": "briefcase"
         },
         {
           "label": "Spaces & inventory",
@@ -53,21 +52,25 @@
           "label": "Charge definitions",
           "href": "/admin/charges",
           "icon": "receipt",
-          "module": "charges",
-          "children": [
-            {
-              "label": "Charge register",
-              "href": "/admin/commercial/charges",
-              "icon": "calculator",
-              "module": "charges"
-            },
-            {
-              "label": "Rent roll & arrears",
-              "href": "/admin/commercial/finance",
-              "icon": "calculator",
-              "module": "charges"
-            }
-          ]
+          "module": "billing"
+        },
+        {
+          "label": "Charge register",
+          "href": "/admin/charges/schedules",
+          "icon": "calculator",
+          "module": "billing"
+        },
+        {
+          "label": "Assignments",
+          "href": "/admin/commercial/charges",
+          "icon": "receipt",
+          "module": "billing"
+        },
+        {
+          "label": "Rent roll & arrears",
+          "href": "/admin/commercial/finance",
+          "icon": "calculator",
+          "module": "billing"
         }
       ]
     },
@@ -103,19 +106,19 @@
           "label": "Gates",
           "href": "/admin/gates",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Visitors",
@@ -127,7 +130,7 @@
           "label": "Movement log",
           "href": "/admin/passages",
           "icon": "history",
-          "module": "check_in_out"
+          "module": "access_control"
         }
       ]
     },

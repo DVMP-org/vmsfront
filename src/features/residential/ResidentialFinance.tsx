@@ -24,6 +24,7 @@ import {
   type FilterDefinition,
 } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatMoney, formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import type { Assignment } from "@/features/charges/api";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
@@ -48,6 +49,14 @@ type FinanceRow = {
 };
 
 export default function ResidentialFinance() {
+  return <ResidentialFinanceView view="register" />;
+}
+
+export function ResidentialArrears() {
+  return <ResidentialFinanceView view="arrears" />;
+}
+
+function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
   const { contextKey, selectedSite, canManageFinance } = useResidentialAccess();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const placeId = selectedSite?.id || "";
@@ -96,10 +105,30 @@ export default function ResidentialFinance() {
         }),
     [assignments.data, scopeIds],
   );
-  const outstanding = rows.reduce((sum, row) => sum + row.outstanding, 0);
-  const overdue = rows.filter(
+  const outstandingAssignments = rows.filter(
     (row) => row.balance_state === "outstanding",
   ).length;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const arrearsRows = rows.filter(
+    (row) =>
+      row.outstanding > 0 &&
+      !!row.next_due_date &&
+      row.next_due_date.slice(0, 10) < today,
+  );
+  const displayRows = view === "arrears" ? arrearsRows : rows;
+  const balancesByCurrency = new Map<string, number>();
+  for (const row of displayRows) {
+    balancesByCurrency.set(
+      row.currency,
+      (balancesByCurrency.get(row.currency) ?? 0) + row.outstanding,
+    );
+  }
+  const openBalanceLabel =
+    [...balancesByCurrency]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([code, amount]) => formatMoneyWithCode(amount, code))
+      .join(" · ") || "—";
   const columns: Column<FinanceRow>[] = [
     {
       key: "charge",
@@ -245,10 +274,14 @@ export default function ResidentialFinance() {
 
   return (
     <ResidentialShell
-      title="Rent & service charges"
-      description="Residential charge responsibility and outstanding balances, with direct access to definitions, schedules and payment records."
+      title={view === "arrears" ? "Arrears" : "Assignments"}
+      description={
+        view === "arrears"
+          ? "Follow up residential assignments whose earliest open schedule is past due. The balance shown includes all open schedules on each assignment."
+          : "Review residential charge assignments, responsible Parties, schedules and balances in the selected Site."
+      }
       primaryAction={
-        canManageFinance ? (
+        view === "register" && canManageFinance ? (
           <Button asChild>
             <Link href="/admin/charges/new">
               <FilePlus2 className="h-4 w-4" aria-hidden="true" />
@@ -261,42 +294,65 @@ export default function ResidentialFinance() {
       <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
         <Summary
           icon={ReceiptText}
-          label="Assignments"
-          value={String(rows.length)}
-          detail="For the selected property hierarchy"
+          label={view === "arrears" ? "Past-due assignments" : "Assignments"}
+          value={String(displayRows.length)}
+          detail={
+            view === "arrears"
+              ? "Earliest open due date is before today"
+              : "In the selected Site hierarchy"
+          }
         />
         <Summary
           icon={WalletCards}
-          label="Outstanding"
-          value={rows.length ? String(overdue) : "—"}
-          detail="Assignments with a positive balance"
+          label={view === "arrears" ? "Places with arrears" : "Outstanding"}
+          value={String(
+            view === "arrears"
+              ? new Set(arrearsRows.map((row) => row.target_place_id)).size
+              : outstandingAssignments,
+          )}
+          detail={
+            view === "arrears"
+              ? "Distinct Places with a past-due assignment"
+              : "Assignments with a positive balance"
+          }
         />
         <Summary
           icon={CircleDollarSign}
-          label="Open balance"
-          value={
-            rows.length && rows[0]?.currency
-              ? formatMoney(outstanding, rows[0].currency)
-              : "—"
+          label="Open balance by currency"
+          value={openBalanceLabel}
+          detail={
+            view === "arrears"
+              ? "All open schedules on past-due assignments"
+              : "Each charge currency is totaled separately"
           }
-          detail="Uses the currency published by each charge"
         />
       </section>
 
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold">Charge register</h2>
+            <h2 className="text-base font-semibold">
+              {view === "arrears"
+                ? "Past-due assignments"
+                : "Charge assignments"}
+            </h2>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-              Rent and service charges remain canonical shared finance records;
-              this view filters them to the residential property scope.
+              {view === "arrears"
+                ? "These assignments have a past-due open schedule. Open the assignment to inspect individual schedules and exact overdue amounts."
+                : "Review each assigned charge and its responsible Party in the selected Site."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link href="/admin/charges">
+              <Link
+                href={
+                  view === "arrears"
+                    ? "/admin/residential/finance"
+                    : "/admin/charges"
+                }
+              >
                 <Landmark className="h-4 w-4" aria-hidden="true" />
-                Manage definitions
+                {view === "arrears" ? "Charge register" : "Definitions"}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
@@ -308,7 +364,7 @@ export default function ResidentialFinance() {
           </div>
         </div>
         <DataTable
-          data={rows}
+          data={displayRows}
           columns={columns}
           availableFilters={filters}
           searchPlaceholder="Search charges, units or responsible parties"
@@ -327,8 +383,16 @@ export default function ResidentialFinance() {
             void tree.refetch();
             void assignments.refetch();
           }}
-          emptyMessage="No rent or service-charge assignments match this property."
-          tableLabel="Residential charge assignments"
+          emptyMessage={
+            view === "arrears"
+              ? "No past-due residential charge assignments in this Site."
+              : "No residential charge assignments match this Site."
+          }
+          tableLabel={
+            view === "arrears"
+              ? "Residential past-due charge assignments"
+              : "Residential charge assignments"
+          }
           scrollHint="Scroll horizontally to compare payers, balances and collection status."
           mobileSummary={(row) => (
             <div className="space-y-2">
@@ -378,20 +442,10 @@ function Summary({
         <Icon className="h-4 w-4 text-[var(--vms-coral)]" aria-hidden />
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-2 break-words text-2xl font-semibold tabular-nums">
+        {value}
+      </p>
       <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">{detail}</p>
     </div>
   );
-}
-
-function formatMoney(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currency || "NGN",
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currency || "NGN"} ${amount.toFixed(2)}`;
-  }
 }

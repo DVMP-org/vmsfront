@@ -21,7 +21,11 @@ import {
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
-import { placesApi, type PlaceTreeNode } from "@/features/places/api";
+import {
+  placeKinds,
+  placesApi,
+  type PlaceTreeNode,
+} from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import {
   mixedUseApi,
@@ -67,20 +71,7 @@ function initialForm(): AllocationForm {
     period_end: dateInput(end),
     total_amount: "",
     currency: "NGN",
-    shares: [
-      {
-        use_case: "residential",
-        label: "Residential",
-        target_place_id: "",
-        percentage: "50",
-      },
-      {
-        use_case: "commercial",
-        label: "Commercial",
-        target_place_id: "",
-        percentage: "50",
-      },
-    ],
+    shares: [],
   };
 }
 
@@ -121,6 +112,10 @@ export function ExpenseAllocations() {
   const [form, setForm] = useState<AllocationForm>(initialForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [reviewAllocations, setReviewAllocations] = useState<
+    ExpenseAllocation[]
+  >([]);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["mixed-use-expense-allocations", selectedSite?.id],
@@ -133,7 +128,7 @@ export function ExpenseAllocations() {
     retry: false,
   });
   const tree = useQuery({
-    queryKey: ["property-tree", "mixed-use-expenses"],
+    queryKey: ["property-tree", "mixed-use-expenses", selectedSite?.id],
     queryFn: () =>
       selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
     enabled: !!selectedSite?.id,
@@ -141,13 +136,18 @@ export function ExpenseAllocations() {
   });
 
   const rows = query.data?.items ?? [];
-  const totalAllocated = rows.reduce(
-    (total, allocation) => total + Number(allocation.total_amount),
-    0,
+  const totalsByCurrency = (allocations: ExpenseAllocation[]) =>
+    Object.entries(
+      allocations.reduce<Record<string, number>>((totals, allocation) => {
+        totals[allocation.currency] =
+          (totals[allocation.currency] ?? 0) + Number(allocation.total_amount);
+        return totals;
+      }, {}),
+    ).map(([currency, amount]) => money(amount.toFixed(2), currency));
+  const totalAllocated = totalsByCurrency(rows);
+  const approvedTotal = totalsByCurrency(
+    rows.filter((allocation) => allocation.status === "approved"),
   );
-  const approvedTotal = rows
-    .filter((allocation) => allocation.status === "approved")
-    .reduce((total, allocation) => total + Number(allocation.total_amount), 0);
   const draftCount = rows.filter(
     (allocation) => allocation.status === "draft",
   ).length;
@@ -155,6 +155,17 @@ export function ExpenseAllocations() {
     (total, share) => total + (Number(share.percentage) || 0),
     0,
   );
+  const percentageRemaining = 100 - percentageTotal;
+  const sharesComplete =
+    form.shares.length > 0 &&
+    form.shares.every(
+      (share) =>
+        share.label.trim() &&
+        share.percentage.trim() &&
+        Number(share.percentage) > 0 &&
+        Number(share.percentage) <= 100,
+    ) &&
+    Math.abs(percentageRemaining) <= 0.001;
   const allocationAmount = Number(form.total_amount) || 0;
   const targetOptions = useMemo(() => {
     if (!tree.data || !selectedSite) return [];
@@ -180,21 +191,13 @@ export function ExpenseAllocations() {
     onError: (error) => setFormError(parseApiError(error).message),
   });
 
-  const changeStatus = useMutation({
-    mutationFn: async ({
-      allocation,
-      action,
-    }: {
-      allocation: ExpenseAllocation;
-      action: "approve" | "archive";
-    }) => {
+  const archive = useMutation({
+    mutationFn: async (allocation: ExpenseAllocation) => {
       if (!selectedSite) throw new Error("Select a property first");
-      return action === "approve"
-        ? mixedUseApi.approveAllocation(selectedSite.id, allocation.id)
-        : mixedUseApi.archiveAllocation(selectedSite.id, allocation.id);
+      return mixedUseApi.archiveAllocation(selectedSite.id, allocation.id);
     },
     onSuccess: () => {
-      toast.success("Allocation status updated.");
+      toast.success("Allocation archived.");
       void client.invalidateQueries({
         queryKey: ["mixed-use-expense-allocations"],
       });
@@ -205,20 +208,68 @@ export function ExpenseAllocations() {
     onError: (error) => toast.error(parseApiError(error).message),
   });
 
+  const approve = useMutation({
+    mutationFn: async (allocations: ExpenseAllocation[]) => {
+      if (!selectedSite) throw new Error("Select a property first");
+      const results = await Promise.allSettled(
+        allocations.map((allocation) =>
+          mixedUseApi.approveAllocation(selectedSite.id, allocation.id),
+        ),
+      );
+      return {
+        approved: results.filter((result) => result.status === "fulfilled")
+          .length,
+        failed: allocations.filter(
+          (_, index) => results[index].status === "rejected",
+        ),
+        firstError: results.find((result) => result.status === "rejected"),
+      };
+    },
+    onSuccess: ({ approved, failed, firstError }) => {
+      if (approved)
+        toast.success(
+          `${approved} allocation${approved === 1 ? "" : "s"} approved.`,
+        );
+      if (failed.length) {
+        setReviewAllocations(failed);
+        setReviewError(
+          firstError?.status === "rejected"
+            ? parseApiError(firstError.reason).message
+            : "Some allocations could not be approved. Review and retry.",
+        );
+      } else {
+        setReviewAllocations([]);
+        setReviewError(null);
+        setSelectedRows(new Set());
+      }
+      void client.invalidateQueries({
+        queryKey: ["mixed-use-expense-allocations"],
+      });
+      void client.invalidateQueries({
+        queryKey: ["mixed-use-overview-allocations"],
+      });
+    },
+    onError: (error) => setReviewError(parseApiError(error).message),
+  });
+
+  function openReview(allocations: ExpenseAllocation[]) {
+    if (!allocations.length) return;
+    setReviewError(null);
+    setReviewAllocations(allocations);
+  }
+
   const bulkActions: BulkAction[] = context.canManageExpenses
     ? [
         {
-          label: "Approve drafts",
+          label: "Review drafts",
           icon: CheckCircle2,
           onClick: (ids) => {
-            rows
-              .filter(
+            openReview(
+              rows.filter(
                 (allocation) =>
                   ids.includes(allocation.id) && allocation.status === "draft",
-              )
-              .forEach((allocation) =>
-                changeStatus.mutate({ allocation, action: "approve" }),
-              );
+              ),
+            );
           },
         },
         {
@@ -231,9 +282,7 @@ export function ExpenseAllocations() {
                   ids.includes(allocation.id) &&
                   allocation.status === "approved",
               )
-              .forEach((allocation) =>
-                changeStatus.mutate({ allocation, action: "archive" }),
-              );
+              .forEach((allocation) => archive.mutate(allocation));
           },
         },
       ]
@@ -305,15 +354,14 @@ export function ExpenseAllocations() {
           <Button
             size="sm"
             variant={allocation.status === "draft" ? "primary" : "outline"}
-            disabled={changeStatus.isPending}
+            disabled={approve.isPending || archive.isPending}
             onClick={() =>
-              changeStatus.mutate({
-                allocation,
-                action: allocation.status === "draft" ? "approve" : "archive",
-              })
+              allocation.status === "draft"
+                ? openReview([allocation])
+                : archive.mutate(allocation)
             }
           >
-            {allocation.status === "draft" ? "Approve" : "Archive"}
+            {allocation.status === "draft" ? "Review" : "Archive"}
           </Button>
         ) : null,
     },
@@ -350,6 +398,21 @@ export function ExpenseAllocations() {
     }
     if (!allocationAmount || allocationAmount <= 0) {
       setFormError("Enter a total amount greater than zero.");
+      return;
+    }
+    if (!form.shares.length) {
+      setFormError("Add at least one domain share before creating the draft.");
+      return;
+    }
+    if (
+      form.shares.some(
+        (share) =>
+          !share.percentage.trim() ||
+          Number(share.percentage) <= 0 ||
+          Number(share.percentage) > 100,
+      )
+    ) {
+      setFormError("Enter a percentage above 0 and up to 100 for every share.");
       return;
     }
     if (Math.abs(percentageTotal - 100) > 0.001) {
@@ -395,16 +458,20 @@ export function ExpenseAllocations() {
         className="grid gap-3 sm:grid-cols-3"
       >
         <Summary
-          label="Allocated in view"
-          value={money(totalAllocated.toFixed(2), "NGN")}
+          label="Recorded in view"
+          values={totalAllocated}
           icon={Scale}
         />
         <Summary
           label="Approved"
-          value={money(approvedTotal.toFixed(2), "NGN")}
+          values={approvedTotal}
           icon={CircleDollarSign}
         />
-        <Summary label="Drafts" value={String(draftCount)} icon={ReceiptText} />
+        <Summary
+          label="Drafts"
+          values={[String(draftCount)]}
+          icon={ReceiptText}
+        />
       </section>
 
       {query.isError && query.data ? (
@@ -472,6 +539,24 @@ export function ExpenseAllocations() {
                   )
                   .join(" · ")}
               </p>
+              {context.canManageExpenses && allocation.status !== "archived" ? (
+                <Button
+                  size="sm"
+                  variant={
+                    allocation.status === "draft" ? "primary" : "outline"
+                  }
+                  disabled={approve.isPending || archive.isPending}
+                  onClick={() =>
+                    allocation.status === "draft"
+                      ? openReview([allocation])
+                      : archive.mutate(allocation)
+                  }
+                >
+                  {allocation.status === "draft"
+                    ? "Review allocation"
+                    : "Archive"}
+                </Button>
+              ) : null}
             </div>
           )}
         />
@@ -591,20 +676,12 @@ export function ExpenseAllocations() {
           </div>
 
           <section>
-            <InlineAlert
-              tone="warning"
-              title="Editable starter split"
-              className="mb-3"
-            >
-              The form starts at 50% Residential and 50% Commercial. Confirm or
-              change each share to match this expense before creating the draft.
-            </InlineAlert>
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h3 className="font-semibold">Allocation shares</h3>
                 <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                  Keep total shares at 100%. Targets must belong to this
-                  property.
+                  Add the domains that share this cost. Choose a specific Place
+                  only when the share applies to that Place.
                 </p>
               </div>
               <Button
@@ -616,19 +693,25 @@ export function ExpenseAllocations() {
                     shares: [
                       ...current.shares,
                       {
-                        use_case: "shared",
-                        label: "Shared area",
+                        use_case: "residential",
+                        label: "Residential",
                         target_place_id: "",
-                        percentage: "0",
+                        percentage: "",
                       },
                     ],
                   }))
                 }
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                Add share
+                Add domain share
               </Button>
             </div>
+            {form.shares.length === 0 ? (
+              <div className="rounded-[var(--vms-radius-control)] border border-dashed border-[var(--vms-line-strong)] bg-[var(--vms-surface-subtle)] px-4 py-5 text-sm text-[var(--vms-ink-muted)]">
+                No shares yet. Add a domain share, set its scope and percentage,
+                then bring the total to 100%.
+              </div>
+            ) : null}
             <div className="space-y-3">
               {form.shares.map((share, index) => (
                 <div
@@ -639,12 +722,22 @@ export function ExpenseAllocations() {
                     <span>Domain</span>
                     <select
                       value={share.use_case}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const nextUseCase = event.currentTarget
+                          .value as AllocationUseCase;
+                        const previousLabel = useCaseLabels.find(
+                          (option) => option.value === share.use_case,
+                        )?.label;
                         updateShare(index, {
-                          use_case: event.currentTarget
-                            .value as AllocationUseCase,
-                        })
-                      }
+                          use_case: nextUseCase,
+                          label:
+                            share.label === previousLabel
+                              ? (useCaseLabels.find(
+                                  (option) => option.value === nextUseCase,
+                                )?.label ?? share.label)
+                              : share.label,
+                        });
+                      }}
                       className={fieldClass}
                     >
                       {useCaseLabels.map((option) => (
@@ -667,7 +760,7 @@ export function ExpenseAllocations() {
                     />
                   </label>
                   <label className="space-y-1 text-xs font-medium">
-                    <span>Target property</span>
+                    <span>Target scope</span>
                     <select
                       value={share.target_place_id}
                       onChange={(event) =>
@@ -677,10 +770,10 @@ export function ExpenseAllocations() {
                       }
                       className={fieldClass}
                     >
-                      <option value="">No specific property</option>
+                      <option value="">Entire Site</option>
                       {targetOptions.map((place) => (
                         <option key={place.id} value={place.id}>
-                          {place.name}
+                          {place.name} · {placeKinds[place.kind]}
                         </option>
                       ))}
                     </select>
@@ -716,7 +809,6 @@ export function ExpenseAllocations() {
                       variant="ghost"
                       size="icon-sm"
                       aria-label={`Remove ${share.label || "share"}`}
-                      disabled={form.shares.length === 1}
                       onClick={() =>
                         setForm((current) => ({
                           ...current,
@@ -732,15 +824,25 @@ export function ExpenseAllocations() {
                 </div>
               ))}
             </div>
-            <p
-              className={
-                Math.abs(percentageTotal - 100) > 0.001
-                  ? "mt-3 text-sm font-semibold text-[var(--vms-danger)]"
-                  : "mt-3 text-sm font-semibold text-[var(--vms-success)]"
-              }
+            <div
+              role="status"
+              className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[var(--vms-radius-control)] border px-3 py-2 text-sm ${
+                sharesComplete
+                  ? "border-[var(--vms-success)] text-[var(--vms-success)]"
+                  : "border-[var(--vms-line)] text-[var(--vms-ink)]"
+              }`}
             >
-              Allocated: {percentageTotal.toFixed(2)}%
-            </p>
+              <span className="font-semibold">
+                Allocated {percentageTotal.toFixed(2)}% of 100%
+              </span>
+              <span>
+                {sharesComplete
+                  ? "Ready to create draft"
+                  : percentageRemaining >= 0
+                    ? `${percentageRemaining.toFixed(2)}% remaining`
+                    : `${Math.abs(percentageRemaining).toFixed(2)}% over`}
+              </span>
+            </div>
           </section>
 
           <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
@@ -753,6 +855,7 @@ export function ExpenseAllocations() {
             </Button>
             <Button
               type="submit"
+              disabled={!sharesComplete}
               isLoading={create.isPending}
               loadingLabel="Creating…"
             >
@@ -760,6 +863,126 @@ export function ExpenseAllocations() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={reviewAllocations.length > 0}
+        onClose={() => {
+          if (!approve.isPending) setReviewAllocations([]);
+        }}
+        title={
+          reviewAllocations.length <= 1
+            ? "Review expense allocation"
+            : `Review ${reviewAllocations.length} expense allocations`
+        }
+        description="Check each expense, period, currency, target scope and domain share before approval. Approval makes the allocation available for property charges."
+        size="lg"
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="secondary"
+              disabled={approve.isPending}
+              onClick={() => setReviewAllocations([])}
+            >
+              Keep as draft
+            </Button>
+            <Button
+              disabled={reviewAllocations.some(
+                (allocation) =>
+                  !allocation.shares.length ||
+                  allocation.shares.some(
+                    (share) =>
+                      !Number.isFinite(Number(share.percentage)) ||
+                      Number(share.percentage) <= 0,
+                  ) ||
+                  Math.abs(
+                    allocation.shares.reduce(
+                      (total, share) => total + Number(share.percentage),
+                      0,
+                    ) - 100,
+                  ) > 0.001,
+              )}
+              isLoading={approve.isPending}
+              loadingLabel="Approving…"
+              onClick={() => approve.mutate(reviewAllocations)}
+            >
+              Approve{" "}
+              {reviewAllocations.length === 1
+                ? "allocation"
+                : `${reviewAllocations.length} allocations`}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {reviewError ? (
+            <InlineAlert tone="danger" title="Approval was not completed">
+              {reviewError}
+            </InlineAlert>
+          ) : null}
+          {reviewAllocations.map((allocation) => {
+            const total = allocation.shares.reduce(
+              (sum, share) => sum + Number(share.percentage),
+              0,
+            );
+            return (
+              <section
+                key={allocation.id}
+                className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{allocation.title}</h3>
+                    {allocation.description ? (
+                      <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                        {allocation.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-xs text-[var(--vms-ink-muted)]">
+                      {allocation.period_start} to {allocation.period_end} ·{" "}
+                      {selectedSite?.name}
+                    </p>
+                  </div>
+                  <p className="text-base font-semibold">
+                    {money(allocation.total_amount, allocation.currency)}
+                  </p>
+                </div>
+                <div className="mt-4 divide-y divide-[var(--vms-line)] border-y border-[var(--vms-line)]">
+                  {allocation.shares.map((share) => (
+                    <div
+                      key={share.id}
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium">{share.label}</p>
+                        <p className="text-xs text-[var(--vms-ink-muted)]">
+                          {useCaseLabels.find(
+                            (option) => option.value === share.use_case,
+                          )?.label ?? share.use_case}
+                          {" · "}
+                          {share.target_place_id
+                            ? (targetOptions.find(
+                                (place) => place.id === share.target_place_id,
+                              )?.name ?? "Specific Place")
+                            : "Entire Site"}
+                        </p>
+                      </div>
+                      <p className="font-medium tabular-nums">
+                        {Number(share.percentage).toFixed(2)}% ·{" "}
+                        {money(share.amount, allocation.currency)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p
+                  className={`mt-3 text-sm font-semibold ${Math.abs(total - 100) <= 0.001 ? "text-[var(--vms-success)]" : "text-[var(--vms-danger)]"}`}
+                >
+                  Total allocated: {total.toFixed(2)}% of 100%
+                </p>
+              </section>
+            );
+          })}
+        </div>
       </Modal>
     </MixedUseShell>
   );
@@ -770,11 +993,11 @@ const fieldClass =
 
 function Summary({
   label,
-  value,
+  values,
   icon: Icon,
 }: {
   label: string;
-  value: string;
+  values: string[];
   icon: typeof Scale;
 }) {
   return (
@@ -783,7 +1006,17 @@ function Summary({
       <p className="mt-3 text-xs font-medium text-[var(--vms-ink-muted)]">
         {label}
       </p>
-      <p className="mt-1 text-xl font-semibold tracking-[-0.03em]">{value}</p>
+      <div className="mt-1 space-y-0.5">
+        {values.length ? (
+          values.map((value) => (
+            <p key={value} className="text-xl font-semibold tracking-[-0.03em]">
+              {value}
+            </p>
+          ))
+        ) : (
+          <p className="text-xl font-semibold tracking-[-0.03em]">—</p>
+        )}
+      </div>
     </div>
   );
 }

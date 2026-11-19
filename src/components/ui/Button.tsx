@@ -93,7 +93,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const content = isLoading ? (
       <>
         <Loader size={LoaderSize} colour="current" />
-        <span>{children || loadingLabel}</span>
+        {/* One spinning indicator only: a button's own icon is hidden while it
+            loads, so the spinner and the icon never compete in the same slot. */}
+        <span className="inline-flex items-center gap-2 [&_svg]:hidden">
+          {children || loadingLabel}
+        </span>
       </>
     ) : (
       <>

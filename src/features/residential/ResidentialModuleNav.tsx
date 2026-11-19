@@ -57,11 +57,8 @@ export function ResidentialModuleNav() {
           const active =
             section.href === "/admin"
               ? pathname === section.href
-              : section.href === "/admin/checkpoints"
-                ? pathname === section.href ||
-                  pathname?.startsWith(`${section.href}/`)
-                : pathname === section.href ||
-                  pathname?.startsWith(`${section.href}/`);
+              : pathname === section.href ||
+                pathname?.startsWith(`${section.href}/`);
           const Icon = section.icon;
           return (
             <li key={section.href}>

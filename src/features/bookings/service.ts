@@ -16,6 +16,7 @@ import type {
   BookingDto,
   BookingFinancialsDto,
   BookingListParams,
+  BookingOnboardingReceipt,
   BookingPaymentDto,
   BookingUpdateInput,
   RecordBookingPaymentInput,
@@ -50,6 +51,13 @@ export const bookingsService = {
 
   async approve(bookingId: string): Promise<ApiResponse<BookingDto>> {
     return apiClient.post(`/admin/bookings/${bookingId}/approve`);
+  },
+
+  /** Send the guest the magic link acceptance created, again. */
+  async resendOnboarding(
+    bookingId: string,
+  ): Promise<ApiResponse<BookingOnboardingReceipt>> {
+    return apiClient.post(`/admin/bookings/${bookingId}/resend-onboarding`);
   },
 
   async decline(

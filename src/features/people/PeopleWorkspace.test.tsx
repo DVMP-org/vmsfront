@@ -120,7 +120,6 @@ const tenant = {
   assignment_id: "relationship-1",
   party: {
     id: "party-1",
-    kind: "person",
     display_name: "Ada Tenant",
     email: "ada@example.test",
     is_active: true,
@@ -214,10 +213,6 @@ describe("Site People", () => {
       0,
     );
     expect(screen.getByText("Apartment 4B")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Managers" })).toHaveAttribute(
-      "href",
-      "/admin/managers",
-    );
     expect(peopleApi.get).toHaveBeenCalledWith("site-1");
   });
 

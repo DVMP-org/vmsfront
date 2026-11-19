@@ -55,6 +55,8 @@ export interface BookingDto {
   requester_email: string | null;
   requester_phone: string | null;
   status: BookingStatus;
+  /** The stay's lifecycle once approval opened one; check-in/out move this. */
+  hospitality_stay_status?: string | null;
   /** How the booking reached the Site: public page, phone, walk-in, staff. */
   source: BookingSource;
   check_in_at: string;
@@ -89,7 +91,6 @@ export interface BookingDetailDto extends BookingDto {
   reservations: ReservationDto[];
   /** The stay approval opened: what check-in, check-out and the folio act on. */
   hospitality_stay_id?: string | null;
-  hospitality_stay_status?: string | null;
 }
 
 export type BookingPaymentStatus = "captured" | "refunded" | "void";
@@ -109,6 +110,12 @@ export interface BookingPaymentDto {
   note?: string | null;
   recorded_by_admin_id?: string | null;
   created_at: string;
+}
+
+/** Where the guest's onboarding (magic-link) email was delivered. */
+export interface BookingOnboardingReceipt {
+  sent: boolean;
+  email: string;
 }
 
 export interface BookingListParams {

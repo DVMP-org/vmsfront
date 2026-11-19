@@ -45,6 +45,7 @@ import {
   sitesApi,
 } from "@/features/sites/api";
 import "./styles.css";
+import PageLoader from "@/components/ui/PageLoader";
 
 export interface PlaceRoute {
   id?: string;
@@ -251,7 +252,11 @@ function SitesWorkspace({
       },
     },
   ];
-  if (profile.isPending) return <p role="status">Loading Site permissions…</p>;
+  if (profile.isPending) return (
+    <main className="mx-auto w-full max-w-[1440px] pb-10 pt-3 text-[var(--vms-ink)]">
+      <PageLoader message="Loading Site permissions…" />
+    </main>
+  );
   if (profile.isError) {
     return (
       <InlineAlert

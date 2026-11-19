@@ -52,8 +52,16 @@ function initialValues(
  * SiteAdmins and Parties edit the same User identity record; only the role
  * label and the navigation shell differ.
  */
-export function ProfilePage({ audience }: { audience: "admin" | "resident" }) {
-  return audience === "admin" ? <AdminProfile /> : <ResidentProfile />;
+export function ProfilePage({
+  audience,
+}: {
+  audience: "admin" | "resident" | "guest";
+}) {
+  return audience === "admin" ? (
+    <AdminProfile />
+  ) : (
+    <ResidentProfile roleLabel={audience === "guest" ? "Guest" : "Party"} />
+  );
 }
 
 function AdminProfile() {
@@ -74,7 +82,7 @@ function AdminProfile() {
   );
 }
 
-function ResidentProfile() {
+function ResidentProfile({ roleLabel }: { roleLabel: string }) {
   const query = useResidentProfileDetails();
   const authUser = useAuthStore((state) => state.user);
   // A Party without a Resident record still owns this User identity, so the
@@ -84,7 +92,7 @@ function ResidentProfile() {
   return (
     <ProfileForm
       user={user}
-      roleLabel="Party"
+      roleLabel={roleLabel}
       initial={initial}
       isPending={query.isPending && !authUser}
       isError={!user}

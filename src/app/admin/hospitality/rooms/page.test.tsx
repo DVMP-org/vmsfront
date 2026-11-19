@@ -40,6 +40,10 @@ vi.mock("@/features/hospitality/api", () => ({
   },
 }));
 
+vi.mock("@/features/files/components/AttachmentManager", () => ({
+  AttachmentManager: () => <div>Room images</div>,
+}));
+
 // The category picker reads Place groups. Left unmocked it would try a real
 // fetch, so the suite pins a fixed vocabulary instead.
 vi.mock("@/features/place-groups/api", () => ({
@@ -73,7 +77,9 @@ const room = {
   current_stay_id: null,
   current_guest_name: null,
   next_arrival: null,
+  next_guest_name: null,
   maintenance_open: 0,
+  amenities: [],
   updated_at: "2026-11-09T10:00:00Z",
 } as const;
 
@@ -127,6 +133,27 @@ describe("hospitality room inventory", () => {
     expect(
       screen.getAllByRole("button", { name: "Retry" }).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("opens room details from the visible register action", async () => {
+    mount();
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "View Harbour Suite details",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "View details" }),
+    );
+    expect(
+      within(dialog).getByRole("region", { name: "Room details" }),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        within(dialog).getByRole("region", { name: "Room details" }),
+      ).getByText("Nightly rate"),
+    ).toBeInTheDocument();
   });
 
   it("creates the room the operator typed, sold as the category they chose", async () => {

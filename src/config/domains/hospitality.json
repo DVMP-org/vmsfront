@@ -16,8 +16,7 @@
         {
           "label": "Overview",
           "href": "/admin",
-          "icon": "bed",
-          "module": "hospitality"
+          "icon": "bed"
         },
         {
           "label": "Bookings",
@@ -29,6 +28,12 @@
           "label": "Reservations",
           "href": "/admin/reservations",
           "icon": "calendar",
+          "module": "reservations"
+        },
+        {
+          "label": "Guests",
+          "href": "/admin/hospitality/guests",
+          "icon": "users",
           "module": "reservations"
         },
         {
@@ -91,13 +96,13 @@
           "label": "Guest folios & billing",
           "href": "/admin/hospitality/billing",
           "icon": "receipt",
-          "module": "charges",
+          "module": "billing",
           "children": [
             {
               "label": "Charge definitions",
               "href": "/admin/charges",
               "icon": "receipt",
-              "module": "charges"
+              "module": "billing"
             }
           ]
         }
@@ -111,19 +116,19 @@
           "label": "Gates",
           "href": "/admin/gates",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Check-in console",
           "href": "/admin/checkpoints/console",
           "icon": "scan",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Invitations",
           "href": "/admin/invitations",
           "icon": "ticket",
-          "module": "check_in_out"
+          "module": "access_control"
         },
         {
           "label": "Visitors",
@@ -135,7 +140,7 @@
           "label": "Movement log",
           "href": "/admin/passages",
           "icon": "history",
-          "module": "check_in_out"
+          "module": "access_control"
         }
       ]
     },
@@ -208,7 +213,7 @@
   "workspace_navigation": [
     {
       "id": "place",
-      "label": "My place",
+      "label": "My stay",
       "items": [
         {
           "label": "Stay overview",
@@ -220,7 +225,7 @@
     },
     {
       "id": "access",
-      "label": "Visitors & access",
+      "label": "Guests & access",
       "items": [
         {
           "label": "Invitations",
@@ -244,7 +249,7 @@
     },
     {
       "id": "services",
-      "label": "Services",
+      "label": "Stay services",
       "items": [
         {
           "label": "Announcements",
@@ -259,13 +264,13 @@
           "module": "forum"
         },
         {
-          "label": "My charges",
+          "label": "Stay bill & payments",
           "href": "/workspace/{placeId}/charges",
           "icon": "receipt",
           "module": "billing"
         },
         {
-          "label": "Maintenance requests",
+          "label": "Report a room issue",
           "href": "/workspace/{placeId}/maintenance",
           "icon": "wrench",
           "module": "maintenance"

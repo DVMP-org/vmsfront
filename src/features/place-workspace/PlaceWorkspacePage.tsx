@@ -30,11 +30,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormDrawer, FormRecordSummary } from "@/components/ui/form/FormDrawer";
 import { FormSection } from "@/components/ui/form/FormSection";
-import { domainExperience } from "@/config/domains";
 import { AccessWorkspace } from "@/features/access-journey/AccessWorkspace";
 import { accessJourneyApi } from "@/features/access-journey/api";
 import { myChargesApi } from "@/features/charges/my-charges/api";
-import { GuestStayDashboard } from "@/features/guest-stay/GuestStayDashboard";
+import { GuestStayBill } from "@/features/guest-stay/GuestStayBill";
+import { HospitalityGuestOverview } from "./HospitalityGuestOverview";
 import { PlaceSettingsPage } from "@/features/place-settings/PlaceSettingsPage";
 import { ProfilePage } from "@/features/profile/ProfilePage";
 import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
@@ -430,10 +430,31 @@ const sectionDescription: Record<string, (placeName: string) => string> = {
   settings: (placeName) => `Preferences for ${placeName}.`,
 };
 
+const hospitalityGuestSectionDescription: Record<
+  string,
+  (placeName: string) => string
+> = {
+  overview: (placeName) =>
+    `Your stay at ${placeName}: status, bill and the services available to you.`,
+  invitations: (placeName) => `Invite someone to visit you at ${placeName}.`,
+  visitors: () => "People you have invited and the state of their access.",
+  movements: () => "Entry and exit activity recorded for your guests.",
+  announcements: (placeName) => `Notices for guests staying at ${placeName}.`,
+  charges: () => "Your stay bill, charges and payment history.",
+  maintenance: () => "Report a room issue and follow its progress.",
+  profile: () => "Your shared identity and contact details.",
+};
+
 export function PlaceWorkspacePage({ section }: { section: string }) {
   const context = usePlaceWorkspace();
   const navigation = placeWorkspaceNavigation(context);
   const placeName = qualifiedPlaceName(context.place);
+  const isHospitalityGuest =
+    context.effective_use_case === "hospitality" &&
+    context.relationships.some((item) =>
+      ["guest", "guest_of"].includes(item.role),
+    );
+  const stayPlaceName = context.place.site_name || placeName;
   const title =
     navigation
       .flatMap((group) => group.items)
@@ -464,13 +485,18 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
   return (
     <div className="space-y-5">
       <PageHeading
-        eyebrow={context.place.name}
+        eyebrow={
+          isHospitalityGuest ? `Your stay · ${stayPlaceName}` : context.place.name
+        }
         title={title}
-        description={(sectionDescription[section] ?? (() => undefined))(
-          placeName,
-        )}
+        description={
+          (isHospitalityGuest
+            ? hospitalityGuestSectionDescription[section]
+            : sectionDescription[section])?.(stayPlaceName) ?? undefined
+        }
       />
-      {section === "overview" && <Overview />}
+      {section === "overview" &&
+        (isHospitalityGuest ? <HospitalityGuestOverview /> : <Overview />)}
       {section === "invitations" && (
         <AccessWorkspace
           relationship={relationship}
@@ -482,9 +508,16 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
       {section === "visitors" && <Visitors />}
       {section === "movements" && <Movements />}
       {section === "announcements" && <Announcements />}
-      {section === "charges" && <Charges />}
+      {section === "charges" &&
+        (isHospitalityGuest ? (
+          <GuestStayBill placeId={context.place.id} />
+        ) : (
+          <Charges />
+        ))}
       {section === "maintenance" && <Maintenance />}
-      {section === "profile" && <ProfilePage audience="resident" />}
+      {section === "profile" && (
+        <ProfilePage audience={isHospitalityGuest ? "guest" : "resident"} />
+      )}
       {section === "settings" && <PlaceSettingsPage />}
     </div>
   );
@@ -510,7 +543,6 @@ function Overview() {
       return next;
     });
   }
-  const definition = domainExperience(context.effective_use_case);
   const announcements = useQuery({
     queryKey: ["place-announcements", place.id, party.id],
     queryFn: () => placeWorkspaceApi.announcements(place.id),
@@ -1096,14 +1128,6 @@ function Overview() {
         </SectionCard>
       </div>
 
-      {definition?.workspace_dashboard.some(
-        (item) => item.section === "stay",
-      ) &&
-      context.relationships.some(
-        (item) => item.role === "guest" || item.role === "guest_of",
-      ) ? (
-        <GuestStayDashboard placeId={context.place.id} />
-      ) : null}
     </div>
   );
 }

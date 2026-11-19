@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { formatMoney } from "@/lib/currency";
 import { formatDateTime } from "@/lib/datetime";
+import { parseApiError } from "@/lib/error-utils";
 import { humanize } from "@/lib/strings";
 import { outstandingBalance } from "../../lib";
 import type {
@@ -62,11 +63,7 @@ export function BookingPaymentsSection({
       setAmount("");
       setReference("");
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "That payment could not be recorded.",
-      );
+      setError(parseApiError(cause).message);
     }
   }
 

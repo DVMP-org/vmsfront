@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useConvertReservation } from "@/features/bookings/queries";
 import { useHospitalityRooms } from "@/features/hospitality/queries";
+import { parseApiError } from "@/lib/error-utils";
 
 /**
  * Confirming a reservation into a booking, for every room it needs.
@@ -52,11 +53,7 @@ export function ConvertReservationForm({
             await convert.mutateAsync(selected);
             onDone?.();
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That reservation could not be converted.",
-            );
+            setError(parseApiError(cause).message);
         }
     }
 

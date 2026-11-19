@@ -35,8 +35,8 @@ const sections = [
     icon: Scale,
   },
   {
-    href: "/admin/checkpoints",
-    label: "Gate & check-in",
+    href: "/admin/checkpoints/console",
+    label: "Check-in console",
     icon: ScanLine,
   },
   {

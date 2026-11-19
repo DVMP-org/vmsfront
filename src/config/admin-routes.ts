@@ -42,7 +42,6 @@ export const adminLinks: AdminRoute[] = [
     href: "/admin",
     label: "Dashboard",
     icon: Home,
-    module: "dashboard",
     group: "Workspace",
   },
   {
@@ -67,7 +66,7 @@ export const adminLinks: AdminRoute[] = [
     label: "Passage history",
     icon: History,
     permission: "checkpoint_events.list",
-    module: "check_in_out",
+    module: "access_control",
     group: "Access",
   },
   {
@@ -75,7 +74,7 @@ export const adminLinks: AdminRoute[] = [
     label: "Invitations",
     icon: Shield,
     permission: "visit_authorizations.list",
-    module: "check_in_out",
+    module: "access_control",
     group: "Access",
   },
   {
@@ -83,7 +82,7 @@ export const adminLinks: AdminRoute[] = [
     label: "Charges",
     icon: Receipt,
     permission: "charges.list",
-    module: "charges",
+    module: "billing",
     group: "Finance",
   },
   {
@@ -99,7 +98,7 @@ export const adminLinks: AdminRoute[] = [
     label: "Gates",
     icon: DoorOpen,
     permission: "gates.list",
-    module: "gates",
+    module: "access_control",
     group: "Access",
   },
   {
@@ -132,37 +131,13 @@ const domainIcons: Record<string, LucideIcon> = {
   document: FileText,
 };
 
-/**
- * Navigation config predates the Site module catalogue, so some entries still
- * reference the feature keys the sidebar used before modules were introduced
- * (`charges`, `gates`, …). Site modules now report the owning module
- * (`billing`, `access_control`, …). Without this mapping those links silently
- * disappear from the sidebar.
- */
-const moduleKeyAliases: Record<string, string[]> = {
-  charges: ["billing"],
-  gates: ["access_control"],
-  check_in_out: ["access_control"],
-  forums: ["forum"],
-  dashboard: [
-    "properties",
-    "residential",
-    "commercial",
-    "hospitality",
-    "mixed_use",
-  ],
-};
-
 export function isModuleEnabled(
   module: string | undefined,
   modules: readonly string[] | undefined,
 ): boolean {
   if (!module) return true;
   if (!modules) return false;
-  if (modules.includes(module)) return true;
-  return (moduleKeyAliases[module] ?? []).some((alias) =>
-    modules.includes(alias),
-  );
+  return modules.includes(module);
 }
 
 export function contextualAdminLinks(
@@ -227,7 +202,7 @@ export function contextualAdminLinks(
       !(link.href === "/admin/people" && configuredModules.has("people")),
   );
 
-  return [...configuredLinks, ...commonLinks]
+  const availableLinks = [...configuredLinks, ...commonLinks]
     .filter((link) => isModuleEnabled(link.module, modules))
     .map((link, index) => ({
       ...link,
@@ -250,4 +225,13 @@ export function contextualAdminLinks(
       return rank(left) - rank(right) || left.index - right.index;
     })
     .map(({ index: _index, ...link }) => link);
+
+  const groups = new Map<string, AdminRoute[]>();
+  for (const link of availableLinks) {
+    const group = link.group ?? "Other";
+    const items = groups.get(group) ?? [];
+    items.push(link);
+    groups.set(group, items);
+  }
+  return Array.from(groups.values()).flat();
 }

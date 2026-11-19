@@ -49,6 +49,7 @@ export interface User {
   is_active: boolean;
   email_verified_at: string | null;
   avatar_url: string | null;
+  onboarded?: boolean;
   created_at: string;
   updated_at: string;
   name?: string | null;
@@ -438,7 +439,6 @@ export interface WorkspaceRelationship {
 
 export interface WorkspaceParty {
   id: string;
-  kind: string;
   display_name: string;
   email: string | null;
   avatar_url?: string | null;
@@ -778,7 +778,12 @@ export interface AdminDashboard {
   }>;
 }
 
-export type AttentionKind = "access" | "billing" | "maintenance" | "lease";
+export type AttentionKind =
+  | "access"
+  | "billing"
+  | "maintenance"
+  | "stay"
+  | "lease";
 
 export interface AttentionItem {
   code: string;

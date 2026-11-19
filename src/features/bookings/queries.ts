@@ -8,8 +8,10 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { unwrap } from "@/lib/api-envelope";
+import { parseApiError } from "@/lib/error-utils";
 import { bookingsService } from "./service";
 import type {
   AdminBookingCreateInput,
@@ -89,6 +91,29 @@ export function useApproveBooking(bookingId: string) {
   return useDecisionMutation(bookingId, async () =>
     unwrap(await bookingsService.approve(bookingId)),
   );
+}
+
+/**
+ * Send the guest their acceptance magic link again.
+ *
+ * This is not a decision, so it does not refresh the register; only the booking
+ * it belongs to changes, and its trail records who sent it.
+ */
+export function useResendBookingOnboarding(bookingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(await bookingsService.resendOnboarding(bookingId)),
+    onSuccess: async (receipt) => {
+      toast.success(`Magic link sent to ${receipt.email}`);
+      await queryClient.invalidateQueries({
+        queryKey: bookingKeys.detail(bookingId),
+      });
+    },
+    onError: (error) => {
+      toast.error(parseApiError(error).message);
+    },
+  });
 }
 
 export function useDeclineBooking(bookingId: string) {

@@ -623,6 +623,7 @@ function Console({
   showBack: boolean;
 }) {
   const gateId = gate.data?.id ?? "unassigned";
+  const access = useAccess();
   const client = useQueryClient();
   const [code, setCode] = useState("");
   const [lookupCode, setLookupCode] = useState("");
@@ -636,6 +637,12 @@ function Console({
   );
   const [selectedLaneId, setSelectedLaneId] = useState("");
   const [online, setOnline] = useState(true);
+  const noAssignment = gate.isError && hasNoAssignedCheckpoint(gate.error);
+  const checkpointReady = gate.isSuccess && !!gate.data;
+  const canRecord =
+    checkpointReady && (online || gate.data.offline_policy !== "deny");
+  const canAssignCheckpoint =
+    access.allowed("gates.update") || access.allowed("places.update");
   const storageKey = queueStorageKey(context, gateId);
   const [queued, setQueued] = useState<QueuedPassage[]>(() =>
     loadQueuedPassages(storageKey),
@@ -655,8 +662,10 @@ function Console({
       checkpointsApi.accessEvents({
         page: 1,
         page_size: 5,
+        gate_id: gateId,
         sort: "occurred_at:desc",
       }),
+    enabled: checkpointReady,
   });
   const mutation = useMutation({
     mutationFn: async (body: PassageInput) => {
@@ -728,6 +737,7 @@ function Console({
       !intent &&
       !result &&
       !mutation.isPending &&
+      checkpointReady &&
       online,
     retry: false,
     staleTime: 15_000,
@@ -762,16 +772,22 @@ function Console({
       mutation.isPending ||
       intent ||
       !queued.length ||
-      !gate.data
+      !checkpointReady
     ) {
       return;
     }
     const next = queued[0];
     setIntent(next.input);
     mutation.mutate(next.input);
-  }, [gate.data, intent, mutation, online, queued]);
+  }, [checkpointReady, intent, mutation, online, queued]);
   function recordPassage(nextDirection?: "entry" | "exit") {
     if (intent || mutation.isPending) return;
+    if (!checkpointReady) {
+      setQueueNotice(
+        "Assign a checkpoint before scanning or recording a passage.",
+      );
+      return;
+    }
     if (needsGuest) {
       setQueueNotice(
         "Choose which visitor is passing before you check in or out.",
@@ -826,12 +842,13 @@ function Console({
         <span>Validate access at the assigned checkpoint.</span>
       </header>
 
-      {gate.isError && !hasNoAssignedCheckpoint(gate.error) ? (
+      {gate.isError && !noAssignment ? (
         <Failure error={gate.error} retry={() => gate.refetch()} />
       ) : null}
       <section
         className="checkpoint-console-status"
-        aria-label="Active checkpoint"
+        aria-label="Checkpoint connection and readiness"
+        role="status"
       >
         <div>
           <ScanLine aria-hidden="true" />
@@ -848,7 +865,7 @@ function Console({
         <div>
           <span>
             <small>Operator</small>
-            <strong>{gate.data?.operator_name || "Current SiteAdmin"}</strong>
+            <strong>{gate.data?.operator_name || "—"}</strong>
           </span>
           {gate.data?.operator_site_admin_id ? (
             <Badge variant="neutral">
@@ -865,40 +882,53 @@ function Console({
           <span>
             <small>Connection</small>
             <strong className={online ? "online" : "offline"}>
-              {online ? "Online" : "Offline"}
+              {!online
+                ? "Browser offline"
+                : gate.isPending
+                  ? "Checking server"
+                  : gate.isError && !noAssignment
+                    ? "Unable to verify"
+                    : "Connected"}
             </strong>
           </span>
         </div>
         <div>
-          <Clock3 aria-hidden="true" />
+          <CheckCircle2 aria-hidden="true" />
           <span>
-            <small>Updated</small>
+            <small>Readiness</small>
             <strong>
-              {gate.dataUpdatedAt
-                ? new Date(gate.dataUpdatedAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "Just now"}
+              {gate.isPending
+                ? "Checking assignment"
+                : noAssignment
+                  ? "Assignment required"
+                  : !checkpointReady
+                    ? "Not ready"
+                    : !online
+                      ? gate.data.offline_policy === "deny"
+                        ? "Connection required"
+                        : "Provisional queue only"
+                      : "Ready to scan"}
             </strong>
           </span>
         </div>
       </section>
-      {gate.isError && hasNoAssignedCheckpoint(gate.error) ? (
+      {noAssignment ? (
         <InlineAlert
           tone="warning"
           title="Checkpoint assignment required"
           action={
-            <Link
-              href="/admin/gates"
-              className="inline-flex min-h-10 items-center px-2 text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
-            >
-              Manage checkpoints
-            </Link>
+            canAssignCheckpoint ? (
+              <Link
+                href="/admin/gates"
+                className="inline-flex min-h-10 items-center px-2 text-sm font-semibold text-[var(--vms-action)] underline-offset-4 hover:underline"
+              >
+                Assign a checkpoint
+              </Link>
+            ) : undefined
           }
         >
-          This operator has no assigned checkpoint. The browser is online, but
-          access decisions cannot be recorded until a checkpoint is assigned.
+          This operator has no assigned checkpoint. Ask a Site manager to assign
+          one before scanning or recording a passage.
         </InlineAlert>
       ) : null}
       {queued.length ? (
@@ -917,7 +947,9 @@ function Console({
             variant="outline"
             size="sm"
             className="mt-3"
-            disabled={!online || mutation.isPending || !!intent}
+            disabled={
+              !online || !checkpointReady || mutation.isPending || !!intent
+            }
             onClick={() => {
               const next = queued[0];
               if (!next) return;
@@ -937,9 +969,17 @@ function Console({
         }}
       >
         <fieldset
-          disabled={!!intent || mutation.isPending || !!result}
+          disabled={
+            !checkpointReady || !!intent || mutation.isPending || !!result
+          }
+          aria-describedby="checkpoint-readiness-help"
           className="checkpoint-console-fields"
         >
+          <p id="checkpoint-readiness-help" className="sr-only">
+            {checkpointReady
+              ? "Credential entry is available for the assigned checkpoint."
+              : "Credential entry is unavailable until a checkpoint is assigned and its context loads."}
+          </p>
           <section className="checkpoint-scan-panel">
             <header>
               <span>
@@ -994,7 +1034,7 @@ function Console({
                     aria-label="Door or barrier"
                     value={selectedLane?.id || ""}
                     onChange={(e) => setSelectedLaneId(e.target.value)}
-                    disabled={gate.isPending || lanes.length === 0}
+                    disabled={!checkpointReady || lanes.length === 0}
                     className={fieldControlClassName}
                   >
                     {lanes.length ? (
@@ -1010,6 +1050,12 @@ function Console({
                   </select>
                 )}
               </Field>
+              {checkpointReady && lanes.length === 0 ? (
+                <p className="text-xs text-[var(--vms-ink-muted)]">
+                  No hardware lane is configured. You can record a checkpoint
+                  decision, but no barrier command will be sent.
+                </p>
+              ) : null}
             </div>
             <details className="checkpoint-override">
               <summary>
@@ -1285,6 +1331,7 @@ function Console({
                 size="lg"
                 disabled={
                   !code.trim() ||
+                  !canRecord ||
                   !canCheckIn ||
                   (manualOverride && !overrideReason.trim()) ||
                   mutation.isPending
@@ -1304,6 +1351,7 @@ function Console({
                 variant="outline"
                 disabled={
                   !code.trim() ||
+                  !canRecord ||
                   !canCheckOut ||
                   (manualOverride && !overrideReason.trim()) ||
                   mutation.isPending
@@ -1458,6 +1506,7 @@ function Console({
               variant="outline"
               size="sm"
               isLoading={recentScans.isFetching}
+              disabled={!checkpointReady}
               onClick={() => recentScans.refetch()}
             >
               <RefreshCcw aria-hidden="true" />
@@ -1483,7 +1532,13 @@ function Console({
               </tr>
             </thead>
             <tbody>
-              {recentScans.isPending ? (
+              {!checkpointReady && !gate.isPending ? (
+                <tr>
+                  <td colSpan={5}>
+                    Assign a checkpoint to view its recent scans.
+                  </td>
+                </tr>
+              ) : recentScans.isPending ? (
                 <tr>
                   <td colSpan={5}>Loading recent scans…</td>
                 </tr>

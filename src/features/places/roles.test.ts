@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  placeAssignmentCopyFor,
-  placePartyKindFor,
-  placeRolesFor,
-} from "./roles";
+import { placeAssignmentCopyFor, placeRolesFor } from "./roles";
 
 describe("place relationship vocabulary", () => {
   it("uses household roles for residential sites", () => {
@@ -14,15 +10,13 @@ describe("place relationship vocabulary", () => {
       "tenant",
       "household_member",
     ]);
-    expect(placePartyKindFor("residential")).toBe("person");
     expect(placeAssignmentCopyFor("residential").title).toBe("Assign resident");
   });
 
-  it("uses business roles and allows organizations for commercial sites", () => {
+  it("uses business roles for commercial sites", () => {
     const roles = placeRolesFor("commercial").map((role) => role.value);
     expect(roles).toEqual(["tenant", "member"]);
     expect(roles).not.toContain("resident");
-    expect(placePartyKindFor("commercial")).toBe("any");
     expect(placeAssignmentCopyFor("commercial")).toMatchObject({
       title: "Add party to this space",
       placeLabel: "Commercial space",
@@ -35,7 +29,6 @@ describe("place relationship vocabulary", () => {
       "guest",
       "member",
     ]);
-    expect(placePartyKindFor("hospitality")).toBe("any");
   });
 
   it("covers both households and businesses in mixed-use sites", () => {
@@ -46,7 +39,6 @@ describe("place relationship vocabulary", () => {
   });
 
   it("falls back to residential vocabulary when the use case is unknown", () => {
-    expect(placePartyKindFor(null)).toBe("person");
     expect(placeRolesFor(undefined)[0].value).toBe("resident");
   });
 });

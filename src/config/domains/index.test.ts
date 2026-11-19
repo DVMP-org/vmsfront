@@ -28,7 +28,7 @@ describe("domain experience configuration", () => {
   it("presents mixed-use as one cohesive property experience", () => {
     const mixedUse = domainExperiences.mixed_use;
     expect(mixedUse.navigation.map((group) => group.label)).toEqual([
-      "Property",
+      "Overview",
       "Leasing & revenue",
       "Operations",
       "Access",

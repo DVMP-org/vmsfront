@@ -35,6 +35,8 @@ import {
   Calendar as CalendarIcon,
   Columns3,
   Inbox,
+  LayoutGrid,
+  List,
   RefreshCw,
   Rows3,
   SearchX,
@@ -136,6 +138,10 @@ interface DataTableProps<T> {
   isLoading?: boolean | null;
   /** Optional mobile representation. When provided, the desktop table becomes a labelled row-summary list below md. */
   mobileSummary?: (row: T) => ReactNode;
+  /** Optional card content for the card view. Falls back to the row summary. */
+  renderCard?: (row: T) => ReactNode;
+  /** Show the table/card view toggle beside the column chooser. Defaults to true; pass false for table-only registers. */
+  enableCardView?: boolean;
   /** Accessible name for the desktop comparison region. */
   tableLabel?: string;
   scrollHint?: string;
@@ -207,6 +213,8 @@ export function DataTable<T extends Record<string, any>>({
   bulkActions = [],
   isLoading = false,
   mobileSummary,
+  renderCard,
+  enableCardView = true,
   tableLabel = "Data table",
   scrollHint,
   isStale = false,
@@ -267,6 +275,10 @@ export function DataTable<T extends Record<string, any>>({
   const [density, setDensity] = useState<"compact" | "comfortable">(
     "comfortable",
   );
+  // Table is the canonical register view; cards are an optional alternate view.
+  // A hierarchy keeps the table because card order would lose parent context.
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const cardViewEnabled = enableCardView && !hierarchy;
 
   // Internal state for filters - map field to value
   const [filterValues, setFilterValues] = useState<Record<string, string>>(
@@ -1078,6 +1090,32 @@ export function DataTable<T extends Record<string, any>>({
                     </Button>
                   </fieldset>
                 </details>
+                {cardViewEnabled ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setViewMode((current) =>
+                        current === "table" ? "cards" : "table",
+                      )
+                    }
+                    className="h-9 w-9 p-0"
+                    aria-pressed={viewMode === "cards"}
+                    aria-label="Card view"
+                    title={
+                      viewMode === "table"
+                        ? "Switch to card view"
+                        : "Switch to list view"
+                    }
+                  >
+                    {viewMode === "table" ? (
+                      <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <List className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -1214,7 +1252,11 @@ export function DataTable<T extends Record<string, any>>({
               </div>
             ) : null}
             {/* Horizontal scroll container with shadow indicators */}
-            <div className="hidden md:block">
+              <div
+                className={
+                  viewMode === "cards" ? "hidden" : "hidden md:block"
+                }
+              >
               <Table
                 aria-label={tableLabel}
                 className="min-w-full text-xs sm:text-sm"
@@ -1374,7 +1416,7 @@ export function DataTable<T extends Record<string, any>>({
                               key={column.key}
                               className={cn(
                                 column.className,
-                                density === "compact" && "py-1.5",
+                                density === "compact" && "py-1.5 xs:py-1.5",
                                 column.responsiveHide === "sm" &&
                                   "hidden sm:table-cell",
                                 column.responsiveHide === "md" &&
@@ -1403,7 +1445,10 @@ export function DataTable<T extends Record<string, any>>({
               </Table>
             </div>
             <ul
-              className="divide-y divide-border rounded-lg border border-border md:hidden"
+                className={cn(
+                  "divide-y divide-border rounded-lg border border-border md:hidden",
+                  viewMode === "cards" && "hidden",
+                )}
               aria-label={`${tableLabel} row summaries`}
             >
               {paginatedData.length === 0 ? (
@@ -1452,6 +1497,50 @@ export function DataTable<T extends Record<string, any>>({
                 })
               )}
             </ul>
+              {viewMode === "cards" ? (
+                <div
+                  role="list"
+                  aria-label={`${tableLabel} cards`}
+                  className="grid gap-3 p-2 sm:grid-cols-2 xl:grid-cols-3"
+                >
+                  {paginatedData.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
+                      {emptyMessage}
+                    </div>
+                  ) : (
+                    paginatedData.map((row, index) => {
+                      const rowId = getRowId(row);
+                      const isSelected = selected.has(rowId);
+                      const renderContent =
+                        renderCard ?? mobileSummary ?? generatedMobileSummary;
+                      return (
+                        <article
+                          role="listitem"
+                          key={rowId || index}
+                          className={cn(
+                            "rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4",
+                            isSelected &&
+                            "border-[var(--vms-ink)] bg-[var(--vms-surface-subtle)]",
+                          )}
+                        >
+                          {selectable ? (
+                            <label className="mb-3 flex min-h-11 items-center gap-2 text-xs font-medium">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleRowSelection(rowId)}
+                                className="h-5 w-5 rounded border-input"
+                              />
+                              Select row
+                            </label>
+                          ) : null}
+                          {renderContent(row)}
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
           </div>
         )}
       </div>
@@ -1488,7 +1577,7 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center justify-center gap-1 my-4">
             {/* First/Prev - hidden on very small screens */}
             <Button
               variant="outline"

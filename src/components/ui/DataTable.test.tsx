@@ -92,6 +92,45 @@ describe("DataTable register foundation", () => {
     ).toBeInTheDocument();
   });
 
+  it("toggles between the register and an optional card view", () => {
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+        tableLabel="People register"
+      />,
+    );
+
+    const cardToggle = screen.getByRole("button", { name: "Card view" });
+    fireEvent.click(cardToggle);
+
+    expect(
+      screen.getByRole("list", { name: "People register cards" }),
+    ).toHaveTextContent("NameAdaRoleResident");
+    expect(cardToggle).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(cardToggle);
+
+    expect(
+      screen.queryByRole("list", { name: "People register cards" }),
+    ).toBeNull();
+    expect(cardToggle).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("can disable the optional card view", () => {
+    render(
+      <DataTable
+        data={[{ id: "one", name: "Ada", role: "Resident" }]}
+        columns={columns}
+        enableCardView={false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Card view" }),
+    ).toBeNull();
+  });
+
   it("dismisses the column picker outside and on Escape without resetting choices", () => {
     render(
       <DataTable

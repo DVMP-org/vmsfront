@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useCheckInStay, useCheckOutStay } from "@/features/hospitality/queries";
+import { parseApiError } from "@/lib/error-utils";
 import type { BookingDetailDto } from "../../api-types";
 
 /**
@@ -43,11 +44,7 @@ export function BookingStayActions({ booking }: { booking: BookingDetailDto }) {
         try {
             await action();
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : "That action did not go through.",
-            );
+            setError(parseApiError(cause).message);
         }
     }
 

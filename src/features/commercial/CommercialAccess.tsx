@@ -27,6 +27,7 @@ import {
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Modal } from "@/components/ui/Modal";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
 import { invitationApprovalsApi } from "@/features/invitation-approvals/api";
@@ -55,7 +56,13 @@ type AccessRow = {
 };
 
 export default function CommercialAccess() {
-  const { selectedSite, contextKey, canManageAccess } = useCommercialAccess();
+  const {
+    selectedSite,
+    contextKey,
+    profile,
+    canManageAccess,
+    canReadInvitations,
+  } = useCommercialAccess();
   const client = useQueryClient();
   const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -71,15 +78,14 @@ export default function CommercialAccess() {
     enabled: !!placeId,
   });
   const invitations = useQuery({
-    queryKey: ["commercial", contextKey, "invitations", placeId],
+    queryKey: ["commercial", contextKey, "visitor-approvals"],
     queryFn: () =>
       invitationApprovalsApi.list({
-        status: "all",
+        status: "requested",
         page: 1,
-        pageSize: 100,
-        destinationPlaceId: placeId,
+        pageSize: 1,
       }),
-    enabled: !!placeId,
+    enabled: !!placeId && profile.isSuccess && canReadInvitations,
     retry: false,
   });
   const allPlaces = useMemo(
@@ -131,9 +137,6 @@ export default function CommercialAccess() {
         })),
     [relationships.data?.items, scopeIds],
   );
-  const pendingInvitations = (invitations.data?.items || []).filter(
-    (invitation) => invitation.status === "requested",
-  ).length;
   const update = useMutation({
     mutationFn: ({ ids, active }: { ids: string[]; active: boolean }) =>
       Promise.all(
@@ -317,16 +320,35 @@ export default function CommercialAccess() {
             value: rows.filter((row) => row.status === "active").length,
             detail: "Currently valid operating access",
           },
-          {
-            icon: DoorOpen,
-            label: "Visitor approvals",
-            value: invitations.isError ? "Unavailable" : pendingInvitations,
-            detail: invitations.isError
-              ? "Could not load the visitor queue"
-              : "Requests awaiting approval",
-          },
+          ...(canReadInvitations && !invitations.isError
+            ? [
+                {
+                  icon: DoorOpen,
+                  label: "Visitor approvals",
+                  value: invitations.data?.total ?? "—",
+                  detail: "Requested invitations across this Site",
+                },
+              ]
+            : []),
         ]}
       />
+      {canReadInvitations && invitations.isError ? (
+        <InlineAlert
+          tone="warning"
+          title="Visitor approval count could not be loaded"
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => invitations.refetch()}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {parseApiError(invitations.error).message}
+        </InlineAlert>
+      ) : null}
       <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
         <div className="mb-3 flex flex-col gap-3 border-b border-[var(--vms-line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -337,12 +359,14 @@ export default function CommercialAccess() {
               registered separately against the Site.
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/invitations">
-              <DoorOpen className="h-4 w-4" aria-hidden="true" />
-              Visitor invitation queue
-            </Link>
-          </Button>
+          {canReadInvitations ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/invitations?status=requested">
+                <DoorOpen className="h-4 w-4" aria-hidden="true" />
+                Visitor invitation queue
+              </Link>
+            </Button>
+          ) : null}
         </div>
         <DataTable
           data={rows}
@@ -500,7 +524,6 @@ function AssignAccessModal({
         </Field>
         <FacetPicker
           facet="parties"
-          kind="person"
           label="Person"
           value={person}
           contextKey={contextKey}
@@ -588,7 +611,9 @@ function SummaryStrip({
   }>;
 }) {
   return (
-    <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
+    <section
+      className={`grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] ${items.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+    >
       {items.map(({ icon: Icon, label, value, detail }) => (
         <div
           key={label}

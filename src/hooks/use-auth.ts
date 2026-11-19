@@ -254,7 +254,7 @@ export function useResetPassword(onSuccess?: () => void) {
   });
 }
 
-export function useOnboard() {
+export function useOnboard(redirectTo?: string) {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const queryClient = useQueryClient();
@@ -269,7 +269,7 @@ export function useOnboard() {
       queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
 
       toast.success("Onboarding complete! Welcome.");
-      router.push("/");
+      router.push(redirectTo || "/");
     },
     onError: (error: any) => {
       const parsedError = parseApiError(error);
