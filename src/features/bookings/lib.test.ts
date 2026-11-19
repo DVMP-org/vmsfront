@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bookingGuestPartyId,
+  bookingRoomPlaceId,
   bookingStatusLabel,
   bookingStatusTone,
   filterValue,
@@ -121,5 +123,59 @@ describe("toBookingSummary", () => {
     expect(summary.placeName).toBe("No place yet");
     expect(summary.requester.email).toBe("ada@example.test");
     expect(summary.guestCount).toBe(2);
+  });
+});
+
+describe("detail actions", () => {
+  it("reads the guest acceptance created", () => {
+    expect(
+      bookingGuestPartyId({ outcome: { guest_party_id: "party-1" } }),
+    ).toBe("party-1");
+    expect(bookingGuestPartyId({ outcome: null })).toBeNull();
+    expect(bookingGuestPartyId({ outcome: { guest_party_id: 42 } })).toBeNull();
+  });
+
+  it("ignores holds that no longer block a room", () => {
+    const booking = {
+      reservations: [
+        {
+          id: "r1",
+          site_id: "s1",
+          booking_id: "b1",
+          booking_item_id: null,
+          place_id: "room-old",
+          place_type: null,
+          start_at: "2026-03-01T14:00:00Z",
+          end_at: "2026-03-02T10:00:00Z",
+          status: "cancelled" as const,
+          expires_at: null,
+          notes: null,
+          is_holding: false,
+        },
+        {
+          id: "r2",
+          site_id: "s1",
+          booking_id: "b1",
+          booking_item_id: null,
+          place_id: "room-live",
+          place_type: null,
+          start_at: "2026-03-04T14:00:00Z",
+          end_at: "2026-03-05T10:00:00Z",
+          status: "confirmed" as const,
+          expires_at: null,
+          notes: null,
+          is_holding: true,
+        },
+      ],
+    };
+
+    expect(
+      bookingRoomPlaceId(booking as Parameters<typeof bookingRoomPlaceId>[0]),
+    ).toBe("room-live");
+    expect(
+      bookingRoomPlaceId({ reservations: [] } as Parameters<
+        typeof bookingRoomPlaceId
+      >[0]),
+    ).toBeNull();
   });
 });

@@ -1,51 +1,31 @@
-import { BedDouble, CalendarClock, UserRound, Users } from "lucide-react";
-import type { WorkspaceRelationship } from "@/types";
+import { BedDouble, CalendarClock, CircleAlert, DoorOpen } from "lucide-react";
 import { MetricStrip } from "@/features/dashboard/MetricStrip";
-
-const occupancyRoles = new Set([
-  "resident",
-  "resident_of",
-  "owner",
-  "tenant",
-  "member",
-  "member_of",
-]);
-const staffAndGuestRoles = new Set([
-  "employee",
-  "staff",
-  "hotel_staff",
-  "operator",
-  "manager",
-  "guest",
-  "guest_of",
-]);
+import type { HospitalityRoom } from "./contracts";
+import { roomReadiness } from "./room-readiness";
 
 export function HospitalityMetricStrip({
-  relationships,
+  rooms,
   reservedCount,
   checkedInCount,
-  peopleLoading,
-  peopleError,
+  roomsLoading,
+  roomsError,
   staysLoading,
   staysError,
   checkedInLoading,
   checkedInError,
 }: {
-  relationships: WorkspaceRelationship[];
+    rooms: HospitalityRoom[];
   reservedCount: number;
   checkedInCount: number;
-  peopleLoading: boolean;
-  peopleError: boolean;
+    roomsLoading: boolean;
+    roomsError: boolean;
   staysLoading: boolean;
   staysError: boolean;
   checkedInLoading: boolean;
   checkedInError: boolean;
 }) {
-  const peopleState = peopleLoading
-    ? "loading"
-    : peopleError
-      ? "error"
-      : "ready";
+  const roomState = roomsLoading ? "loading" : roomsError ? "error" : "ready";
+  const readiness = roomReadiness(rooms);
   return (
     <MetricStrip
       label="Hospitality operating summary"
@@ -71,22 +51,22 @@ export function HospitalityMetricStrip({
               : "ready",
         },
         {
-          icon: UserRound,
-          label: "Occupants",
-          value: relationships.filter((row) =>
-            occupancyRoles.has(row.role.toLowerCase()),
-          ).length,
-          detail: "Occupant relationships in loaded Site results",
-          state: peopleState,
+          icon: DoorOpen,
+          label: "Ready rooms",
+          value: readiness.ready,
+          detail: "Available, clean and without open issues",
+          hint: "Rooms that are available, clean or inspected, and have no open maintenance request.",
+          href: "/admin/hospitality/rooms",
+          state: roomState,
         },
         {
-          icon: Users,
-          label: "Staff & guests",
-          value: relationships.filter((row) =>
-            staffAndGuestRoles.has(row.role.toLowerCase()),
-          ).length,
-          detail: "Staff and guest relationships in loaded results",
-          state: peopleState,
+          icon: CircleAlert,
+          label: "Rooms needing work",
+          value: readiness.issues.length,
+          detail: "Cleaning, maintenance or out of service",
+          hint: "Rooms that are dirty or in progress, out of service, or have open maintenance.",
+          href: "/admin/hospitality/rooms",
+          state: roomState,
         },
       ]}
     />

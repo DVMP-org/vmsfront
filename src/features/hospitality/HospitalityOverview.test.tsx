@@ -1,6 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, it, expect, beforeEach } from "vitest";
+import { TooltipProvider } from "@/components/ui/Tooltip";
 import Page from "./HospitalityOverview";
 const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
@@ -9,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   action: vi.fn(),
   update: vi.fn(),
   create: vi.fn(),
-  people: vi.fn(),
+  rooms: { list: vi.fn() },
   context: vi.fn(),
 }));
 vi.mock("@/store/app-store", () => ({
@@ -26,9 +33,6 @@ vi.mock("@/services/admin-service", () => ({
   adminService: { getAdminProfile: mocks.profile },
 }));
 vi.mock("@/features/hospitality/api", () => ({ hospitalityApi: mocks }));
-vi.mock("@/features/hospitality/people-api", () => ({
-  hospitalityPeopleApi: { list: mocks.people },
-}));
 vi.mock("@/features/context/api", () => ({
   contextApi: { workspace: mocks.context },
 }));
@@ -54,6 +58,27 @@ const stay = {
     },
   ],
 };
+const room = {
+  id: "room",
+  name: "Suite 12",
+  room_number: "12",
+  room_type: "suite",
+  place_group_id: null,
+  place_group_name: null,
+  floor: "1",
+  capacity: 2,
+  base_rate: "12000",
+  currency: "NGN",
+  amenities: [],
+  status: "available",
+  housekeeping_status: "clean",
+  current_stay_id: null,
+  current_guest_name: null,
+  next_arrival: null,
+  next_guest_name: null,
+  maintenance_open: 0,
+  updated_at: "2027-01-01T00:00:00Z",
+};
 function mount() {
   return render(
     <QueryClientProvider
@@ -66,7 +91,9 @@ function mount() {
         })
       }
     >
-      <Page />
+      <TooltipProvider>
+        <Page />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -80,6 +107,16 @@ beforeEach(() => {
     total_pages: 1,
   });
   mocks.get.mockResolvedValue(stay);
+  mocks.rooms.list.mockResolvedValue([
+    room,
+    {
+      ...room,
+      id: "room-2",
+      name: "Room 14",
+      room_number: "14",
+      housekeeping_status: "dirty",
+    },
+  ]);
   mocks.context.mockResolvedValue({
     management: {
       mode: "local",
@@ -111,39 +148,8 @@ beforeEach(() => {
       ],
     },
   });
-  mocks.people.mockResolvedValue({
-    items: [
-      {
-        id: "guest-link",
-        organization_id: "org",
-        role: "guest_of",
-        status: "active",
-        effective_from: null,
-        effective_to: null,
-        created_at: "2026-01-01",
-        updated_at: "2026-01-01",
-        party: {
-          id: "guest-party",
-          kind: "person",
-          display_name: "Gina Guest",
-          email: "gina@example.test",
-          is_active: true,
-        },
-        place: {
-          id: "room",
-          name: "Suite 12",
-          slug: "suite-12",
-          kind: "room",
-          is_active: true,
-        },
-      },
-    ],
-    page: 1,
-    total: 2,
-    total_pages: 1,
-  });
 });
-it("prioritizes reserved and checked-in stays over generic administration", async () => {
+it("prioritizes stays and room readiness over generic administration", async () => {
   mount();
   await screen.findByRole("heading", { name: "Hotel operations" });
   expect(
@@ -153,10 +159,20 @@ it("prioritizes reserved and checked-in stays over generic administration", asyn
   ).toBeInTheDocument();
   expect(mocks.context).toHaveBeenCalledWith("hotel");
   expect(mocks.list).toHaveBeenCalledWith(1, "checked_in");
+  expect(mocks.rooms.list).toHaveBeenCalled();
   expect(screen.getByText("Checked in")).toBeInTheDocument();
+  const summary = screen.getByRole("region", {
+    name: "Hospitality operating summary",
+  });
+  expect(within(summary).getByText("Ready rooms")).toBeInTheDocument();
+  expect(within(summary).getByText("Rooms needing work")).toBeInTheDocument();
   expect(
     screen.getByRole("heading", { name: "Reserved stays" }),
   ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Room readiness" }),
+  ).toBeInTheDocument();
+  expect(await screen.findByText("Needs cleaning")).toBeInTheDocument();
   expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
   expect(screen.queryByText("Administration and occupancy")).toBeNull();
 });
@@ -198,19 +214,49 @@ it("shows inherited site administration provenance", async () => {
     await screen.findByText("Site management is inherited from Harbour Group."),
   ).toBeInTheDocument();
 });
+it("keeps stays visible when room inventory fails and supports retry", async () => {
+  mocks.rooms.list.mockRejectedValueOnce(new Error("rooms unavailable"));
+  mount();
+
+  expect(
+    await screen.findByRole("heading", { name: "Reserved stays" }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByText("Room readiness is unavailable"),
+  ).toBeInTheDocument();
+  expect(screen.getAllByText("Ada Guest").length).toBeGreaterThan(0);
+
+  fireEvent.click(
+    within(screen.getByRole("region", { name: "Room readiness" })).getByRole(
+      "button",
+      { name: "Retry" },
+    ),
+  );
+  expect(await screen.findByText("Needs cleaning")).toBeInTheDocument();
+});
 it("renders empty and failed lists explicitly with retry", async () => {
-  mocks.list.mockRejectedValueOnce(new Error("unavailable"));
+  mocks.list.mockImplementation((_: number, status: string) =>
+    status === "reserved"
+      ? Promise.reject(new Error("unavailable"))
+      : Promise.resolve({ items: [stay], page: 1, total: 1, total_pages: 1 }),
+  );
   mount();
   await screen.findByRole("button", { name: "Retry" });
-  mocks.list.mockResolvedValue({
-    items: [],
-    page: 1,
-    total: 0,
-    total_pages: 0,
-  });
+  mocks.list.mockImplementation((_: number, status: string) =>
+    Promise.resolve({
+      items: status === "reserved" ? [] : [stay],
+      page: 1,
+      total: status === "reserved" ? 0 : 1,
+      total_pages: status === "reserved" ? 0 : 1,
+    }),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
   expect(
-    (await screen.findAllByText("No reservations yet")).length,
+    (
+      await screen.findAllByText(
+        "No reserved stays are waiting for arrival review.",
+      )
+    ).length,
   ).toBeGreaterThan(0);
 });
 it("hides lifecycle actions from read-only operators", async () => {
@@ -243,7 +289,7 @@ it("requires confirmation and refreshes state after check-in", async () => {
   expect(mocks.action).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Confirm action" }));
   await waitFor(() =>
-    expect(mocks.action).toHaveBeenCalledWith("stay", "check-in", undefined),
+    expect(mocks.action).toHaveBeenCalledWith("stay", "check-in"),
   );
   await screen.findByRole("button", { name: "Check out" });
 });

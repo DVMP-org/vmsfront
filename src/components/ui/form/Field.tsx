@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { CircleAlert, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { InfoHint } from "../Tooltip";
 
 export interface FieldControlProps {
   id: string;
@@ -18,6 +19,11 @@ interface FieldProps {
   label: string;
   children: (control: FieldControlProps) => ReactNode;
   description?: string;
+  /**
+   * A short explanation of a non-obvious field. Unlike `description` it does not
+   * take permanent vertical space: it is revealed on hover or keyboard focus.
+   */
+  hint?: string;
   error?: string;
   required?: boolean;
   className?: string;
@@ -30,6 +36,7 @@ export function Field({
   label,
   children,
   description,
+  hint,
   error,
   required = false,
   className,
@@ -41,23 +48,26 @@ export function Field({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <label
-        htmlFor={id}
-        className="block text-[13px] font-semibold leading-[18px] text-[var(--vms-ink)]"
-      >
-        {label}
-        {required ? (
-          <>
-            <span
-              aria-hidden="true"
-              className="ml-0.5 text-[var(--vms-danger)]"
-            >
-              *
-            </span>
-            <span className="sr-only"> (required)</span>
-          </>
-        ) : null}
-      </label>
+      <div className="flex items-center gap-1.5">
+        <label
+          htmlFor={id}
+          className="block text-[13px] font-semibold leading-[18px] text-[var(--vms-ink)]"
+        >
+          {label}
+          {required ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="ml-0.5 text-[var(--vms-danger)]"
+              >
+                *
+              </span>
+              <span className="sr-only"> (required)</span>
+            </>
+          ) : null}
+        </label>
+        {hint ? <InfoHint content={hint} label={`About ${label}`} /> : null}
+      </div>
       <div
         className={cn(
           "relative",

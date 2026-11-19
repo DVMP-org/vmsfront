@@ -9,6 +9,8 @@ vi.mock("./api", () => ({
     list: vi.fn(),
     get: vi.fn(),
     folio: vi.fn(),
+    housekeeping: vi.fn(),
+    setHousekeeping: vi.fn(),
   },
 }));
 
@@ -67,6 +69,13 @@ beforeEach(() => {
     paid: "100.00",
     balance: "35.50",
     lines: [],
+  });
+  vi.mocked(guestStayApi.housekeeping).mockResolvedValue({
+    stay_id: "stay",
+    room_id: "room",
+    room_name: "Suite 402",
+    status: "clean",
+    updated_at: "2027-04-05T15:00:00Z",
   });
 });
 

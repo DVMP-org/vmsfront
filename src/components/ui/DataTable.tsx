@@ -1103,7 +1103,7 @@ export function DataTable<T extends Record<string, any>>({
                     className="h-9 w-9 p-0"
                     aria-pressed={viewMode === "cards"}
                     aria-label="Card view"
-                    title={
+                    tooltip={
                       viewMode === "table"
                         ? "Switch to card view"
                         : "Switch to list view"
@@ -1131,7 +1131,7 @@ export function DataTable<T extends Record<string, any>>({
                       ? "Use compact row density"
                       : "Use comfortable row density"
                   }
-                  title={
+                  tooltip={
                     density === "comfortable"
                       ? "Compact density"
                       : "Comfortable density"

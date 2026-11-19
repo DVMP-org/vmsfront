@@ -14,6 +14,8 @@ export const guestStayKeys = {
   all: ["workspace", "guest-stays"] as const,
   folio: (stayId: string) =>
     ["workspace", "guest-stays", stayId, "folio"] as const,
+  housekeeping: (stayId: string) =>
+    ["workspace", "guest-stays", stayId, "housekeeping"] as const,
 };
 
 export function useGuestStays() {

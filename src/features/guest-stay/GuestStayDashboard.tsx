@@ -16,6 +16,7 @@ import {
 } from "@/features/hospitality/contracts";
 import { GuestStayAttention } from "./GuestStayAttention";
 import { GuestStayFolio } from "./GuestStayFolio";
+import { GuestStayHousekeeping } from "./GuestStayHousekeeping";
 import { useGuestStays } from "./queries";
 
 const STAY_RANK: Record<string, number> = {
@@ -188,6 +189,10 @@ function StayCard({ stay }: { stay: Stay }) {
           </p>
         </div>
       </article>
+
+      {stay.status === "checked_in" && room ? (
+        <GuestStayHousekeeping stayId={stay.id} roomName={room.room.name} />
+      ) : null}
 
       <GuestStayFolio stayId={stay.id} />
     </div>

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { ErrorMessage } from "./form/ErrorMessage";
 import { FormDescription } from "./form/FormDescription";
 import { FormLabel } from "./label/FormLabel";
+import { InfoHint } from "./Tooltip";
 
 export const inputVariants = cva(
   [
@@ -106,6 +107,8 @@ export interface InputProps
   showAsterisk?: boolean;
   icon?: React.ElementType;
   description?: React.ReactNode;
+  /** Short explanation shown on hover/focus instead of permanent helper text. */
+  hint?: string;
   isContentSensitive?: boolean;
 }
 
@@ -121,6 +124,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       showAsterisk,
       label,
       description,
+      hint,
       icon: Icon,
       leftNode,
       rightNode,
@@ -149,13 +153,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="relative w-full space-y-1.5">
         {label && (
-          <FormLabel
-            htmlFor={inputId}
-            showAsterisk={showAsterisk}
-            error={error}
-          >
-            {label}
-          </FormLabel>
+          <div className="flex items-center gap-1.5">
+            <FormLabel
+              htmlFor={inputId}
+              showAsterisk={showAsterisk}
+              error={error}
+            >
+              {label}
+            </FormLabel>
+            {hint ? <InfoHint content={hint} label={`About ${label}`} /> : null}
+          </div>
         )}
         <div
           className={cn(

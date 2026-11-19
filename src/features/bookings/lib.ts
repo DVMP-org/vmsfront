@@ -7,7 +7,11 @@
 
 import type { StatusTone } from "@/components/ui/StatusBadge";
 import { humanize } from "@/lib/strings";
-import type { BookingDto, BookingFinancialsDto } from "./api-types";
+import type {
+  BookingDetailDto,
+  BookingDto,
+  BookingFinancialsDto,
+} from "./api-types";
 import type { BookingStatus, BookingSummary } from "./types";
 
 const toneByStatus: Record<BookingStatus, StatusTone> = {
@@ -141,6 +145,37 @@ export function stayNights(checkIn: string, checkOut: string): number | null {
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
   const nights = Math.round((end.getTime() - start.getTime()) / 86_400_000);
   return Number.isFinite(nights) ? Math.max(nights, 0) : null;
+}
+
+/**
+ * The Party acceptance created for this booking.
+ *
+ * Approval records the guest it resolved (or created) in `outcome`, which is
+ * what guest-scoped actions need. Reading it defensively keeps an older or
+ * manually-created booking from rendering an action with an invalid id.
+ */
+export function bookingGuestPartyId(
+  booking: Pick<BookingDto, "outcome">,
+): string | null {
+  const value = booking.outcome?.guest_party_id;
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+/**
+ * The physical room the booking currently holds, for room-scoped actions.
+ *
+ * Reservations are the capacity record, and one booking can hold several. A
+ * cancelled or lapsed hold is not the guest's room, so the newest live hold
+ * wins; without one there is no room to open housekeeping for.
+ */
+export function bookingRoomPlaceId(booking: BookingDetailDto): string | null {
+  const live = booking.reservations.filter(
+    (reservation) =>
+      Boolean(reservation.place_id) &&
+      reservation.status !== "cancelled" &&
+      reservation.status !== "expired",
+  );
+  return live.at(-1)?.place_id ?? null;
 }
 
 /**

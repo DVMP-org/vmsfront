@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -7,12 +8,22 @@ import { unwrap } from "@/lib/api-envelope";
 import { parseApiError } from "@/lib/error-utils";
 import { placeGroupsApi } from "@/features/place-groups/api";
 import { hospitalityApi } from "./api";
+import { hospitalityPeopleApi } from "./people-api";
 import { hospitalityService } from "./service";
 import type { GuestDetail } from "./contracts";
 
 export const hospitalityRoomKeys = {
   all: ["hospitality", "rooms"] as const,
 };
+
+/** Site room inventory shared by the overview and Rooms register. */
+export function useHospitalitySiteRooms(contextKey: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["hospitality-rooms", contextKey],
+    queryFn: () => hospitalityApi.rooms.list(),
+    enabled,
+  });
+}
 
 /** Rooms that may be offered when a reservation needs one. */
 export function useHospitalityRooms(enabled = true) {
@@ -21,6 +32,39 @@ export function useHospitalityRooms(enabled = true) {
     queryFn: async () => unwrap(await hospitalityService.listRooms()),
     enabled,
   });
+}
+
+export const hospitalityPeopleKeys = {
+  all: ["hospitality-people"] as const,
+  list: (contextKey: string) => ["hospitality-people", contextKey] as const,
+};
+
+/**
+ * Housekeepers a room can be assigned to.
+ *
+ * The Rooms register and a stay's detail page both open the housekeeping
+ * drawer, and both need the same option list. Keeping it here means the drawer
+ * has one supplier instead of each screen rebuilding it from relationships.
+ */
+export function useHousekeepingAssignees(
+  contextKey: string,
+  enabled = true,
+) {
+  const people = useQuery({
+    queryKey: hospitalityPeopleKeys.list(contextKey),
+    queryFn: hospitalityPeopleApi.list,
+    enabled,
+  });
+
+  return useMemo(() => {
+    const unique = new Map<string, string>();
+    for (const relationship of people.data?.items ?? []) {
+      if (relationship.party?.id) {
+        unique.set(relationship.party.id, relationship.party.display_name);
+      }
+    }
+    return Array.from(unique, ([value, label]) => ({ value, label }));
+  }, [people.data?.items]);
 }
 
 /**
@@ -45,7 +89,9 @@ function useStayTransition(action: "check-in" | "check-out") {
         action === "check-in" ? "Guest checked in" : "Guest checked out",
       );
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      await queryClient.invalidateQueries({ queryKey: hospitalityRoomKeys.all });
+      await queryClient.invalidateQueries({
+        queryKey: hospitalityRoomKeys.all,
+      });
       await queryClient.invalidateQueries({ queryKey: guestKeys.all });
     },
   });
@@ -111,7 +157,7 @@ export function useResendGuestOnboarding(partyId: string) {
 
 export const hospitalityAmenityKeys = {
   all: ["hospitality", "amenities"] as const,
-};/**
+}; /**
  * The amenity vocabulary, straight from the server.
  *
  * Cached hard: it is a fixed catalogue that changes only with a deploy, and the
@@ -161,8 +207,9 @@ export function useHospitalityPublicPage() {
 export function useUpdateHospitalityPublicPage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: Parameters<typeof hospitalityApi.publicPage.update>[0]) =>
-      hospitalityApi.publicPage.update(body),
+    mutationFn: (
+      body: Parameters<typeof hospitalityApi.publicPage.update>[0],
+    ) => hospitalityApi.publicPage.update(body),
     onSuccess: (page) => {
       queryClient.setQueryData(hospitalityPublicPageKeys.all, page);
     },

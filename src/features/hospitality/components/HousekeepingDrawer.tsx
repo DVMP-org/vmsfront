@@ -448,6 +448,9 @@ export function HousekeepingDrawer({
                                             </div>
                                             <p className="mt-0.5 text-[11px] text-[var(--vms-ink-muted)]">
                                                 {event.actor_name ?? "System"}
+                                                {event.actor_type === "guest"
+                                                    ? " · guest request"
+                                                    : ""}
                                             </p>
                                             {summary.length ? (
                                                 <ul className="mt-1.5 space-y-0.5 text-xs text-[var(--vms-ink-muted)]">

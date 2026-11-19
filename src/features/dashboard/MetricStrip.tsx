@@ -3,12 +3,15 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { InfoHint } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
 
 export interface MetricDefinition {
   label: string;
   value: number | string;
   detail: string;
+  /** How the number is derived, when the detail line is not enough. */
+  hint?: string;
   href?: string;
   attention?: boolean;
   icon?: LucideIcon;
@@ -49,6 +52,13 @@ export function MetricStrip({
             <dt className="flex items-center gap-2 text-xs font-medium leading-5 text-[var(--vms-ink-muted)]">
               {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
               {metric.label}
+              {metric.hint ? (
+                <InfoHint
+                  content={metric.hint}
+                  label={`About ${metric.label}`}
+                  className="relative z-[1]"
+                />
+              ) : null}
             </dt>
             <dd className="mt-2 min-h-8 break-words text-[26px] font-semibold leading-8 tracking-[-0.035em] tabular-nums text-[var(--vms-ink)]">
               {state === "loading" ? (
@@ -80,20 +90,27 @@ export function MetricStrip({
           "min-w-0 bg-[var(--vms-surface)] p-4 sm:p-5",
           metrics.length === 5 && index === 4 && "sm:col-span-2 xl:col-span-1",
         );
-        return metric.href ? (
-          <Link
+        return (
+          <div
             key={metric.label}
-            href={metric.href}
             className={cn(
               classes,
-              "transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)] motion-reduce:transition-none",
+              metric.href &&
+              "relative transition-colors hover:bg-[var(--vms-surface-subtle)] motion-reduce:transition-none",
             )}
           >
             {content}
-          </Link>
-        ) : (
-          <div key={metric.label} className={classes}>
-            {content}
+            {metric.href ? (
+              // The link is an overlay rather than a wrapper: the hint is a
+              // button, and a button inside an anchor is invalid and would
+              // navigate when someone only wanted the explanation.
+              <Link
+                href={metric.href}
+                className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--vms-focus)]"
+              >
+                <span className="sr-only">{metric.label}</span>
+              </Link>
+            ) : null}
           </div>
         );
       })}

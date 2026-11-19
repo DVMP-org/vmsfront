@@ -119,6 +119,8 @@ export interface HousekeepingEvent {
   notes: string | null;
   due_at: string | null;
   actor_name: string | null;
+  /** Who made the change: the desk or the guest occupying the room. */
+  actor_type: "admin" | "guest" | null;
   created_at: string;
 }
 export interface HousekeepingRoomDetail {
@@ -144,6 +146,17 @@ export interface GuestFolio {
   paid: string;
   balance: string;
   lines: GuestFolioLine[];
+}
+
+export type GuestHousekeepingRequest = "clean" | "dirty";
+
+/** The guest's own room housekeeping state. */
+export interface GuestRoomHousekeeping {
+  stay_id: string;
+  room_id: string;
+  room_name: string;
+  status: HousekeepingStatus;
+  updated_at: string;
 }
 export interface HospitalityMaintenanceRequest {
   id: string;

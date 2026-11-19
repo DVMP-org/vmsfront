@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -22,17 +22,30 @@ import { contextApi } from "@/features/context/api";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HospitalityMetricStrip } from "@/features/hospitality/HospitalityMetricStrip";
 import { HotelArrivalsPanel } from "@/features/hospitality/HotelArrivalsPanel";
+import { RoomReadinessPanel } from "@/features/hospitality/RoomReadinessPanel";
+import { StayReviewDrawer } from "@/features/hospitality/StayReviewDrawer";
 import { StayStatusBadge } from "@/features/hospitality/components/StayStatusBadge";
-import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
-import {
-  guestName,
-  interval,
-  localInput,
-  Stay,
-  statusLabel,
-} from "@/features/hospitality/contracts";
+import { useHospitalitySiteRooms } from "@/features/hospitality/queries";
+import { guestName, Stay, statusLabel } from "@/features/hospitality/contracts";
 import "@/app/admin/hospitality/styles.css";
 import PageLoader from "@/components/ui/PageLoader";
+
+const RoomOperationsAnalytics = dynamic(
+  () =>
+    import("@/features/hospitality/RoomOperationsAnalytics").then(
+      (module) => module.RoomOperationsAnalytics,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        role="status"
+        aria-label="Loading room operations chart"
+        className="mt-4 min-h-64 animate-pulse rounded-[var(--vms-radius-surface)] bg-[var(--vms-surface-subtle)] motion-reduce:animate-none"
+      />
+    ),
+  },
+);
 
 export default function HospitalityOverview() {
   const organization = useAppStore((s) => s.organization);
@@ -64,16 +77,7 @@ function HospitalityWorkspace({
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
-  const detailPanel = useRef<HTMLElement>(null);
-  const stayList = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (creating || selected) {
-      detailPanel.current?.focus({ preventScroll: true });
-      detailPanel.current?.scrollIntoView({ block: "nearest" });
-    }
-  }, [creating, selected]);
   const profile = useQuery({
     queryKey: ["hospitality-profile", context],
     queryFn: async () => (await adminService.getAdminProfile()).data,
@@ -105,11 +109,7 @@ function HospitalityWorkspace({
     queryFn: () => hospitalityApi.get(selected!),
     enabled: !!selected && allowed("show"),
   });
-  const people = useQuery({
-    queryKey: ["hospitality", context, "people"],
-    queryFn: hospitalityPeopleApi.list,
-    enabled: allowed("list"),
-  });
+  const rooms = useHospitalitySiteRooms(context, allowed("list"));
   const workspaceContext = useQuery({
     queryKey: ["hospitality", context, "workspace-context", propertyId],
     queryFn: () => contextApi.workspace(propertyId!),
@@ -117,15 +117,13 @@ function HospitalityWorkspace({
     retry: false,
   });
   const changed = async (stay: Stay, message: string) => {
-    setSelected(stay.id);
-    setCreating(false);
     setNotice(message);
     client.setQueryData(["hospitality", context, "detail", stay.id], stay);
     await client.invalidateQueries({ queryKey: ["hospitality", context] });
   };
   if (!enabled || profile.isPending || !profile.isFetchedAfterMount)
     return (
-      <main className="mx-auto w-full max-w-[1440px] pb-10 pt-3 text-[var(--vms-ink)]">
+      <main className="w-full pb-10 pt-3 text-[var(--vms-ink)]">
         <PageLoader message="Loading hospitality permissions…" />
       </main>
     );
@@ -203,7 +201,6 @@ function HospitalityWorkspace({
           aria-label={`Review stay for ${guestName(stay)}`}
           onClick={() => {
             setSelected(stay.id);
-            setCreating(false);
             setNotice("");
           }}
         >
@@ -261,11 +258,11 @@ function HospitalityWorkspace({
 
       <div className="mt-5">
         <HospitalityMetricStrip
-          relationships={people.data?.items ?? []}
+          rooms={rooms.data ?? []}
           reservedCount={reserved.data?.total ?? 0}
           checkedInCount={checkedIn.data?.total ?? 0}
-          peopleLoading={people.isPending}
-          peopleError={people.isError}
+          roomsLoading={rooms.isPending}
+          roomsError={rooms.isError}
           staysLoading={reserved.isPending}
           staysError={reserved.isError}
           checkedInLoading={checkedIn.isPending}
@@ -283,27 +280,39 @@ function HospitalityWorkspace({
           {notice}
         </p>
       )}
-      <HotelArrivalsPanel
-        authorityMode={workspaceContext.data?.management?.mode}
-        authoritativeSiteName={
-          workspaceContext.data?.management?.authoritative_site?.name
-        }
-        stays={reserved.data?.items || []}
-        isLoading={reserved.isPending}
-        error={reserved.isError ? parseApiError(reserved.error).message : null}
-        onRetry={() => void reserved.refetch()}
-        onOpenStay={(id) => {
-          setSelected(id);
-          setCreating(false);
-          setNotice("");
-        }}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <HotelArrivalsPanel
+          authorityMode={workspaceContext.data?.management?.mode}
+          authoritativeSiteName={
+            workspaceContext.data?.management?.authoritative_site?.name
+          }
+          stays={reserved.data?.items || []}
+          isLoading={reserved.isPending}
+          error={
+            reserved.isError ? parseApiError(reserved.error).message : null
+          }
+          onRetry={() => void reserved.refetch()}
+          onOpenStay={(id) => {
+            setSelected(id);
+            setNotice("");
+          }}
+        />
+        <RoomReadinessPanel
+          rooms={rooms.data ?? []}
+          isLoading={rooms.isPending}
+          error={rooms.isError ? parseApiError(rooms.error).message : null}
+          onRetry={() => void rooms.refetch()}
+        />
+      </div>
+      <RoomOperationsAnalytics
+        rooms={rooms.data ?? []}
+        isLoading={rooms.isPending}
+        error={rooms.isError ? parseApiError(rooms.error).message : null}
+        onRetry={() => void rooms.refetch()}
       />
-      <div
-        className={`stay-layout${creating || selected ? " stay-layout-open" : ""}`}
-      >
+      <div className="stay-layout">
         <section
           id="stays"
-          ref={stayList}
           tabIndex={-1}
           className="stay-panel"
           aria-label="Stay list"
@@ -384,7 +393,6 @@ function HospitalityWorkspace({
                   aria-label={`Review stay for ${guestName(stay)}`}
                   onClick={() => {
                     setSelected(stay.id);
-                    setCreating(false);
                     setNotice("");
                   }}
                 >
@@ -395,44 +403,18 @@ function HospitalityWorkspace({
           />
         </section>
       </div>
+      <StayReviewDrawer
+        isOpen={!!selected}
+        onClose={() => setSelected(null)}
+        stay={detail.data}
+        isLoading={detail.isPending}
+        error={detail.isError ? parseApiError(detail.error).message : null}
+        onRetry={() => void detail.refetch()}
+        canCheckIn={allowed("checkin")}
+        canCheckOut={allowed("checkout")}
+        canUpdate={allowed("update")}
+        onChanged={changed}
+      />
     </main>
-  );
-}
-
-function DateFields({
-  start,
-  end,
-  onStart,
-  onEnd,
-  lockStart = false,
-}: {
-  start: string;
-  end: string;
-  onStart: (value: string) => void;
-  onEnd: (value: string) => void;
-  lockStart?: boolean;
-}) {
-  return (
-    <div className="stay-dates">
-      <label>
-        Planned arrival
-        <input
-          type="datetime-local"
-          required
-          disabled={lockStart}
-          value={start}
-          onChange={(e) => onStart(e.target.value)}
-        />
-      </label>
-      <label>
-        Planned departure
-        <input
-          type="datetime-local"
-          required
-          value={end}
-          onChange={(e) => onEnd(e.target.value)}
-        />
-      </label>
-    </div>
   );
 }

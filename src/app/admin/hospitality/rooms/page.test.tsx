@@ -137,11 +137,12 @@ describe("hospitality room inventory", () => {
 
   it("opens room details from the visible register action", async () => {
     mount();
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: "View Harbour Suite details",
-      }),
-    );
+    // The register renders a desktop row and a mobile card; both expose the
+    // same action, which is why the name matches more than once.
+    const [detailsAction] = await screen.findAllByRole("button", {
+      name: "View Harbour Suite details",
+    });
+    fireEvent.click(detailsAction);
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(
       within(dialog).getByRole("button", { name: "View details" }),

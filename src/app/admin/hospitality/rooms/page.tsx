@@ -27,7 +27,7 @@ import type {
   HospitalityRoom,
   RoomOperationalStatus,
 } from "@/features/hospitality/contracts";
-import { hospitalityPeopleApi } from "@/features/hospitality/people-api";
+import { useHousekeepingAssignees } from "@/features/hospitality/queries";
 import { useHospitalityAccess } from "@/features/hospitality/use-hospitality-access";
 
 const roomStatusOptions: Array<{
@@ -56,11 +56,10 @@ export default function HospitalityRoomsPage() {
     queryFn: () => hospitalityApi.rooms.list(),
     enabled: !!access.organization?.id && access.allowed("list"),
   });
-  const people = useQuery({
-    queryKey: ["hospitality-people", access.contextKey],
-    queryFn: hospitalityPeopleApi.list,
-    enabled: !!access.organization?.id && access.allowed("list"),
-  });
+  const assignees = useHousekeepingAssignees(
+    access.contextKey,
+    !!access.organization?.id && access.allowed("list"),
+  );
   const statusMutation = useMutation({
     mutationFn: ({
       id,
@@ -78,15 +77,6 @@ export default function HospitalityRoomsPage() {
       });
     },
   });
-  const assignees = useMemo(() => {
-    const unique = new Map<string, string>();
-    for (const relationship of people.data?.items ?? []) {
-      if (relationship.party?.id) {
-        unique.set(relationship.party.id, relationship.party.display_name);
-      }
-    }
-    return Array.from(unique, ([value, label]) => ({ value, label }));
-  }, [people.data?.items]);
   const data = useMemo(() => rooms.data ?? [], [rooms.data]);
   const summary = useMemo(
     () => ({
@@ -198,7 +188,7 @@ export default function HospitalityRoomsPage() {
             variant="ghost"
             size="icon-sm"
             aria-label={`Open housekeeping for ${room.name}`}
-            title="Housekeeping"
+            tooltip="Housekeeping history, assignment and actions"
             onClick={() => setHousekeepingRoomId(room.id)}
           >
             <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -207,7 +197,7 @@ export default function HospitalityRoomsPage() {
             variant="ghost"
             size="icon-sm"
             aria-label={`View ${room.name} details`}
-            title="Room details"
+            tooltip="Room details, rate and amenities"
             onClick={() => {
               setEditing(room);
               setFormOpen(true);
@@ -390,7 +380,7 @@ export default function HospitalityRoomsPage() {
                     variant="outline"
                     size="icon-sm"
                     aria-label={`Open housekeeping for ${room.name}`}
-                    title="Housekeeping"
+                    tooltip="Housekeeping history, assignment and actions"
                     onClick={() => setHousekeepingRoomId(room.id)}
                   >
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -399,7 +389,7 @@ export default function HospitalityRoomsPage() {
                     variant="outline"
                     size="icon-sm"
                     aria-label={`View ${room.name} details`}
-                    title="Room details"
+                    tooltip="Room details, rate and amenities"
                     onClick={() => {
                       setEditing(room);
                       setFormOpen(true);

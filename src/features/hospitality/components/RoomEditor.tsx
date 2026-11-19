@@ -273,6 +273,7 @@ export function RoomEditor({
               min={1}
               max={50}
               required
+              hint="Maximum guests this room can hold; reservations check it before a room is offered."
               value={values.capacity}
               onChange={onField}
             />
@@ -323,6 +324,7 @@ export function RoomEditor({
               min={0}
               step="0.01"
               placeholder="Optional"
+              hint="What one night costs before taxes or fees. Zero means the room cannot be sold."
               value={values.base_rate}
               onChange={onField}
             />

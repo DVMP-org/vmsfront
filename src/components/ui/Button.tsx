@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import { Loader } from "./loader";
+import { Tooltip } from "./Tooltip";
 
 const buttonVariants = cva(
   [
@@ -68,6 +69,11 @@ export interface ButtonProps
   leftNode?: React.ReactNode;
   rightNode?: React.ReactNode;
   LoaderSize?: number;
+  /**
+   * Short explanation rendered as a tooltip. Use it for icon-only or
+   * easily-misread actions so the control does not rely on `title`.
+   */
+  tooltip?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -82,6 +88,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       leftNode,
       rightNode,
       LoaderSize = 16,
+      tooltip,
       children,
       disabled,
       type,
@@ -107,7 +114,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </>
     );
 
-    return (
+    const button = (
       <Component
         ref={ref}
         type={asChild ? undefined : type || "button"}
@@ -120,9 +127,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {asChild ? children : content}
       </Component>
     );
+
+    // A tooltip is a wrapper, never a `title`: the button stays the focusable
+    // element and keeps its ref, while Radix composes the trigger ref for us.
+    return tooltip ? <Tooltip content={tooltip}>{button}</Tooltip> : button;
   },
 );
-
 Button.displayName = "Button";
 
 export { Button, buttonVariants };

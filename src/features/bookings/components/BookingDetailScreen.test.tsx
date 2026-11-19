@@ -9,6 +9,26 @@ const cancelMutate = vi.fn();
 
 vi.mock("@/features/hospitality/queries", () => ({
   useHospitalityRooms: () => ({ data: [], isPending: false }),
+  // The detail page opens the same housekeeping drawer the Rooms register
+  // uses; only the assignee list is needed to render it closed.
+  useHousekeepingAssignees: () => [],
+  // The guest drawer is the same one the directory opens.
+  useHospitalityGuest: () => ({
+    data: {
+      display_name: "Ada Visitor",
+      email: "ada@example.test",
+      phone: null,
+      stays_count: 1,
+      stay_status: "checked_in",
+      planned_check_in: "2027-05-01T14:00:00Z",
+      planned_check_out: "2027-05-03T11:00:00Z",
+      actual_check_in: "2027-05-01T14:10:00Z",
+      stays: [],
+    },
+    isPending: false,
+    isError: false,
+  }),
+  useResendGuestOnboarding: () => ({ mutate: vi.fn(), isPending: false }),
   // The details page can drive the stay's own transitions; these render only
   // when the server says the stay is in a state that accepts them.
   useCheckInStay: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -185,5 +205,37 @@ describe("booking detail", () => {
     mount({ status: "checked_in" });
 
     expect(screen.queryByRole("button", { name: "Cancel booking" })).toBeNull();
+  });
+
+  it("opens the guest record from the stay without leaving it", () => {
+    mount({
+      outcome: { guest_party_id: "party-1" },
+      reservations: [
+        {
+          id: "reservation-1",
+          site_id: "site-1",
+          booking_id: "booking-1",
+          booking_item_id: null,
+          place_id: "room-1",
+          place_type: null,
+          start_at: "2027-05-01T14:00:00Z",
+          end_at: "2027-05-03T11:00:00Z",
+          status: "confirmed",
+          expires_at: null,
+          notes: null,
+          is_holding: true,
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Guest details" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Guest" });
+    expect(within(drawer).getByText("Ada Visitor")).toBeTruthy();
+    // The room-scoped action is offered beside it, using the room the
+    // reservation actually holds.
+    expect(
+      screen.getByRole("button", { name: "Housekeeping" }),
+    ).toBeTruthy();
   });
 });

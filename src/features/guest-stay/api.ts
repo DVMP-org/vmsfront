@@ -1,6 +1,11 @@
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
-import type { GuestFolio, Stay } from "@/features/hospitality/contracts";
+import type {
+  GuestFolio,
+  GuestHousekeepingRequest,
+  GuestRoomHousekeeping,
+  Stay,
+} from "@/features/hospitality/contracts";
 
 export const guestStayApi = {
   list: async () =>
@@ -29,6 +34,26 @@ export const guestStayApi = {
     (
       await apiClient.get<ApiResponse<GuestFolio>>(
         `/workspace/hospitality/stays/${stayId}/folio`,
+      )
+    ).data,
+  /**
+   * Housekeeping state of the guest's own room. The server resolves the room
+   * from the stay, so the guest never names a room id.
+   */
+  housekeeping: async (stayId: string) =>
+    (
+      await apiClient.get<ApiResponse<GuestRoomHousekeeping>>(
+        `/workspace/hospitality/stays/${stayId}/housekeeping`,
+      )
+    ).data,
+  setHousekeeping: async (
+    stayId: string,
+    status: GuestHousekeepingRequest,
+  ) =>
+    (
+      await apiClient.patch<ApiResponse<GuestRoomHousekeeping>>(
+        `/workspace/hospitality/stays/${stayId}/housekeeping`,
+        { status },
       )
     ).data,
 };
