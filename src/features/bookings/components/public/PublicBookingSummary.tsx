@@ -27,7 +27,7 @@ export function PublicBookingSummary({
   nights: number;
   category: PublicRoomCategory | null;
   rooms: number;
-  guests: number;
+  guests: number | null;
 }) {
   const estimate = category
     ? estimateFromRates(category.rates, nights, rooms)
@@ -47,8 +47,8 @@ export function PublicBookingSummary({
       </p>
       <p className="text-xs text-[var(--vms-ink-muted)]">
         {nights} {nights === 1 ? "night" : "nights"} · {rooms}{" "}
-        {rooms === 1 ? "room" : "rooms"} · {guests}{" "}
-        {guests === 1 ? "guest" : "guests"}
+        {rooms === 1 ? "room" : "rooms"}
+        {guests ? ` · ${guests} ${guests === 1 ? "guest" : "guests"}` : ""}
       </p>
       {category ? (
         <>

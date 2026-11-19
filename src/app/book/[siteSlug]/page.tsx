@@ -17,7 +17,7 @@ export default async function PublicBookingPage({
 }) {
   const { siteSlug } = await params;
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8">
+    <main className="min-h-screen">
       <PublicBookingEntry siteSlug={siteSlug} />
     </main>
   );

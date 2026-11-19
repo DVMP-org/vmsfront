@@ -47,7 +47,7 @@ export function WorkspaceLobbyHeader({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[var(--vms-ink)] text-white shadow-[var(--vms-shadow-raised)]">
-      <div className="mx-auto flex h-14 w-full max-w-[1220px] items-center justify-between gap-3 px-4 sm:px-8">
+      <div className="mx-auto flex h-12 w-full max-w-[1150px] items-center justify-between gap-3 px-4 sm:px-8">
         <Link
           href="/"
           aria-label="VMS Core workspace lobby"

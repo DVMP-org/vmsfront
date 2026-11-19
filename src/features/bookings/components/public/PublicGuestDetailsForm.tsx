@@ -8,6 +8,7 @@ export interface PublicGuestDetails {
   email: string;
   phone: string;
   notes: string;
+  guestCount: string;
 }
 
 /**
@@ -34,7 +35,11 @@ export function PublicGuestDetailsForm({
   error: string | null;
 }) {
   const hasContact = Boolean(details.email.trim() || details.phone.trim());
-  const canContinue = details.name.trim().length >= 2 && hasContact;
+  const guestCountValid =
+    !details.guestCount ||
+    (Number(details.guestCount) >= 1 && Number(details.guestCount) <= 50);
+  const canContinue =
+    details.name.trim().length >= 2 && hasContact && guestCountValid;
 
   return (
     <form
@@ -44,6 +49,15 @@ export function PublicGuestDetailsForm({
         if (canContinue) onContinue();
       }}
     >
+      <div>
+        <h3 className="font-serif text-2xl text-[var(--vms-ink)]">
+          Who should we contact?
+        </h3>
+        <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+          Share the lead guest&apos;s name and one way to reach you. Party size
+          is optional.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input
           label="Full name"
@@ -69,6 +83,17 @@ export function PublicGuestDetailsForm({
           value={details.phone}
           onChange={(event) => onChange("phone", event.currentTarget.value)}
         />
+        <Input
+          label="Number of guests (optional)"
+          name="guest_count"
+          type="number"
+          min={1}
+          max={50}
+          value={details.guestCount}
+          onChange={(event) =>
+            onChange("guestCount", event.currentTarget.value)
+          }
+        />
       </div>
 
       <label className="flex flex-col gap-1 text-sm font-medium text-[var(--vms-ink)]">
@@ -90,7 +115,10 @@ export function PublicGuestDetailsForm({
       </p>
 
       {error ? (
-        <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+        <p
+          role="alert"
+          className="text-xs font-medium text-[var(--vms-danger)]"
+        >
           {error}
         </p>
       ) : null}

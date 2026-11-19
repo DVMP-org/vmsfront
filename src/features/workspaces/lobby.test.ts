@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CurrentUserContext } from "@/types";
-import {
-  buildLobbyWorkspaces,
-  resolveLobbyWorkspaces,
-} from "./lobby";
+import { buildLobbyWorkspaces, resolveLobbyWorkspaces } from "./lobby";
 
 function context(
   overrides: Partial<CurrentUserContext> = {},
@@ -56,7 +53,7 @@ const relationship = {
     parent_id: "site-1",
     site_name: "Pebble Court",
     is_active: true,
-    use_case: "residential",
+    effective_use_case: "residential",
   },
 };
 
@@ -119,13 +116,16 @@ describe("buildLobbyWorkspaces", () => {
 
     expect(siteCard).toMatchObject({
       title: "Pebble Court",
+      category: "RESIDENTIAL PROPERTY",
+      description: "Homes, residents, visitors and property requests.",
       destination: "/admin?site_id=site-1",
       roleLabel: "Site administrator",
       selection: { id: "site-1", name: "Pebble Court" },
     });
     expect(partyCard).toMatchObject({
       title: "Pebble Court - APT 01",
-      category: "MY PLACE",
+      category: "RESIDENTIAL HOME",
+      description: "Your home, visitors, charges and maintenance requests.",
       roleLabel: "Resident",
       destination: "/workspace/place-1",
       selection: { id: "place-1", name: "Pebble Court - APT 01" },
@@ -190,35 +190,87 @@ describe("resolveLobbyWorkspaces", () => {
   });
 
   it("shows the picker when more than one destination is authorized", () => {
-    expect(resolveLobbyWorkspaces([card, { ...card, id: "party:place" }])).toEqual(
-      { kind: "picker" },
-    );
+    expect(
+      resolveLobbyWorkspaces([card, { ...card, id: "party:place" }]),
+    ).toEqual({ kind: "picker" });
   });
 });
-
 
 it("keeps inherited Sites distinct when they share one ancestor assignment", () => {
   const inherited = {
     ...siteWorkspace,
-    site: { ...siteWorkspace.site, id: "child-site", parent_site_id: "site-1", name: "Annex" },
+    site: {
+      ...siteWorkspace.site,
+      id: "child-site",
+      parent_site_id: "site-1",
+      name: "Annex",
+    },
   };
   const cards = buildLobbyWorkspaces({
-    context: context({ site_workspaces: [siteWorkspace, inherited] }), organization,
+    context: context({ site_workspaces: [siteWorkspace, inherited] }),
+    organization,
   });
   expect(new Set(cards.map((card) => card.id)).size).toBe(2);
-  expect(cards.map((card) => card.selection?.id)).toEqual(["site-1", "child-site"]);
+  expect(cards.map((card) => card.selection?.id)).toEqual([
+    "site-1",
+    "child-site",
+  ]);
 });
 
 it("uses the Site operating type independently of legacy organization and Place classification", () => {
   const workspaces = buildLobbyWorkspaces({
     context: context({
-      site_workspaces: [{ ...siteWorkspace, site: { ...siteWorkspace.site, use_case: "hospitality" } }],
+      site_workspaces: [
+        {
+          ...siteWorkspace,
+          site: { ...siteWorkspace.site, use_case: "hospitality" },
+        },
+      ],
       workspaces: [relationship] as never,
     }),
     organization,
   });
-  expect(workspaces.find(item => item.type === "site_admin")).toMatchObject({
-    useCase: "hospitality", destination: "/admin?site_id=site-1",
+  expect(workspaces.find((item) => item.type === "site_admin")).toMatchObject({
+    useCase: "hospitality",
+    category: "HOSPITALITY PROPERTY",
+    destination: "/admin?site_id=site-1",
   });
-  expect(workspaces.find(item => item.type === "party")).not.toHaveProperty("useCase");
+  expect(workspaces.find((item) => item.type === "party")).toMatchObject({
+    useCase: "residential",
+    category: "RESIDENTIAL HOME",
+  });
 });
+
+it.each([
+  ["residential", "RESIDENTIAL PROPERTY", "RESIDENTIAL HOME"],
+  ["commercial", "COMMERCIAL PROPERTY", "COMMERCIAL SPACE"],
+  ["hospitality", "HOSPITALITY PROPERTY", "HOSPITALITY STAY"],
+  ["mixed_use", "MIXED-USE PROPERTY", "MIXED-USE SPACE"],
+] as const)(
+  "uses the authoritative %s domain in both workspace cards",
+  (useCase, siteCategory, personalCategory) => {
+    const workspaces = buildLobbyWorkspaces({
+      context: context({
+        site_workspaces: [
+          {
+            ...siteWorkspace,
+            site: { ...siteWorkspace.site, use_case: useCase },
+          },
+        ],
+        workspaces: [
+          {
+            ...relationship,
+            place: { ...relationship.place, effective_use_case: useCase },
+          },
+        ] as never,
+      }),
+      organization,
+    });
+    expect(
+      workspaces.find((item) => item.type === "site_admin")?.category,
+    ).toBe(siteCategory);
+    expect(workspaces.find((item) => item.type === "party")?.category).toBe(
+      personalCategory,
+    );
+  },
+);

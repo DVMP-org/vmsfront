@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useVerifyToken } from "@/hooks/use-auth";
+import { useVerifyToken } from "../../hooks/use-auth";
 import {
   useCurrentOrganization,
   useMyOrganizations,
-} from "@/hooks/use-organization";
+} from "../../hooks/use-organization";
 import { WorkspaceLobbyPage } from "./WorkspaceLobbyPage";
 
 const mocks = vi.hoisted(() => ({
@@ -18,7 +18,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
 }));
 vi.mock("@/components/layout/WorkspaceLobbyHeader", () => ({
-  WorkspaceLobbyHeader: () => <header aria-label="Lobby header" />,
+  WorkspaceLobbyHeader: ({ canSwitchOrganization }: { canSwitchOrganization: boolean }) => (
+    <header aria-label="Lobby header" data-can-switch-organization={canSwitchOrganization} />
+  ),
 }));
 vi.mock("@/hooks/use-auth", () => ({
   useVerifyToken: vi.fn(),
@@ -94,13 +96,18 @@ const relationship = {
     parent_id: "site-1",
     site_name: "Pebble Court",
     is_active: true,
-    use_case: "residential",
+    effective_use_case: "residential",
   },
 };
 
 function context(overrides: Record<string, unknown> = {}) {
   return {
-    user: { id: "user", first_name: "Alex", last_name: "Morgan", email: "alex@example.com" },
+    user: {
+      id: "user",
+      first_name: "Alex",
+      last_name: "Morgan",
+      email: "alex@example.com",
+    },
     party: null,
     admin: null,
     workspaces: [],
@@ -158,10 +165,14 @@ describe("WorkspaceLobbyPage", () => {
     expect(
       screen.getByRole("heading", { name: "Choose your workspace" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Continue where you have access within/)).toBeInTheDocument();
-    expect(screen.getByText("Harbour Estate")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Continue to the workspace you need/),
+    ).toBeInTheDocument();
     expect(screen.getByText("Organization administration")).toBeInTheDocument();
     expect(screen.getByText("Pebble Court")).toBeInTheDocument();
+    expect(screen.getByText("RESIDENTIAL PROPERTY")).toBeInTheDocument();
+    expect(screen.getByText("RESIDENTIAL HOME")).toBeInTheDocument();
+    expect(screen.queryByText("Site administrator")).toBeNull();
     expect(screen.getByText("Pebble Court - APT 01")).toBeInTheDocument();
   });
 
@@ -235,9 +246,10 @@ describe("WorkspaceLobbyPage", () => {
 
     render(<WorkspaceLobbyPage />);
 
-    expect(
-      screen.getByRole("link", { name: "Change organization" }),
-    ).toHaveAttribute("href", "/organizations");
+    expect(screen.getByRole("banner", { name: "Lobby header" })).toHaveAttribute(
+      "data-can-switch-organization",
+      "true",
+    );
   });
 
   it("shows the error state and retries the workspace request", () => {

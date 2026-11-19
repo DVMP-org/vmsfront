@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -56,7 +62,11 @@ vi.mock("../../public-queries", () => ({
     isError: false,
     isSuccess: false,
   }),
-  usePayPublicBooking: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+  usePayPublicBooking: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+  }),
 }));
 
 const site: PublicSiteBooking = {
@@ -78,7 +88,10 @@ function mount() {
     <QueryClientProvider
       client={
         new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
         })
       }
     >
@@ -89,11 +102,13 @@ function mount() {
 
 async function reachDetails() {
   mount();
-  fireEvent.click(screen.getByRole("button", { name: "Search rooms" }));
+  fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
   fireEvent.click(
     await screen.findByRole("button", { name: "Select Deluxe Super" }),
   );
-  const form = screen.getByRole("button", { name: "Continue" }).closest("form")!;
+  const form = screen
+    .getByRole("button", { name: "Continue" })
+    .closest("form")!;
   fireEvent.change(within(form).getByLabelText("Full name"), {
     target: { value: "Ada Visitor" },
   });
@@ -108,23 +123,27 @@ beforeEach(() => {
 });
 
 describe("public hospitality booking", () => {
-  it("starts on the dates, not on a room list", () => {
+  it("starts with dates and rooms, with a category preview but no availability claim", () => {
     mount();
 
     expect(screen.getByLabelText("Check-in")).toBeTruthy();
     expect(screen.getByLabelText("Check-out")).toBeTruthy();
-    expect(screen.queryByText("Deluxe Super")).toBeNull();
+    expect(screen.getByLabelText("Rooms")).toBeTruthy();
+    expect(screen.getByText("Deluxe Super")).toBeTruthy();
+    expect(screen.queryByText("2 rooms left for these dates")).toBeNull();
   });
 
   it("shows categories with what is left for those dates", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search rooms" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
 
     expect(await screen.findByText("Deluxe Super")).toBeTruthy();
     expect(screen.getByText("2 rooms left for these dates")).toBeTruthy();
     // A sold-out category is shown and disabled, not hidden: the guest should be
     // able to see the property has it, and that it is gone.
-    expect(screen.getByText("No rooms of this type left for these dates")).toBeTruthy();
+    expect(
+      screen.getByText("No rooms of this type left for these dates"),
+    ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Executive Suite is not available" }),
     ).toBeDisabled();
@@ -137,9 +156,7 @@ describe("public hospitality booking", () => {
     expect(within(summary).getByText("Deluxe Super")).toBeTruthy();
     // The default window is one night, so the estimate is one night's rate.
     expect(within(summary).getAllByText(/120/).length).toBeGreaterThan(0);
-    expect(
-      within(summary).getByText(/Estimated total/),
-    ).toBeTruthy();
+    expect(within(summary).getByText(/Estimated total/)).toBeTruthy();
   });
 
   it("books the category, not the room, and sends the room count", async () => {
@@ -153,7 +170,6 @@ describe("public hospitality booking", () => {
       place_id: null,
       place_group_id: "group-deluxe",
       rooms: 1,
-      guest_count: 2,
       requester_name: "Ada Visitor",
       requester_email: "ada@example.test",
     });
@@ -161,34 +177,68 @@ describe("public hospitality booking", () => {
     // chose dates.
     expect(payload.check_in_at).toBeTruthy();
     expect(payload.check_out_at).toBeTruthy();
+    expect(payload.guest_count).toBeUndefined();
   });
 
   it("can reserve instead, without committing to pay", async () => {
     await reachDetails();
-    fireEvent.click(screen.getByRole("button", { name: "Reserve — pay later" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reserve — pay later" }),
+    );
 
     await waitFor(() => expect(submitMutate).toHaveBeenCalledTimes(1));
-    expect(submitMutate.mock.calls[0][0]).toMatchObject({ kind: "reservation" });
+    expect(submitMutate.mock.calls[0][0]).toMatchObject({
+      kind: "reservation",
+    });
+  });
+
+  it("keeps party size optional and submits it when supplied", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select Deluxe Super" }),
+    );
+    const form = screen
+      .getByRole("button", { name: "Continue" })
+      .closest("form")!;
+    fireEvent.change(within(form).getByLabelText("Full name"), {
+      target: { value: "Ada Visitor" },
+    });
+    fireEvent.change(within(form).getByLabelText("Email"), {
+      target: { value: "ada@example.test" },
+    });
+    fireEvent.change(
+      within(form).getByLabelText("Number of guests (optional)"),
+      { target: { value: "3" } },
+    );
+    fireEvent.click(within(form).getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pay and book" }));
+    await waitFor(() => expect(submitMutate).toHaveBeenCalledTimes(1));
+    expect(submitMutate.mock.calls[0][0].guest_count).toBe(3);
   });
 
   it("will not proceed without a way to reach the guest", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search rooms" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Select Deluxe Super" }),
     );
 
-    const form = screen.getByRole("button", { name: "Continue" }).closest("form")!;
+    const form = screen
+      .getByRole("button", { name: "Continue" })
+      .closest("form")!;
     fireEvent.change(within(form).getByLabelText("Full name"), {
       target: { value: "Ada Visitor" },
     });
 
-    expect(within(form).getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(
+      within(form).getByRole("button", { name: "Continue" }),
+    ).toBeDisabled();
   });
 
   it("prices two rooms as the two rooms the guest gets, not the cheapest twice", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search rooms" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
 
     const rooms = await screen.findByLabelText("Rooms of Deluxe Super");
     fireEvent.change(rooms, { target: { value: "2" } });

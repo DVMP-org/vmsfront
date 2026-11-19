@@ -5,7 +5,8 @@ const STEPS = [
   "Choose room",
   "Guest details",
   "Review",
-  "Pay",
+  "Payment",
+  "Confirmation",
 ] as const;
 
 /**
@@ -18,16 +19,59 @@ const STEPS = [
  */
 export function PublicBookingSteps({ current }: { current: number }) {
   return (
-    <ol
-      aria-label="Booking steps"
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs"
-    >
-      {STEPS.map((label, index) => {
-        const done = index < current;
-        const active = index === current;
-        return (
-          <li key={label} className="flex items-center gap-1.5">
-            <span
+    <>
+      <div
+        role="progressbar"
+        aria-label="Booking progress"
+        aria-valuemin={1}
+        aria-valuemax={STEPS.length}
+        aria-valuenow={current + 1}
+        aria-valuetext={`Step ${current + 1} of ${STEPS.length}: ${STEPS[current]}`}
+        className="flex flex-col gap-2 lg:hidden"
+      >
+        <div className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="text-[var(--vms-ink-muted)]">
+            Step {current + 1} of {STEPS.length}
+          </span>
+          <span className="font-semibold text-[var(--vms-ink)]">
+            {STEPS[current]}
+          </span>
+        </div>
+        <div className="h-1 overflow-hidden rounded-full bg-[var(--vms-line)]">
+          <div
+            className="h-full rounded-full bg-[var(--vms-accent)] transition-[width] duration-300 motion-reduce:transition-none"
+            style={{ width: `${((current + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+      <ol
+        aria-label="Booking steps"
+        className="hidden w-full grid-cols-6 lg:grid"
+      >
+        {STEPS.map((label, index) => {
+          const done = index < current;
+          const active = index === current;
+          return (
+            <li
+              key={label}
+              className="relative flex min-w-0 flex-col items-center gap-2 text-center"
+            >
+              {index < STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 top-3 h-px w-full bg-[var(--vms-line)]"
+                >
+                  <span
+                    className={
+                      "block h-full transition-[width] duration-300 motion-reduce:transition-none " +
+                      (done
+                        ? "w-full bg-[var(--vms-accent)]"
+                        : "w-0 bg-[var(--vms-accent)]")
+                    }
+                  />
+                </span>
+              ) : null}
+              <span
               aria-hidden="true"
               className={
                 "grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold tabular-nums " +
@@ -56,8 +100,9 @@ export function PublicBookingSteps({ current }: { current: number }) {
               </span>
             ) : null}
           </li>
-        );
-      })}
-    </ol>
+          );
+        })}
+      </ol>
+    </>
   );
 }

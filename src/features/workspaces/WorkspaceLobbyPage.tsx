@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, RefreshCw } from "lucide-react";
+import { Building2, Home, Layers3, RefreshCw } from "lucide-react";
 import { useAuth, useVerifyToken } from "@/hooks/use-auth";
 import { useRequireEmailVerification } from "@/hooks/use-email-verification-guard";
 import {
@@ -78,9 +78,7 @@ export function WorkspaceLobbyPage() {
   const context = useVerifyToken();
   const { organization } = useCurrentOrganization();
   const { data: organizations = [] } = useMyOrganizations();
-  const setSelectedSite = useAppStore(
-    (state) => state.setSelectedSite,
-  );
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   useRequireEmailVerification(true);
 
   const [allowPicker, setAllowPicker] = useState(false);
@@ -102,6 +100,31 @@ export function WorkspaceLobbyPage() {
     () => resolveLobbyWorkspaces(workspaces),
     [workspaces],
   );
+  const workspaceGroups = [
+    {
+      id: "organization-workspaces",
+      title: "Organization",
+      description: "Organization-wide administration and settings.",
+      icon: Layers3,
+      items: workspaces.filter(
+        (workspace) => workspace.type === "organization",
+      ),
+    },
+    {
+      id: "site-workspaces",
+      title: "Properties you manage",
+      description: "Choose a property to open its operations.",
+      icon: Building2,
+      items: workspaces.filter((workspace) => workspace.type === "site_admin"),
+    },
+    {
+      id: "place-workspaces",
+      title: "My workspaces",
+      description: "Access linked to your home, stay or business space.",
+      icon: Home,
+      items: workspaces.filter((workspace) => workspace.type === "party"),
+    },
+  ].filter((group) => group.items.length > 0);
 
   const openWorkspace = useCallback(
     (workspace: LobbyWorkspace) => {
@@ -131,16 +154,26 @@ export function WorkspaceLobbyPage() {
   const canSwitchOrganization = organizations.length > 1;
   const credential = context.data?.user;
   const signedInName =
-    getFullName(credential?.first_name, credential?.last_name, credential?.email || "") ||
+    getFullName(
+      credential?.first_name,
+      credential?.last_name,
+      credential?.email || "",
+    ) ||
     context.data?.party?.display_name ||
     "your account";
   const organizationName = organization?.name || "your organization";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--vms-canvas)] text-[var(--vms-ink)]">
+    <div
+      className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--vms-canvas)] text-[var(--vms-ink)]"
+      style={{
+        backgroundImage:
+          "radial-gradient(55rem 35rem at 105% 4%, color-mix(in srgb, var(--vms-coral-accent) 7%, transparent), transparent 72%), radial-gradient(43rem 30rem at -10% 100%, color-mix(in srgb, var(--vms-coral-accent) 5%, transparent), transparent 74%)",
+      }}
+    >
       <WorkspaceLobbyHeader canSwitchOrganization={canSwitchOrganization} />
 
-      <main className="mx-auto w-full max-w-[1220px] flex-1 px-4 pb-12 pt-8 sm:px-8 sm:pt-12">
+      <main className="relative mx-auto w-full max-w-[1220px] flex-1 px-4 pb-12 pt-8 sm:px-8 sm:pt-9">
         {context.isPending || redirecting ? <LobbySkeleton /> : null}
 
         {context.isError && !context.isPending ? (
@@ -163,47 +196,21 @@ export function WorkspaceLobbyPage() {
         {context.isSuccess && !redirecting ? (
           <div className="mx-auto w-full max-w-[980px]">
             <header className="text-center">
-              <h1 className="text-[32px] font-semibold tracking-[-0.035em] sm:text-[34px]">
+              <span
+                aria-hidden="true"
+                className="mx-auto mb-4 block h-1.5 w-10 rounded-full bg-[var(--vms-coral-accent)]"
+              />
+              <h1 className="text-[32px] font-semibold tracking-[-0.045em] sm:text-[40px] sm:leading-[1.1]">
                 Choose your workspace
               </h1>
-              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--vms-ink-muted)] sm:text-base">
-                Continue where you have access within {organizationName}.
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)] sm:text-base">
+                Continue to the workspace you need to manage your places, people
+                and operations.
               </p>
             </header>
 
-            <section
-              aria-label="Organization"
-              className="mt-8 flex flex-col gap-4 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6"
-            >
-              <span
-                aria-hidden="true"
-                className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-ink)] text-sm font-semibold tracking-[0.04em] text-white"
-              >
-                {initials(organization?.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                  Organization
-                </p>
-                <p className="mt-0.5 truncate text-base font-semibold">
-                  {organization?.name || "Current organization"}
-                </p>
-              </div>
-              {canSwitchOrganization ? (
-                <Link
-                  href="/organizations"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-4 text-sm font-semibold text-[var(--vms-ink)] transition-colors hover:bg-[var(--vms-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2"
-                >
-                  Change organization
-                </Link>
-              ) : null}
-            </section>
-
-            <section aria-labelledby="available-workspaces" className="mt-8">
-              <h2
-                id="available-workspaces"
-                className="text-lg font-semibold tracking-[-0.02em]"
-              >
+            <section aria-labelledby="available-workspaces" className="mt-7">
+              <h2 id="available-workspaces" className="sr-only">
                 Available workspaces
               </h2>
 
@@ -225,17 +232,51 @@ export function WorkspaceLobbyPage() {
                   />
                 </div>
               ) : (
-                <ul className="mt-4 space-y-4">
-                  {workspaces.map((workspace, index) => (
-                    <li key={workspace.id}>
-                      <LobbyWorkspaceCard
-                        workspace={workspace}
-                        emphasized={index === 0}
-                        onOpen={openWorkspace}
-                      />
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-6">
+                  {workspaceGroups.map((group) => {
+                    const Icon = group.icon;
+                    return (
+                      <section key={group.id} aria-labelledby={group.id}>
+                        <div className="mb-3 flex items-center gap-3">
+                          <span
+                            aria-hidden="true"
+                            className="grid size-10 shrink-0 place-items-center rounded-[var(--vms-radius-control)] bg-[color-mix(in_srgb,var(--vms-coral-accent)_10%,white)] text-[var(--vms-coral-accent)]"
+                          >
+                            <Icon className="size-5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <h3
+                              id={group.id}
+                              className="text-lg font-semibold tracking-[-0.03em] leading-5"
+                            >
+                              {group.title}
+                            </h3>
+                            <p className="mt-0.5 text-xs leading-4 text-[var(--vms-ink-muted)] sm:text-sm">
+                              {group.description}
+                            </p>
+                          </div>
+                          <span className="hidden shrink-0 rounded-full bg-[var(--vms-surface-subtle)] px-3 py-1 text-xs text-[var(--vms-ink-muted)] sm:inline-flex">
+                            {group.items.length}{" "}
+                            {group.items.length === 1
+                              ? "workspace"
+                              : "workspaces"}
+                          </span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {group.items.map((workspace) => (
+                            <li key={workspace.id}>
+                              <LobbyWorkspaceCard
+                                workspace={workspace}
+                                emphasized={workspace.type === "organization"}
+                                onOpen={openWorkspace}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    );
+                  })}
+                </div>
               )}
             </section>
 

@@ -72,6 +72,8 @@ export interface PublicSiteBooking {
   site_id: string;
   site_name: string;
   site_slug: string;
+  site_description?: string | null;
+  site_address?: string | null;
   domain: string;
   timezone: string;
   stage: PublicBookingStage;
@@ -93,7 +95,7 @@ export interface PublicBookingInput {
   host_party_id: string | null;
   check_in_at: string;
   check_out_at: string;
-  guest_count: number;
+  guest_count?: number;
   requester_name: string;
   requester_email: string | null;
   requester_phone: string | null;
