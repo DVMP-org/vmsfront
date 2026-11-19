@@ -24,7 +24,6 @@ const gateSchema = z.object({
   automatic_direction: z.boolean(),
   manual_direction_override: z.boolean(),
   offline_policy: z.enum(["deny", "queue", "allow_verified"]),
-  reentry_policy: z.enum(["allowed", "denied", "manual"]),
   allowed_credential_types: z.array(z.string()).min(1),
   access_days: z.array(z.number()),
   access_start: z.string(),
@@ -86,7 +85,6 @@ export function GateFormModal({
       automatic_direction: true,
       manual_direction_override: false,
       offline_policy: "deny",
-      reentry_policy: "allowed",
       allowed_credential_types: [
         "invitation_code",
         "invitation_qr",
@@ -118,7 +116,6 @@ export function GateFormModal({
         automatic_direction: gate.automatic_direction ?? true,
         manual_direction_override: gate.manual_direction_override ?? false,
         offline_policy: gate.offline_policy ?? "deny",
-        reentry_policy: gate.reentry_policy ?? "allowed",
         allowed_credential_types: gate.allowed_credential_types?.length
           ? gate.allowed_credential_types
           : ["invitation_code", "invitation_qr", "badge_qr", "permanent_code"],
@@ -136,7 +133,6 @@ export function GateFormModal({
         automatic_direction: true,
         manual_direction_override: false,
         offline_policy: "deny",
-        reentry_policy: "allowed",
         allowed_credential_types: [
           "invitation_code",
           "invitation_qr",
@@ -292,36 +288,21 @@ export function GateFormModal({
           </div>
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="offline-policy" label="Offline policy">
-            {(control) => (
-              <select
-                {...control}
-                {...register("offline_policy")}
-                className={fieldControlClassName}
-              >
-                <option value="deny">Deny passages offline</option>
-                <option value="queue">Queue for reconnect</option>
-                <option value="allow_verified">
-                  Allow locally verified credentials
-                </option>
-              </select>
-            )}
-          </Field>
-          <Field id="reentry-policy" label="Re-entry policy">
-            {(control) => (
-              <select
-                {...control}
-                {...register("reentry_policy")}
-                className={fieldControlClassName}
-              >
-                <option value="allowed">Allow re-entry</option>
-                <option value="denied">Deny re-entry</option>
-                <option value="manual">Require override</option>
-              </select>
-            )}
-          </Field>
-        </div>
+        <Field id="offline-policy" label="Offline policy">
+          {(control) => (
+            <select
+              {...control}
+              {...register("offline_policy")}
+              className={fieldControlClassName}
+            >
+              <option value="deny">Deny passages offline</option>
+              <option value="queue">Queue for reconnect</option>
+              <option value="allow_verified">
+                Allow locally verified credentials
+              </option>
+            </select>
+          )}
+        </Field>
 
         <Field
           id="credential-types"

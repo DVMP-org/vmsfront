@@ -10,6 +10,7 @@ import { formatMoney } from "@/lib/currency";
 import { formatDateRange, formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { PublicBookingPayment } from "../PublicBookingPayment";
+import { attachmentUrl } from "@/features/files/api";
 import { PublicBookingSteps } from "./PublicBookingSteps";
 import { PublicBookingSummary } from "./PublicBookingSummary";
 import { PublicCategoryChooser } from "./PublicCategoryChooser";
@@ -196,6 +197,25 @@ export function PublicHospitalityBookingFlow({
           ) : null}
 
           <main className="mx-auto grid max-w-6xl gap-6 px-4 pb-10 pt-6 sm:px-6 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
+            {site.branding?.gallery?.length ? (
+              <section id="gallery" className="min-w-0 lg:col-span-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {site.branding.gallery.slice(0, 8).map((path) => {
+                    const url = attachmentUrl(path);
+                    return url ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- public API content
+                      <img
+                        key={path}
+                        src={url}
+                        alt={`${site.site_name} gallery`}
+                        loading="lazy"
+                        className="aspect-[4/3] w-full rounded-lg object-cover"
+                      />
+                    ) : null;
+                  })}
+                </div>
+              </section>
+            ) : null}
             {site.categories.length === 0 ? (
               <PanelState
                 kind="empty"
@@ -337,7 +357,9 @@ function PublicHotelHero({
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/hospitality/hero-demo.webp')" }}
+        style={{
+          backgroundImage: `url('${attachmentUrl(site.branding?.cover_url) ?? "/images/hospitality/hero-demo.webp"}')`,
+        }}
       />
       <div
         aria-hidden="true"
@@ -349,14 +371,24 @@ function PublicHotelHero({
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
           Stay with us
         </p>
-        <h1
-          className={`max-w-2xl font-serif leading-tight ${compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl"}`}
-        >
-          {site.site_name}
-        </h1>
-        {!compact && site.site_description ? (
+        <div className="flex items-center gap-3">
+          {site.branding?.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- public API content
+            <img
+              src={attachmentUrl(site.branding.logo_url) ?? undefined}
+              alt=""
+              className="size-11 rounded-lg bg-white/90 object-contain p-1"
+            />
+          ) : null}
+          <h1
+            className={`max-w-2xl font-serif leading-tight ${compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl"}`}
+          >
+            {site.site_name}
+          </h1>
+        </div>
+        {!compact && (site.branding?.description || site.site_description) ? (
           <p className="mt-3 max-w-xl text-base leading-relaxed text-white/90">
-            {site.site_description}
+            {site.branding?.description || site.site_description}
           </p>
         ) : null}
         {!compact && site.site_address ? (
@@ -368,11 +400,7 @@ function PublicHotelHero({
             {site.site_address}
           </p>
         ) : null}
-        {!compact ? (
-          <p className="mt-2 text-[10px] text-white/70">
-            Illustrative property image
-          </p>
-        ) : null}
+
       </div>
     </section>
   );
@@ -404,21 +432,33 @@ function PublicRoomPreview({
           >
             <div className="grid sm:grid-cols-[13rem_minmax(0,1fr)]">
               <div className="relative h-32 sm:h-44">
-                <Image
-                  src={
-                    index % 2 === 0
-                      ? "/images/hospitality/room-demo.webp"
-                      : "/images/hospitality/suite-demo.webp"
-                  }
-                  alt="Illustrative room interior"
-                  fill
-                  unoptimized
-                  sizes="(max-width: 640px) 100vw, 208px"
-                  className="object-cover"
-                />
-                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-[10px] text-white">
-                  Demo photo
-                </span>
+                {category.images?.[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- public API content
+                  <img
+                    src={attachmentUrl(category.images[0]) ?? undefined}
+                    alt={category.name}
+                    loading="lazy"
+                    className="size-full object-cover"
+                  />
+                ) : (
+                    <Image
+                      src={
+                        index % 2 === 0
+                          ? "/images/hospitality/room-demo.webp"
+                          : "/images/hospitality/suite-demo.webp"
+                      }
+                      alt="Illustrative room interior"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 640px) 100vw, 208px"
+                      className="object-cover"
+                    />
+                )}
+                {!category.images?.[0] ? (
+                  <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-[10px] text-white">
+                    Demo photo
+                  </span>
+                ) : null}
               </div>
               <div className="flex min-h-[11rem] flex-col justify-between gap-2 p-3 sm:flex-row sm:items-start">
                 <div className="min-w-0">

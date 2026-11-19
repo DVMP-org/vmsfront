@@ -441,6 +441,7 @@ export interface WorkspaceParty {
   kind: string;
   display_name: string;
   email: string | null;
+  avatar_url?: string | null;
   is_active: boolean;
 }
 

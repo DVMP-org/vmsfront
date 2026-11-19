@@ -25,7 +25,6 @@ export interface SiteModule {
   description: string;
   enabled: boolean;
   supported: boolean;
-  settings: Record<string, unknown>;
 }
 
 export interface SiteModuleList {
@@ -37,7 +36,6 @@ export interface SiteModuleList {
 export interface SiteModuleUpdate {
   key: DomainModuleKey;
   enabled: boolean;
-  settings: Record<string, unknown>;
 }
 
 export const siteModulesApi = {

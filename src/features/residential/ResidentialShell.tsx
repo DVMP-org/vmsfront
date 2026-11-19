@@ -2,7 +2,6 @@
 
 import type { QueryContext } from "@/lib/query-keys";
 import type { ReactNode } from "react";
-import { WorkspaceContext } from "@/components/ui/WorkspaceContext";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { SitePicker } from "@/components/sites/SitePicker";
@@ -23,8 +22,10 @@ export function useResidentialAccess() {
     selectedSite,
     contextKey: access.contextKey,
     canListUnits: can("places.list"),
+    canCreateUnits: can("places.create"),
     canManageUnits: can("places.create") || can("places.update"),
-    canManagePeople: can("place_relationships.create") || can("parties.create"),
+    canManagePeople: can("place_relationships.create"),
+    canUpdateRelationships: can("place_relationships.update"),
     canManageFinance: can("charges.create") || can("charges.update"),
     canManageMaintenance:
       can("maintenance.manage") || can("places.update") || can("places.create"),
@@ -40,8 +41,7 @@ export function ResidentialShell({
   title,
   description,
   primaryAction,
-  children,
-  showWorkspace = false,
+  children
 }: {
   title: string;
   description: string;
@@ -53,12 +53,10 @@ export function ResidentialShell({
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      {showWorkspace && selectedSite && (
-        <WorkspaceContext name={selectedSite.name} description="Residential" />
-      )}
+
       <PageHeader
         breadcrumbs={
-          selectedSite && !showWorkspace ? (
+          selectedSite ? (
             <Breadcrumbs
               className="mb-5"
               items={[

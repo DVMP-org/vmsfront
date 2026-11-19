@@ -13,6 +13,21 @@ import {
 const base = "/admin/hospitality/stays";
 const moduleBase = "/admin/hospitality";
 
+/** The branding choices a hospitality Site's public booking page uses. */
+export interface HospitalityPublicPage {
+  site_id: string;
+  description: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_address: string | null;
+  primary_color: string;
+  secondary_color: string;
+  sections: string[];
+  is_published: boolean;
+  /** Inherited organization logo, shown when the Site has no logo. */
+  logo_url: string | null;
+}
+
 /** One entry in the amenity vocabulary the server accepts. */
 export interface AmenityOption {
   code: string;
@@ -49,6 +64,21 @@ export const hospitalityApi = {
       (
         await apiClient.get<ApiResponse<AmenityOption[]>>(
           `${moduleBase}/amenities`,
+        )
+      ).data,
+  },
+  publicPage: {
+    get: async () =>
+      (
+        await apiClient.get<ApiResponse<HospitalityPublicPage>>(
+          `${moduleBase}/public-page`,
+        )
+      ).data,
+    update: async (body: Partial<HospitalityPublicPage>) =>
+      (
+        await apiClient.put<ApiResponse<HospitalityPublicPage>>(
+          `${moduleBase}/public-page`,
+          body,
         )
       ).data,
   },

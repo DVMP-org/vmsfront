@@ -34,6 +34,8 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
+import { useAppStore } from "@/store/app-store";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -60,6 +62,7 @@ const initialFormState: ThemeFormState = {
 };
 
 export function BrandingSection() {
+  const organization = useAppStore((state) => state.organization);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -190,6 +193,22 @@ export function BrandingSection() {
           Create Theme
         </Button>
       </div>
+
+      {organization?.id ? (
+        <div className="mb-4 rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+          <AttachmentManager
+            entityType="organization"
+            entityId={organization.id}
+            category="logo"
+            variant="single"
+            isPublic
+            allowCrop
+            aspect="wide"
+            title="Organization logo"
+            description="Used in settings, as the default mark for new Sites, and on public pages that have no Site logo."
+          />
+        </div>
+      ) : null}
 
       {activeTheme && (
         <div className="border border-green-200 bg-green-50/50 rounded-lg p-3 mb-4">

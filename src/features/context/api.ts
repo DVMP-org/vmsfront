@@ -85,6 +85,12 @@ export interface WorkspaceContext {
 export function workspacePermissions(
   context: WorkspaceContext | undefined,
 ): string[] {
+  const roles = context?.management?.roles ?? context?.roles ?? [];
+  // Role codes are authoritative for full Site authority, even when a stored
+  // catalogue predates a newer permission key.
+  if (roles.some((role) => role.code === "site_admin" || role.code === "super_admin")) {
+    return ["*"];
+  }
   return (
     context?.management?.effective_permissions ??
     context?.effective_permissions ??

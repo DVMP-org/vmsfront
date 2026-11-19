@@ -3,9 +3,9 @@ import {
   Building2,
   ConciergeBell,
   ShieldCheck,
-  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/ui/Avatar";
 import type { WorkspaceRelationship } from "@/types";
 import { formatDateTime } from "@/lib/datetime";
 import { guestName, type Stay } from "./contracts";
@@ -119,9 +119,12 @@ export function HotelAdministrationSummary({
                 .slice(0, Math.max(0, 8 - administrators.length))
                 .map((relationship) => (
                   <li key={relationship.id}>
-                    <span className="hotel-person-icon">
-                      <UserRound className="h-4 w-4" />
-                    </span>
+                    <Avatar
+                      name={relationship.party.display_name}
+                      src={relationship.party.avatar_url}
+                      size="xs"
+                      className="hotel-person-icon"
+                    />
                     <span className="min-w-0 flex-1">
                       <strong>{relationship.party.display_name}</strong>
                       <small>

@@ -14,6 +14,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { parseApiError } from "@/lib/error-utils";
 import { placesApi } from "@/features/places/api";
 import { useSiteAccess } from "@/features/context/use-site-access";
@@ -329,6 +330,18 @@ function PlaceGroupDrawer({
             )}
           </div>
         </fieldset>
+        {group ? (
+          <div className="border-t border-[var(--vms-line)] pt-4">
+            <AttachmentManager
+              entityType="place_group"
+              entityId={group.id}
+              category="gallery"
+              variant="gallery"
+              title="Group images"
+              description="Images shown for this group, such as a room category photo."
+            />
+          </div>
+        ) : null}
         <div className="flex justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

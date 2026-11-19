@@ -9,7 +9,7 @@ import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 
 // The Valet gateway exposes the API without a port in local and hosted use.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://vmscore.to";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://vmscore.to";
 
 const cookies = createCookieUtilities({
   baseDomain: process.env.NEXT_PUBLIC_BASE_DOMAIN || "",

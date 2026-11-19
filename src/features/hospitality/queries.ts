@@ -49,9 +49,7 @@ export function useCheckOutStay() {
 
 export const hospitalityAmenityKeys = {
   all: ["hospitality", "amenities"] as const,
-};
-
-/**
+};/**
  * The amenity vocabulary, straight from the server.
  *
  * Cached hard: it is a fixed catalogue that changes only with a deploy, and the
@@ -83,5 +81,28 @@ export function useRoomCategories(enabled = true) {
     queryFn: () => placeGroupsApi.list(),
     enabled,
     staleTime: 30_000,
+  });
+}
+
+export const hospitalityPublicPageKeys = {
+  all: ["hospitality", "public-page"] as const,
+};
+
+export function useHospitalityPublicPage() {
+  return useQuery({
+    queryKey: hospitalityPublicPageKeys.all,
+    queryFn: () => hospitalityApi.publicPage.get(),
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateHospitalityPublicPage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Parameters<typeof hospitalityApi.publicPage.update>[0]) =>
+      hospitalityApi.publicPage.update(body),
+    onSuccess: (page) => {
+      queryClient.setQueryData(hospitalityPublicPageKeys.all, page);
+    },
   });
 }

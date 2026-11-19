@@ -8,6 +8,7 @@ import {
   MapPin,
   Pencil,
   Plus,
+  Settings2,
   ShieldCheck,
 } from "lucide-react";
 
@@ -76,6 +77,8 @@ export function SiteDirectoryTable({
   onToggle,
   allowed,
   onCreateChild,
+  onManagePolicies,
+  canManagePolicies,
   basePath,
 }: {
   rows: SiteDisplayRow[];
@@ -83,6 +86,8 @@ export function SiteDirectoryTable({
   onToggle: (siteId: string) => void;
   allowed: (action: string) => boolean;
   onCreateChild: (site: OrganizationSiteSummary) => void;
+    onManagePolicies: (site: OrganizationSiteSummary) => void;
+    canManagePolicies: boolean;
   basePath: string;
 }) {
   const router = useRouter();
@@ -191,6 +196,13 @@ export function SiteDirectoryTable({
                         <Plus className="h-4 w-4" aria-hidden="true" />
                       </ActionIcon>
                       <ActionIcon
+                        label={`Manage policies for ${site.name}`}
+                        onClick={() => onManagePolicies(site)}
+                        disabled={!canManagePolicies}
+                      >
+                        <Settings2 className="h-4 w-4" aria-hidden="true" />
+                      </ActionIcon>
+                      <ActionIcon
                         label={`Manage Site managers for ${site.name}`}
                         onClick={() => manageAccess(site)}
                         disabled={!allowed("show")}
@@ -280,6 +292,13 @@ export function SiteDirectoryTable({
                       disabled={!allowed("create")}
                     >
                       <Plus className="h-4 w-4" aria-hidden="true" />
+                    </ActionIcon>
+                    <ActionIcon
+                      label={`Manage policies for ${site.name}`}
+                      onClick={() => onManagePolicies(site)}
+                      disabled={!canManagePolicies}
+                    >
+                      <Settings2 className="h-4 w-4" aria-hidden="true" />
                     </ActionIcon>
                     <ActionIcon
                       label={`Manage Site managers for ${site.name}`}

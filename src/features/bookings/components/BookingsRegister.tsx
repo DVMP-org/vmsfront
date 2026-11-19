@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Settings2 } from "lucide-react";
 
 import {
   DataTable,
@@ -13,6 +14,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { useHospitalityRooms } from "@/features/hospitality/queries";
+import { BookingPageSettings } from "@/features/hospitality/components/BookingPageSettings";
 import { formatMoney } from "@/lib/currency";
 import { formatDate } from "@/lib/datetime";
 import { BookingCreateForm } from "./BookingCreateForm";
@@ -67,6 +69,7 @@ export function BookingsRegister() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterConfig[]>([]);
   const [creating, setCreating] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [openBookingId, setOpenBookingId] = useState<string | null>(null);
 
   const context = useWorkspaceContext();
@@ -272,7 +275,19 @@ export function BookingsRegister() {
             New booking
           </Button>
         }
-        secondaryActions={<BookingPageLink siteSlug={siteSlug} />}
+        secondaryActions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings2 aria-hidden className="size-4" />
+              Booking page
+            </Button>
+            <BookingPageLink siteSlug={siteSlug} />
+          </div>
+        }
       />
 
       <DataTable
@@ -406,6 +421,16 @@ export function BookingsRegister() {
         bookingId={openBookingId}
         onClose={() => setOpenBookingId(null)}
       />
+
+      <Drawer
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        title="Booking page"
+        description="The images, copy, contact details and sections guests see when they book direct."
+        className="max-w-3xl"
+      >
+        <BookingPageSettings />
+      </Drawer>
     </div>
   );
 }

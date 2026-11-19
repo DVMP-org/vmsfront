@@ -29,7 +29,6 @@ export interface Gate {
   automatic_direction?: boolean;
   manual_direction_override?: boolean;
   offline_policy?: "deny" | "queue" | "allow_verified";
-  reentry_policy?: "allowed" | "denied" | "manual";
   allowed_credential_types?: Array<
     "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
   > | null;
@@ -55,7 +54,6 @@ export interface CreateGateRequest {
   automatic_direction?: boolean;
   manual_direction_override?: boolean;
   offline_policy?: "deny" | "queue" | "allow_verified";
-  reentry_policy?: "allowed" | "denied" | "manual";
   allowed_credential_types?: Array<
     "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
   >;
@@ -76,7 +74,6 @@ export interface UpdateGateRequest {
   automatic_direction?: boolean;
   manual_direction_override?: boolean;
   offline_policy?: "deny" | "queue" | "allow_verified";
-  reentry_policy?: "allowed" | "denied" | "manual";
   allowed_credential_types?: Array<
     "invitation_code" | "invitation_qr" | "badge_qr" | "permanent_code"
   >;

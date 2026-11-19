@@ -57,6 +57,23 @@ export interface PublicRoomCategory {
    */
   rates: string[];
   amenities: string[];
+  /** Public category photos, already ordered by the hotel. */
+  images: string[];
+}
+
+/** The Site's explicit public-page branding choices. */
+export interface PublicSiteBranding {
+  logo_url: string | null;
+  cover_url: string | null;
+  gallery: string[];
+  description: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_address: string | null;
+  primary_color: string;
+  secondary_color: string;
+  sections: string[];
+  is_published: boolean;
 }
 
 /** What is left for the dates the guest asked about. */
@@ -83,6 +100,7 @@ export interface PublicSiteBooking {
   /** Hospitality sells categories rather than rooms. Empty for other domains. */
   categories: PublicRoomCategory[];
   hosts: PublicBookingHost[];
+  branding: PublicSiteBranding;
 }
 
 export interface PublicBookingInput {

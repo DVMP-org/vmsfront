@@ -38,6 +38,13 @@ const links = [
     permissions: ["admins.list"],
   },
   {
+    href: "/organization/policies",
+    label: "Policies & Standards",
+    description: "Reusable operating standards, site assignments and exceptions.",
+    icon: ShieldCheck,
+    permissions: ["settings.show", "organizations.show"],
+  },
+  {
     href: "/organization/settings",
     label: "Organization Settings",
     description: "Identity, operating context and shared configuration.",

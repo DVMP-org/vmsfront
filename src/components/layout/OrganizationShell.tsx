@@ -8,6 +8,7 @@ import {
   Plug,
   Puzzle,
   Settings,
+  ShieldCheck,
   UserCog,
   Users,
 } from "lucide-react";
@@ -48,6 +49,12 @@ const navigationGroups: { label: string; items: OrganizationNavItem[] }[] = [
         label: "Sites",
         icon: Building2,
         permissions: ["places.list"],
+      },
+      {
+        href: "/organization/policies",
+        label: "Policies & standards",
+        icon: ShieldCheck,
+        permissions: ["settings.show", "organizations.show"],
       },
       {
         href: "/organization/administrators",

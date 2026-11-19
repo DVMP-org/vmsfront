@@ -15,6 +15,8 @@ import { contextApi } from "@/features/context/api";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
+import { attachmentUrl } from "@/features/files/api";
+import { useAttachmentSummaries } from "@/features/files/queries";
 import {
   placeKinds,
   placesApi,
@@ -80,6 +82,11 @@ export function PlaceDirectory() {
   const categoryLabels = new Map(
     catalog.data?.building_types.map((type) => [type.value, type.label]) ?? [],
   );
+  const placeIds = useMemo(
+    () => (list.data?.items ?? []).map((place) => place.id),
+    [list.data?.items],
+  );
+  const images = useAttachmentSummaries("place", placeIds);
   const hierarchy = useMemo(() => {
     const paths = new Map<string, string>();
     const buildings: BuildingOption[] = [];
@@ -106,14 +113,37 @@ export function PlaceDirectory() {
     {
       key: "name",
       header: "Place",
-      accessor: (place) => (
-        <Link
-          className="font-semibold hover:underline"
-          href={`/admin/places/${place.id}`}
-        >
-          {place.name}
-        </Link>
-      ),
+      accessor: (place) => {
+        const src = attachmentUrl(
+          images.data?.[place.id]?.thumbnail_url ?? null,
+        );
+        return (
+          <Link
+            className="flex items-center gap-3 font-semibold hover:underline"
+            href={`/admin/places/${place.id}`}
+          >
+            {src ? (
+              // eslint-disable-next-line @next/next/no-img-element -- signed API content
+              <img
+                src={src}
+                alt=""
+                loading="lazy"
+                className="size-9 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--vms-surface-subtle)] text-[var(--vms-ink-muted)]"
+              >
+                <span className="text-[10px] font-semibold uppercase">
+                  {place.kind.slice(0, 2)}
+                </span>
+              </span>
+            )}
+            <span>{place.name}</span>
+          </Link>
+        );
+      },
     },
     {
       key: "kind",

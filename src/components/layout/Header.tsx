@@ -268,6 +268,7 @@ export const Header = memo(function Header({
               >
                 <Avatar
                   name={displayName}
+                  src={currentUser.avatar_url}
                   size="sm"
                   tone="coral"
                   decorative
@@ -284,7 +285,12 @@ export const Header = memo(function Header({
               {menuOpen && (
                 <div className="absolute right-0 z-50 mt-2 w-[calc(100vw-1.5rem)] rounded-[var(--vms-radius-overlay)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-2 text-sm text-[var(--vms-ink)] shadow-[var(--vms-shadow-overlay)] sm:w-64">
                   <div className="mb-2 flex items-center gap-3 border-b border-[var(--vms-line)] px-2 py-3">
-                    <Avatar name={displayName} size="md" tone="coral" />
+                    <Avatar
+                      name={displayName}
+                      src={currentUser.avatar_url}
+                      size="md"
+                      tone="coral"
+                    />
                     <div className="flex flex-col">
                       <span className="font-bold">
                         {getFullName(

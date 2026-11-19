@@ -77,11 +77,6 @@ export function SiteModulesPanel({
   });
   const [draft, setDraft] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  // `null` means "as saved", so a successful save puts the switch back in step
-  // with the server without a second fetch.
-  const [settlementOverride, setSettlementOverride] = useState<boolean | null>(
-    null,
-  );
 
   useEffect(() => {
     if (!query.data) return;
@@ -91,7 +86,6 @@ export function SiteModulesPanel({
       ),
     );
     setSelectedRows(new Set());
-    setSettlementOverride(null);
   }, [query.data]);
 
   const rows = useMemo<ModuleRow[]>(
@@ -105,17 +99,7 @@ export function SiteModulesPanel({
   const enabledChanges = rows.filter(
     (module) => module.stagedEnabled !== module.enabled,
   );
-  const hospitality = useMemo(
-    () => rows.find((module) => module.key === "hospitality") ?? null,
-    [rows],
-  );
-  const savedSettlement = Boolean(
-    hospitality?.settings?.checkout_requires_settlement,
-  );
-  const settlementValue = settlementOverride ?? savedSettlement;
-  const policyChanged =
-    Boolean(hospitality) && settlementValue !== savedSettlement;
-  const pendingCount = enabledChanges.length + (policyChanged ? 1 : 0);
+  const pendingCount = enabledChanges.length;
   const save = useMutation({
     mutationFn: () =>
       siteModulesApi.update(
@@ -123,20 +107,10 @@ export function SiteModulesPanel({
         rows.map((module) => ({
           key: module.key,
           enabled: module.stagedEnabled,
-          // Hospitality carries the checkout policy; every other module passes
-          // its settings through untouched.
-          settings:
-            module.key === "hospitality"
-              ? {
-                ...module.settings,
-                checkout_requires_settlement: settlementValue,
-              }
-              : module.settings,
         })),
       ),
     onSuccess: (updated) => {
       queryClient.setQueryData(["site-modules", siteId], updated);
-      setSettlementOverride(null);
       void queryClient.invalidateQueries({ queryKey: ["workspace-context"] });
       toast.success("Site modules updated.");
     },
@@ -161,7 +135,6 @@ export function SiteModulesPanel({
       ),
     );
     setSelectedRows(new Set());
-    setSettlementOverride(null);
   }
 
   const bulkActions: BulkAction[] = canEdit
@@ -386,52 +359,6 @@ export function SiteModulesPanel({
           />
         )}
 
-        {/* Hospitality policy, kept beside the module it belongs to rather than
-            in a settings screen of its own: this is where an operator already
-            looks when deciding how the property runs. */}
-        {hospitality ? (
-          <div className="mt-4 rounded-lg border border-[var(--vms-line)] p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-sm font-semibold text-[var(--vms-ink)]">
-                  Checkout with an outstanding balance
-                </p>
-                <p className="mt-1 text-xs leading-5 text-[var(--vms-ink-muted)]">
-                  When this is on, a guest cannot be checked out while their bill
-                  still has a balance. Nothing is written off either way — the
-                  guest can settle it, or a manager can turn this off.
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={settlementValue}
-                aria-label="Require settlement before checkout"
-                disabled={!canEdit || save.isPending}
-                onClick={() => setSettlementOverride(!settlementValue)}
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-[var(--vms-radius-control)] px-1 text-sm font-semibold text-[var(--vms-ink)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span
-                  aria-hidden="true"
-                  className={[
-                    "relative h-6 w-11 rounded-full border transition-colors",
-                    settlementValue
-                      ? "border-[var(--vms-action)] bg-[var(--vms-action)]"
-                      : "border-[var(--vms-line-strong)] bg-[var(--vms-surface-subtle)]",
-                  ].join(" ")}
-                >
-                  <span
-                    className={[
-                      "absolute top-0.5 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform",
-                      settlementValue ? "translate-x-[22px]" : "translate-x-0.5",
-                    ].join(" ")}
-                  />
-                </span>
-                {settlementValue ? "Required" : "Allowed"}
-              </button>
-            </div>
-          </div>
-        ) : null}
       </div>
     </section>
   );

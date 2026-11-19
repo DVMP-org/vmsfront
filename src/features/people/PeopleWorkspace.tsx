@@ -10,12 +10,12 @@ import {
   Mail,
   Plus,
   ShieldCheck,
-  UserRound,
   Users,
 } from "lucide-react";
 
 import { PlacePicker } from "@/components/sites/PlacePicker";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
@@ -85,9 +85,11 @@ export default function PeopleWorkspace() {
       sortable: true,
       accessor: (person) => (
         <span className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--vms-surface-subtle)]">
-            <UserRound className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <Avatar
+            name={person.party.display_name}
+            src={person.party.avatar_url}
+            size="sm"
+          />
           <span>
             <strong className="block">{person.party.display_name}</strong>
             <span className="block text-xs text-[var(--vms-ink-muted)]">
@@ -240,7 +242,11 @@ export default function PeopleWorkspace() {
             emptyMessage="No Parties match these filters"
             mobileSummary={(person) => (
               <span className="flex items-center gap-3">
-                <UserRound className="h-5 w-5" aria-hidden="true" />
+                <Avatar
+                  name={person.party.display_name}
+                  src={person.party.avatar_url}
+                  size="sm"
+                />
                 <span>
                   <strong className="block">{person.party.display_name}</strong>
                   <span className="text-xs text-[var(--vms-ink-muted)]">

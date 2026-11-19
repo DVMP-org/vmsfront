@@ -78,6 +78,15 @@ export function hasAdminPermission(
   requirement: string | string[],
 ): boolean {
   if (!admin) return false;
+  const roles = admin.roles?.length
+    ? admin.roles
+    : admin.role
+      ? [admin.role]
+      : [];
+  // The role code is authoritative for a super administrator. Some seeded or
+  // legacy roles carry an explicit catalogue that predates newer permissions,
+  // but the code still means total access.
+  if (roles.some((role) => role.code === "super_admin")) return true;
   if (Array.isArray(admin.effective_permissions)) {
     const permissions = admin.effective_permissions;
     if (permissions.includes("*")) return true;
@@ -87,11 +96,6 @@ export function hasAdminPermission(
         permissions.includes(`${permission.split(".")[0]}.*`),
     );
   }
-  const roles = admin.roles?.length
-    ? admin.roles
-    : admin.role
-      ? [admin.role]
-      : [];
   return roles.some((role) => hasPermission(role, requirement));
 }
 

@@ -11,6 +11,7 @@ import {
   Plus,
   Route,
   RotateCcw,
+  Settings2,
   ShieldCheck,
 } from "lucide-react";
 
@@ -19,6 +20,8 @@ import { Drawer } from "@/components/ui/Drawer";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { OrganizationAdminHeader } from "@/features/organization-admin/OrganizationAdminHeader";
 import { placeKinds } from "@/features/places/api";
+import { OrganizationSitePolicyDrawer } from "@/features/policies/components/OrganizationSitePolicyDrawer";
+import { useOrganizationSitePolicies } from "@/features/policies/queries";
 import { useAdminProfile } from "@/hooks/use-admin";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCurrentOrganization } from "@/hooks/use-organization";
@@ -91,11 +94,25 @@ export function OrganizationSiteDetail({ siteId }: { siteId: string }) {
   const hasSidebar = useMediaQuery("(min-width: 1280px)");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [policiesOpen, setPoliciesOpen] = useState(false);
 
   const allowed = (action: string) =>
     profile.isSuccess &&
     !profile.isError &&
     hasAdminPermission(profile.data, `places.${action}`);
+  const canViewPolicies =
+    profile.isSuccess &&
+    !profile.isError &&
+    hasAdminPermission(profile.data, ["settings.show"]);
+  const canEditPolicies =
+    profile.isSuccess &&
+    !profile.isError &&
+    hasAdminPermission(profile.data, ["settings.update"]);
+  const sitePolicies = useOrganizationSitePolicies(
+    slug,
+    siteId,
+    canViewPolicies,
+  );
 
   if (detail.isPending) {
     return (
@@ -187,6 +204,12 @@ export function OrganizationSiteDetail({ siteId }: { siteId: string }) {
                 </Link>
               </Button>
             ) : null}
+            {canViewPolicies ? (
+              <Button variant="outline" onClick={() => setPoliciesOpen(true)}>
+                <Settings2 className="h-4 w-4" aria-hidden="true" />
+                Policies
+              </Button>
+            ) : null}
             <Button variant="outline" asChild>
               <Link href={`/organization/managers?site=${site.id}`}>
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
@@ -253,6 +276,36 @@ export function OrganizationSiteDetail({ siteId }: { siteId: string }) {
               />
             </div>
           </SurfaceCard>
+
+          {canViewPolicies ? (
+            <SurfaceCard>
+              <SectionHeading
+                title="Policies"
+                description="The organization standard this Site inherits and any explicit Site overrides."
+                action={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPoliciesOpen(true)}
+                  >
+                    Manage policies
+                  </Button>
+                }
+              />
+              <dl className="divide-y divide-[var(--vms-line)]">
+                <DetailRow label="Standard">
+                  {sitePolicies.data?.template?.name ?? "Platform defaults"}
+                </DetailRow>
+                <DetailRow label="Site overrides">
+                  {
+                    sitePolicies.data?.policies.filter(
+                      (policy) => policy.has_site_override,
+                    ).length ?? 0
+                  }
+                </DetailRow>
+              </dl>
+            </SurfaceCard>
+          ) : null}
 
           <SurfaceCard>
             <SectionHeading
@@ -377,6 +430,15 @@ export function OrganizationSiteDetail({ siteId }: { siteId: string }) {
           </InlineAlert>
         </div>
       </Drawer>
+
+      <OrganizationSitePolicyDrawer
+        slug={slug ?? ""}
+        siteId={site.id}
+        siteName={site.name}
+        isOpen={policiesOpen}
+        onClose={() => setPoliciesOpen(false)}
+        canEdit={canEditPolicies}
+      />
 
       <CreateSiteDrawer
         isOpen={createOpen}

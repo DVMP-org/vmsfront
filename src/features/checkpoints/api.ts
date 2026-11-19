@@ -25,7 +25,6 @@ export interface ActiveCheckpoint {
   automatic_direction: boolean;
   manual_direction_override: boolean;
   offline_policy?: "deny" | "queue" | "allow_verified";
-  reentry_policy?: "allowed" | "denied" | "manual";
   allowed_credential_types?: string[];
   policy_version: number;
   operator_site_admin_id: string;

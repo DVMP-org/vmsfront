@@ -52,7 +52,7 @@ export function ResidentProfile({
     <ResidentialShell
       title="Resident profile"
       description="Contact information and occupancy details."
-      showWorkspace
+
     >
       <Link
         href="/admin/residential/occupancies"

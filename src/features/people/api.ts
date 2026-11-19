@@ -8,6 +8,7 @@ export interface PlacePerson {
     kind: string;
     display_name: string;
     email: string | null;
+    avatar_url?: string | null;
     is_active: boolean;
   };
   role: string;

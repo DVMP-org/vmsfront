@@ -9,6 +9,7 @@ import {
   ChevronsUpDown,
   Plus,
   Search,
+  ShieldCheck,
   Upload,
 } from "lucide-react";
 
@@ -29,6 +30,8 @@ import {
   operatingTypeLabels,
 } from "../lib";
 import { useOrganizationSites } from "../queries";
+import { OrganizationSitePolicyDrawer } from "@/features/policies/components/OrganizationSitePolicyDrawer";
+
 import { CreateSiteDrawer } from "./CreateSiteDrawer";
 import { ImportModelsDrawer } from "./ImportModelsDrawer";
 import { EmptyPanel, SurfaceCard } from "./organization-ui";
@@ -55,6 +58,8 @@ export function SitesDirectoryPage() {
     null,
   );
   const [created, setCreated] = useState<CreatedOrganizationSite | null>(null);
+  const [policySite, setPolicySite] =
+    useState<OrganizationSiteSummary | null>(null);
   const initialized = useRef(false);
 
   const allowed = (action: string) =>
@@ -62,6 +67,10 @@ export function SitesDirectoryPage() {
     !profile.isError &&
     hasAdminPermission(profile.data, `places.${action}`);
   const canCreateSite = allowed("create");
+  const canManagePolicies =
+    profile.isSuccess &&
+    !profile.isError &&
+    hasAdminPermission(profile.data, ["settings.show"]);
 
   useEffect(() => {
     if (searchParams?.get("create") === "site" && canCreateSite) {
@@ -130,16 +139,31 @@ export function SitesDirectoryPage() {
         title="Sites"
         description="Every Site owned by this organization. Sites contain child Sites and Places; a Place never contains a Site."
         actions={
-          allowed("create") ? (
+          canManagePolicies || allowed("create") ? (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setImportOpen(true)}>
-                <Upload className="h-4 w-4" aria-hidden="true" />
-                Import
-              </Button>
-              <Button onClick={() => openCreate()}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Create Site
-              </Button>
+              {canManagePolicies ? (
+                <Button variant="outline" asChild>
+                  <Link href="/organization/policies">
+                    <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                    Policies
+                  </Link>
+                </Button>
+              ) : null}
+              {allowed("create") ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setImportOpen(true)}
+                  >
+                    <Upload className="h-4 w-4" aria-hidden="true" />
+                    Import
+                  </Button>
+                  <Button onClick={() => openCreate()}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Create Site
+                  </Button>
+                </>
+              ) : null}
             </div>
           ) : null
         }
@@ -336,6 +360,8 @@ export function SitesDirectoryPage() {
             onToggle={toggle}
             allowed={allowed}
             onCreateChild={(site) => openCreate(site)}
+                  onManagePolicies={(site) => setPolicySite(site)}
+                  canManagePolicies={canManagePolicies}
             basePath="/organization/sites"
           />
         )}
@@ -360,6 +386,19 @@ export function SitesDirectoryPage() {
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
         slug={slug}
+      />
+
+      <OrganizationSitePolicyDrawer
+        slug={slug ?? ""}
+        siteId={policySite?.id ?? null}
+        siteName={policySite?.name ?? "site"}
+        isOpen={policySite !== null}
+        onClose={() => setPolicySite(null)}
+        canEdit={
+          profile.isSuccess &&
+          !profile.isError &&
+          hasAdminPermission(profile.data, ["settings.update"])
+        }
       />
     </div>
   );

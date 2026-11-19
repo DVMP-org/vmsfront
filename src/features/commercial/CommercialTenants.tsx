@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
 import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   DataTable,
   type BulkAction,
@@ -46,6 +47,7 @@ type TenantRow = {
   id: string;
   tenant: string;
   email: string;
+  avatar_url: string | null;
   role: string;
   space_id: string;
   space: string;
@@ -111,6 +113,7 @@ export default function CommercialTenants() {
           id: relationship.id,
           tenant: relationship.party.display_name,
           email: relationship.party.email || "",
+          avatar_url: relationship.party.avatar_url ?? null,
           role: relationship.role,
           space_id: relationship.place.id,
           space: relationship.place.name,
@@ -165,10 +168,13 @@ export default function CommercialTenants() {
       header: "Business tenant",
       sortable: true,
       accessor: (row) => (
-        <span>
-          <strong className="block truncate">{row.tenant}</strong>
-          <span className="text-xs text-[var(--vms-ink-muted)]">
-            {row.email || "No contact email"}
+        <span className="flex items-center gap-3">
+          <Avatar name={row.tenant} src={row.avatar_url} size="sm" />
+          <span>
+            <strong className="block truncate">{row.tenant}</strong>
+            <span className="text-xs text-[var(--vms-ink-muted)]">
+              {row.email || "No contact email"}
+            </span>
           </span>
         </span>
       ),

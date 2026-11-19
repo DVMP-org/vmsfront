@@ -120,13 +120,14 @@ export default function ResidentialUnits() {
     const byId = new Map(allPlaces.map((place) => [place.id, place]));
     const relationshipsByPlace = new Map<
       string,
-      Array<{ display_name: string; role: string }>
+      Array<{ display_name: string; role: string; avatar_url?: string | null }>
     >();
     (relationships.data?.items || []).forEach((relationship) => {
       const rows = relationshipsByPlace.get(relationship.place.id) || [];
       rows.push({
         display_name: relationship.party.display_name,
         role: relationship.role,
+        avatar_url: relationship.party.avatar_url ?? null,
       });
       relationshipsByPlace.set(relationship.place.id, rows);
     });
@@ -147,6 +148,7 @@ export default function ResidentialUnits() {
           status: place.is_active ? "active" : "archived",
           occupancy_status: residents.length ? "occupied" : "vacant",
           residents: residents.map((row) => row.display_name).join(", "),
+          resident_avatar_url: residents[0]?.avatar_url ?? null,
         };
       });
   }, [allPlaces, relationships.data?.items, scopedPlaces, selectedSite]);
@@ -256,7 +258,13 @@ export default function ResidentialUnits() {
       header: "Resident",
       accessor: (unit) => (
         <span className="flex min-w-0 items-center gap-2">
-          <Avatar name={unit.residents} size="md" tone="info" decorative />
+          <Avatar
+            name={unit.residents}
+            src={unit.resident_avatar_url}
+            size="md"
+            tone="info"
+            decorative
+          />
           <span className="block max-w-48 truncate text-sm">
             {unit.residents || "No resident"}
           </span>
@@ -357,7 +365,7 @@ export default function ResidentialUnits() {
 
   return (
     <ResidentialShell
-      showWorkspace
+
       title="Units"
       description={`Unit directory for ${selectedSite?.name || "the selected"} residential property.`}
       primaryAction={primaryAction}

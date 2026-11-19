@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { SlideOver } from "@/components/ui/SlideOver";
 import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { useAppStore } from "@/store/app-store";
 import { hospitalityApi } from "../api";
 import { useHospitalityAmenities, useRoomCategories } from "../queries";
@@ -294,6 +295,21 @@ export function RoomEditor({
             ) : null}
           </div>
         </Section>
+
+        {room ? (
+          <Section
+            title="Room photos"
+            hint="Shown to the desk and, when public, on the booking page."
+          >
+            <AttachmentManager
+              entityType="hospitality_room"
+              entityId={room.id}
+              category="gallery"
+              variant="gallery"
+              title="Room images"
+            />
+          </Section>
+        ) : null}
 
         <Section
           title="What it costs"

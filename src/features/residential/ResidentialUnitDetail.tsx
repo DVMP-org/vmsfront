@@ -33,6 +33,7 @@ export type ResidentialUnitRow = Place & {
   status: string;
   occupancy_status: string;
   residents: string;
+  resident_avatar_url?: string | null;
 };
 
 const detailTabs = ["Overview", "Residents", "Charges"] as const;
@@ -321,7 +322,11 @@ export function ResidentialUnitDetail({
             <ul className="space-y-4">
               {residents.map((row) => (
                 <li key={row.id} className="flex items-start gap-3">
-                  <Avatar name={row.party.display_name} decorative />
+                  <Avatar
+                    name={row.party.display_name}
+                    src={row.party.avatar_url}
+                    decorative
+                  />
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/admin/residential/occupancies/${encodeURIComponent(row.id)}`}

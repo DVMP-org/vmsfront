@@ -10,6 +10,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { OrganizationAdminHeader } from "@/features/organization-admin/OrganizationAdminHeader";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import type { UseCase } from "@/features/context/api";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { parseApiError } from "@/lib/error-utils";
@@ -377,6 +378,42 @@ export function OrganizationSiteEdit({ siteId }: { siteId: string }) {
                 onChange={(next) => setNotification(option.key, next)}
               />
             ))}
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard>
+          <SectionHeading
+            title="Photographs"
+            description="Brand and gallery images for this Site."
+          />
+          <div className="space-y-5 px-4 py-4 sm:px-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <AttachmentManager
+                entityType="site"
+                entityId={site.id}
+                category="logo"
+                variant="single"
+                allowCrop
+                aspect="wide"
+                title="Logo"
+              />
+              <AttachmentManager
+                entityType="site"
+                entityId={site.id}
+                category="cover"
+                variant="single"
+                allowCrop
+                aspect="wide"
+                title="Cover image"
+              />
+            </div>
+            <AttachmentManager
+              entityType="site"
+              entityId={site.id}
+              category="gallery"
+              variant="gallery"
+              title="Gallery"
+            />
           </div>
         </SurfaceCard>
 

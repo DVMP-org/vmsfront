@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { publicBookingUrl } from "../lib";
 
 /**
- * The Site's own public booking page, as something an administrator can share.
+ * The Site booking page, as something an administrator can share.
  *
  * The address exists whether or not this is shown — the page is served on the
  * organization's subdomain from the Site's slug — but until now nothing in the
@@ -62,7 +62,7 @@ export function BookingPageLink({ siteSlug }: { siteSlug: string | null }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-[var(--vms-border)] px-3 py-2">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
-        Public booking page
+        Booking page
       </span>
       <div className="flex flex-wrap items-center gap-2">
         <a

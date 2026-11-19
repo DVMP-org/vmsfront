@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormDrawer } from "@/components/ui/form/FormDrawer";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { Switch } from "@/components/ui/Switch";
@@ -309,6 +310,32 @@ export function EditContractorDrawer({
             </Field>
           </div>
         ) : null}
+      </FormSection>
+
+      <FormSection
+        title="Documents"
+        description="Permits, insurance and other files. They stay private to this Site."
+      >
+        <AttachmentManager
+          entityType="contractor"
+          entityId={contractor.id}
+          category="document"
+          variant="documents"
+          title="Contractor documents"
+        />
+      </FormSection>
+
+      <FormSection
+        title="Photos"
+        description="Identity or site photos kept with the contractor record."
+      >
+        <AttachmentManager
+          entityType="contractor"
+          entityId={contractor.id}
+          category="gallery"
+          variant="gallery"
+          title="Contractor photos"
+        />
       </FormSection>
 
       <FormSection

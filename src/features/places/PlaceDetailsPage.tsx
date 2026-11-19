@@ -15,12 +15,14 @@ import {
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Avatar } from "@/components/ui/Avatar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import type { WorkspaceRelationship } from "@/types";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { placeKinds, placesApi, placeRelationshipsApi } from "./api";
 import { PlaceAssignmentModal } from "./PlaceAssignmentModal";
 import { placeAssignmentCopyFor } from "./roles";
@@ -52,7 +54,16 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
     {
       key: "party.display_name",
       header: "Person",
-      accessor: (row) => row.party.display_name,
+      accessor: (row) => (
+        <span className="flex items-center gap-3">
+          <Avatar
+            name={row.party.display_name}
+            src={row.party.avatar_url}
+            size="sm"
+          />
+          <span>{row.party.display_name}</span>
+        </span>
+      ),
     },
     {
       key: "role",
@@ -189,6 +200,24 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
               </dd>
             </div>
           </dl>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Photos</CardTitle>
+          <CardDescription>
+            Images for {currentPlace.name}. The cover is used in directories
+            and public listings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AttachmentManager
+            entityType="place"
+            entityId={currentPlace.id}
+            category="gallery"
+            variant="gallery"
+            title="Place gallery"
+          />
         </CardContent>
       </Card>
       <Card>

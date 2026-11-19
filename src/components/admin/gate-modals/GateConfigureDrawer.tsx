@@ -113,10 +113,6 @@ export function GateConfigureDrawer({
                 }
               />
               <Fact
-                label="Re-entry"
-                value={humanizePolicy(gate.reentry_policy)}
-              />
-              <Fact
                 label="Offline"
                 value={humanizePolicy(gate.offline_policy)}
               />

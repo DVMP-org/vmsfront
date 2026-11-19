@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
+import { SitePoliciesPanel } from "@/features/policies/components/SitePoliciesPanel";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { ImportModelsDrawer } from "@/features/organization-workspace/components/ImportModelsDrawer";
 import type { OrganizationImportModel } from "@/features/organization-workspace/api";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
@@ -32,7 +34,13 @@ import type {
 
 export function SiteConfiguration() {
   const [activeTab, setActiveTab] = useState<
-    "general" | "gates" | "access" | "roles" | "operations" | "notifications"
+    | "general"
+    | "gates"
+    | "access"
+    | "roles"
+    | "operations"
+    | "policies"
+    | "notifications"
   >("general");
   const [importOpen, setImportOpen] = useState(false);
   const selectedSite = useAppStore((state) => state.selectedSite);
@@ -113,20 +121,28 @@ export function SiteConfiguration() {
   const tabs = [
     ["general", "General"],
     ["gates", "Gates & checkpoints"],
-    ["access", "Access policies"],
+    ["access", "Checkpoint rules"],
     ["roles", "Roles & permissions"],
     ["operations", "Operational settings"],
+    ["policies", "Policies"],
     ["notifications", "Notifications"],
   ].filter(([id]) => {
     if (id === "gates") return allowed("gates.list");
     if (id === "access") return allowed("checkpoint_events.list");
     if (id === "roles") return allowed("parties.update");
     if (id === "operations") return allowed("places.update");
+    if (id === "policies") return allowed("places.show");
     if (id === "notifications") return allowed("places.update");
     return true;
   }) as Array<
     [
-      "general" | "gates" | "access" | "roles" | "operations" | "notifications",
+      | "general"
+      | "gates"
+      | "access"
+      | "roles"
+      | "operations"
+      | "policies"
+      | "notifications",
       string,
     ]
   >;
@@ -181,6 +197,7 @@ export function SiteConfiguration() {
       </nav>
 
       {activeTab === "general" ? (
+        <div className="space-y-5">
         <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
           <h2 className="text-lg font-semibold">General details</h2>
           <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
@@ -213,6 +230,43 @@ export function SiteConfiguration() {
             <Link href="/admin/site/configuration">Edit property details</Link>
           </Button>
         </section>
+          <section className="space-y-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
+            <div>
+              <h2 className="text-lg font-semibold">Site images</h2>
+              <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
+                Brand and gallery images for this Site. Images marked public can
+                appear on its booking page.
+              </p>
+            </div>
+            <div className="grid gap-5 lg:grid-cols-2">
+              <AttachmentManager
+                entityType="site"
+                entityId={property.data.id}
+                category="logo"
+                variant="single"
+                title="Site logo"
+                allowCrop
+                aspect="wide"
+              />
+              <AttachmentManager
+                entityType="site"
+                entityId={property.data.id}
+                category="cover"
+                variant="single"
+                title="Cover image"
+                allowCrop
+                aspect="wide"
+              />
+            </div>
+            <AttachmentManager
+              entityType="site"
+              entityId={property.data.id}
+              category="gallery"
+              variant="gallery"
+              title="Site gallery"
+            />
+          </section>
+        </div>
       ) : null}
 
       {activeTab === "gates" ? (
@@ -228,10 +282,10 @@ export function SiteConfiguration() {
       {activeTab === "access" ? (
         <ConfigurationLinkCard
           icon={CalendarClock}
-          title="Access policies"
+          title="Checkpoint rules"
           description="Gate direction, schedules, credential types, re-entry and offline behavior are configured on each checkpoint. Passage decisions remain server-owned."
           href="/admin/gates"
-          action="Configure checkpoint policies"
+          action="Configure checkpoint rules"
         />
       ) : null}
 
@@ -249,6 +303,13 @@ export function SiteConfiguration() {
         <SiteModulesPanel
           siteId={property.data.id}
           siteName={property.data.name}
+          canEdit={canEditModules}
+        />
+      ) : null}
+
+      {activeTab === "policies" ? (
+        <SitePoliciesPanel
+          siteId={property.data.id}
           canEdit={canEditModules}
         />
       ) : null}

@@ -12,6 +12,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Input } from "@/components/ui/Input";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { parseApiError } from "@/lib/error-utils";
+import { AttachmentManager } from "@/features/files/components/AttachmentManager";
 import { placeGroupsApi, type PlaceGroup } from "@/features/place-groups/api";
 import { useAppStore } from "@/store/app-store";
 import {
@@ -256,6 +257,19 @@ function CategoryDrawer({
           onChange={(event) => setDescription(event.currentTarget.value)}
           placeholder="King bed, city view, sleeps two"
         />
+        {group ? (
+          <div className="border-t border-[var(--vms-line)] pt-4">
+            <AttachmentManager
+              entityType="place_group"
+              entityId={group.id}
+              category="gallery"
+              variant="gallery"
+              isPublic
+              title="Category photos"
+              description="Public photos guests see for this room category."
+            />
+          </div>
+        ) : null}
         {mutation.isError ? (
           <InlineAlert tone="danger" title="That did not save">
             {parseApiError(mutation.error).message}
