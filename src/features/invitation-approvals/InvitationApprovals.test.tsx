@@ -297,7 +297,9 @@ describe("invitation approvals", () => {
     renderWithClient(<InvitationDetail invitationId="invite" />);
 
     expect(await screen.findByText("entry allowed")).toBeInTheDocument();
-    expect(screen.getAllByText(/valid_authorization/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/valid_authorization/).length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("renders a group authorization as one row and lists every visitor in detail", async () => {

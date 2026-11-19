@@ -71,7 +71,8 @@ export function useCommercialChargeAssignments(
 export function useCommercialMaintenance(contextKey: string, enabled: boolean) {
   return useQuery({
     queryKey: commercialKeys.maintenance(contextKey),
-    queryFn: () => maintenanceApi.list({ domain: "commercial", page_size: 100 }),
+    queryFn: () =>
+      maintenanceApi.list({ domain: "commercial", page_size: 100 }),
     enabled,
     retry: false,
   });

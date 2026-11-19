@@ -8,11 +8,7 @@
  */
 
 export type ReservationStatus =
-  | "held"
-  | "confirmed"
-  | "completed"
-  | "expired"
-  | "cancelled";
+  "held" | "confirmed" | "completed" | "expired" | "cancelled";
 
 export interface ReservationDto {
   id: string;

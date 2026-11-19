@@ -40,10 +40,7 @@ export function PublicBookingPayment({
     return null;
   }
 
-  const amount = formatMoney(
-    booking.amount_due,
-    booking.currency ?? undefined,
-  );
+  const amount = formatMoney(booking.amount_due, booking.currency ?? undefined);
   const nights = booking.nights ?? 1;
 
   const start = () => {
@@ -92,8 +89,8 @@ export function PublicBookingPayment({
       ) : null}
 
       <p className="text-xs text-[var(--vms-ink-muted)]">
-        Paying does not confirm the stay — your request still has to be reviewed.
-        If it is declined, contact the Site about a refund.
+        Paying does not confirm the stay — your request still has to be
+        reviewed. If it is declined, contact the Site about a refund.
       </p>
     </div>
   );

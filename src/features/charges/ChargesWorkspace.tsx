@@ -104,8 +104,7 @@ export default function ChargesWorkspace({
     );
   }
 
-  const required =
-    action === "new" ? "create" : action ? "show" : "list";
+  const required = action === "new" ? "create" : action ? "show" : "list";
   if (!allow(required)) {
     return (
       <PageState
@@ -145,7 +144,9 @@ export default function ChargesWorkspace({
           if (action === "new") router.push("/admin/charges");
         }}
         onCreated={(definition) => {
-          void queryClient.invalidateQueries({ queryKey: queryKeys.charges.all });
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.charges.all,
+          });
           setCreateOpen(false);
           router.push(`/admin/charges/definitions/${definition.id}`);
         }}
@@ -179,7 +180,6 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
             responsible Party and every schedule visible.
           </p>
         </div>
-
       </div>
     </header>
   );
@@ -440,8 +440,7 @@ function NewDefinition({
       nextErrors["charge-currency"] = "Use a three-letter currency code.";
     }
     if (showDates && startDate && endDate && endDate < startDate) {
-      nextErrors["charge-end-date"] =
-        "End date must be after the start date.";
+      nextErrors["charge-end-date"] = "End date must be after the start date.";
     }
     if (!siteId) nextErrors["charge-site"] = "Select a Site first.";
     setErrors(nextErrors);
@@ -616,9 +615,7 @@ function NewDefinition({
               className="mt-0.5 h-4 w-4"
             />
             <span className="min-w-0 text-sm">
-              <span className="block font-medium">
-                Flexible frequency
-              </span>
+              <span className="block font-medium">Flexible frequency</span>
               <span className="mt-0.5 block text-xs leading-5 text-[var(--vms-ink-muted)]">
                 Let the payer acknowledge the same or a longer cycle than the
                 recurrence above.
@@ -800,10 +797,7 @@ function DefinitionDetail({
             }
           />
           {definition.end_date ? (
-            <Fact
-              label="Runs until"
-              value={formatDate(definition.end_date)}
-            />
+            <Fact label="Runs until" value={formatDate(definition.end_date)} />
           ) : null}
         </div>
         {toggle.isError ? (
@@ -894,7 +888,9 @@ function DefinitionDetail({
           onClose={() => setAssignOpen(false)}
           onAssigned={(result) => {
             setAssignOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["charges", contextKey] });
+            queryClient.invalidateQueries({
+              queryKey: ["charges", contextKey],
+            });
             if (result.created.length === 1) {
               router.push(`/admin/charges/assignments/${result.created[0].id}`);
             }
@@ -1256,8 +1252,7 @@ function AssignmentDetail({
   const billingCadence =
     scheduleCadence ?? acknowledgedCadence ?? definition.recurrence;
   const cadenceOptions = allowedCadences(definition.recurrence);
-  const awaitingCadence =
-    isFlexible && (schedules.data?.total ?? 0) === 0;
+  const awaitingCadence = isFlexible && (schedules.data?.total ?? 0) === 0;
   const scheduleColumns: Column<Schedule>[] = [
     {
       key: "due_date",
@@ -1547,7 +1542,8 @@ function AssignmentDetail({
                       "Choose the responsible Party.";
                   }
                   setErrors(nextErrors);
-                  if (!Object.keys(nextErrors).length) mutation.mutate("assign");
+                  if (!Object.keys(nextErrors).length)
+                    mutation.mutate("assign");
                 }}
               >
                 <FormErrorSummary errors={errors} />
@@ -1569,7 +1565,9 @@ function AssignmentDetail({
                   disabled={!newParty || mutation.isPending}
                   className="min-h-11 w-full"
                 >
-                  {mutation.isPending ? "Assigning…" : "Assign responsible party"}
+                  {mutation.isPending
+                    ? "Assigning…"
+                    : "Assign responsible party"}
                 </Button>
               </form>
             </ActionPanel>
@@ -2018,4 +2016,3 @@ function isoFromDateInput(value: string): string | undefined {
   const date = new Date(`${value}T12:00:00`);
   return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
 }
-

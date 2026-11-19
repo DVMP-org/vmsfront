@@ -160,9 +160,7 @@ describe("AccessWorkspace", () => {
     fireEvent.change(screen.getByLabelText(/visitor name/i), {
       target: { value: "New Guest" },
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: /submit invitation/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /missing its Site reference/i,
     );
@@ -206,9 +204,9 @@ describe("AccessWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit invitation/i }));
 
     await waitFor(() => expect(accessJourneyApi.create).toHaveBeenCalled());
-    expect(
-      vi.mocked(accessJourneyApi.create).mock.calls[0][0].max_uses,
-    ).toBe(7);
+    expect(vi.mocked(accessJourneyApi.create).mock.calls[0][0].max_uses).toBe(
+      7,
+    );
   });
 
   it("creates one invitation for a group of guests", async () => {
@@ -335,7 +333,9 @@ describe("AccessWorkspace", () => {
       await screen.findByRole("button", { name: /open invitation/i }),
     );
 
-    expect((await screen.findAllByText(/Checked in/)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Checked in/)).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText(/Gate gate-123/)).toBeInTheDocument();
     expect(screen.getByText(/active_authorization/)).toBeInTheDocument();
   });

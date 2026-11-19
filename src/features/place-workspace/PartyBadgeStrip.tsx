@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Check,
-  Copy,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-} from "lucide-react";
+import { Check, Copy, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 
@@ -59,7 +53,6 @@ export function PartyBadgeStrip() {
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
           <ShieldCheck className="h-3 w-3" aria-hidden />
-
         </span>
         <button
           type="button"
@@ -96,7 +89,10 @@ export function PartyBadgeStrip() {
           className="grid h-7 w-7 place-items-center rounded-md text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] disabled:opacity-40"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-[var(--vms-success)]" aria-hidden />
+            <Check
+              className="h-3.5 w-3.5 text-[var(--vms-success)]"
+              aria-hidden
+            />
           ) : (
             <Copy className="h-3.5 w-3.5" aria-hidden />
           )}

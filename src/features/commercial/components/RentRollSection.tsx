@@ -101,7 +101,9 @@ export function RentRollSection({
   return (
     <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-3 sm:p-4">
       <div className="mb-3 border-b border-[var(--vms-line)] pb-4">
-        <h2 className="text-base font-semibold">Rent roll &amp; arrears ageing</h2>
+        <h2 className="text-base font-semibold">
+          Rent roll &amp; arrears ageing
+        </h2>
         <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
           Who owes what, how long it has been owed, and when the tenancy that
           owes it ends.

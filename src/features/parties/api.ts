@@ -25,7 +25,6 @@ export interface PartyInput {
 /** Organization-wide Party register. Identity lives here, not in a Place. */
 export const partiesApi = {
   create: async (body: PartyInput) =>
-    (
-      await apiClient.post<ApiResponse<PartySummary>>("/admin/parties", body)
-    ).data,
+    (await apiClient.post<ApiResponse<PartySummary>>("/admin/parties", body))
+      .data,
 };

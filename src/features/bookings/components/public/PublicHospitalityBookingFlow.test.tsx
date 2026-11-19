@@ -135,7 +135,9 @@ describe("public hospitality booking", () => {
 
   it("shows categories with what is left for those dates", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Search availability" }),
+    );
 
     expect(await screen.findByText("Deluxe Super")).toBeTruthy();
     expect(screen.getByText("2 rooms left for these dates")).toBeTruthy();
@@ -194,7 +196,9 @@ describe("public hospitality booking", () => {
 
   it("keeps party size optional and submits it when supplied", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Search availability" }),
+    );
     fireEvent.click(
       await screen.findByRole("button", { name: "Select Deluxe Super" }),
     );
@@ -219,7 +223,9 @@ describe("public hospitality booking", () => {
 
   it("will not proceed without a way to reach the guest", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Search availability" }),
+    );
     fireEvent.click(
       await screen.findByRole("button", { name: "Select Deluxe Super" }),
     );
@@ -238,7 +244,9 @@ describe("public hospitality booking", () => {
 
   it("prices two rooms as the two rooms the guest gets, not the cheapest twice", async () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Search availability" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Search availability" }),
+    );
 
     const rooms = await screen.findByLabelText("Rooms of Deluxe Super");
     fireEvent.change(rooms, { target: { value: "2" } });

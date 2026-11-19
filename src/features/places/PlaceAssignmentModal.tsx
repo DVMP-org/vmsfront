@@ -78,8 +78,7 @@ export function PlaceAssignmentModal({
   const [effectiveTo, setEffectiveTo] = useState("");
   const [withLease, setWithLease] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
-  const [rentCadence, setRentCadence] =
-    useState<ChargeRecurrence>("monthly");
+  const [rentCadence, setRentCadence] = useState<ChargeRecurrence>("monthly");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const save = useMutation({
     mutationFn: async () => {
@@ -171,10 +170,18 @@ export function PlaceAssignmentModal({
         toast.success("Draft lease created — confirm it to start billing.");
       }
       for (const queryKey of [
-        ["auth", "verify"], queryKeys.relationships.all,
-        queryKeys.people.all, queryKeys.places.all, ["place"], ["residential"],
-        ["commercial"], ["hospitality"], ["mixed_use"], ["leases"],
-      ]) void client.invalidateQueries({ queryKey });
+        ["auth", "verify"],
+        queryKeys.relationships.all,
+        queryKeys.people.all,
+        queryKeys.places.all,
+        ["place"],
+        ["residential"],
+        ["commercial"],
+        ["hospitality"],
+        ["mixed_use"],
+        ["leases"],
+      ])
+        void client.invalidateQueries({ queryKey });
       onSaved();
     },
     onError: (error) => setErrors({ form: parseApiError(error).message }),

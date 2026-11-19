@@ -252,7 +252,9 @@ describe("operating dashboard", () => {
       within(placeScope).queryByRole("link", { name: /Harbour Hotel/ }),
     ).not.toBeInTheDocument();
     expect(within(placeScope).getByText("Harbour Hotel")).toBeInTheDocument();
-    expect(screen.getByText("Invitation awaiting approval")).toBeInTheDocument();
+    expect(
+      screen.getByText("Invitation awaiting approval"),
+    ).toBeInTheDocument();
     const activityTable = screen.getByRole("table", {
       name: "Recent checkpoint activity for Harbour Hotel",
     });
@@ -368,7 +370,9 @@ describe("operating dashboard", () => {
     render(<AdminDashboardPage />);
 
     expect(screen.getByText("Access trend unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Invitation awaiting approval")).toBeInTheDocument();
+    expect(
+      screen.getByText("Invitation awaiting approval"),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.analyticsRefetch).toHaveBeenCalledOnce();
   });

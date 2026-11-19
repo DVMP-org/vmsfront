@@ -75,7 +75,9 @@
   text-align: left;
   background: var(--vms-surface);
   color: var(--vms-ink);
-  transition: background var(--vms-motion), border-color var(--vms-motion);
+  transition:
+    background var(--vms-motion),
+    border-color var(--vms-motion);
 }
 .stay-workspace button:hover {
   background: var(--vms-surface-subtle);

@@ -104,7 +104,8 @@ export function CreateContractorDrawer({
     if (!draft.access_from || !draft.access_to) {
       next.access_to = "Set when the contractor may be on Site.";
     } else if (
-      new Date(draft.access_to).getTime() <= new Date(draft.access_from).getTime()
+      new Date(draft.access_to).getTime() <=
+      new Date(draft.access_from).getTime()
     ) {
       next.access_to = "Access must end after it starts.";
     }
@@ -132,9 +133,10 @@ export function CreateContractorDrawer({
         permit_reference: draft.requires_permit
           ? draft.permit_reference.trim()
           : null,
-        permit_expires_at: draft.requires_permit && draft.permit_expires_at
-          ? new Date(draft.permit_expires_at).toISOString()
-          : null,
+        permit_expires_at:
+          draft.requires_permit && draft.permit_expires_at
+            ? new Date(draft.permit_expires_at).toISOString()
+            : null,
         access_from: new Date(draft.access_from).toISOString(),
         access_to: new Date(draft.access_to).toISOString(),
         notes: draft.notes.trim() || null,
@@ -143,7 +145,9 @@ export function CreateContractorDrawer({
     );
   }
 
-  const serverError = mutation.error ? parseApiError(mutation.error).message : null;
+  const serverError = mutation.error
+    ? parseApiError(mutation.error).message
+    : null;
 
   return (
     <FormDrawer
@@ -165,7 +169,12 @@ export function CreateContractorDrawer({
         description="The person or firm arriving on Site."
         icon={UserRoundPlus}
       >
-        <Field id="contractor-name" label="Contact name" required error={errors.contact_name}>
+        <Field
+          id="contractor-name"
+          label="Contact name"
+          required
+          error={errors.contact_name}
+        >
           {(control) => (
             <input
               {...control}
@@ -178,7 +187,12 @@ export function CreateContractorDrawer({
           )}
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="contractor-email" label="Email" required error={errors.email}>
+          <Field
+            id="contractor-email"
+            label="Email"
+            required
+            error={errors.email}
+          >
             {(control) => (
               <input
                 {...control}
@@ -321,7 +335,10 @@ export function CreateContractorDrawer({
         ) : null}
       </FormSection>
 
-      <FormSection title="Notes" description="Internal context for the site team.">
+      <FormSection
+        title="Notes"
+        description="Internal context for the site team."
+      >
         <Field id="contractor-notes" label="Notes">
           {(control) => (
             <textarea

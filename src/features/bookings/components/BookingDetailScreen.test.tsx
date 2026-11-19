@@ -121,10 +121,9 @@ describe("booking detail", () => {
       key: "ArrowRight",
     });
 
-    expect(screen.getByRole("tab", { name: "Rooms & charges" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(
+      screen.getByRole("tab", { name: "Rooms & charges" }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
   it("reports the balance from the payments, not from a status column", () => {

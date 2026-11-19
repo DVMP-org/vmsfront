@@ -30,7 +30,8 @@ export default function ResetPasswordPage() {
     const nextErrors: Record<string, string> = {};
 
     if (!formData.email) nextErrors.email = "Email is required";
-    if (!formData.newPassword) nextErrors.newPassword = "New password is required";
+    if (!formData.newPassword)
+      nextErrors.newPassword = "New password is required";
     if (formData.newPassword.length < 8)
       nextErrors.newPassword = "Password must be at least 8 characters long";
     if (!formData.confirmPassword)
@@ -69,7 +70,8 @@ export default function ResetPasswordPage() {
           <div className="space-y-2">
             <h3 className="text-xl font-bold">Invalid Link</h3>
             <p className="text-muted-foreground">
-              For security reasons, reset links expire quickly. Please request a new one to continue.
+              For security reasons, reset links expire quickly. Please request a
+              new one to continue.
             </p>
           </div>
           <div className="space-y-4">

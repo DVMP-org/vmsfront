@@ -8,10 +8,7 @@ export type ResidentialSection =
   | "announcements";
 
 export type AnnouncementAudience =
-  | "all_residents"
-  | "owners"
-  | "tenants"
-  | "staff";
+  "all_residents" | "owners" | "tenants" | "staff";
 
 export const announcementPriorities = [
   "low",

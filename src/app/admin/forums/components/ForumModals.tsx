@@ -89,7 +89,9 @@ export function CategoryFormModal({
       residencies[0]?.id ||
       "";
     setFormValues({
-      scopeType: initialValues?.scopeType ?? (fallbackResidencyId ? "residency" : "organization"),
+      scopeType:
+        initialValues?.scopeType ??
+        (fallbackResidencyId ? "residency" : "organization"),
       residencyId: fallbackResidencyId,
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
@@ -100,7 +102,8 @@ export function CategoryFormModal({
 
   const canSubmit =
     formValues.name.trim().length > 0 &&
-    (formValues.scopeType === "organization" || Boolean(formValues.residencyId));
+    (formValues.scopeType === "organization" ||
+      Boolean(formValues.residencyId));
   const modalTitle =
     mode === "create" ? "Create Forum Category" : "Edit Forum Category";
 
@@ -114,7 +117,9 @@ export function CategoryFormModal({
           onSubmit({
             ...formValues,
             residencyId:
-              formValues.scopeType === "organization" ? "" : formValues.residencyId,
+              formValues.scopeType === "organization"
+                ? ""
+                : formValues.residencyId,
             name: formValues.name.trim(),
             description: formValues.description.trim(),
           });
@@ -130,11 +135,15 @@ export function CategoryFormModal({
             onChange={(event) =>
               setFormValues((prev) => ({
                 ...prev,
-                scopeType: event.target.value as CategoryFormValues["scopeType"],
+                scopeType: event.target
+                  .value as CategoryFormValues["scopeType"],
                 residencyId:
                   event.target.value === "organization"
                     ? ""
-                    : prev.residencyId || defaultResidencyId || residencies[0]?.id || "",
+                    : prev.residencyId ||
+                      defaultResidencyId ||
+                      residencies[0]?.id ||
+                      "",
               }))
             }
           >
@@ -152,7 +161,10 @@ export function CategoryFormModal({
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               value={formValues.residencyId}
               onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, residencyId: event.target.value }))
+                setFormValues((prev) => ({
+                  ...prev,
+                  residencyId: event.target.value,
+                }))
               }
               required
             >
@@ -169,7 +181,8 @@ export function CategoryFormModal({
         )}
 
         <p className="text-xs text-muted-foreground">
-          Organization categories are visible everywhere. Residency categories stay local to one residency.
+          Organization categories are visible everywhere. Residency categories
+          stay local to one residency.
         </p>
 
         <div className="space-y-1.5">
@@ -275,7 +288,9 @@ export function TopicFormModal({
     }
 
     return categories.filter(
-      (category) => !category.residency_id || category.residency_id === formValues.residencyId
+      (category) =>
+        !category.residency_id ||
+        category.residency_id === formValues.residencyId,
     );
   }, [categories, formValues.targetType, formValues.residencyId]);
 
@@ -292,16 +307,15 @@ export function TopicFormModal({
         return !category.residency_id;
       }
 
-      return !category.residency_id || category.residency_id === fallbackResidencyId;
+      return (
+        !category.residency_id || category.residency_id === fallbackResidencyId
+      );
     });
     setFormValues({
       targetType: fallbackTargetType,
       residencyId: fallbackResidencyId,
       residencyGroupId: initialValues?.residencyGroupId || "",
-      categoryId:
-        initialValues?.categoryId ||
-        scopedCategories[0]?.id ||
-        "",
+      categoryId: initialValues?.categoryId || scopedCategories[0]?.id || "",
       title: initialValues?.title ?? "",
       content: initialValues?.content ?? "",
       isPinned: initialValues?.isPinned ?? false,
@@ -318,13 +332,13 @@ export function TopicFormModal({
 
   const canSubmit =
     ((formValues.targetType === "residency" && formValues.residencyId) ||
-      (formValues.targetType === "residencyGroup" && formValues.residencyGroupId)) &&
+      (formValues.targetType === "residencyGroup" &&
+        formValues.residencyGroupId)) &&
     formValues.categoryId &&
     formValues.title.trim().length > 0 &&
     (mode === "edit" || formValues.content.trim().length > 0);
 
-  const modalTitle =
-    mode === "create" ? "Create Topic" : "Edit Topic";
+  const modalTitle = mode === "create" ? "Create Topic" : "Edit Topic";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
@@ -336,7 +350,9 @@ export function TopicFormModal({
           onSubmit({
             ...formValues,
             residencyId:
-              formValues.targetType === "residency" ? formValues.residencyId : "",
+              formValues.targetType === "residency"
+                ? formValues.residencyId
+                : "",
             residencyGroupId:
               formValues.targetType === "residencyGroup"
                 ? formValues.residencyGroupId
@@ -358,10 +374,14 @@ export function TopicFormModal({
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  targetType: event.target.value as TopicFormValues["targetType"],
+                  targetType: event.target
+                    .value as TopicFormValues["targetType"],
                   residencyId:
                     event.target.value === "residency"
-                      ? prev.residencyId || defaultResidencyId || residencies[0]?.id || ""
+                      ? prev.residencyId ||
+                        defaultResidencyId ||
+                        residencies[0]?.id ||
+                        ""
                       : "",
                   residencyGroupId:
                     event.target.value === "residencyGroup"
@@ -379,7 +399,9 @@ export function TopicFormModal({
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {formValues.targetType === "residencyGroup" ? "Residency group" : "Residency"}
+              {formValues.targetType === "residencyGroup"
+                ? "Residency group"
+                : "Residency"}
             </label>
             <select
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -392,7 +414,9 @@ export function TopicFormModal({
                 setFormValues((prev) => ({
                   ...prev,
                   residencyId:
-                    prev.targetType === "residency" ? event.target.value : prev.residencyId,
+                    prev.targetType === "residency"
+                      ? event.target.value
+                      : prev.residencyId,
                   residencyGroupId:
                     prev.targetType === "residencyGroup"
                       ? event.target.value
@@ -408,15 +432,15 @@ export function TopicFormModal({
               </option>
               {formValues.targetType === "residencyGroup"
                 ? residencyGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))
                 : residencies.map((residency) => (
-                  <option key={residency.id} value={residency.id}>
-                    {residency.name}
-                  </option>
-                ))}
+                    <option key={residency.id} value={residency.id}>
+                      {residency.name}
+                    </option>
+                  ))}
             </select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
@@ -447,7 +471,8 @@ export function TopicFormModal({
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              Residency-group creation fans out into one topic per residency and can only use organization-wide categories.
+              Residency-group creation fans out into one topic per residency and
+              can only use organization-wide categories.
             </p>
           </div>
         </div>

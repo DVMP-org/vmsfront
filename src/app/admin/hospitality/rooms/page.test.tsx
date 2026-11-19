@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -39,7 +45,12 @@ vi.mock("@/features/hospitality/api", () => ({
 vi.mock("@/features/place-groups/api", () => ({
   placeGroupsApi: {
     list: async () => [
-      { id: "group-deluxe", name: "Deluxe Super", description: null, places: [] },
+      {
+        id: "group-deluxe",
+        name: "Deluxe Super",
+        description: null,
+        places: [],
+      },
     ],
     create: async () => ({}),
     update: async () => ({}),
@@ -95,9 +106,9 @@ describe("hospitality room inventory", () => {
     expect(
       await screen.findByRole("heading", { name: "Room inventory" }),
     ).toBeInTheDocument();
-    expect((await screen.findAllByText("Harbour Suite")).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      (await screen.findAllByText("Harbour Suite")).length,
+    ).toBeGreaterThan(0);
     expect((await screen.findAllByText("$180.00")).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Add room" }));
@@ -110,7 +121,9 @@ describe("hospitality room inventory", () => {
     mocks.list.mockRejectedValueOnce(new Error("inventory unavailable"));
     mount();
 
-    expect(await screen.findByText("inventory unavailable")).toBeInTheDocument();
+    expect(
+      await screen.findByText("inventory unavailable"),
+    ).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: "Retry" }).length,
     ).toBeGreaterThan(0);

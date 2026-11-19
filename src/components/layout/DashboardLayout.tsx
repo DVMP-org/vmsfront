@@ -174,7 +174,6 @@ export function DashboardLayout({ children, type }: DashboardLayoutProps) {
                 "gap-4 xs:gap-5 sm:gap-5 md:gap-6",
               )}
             >
-
               {children}
             </div>
           </main>

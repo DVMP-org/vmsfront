@@ -18,7 +18,8 @@ import { ProfilePage } from "./ProfilePage";
  */
 export function UnifiedProfilePage() {
   const requested = useSearchParams().get("context");
-  const context = requested === "admin" || requested === "resident" ? requested : null;
+  const context =
+    requested === "admin" || requested === "resident" ? requested : null;
   const admin = useQuery({
     queryKey: ["profile", "admin"],
     queryFn: async () => (await adminService.getAdminProfile()).data,

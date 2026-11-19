@@ -163,12 +163,7 @@
         "occupancy",
         "balance"
       ],
-      "filters": [
-        "type",
-        "occupancy",
-        "lease_end",
-        "status"
-      ]
+      "filters": ["type", "occupancy", "lease_end", "status"]
     },
     "maintenance": {
       "columns": [
@@ -180,13 +175,7 @@
         "sla",
         "status"
       ],
-      "filters": [
-        "priority",
-        "system",
-        "assignment",
-        "sla",
-        "status"
-      ]
+      "filters": ["priority", "system", "assignment", "sla", "status"]
     }
   },
   "maintenance": {

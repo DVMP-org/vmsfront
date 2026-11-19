@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { brandVariables, contrastRatio, validateBrandKit } from "../../packages/ui/src/brand";
+import {
+  brandVariables,
+  contrastRatio,
+  validateBrandKit,
+} from "../../packages/ui/src/brand";
 
 const valid = {
   light: { primary: "#175e56", surface: "#faf9f6", text: "#202a2a" },
@@ -13,7 +17,17 @@ describe("tenant brand kit", () => {
     expect(brandVariables(valid, "dark")["--vms-on-primary"]).toBe("#000000");
   });
   it("rejects invalid colors and inaccessible text or focus colors", () => {
-    expect(validateBrandKit({ ...valid, light: { ...valid.light, text: "#eeeeee", primary: "#eeeeee" } })).toHaveLength(2);
-    expect(() => brandVariables({ ...valid, dark: { ...valid.dark, primary: "red; color: red" } }, "light")).toThrow();
+    expect(
+      validateBrandKit({
+        ...valid,
+        light: { ...valid.light, text: "#eeeeee", primary: "#eeeeee" },
+      }),
+    ).toHaveLength(2);
+    expect(() =>
+      brandVariables(
+        { ...valid, dark: { ...valid.dark, primary: "red; color: red" } },
+        "light",
+      ),
+    ).toThrow();
   });
 });

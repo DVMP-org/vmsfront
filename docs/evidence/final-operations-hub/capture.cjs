@@ -314,7 +314,12 @@ async function createContext(
           ],
           specialist_groups: [],
           use_cases: [
-            { value: "mixed_use", label: "Mixed use", modules: [], module_groups: [] },
+            {
+              value: "mixed_use",
+              label: "Mixed use",
+              modules: [],
+              module_groups: [],
+            },
           ],
           building_types: [],
           common_modules: [
@@ -427,7 +432,10 @@ async function createContext(
     if (pathname === `/admin/visit-authorizations/${invitation.id}`) {
       return json(route, body(invitation));
     }
-    if (pathname.endsWith("/sessions") || pathname.endsWith("/checkpoint-events")) {
+    if (
+      pathname.endsWith("/sessions") ||
+      pathname.endsWith("/checkpoint-events")
+    ) {
       return json(route, body(paginated([])));
     }
     if (pathname === "/admin/gates") {
@@ -467,9 +475,11 @@ async function createContext(
       return json(route, body(paginated([])));
     }
     if (pathname === "/admin/plugins") return json(route, body([]));
-    if (pathname === "/admin/plugins/entitlements") return json(route, body([]));
+    if (pathname === "/admin/plugins/entitlements")
+      return json(route, body([]));
     if (pathname === "/admin/config/payment/list") return json(route, body([]));
-    if (pathname === "/admin/integrations") return json(route, body(paginated([])));
+    if (pathname === "/admin/integrations")
+      return json(route, body(paginated([])));
     if (pathname === "/admin/config/mailer/settings") {
       return json(
         route,
@@ -493,7 +503,8 @@ async function createContext(
     if (pathname === "/admin/subscription/invoices") {
       return json(route, body(paginated([])));
     }
-    if (pathname === "/admin/branding/theme/active") return json(route, body(null));
+    if (pathname === "/admin/branding/theme/active")
+      return json(route, body(null));
     if (pathname === "/admin/branding/themes") return json(route, body([]));
     if (pathname === "/user/notifications") {
       return json(route, body(paginated([])));
@@ -505,8 +516,11 @@ async function createContext(
 }
 
 async function captureRoute(session, spec, viewport, label) {
-  const { page, pageErrors: allPageErrors, consoleErrors: allConsoleErrors } =
-    session;
+  const {
+    page,
+    pageErrors: allPageErrors,
+    consoleErrors: allConsoleErrors,
+  } = session;
   const pageErrorStart = allPageErrors.length;
   const consoleErrorStart = allConsoleErrors.length;
   let response = null;
@@ -656,8 +670,7 @@ async function main() {
       authenticated: false,
     },
   ];
-  const requestedRoutes = process.env.CAPTURE_ROUTES
-    ?.split(",")
+  const requestedRoutes = process.env.CAPTURE_ROUTES?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
   const selectedRouteSpecs =
@@ -672,16 +685,14 @@ async function main() {
     ["390", { width: 390, height: 844 }],
     ["320", { width: 320, height: 760 }],
   ];
-  const requestedViewports = process.env.CAPTURE_VIEWPORTS
-    ?.split(",")
+  const requestedViewports = process.env.CAPTURE_VIEWPORTS?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
   const selectedViewports = requestedViewports
     ? viewports.filter(([label]) => requestedViewports.includes(label))
     : viewports;
   const captureFirstPlace = process.env.CAPTURE_FIRST_PLACE !== "false";
-  const resultsName =
-    process.env.CAPTURE_RESULTS || "results.json";
+  const resultsName = process.env.CAPTURE_RESULTS || "results.json";
   const results = [];
   try {
     for (const [label, viewport] of selectedViewports) {

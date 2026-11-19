@@ -47,15 +47,15 @@ export type IntegrationCapability =
   | "file_storage";
 
 export interface IntegrationConfig {
-  name: string,
-  description: string,
-  logo_url: string | null,
-  website_url: string | null,
-  docs_url: string | null,
-  type: IntegrationType,
-  tags?: string[] | null,
-  capabilities: IntegrationCapability[],
-  credentials: IntegrationCredentials,
+  name: string;
+  description: string;
+  logo_url: string | null;
+  website_url: string | null;
+  docs_url: string | null;
+  type: IntegrationType;
+  tags?: string[] | null;
+  capabilities: IntegrationCapability[];
+  credentials: IntegrationCredentials;
 }
 
 export interface PaymentGatewaySelection {
@@ -105,7 +105,10 @@ export const INTEGRATION_TYPE_LABELS: Record<IntegrationType, string> = {
   other: "Other",
 };
 
-export const INTEGRATION_CAPABILITY_LABELS: Record<IntegrationCapability, string> = {
+export const INTEGRATION_CAPABILITY_LABELS: Record<
+  IntegrationCapability,
+  string
+> = {
   send_message: "Send Messages",
   receive_message: "Receive Messages",
   process_payment: "Process Payments",

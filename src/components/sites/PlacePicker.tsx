@@ -4,10 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { fieldControlClassName } from "@/components/ui/form/Field";
-import {
-  placesApi,
-  type PlaceTreeNode,
-} from "@/features/places/api";
+import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 
 export function PlacePicker({
   siteId,
@@ -25,10 +22,7 @@ export function PlacePicker({
     queryFn: () => placesApi.tree(siteId),
     enabled: !!siteId,
   });
-  const items = useMemo(
-    () => flattenPlaces(places.data || []),
-    [places.data],
-  );
+  const items = useMemo(() => flattenPlaces(places.data || []), [places.data]);
   return (
     <label className="block space-y-2">
       <span className="text-[13px] font-semibold">{label}</span>
@@ -66,8 +60,6 @@ export function PlacePicker({
   );
 }
 
-export function flattenPlaces(
-  roots: PlaceTreeNode[],
-): PlaceTreeNode[] {
+export function flattenPlaces(roots: PlaceTreeNode[]): PlaceTreeNode[] {
   return roots.flatMap((root) => [root, ...flattenPlaces(root.children || [])]);
 }

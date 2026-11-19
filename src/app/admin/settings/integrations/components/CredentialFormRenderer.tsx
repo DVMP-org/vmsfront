@@ -41,13 +41,7 @@ function FieldError({ id, error }: { id: string; error?: string }) {
   );
 }
 
-function FieldDescription({
-  id,
-  children,
-}: {
-  id: string;
-  children?: string;
-}) {
+function FieldDescription({ id, children }: { id: string; children?: string }) {
   if (!children) return null;
   return (
     <p id={id} className="text-xs leading-5 text-[var(--vms-ink-muted)]">
@@ -68,7 +62,9 @@ function renderField(
   const isRequired = field.required !== false;
   const currentValue = value ?? field.value ?? "";
   const inputId = `integration-credential-${key}`;
-  const descriptionId = field.description ? `${inputId}-description` : undefined;
+  const descriptionId = field.description
+    ? `${inputId}-description`
+    : undefined;
   const errorId = error ? `${inputId}-error` : undefined;
   const describedBy =
     [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
@@ -85,7 +81,10 @@ function renderField(
           <label htmlFor={inputId} className="block text-sm font-semibold">
             {label}
             {isRequired ? (
-              <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+              <span
+                className="ml-1 text-[var(--vms-danger)]"
+                aria-hidden="true"
+              >
                 *
               </span>
             ) : null}
@@ -139,7 +138,10 @@ function renderField(
           <label htmlFor={inputId} className="block text-sm font-semibold">
             {label}
             {isRequired ? (
-              <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+              <span
+                className="ml-1 text-[var(--vms-danger)]"
+                aria-hidden="true"
+              >
                 *
               </span>
             ) : null}
@@ -149,7 +151,9 @@ function renderField(
             type="number"
             placeholder={placeholder}
             value={currentValue as number}
-            onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) =>
+              onChange(e.target.value === "" ? "" : Number(e.target.value))
+            }
             error={error}
             disabled={disabled}
             aria-describedby={describedBy}
@@ -166,7 +170,10 @@ function renderField(
           <label htmlFor={inputId} className="block text-sm font-semibold">
             {label}
             {isRequired ? (
-              <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+              <span
+                className="ml-1 text-[var(--vms-danger)]"
+                aria-hidden="true"
+              >
                 *
               </span>
             ) : null}
@@ -206,7 +213,10 @@ function renderField(
           <label htmlFor={inputId} className="block text-sm font-semibold">
             {label}
             {isRequired ? (
-              <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+              <span
+                className="ml-1 text-[var(--vms-danger)]"
+                aria-hidden="true"
+              >
                 *
               </span>
             ) : null}
@@ -243,7 +253,10 @@ function renderField(
           <label htmlFor={inputId} className="block text-sm font-semibold">
             {label}
             {isRequired ? (
-              <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+              <span
+                className="ml-1 text-[var(--vms-danger)]"
+                aria-hidden="true"
+              >
                 *
               </span>
             ) : null}

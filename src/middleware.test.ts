@@ -196,10 +196,9 @@ describe("organization routing", () => {
   });
 
   it("allows login on a tenant domain", () => {
-    const request = new NextRequest(
-      "https://harbour.vmsfront.to/auth/login",
-      { headers: { host: "harbour.vmsfront.to" } },
-    );
+    const request = new NextRequest("https://harbour.vmsfront.to/auth/login", {
+      headers: { host: "harbour.vmsfront.to" },
+    });
 
     const response = middleware(request);
 
@@ -208,10 +207,9 @@ describe("organization routing", () => {
   });
 
   it("allows the canonical trailing-slash login on a tenant domain", () => {
-    const request = new NextRequest(
-      "https://harbour.vmsfront.to/auth/login/",
-      { headers: { host: "harbour.vmsfront.to" } },
-    );
+    const request = new NextRequest("https://harbour.vmsfront.to/auth/login/", {
+      headers: { host: "harbour.vmsfront.to" },
+    });
 
     const response = middleware(request);
 
@@ -220,10 +218,9 @@ describe("organization routing", () => {
   });
 
   it("redirects a tenant landing alias to the base-domain homepage", () => {
-    const request = new NextRequest(
-      "https://harbour.vmsfront.to/landing",
-      { headers: { host: "harbour.vmsfront.to" } },
-    );
+    const request = new NextRequest("https://harbour.vmsfront.to/landing", {
+      headers: { host: "harbour.vmsfront.to" },
+    });
 
     const response = middleware(request);
     const location = new URL(response.headers.get("location") || "");

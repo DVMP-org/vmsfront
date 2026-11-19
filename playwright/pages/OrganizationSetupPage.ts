@@ -5,7 +5,10 @@ import { vmsConfig } from "../configs/vms.config";
 export class OrganizationSetupPage {
   constructor(private readonly page: Page) {}
 
-  async login(email = vmsConfig.adminEmail, password = vmsConfig.adminPassword) {
+  async login(
+    email = vmsConfig.adminEmail,
+    password = vmsConfig.adminPassword,
+  ) {
     await this.page.goto(`${vmsConfig.webBaseURL}/auth/login`);
     await this.page.getByLabel("Email Address").fill(email);
     await this.page.getByLabel("Password").fill(password);
@@ -16,7 +19,9 @@ export class OrganizationSetupPage {
   async openOrganizationIndex() {
     await this.page.goto(`${vmsConfig.webBaseURL}/organizations`);
     await expect(
-      this.page.getByRole("heading", { name: /welcome|organizations/i }).first(),
+      this.page
+        .getByRole("heading", { name: /welcome|organizations/i })
+        .first(),
     ).toBeVisible();
   }
 
@@ -41,9 +46,7 @@ export class OrganizationSetupPage {
     if (await workspaceUrl.isVisible()) {
       await workspaceUrl.fill(slug);
     }
-    await this.page
-      .getByRole("button", { name: /continue to plan/i })
-      .click();
+    await this.page.getByRole("button", { name: /continue to plan/i }).click();
     await expect(this.page).toHaveURL(
       new RegExp(`${slug}\\.${vmsConfig.baseDomain}.*\\/plans`),
     );
@@ -54,9 +57,7 @@ export class OrganizationSetupPage {
       .getByRole("button", { name: /activate( free plan| and continue)/i })
       .click();
     await expect(this.page).toHaveURL(
-      new RegExp(
-        `${vmsConfig.baseDomain}.*\\/setup\\/first-site\\/?$`,
-      ),
+      new RegExp(`${vmsConfig.baseDomain}.*\\/setup\\/first-site\\/?$`),
     );
   }
 
@@ -77,9 +78,7 @@ export class OrganizationSetupPage {
     if (description) {
       await this.page.getByLabel("Description").fill(description);
     }
-    await this.page
-      .getByRole("button", { name: "Create first Site" })
-      .click();
+    await this.page.getByRole("button", { name: "Create first Site" }).click();
     await expect(
       this.page.getByRole("heading", { name: "Choose your workspace" }),
     ).toBeVisible({ timeout: 30_000 });

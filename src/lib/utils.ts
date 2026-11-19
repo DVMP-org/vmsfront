@@ -37,7 +37,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getInitials(firstName?: string | null, lastName?: string | null): string {
+export function getInitials(
+  firstName?: string | null,
+  lastName?: string | null,
+): string {
   return initials([firstName, lastName].filter(Boolean).join(" "), "U");
 }
 
@@ -116,13 +119,15 @@ export function toCamelCase(str: string): string {
 export function toSnakeCase(str: string): string {
   // Handle consecutive uppercase letters (acronyms) as a single unit
   // First, insert underscore before uppercase letters that follow lowercase or other uppercase
-  return str
-    // Insert underscore before uppercase letters that follow lowercase letters
-    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-    // Insert underscore before uppercase letters that follow other uppercase letters (acronyms)
-    // but only if followed by lowercase (to avoid splitting acronyms)
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-    .toLowerCase();
+  return (
+    str
+      // Insert underscore before uppercase letters that follow lowercase letters
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      // Insert underscore before uppercase letters that follow other uppercase letters (acronyms)
+      // but only if followed by lowercase (to avoid splitting acronyms)
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+      .toLowerCase()
+  );
 }
 
 /**
@@ -134,10 +139,10 @@ export function keysToCamelCase<T = any>(obj: any): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => keysToCamelCase(item)) as T;
+    return obj.map((item) => keysToCamelCase(item)) as T;
   }
 
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     const camelCaseObj: any = {};
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
@@ -160,10 +165,10 @@ export function keysToSnakeCase<T = any>(obj: any): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => keysToSnakeCase(item)) as T;
+    return obj.map((item) => keysToSnakeCase(item)) as T;
   }
 
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     const snakeCaseObj: any = {};
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
@@ -176,7 +181,6 @@ export function keysToSnakeCase<T = any>(obj: any): T {
 
   return obj;
 }
-
 
 export function getTimeRemaining(validTo?: string | null): string | null {
   if (!validTo) return null;
@@ -193,7 +197,7 @@ export function getTimeRemaining(validTo?: string | null): string | null {
 
 export function formatPassWindow(
   validFrom?: string | null,
-  validTo?: string | null
+  validTo?: string | null,
 ): string {
   const from = safeFormatDateTime(validFrom);
   const to = safeFormatDateTime(validTo);
@@ -220,7 +224,6 @@ export function safeFormatDateTime(value?: string | null): string | null {
   return formatDateTime(parsed);
 }
 
-
 export const formatPrice = (price: number, currency?: string) => {
   if (price === 0) return "Free";
   return new Intl.NumberFormat("en-US", {
@@ -228,7 +231,6 @@ export const formatPrice = (price: number, currency?: string) => {
     currency: currency || "USD",
   }).format(price);
 };
-
 
 export const formatNumber = (num: number) => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -242,16 +244,16 @@ export const formatNumber = (num: number) => {
  */
 export function safeOpenUrl(url: string | undefined | null): void {
   if (!url) return;
-  
+
   try {
     const parsed = new URL(url);
     // Only allow http and https protocols
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      console.warn('Blocked attempt to open URL with unsafe protocol:', url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      console.warn("Blocked attempt to open URL with unsafe protocol:", url);
       return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, "_blank", "noopener,noreferrer");
   } catch (error) {
-    console.error('Invalid URL:', url, error);
+    console.error("Invalid URL:", url, error);
   }
 }

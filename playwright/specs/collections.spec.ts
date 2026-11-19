@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  installCanonicalApi,
-  seedSession,
-} from "../fixtures/canonical-api";
+import { installCanonicalApi, seedSession } from "../fixtures/canonical-api";
 import { PropertiesPage } from "../pages/PropertiesPage";
 
 function makePlaces(count: number) {
@@ -42,11 +39,11 @@ test.describe("@canonical @collections collection behavior", () => {
     const tenant = await seedSession(context);
     const properties = new PropertiesPage(page);
     await page.goto(`${tenant}/admin/properties`);
-    await expect(page.getByRole("heading", { name: "Properties" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Properties" }),
+    ).toBeVisible();
 
-    await page
-      .getByPlaceholder("Find a property or space…")
-      .fill("Harbour");
+    await page.getByPlaceholder("Find a property or space…").fill("Harbour");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(propertyText("Harbour 01")).toBeVisible();
 
@@ -65,7 +62,9 @@ test.describe("@canonical @collections collection behavior", () => {
 
     await page.getByLabel("Choose visible columns").click();
     await page.getByRole("checkbox", { name: "Location" }).uncheck();
-    await expect(page.getByRole("columnheader", { name: "Location" })).toHaveCount(0);
+    await expect(
+      page.getByRole("columnheader", { name: "Location" }),
+    ).toHaveCount(0);
 
     if (mobile) {
       await expect(
@@ -77,7 +76,6 @@ test.describe("@canonical @collections collection behavior", () => {
         page.getByRole("columnheader", { name: "Property" }),
       ).toHaveAttribute("aria-sort", "ascending");
     }
-
   });
 
   test("multi-select exposes bulk actions and downloads selected rows", async ({
@@ -117,9 +115,7 @@ test.describe("@canonical @collections collection behavior", () => {
       .getByPlaceholder("Find a property or space…")
       .fill("not-a-place");
     await page.getByRole("button", { name: "Search", exact: true }).click();
-    await expect(
-      emptyText("No properties match these filters"),
-    ).toBeVisible();
+    await expect(emptyText("No properties match these filters")).toBeVisible();
     await page.getByRole("button", { name: "Clear all" }).click();
     await expect(
       mobile
@@ -190,14 +186,14 @@ test.describe("@canonical @collections collection behavior", () => {
     await page.goto(`${tenant}/admin/properties`);
     await expect(propertyText("Harbour 01")).toBeVisible();
     failed = true;
-    await page
-      .getByPlaceholder("Find a property or space…")
-      .fill("Harbour");
+    await page.getByPlaceholder("Find a property or space…").fill("Harbour");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(
       page.getByText(/last available records remain visible/i),
     ).toBeVisible();
     await expect(propertyText("Harbour 01")).toBeVisible();
-    await expect(page.getByRole("button", { name: /retry update/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /retry update/i }),
+    ).toBeVisible();
   });
 });

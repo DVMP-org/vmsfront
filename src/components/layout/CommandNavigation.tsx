@@ -33,9 +33,7 @@ export function permittedCommands(
       if (route.children) visit(route.children);
     });
   visit(
-    modules
-      ? contextualAdminLinks(modules, moduleGroups, useCase)
-      : adminLinks,
+    modules ? contextualAdminLinks(modules, moduleGroups, useCase) : adminLinks,
   );
   return result;
 }

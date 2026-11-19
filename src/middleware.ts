@@ -33,7 +33,8 @@ function getBaseDomainUrl(
     value?.split(",")[0]?.trim() || "";
   const forwardedHost = firstHeader(request?.headers.get("x-forwarded-host"));
   const hostHeader = firstHeader(request?.headers.get("host"));
-  const rawHost = forwardedHost || hostHeader || requestUrl?.host || BASE_DOMAIN;
+  const rawHost =
+    forwardedHost || hostHeader || requestUrl?.host || BASE_DOMAIN;
   const [requestHostname, requestPort] = (() => {
     const match = rawHost.match(/^(.+?)(?::(\d+))?$/);
     return [match?.[1] || BASE_DOMAIN, match?.[2] || ""] as const;

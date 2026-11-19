@@ -153,7 +153,6 @@ export function ManagersWorkspace() {
           </p>
         </div>
         <div className="flex gap-2">
-
           {canManage ? (
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />

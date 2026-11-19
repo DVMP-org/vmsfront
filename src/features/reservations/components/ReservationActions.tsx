@@ -88,7 +88,10 @@ export function ReservationActions({
               disabled={pending || !roomId}
               aria-busy={allocate.isPending}
               onClick={() =>
-                allocate.mutate({ reservationId: reservation.id, placeId: roomId })
+                allocate.mutate({
+                  reservationId: reservation.id,
+                  placeId: roomId,
+                })
               }
             >
               Assign

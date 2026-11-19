@@ -70,12 +70,8 @@ export const placesApi = {
     (await apiClient.post<ApiResponse<Place>>(base, body)).data,
   update: async (
     id: string,
-    body: Omit<
-      PlaceInput,
-      "site_id" | "parent_id" | "kind" | "building_type"
-    >,
-  ) =>
-    (await apiClient.patch<ApiResponse<Place>>(`${base}/${id}`, body)).data,
+    body: Omit<PlaceInput, "site_id" | "parent_id" | "kind" | "building_type">,
+  ) => (await apiClient.patch<ApiResponse<Place>>(`${base}/${id}`, body)).data,
   move: async (id: string, parent_id: string | null) =>
     (
       await apiClient.post<ApiResponse<Place>>(`${base}/${id}/move`, {

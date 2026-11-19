@@ -12,7 +12,11 @@ import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 
-import { useEmailTemplate, useResetEmailTemplate, useSaveEmailTemplate } from "../queries";
+import {
+  useEmailTemplate,
+  useResetEmailTemplate,
+  useSaveEmailTemplate,
+} from "../queries";
 
 export function EmailTemplateDrawer({
   isOpen,
@@ -123,9 +127,7 @@ export function EmailTemplateDrawer({
             title={detail.data.label}
             meta={detail.data.name}
             trailing={
-              <Badge
-                variant={detail.data.has_override ? "info" : "neutral"}
-              >
+              <Badge variant={detail.data.has_override ? "info" : "neutral"}>
                 {detail.data.has_override ? "Customized" : "Packaged default"}
               </Badge>
             }

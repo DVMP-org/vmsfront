@@ -51,7 +51,8 @@ export function TerminateLeaseDialog({
 
   if (!lease) return null;
 
-  const isDraft = lease.status === "draft" || lease.status === "pending_signature";
+  const isDraft =
+    lease.status === "draft" || lease.status === "pending_signature";
 
   function submit() {
     mutation.mutate(

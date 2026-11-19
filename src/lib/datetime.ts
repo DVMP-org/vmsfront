@@ -99,7 +99,8 @@ export function relativeTime(value: DateInput, now: DateInput = new Date()) {
   ];
   let duration = minutes;
   for (const [unit, size] of steps) {
-    if (Math.abs(duration) < size) return relative.format(Math.round(duration), unit);
+    if (Math.abs(duration) < size)
+      return relative.format(Math.round(duration), unit);
     duration /= size;
   }
   return EMPTY;
@@ -127,7 +128,9 @@ export function toDateTimeInputValue(value: DateInput): string {
  * A bare `YYYY-MM-DD` is read as UTC midnight so the API receives an
  * unambiguous instant; anything else is parsed as-is.
  */
-export function fromDateInputValue(value: string | null | undefined): Date | null {
+export function fromDateInputValue(
+  value: string | null | undefined,
+): Date | null {
   if (!value) return null;
   const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
     ? new Date(`${value}T00:00:00Z`)

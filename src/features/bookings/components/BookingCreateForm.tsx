@@ -67,8 +67,7 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
 
   const places = useQuery({
     queryKey: ["places", "bookable", domain],
-    queryFn: () =>
-      placesApi.list({ page: 1, page_size: 100, is_active: true }),
+    queryFn: () => placesApi.list({ page: 1, page_size: 100, is_active: true }),
     enabled: Boolean(domain),
   });
   const bookable = (places.data?.items ?? []).filter((place: Place) =>
@@ -86,7 +85,9 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
   );
 
   if (context.isPending) {
-    return <p className="text-sm text-[var(--vms-ink-muted)]">Loading this Site…</p>;
+    return (
+      <p className="text-sm text-[var(--vms-ink-muted)]">Loading this Site…</p>
+    );
   }
 
   if (!domain || allowedKinds.length === 0) {
@@ -313,7 +314,10 @@ export function BookingCreateForm({ onCreated }: { onCreated: () => void }) {
       </Field>
 
       {create.isError ? (
-        <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+        <p
+          role="alert"
+          className="text-xs font-medium text-[var(--vms-danger)]"
+        >
           {create.error instanceof Error
             ? create.error.message
             : "The booking did not go through."}

@@ -18,8 +18,15 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
 }));
 vi.mock("@/components/layout/WorkspaceLobbyHeader", () => ({
-  WorkspaceLobbyHeader: ({ canSwitchOrganization }: { canSwitchOrganization: boolean }) => (
-    <header aria-label="Lobby header" data-can-switch-organization={canSwitchOrganization} />
+  WorkspaceLobbyHeader: ({
+    canSwitchOrganization,
+  }: {
+    canSwitchOrganization: boolean;
+  }) => (
+    <header
+      aria-label="Lobby header"
+      data-can-switch-organization={canSwitchOrganization}
+    />
   ),
 }));
 vi.mock("@/hooks/use-auth", () => ({
@@ -246,10 +253,9 @@ describe("WorkspaceLobbyPage", () => {
 
     render(<WorkspaceLobbyPage />);
 
-    expect(screen.getByRole("banner", { name: "Lobby header" })).toHaveAttribute(
-      "data-can-switch-organization",
-      "true",
-    );
+    expect(
+      screen.getByRole("banner", { name: "Lobby header" }),
+    ).toHaveAttribute("data-can-switch-organization", "true");
   });
 
   it("shows the error state and retries the workspace request", () => {

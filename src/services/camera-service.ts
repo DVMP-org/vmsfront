@@ -1,11 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 
 export type CameraStatus =
-  | "online"
-  | "offline"
-  | "setup_required"
-  | "error"
-  | string;
+  "online" | "offline" | "setup_required" | "error" | string;
 
 export interface CameraSettings {
   plugin_id?: string;

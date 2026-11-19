@@ -25,8 +25,7 @@ import type {
  */
 
 export const publicBookingKeys = {
-  catalogue: (siteSlug: string) =>
-    ["public", "booking", siteSlug] as const,
+  catalogue: (siteSlug: string) => ["public", "booking", siteSlug] as const,
 };
 
 export function usePublicSiteBooking(siteSlug: string) {

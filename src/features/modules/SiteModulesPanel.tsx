@@ -189,6 +189,7 @@ export function SiteModulesPanel({
     {
       key: "stagedEnabled",
       header: "Status",
+      minWidth: 136,
       sortable: true,
       accessor: (module) => (
         <button
@@ -200,7 +201,7 @@ export function SiteModulesPanel({
           }`}
           disabled={!canEdit || save.isPending}
           onClick={() => setModulesEnabled([module.key], !module.stagedEnabled)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] text-sm font-semibold text-[var(--vms-ink)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-[var(--vms-radius-control)] px-1 text-sm font-semibold text-[var(--vms-ink)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span
             aria-hidden="true"

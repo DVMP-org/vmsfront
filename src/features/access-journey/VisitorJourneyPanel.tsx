@@ -83,9 +83,7 @@ export function VisitorJourneyPanel({
   const guestEvents = useMemo(
     () =>
       events
-        .filter(
-          (event) => !selectedId || event.visit_guest_id === selectedId,
-        )
+        .filter((event) => !selectedId || event.visit_guest_id === selectedId)
         .slice()
         .sort(
           (left, right) =>
@@ -155,7 +153,11 @@ export function VisitorJourneyPanel({
 
   if (loading) {
     return (
-      <div className="space-y-2" role="status" aria-label="Loading visitor journey">
+      <div
+        className="space-y-2"
+        role="status"
+        aria-label="Loading visitor journey"
+      >
         <div className="h-8 w-full animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
         <div className="h-8 w-full animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
         <div className="h-8 w-full animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
@@ -250,7 +252,10 @@ export function VisitorJourneyPanel({
             {steps.map((step, index) => {
               const entry = step.direction === "entry";
               return (
-                <li key={step.key} className="relative flex gap-3 pb-4 last:pb-0">
+                <li
+                  key={step.key}
+                  className="relative flex gap-3 pb-4 last:pb-0"
+                >
                   {index < steps.length - 1 ? (
                     <span
                       aria-hidden="true"
@@ -342,10 +347,10 @@ export function VisitorJourneyPanel({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm">
-                      {event.gate_name ||
-                        `Gate ${event.gate_id.slice(0, 8)}`}{" "}
-                      ·{" "}
-                      {event.direction === "entry" ? "Checked in" : "Checked out"}
+                      {event.gate_name || `Gate ${event.gate_id.slice(0, 8)}`} ·{" "}
+                      {event.direction === "entry"
+                        ? "Checked in"
+                        : "Checked out"}
                     </p>
                     <p className="text-[11px] text-[var(--vms-ink-muted)]">
                       {allowed ? humanize(event.reason_code) : "Denied"} ·{" "}

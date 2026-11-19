@@ -91,9 +91,7 @@ describe("plan activation setup", () => {
       await screen.findByRole("button", { name: /Activate and continue/ }),
     );
 
-    await waitFor(() =>
-      expect(mocks.replace).toHaveBeenCalledWith("/"),
-    );
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/"));
     expect(mocks.push).not.toHaveBeenCalledWith("/admin");
   });
 

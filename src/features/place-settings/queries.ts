@@ -8,93 +8,95 @@
  */
 
 import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-    type UseMutationResult,
-    type UseQueryResult,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
 } from "@tanstack/react-query";
 
 import {
-    placeSettingsApi,
-    type HouseholdMember,
-    type PlacePreferences,
+  placeSettingsApi,
+  type HouseholdMember,
+  type PlacePreferences,
 } from "./api";
 
 export const placeSettingsKeys = {
-    all: (placeId: string) => ["place-settings", placeId] as const,
-    preferences: (placeId: string) =>
-        ["place-settings", placeId, "preferences"] as const,
-    members: (placeId: string) => ["place-settings", placeId, "members"] as const,
+  all: (placeId: string) => ["place-settings", placeId] as const,
+  preferences: (placeId: string) =>
+    ["place-settings", placeId, "preferences"] as const,
+  members: (placeId: string) => ["place-settings", placeId, "members"] as const,
 };
 
 export function usePlacePreferences(
-    placeId: string,
+  placeId: string,
 ): UseQueryResult<PlacePreferences> {
-    return useQuery({
-        queryKey: placeSettingsKeys.preferences(placeId),
-        queryFn: () => placeSettingsApi.preferences(placeId),
-        staleTime: 60_000,
-        retry: false,
-    });
+  return useQuery({
+    queryKey: placeSettingsKeys.preferences(placeId),
+    queryFn: () => placeSettingsApi.preferences(placeId),
+    staleTime: 60_000,
+    retry: false,
+  });
 }
 
 export function useSavePlacePreferences(
-    placeId: string,
+  placeId: string,
 ): UseMutationResult<PlacePreferences, Error, PlacePreferences> {
-    const client = useQueryClient();
-    return useMutation({
-        mutationFn: (preferences: PlacePreferences) =>
-            placeSettingsApi.savePreferences(placeId, preferences),
-        onSuccess: (preferences) => {
-            client.setQueryData(placeSettingsKeys.preferences(placeId), preferences);
-        },
-    });
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (preferences: PlacePreferences) =>
+      placeSettingsApi.savePreferences(placeId, preferences),
+    onSuccess: (preferences) => {
+      client.setQueryData(placeSettingsKeys.preferences(placeId), preferences);
+    },
+  });
 }
 
 export function useHouseholdMembers(
-    placeId: string,
-    options: { enabled?: boolean } = {},
+  placeId: string,
+  options: { enabled?: boolean } = {},
 ): UseQueryResult<HouseholdMember[]> {
-    return useQuery({
-        queryKey: placeSettingsKeys.members(placeId),
-        queryFn: () => placeSettingsApi.members(placeId),
-        enabled: options.enabled ?? true,
-        retry: false,
-    });
+  return useQuery({
+    queryKey: placeSettingsKeys.members(placeId),
+    queryFn: () => placeSettingsApi.members(placeId),
+    enabled: options.enabled ?? true,
+    retry: false,
+  });
 }
 
-export function useAddHouseholdMember(placeId: string): UseMutationResult<
-    unknown,
-    Error,
-    { display_name: string; email: string; role: string }
+export function useAddHouseholdMember(
+  placeId: string,
+): UseMutationResult<
+  unknown,
+  Error,
+  { display_name: string; email: string; role: string }
 > {
-    const client = useQueryClient();
-    return useMutation({
-        mutationFn: (body: { display_name: string; email: string; role: string }) =>
-            placeSettingsApi.addMember(placeId, body),
-        onSuccess: () => {
-            void client.invalidateQueries({
-                queryKey: placeSettingsKeys.members(placeId),
-            });
-            void client.invalidateQueries({ queryKey: ["auth", "verify"] });
-            void client.invalidateQueries({ queryKey: ["place-workspace"] });
-        },
-    });
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { display_name: string; email: string; role: string }) =>
+      placeSettingsApi.addMember(placeId, body),
+    onSuccess: () => {
+      void client.invalidateQueries({
+        queryKey: placeSettingsKeys.members(placeId),
+      });
+      void client.invalidateQueries({ queryKey: ["auth", "verify"] });
+      void client.invalidateQueries({ queryKey: ["place-workspace"] });
+    },
+  });
 }
 
 export function useRemoveHouseholdMember(
-    placeId: string,
+  placeId: string,
 ): UseMutationResult<unknown, Error, string> {
-    const client = useQueryClient();
-    return useMutation({
-        mutationFn: (relationshipId: string) =>
-            placeSettingsApi.removeMember(placeId, relationshipId),
-        onSuccess: () => {
-            void client.invalidateQueries({
-                queryKey: placeSettingsKeys.members(placeId),
-            });
-            void client.invalidateQueries({ queryKey: ["auth", "verify"] });
-        },
-    });
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (relationshipId: string) =>
+      placeSettingsApi.removeMember(placeId, relationshipId),
+    onSuccess: () => {
+      void client.invalidateQueries({
+        queryKey: placeSettingsKeys.members(placeId),
+      });
+      void client.invalidateQueries({ queryKey: ["auth", "verify"] });
+    },
+  });
 }

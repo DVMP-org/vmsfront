@@ -50,7 +50,7 @@ export function PaginationBar({
       aria-label={`${resourceLabel} pagination`}
       className={cn(
         "flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between",
-        className
+        className,
       )}
     >
       <div className="text-xs tabular-nums" aria-live="polite">
@@ -58,8 +58,7 @@ export function PaginationBar({
         <span className="font-semibold text-foreground">
           {safeTotal === 0 ? 0 : showingFrom}-{showingTo}
         </span>{" "}
-        of{" "}
-        <span className="font-semibold text-foreground">{safeTotal}</span>{" "}
+        of <span className="font-semibold text-foreground">{safeTotal}</span>{" "}
         {resourceLabel}
       </div>
       <div className="flex items-center justify-between gap-1.5 sm:justify-end sm:gap-2">

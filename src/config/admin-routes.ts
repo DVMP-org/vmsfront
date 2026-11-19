@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Megaphone,
   Puzzle,
-  RadioTower,
   Receipt,
   Scan,
   TicketCheck,
@@ -64,14 +63,6 @@ export const adminLinks: AdminRoute[] = [
     managementOnly: true,
   },
   {
-    href: "/admin/checkpoints",
-    label: "Check-in / check-out",
-    icon: Scan,
-    permission: "gates.list",
-    module: "check_in_out",
-    group: "Access",
-  },
-  {
     href: "/admin/passages",
     label: "Passage history",
     icon: History,
@@ -112,14 +103,11 @@ export const adminLinks: AdminRoute[] = [
     group: "Access",
   },
   {
-    href: "/admin/gates/simulator",
-    label: "Hardware lab",
-    icon: RadioTower,
-    permission: "gates.list",
-    module: "gates",
-    group: "Access",
+    href: "/profile?context=admin",
+    label: "Profile",
+    icon: UserCog,
+    group: "Account",
   },
-  { href: "/profile?context=admin", label: "Profile", icon: UserCog, group: "Account" },
 ];
 
 const domainIcons: Record<string, LucideIcon> = {
@@ -156,7 +144,13 @@ const moduleKeyAliases: Record<string, string[]> = {
   gates: ["access_control"],
   check_in_out: ["access_control"],
   forums: ["forum"],
-  dashboard: ["properties", "residential", "commercial", "hospitality", "mixed_use"],
+  dashboard: [
+    "properties",
+    "residential",
+    "commercial",
+    "hospitality",
+    "mixed_use",
+  ],
 };
 
 export function isModuleEnabled(

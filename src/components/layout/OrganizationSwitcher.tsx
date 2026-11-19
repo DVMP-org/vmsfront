@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Building2,
-  Check,
-  ChevronDown,
-  Plus,
-} from "lucide-react";
+import { Building2, Check, ChevronDown, Plus } from "lucide-react";
 import {
   useCurrentOrganization,
   useMyOrganizations,
@@ -15,7 +10,11 @@ import {
 import { buildSubdomainUrl } from "@/lib/subdomain-utils";
 import { cn } from "@/lib/utils";
 
-export function OrganizationSwitcher({ compact = false }: { compact?: boolean }) {
+export function OrganizationSwitcher({
+  compact = false,
+}: {
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { organization } = useCurrentOrganization();
@@ -58,7 +57,9 @@ export function OrganizationSwitcher({ compact = false }: { compact?: boolean })
         aria-controls="global-organization-switcher"
         className={cn(
           "flex h-10 max-w-[260px] items-center gap-2 rounded-md px-2.5 text-left text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]",
-          compact ? "bg-white/[0.06]" : "border border-white/15 bg-white/[0.06]",
+          compact
+            ? "bg-white/[0.06]"
+            : "border border-white/15 bg-white/[0.06]",
         )}
       >
         <OrganizationMark
@@ -66,7 +67,12 @@ export function OrganizationSwitcher({ compact = false }: { compact?: boolean })
           logoUrl={organization?.logo_url}
         />
         <span className="hidden min-w-0 flex-1 sm:block">
-          <span className={cn("block truncate font-semibold", compact ? "text-sm" : "text-xs")}>
+          <span
+            className={cn(
+              "block truncate font-semibold",
+              compact ? "text-sm" : "text-xs",
+            )}
+          >
             {organization?.name || "Choose organization"}
           </span>
           {!compact ? (

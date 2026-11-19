@@ -5,11 +5,14 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import "@vms/ui/tokens.css";
 import "react-datepicker/dist/react-datepicker.css";
 import "./globals.css";
+import "./marketing.css";
+import { marketingSiteUrl } from "@/components/marketing/seo";
 import { Providers } from "./providers";
 import { Suspense } from "react";
 import { BootSkeleton } from "@/components/ui/Skeleton";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(marketingSiteUrl),
   title: "VMS Core — Property Operations",
   description: "Property operations, access and administration in context",
   manifest: "/manifest.webmanifest",

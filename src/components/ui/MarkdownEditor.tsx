@@ -32,7 +32,7 @@ export function MarkdownEditor({
       data-color-mode="light"
       className={cn(
         "w-full overflow-hidden rounded-2xl border border-border/70 bg-background shadow-inner",
-        className
+        className,
       )}
     >
       <Editor

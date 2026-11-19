@@ -131,7 +131,12 @@ it("lists only visits that are still upcoming and not yet active", async () => {
     requested_at: past,
     decided_at: null,
     host_party: { display_name: "Resident" },
-    destination_place: { id: "unit", name: "APT 01", kind: "unit", address: "" },
+    destination_place: {
+      id: "unit",
+      name: "APT 01",
+      kind: "unit",
+      address: "",
+    },
   };
   m.invitations.mockResolvedValue({
     items: [
@@ -185,10 +190,12 @@ it("lists only visits that are still upcoming and not yet active", async () => {
   expect(
     await within(card as HTMLElement).findByText("Upcoming Visitor"),
   ).toBeVisible();
-  expect(within(card as HTMLElement).getByText("Requested Visitor")).toBeVisible();
   expect(
-    within(card as HTMLElement).getAllByText(/in \d+ days/),
-  ).toHaveLength(2);
+    within(card as HTMLElement).getByText("Requested Visitor"),
+  ).toBeVisible();
+  expect(within(card as HTMLElement).getAllByText(/in \d+ days/)).toHaveLength(
+    2,
+  );
   expect(within(card as HTMLElement).queryByText("Active Visitor")).toBeNull();
 });
 
@@ -232,7 +239,9 @@ it("shows announcements as priority alerts above the dashboard", async () => {
   expect((alerts[0] as HTMLElement).style.width).toBe("100%");
   expect((alerts[0] as HTMLElement).style.marginTop).toBe("");
   expect((alerts[1] as HTMLElement).style.width).toBe("calc(100% - 20px)");
-  expect(parseFloat((alerts[1] as HTMLElement).style.marginTop)).toBeLessThan(0);
+  expect(parseFloat((alerts[1] as HTMLElement).style.marginTop)).toBeLessThan(
+    0,
+  );
   expect((alerts[1] as HTMLElement).style.transform).toBe("translateY(2px)");
   expect(Number((alerts[0] as HTMLElement).style.zIndex)).toBeGreaterThan(
     Number((alerts[1] as HTMLElement).style.zIndex),
@@ -346,15 +355,16 @@ it("opens a maintenance request in a drawer below xl", async () => {
   expect(
     within(drawer).getByText("Water pools under the sink cabinet."),
   ).toBeVisible();
-  expect(
-    within(drawer).getByText(/Current status · Assigned/),
-  ).toBeVisible();
+  expect(within(drawer).getByText(/Current status · Assigned/)).toBeVisible();
 });
 it("renders visitors, movements, charges, announcements and profile sections", async () => {
   mount("visitors");
   expect(
-    (await screen.findAllByText(/No visitors to show|Visitors on your invitations/))
-      .length,
+    (
+      await screen.findAllByText(
+        /No visitors to show|Visitors on your invitations/,
+      )
+    ).length,
   ).toBeGreaterThan(0);
 });
 
@@ -426,7 +436,9 @@ it("lists charge definitions before opening the schedule ledger", async () => {
   await waitFor(() =>
     expect(m.charges).toHaveBeenCalledWith("unit", 1, "definition"),
   );
-  expect(await screen.findByRole("button", { name: "All charges" })).toBeVisible();
+  expect(
+    await screen.findByRole("button", { name: "All charges" }),
+  ).toBeVisible();
   expect(await screen.findByText("Next due")).toBeVisible();
   expect(
     screen.getAllByRole("button", { name: /^Pay/ }).length,

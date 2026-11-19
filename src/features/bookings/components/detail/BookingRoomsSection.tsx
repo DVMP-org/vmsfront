@@ -37,7 +37,8 @@ export function BookingRoomsSection({
   const [roomId, setRoomId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const needsRoom = booking.kind === "reservation" && booking.status === "requested";
+  const needsRoom =
+    booking.kind === "reservation" && booking.status === "requested";
 
   async function assign() {
     setError(null);
@@ -64,8 +65,8 @@ export function BookingRoomsSection({
             Assign a room
           </label>
           <p className="text-xs text-[var(--vms-ink-muted)]">
-            This reservation holds a room category without naming a room. Approval
-            needs the room it will actually occupy.
+            This reservation holds a room category without naming a room.
+            Approval needs the room it will actually occupy.
           </p>
           <div className="flex flex-wrap items-end gap-2">
             <select
@@ -93,7 +94,10 @@ export function BookingRoomsSection({
             </Button>
           </div>
           {error ? (
-            <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+            <p
+              role="alert"
+              className="text-xs font-medium text-[var(--vms-danger)]"
+            >
               {error}
             </p>
           ) : null}

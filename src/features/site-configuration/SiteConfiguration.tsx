@@ -156,7 +156,6 @@ export function SiteConfiguration() {
         ) : null}
       </header>
 
-
       <nav
         aria-label="Site configuration sections"
         className="-mx-1 overflow-x-auto border-b border-[var(--vms-line)]"

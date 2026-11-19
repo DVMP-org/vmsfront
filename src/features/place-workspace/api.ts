@@ -171,12 +171,7 @@ export const placeWorkspaceApi = {
         body,
       )
     ).data,
-  movements: async (
-    id: string,
-    page = 1,
-    subjectKey?: string,
-    pageSize = 20,
-  ) =>
+  movements: async (id: string, page = 1, subjectKey?: string, pageSize = 20) =>
     (
       await apiClient.get<
         ApiResponse<{ items: Movement[]; has_more: boolean }>

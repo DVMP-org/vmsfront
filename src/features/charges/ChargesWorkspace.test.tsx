@@ -123,10 +123,7 @@ const assignment = {
   outstanding_amount: "15000.00",
 };
 
-function mount(
-  action?: "new" | "definition" | "assignment",
-  id = "charge",
-) {
+function mount(action?: "new" | "definition" | "assignment", id = "charge") {
   return render(
     <QueryClientProvider
       client={
@@ -340,11 +337,15 @@ describe("charge routes", () => {
       target_count: 1,
     });
     mount("definition");
-    fireEvent.click(await screen.findByRole("button", { name: "Assign charge" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Assign charge" }),
+    );
     const drawer = await screen.findByRole("dialog", {
       name: /Assign Service charge/,
     });
-    const submit = within(drawer).getByRole("button", { name: "Assign charge" });
+    const submit = within(drawer).getByRole("button", {
+      name: "Assign charge",
+    });
     expect(submit).toBeDisabled();
     expect(within(drawer).queryByLabelText(/Initial schedules/i)).toBeNull();
     expect(within(drawer).queryByLabelText(/First due date/i)).toBeNull();
@@ -376,7 +377,9 @@ describe("charge routes", () => {
       target_count: 2,
     });
     mount("definition");
-    fireEvent.click(await screen.findByRole("button", { name: "Assign charge" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Assign charge" }),
+    );
     const drawer = await screen.findByRole("dialog", {
       name: /Assign Service charge/,
     });
@@ -388,7 +391,9 @@ describe("charge routes", () => {
         name: /Choose Responsible person or organization/,
       }),
     );
-    const submit = within(drawer).getByRole("button", { name: "Assign charge" });
+    const submit = within(drawer).getByRole("button", {
+      name: "Assign charge",
+    });
     await waitFor(() => expect(submit).toBeEnabled());
     fireEvent.click(submit);
 

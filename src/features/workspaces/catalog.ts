@@ -137,7 +137,9 @@ export function buildWorkspaceCards(
         managementRole === "Super Admin"
           ? "Super administrator"
           : managementRole,
-      href: managementPlace?.id ? `/admin?site_id=${managementPlace.id}` : "/admin",
+      href: managementPlace?.id
+        ? `/admin?site_id=${managementPlace.id}`
+        : "/admin",
       place: managementPlace,
     });
   }

@@ -32,9 +32,7 @@ export interface ChargeCheckout {
 
 export const myChargesApi = {
   list: async () =>
-    (
-      await apiClient.get<ApiResponse<CurrentCharge[]>>("/charges")
-    ).data,
+    (await apiClient.get<ApiResponse<CurrentCharge[]>>("/charges")).data,
   pay: async (scheduleId: string) =>
     (
       await apiClient.post<ApiResponse<ChargeCheckout>>(

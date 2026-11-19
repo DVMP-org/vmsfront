@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-} from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { contextApi } from "@/features/context/api";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -191,7 +189,9 @@ function OrganizationEditor({
       ) : null}
       {mutation.isError ? (
         <FormErrorSummary
-          errors={{ "organization-name": parseApiError(mutation.error).message }}
+          errors={{
+            "organization-name": parseApiError(mutation.error).message,
+          }}
           className="mx-5 mt-3"
         />
       ) : null}
@@ -206,10 +206,7 @@ function OrganizationEditor({
       ) : null}
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--vms-line)] px-5 py-4">
         {editable ? (
-          <Button
-            type="submit"
-            disabled={mutation.isPending || !name.trim()}
-          >
+          <Button type="submit" disabled={mutation.isPending || !name.trim()}>
             {mutation.isPending ? "Saving…" : "Save organization"}
           </Button>
         ) : null}

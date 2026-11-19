@@ -25,14 +25,15 @@ describe("filterValue", () => {
   });
 
   it("treats an empty value as no filter, not as a filter for nothing", () => {
-    expect(
-      filterValue([{ field: "kind", value: "" }], "kind"),
-    ).toBeUndefined();
+    expect(filterValue([{ field: "kind", value: "" }], "kind")).toBeUndefined();
   });
 
   it("uses the first entry when the table sends a list", () => {
     expect(
-      filterValue([{ field: "kind", value: ["booking", "reservation"] }], "kind"),
+      filterValue(
+        [{ field: "kind", value: ["booking", "reservation"] }],
+        "kind",
+      ),
     ).toBe("booking");
   });
 });

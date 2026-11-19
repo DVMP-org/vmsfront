@@ -159,12 +159,7 @@
         "status",
         "balance"
       ],
-      "filters": [
-        "zone",
-        "domain",
-        "occupancy",
-        "status"
-      ]
+      "filters": ["zone", "domain", "occupancy", "status"]
     },
     "maintenance": {
       "columns": [
@@ -176,13 +171,7 @@
         "allocation",
         "status"
       ],
-      "filters": [
-        "zone",
-        "domain",
-        "priority",
-        "owner",
-        "status"
-      ]
+      "filters": ["zone", "domain", "priority", "owner", "status"]
     }
   },
   "maintenance": {

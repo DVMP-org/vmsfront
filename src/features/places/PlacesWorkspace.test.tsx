@@ -249,9 +249,7 @@ describe("organization Site register", () => {
       ),
     );
     await waitFor(() =>
-      expect(mocks.push).toHaveBeenCalledWith(
-        "/organization/sites/site-1",
-      ),
+      expect(mocks.push).toHaveBeenCalledWith("/organization/sites/site-1"),
     );
   });
 

@@ -65,13 +65,7 @@ export function SlideOver({
   const titleId = `drawer-title-${generatedId.replace(/:/g, "")}`;
   const descriptionId = `drawer-description-${generatedId.replace(/:/g, "")}`;
   const { present, state } = useOverlayPresence(isOpen);
-  useDialogFocus(
-    present,
-    onClose,
-    panelRef,
-    initialFocusSelector,
-    dismissible,
-  );
+  useDialogFocus(present, onClose, panelRef, initialFocusSelector, dismissible);
 
   if (!present || typeof document === "undefined") return null;
 

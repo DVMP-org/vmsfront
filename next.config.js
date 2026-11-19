@@ -6,28 +6,33 @@ const nextConfig = {
   output: "standalone",
   transpilePackages: ["@vms/api-client", "@vms/ui"],
   images: {
-    domains: ['localhost', "storage.googleapis.com", "vmscore.to", "vmscore.vercel.app"],
+    domains: [
+      "localhost",
+      "storage.googleapis.com",
+      "vmscore.to",
+      "vmscore.vercel.app",
+    ],
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'vmscore.to',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "vmscore.to",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'vmscore.vercel.app',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "vmscore.vercel.app",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
   // Allow dev origins for cross-origin requests in development (hostnames only, no protocol or port)
   allowedDevOrigins: [
-    'localhost',
-    '127.0.0.1',
-    '192.168.100.20',
-    '*.localhost',
+    "localhost",
+    "127.0.0.1",
+    "192.168.100.20",
+    "*.localhost",
     localBaseDomain,
     `*.${localBaseDomain}`,
     "vmsfront.to",
@@ -40,18 +45,18 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: [
-      'lucide-react',
-      'date-fns',
-      'recharts',
-      'framer-motion',
-      '@fortawesome/fontawesome-free',
+      "lucide-react",
+      "date-fns",
+      "recharts",
+      "framer-motion",
+      "@fortawesome/fontawesome-free",
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vmscore.to'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://vmscore.to";
     return [
       {
-        source: '/api/:path*',
+        source: "/api/:path*",
         destination: `${apiUrl}/api/:path*`,
       },
     ];

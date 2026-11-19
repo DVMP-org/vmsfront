@@ -30,7 +30,7 @@ export const organizationService = {
    * Create a new organization
    */
   async createOrganization(
-    data: CreateOrganizationRequest
+    data: CreateOrganizationRequest,
   ): Promise<ApiResponse<Organization>> {
     return apiClient.post("/organizations/create", data);
   },
@@ -40,7 +40,7 @@ export const organizationService = {
    */
   async updateOrganization(
     slug: string,
-    data: Partial<CreateOrganizationRequest>
+    data: Partial<CreateOrganizationRequest>,
   ): Promise<ApiResponse<Organization>> {
     return apiClient.patch(`/organizations/${slug}`, data);
   },
@@ -49,7 +49,7 @@ export const organizationService = {
    * Check if a slug is available
    */
   async checkSlugAvailability(
-    slug: string
+    slug: string,
   ): Promise<ApiResponse<{ exists: boolean }>> {
     return apiClient.get(`/organizations/check-slug/${slug}`);
   },

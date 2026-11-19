@@ -41,9 +41,7 @@ export function OrganizationAdminHeader({
             {description}
           </p>
         </div>
-        {actions ? (
-          <div className="flex flex-wrap gap-2">{actions}</div>
-        ) : null}
+        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
       </div>
     </header>
   );

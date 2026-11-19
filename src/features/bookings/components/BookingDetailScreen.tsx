@@ -10,7 +10,10 @@ import { formatDateTime } from "@/lib/datetime";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { BookingActivitySection } from "./detail/BookingActivitySection";
 import { BookingDetailActions } from "./detail/BookingDetailActions";
-import { BookingDetailTabs, type BookingDetailTab } from "./detail/BookingDetailTabs";
+import {
+  BookingDetailTabs,
+  type BookingDetailTab,
+} from "./detail/BookingDetailTabs";
 import { BookingOverviewSection } from "./detail/BookingOverviewSection";
 import { BookingPaymentsSection } from "./detail/BookingPaymentsSection";
 import { BookingRoomsSection } from "./detail/BookingRoomsSection";
@@ -79,7 +82,9 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
           All bookings
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold text-[var(--vms-ink)]">{heading}</h1>
+          <h1 className="text-lg font-semibold text-[var(--vms-ink)]">
+            {heading}
+          </h1>
           <BookingStatusBadge status={data.status} />
         </div>
         <p className="text-xs text-[var(--vms-ink-muted)]">
@@ -105,10 +110,16 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
             aria-label={TABS.find((entry) => entry.key === tab)?.label}
             className="flex flex-col gap-4 p-4 sm:p-5"
           >
-            {tab === "overview" ? <BookingOverviewSection booking={data} /> : null}
+            {tab === "overview" ? (
+              <BookingOverviewSection booking={data} />
+            ) : null}
             {tab === "rooms" ? <BookingRoomsSection booking={data} /> : null}
-            {tab === "payments" ? <BookingPaymentsSection booking={data} /> : null}
-            {tab === "activity" ? <BookingActivitySection booking={data} /> : null}
+            {tab === "payments" ? (
+              <BookingPaymentsSection booking={data} />
+            ) : null}
+            {tab === "activity" ? (
+              <BookingActivitySection booking={data} />
+            ) : null}
           </div>
         </div>
 

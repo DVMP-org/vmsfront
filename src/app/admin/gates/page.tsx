@@ -70,7 +70,7 @@ export default function AdminGatesPage() {
   const [isConfigureOpen, setIsConfigureOpen] = useState(false);
   const [isDependencyEditorOpen, setIsDependencyEditorOpen] = useState(false);
   const [isDependencyModalOpen, setIsDependencyModalOpen] = useState(false);
-  const [assigningGate, setAssigningGate] = useState<Gate | null>(null)
+  const [assigningGate, setAssigningGate] = useState<Gate | null>(null);
   const [gatePendingDelete, setGatePendingDelete] = useState<Gate | null>(null);
 
   useEffect(() => {

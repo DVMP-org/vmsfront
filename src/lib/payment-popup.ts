@@ -14,7 +14,7 @@ export function openPaymentPopup(
   url: string,
   reference: string,
   onSuccess?: (reference: string) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
 ): Window | null {
   // Calculate popup size (smaller window)
   const width = 500;
@@ -29,7 +29,7 @@ export function openPaymentPopup(
   const popup = window.open(
     url,
     "payment",
-    `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=no,location=no,status=no`
+    `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=no,location=no,status=no`,
   );
 
   if (!popup) {
@@ -56,7 +56,7 @@ export function openPaymentPopup(
       }
     }
   };
-  
+
   const cleanup = () => {
     if (cleanupCalled) return;
     cleanupCalled = true;
@@ -88,7 +88,10 @@ export function openPaymentPopup(
       return;
     }
 
-    if (event.data?.type === "PAYMENT_SUCCESS" && event.data?.reference === reference) {
+    if (
+      event.data?.type === "PAYMENT_SUCCESS" &&
+      event.data?.reference === reference
+    ) {
       cleanup();
       refocusParent();
       onSuccess?.(reference);
@@ -125,16 +128,18 @@ export function openPaymentPopup(
   }, 1000);
 
   // Cleanup after 30 minutes (payment timeout)
-  timeout = setTimeout(() => {
-    cleanup();
-    if (!popup.closed) {
-      popup.close();
-    }
-    refocusParent();
-    // If timeout fires, notify error callback if available
-    onError?.("Payment timeout");
-  }, 30 * 60 * 1000);
+  timeout = setTimeout(
+    () => {
+      cleanup();
+      if (!popup.closed) {
+        popup.close();
+      }
+      refocusParent();
+      // If timeout fires, notify error callback if available
+      onError?.("Payment timeout");
+    },
+    30 * 60 * 1000,
+  );
 
   return popup;
 }
-

@@ -56,7 +56,9 @@ function mount(permissions: string[]) {
   mocks.organization.mockResolvedValue(organization);
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <OrganizationPage />
     </QueryClientProvider>,

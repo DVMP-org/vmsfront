@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Building2, Check, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  Check,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 import { VmsWordmark } from "@/components/brand/VmsBrand";
 import { OperationsIllustration } from "@/components/illustrations/OperationsIllustration";

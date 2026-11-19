@@ -54,10 +54,7 @@ export function ResidentialShell({
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
       {showWorkspace && selectedSite && (
-        <WorkspaceContext
-          name={selectedSite.name}
-          description="Residential"
-        />
+        <WorkspaceContext name={selectedSite.name} description="Residential" />
       )}
       <PageHeader
         breadcrumbs={
@@ -106,7 +103,11 @@ export function ResidentialShell({
   );
 }
 
-function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
+function PropertyContext({
+  contextKey: _contextKey,
+}: {
+  contextKey: QueryContext;
+}) {
   const selectedSite = useAppStore((state) => state.selectedSite);
   const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   return (

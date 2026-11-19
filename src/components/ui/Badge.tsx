@@ -21,8 +21,7 @@ const variants: Record<BadgeVariant, string> = {
     "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
   neutral:
     "border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] text-[var(--vms-ink)]",
-  info:
-    "border-[color-mix(in_srgb,var(--vms-info)_35%,white)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
+  info: "border-[color-mix(in_srgb,var(--vms-info)_35%,white)] bg-[color-mix(in_srgb,var(--vms-info)_10%,white)] text-[var(--vms-info)]",
   success:
     "border-[color-mix(in_srgb,var(--vms-success)_35%,white)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]",
   warning:

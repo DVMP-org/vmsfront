@@ -29,10 +29,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { domainExperience, type DomainUseCase } from "@/config/domains";
-import {
-  placesApi,
-  type PlaceTreeNode,
-} from "@/features/places/api";
+import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import {
@@ -72,9 +69,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const tree = useQuery({
     queryKey: ["maintenance-property-tree"],
     queryFn: () =>
-      selectedSite?.id
-        ? placesApi.tree(selectedSite.id)
-        : Promise.resolve([]),
+      selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
     retry: false,
   });
   const spaces = useMemo(() => {
@@ -85,14 +80,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       : roots.flatMap((root) => flatten(root));
   }, [tree.data, selectedSite?.id]);
   const query = useQuery({
-    queryKey: [
-      "maintenance",
-      selectedSite?.id,
-      domain,
-      filters,
-      search,
-      page,
-    ],
+    queryKey: ["maintenance", selectedSite?.id, domain, filters, search, page],
     queryFn: () =>
       maintenanceApi.list({
         page,

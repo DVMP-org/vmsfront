@@ -440,9 +440,7 @@ it("lists every visitor on a group invitation and records the chosen suffix", as
     screen.getByText(/This invitation covers several visitors/),
   ).toBeVisible();
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: /Bola Guest/ }),
-  );
+  fireEvent.click(await screen.findByRole("button", { name: /Bola Guest/ }));
 
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Check in" })).toBeEnabled(),

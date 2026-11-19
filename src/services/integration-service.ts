@@ -16,7 +16,6 @@ export const integrationService = {
     filters?: string;
     sort?: string;
   }): Promise<ApiResponse<PaginatedResponse<Integration>>> {
-
     return apiClient.get(`/admin/integrations`, {
       params: {
         search: params?.search || undefined,
@@ -29,14 +28,16 @@ export const integrationService = {
   },
 
   // Get single integration by ID
-  async getIntegrationById(integrationId: string): Promise<ApiResponse<Integration>> {
+  async getIntegrationById(
+    integrationId: string,
+  ): Promise<ApiResponse<Integration>> {
     return apiClient.get(`/admin/integrations/${integrationId}`);
   },
 
   // Update integration (credentials/config)
   async updateIntegrationCredentials(
     integrationId: string,
-    credentials: IntegrationCredentials
+    credentials: IntegrationCredentials,
   ): Promise<ApiResponse<Integration>> {
     return apiClient.put(`/admin/integrations/${integrationId}/credentials`, {
       credentials,
@@ -54,7 +55,9 @@ export const integrationService = {
   },
 
   // Health check
-  async checkHealth(name: string): Promise<ApiResponse<{ status: string; message?: string }>> {
+  async checkHealth(
+    name: string,
+  ): Promise<ApiResponse<{ status: string; message?: string }>> {
     return apiClient.get(`/admin/integrations/${name}/health`);
   },
 

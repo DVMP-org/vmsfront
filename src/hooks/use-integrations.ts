@@ -1,10 +1,13 @@
 import { queryClient } from "@/lib/query-client";
 import { integrationService } from "@/services/integration-service";
 import { PaginatedResponse } from "@/types";
-import { CredentialFormValues, Integration, IntegrationCredentials } from "@/types/integration";
+import {
+  CredentialFormValues,
+  Integration,
+  IntegrationCredentials,
+} from "@/types/integration";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-
 
 export function useIntegrations(
   params: {
@@ -32,19 +35,18 @@ export function useIntegrations(
   });
 }
 
-
 export function useIntegration(integrationId: string | null) {
   return useQuery<Integration>({
     queryKey: ["integration", integrationId],
     queryFn: async () => {
-      if (!integrationId) throw new Error("Integration ID is required")
-      const response = await integrationService.getIntegrationById(integrationId);
+      if (!integrationId) throw new Error("Integration ID is required");
+      const response =
+        await integrationService.getIntegrationById(integrationId);
       return response.data;
     },
     enabled: !!integrationId,
   });
 }
-
 
 export function useEnableIntegration() {
   return useMutation({
@@ -107,12 +109,17 @@ export function useSelectPaymentGateway() {
 export function useUpdateIntegrationCredentials(integrationId: string) {
   return useMutation({
     mutationFn: async (credentials: IntegrationCredentials) => {
-      return integrationService.updateIntegrationCredentials(integrationId, credentials);
+      return integrationService.updateIntegrationCredentials(
+        integrationId,
+        credentials,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
       queryClient.invalidateQueries({ queryKey: ["integration"] });
-      queryClient.invalidateQueries({ queryKey: ["integration", integrationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["integration", integrationId],
+      });
       toast.success("Integration updated successfully");
     },
     onError: (error: any) => {

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -24,8 +30,18 @@ vi.mock("../queries", () => ({
   useRoomCategories: () => ({ data: categories, isPending: false }),
   useHospitalityAmenities: () => ({
     data: [
-      { code: "wifi", label: "Wi-Fi", group: "connectivity", group_label: "Connectivity" },
-      { code: "air_conditioning", label: "Air conditioning", group: "comfort", group_label: "Comfort" },
+      {
+        code: "wifi",
+        label: "Wi-Fi",
+        group: "connectivity",
+        group_label: "Connectivity",
+      },
+      {
+        code: "air_conditioning",
+        label: "Air conditioning",
+        group: "comfort",
+        group_label: "Comfort",
+      },
     ],
     isPending: false,
     isError: false,
@@ -41,8 +57,9 @@ vi.mock("@/features/place-groups/api", () => ({
 }));
 
 vi.mock("@/store/app-store", () => ({
-  useAppStore: (selector: (state: { selectedSite: { id: string } }) => unknown) =>
-    selector({ selectedSite: { id: "site-1" } }),
+  useAppStore: (
+    selector: (state: { selectedSite: { id: string } }) => unknown,
+  ) => selector({ selectedSite: { id: "site-1" } }),
 }));
 
 vi.mock("../api", () => ({
@@ -80,7 +97,10 @@ function mount(existing: HospitalityRoom | null = null) {
     <QueryClientProvider
       client={
         new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
         })
       }
     >
@@ -144,7 +164,9 @@ describe("room category in the editor", () => {
     mount();
 
     const select = screen.getByLabelText("Room category") as HTMLSelectElement;
-    expect(within(select).getByRole("option", { name: "Executive Suite" })).toBeTruthy();
+    expect(
+      within(select).getByRole("option", { name: "Executive Suite" }),
+    ).toBeTruthy();
     // No "nothing here yet" prompt once categories exist.
     expect(screen.queryByText(/No categories yet/)).toBeNull();
   });

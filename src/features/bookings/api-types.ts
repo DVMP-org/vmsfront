@@ -13,7 +13,10 @@ import type {
   BookingSource,
   BookingStatus,
 } from "./types";
-import type { BookingItemDto, ReservationDto } from "@/features/reservations/api-types";
+import type {
+  BookingItemDto,
+  ReservationDto,
+} from "@/features/reservations/api-types";
 
 export interface BookingActivityDto {
   id: string;
@@ -130,7 +133,9 @@ export const BOOKING_DOMAIN_LABEL: Record<BookingDomain, string> = {
 };
 
 /** A booking awaiting money is not yet decidable, so it cannot be approved. */
-export function canDecide(booking: Pick<BookingDto, "status" | "domain">): boolean {
+export function canDecide(
+  booking: Pick<BookingDto, "status" | "domain">,
+): boolean {
   if (booking.domain !== "residential" && booking.domain !== "hospitality") {
     return false;
   }
@@ -144,9 +149,7 @@ export function canDecide(booking: Pick<BookingDto, "status" | "domain">): boole
  * check-out. The server refuses these same statuses; this mirror exists so the
  * button is not offered for an action that will bounce.
  */
-export function canCancel(
-  booking: Pick<BookingDto, "status">,
-): boolean {
+export function canCancel(booking: Pick<BookingDto, "status">): boolean {
   return (
     booking.status === "requested" ||
     booking.status === "pending_payment" ||

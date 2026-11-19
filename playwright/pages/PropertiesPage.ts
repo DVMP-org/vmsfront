@@ -47,7 +47,9 @@ export class PropertiesPage {
   }
 
   async expectRow(name: string) {
-    await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
+    await expect(
+      this.page.getByText(name, { exact: true }).first(),
+    ).toBeVisible();
   }
 
   async selectColumns(...labels: string[]) {

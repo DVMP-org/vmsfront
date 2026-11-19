@@ -150,7 +150,11 @@ export function CheckpointAssignmentsModal({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading || failed} isLoading={save.isPending}>
+          <Button
+            type="submit"
+            disabled={loading || failed}
+            isLoading={save.isPending}
+          >
             Save assignments
           </Button>
         </div>

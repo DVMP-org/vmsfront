@@ -69,9 +69,7 @@ describe("agreement card", () => {
     withLeases([lease({ accepted_at: "2026-01-05T09:00:00Z" })]);
     render(<AgreementCard placeId="place" partyId="party" />);
 
-    expect(
-      screen.getByText(/You accepted these terms on/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/You accepted these terms on/)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Accept terms" }),
     ).not.toBeInTheDocument();

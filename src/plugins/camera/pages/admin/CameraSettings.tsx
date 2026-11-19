@@ -76,9 +76,7 @@ function SettingToggle({
       </span>
       <span
         className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-          checked
-            ? "bg-[var(--vms-success)]"
-            : "bg-[var(--vms-line-strong)]"
+          checked ? "bg-[var(--vms-success)]" : "bg-[var(--vms-line-strong)]"
         }`}
       >
         <span
@@ -234,7 +232,10 @@ export default function CameraSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Network className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
+              <Network
+                className="h-5 w-5 text-[var(--vms-action)]"
+                aria-hidden="true"
+              />
               Connectivity and security
             </CardTitle>
             <CardDescription>
@@ -348,7 +349,10 @@ export default function CameraSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Video className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
+              <Video
+                className="h-5 w-5 text-[var(--vms-action)]"
+                aria-hidden="true"
+              />
               Recording behavior
             </CardTitle>
             <CardDescription>
@@ -399,7 +403,10 @@ export default function CameraSettingsPage() {
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <HardDrive className="h-5 w-5 text-[var(--vms-action)]" aria-hidden="true" />
+              <HardDrive
+                className="h-5 w-5 text-[var(--vms-action)]"
+                aria-hidden="true"
+              />
               Screenshots and storage
             </CardTitle>
             <CardDescription>
@@ -470,7 +477,10 @@ export default function CameraSettingsPage() {
 
       <Card className="border-dashed">
         <CardContent className="flex gap-3 py-4">
-          <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vms-success)]" aria-hidden="true" />
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vms-success)]"
+            aria-hidden="true"
+          />
           <div>
             <p className="font-semibold">Tenant boundary preserved</p>
             <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">

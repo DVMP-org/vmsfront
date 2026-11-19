@@ -121,10 +121,7 @@ export default function OrganizationAdministratorsPage() {
   const readOnly = !canCreate && !canUpdate && !canDelete;
 
   useEffect(() => {
-    if (
-      searchParams?.get("create") === "administrator" &&
-      canCreate
-    ) {
+    if (searchParams?.get("create") === "administrator" && canCreate) {
       setDraft(emptyDraft);
       setErrors({});
       setCreateOpen(true);
@@ -616,11 +613,7 @@ export default function OrganizationAdministratorsPage() {
             </p>
           ) : null}
           <div className="flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={closeCreate}
-            >
+            <Button type="button" variant="secondary" onClick={closeCreate}>
               Cancel
             </Button>
             <Button

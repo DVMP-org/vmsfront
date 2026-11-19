@@ -73,9 +73,7 @@ export function PlaceWorkspaceShell({
                 <div className="flex flex-wrap items-center gap-2">
                   <Button onClick={() => query.refetch()}>Retry</Button>
                   <Button asChild variant="outline">
-                    <Link href="/?lobby=1">
-                      All workspaces
-                    </Link>
+                    <Link href="/?lobby=1">All workspaces</Link>
                   </Button>
                 </div>
               </section>

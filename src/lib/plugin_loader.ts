@@ -8,12 +8,12 @@ import { adminService } from "@/services/admin-service";
 
 /**
  * All frontend plugins registered here
- * 
+ *
  * To add a new plugin:
  * 1. Create a plugin directory in src/plugins/
  * 2. Export manifest.json and routes.js
  * 3. Import and add to this array
- * 
+ *
  * @example
  * ```typescript
  * import myPlugin from "@/plugins/my-plugin";
@@ -26,76 +26,79 @@ const FRONTEND_PLUGINS = [electricity, camera];
  * Backend plugin from API
  */
 interface BackendPlugin {
-    id: string;
-    name: string;
-    version: string;
-    enabled: boolean;
-    [key: string]: any;
+  id: string;
+  name: string;
+  version: string;
+  enabled: boolean;
+  [key: string]: any;
 }
 
 /**
  * Validates a plugin structure
  */
 function validatePlugin(plugin: any): plugin is {
-    manifest: any;
-    adminRoutes?: any[];
-    residentRoutes?: any[]
+  manifest: any;
+  adminRoutes?: any[];
+  residentRoutes?: any[];
 } {
-    if (!plugin) {
-        console.error("Plugin is null or undefined");
-        return false;
-    }
+  if (!plugin) {
+    console.error("Plugin is null or undefined");
+    return false;
+  }
 
-    if (!plugin.manifest) {
-        console.error("Plugin missing manifest");
-        return false;
-    }
+  if (!plugin.manifest) {
+    console.error("Plugin missing manifest");
+    return false;
+  }
 
-    if (!plugin.manifest.name) {
-        console.error("Plugin manifest missing name");
-        return false;
-    }
+  if (!plugin.manifest.name) {
+    console.error("Plugin manifest missing name");
+    return false;
+  }
 
-    if (!plugin.manifest.frontend) {
-        console.error(`Plugin ${plugin.manifest.name} missing frontend config`);
-        return false;
-    }
+  if (!plugin.manifest.frontend) {
+    console.error(`Plugin ${plugin.manifest.name} missing frontend config`);
+    return false;
+  }
 
-    if (!plugin.manifest.frontend.basePath) {
-        console.error(`Plugin ${plugin.manifest.name} missing basePath`);
-        return false;
-    }
+  if (!plugin.manifest.frontend.basePath) {
+    console.error(`Plugin ${plugin.manifest.name} missing basePath`);
+    return false;
+  }
 
-    const hasAdminRoutes = Array.isArray(plugin.adminRoutes) && plugin.adminRoutes.length > 0;
-    const hasResidentRoutes = Array.isArray(plugin.residentRoutes) && plugin.residentRoutes.length > 0;
+  const hasAdminRoutes =
+    Array.isArray(plugin.adminRoutes) && plugin.adminRoutes.length > 0;
+  const hasResidentRoutes =
+    Array.isArray(plugin.residentRoutes) && plugin.residentRoutes.length > 0;
 
-    if (!hasAdminRoutes && !hasResidentRoutes) {
-        console.warn(`Plugin ${plugin.manifest.name} has no routes defined`);
-    }
+  if (!hasAdminRoutes && !hasResidentRoutes) {
+    console.warn(`Plugin ${plugin.manifest.name} has no routes defined`);
+  }
 
-    return true;
+  return true;
 }
 
 const PLUGINS_CACHE_KEY = "vmscore_plugins_cache";
 const PLUGINS_CACHE_TIMESTAMP_KEY = "vmscore_plugins_cache_timestamp";
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-const DEFAULT_ORGANIZATION_SLUG = process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
+const DEFAULT_ORGANIZATION_SLUG =
+  process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_SLUG || "";
 
 function getPluginCacheScope(): string {
-    return (
-        getSubdomain() ||
-        getCookie("selected-organization") ||
-        DEFAULT_ORGANIZATION_SLUG ||
-        "global"
-    );
+  return (
+    getSubdomain() ||
+    getCookie("selected-organization") ||
+    DEFAULT_ORGANIZATION_SLUG ||
+    "global"
+  );
 }
 
 function getPluginCacheKey(): string {
-    return `${PLUGINS_CACHE_KEY}:${getPluginCacheScope()}`;
+  return `${PLUGINS_CACHE_KEY}:${getPluginCacheScope()}`;
 }
 
 function getPluginCacheTimestampKey(): string {
-    return `${PLUGINS_CACHE_TIMESTAMP_KEY}:${getPluginCacheScope()}`;
+  return `${PLUGINS_CACHE_TIMESTAMP_KEY}:${getPluginCacheScope()}`;
 }
 
 /**
@@ -103,35 +106,35 @@ function getPluginCacheTimestampKey(): string {
  * @returns Cached backend plugins or null if cache is invalid/expired
  */
 function getCachedPlugins(): BackendPlugin[] | null {
-    if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") return null;
 
-    try {
-        const cachedData = localStorage.getItem(getPluginCacheKey());
-        const cachedTimestamp = localStorage.getItem(getPluginCacheTimestampKey());
+  try {
+    const cachedData = localStorage.getItem(getPluginCacheKey());
+    const cachedTimestamp = localStorage.getItem(getPluginCacheTimestampKey());
 
-        if (!cachedData || !cachedTimestamp) {
-            return null;
-        }
-
-        const timestamp = parseInt(cachedTimestamp, 10);
-        const now = Date.now();
-
-        // Check if cache is expired
-        if (now - timestamp > CACHE_DURATION_MS) {
-            localStorage.removeItem(getPluginCacheKey());
-            localStorage.removeItem(getPluginCacheTimestampKey());
-            return null;
-        }
-
-        const plugins = JSON.parse(cachedData) as BackendPlugin[];
-        return Array.isArray(plugins) ? plugins : null;
-    } catch (error) {
-        console.error("Failed to read plugins cache:", error);
-        // Clear invalid cache
-        localStorage.removeItem(getPluginCacheKey());
-        localStorage.removeItem(getPluginCacheTimestampKey());
-        return null;
+    if (!cachedData || !cachedTimestamp) {
+      return null;
     }
+
+    const timestamp = parseInt(cachedTimestamp, 10);
+    const now = Date.now();
+
+    // Check if cache is expired
+    if (now - timestamp > CACHE_DURATION_MS) {
+      localStorage.removeItem(getPluginCacheKey());
+      localStorage.removeItem(getPluginCacheTimestampKey());
+      return null;
+    }
+
+    const plugins = JSON.parse(cachedData) as BackendPlugin[];
+    return Array.isArray(plugins) ? plugins : null;
+  } catch (error) {
+    console.error("Failed to read plugins cache:", error);
+    // Clear invalid cache
+    localStorage.removeItem(getPluginCacheKey());
+    localStorage.removeItem(getPluginCacheTimestampKey());
+    return null;
+  }
 }
 
 /**
@@ -139,32 +142,32 @@ function getCachedPlugins(): BackendPlugin[] | null {
  * @param plugins Array of backend plugins to cache
  */
 function setCachedPlugins(plugins: BackendPlugin[]): void {
-    if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
 
+  try {
+    localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
+    localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
+  } catch (error) {
+    console.error("Failed to cache plugins:", error);
+    // If storage is full or unavailable, clear old cache and try again
     try {
-        localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
-        localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
-    } catch (error) {
-        console.error("Failed to cache plugins:", error);
-        // If storage is full or unavailable, clear old cache and try again
-        try {
-            localStorage.removeItem(getPluginCacheKey());
-            localStorage.removeItem(getPluginCacheTimestampKey());
-            localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
-            localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
-        } catch (retryError) {
-            console.error("Failed to cache plugins after retry:", retryError);
-        }
+      localStorage.removeItem(getPluginCacheKey());
+      localStorage.removeItem(getPluginCacheTimestampKey());
+      localStorage.setItem(getPluginCacheKey(), JSON.stringify(plugins));
+      localStorage.setItem(getPluginCacheTimestampKey(), Date.now().toString());
+    } catch (retryError) {
+      console.error("Failed to cache plugins after retry:", retryError);
     }
+  }
 }
 
 /**
  * Clears the plugins cache
  */
 export function clearPluginsCache(): void {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem(getPluginCacheKey());
-    localStorage.removeItem(getPluginCacheTimestampKey());
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(getPluginCacheKey());
+  localStorage.removeItem(getPluginCacheTimestampKey());
 }
 
 /**
@@ -172,41 +175,47 @@ export function clearPluginsCache(): void {
  * @param useCache Whether to use cached data if available
  * @returns Array of enabled backend plugins
  */
-async function fetchEnabledPlugins(useCache: boolean = true): Promise<BackendPlugin[]> {
-    // Try to use cache first if requested
-    if (useCache) {
-        const cached = getCachedPlugins();
-        if (cached) {
-            // Return cached data immediately, but refresh in background
-            fetchEnabledPlugins(false).then(plugins => {
-                setCachedPlugins(plugins);
-            }).catch(() => {
-                // Silently fail background refresh
-            });
-            return cached;
-        }
+async function fetchEnabledPlugins(
+  useCache: boolean = true,
+): Promise<BackendPlugin[]> {
+  // Try to use cache first if requested
+  if (useCache) {
+    const cached = getCachedPlugins();
+    if (cached) {
+      // Return cached data immediately, but refresh in background
+      fetchEnabledPlugins(false)
+        .then((plugins) => {
+          setCachedPlugins(plugins);
+        })
+        .catch(() => {
+          // Silently fail background refresh
+        });
+      return cached;
     }
+  }
 
-    try {
-        const response = await adminService.getPlugins();
-        if (response.data && Array.isArray(response.data)) {
-            // Only return enabled plugins
-            const enabledPlugins = response.data.filter((plugin: BackendPlugin) => plugin.enabled === true);
-            // Cache the result
-            setCachedPlugins(enabledPlugins);
-            return enabledPlugins;
-        }
-        return [];
-    } catch (error) {
-        console.error("Failed to fetch plugins from API:", error);
-        // If API fails, try to return cached data as fallback
-        if (useCache) {
-            const cached = getCachedPlugins();
-            if (cached) return cached;
-        }
-        // Return empty array on error - plugins won't load
-        return [];
+  try {
+    const response = await adminService.getPlugins();
+    if (response.data && Array.isArray(response.data)) {
+      // Only return enabled plugins
+      const enabledPlugins = response.data.filter(
+        (plugin: BackendPlugin) => plugin.enabled === true,
+      );
+      // Cache the result
+      setCachedPlugins(enabledPlugins);
+      return enabledPlugins;
     }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch plugins from API:", error);
+    // If API fails, try to return cached data as fallback
+    if (useCache) {
+      const cached = getCachedPlugins();
+      if (cached) return cached;
+    }
+    // Return empty array on error - plugins won't load
+    return [];
+  }
 }
 
 /**
@@ -216,12 +225,14 @@ async function fetchEnabledPlugins(useCache: boolean = true): Promise<BackendPlu
  * @returns Matching backend plugin or null
  */
 function matchPluginByName(
-    frontendPlugin: { manifest: { name: string; version?: string } },
-    backendPlugins: BackendPlugin[]
+  frontendPlugin: { manifest: { name: string; version?: string } },
+  backendPlugins: BackendPlugin[],
 ): BackendPlugin | null {
-    return backendPlugins.find(
-        (backend) => backend.name === frontendPlugin.manifest.name
-    ) || null;
+  return (
+    backendPlugins.find(
+      (backend) => backend.name === frontendPlugin.manifest.name,
+    ) || null
+  );
 }
 
 /**
@@ -230,40 +241,41 @@ function matchPluginByName(
  * @param useCache Whether to use cached plugins if available (default: true)
  * @returns Array of loaded plugins with normalized data
  */
-export async function loadPlugins(useCache: boolean = true): Promise<LoadedPlugin[]> {
-    // Fetch enabled plugins from backend (with caching)
-    const enabledBackendPlugins = await fetchEnabledPlugins(useCache);
+export async function loadPlugins(
+  useCache: boolean = true,
+): Promise<LoadedPlugin[]> {
+  // Fetch enabled plugins from backend (with caching)
+  const enabledBackendPlugins = await fetchEnabledPlugins(useCache);
 
-    // Match frontend plugins with backend plugins and filter to only enabled ones
-    return FRONTEND_PLUGINS
-        .filter(validatePlugin)
-        .map(plugin => {
-            // Match with backend plugin
-            const backendPlugin = matchPluginByName(plugin, enabledBackendPlugins);
+  // Match frontend plugins with backend plugins and filter to only enabled ones
+  return FRONTEND_PLUGINS.filter(validatePlugin)
+    .map((plugin) => {
+      // Match with backend plugin
+      const backendPlugin = matchPluginByName(plugin, enabledBackendPlugins);
 
-            // Only include if plugin is enabled in backend
-            if (!backendPlugin) {
-                return null;
-            }
+      // Only include if plugin is enabled in backend
+      if (!backendPlugin) {
+        return null;
+      }
 
-            // Normalize basePath to always start with /
-            const basePath = plugin.manifest.frontend.basePath.startsWith("/")
-                ? plugin.manifest.frontend.basePath
-                : `/${plugin.manifest.frontend.basePath}`;
+      // Normalize basePath to always start with /
+      const basePath = plugin.manifest.frontend.basePath.startsWith("/")
+        ? plugin.manifest.frontend.basePath
+        : `/${plugin.manifest.frontend.basePath}`;
 
-            return {
-                name: plugin.manifest.name,
-                basePath,
-                manifest: {
-                    ...plugin.manifest,
-                    backendVersion: backendPlugin.version,
-                },
-                adminRoutes: plugin.adminRoutes,
-                residentRoutes: plugin.residentRoutes,
-                backendId: backendPlugin.id,
-            } as LoadedPlugin;
-        })
-        .filter((plugin): plugin is LoadedPlugin => plugin !== null);
+      return {
+        name: plugin.manifest.name,
+        basePath,
+        manifest: {
+          ...plugin.manifest,
+          backendVersion: backendPlugin.version,
+        },
+        adminRoutes: plugin.adminRoutes,
+        residentRoutes: plugin.residentRoutes,
+        backendId: backendPlugin.id,
+      } as LoadedPlugin;
+    })
+    .filter((plugin): plugin is LoadedPlugin => plugin !== null);
 }
 
 /**
@@ -272,8 +284,10 @@ export async function loadPlugins(useCache: boolean = true): Promise<LoadedPlugi
  * @deprecated Use loadPlugins() async version instead
  */
 export function loadPluginsSync(): LoadedPlugin[] {
-    console.warn("loadPluginsSync() is deprecated. Use async loadPlugins() instead.");
-    return [];
+  console.warn(
+    "loadPluginsSync() is deprecated. Use async loadPlugins() instead.",
+  );
+  return [];
 }
 
 /**
@@ -283,17 +297,25 @@ export function loadPluginsSync(): LoadedPlugin[] {
  * @returns Array of routes for the user type
  */
 export function getPluginRoutesForUserType(
-    plugin: LoadedPlugin,
-    userType: "admin" | "resident"
+  plugin: LoadedPlugin,
+  userType: "admin" | "resident",
 ): PluginRoute[] {
-    if (userType === "admin" && plugin.adminRoutes && plugin.adminRoutes.length > 0) {
-        return plugin.adminRoutes;
-    }
-    if (userType === "resident" && plugin.residentRoutes && plugin.residentRoutes.length > 0) {
-        return plugin.residentRoutes;
-    }
+  if (
+    userType === "admin" &&
+    plugin.adminRoutes &&
+    plugin.adminRoutes.length > 0
+  ) {
+    return plugin.adminRoutes;
+  }
+  if (
+    userType === "resident" &&
+    plugin.residentRoutes &&
+    plugin.residentRoutes.length > 0
+  ) {
+    return plugin.residentRoutes;
+  }
 
-    return [];
+  return [];
 }
 
 /**
@@ -301,9 +323,11 @@ export function getPluginRoutesForUserType(
  * @param path The path to search for
  * @returns The matching plugin or undefined
  */
-export async function findPluginByPath(path: string): Promise<LoadedPlugin | undefined> {
-    const plugins = await loadPlugins();
-    return plugins.find(plugin => isPluginPath(path, plugin.basePath));
+export async function findPluginByPath(
+  path: string,
+): Promise<LoadedPlugin | undefined> {
+  const plugins = await loadPlugins();
+  return plugins.find((plugin) => isPluginPath(path, plugin.basePath));
 }
 
 /**
@@ -311,7 +335,9 @@ export async function findPluginByPath(path: string): Promise<LoadedPlugin | und
  * @param name The plugin name
  * @returns The matching plugin or undefined
  */
-export async function getPluginByName(name: string): Promise<LoadedPlugin | undefined> {
-    const plugins = await loadPlugins();
-    return plugins.find(plugin => plugin.name === name);
+export async function getPluginByName(
+  name: string,
+): Promise<LoadedPlugin | undefined> {
+  const plugins = await loadPlugins();
+  return plugins.find((plugin) => plugin.name === name);
 }

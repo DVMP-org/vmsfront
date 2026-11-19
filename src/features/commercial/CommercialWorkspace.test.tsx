@@ -446,9 +446,7 @@ describe("commercial operations", () => {
     fireEvent.change(within(dialog).getByLabelText(/^Lease end/), {
       target: { value: "2027-12-31" },
     });
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Add party" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add party" }));
 
     await waitFor(() =>
       expect(mocks.createRelationship).toHaveBeenCalledWith(

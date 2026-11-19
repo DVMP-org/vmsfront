@@ -10,7 +10,10 @@ interface UseRealtimeOptions {
  * Hook for realtime updates using polling
  * In a production environment, this could be replaced with WebSocket or SSE
  */
-export function useRealtime({ queryKey, pollInterval = 30000 }: UseRealtimeOptions) {
+export function useRealtime({
+  queryKey,
+  pollInterval = 30000,
+}: UseRealtimeOptions) {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(true);
 
@@ -47,4 +50,3 @@ export function useWebSocket(url: string) {
 
   return { isConnected, lastMessage };
 }
-

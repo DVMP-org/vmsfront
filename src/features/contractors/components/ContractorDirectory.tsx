@@ -42,9 +42,9 @@ export function ContractorDirectory() {
     access.allowed(["contractors.create", "contractors.update"]);
   const [createOpen, setCreateOpen] = useState(false);
   const [managed, setManaged] = useState<Contractor | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | Contractor["status"]>(
-    "all",
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | Contractor["status"]
+  >("all");
   const { confirmAction, confirmationDialog } = useConfirmAction();
   const query = useContractors(selectedSite?.id);
   const revoke = useRevokeContractor(selectedSite?.id);
@@ -209,12 +209,22 @@ export function ContractorDirectory() {
             aria-label="Contractor summary"
             className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3"
           >
-            <Summary label="Registered" value={String(rows.length)} detail="This Site" />
-            <Summary label="Active now" value={String(active)} detail="Inside their window" />
+            <Summary
+              label="Registered"
+              value={String(rows.length)}
+              detail="This Site"
+            />
+            <Summary
+              label="Active now"
+              value={String(active)}
+              detail="Inside their window"
+            />
             <Summary
               label="Needs attention"
               value={String(attention)}
-              detail={permits ? `${permits} under permit` : "No permits required"}
+              detail={
+                permits ? `${permits} under permit` : "No permits required"
+              }
               attention={attention > 0}
             />
           </section>
@@ -272,7 +282,9 @@ export function ContractorDirectory() {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{row.contact_name}</p>
+                      <p className="truncate font-semibold">
+                        {row.contact_name}
+                      </p>
                       <p className="truncate text-xs text-[var(--vms-ink-muted)]">
                         {contractorMeta(row) || row.email}
                       </p>

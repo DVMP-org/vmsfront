@@ -403,7 +403,10 @@ export function DataTable<T extends Record<string, any>>({
   const currentFilters = useMemo(() => {
     // Keep mandatory server scope filters even when they have no editable control.
     const filters: FilterConfig[] = effectiveInitialFilters.filter(
-      (filter) => !availableFilters.some((definition) => definition.field === filter.field),
+      (filter) =>
+        !availableFilters.some(
+          (definition) => definition.field === filter.field,
+        ),
     );
 
     availableFilters.forEach((filterDef) => {
@@ -620,7 +623,7 @@ export function DataTable<T extends Record<string, any>>({
   // Sort data
   const sortedData = useMemo(() => {
     if (disableClientSideSorting || hierarchy) {
-    // Server-side sorting, or a tree that must keep its depth-first order.
+      // Server-side sorting, or a tree that must keep its depth-first order.
       return filteredData;
     }
 

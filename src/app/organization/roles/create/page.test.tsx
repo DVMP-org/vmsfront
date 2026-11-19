@@ -66,8 +66,6 @@ describe("role draft authoring", () => {
     expect(
       screen.getByRole("dialog", { name: "Role draft preview" }),
     ).toHaveTextContent("Portfolio reviewer");
-    expect(
-      screen.getByText(/Nothing has been persisted/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Nothing has been persisted/i)).toBeInTheDocument();
   });
 });

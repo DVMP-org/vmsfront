@@ -32,9 +32,12 @@ export default function ForgotPasswordPage() {
         },
         onError: (err: any) => {
           setSubmitted(false);
-          setError(err?.response?.data?.message || "Something went wrong. Please try again.");
+          setError(
+            err?.response?.data?.message ||
+              "Something went wrong. Please try again.",
+          );
         },
-      }
+      },
     );
   };
 
@@ -57,7 +60,8 @@ export default function ForgotPasswordPage() {
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Check your email</h3>
               <p className="text-muted-foreground">
-                We&apos;ve sent a password reset link to <span className="font-semibold text-foreground">{email}</span>.
+                We&apos;ve sent a password reset link to{" "}
+                <span className="font-semibold text-foreground">{email}</span>.
               </p>
             </div>
             <Link

@@ -1,19 +1,9 @@
 export type CommercialSection =
-  | "overview"
-  | "inventory"
-  | "tenants"
-  | "finance"
-  | "access"
-  | "maintenance";
+  "overview" | "inventory" | "tenants" | "finance" | "access" | "maintenance";
 
 export type MaintenancePriority = "low" | "normal" | "high" | "urgent";
 export type MaintenanceStatus =
-  | "open"
-  | "triaged"
-  | "assigned"
-  | "in_progress"
-  | "resolved"
-  | "closed";
+  "open" | "triaged" | "assigned" | "in_progress" | "resolved" | "closed";
 
 export interface CommercialMaintenanceRequest {
   id: string;
@@ -70,9 +60,12 @@ export const commercialUnitTypes = commercialSpaceTypes.filter(
   (type) => type.kind !== "building",
 );
 
-export function commercialSpaceKind(typeValue: string): CommercialStructuralKind {
+export function commercialSpaceKind(
+  typeValue: string,
+): CommercialStructuralKind {
   return (
-    commercialSpaceTypes.find((type) => type.value === typeValue)?.kind ?? "unit"
+    commercialSpaceTypes.find((type) => type.value === typeValue)?.kind ??
+    "unit"
   );
 }
 

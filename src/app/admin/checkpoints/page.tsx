@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
 /**
- * The gate register is the authoritative checkpoint page. This legacy
- * directory route redirects so existing links keep working.
+ * Keep the legacy route working, but land users on the actual operator
+ * workflow rather than the separate gate-configuration register.
  */
 export default function LegacyCheckpointDirectoryPage() {
-  redirect("/admin/gates");
+  redirect("/admin/checkpoints/console");
 }

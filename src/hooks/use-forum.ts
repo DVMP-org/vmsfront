@@ -24,15 +24,10 @@ export function useForumTopics(
     search?: string;
     filters?: string;
     sort?: string;
-  }
+  },
 ) {
   return useQuery<PaginatedResponse<ForumTopic>>({
-    queryKey: [
-      "forum",
-      "topics",
-      residencyId,
-      params
-    ],
+    queryKey: ["forum", "topics", residencyId, params],
     queryFn: async () => {
       if (!residencyId) throw new Error("Residency ID is required");
       const response = await residentService.getForumTopics(residencyId, {
@@ -45,20 +40,23 @@ export function useForumTopics(
       return response.data;
     },
     enabled: !!residencyId,
-    // @ts-expect-error 
+    // @ts-expect-error
     keepPreviousData: true,
   });
 }
 
 export function useForumTopic(
   residencyId: string | null,
-  topicId: string | null
+  topicId: string | null,
 ) {
   return useQuery<ForumTopic>({
     queryKey: ["forum", "topic", residencyId, topicId],
     queryFn: async () => {
       if (!residencyId || !topicId) throw new Error("IDs are required");
-      const response = await residentService.getForumTopic(residencyId, topicId);
+      const response = await residentService.getForumTopic(
+        residencyId,
+        topicId,
+      );
       return response.data;
     },
     enabled: !!residencyId && !!topicId,
@@ -67,7 +65,7 @@ export function useForumTopic(
 
 export function useForumCategory(
   residencyId: string | null,
-  categoryId: string | null
+  categoryId: string | null,
 ) {
   return useQuery<ForumCategory>({
     queryKey: ["forum", "category", residencyId, categoryId],
@@ -75,7 +73,7 @@ export function useForumCategory(
       if (!residencyId || !categoryId) throw new Error("IDs are required");
       const response = await residentService.getForumCategory(
         residencyId,
-        categoryId
+        categoryId,
       );
       return response.data;
     },
@@ -91,7 +89,7 @@ export function useForumCategoriesList(
     search?: string;
     filters?: string;
     sort?: string;
-  }
+  },
 ) {
   return useQuery<PaginatedResponse<ForumCategory>>({
     queryKey: ["forum", "categories", residencyId, params],
@@ -107,7 +105,7 @@ export function useForumCategoriesList(
       return response.data;
     },
     enabled: !!residencyId,
-    // @ts-expect-error 
+    // @ts-expect-error
     keepPreviousData: true,
   });
 }
@@ -121,7 +119,7 @@ export function useForumPosts(
     search?: string;
     filters?: string;
     sort?: string;
-  }
+  },
 ) {
   return useQuery<PaginatedResponse<ForumPost>>({
     queryKey: ["forum", "posts", residencyId, topicId, params],
@@ -136,7 +134,7 @@ export function useForumPosts(
           search: params.search,
           filters: params.filters,
           sort: params.sort,
-        }
+        },
       );
       return response.data;
     },
@@ -163,7 +161,7 @@ export function useCreateForumCategory() {
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to create forum category."
+        error?.response?.data?.detail || "Failed to create forum category.",
       );
     },
   });
@@ -180,7 +178,7 @@ export function useUpdateForumCategory() {
       residentService.updateForumCategory(
         variables.residencyId,
         variables.categoryId,
-        variables.data
+        variables.data,
       ),
     onSuccess: (_, variables) => {
       toast.success("Category updated.");
@@ -198,7 +196,7 @@ export function useUpdateForumCategory() {
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to update forum category."
+        error?.response?.data?.detail || "Failed to update forum category.",
       );
     },
   });
@@ -210,7 +208,7 @@ export function useDeleteForumCategory() {
     mutationFn: (variables: { residencyId: string; categoryId: string }) =>
       residentService.deleteForumCategory(
         variables.residencyId,
-        variables.categoryId
+        variables.categoryId,
       ),
     onSuccess: (_, variables) => {
       toast.success("Category deleted.");
@@ -223,7 +221,7 @@ export function useDeleteForumCategory() {
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to delete forum category."
+        error?.response?.data?.detail || "Failed to delete forum category.",
       );
     },
   });
@@ -258,7 +256,7 @@ export function useUpdateForumTopic() {
       residentService.updateForumTopic(
         variables.residencyId,
         variables.topicId,
-        variables.data
+        variables.data,
       ),
     onSuccess: (_, variables) => {
       toast.success("Topic updated.");
@@ -281,7 +279,7 @@ export function useDeleteForumTopic() {
     mutationFn: (variables: { residencyId: string; topicId: string }) =>
       residentService.deleteForumTopic(
         variables.residencyId,
-        variables.topicId
+        variables.topicId,
       ),
     onSuccess: (_, variables) => {
       toast.success("Topic deleted.");
@@ -301,14 +299,25 @@ export function useCreateForumPost() {
     mutationFn: (variables: {
       residencyId: string;
       data: ForumPostCreatePayload;
-    }) => residentService.createForumPost(variables.residencyId, variables.data),
+    }) =>
+      residentService.createForumPost(variables.residencyId, variables.data),
     onSuccess: (response, variables) => {
       toast.success("Reply posted!");
       queryClient.invalidateQueries({
-        queryKey: ["forum", "posts", variables.residencyId, variables.data.topic_id],
+        queryKey: [
+          "forum",
+          "posts",
+          variables.residencyId,
+          variables.data.topic_id,
+        ],
       });
       queryClient.invalidateQueries({
-        queryKey: ["forum", "topic", variables.residencyId, variables.data.topic_id],
+        queryKey: [
+          "forum",
+          "topic",
+          variables.residencyId,
+          variables.data.topic_id,
+        ],
       });
       return response;
     },
@@ -331,7 +340,7 @@ export function useUpdateForumPost() {
         variables.residencyId,
         variables.topicId,
         variables.postId,
-        variables.data
+        variables.data,
       ),
     onSuccess: (_, variables) => {
       toast.success("Post updated.");

@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { RentRollSection } from "./RentRollSection";
 
-const row = (overrides: Partial<Parameters<typeof RentRollSection>[0]["rows"][number]>) => ({
+const row = (
+  overrides: Partial<Parameters<typeof RentRollSection>[0]["rows"][number]>,
+) => ({
   id: "suite-1",
   space: "Suite 1",
   tenant: "Acme Studio",
@@ -44,7 +46,8 @@ describe("commercial rent roll section", () => {
     expect(screen.getAllByText(/Vacant — arrears only/).length).toBeGreaterThan(
       0,
     );
-    expect(screen.getByRole("list", { name: "Outstanding money by arrears age" }))
-      .toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Outstanding money by arrears age" }),
+    ).toBeInTheDocument();
   });
 });

@@ -49,9 +49,9 @@ export function OrganizationSettingsTabs({
   return (
     <nav
       aria-label="Organization configuration sections"
-      className="-mx-1 overflow-x-auto border-b border-[var(--vms-line)]"
+      className="-mx-1 border-b border-[var(--vms-line)]"
     >
-      <div className="flex min-w-max gap-1 px-1">
+      <div className="flex flex-wrap gap-x-1 px-1">
         {sections.map((section) => {
           const selected = section.id === active;
           return (

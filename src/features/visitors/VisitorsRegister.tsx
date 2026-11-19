@@ -141,7 +141,10 @@ export function VisitorsRegister({
             type="button"
             className="w-full space-y-2 text-left"
             onClick={() =>
-              setActive({ invitationId: row.invitationId, guestId: row.guestId })
+              setActive({
+                invitationId: row.invitationId,
+                guestId: row.guestId,
+              })
             }
           >
             <div className="flex items-start justify-between gap-3">

@@ -25,7 +25,10 @@ interface IntegrationTypeBadgeProps {
   showIcon?: boolean;
 }
 
-export const INTEGRATION_TYPE_ICONS: Record<IntegrationType, React.ElementType> = {
+export const INTEGRATION_TYPE_ICONS: Record<
+  IntegrationType,
+  React.ElementType
+> = {
   messaging: MessageSquare,
   payment: CreditCard,
   access_control: Shield,

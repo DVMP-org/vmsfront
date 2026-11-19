@@ -318,9 +318,11 @@ export default function ResidentOnboardingPage() {
                   </div>
                   <CardTitle>You're already onboarded</CardTitle>
                   <CardDescription>
-                    Your account is linked to {profile?.user?.residencies?.length || 0}{" "}
-                    residency{(profile?.user?.residencies?.length ?? 0) === 1 ? "" : "s"}.
-                    Jump back into your dashboard to manage passes and visitors.
+                    Your account is linked to{" "}
+                    {profile?.user?.residencies?.length || 0} residency
+                    {(profile?.user?.residencies?.length ?? 0) === 1 ? "" : "s"}
+                    . Jump back into your dashboard to manage passes and
+                    visitors.
                   </CardDescription>
                 </CardHeader>
                 <CardFooter className="flex flex-col gap-3">
@@ -339,8 +341,8 @@ export default function ResidentOnboardingPage() {
                   <CardDescription>
                     Enter the slug (e.g.{" "}
                     <code className="rounded bg-muted px-1">oak-villa</code>)
-                    provided by your estate admin. You can add multiple residencies if
-                    needed.
+                    provided by your estate admin. You can add multiple
+                    residencies if needed.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -385,7 +387,8 @@ export default function ResidentOnboardingPage() {
                                 setSelectedSlugs((prev) =>
                                   prev.filter(
                                     (value) =>
-                                      value.toLowerCase() !== slug.toLowerCase(),
+                                      value.toLowerCase() !==
+                                      slug.toLowerCase(),
                                   ),
                                 )
                               }
@@ -401,7 +404,7 @@ export default function ResidentOnboardingPage() {
                   </div>
 
                   {suggestedResidencies.length > 0 && (
-                      <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
+                    <div className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Popular residencies
                       </p>
@@ -416,12 +419,16 @@ export default function ResidentOnboardingPage() {
                                 const exists = prev.some(
                                   (value) =>
                                     value.toLowerCase() ===
-                                    (residency.slug || residency.name).toLowerCase(),
+                                    (
+                                      residency.slug || residency.name
+                                    ).toLowerCase(),
                                 );
                                 if (exists) return prev;
                                 return [
                                   ...prev,
-                                  residency.slug || residency.name || residency.id,
+                                  residency.slug ||
+                                    residency.name ||
+                                    residency.id,
                                 ];
                               });
                             }}
@@ -467,9 +474,10 @@ export default function ResidentOnboardingPage() {
                     </p>
                     <p>
                       Ask your estate admin for the public slug or copy it from
-                      your welcome email. It usually matches the friendly residency
-                      URL (e.g.{" "}
-                      <code className="rounded bg-muted px-1">green-court</code>).
+                      your welcome email. It usually matches the friendly
+                      residency URL (e.g.{" "}
+                      <code className="rounded bg-muted px-1">green-court</code>
+                      ).
                     </p>
                   </div>
                 </CardContent>
@@ -507,6 +515,5 @@ export default function ResidentOnboardingPage() {
         </div>
       </div>
     </div>
-
   );
 }

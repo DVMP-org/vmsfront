@@ -8,12 +8,13 @@ import { parseApiError } from "@/lib/error-utils";
 import type { GuestFolio } from "@/features/hospitality/contracts";
 import { useGuestStayFolio } from "./queries";
 
-const CATEGORY_LABEL: Record<GuestFolio["lines"][number]["category"], string> = {
-  room: "Room",
-  service: "Service",
-  charge: "Charge",
-  payment: "Payment",
-};
+const CATEGORY_LABEL: Record<GuestFolio["lines"][number]["category"], string> =
+  {
+    room: "Room",
+    service: "Service",
+    charge: "Charge",
+    payment: "Payment",
+  };
 
 /**
  * What this stay costs and what has been paid.

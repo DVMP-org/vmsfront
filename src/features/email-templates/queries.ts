@@ -5,10 +5,7 @@ import { toast } from "sonner";
 
 import { parseApiError } from "@/lib/error-utils";
 
-import {
-  emailTemplatesApi,
-  type EmailTemplatePayload,
-} from "./api";
+import { emailTemplatesApi, type EmailTemplatePayload } from "./api";
 
 export const emailTemplateKeys = {
   list: (slug: string) => ["email-templates", slug, "list"] as const,

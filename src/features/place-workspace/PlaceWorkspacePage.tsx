@@ -51,7 +51,8 @@ import {
   type MaintenanceInput,
   type PersonalMaintenance,
   type PlaceCharge,
-} from "./api"; import { usePlaceWorkspace } from "./PlaceWorkspaceShell";
+} from "./api";
+import { usePlaceWorkspace } from "./PlaceWorkspaceShell";
 import {
   placeWorkspaceNavigation,
   workspaceSectionAllowed,
@@ -146,7 +147,10 @@ function maintenanceBucket(status: string) {
 
 /** Short human reference for a request id, e.g. MR-4F2A. */
 function ticketRef(id: string) {
-  return `MR-${id.replace(/[^0-9a-zA-Z]/g, "").slice(-4).toUpperCase()}`;
+  return `MR-${id
+    .replace(/[^0-9a-zA-Z]/g, "")
+    .slice(-4)
+    .toUpperCase()}`;
 }
 
 function announcementTone(priority?: string | null): AnnouncementPriority {
@@ -249,10 +253,7 @@ function AnnouncementAlert({
         style.border,
       )}
     >
-      <Icon
-        aria-hidden
-        className={cn("h-4 w-4 shrink-0", style.accentText)}
-      />
+      <Icon aria-hidden className={cn("h-4 w-4 shrink-0", style.accentText)} />
       <Badge variant={style.badge}>{announcementPriorityLabel(tone)}</Badge>
       <p className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--vms-ink)]">
         {title}
@@ -423,8 +424,7 @@ const sectionDescription: Record<string, (placeName: string) => string> = {
   visitors: () => "People on your invitations and the state of their access.",
   movements: () => "Entry and exit activity recorded for your visitors.",
   announcements: (placeName) => `Notices published for ${placeName}.`,
-  charges: (placeName) =>
-    `Charges and payment records for ${placeName}.`,
+  charges: (placeName) => `Charges and payment records for ${placeName}.`,
   maintenance: () => "Requests you raised and their current progress.",
   profile: () => "Your shared identity, contact details and profile photo.",
   settings: (placeName) => `Preferences for ${placeName}.`,
@@ -567,12 +567,7 @@ function Overview() {
   );
   const upcoming = useMemo(() => {
     const now = Date.now();
-    const terminal = new Set([
-      "declined",
-      "cancelled",
-      "revoked",
-      "expired",
-    ]);
+    const terminal = new Set(["declined", "cancelled", "revoked", "expired"]);
     return (invitations.data?.items ?? [])
       .filter((item) => {
         // Approval status is not the signal: a visitor who is already on site
@@ -621,13 +616,13 @@ function Overview() {
       ...(movements.data?.items ?? []).slice(0, 3).map((item) => ({
         id: `movement-${item.id}`,
         icon: History,
-        title: `${item.person_name ?? "Visitor"} · ${item.direction === "entry" ? "entry" : "exit"
-          } ${item.outcome}`,
+        title: `${item.person_name ?? "Visitor"} · ${
+          item.direction === "entry" ? "entry" : "exit"
+        } ${item.outcome}`,
         meta: `${item.gate_name} · ${titleCaseStatus(item.reason_code)}`,
         when: item.occurred_at,
         tone: (item.outcome === "allowed" ? "success" : "danger") as
-          | "success"
-          | "danger",
+          "success" | "danger",
       })),
       ...(maintenance.data?.items ?? []).slice(0, 2).map((item) => ({
         id: `request-${item.id}`,
@@ -641,18 +636,19 @@ function Overview() {
         id: `charge-${item.id}`,
         icon: ReceiptText,
         title: item.title,
-        meta: `Charge · ${formatMoney(item.balance, item.currency)} ${Number(item.balance) > 0 ? "outstanding" : "settled"
-          }`,
+        meta: `Charge · ${formatMoney(item.balance, item.currency)} ${
+          Number(item.balance) > 0 ? "outstanding" : "settled"
+        }`,
         when: item.due_date,
         tone: (Number(item.balance) > 0 ? "warning" : "success") as
-          | "warning"
-          | "success",
+          "warning" | "success",
       })),
       ...(invitations.data?.items ?? []).slice(0, 2).map((item) => ({
         id: `invitation-${item.id}`,
         icon: Ticket,
-        title: `Invitation for ${item.guests[0]?.display_name_snapshot ?? "a visitor"
-          }`,
+        title: `Invitation for ${
+          item.guests[0]?.display_name_snapshot ?? "a visitor"
+        }`,
         meta: `Invitation · ${titleCaseStatus(item.status)}`,
         when: item.requested_at,
         tone: "info" as const,
@@ -699,7 +695,8 @@ function Overview() {
                   width: inset ? `calc(100% - ${inset}px)` : "100%",
                   zIndex: alerts.length - index,
                   marginTop: depth > 0 ? "-38px" : undefined,
-                  transform: depth > 0 ? `translateY(${depth * 2}px)` : undefined,
+                  transform:
+                    depth > 0 ? `translateY(${depth * 2}px)` : undefined,
                 }}
                 className="relative"
               >
@@ -761,7 +758,9 @@ function Overview() {
               <>
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
-                    {outstanding > 0 ? "Outstanding balance" : "Account balance"}
+                    {outstanding > 0
+                      ? "Outstanding balance"
+                      : "Account balance"}
                   </p>
                   {outstanding > 0 ? (
                     <p className="mt-0.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[var(--vms-ink)]">
@@ -825,8 +824,8 @@ function Overview() {
 
                 <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
                   {nextDue &&
-                    nextDue.can_pay &&
-                    nextDue.status === "scheduled" ? (
+                  nextDue.can_pay &&
+                  nextDue.status === "scheduled" ? (
                     <Button
                       onClick={() => payNext.mutate(nextDue.id)}
                       isLoading={payNext.isPending}
@@ -837,7 +836,9 @@ function Overview() {
                   <Button
                     asChild
                     variant={
-                      nextDue && nextDue.can_pay && nextDue.status === "scheduled"
+                      nextDue &&
+                      nextDue.can_pay &&
+                      nextDue.status === "scheduled"
                         ? "outline"
                         : "primary"
                     }
@@ -1017,10 +1018,7 @@ function Overview() {
                             entry.tone === "neutral"
                               ? "neutral"
                               : (entry.tone as
-                                | "success"
-                                | "warning"
-                                | "danger"
-                                | "info")
+                                  "success" | "warning" | "danger" | "info")
                           }
                         />
                         <div className="min-w-0 flex-1">
@@ -1098,10 +1096,12 @@ function Overview() {
         </SectionCard>
       </div>
 
-      {definition?.workspace_dashboard.some((item) => item.section === "stay") &&
-        context.relationships.some(
-          (item) => item.role === "guest" || item.role === "guest_of",
-        ) ? (
+      {definition?.workspace_dashboard.some(
+        (item) => item.section === "stay",
+      ) &&
+      context.relationships.some(
+        (item) => item.role === "guest" || item.role === "guest_of",
+      ) ? (
         <GuestStayDashboard placeId={context.place.id} />
       ) : null}
     </div>
@@ -1187,7 +1187,9 @@ function Announcements() {
         {!filtered.length ? (
           <EmptyRow
             icon={Megaphone}
-            title={search ? "No matching announcements" : "No announcements yet"}
+            title={
+              search ? "No matching announcements" : "No announcements yet"
+            }
             description={
               search
                 ? "Try a different word, or clear the search to see every notice."
@@ -1237,13 +1239,15 @@ function Announcements() {
             {selected ? (
               <aside className="min-w-0 lg:sticky lg:top-4">
                 <article
-                  className={cn(
-                    surfaceClass,
-                    "px-4 py-4 sm:px-5 sm:py-5",
-                  )}
+                  className={cn(surfaceClass, "px-4 py-4 sm:px-5 sm:py-5")}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={announcementStyles[announcementTone(selected.priority)].badge}>
+                    <Badge
+                      variant={
+                        announcementStyles[announcementTone(selected.priority)]
+                          .badge
+                      }
+                    >
                       {announcementPriorityLabel(selected.priority)}
                     </Badge>
                     {selected.is_pinned ? (
@@ -1345,15 +1349,21 @@ function Charges() {
   ) as string[];
   const filtered = items.filter((item) => {
     const matchesTab =
-      tab === "all" ? true : tab === "outstanding" ? isOpen(item) : !isOpen(item);
+      tab === "all"
+        ? true
+        : tab === "outstanding"
+          ? isOpen(item)
+          : !isOpen(item);
     const matchesPeriod =
       period === "all" ||
       String(new Date(item.due_date).getFullYear()) === period;
     const matchesType = type === "all" || item.recurrence === type;
     return matchesTab && matchesPeriod && matchesType;
   });
-  const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0] ?? null;
-  const owed = (item: PlaceCharge) => Number(item.amount) - Number(item.balance);
+  const selected =
+    filtered.find((item) => item.id === selectedId) ?? filtered[0] ?? null;
+  const owed = (item: PlaceCharge) =>
+    Number(item.amount) - Number(item.balance);
   const canPayItem = (item: PlaceCharge) =>
     item.can_pay && item.status === "scheduled" && Number(item.balance) > 0;
   const definitionOutstanding = definitionRows.reduce(
@@ -1413,7 +1423,10 @@ function Charges() {
                     <th scope="col" className="px-3 py-2.5 text-right">
                       Outstanding
                     </th>
-                    <th scope="col" className="hidden px-3 py-2.5 sm:table-cell">
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-2.5 sm:table-cell"
+                    >
                       Next due
                     </th>
                     <th
@@ -1514,7 +1527,7 @@ function Charges() {
           {cadenceLabel(
             openDefinition?.is_flexible
               ? (openDefinition.acknowledged_cadence ??
-                openDefinition.recurrence)
+                  openDefinition.recurrence)
               : (openDefinition?.recurrence ?? items[0]?.recurrence),
           )}
         </p>
@@ -1534,7 +1547,8 @@ function Charges() {
               {formatMoney(outstanding, currency)}
             </p>
             <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-              across {openItems.length} charge{openItems.length === 1 ? "" : "s"}
+              across {openItems.length} charge
+              {openItems.length === 1 ? "" : "s"}
             </p>
           </div>
           <div className="border-l border-[var(--vms-line)] pl-5 sm:pl-10">
@@ -1547,8 +1561,8 @@ function Charges() {
             {nextDue ? (
               <>
                 <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                  Next payment{" "}
-                  {formatMoney(nextDue.balance, nextDue.currency)} ·{" "}
+                  Next payment {formatMoney(nextDue.balance, nextDue.currency)}{" "}
+                  ·{" "}
                   {cadenceLabel(
                     nextDue.acknowledged_cadence ?? nextDue.recurrence,
                   )}
@@ -1593,7 +1607,11 @@ function Charges() {
           setSelectedId(null);
         }}
         tabs={[
-          { value: "outstanding", label: "Outstanding", count: openItems.length },
+          {
+            value: "outstanding",
+            label: "Outstanding",
+            count: openItems.length,
+          },
           {
             value: "paid",
             label: "Paid",
@@ -1662,7 +1680,10 @@ function Charges() {
                 </caption>
                 <thead>
                   <tr className="border-b border-[var(--vms-line)] text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-                    <th scope="col" className="hidden px-3 py-2.5 sm:table-cell">
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-2.5 sm:table-cell"
+                    >
                       Period
                     </th>
                     <th scope="col" className="px-3 py-2.5">
@@ -1671,7 +1692,10 @@ function Charges() {
                     <th scope="col" className="px-3 py-2.5 text-right">
                       Amount
                     </th>
-                    <th scope="col" className="hidden px-3 py-2.5 text-right md:table-cell">
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-2.5 text-right md:table-cell"
+                    >
                       Paid
                     </th>
                     <th scope="col" className="px-3 py-2.5 text-right">
@@ -1722,7 +1746,10 @@ function Charges() {
                             <StatusPill status={item.status} />
                           </td>
                           <td className="px-1 py-2.5 text-right text-[var(--vms-ink-muted)]">
-                            <ChevronRight aria-hidden className="ml-auto h-4 w-4" />
+                            <ChevronRight
+                              aria-hidden
+                              className="ml-auto h-4 w-4"
+                            />
                           </td>
                         </tr>
                       );
@@ -1804,7 +1831,9 @@ function Charges() {
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <dt className="text-[var(--vms-ink-muted)]">Amount paid</dt>
+                      <dt className="text-[var(--vms-ink-muted)]">
+                        Amount paid
+                      </dt>
                       <dd className="font-semibold tabular-nums text-[var(--vms-ink)]">
                         {formatMoney(owed(selected), selected.currency)}
                       </dd>
@@ -2123,7 +2152,9 @@ function Maintenance() {
           <div className={cn(surfaceClass, "py-2")}>
             <EmptyRow
               icon={Wrench}
-              title={rows.length ? "Nothing in this view" : "No maintenance requests"}
+              title={
+                rows.length ? "Nothing in this view" : "No maintenance requests"
+              }
               description={
                 rows.length
                   ? "Try another status, category or search term."
@@ -2146,10 +2177,16 @@ function Maintenance() {
                     <th scope="col" className="px-3 py-2.5">
                       Issue
                     </th>
-                    <th scope="col" className="hidden px-3 py-2.5 sm:table-cell">
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-2.5 sm:table-cell"
+                    >
                       Category
                     </th>
-                    <th scope="col" className="hidden px-3 py-2.5 md:table-cell">
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-2.5 md:table-cell"
+                    >
                       Reported
                     </th>
                     <th scope="col" className="px-3 py-2.5">
@@ -2196,7 +2233,10 @@ function Maintenance() {
                           <StatusPill status={item.status} />
                         </td>
                         <td className="px-1 py-2.5 text-right text-[var(--vms-ink-muted)]">
-                          <ChevronRight aria-hidden className="ml-auto h-4 w-4" />
+                          <ChevronRight
+                            aria-hidden
+                            className="ml-auto h-4 w-4"
+                          />
                         </td>
                       </tr>
                     );
@@ -2422,7 +2462,9 @@ function MaintenanceDetails({
                   aria-hidden
                   className={cn(
                     "h-px flex-1",
-                    reached ? "bg-[var(--vms-success)]" : "bg-[var(--vms-line)]",
+                    reached
+                      ? "bg-[var(--vms-success)]"
+                      : "bg-[var(--vms-line)]",
                   )}
                 />
               ) : null}

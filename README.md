@@ -31,30 +31,34 @@ A modern, responsive dashboard application for the VMSCORE visitor and resident 
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Backend API running at `http://localhost:8080`
 
 ### Installation
 
 1. **Clone the repository** (if not already in the project):
+
    ```bash
    cd vmsfront
    ```
 
 2. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**:
-   
+
    Copy the `.env.example` file to `.env.local`:
+
    ```bash
    cp .env.example .env.local
    ```
 
    Update the values in `.env.local`:
+
    ```env
    NEXT_PUBLIC_API_URL=https://vmscore.to
    NEXT_PUBLIC_APP_NAME=VMSCORE
@@ -62,6 +66,7 @@ A modern, responsive dashboard application for the VMSCORE visitor and resident 
    ```
 
 4. **Run the development server**:
+
    ```bash
    npm run dev
    # or
@@ -97,12 +102,14 @@ vmsfront/
 ## Key Features
 
 ### Authentication
+
 - Login and registration pages
 - JWT-based authentication
 - Automatic token refresh
 - Protected routes
 
 ### Resident Dashboard
+
 - View residency information
 - Create and manage visitor passes
 - Track gate events
@@ -110,6 +117,7 @@ vmsfront/
 - QR code generation for passes
 
 ### Admin Dashboard
+
 - Manage residencies and residents
 - Gate console for check-in/out
 - View analytics and reports
@@ -143,6 +151,7 @@ The application supports branding customization through CSS variables. Update th
 ### App Name
 
 Change the app name in `.env.local`:
+
 ```env
 NEXT_PUBLIC_APP_NAME=Your Brand Name
 ```
@@ -150,6 +159,7 @@ NEXT_PUBLIC_APP_NAME=Your Brand Name
 ## Testing
 
 Run tests with:
+
 ```bash
 npm run test
 # or
@@ -161,6 +171,7 @@ The project uses Vitest for unit testing and React Testing Library for component
 ### Smoke Tests
 
 Key user flows covered:
+
 1. Login flow
 2. Dashboard selection
 3. Pass creation
@@ -169,6 +180,7 @@ Key user flows covered:
 ## Building for Production
 
 1. **Build the application**:
+
    ```bash
    npm run build
    # or
@@ -183,6 +195,7 @@ Key user flows covered:
    ```
 
 The production build is optimized with:
+
 - Server-side rendering (SSR)
 - Static generation where possible
 - Automatic code splitting
@@ -190,11 +203,11 @@ The production build is optimized with:
 
 ## Environment Variables
 
-| Variable               | Description            | Default                 |
-| ---------------------- | ---------------------- | ----------------------- |
+| Variable               | Description            | Default              |
+| ---------------------- | ---------------------- | -------------------- |
 | `NEXT_PUBLIC_API_URL`  | Backend API base URL   | `https://vmscore.to` |
-| `NEXT_PUBLIC_APP_NAME` | Application name       | `VMSCORE`               |
-| `NEXT_PUBLIC_WS_URL`   | WebSocket URL (future) | `wss://vmscore.to`      |
+| `NEXT_PUBLIC_APP_NAME` | Application name       | `VMSCORE`            |
+| `NEXT_PUBLIC_WS_URL`   | WebSocket URL (future) | `wss://vmscore.to`   |
 
 ## Deployment
 
@@ -208,6 +221,7 @@ The production build is optimized with:
 ### Docker
 
 Create a `Dockerfile`:
+
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -220,6 +234,7 @@ CMD ["npm", "start"]
 ```
 
 Build and run:
+
 ```bash
 docker build -t vmsfront .
 docker run -p 3000:3000 vmsfront
@@ -250,4 +265,3 @@ For issues and questions, please refer to the main VMSCORE documentation or cont
 - [ ] Multi-language support
 - [ ] Dark mode toggle
 - [ ] Export reports (PDF/CSV)
-

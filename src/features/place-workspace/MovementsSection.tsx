@@ -72,7 +72,8 @@ function movementStatus(movement: Movement) {
 function credentialLabel(movement: Movement) {
   const type = (movement.credential_type ?? "").toLowerCase();
   if (type.includes("badge")) return "Permanent badge";
-  if (type.includes("invitation") || movement.invitation_code) return "Invitation";
+  if (type.includes("invitation") || movement.invitation_code)
+    return "Invitation";
   if (type.includes("permanent")) return "Permanent code";
   return movement.invitation_code ? "Invitation" : "Credential";
 }
@@ -137,7 +138,7 @@ export function buildVisitorJourneys(
       const reference =
         latest.invitation_code && latest.guest_suffix
           ? `${latest.invitation_code}-${latest.guest_suffix}`
-          : latest.credential_reference ?? "";
+          : (latest.credential_reference ?? "");
       return {
         key,
         personName: latest.person_name || "Visitor",
@@ -234,7 +235,10 @@ export function MovementsSection() {
           </div>
           <label className="inline-flex items-center gap-2">
             <span className="sr-only">Date range</span>
-            <CalendarClock aria-hidden className="h-4 w-4 text-[var(--vms-ink-muted)]" />
+            <CalendarClock
+              aria-hidden
+              className="h-4 w-4 text-[var(--vms-ink-muted)]"
+            />
             <select
               value={range}
               onChange={(event) => setRange(event.target.value as RangeFilter)}
@@ -297,11 +301,21 @@ export function MovementsSection() {
               <thead>
                 <tr className="border-b border-[var(--vms-line)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
                   <th scope="col" className="w-8 py-2.5" />
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Visitor</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Journey</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Scans</th>
-                  <th scope="col" className="py-2.5 pr-3 font-semibold">Latest</th>
-                  <th scope="col" className="py-2.5 font-semibold">Last scan</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">
+                    Visitor
+                  </th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">
+                    Journey
+                  </th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">
+                    Scans
+                  </th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">
+                    Latest
+                  </th>
+                  <th scope="col" className="py-2.5 font-semibold">
+                    Last scan
+                  </th>
                 </tr>
               </thead>
               <tbody>

@@ -30,10 +30,7 @@ export type BookingKind = "reservation" | "booking";
 export type BookingSource = "public" | "phone" | "walk_in" | "staff";
 
 export type BookingDomain =
-  | "residential"
-  | "commercial"
-  | "mixed_use"
-  | "hospitality";
+  "residential" | "commercial" | "mixed_use" | "hospitality";
 
 export interface BookingRequester {
   name: string;

@@ -35,10 +35,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
-import {
-  PluginMetricStrip,
-  PluginNotice,
-} from "@/components/plugins/PluginUi";
+import { PluginMetricStrip, PluginNotice } from "@/components/plugins/PluginUi";
 import { parseApiError } from "@/lib/error-utils";
 import {
   Camera,
@@ -348,14 +345,20 @@ function CameraCard({
 
         {error && (
           <div className="flex gap-2 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-danger)_32%,white)] bg-[var(--vms-danger-subtle)] p-3 text-sm text-[var(--vms-danger)]">
-            <WifiOff className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <WifiOff
+              className="mt-0.5 h-4 w-4 flex-shrink-0"
+              aria-hidden="true"
+            />
             <span>{testResult?.message || error}</span>
           </div>
         )}
 
         {testResult?.success && (
           <div className="flex gap-2 rounded-[var(--vms-radius-surface)] border border-[color-mix(in_srgb,var(--vms-success)_32%,white)] bg-[var(--vms-success-subtle)] p-3 text-sm text-[var(--vms-success)]">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <CheckCircle2
+              className="mt-0.5 h-4 w-4 flex-shrink-0"
+              aria-hidden="true"
+            />
             <span>
               {testResult.message}
               {testResult.resolution ? ` · ${testResult.resolution}` : ""}

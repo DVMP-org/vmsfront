@@ -20,7 +20,13 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Modal } from "@/components/ui/Modal";
-import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  Column,
+  BulkAction,
+  FilterDefinition,
+  FilterConfig,
+} from "@/components/ui/DataTable";
 import { getFullName, getInitials, formatDate } from "@/lib/utils";
 import { formatFiltersForAPI } from "@/lib/table-utils";
 import { toast } from "sonner";
@@ -68,17 +74,26 @@ export default function AdminManagementPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [roleId, setRoleId] = useState<string | undefined>(() => initializeFromUrl("roleId"));
-  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [roleId, setRoleId] = useState<string | undefined>(() =>
+    initializeFromUrl("roleId"),
+  );
+  const [sort, setSort] = useState<string | null>(() =>
+    initializeFromUrl("sort"),
+  );
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateAdminFormState>(initialFormState);
+  const [createForm, setCreateForm] =
+    useState<CreateAdminFormState>(initialFormState);
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
-  const [startDate, setStartDate] = useState<string | undefined>(() => initializeFromUrl("startDate"))
-  const [endDate, setEndDate] = useState<string | undefined>(() => initializeFromUrl("endDate"))
+  const [startDate, setStartDate] = useState<string | undefined>(() =>
+    initializeFromUrl("startDate"),
+  );
+  const [endDate, setEndDate] = useState<string | undefined>(() =>
+    initializeFromUrl("endDate"),
+  );
 
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
@@ -94,7 +109,11 @@ export default function AdminManagementPage() {
     return filters;
   }, [roleId, startDate, endDate]);
 
-  const { data: adminsData, isLoading: adminsLoading, isFetching: adminsFetching } = useAdmins({
+  const {
+    data: adminsData,
+    isLoading: adminsLoading,
+    isFetching: adminsFetching,
+  } = useAdmins({
     page,
     pageSize,
     search: search.trim() || undefined,
@@ -102,10 +121,9 @@ export default function AdminManagementPage() {
     sort: sort || "created_at|desc",
   });
 
-
   const { data: rolesData, isLoading: rolesLoading } = useAdminRoles({
     page: 1,
-    pageSize: 100
+    pageSize: 100,
   });
   const roles = useMemo(() => rolesData?.items ?? [], [rolesData]);
   const createAdmin = useCreateAdmin();
@@ -130,7 +148,6 @@ export default function AdminManagementPage() {
           label: role.name,
           value: role.id,
         })),
-
       });
     }
 
@@ -157,9 +174,17 @@ export default function AdminManagementPage() {
       };
     }
     const total = admins.length;
-    const withCustomPermissions = admins?.filter((admin) => admin.role?.permissions && admin.role?.permissions !== "").length;
-    const allAccess = admins?.filter((admin) => admin.role?.permissions_parsed.includes("*") || admin.role?.code?.toLowerCase() === "super_admin").length;
-    const uniqueRoles = new Set(admins?.map((admin) => admin.role_id).filter(Boolean)).size;
+    const withCustomPermissions = admins?.filter(
+      (admin) => admin.role?.permissions && admin.role?.permissions !== "",
+    ).length;
+    const allAccess = admins?.filter(
+      (admin) =>
+        admin.role?.permissions_parsed.includes("*") ||
+        admin.role?.code?.toLowerCase() === "super_admin",
+    ).length;
+    const uniqueRoles = new Set(
+      admins?.map((admin) => admin.role_id).filter(Boolean),
+    ).size;
     return { total, withCustomPermissions, allAccess, uniqueRoles };
   }, [admins]);
 
@@ -173,7 +198,7 @@ export default function AdminManagementPage() {
       { adminId, roleId },
       {
         onSettled: () => setUpdatingAdminId(null),
-      }
+      },
     );
   };
 
@@ -275,12 +300,11 @@ export default function AdminManagementPage() {
       header: "Permissions",
       sortable: false,
       accessor: (row) => {
-        const permissionsLabel =
-          row.role?.permissions_parsed.includes("*")
-            ? "All access"
-            : row.role?.permissions_parsed
-              ? `${row.role?.permissions_parsed?.length} override(s)`
-              : "Inherit role";
+        const permissionsLabel = row.role?.permissions_parsed.includes("*")
+          ? "All access"
+          : row.role?.permissions_parsed
+            ? `${row.role?.permissions_parsed?.length} override(s)`
+            : "Inherit role";
 
         return (
           <Badge
@@ -316,7 +340,14 @@ export default function AdminManagementPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => confirmAction({title: "Delete administrator?", description: `Delete ${row.name}? This removes the administrator record.`, confirmLabel: "Delete administrator", onConfirm: () => handleDelete(row.id)})}
+            onClick={() =>
+              confirmAction({
+                title: "Delete administrator?",
+                description: `Delete ${row.name}? This removes the administrator record.`,
+                confirmLabel: "Delete administrator",
+                onConfirm: () => handleDelete(row.id),
+              })
+            }
             disabled={deletingAdminId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -346,7 +377,9 @@ export default function AdminManagementPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Admins
+              </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -361,7 +394,9 @@ export default function AdminManagementPage() {
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">{stats.withCustomPermissions}</div>
+              <div className="text-xl font-bold">
+                {stats.withCustomPermissions}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -375,7 +410,9 @@ export default function AdminManagementPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unique Roles</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Unique Roles
+              </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -387,7 +424,6 @@ export default function AdminManagementPage() {
         {/* Table */}
         <Card>
           <CardContent className="p-6">
-
             <DataTable
               data={admins}
               columns={columns}
@@ -410,11 +446,21 @@ export default function AdminManagementPage() {
               onFiltersChange={(filters) => {
                 setPage(1);
                 const roleFilter = filters.find((f) => f.field === "role_id");
-                const startDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "gte");
-                const endDateFilter = filters.find((f) => f.field === "created_at" && f.operator === "lte");
-                setRoleId(roleFilter?.value as string | undefined || undefined);
-                setStartDate(startDateFilter?.value as string | undefined || undefined);
-                setEndDate(endDateFilter?.value as string | undefined || undefined);
+                const startDateFilter = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "gte",
+                );
+                const endDateFilter = filters.find(
+                  (f) => f.field === "created_at" && f.operator === "lte",
+                );
+                setRoleId(
+                  (roleFilter?.value as string | undefined) || undefined,
+                );
+                setStartDate(
+                  (startDateFilter?.value as string | undefined) || undefined,
+                );
+                setEndDate(
+                  (endDateFilter?.value as string | undefined) || undefined,
+                );
               }}
               availableFilters={availableFilters}
               initialFilters={activeFilters}
@@ -430,7 +476,6 @@ export default function AdminManagementPage() {
               bulkActions={bulkActions}
               isLoading={adminsLoading || adminsFetching || rolesLoading}
             />
-
           </CardContent>
         </Card>
       </div>

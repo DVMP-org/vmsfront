@@ -95,10 +95,6 @@ export const sitesApi = {
       )
     ).data,
   createPlace: async (siteId: string, body: SitePlaceInput) =>
-    (
-      await apiClient.post<ApiResponse<Place>>(
-        `${base}/${siteId}/places`,
-        body,
-      )
-    ).data,
+    (await apiClient.post<ApiResponse<Place>>(`${base}/${siteId}/places`, body))
+      .data,
 };

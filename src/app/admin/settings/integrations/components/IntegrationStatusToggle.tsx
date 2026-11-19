@@ -53,9 +53,7 @@ export function IntegrationStatusToggle({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--vms-surface)]",
           "disabled:cursor-not-allowed disabled:opacity-50",
           sizes.track,
-          enabled
-            ? "bg-[var(--vms-success)]"
-            : "bg-[var(--vms-line-strong)]",
+          enabled ? "bg-[var(--vms-success)]" : "bg-[var(--vms-line-strong)]",
         )}
       >
         <span

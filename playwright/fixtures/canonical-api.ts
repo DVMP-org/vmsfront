@@ -269,8 +269,7 @@ export async function installCanonicalApi(
       slug: options.slug || "harbour",
     }),
     places: [
-      ...(options.places ||
-        (options.needsFirstSite ? [] : [defaultPlace])),
+      ...(options.places || (options.needsFirstSite ? [] : [defaultPlace])),
     ],
     people: [] as Json[],
     invitations: [...(options.invitations || [defaultInvitation])],
@@ -490,31 +489,23 @@ export async function installCanonicalApi(
     if (path === "/admin/places" && method === "GET") {
       const pageNumber = Number(url.searchParams.get("page") || 1);
       const pageSize = Number(url.searchParams.get("page_size") || 10);
-      let matches = searchItems(
-        state.places,
-        url.searchParams.get("search"),
-      );
+      let matches = searchItems(state.places, url.searchParams.get("search"));
       const kind = url.searchParams.get("kind");
       if (kind) matches = matches.filter((place) => place.kind === kind);
       const active = url.searchParams.get("is_active");
       if (active !== null) {
-        matches = matches.filter(
-          (place) => String(place.is_active) === active,
-        );
+        matches = matches.filter((place) => String(place.is_active) === active);
       }
       if (url.searchParams.get("root_only") === "true") {
         matches = matches.filter((place) => !place.parent_id);
       }
-      return fulfill(
-        route,
-        {
-          ...paginated(matches, pageNumber, pageSize),
-          items: matches.slice(
-            (pageNumber - 1) * pageSize,
-            pageNumber * pageSize,
-          ),
-        },
-      );
+      return fulfill(route, {
+        ...paginated(matches, pageNumber, pageSize),
+        items: matches.slice(
+          (pageNumber - 1) * pageSize,
+          pageNumber * pageSize,
+        ),
+      });
     }
     if (path === "/admin/places" && method === "POST") {
       state.mutations.push("place.create");
@@ -570,9 +561,7 @@ export async function installCanonicalApi(
         occupants: state.people,
       });
     }
-    const addPersonMatch = path.match(
-      /^\/admin\/places\/([^/]+)\/parties$/,
-    );
+    const addPersonMatch = path.match(/^\/admin\/places\/([^/]+)\/parties$/);
     if (addPersonMatch && method === "POST") {
       state.mutations.push("place.person.add");
       const newPerson = {

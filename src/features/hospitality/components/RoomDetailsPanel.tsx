@@ -32,7 +32,9 @@ export function RoomDetailsPanel({
   room: HospitalityRoom;
   amenityOptions: AmenityOption[];
 }) {
-  const labels = new Map(amenityOptions.map((option) => [option.code, option.label]));
+  const labels = new Map(
+    amenityOptions.map((option) => [option.code, option.label]),
+  );
 
   return (
     <section
@@ -44,14 +46,18 @@ export function RoomDetailsPanel({
           label="Category"
           value={
             room.place_group_name ?? (
-              <span className="text-[var(--vms-ink-muted)]">Not categorised</span>
+              <span className="text-[var(--vms-ink-muted)]">
+                Not categorised
+              </span>
             )
           }
         />
         <Fact label="Type" value={humanize(room.room_type)} />
         <Fact
           label="Floor"
-          value={room.floor ?? <span className="text-[var(--vms-ink-muted)]">—</span>}
+          value={
+            room.floor ?? <span className="text-[var(--vms-ink-muted)]">—</span>
+          }
         />
         <Fact label="Sleeps" value={String(room.capacity)} />
         <Fact

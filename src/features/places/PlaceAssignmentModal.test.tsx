@@ -93,9 +93,7 @@ it("creates a business Party and attaches it for commercial spaces", async () =>
   expect(roleSelect.querySelector("option[value=tenant]")).not.toBeNull();
   expect(roleSelect.querySelector("option[value=resident]")).toBeNull();
 
-  fireEvent.click(
-    screen.getByRole("radio", { name: "New business Party" }),
-  );
+  fireEvent.click(screen.getByRole("radio", { name: "New business Party" }));
   fireEvent.change(screen.getByLabelText(/Full name/), {
     target: { value: "Acme Studio" },
   });

@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarClock, FilePlus2, FileSignature, ReceiptText } from "lucide-react";
+import {
+  CalendarClock,
+  FilePlus2,
+  FileSignature,
+  ReceiptText,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Column, DataTable } from "@/components/ui/DataTable";
@@ -21,10 +26,7 @@ import {
   leaseTermLabel,
   monthlyEquivalent,
 } from "../lib";
-import {
-  useLeasePlaceOptions,
-  useLeases,
-} from "../queries";
+import { useLeasePlaceOptions, useLeases } from "../queries";
 import { LeaseDetailDrawer } from "./LeaseDetailDrawer";
 import { LeaseFormDrawer } from "./LeaseFormDrawer";
 import { TerminateLeaseDialog } from "./TerminateLeaseDialog";
@@ -51,7 +53,8 @@ export function LeasesDirectory() {
     access.workspace.data?.management?.selected_site ?? storedSite;
   const siteId = selectedSite?.id;
   const canManage =
-    access.isAdministrator || access.allowed(["leases.create", "leases.update"]);
+    access.isAdministrator ||
+    access.allowed(["leases.create", "leases.update"]);
 
   const [statusFilter, setStatusFilter] = useState<"all" | LeaseStatus>("all");
   const [formOpen, setFormOpen] = useState(false);
@@ -141,7 +144,10 @@ export function LeasesDirectory() {
           <div className="text-sm tabular-nums text-[var(--vms-ink)]">
             <p>≈ {formatMoney(value, row.currency)}/month</p>
             <p className="text-xs text-[var(--vms-ink-muted)]">
-              {row.charge_lines.filter((line) => line.status !== "cancelled").length}{" "}
+              {
+                row.charge_lines.filter((line) => line.status !== "cancelled")
+                  .length
+              }{" "}
               charges
             </p>
           </div>
@@ -173,11 +179,7 @@ export function LeasesDirectory() {
       header: "",
       mobileHide: true,
       accessor: (row) => (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setDetail(row)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => setDetail(row)}>
           Manage
         </Button>
       ),
@@ -204,8 +206,16 @@ export function LeasesDirectory() {
         {[
           { label: "Live leases", value: active.length, icon: FileSignature },
           { label: "Drafts to confirm", value: drafts, icon: ReceiptText },
-          { label: "Expiring within 60 days", value: expiring, icon: CalendarClock },
-          { label: "Contract value / month", value: formatMoney(monthly, active[0]?.currency ?? "NGN"), icon: ReceiptText },
+          {
+            label: "Expiring within 60 days",
+            value: expiring,
+            icon: CalendarClock,
+          },
+          {
+            label: "Contract value / month",
+            value: formatMoney(monthly, active[0]?.currency ?? "NGN"),
+            icon: ReceiptText,
+          },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -251,7 +261,11 @@ export function LeasesDirectory() {
         <EmptyState
           title="No leases yet"
           description="Draft the first agreement for this property. Nothing is billed until you confirm it."
-          action={canManage ? { label: "Draft a lease", onClick: openCreate } : undefined}
+          action={
+            canManage
+              ? { label: "Draft a lease", onClick: openCreate }
+              : undefined
+          }
         />
       ) : (
         <DataTable

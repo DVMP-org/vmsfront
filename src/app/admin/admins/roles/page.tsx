@@ -12,7 +12,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DataTable, Column, BulkAction, FilterDefinition, FilterConfig } from "@/components/ui/DataTable";
+import {
+  DataTable,
+  Column,
+  BulkAction,
+  FilterDefinition,
+  FilterConfig,
+} from "@/components/ui/DataTable";
 import { Shield, Trash2, Edit, Plus } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,7 +30,6 @@ import { formatFiltersForAPI } from "@/lib/table-utils";
 const PAGE_SIZE = 20;
 
 export default function RolesPage() {
-
   const { confirmAction, confirmationDialog } = useConfirmAction();
   const router = useRouter();
 
@@ -43,13 +48,21 @@ export default function RolesPage() {
   const [page, setPage] = useState(() => initializeFromUrl("page"));
   const [pageSize, setPageSize] = useState(() => initializeFromUrl("pageSize"));
   const [search, setSearch] = useState(() => initializeFromUrl("search"));
-  const [sort, setSort] = useState<string | null>(() => initializeFromUrl("sort"));
+  const [sort, setSort] = useState<string | null>(() =>
+    initializeFromUrl("sort"),
+  );
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
   const [editingRole, setEditingRole] = useState<AdminRole | null>(null);
   const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(() => initializeFromUrl("status"));
-  const [startDate, setStartDate] = useState<string | null>(() => initializeFromUrl("startDate"));
-  const [endDate, setEndDate] = useState<string | null>(() => initializeFromUrl("endDate"));
+  const [status, setStatus] = useState<string | null>(() =>
+    initializeFromUrl("status"),
+  );
+  const [startDate, setStartDate] = useState<string | null>(() =>
+    initializeFromUrl("startDate"),
+  );
+  const [endDate, setEndDate] = useState<string | null>(() =>
+    initializeFromUrl("endDate"),
+  );
   const deletRole = useAdminDeleteRole();
 
   // Sync state to URL
@@ -59,11 +72,22 @@ export default function RolesPage() {
 
   const activeFilters = useMemo(() => {
     const filters: FilterConfig[] = [];
-    if (status) filters.push({ field: "status", operator: "eq" as const, value: status });
+    if (status)
+      filters.push({ field: "status", operator: "eq" as const, value: status });
 
     // Match the DataTable internal key pattern for date-range
-    if (startDate) filters.push({ field: "created_at", operator: "gte" as const, value: startDate });
-    if (endDate) filters.push({ field: "created_at", operator: "lte" as const, value: endDate });
+    if (startDate)
+      filters.push({
+        field: "created_at",
+        operator: "gte" as const,
+        value: startDate,
+      });
+    if (endDate)
+      filters.push({
+        field: "created_at",
+        operator: "lte" as const,
+        value: endDate,
+      });
 
     return filters;
   }, [status, startDate, endDate]);
@@ -85,13 +109,16 @@ export default function RolesPage() {
     },
   ];
 
-
-  const { data: rolesData, isLoading, isFetching } = useAdminRoles({
+  const {
+    data: rolesData,
+    isLoading,
+    isFetching,
+  } = useAdminRoles({
     page,
     pageSize,
     search,
     sort: sort || undefined,
-    filters: formatFiltersForAPI(activeFilters)
+    filters: formatFiltersForAPI(activeFilters),
   });
 
   // Pagination
@@ -138,9 +165,7 @@ export default function RolesPage() {
           <div>
             <p className="font-medium text-lg">{row.name}</p>
             {row.description && (
-              <p className="text-sm text-muted-foreground">
-                {row.description}
-              </p>
+              <p className="text-sm text-muted-foreground">{row.description}</p>
             )}
           </div>
         </div>
@@ -150,9 +175,7 @@ export default function RolesPage() {
       key: "code",
       header: "Code",
       sortable: true,
-      accessor: (row) => (
-        <Badge variant="secondary">{row.code}</Badge>
-      ),
+      accessor: (row) => <Badge variant="secondary">{row.code}</Badge>,
     },
     {
       key: "permissions",
@@ -160,7 +183,11 @@ export default function RolesPage() {
       sortable: false,
       accessor: (row) => {
         if (!row.permissions_parsed || row.permissions_parsed.length === 0) {
-          return <span className="text-sm text-muted-foreground">No permissions</span>;
+          return (
+            <span className="text-sm text-muted-foreground">
+              No permissions
+            </span>
+          );
         }
 
         return (
@@ -195,17 +222,20 @@ export default function RolesPage() {
       sortable: false,
       accessor: (row) => (
         <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setEditingRole(row)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setEditingRole(row)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => confirmAction({title: "Delete role?", description: `Delete ${row.name}? This removes the role record.`, confirmLabel: "Delete role", onConfirm: () => handleDelete(row.id)})}
+            onClick={() =>
+              confirmAction({
+                title: "Delete role?",
+                description: `Delete ${row.name}? This removes the role record.`,
+                confirmLabel: "Delete role",
+                onConfirm: () => handleDelete(row.id),
+              })
+            }
             disabled={deletingRoleId === row.id}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
@@ -236,7 +266,6 @@ export default function RolesPage() {
 
         <Card>
           <CardContent className="p-6">
-
             <DataTable
               data={roles}
               columns={columns}
@@ -254,12 +283,20 @@ export default function RolesPage() {
               initialSearch={search}
               onFiltersChange={(filters) => {
                 setPage(1);
-                const statusFilter = filters.find((filter) => filter.field === "status");
-                const startDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "gte");
-                const endDateFilter = filters.find((filter) => filter.field === "created_at" && filter.operator === "lte");
-                setStatus(statusFilter?.value as string || "");
-                setStartDate(startDateFilter?.value as string || "");
-                setEndDate(endDateFilter?.value as string || "");
+                const statusFilter = filters.find(
+                  (filter) => filter.field === "status",
+                );
+                const startDateFilter = filters.find(
+                  (filter) =>
+                    filter.field === "created_at" && filter.operator === "gte",
+                );
+                const endDateFilter = filters.find(
+                  (filter) =>
+                    filter.field === "created_at" && filter.operator === "lte",
+                );
+                setStatus((statusFilter?.value as string) || "");
+                setStartDate((startDateFilter?.value as string) || "");
+                setEndDate((endDateFilter?.value as string) || "");
               }}
               onSearchChange={(value) => {
                 setPage(1);
@@ -277,7 +314,6 @@ export default function RolesPage() {
               bulkActions={bulkActions}
               isLoading={isLoading || isFetching}
             />
-
           </CardContent>
         </Card>
       </div>

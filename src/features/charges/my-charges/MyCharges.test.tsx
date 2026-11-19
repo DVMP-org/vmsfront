@@ -36,7 +36,9 @@ const charge = {
 function mount() {
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <MyCharges placeId="unit" placeName="Apartment 4B" />
     </QueryClientProvider>,
@@ -83,9 +85,7 @@ describe("personal charges", () => {
     });
     mount();
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: /Pay balance/ }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: /Pay balance/ }));
 
     await waitFor(() => expect(mocks.pay).toHaveBeenCalledWith("schedule"));
     await waitFor(() =>

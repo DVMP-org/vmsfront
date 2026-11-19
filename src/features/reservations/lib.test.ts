@@ -47,9 +47,9 @@ describe("reservation status", () => {
 
 describe("reservationResourceLabel", () => {
   it("names the room when one is assigned", () => {
-    expect(
-      reservationResourceLabel({ place_type: "deluxe" }, "Room 101"),
-    ).toBe("Room 101");
+    expect(reservationResourceLabel({ place_type: "deluxe" }, "Room 101")).toBe(
+      "Room 101",
+    );
   });
 
   it("says which category is held, and that it still needs a room", () => {
@@ -77,15 +77,15 @@ describe("holdsReason", () => {
   });
 
   it("distinguishes the ways a row can stop holding", () => {
-    expect(holdsReason(reservation({ status: "cancelled", is_holding: false }))).toBe(
-      "Released",
-    );
-    expect(holdsReason(reservation({ status: "expired", is_holding: false }))).toBe(
-      "Expired",
-    );
-    expect(holdsReason(reservation({ status: "completed", is_holding: false }))).toBe(
-      "Stayed",
-    );
+    expect(
+      holdsReason(reservation({ status: "cancelled", is_holding: false })),
+    ).toBe("Released");
+    expect(
+      holdsReason(reservation({ status: "expired", is_holding: false })),
+    ).toBe("Expired");
+    expect(
+      holdsReason(reservation({ status: "completed", is_holding: false })),
+    ).toBe("Stayed");
   });
 });
 

@@ -178,12 +178,7 @@
         "stay_status",
         "folio"
       ],
-      "filters": [
-        "stay_status",
-        "room_type",
-        "arrival",
-        "departure"
-      ]
+      "filters": ["stay_status", "room_type", "arrival", "departure"]
     },
     "maintenance": {
       "columns": [
@@ -194,12 +189,7 @@
         "room_status",
         "status"
       ],
-      "filters": [
-        "priority",
-        "room",
-        "room_status",
-        "status"
-      ]
+      "filters": ["priority", "room", "room_status", "status"]
     }
   },
   "maintenance": {

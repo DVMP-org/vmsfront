@@ -105,7 +105,11 @@ export function MixedUseShell({
   );
 }
 
-function PropertyContext({ contextKey: _contextKey }: { contextKey: QueryContext }) {
+function PropertyContext({
+  contextKey: _contextKey,
+}: {
+  contextKey: QueryContext;
+}) {
   const selectedSite = useAppStore((state) => state.selectedSite);
   const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   return (

@@ -90,7 +90,9 @@ export interface LeaseInput {
   charge_lines: LeaseChargeLineInput[];
 }
 
-export type LeaseUpdateInput = Partial<Omit<LeaseInput, "place_id" | "party_id">>;
+export type LeaseUpdateInput = Partial<
+  Omit<LeaseInput, "place_id" | "party_id">
+>;
 
 export interface LeasePlanLine {
   name: string;
@@ -150,7 +152,8 @@ export const leasesApi = {
     (await apiClient.get<ApiResponse<LeasePlanPreview>>(`${base}/${id}/plan`))
       .data,
   activate: async (id: string) =>
-    (await apiClient.post<ApiResponse<Lease>>(`${base}/${id}/activate`, {})).data,
+    (await apiClient.post<ApiResponse<Lease>>(`${base}/${id}/activate`, {}))
+      .data,
   terminate: async (id: string, body: LeaseTerminateInput) =>
     (await apiClient.post<ApiResponse<Lease>>(`${base}/${id}/terminate`, body))
       .data,

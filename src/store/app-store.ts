@@ -4,73 +4,73 @@ import { Residency, BrandingConfig, Organization } from "@/types";
 import { deleteCookie, setCookie } from "@/lib/cookies";
 
 interface AppState {
-    selectedSite: {id:string;name:string} | null;
-    setSelectedSite: (site: {id:string;name:string} | null) => void;
-    organization: Organization | null;
-    selectedResidency: Residency | null;
-    branding: BrandingConfig | null;
-    setSelectedResidency: (residency: Residency | null) => void;
-    setBranding: (branding: BrandingConfig) => void;
-    setSelectedOrganization: (organization: Organization | null) => void;
-    resetTenantContext: () => void;
+  selectedSite: { id: string; name: string } | null;
+  setSelectedSite: (site: { id: string; name: string } | null) => void;
+  organization: Organization | null;
+  selectedResidency: Residency | null;
+  branding: BrandingConfig | null;
+  setSelectedResidency: (residency: Residency | null) => void;
+  setBranding: (branding: BrandingConfig) => void;
+  setSelectedOrganization: (organization: Organization | null) => void;
+  resetTenantContext: () => void;
 }
 
 export const useAppStore = create<AppState>()(
-    persist(
-        (set, get) => ({
-            selectedSite: null,
-            setSelectedSite: (selectedSite) => {
-                if (selectedSite?.id) {
-                    setCookie("selected-site", selectedSite.id, 30);
-                    const slug = get().organization?.slug;
-                    if (slug) setCookie("selected-site-organization", slug, 30);
-                } else {
-                    deleteCookie("selected-site");
-                    deleteCookie("selected-site-organization");
-                }
-                set({ selectedSite });
-            },
-            organization: null,
-            selectedResidency: null,
-            branding: null,
-            setSelectedResidency: (residency) => set({ selectedResidency: residency }),
-            setSelectedOrganization: (organization) => {
-                const currentOrg = get().organization;
-                const isDifferentOrg =
-                    !organization || (!!currentOrg && currentOrg.id !== organization.id);
-                if (organization?.slug) {
-                    setCookie("selected-organization", organization.slug, 30);
-                } else {
-                    deleteCookie("selected-organization");
-                }
-                if (isDifferentOrg) {
-                    deleteCookie("selected-site");
-                    deleteCookie("selected-site-organization");
-                }
-                set((state) => ({
-                    organization,
-                    selectedSite: isDifferentOrg ? null : state.selectedSite,
-                }));
-            },
-            setBranding: (branding) => set({ branding }),
-            resetTenantContext: () => {
-                deleteCookie("selected-organization");
-                deleteCookie("selected-site");
-                deleteCookie("selected-site-organization");
-                if (typeof window !== "undefined") {
-                    localStorage.removeItem("app-storage");
-                }
-                set({
-                    selectedSite: null,
-                    organization: null,
-                    selectedResidency: null,
-                    branding: null,
-                });
-            },
-        }),
-        {
-            name: "app-storage",
+  persist(
+    (set, get) => ({
+      selectedSite: null,
+      setSelectedSite: (selectedSite) => {
+        if (selectedSite?.id) {
+          setCookie("selected-site", selectedSite.id, 30);
+          const slug = get().organization?.slug;
+          if (slug) setCookie("selected-site-organization", slug, 30);
+        } else {
+          deleteCookie("selected-site");
+          deleteCookie("selected-site-organization");
         }
-    )
+        set({ selectedSite });
+      },
+      organization: null,
+      selectedResidency: null,
+      branding: null,
+      setSelectedResidency: (residency) =>
+        set({ selectedResidency: residency }),
+      setSelectedOrganization: (organization) => {
+        const currentOrg = get().organization;
+        const isDifferentOrg =
+          !organization || (!!currentOrg && currentOrg.id !== organization.id);
+        if (organization?.slug) {
+          setCookie("selected-organization", organization.slug, 30);
+        } else {
+          deleteCookie("selected-organization");
+        }
+        if (isDifferentOrg) {
+          deleteCookie("selected-site");
+          deleteCookie("selected-site-organization");
+        }
+        set((state) => ({
+          organization,
+          selectedSite: isDifferentOrg ? null : state.selectedSite,
+        }));
+      },
+      setBranding: (branding) => set({ branding }),
+      resetTenantContext: () => {
+        deleteCookie("selected-organization");
+        deleteCookie("selected-site");
+        deleteCookie("selected-site-organization");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("app-storage");
+        }
+        set({
+          selectedSite: null,
+          organization: null,
+          selectedResidency: null,
+          branding: null,
+        });
+      },
+    }),
+    {
+      name: "app-storage",
+    },
+  ),
 );
-

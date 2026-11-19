@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, CreditCard, ExternalLink, ReceiptText } from "lucide-react";
+import {
+  CalendarClock,
+  CreditCard,
+  ExternalLink,
+  ReceiptText,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { parseApiError } from "@/lib/error-utils";
@@ -68,7 +73,7 @@ export function MyCharges({
   }
 
   return (
-      <section className="mt-4 overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
+    <section className="mt-4 overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
       <header className="flex flex-col gap-3 border-b border-[var(--vms-line)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
@@ -144,7 +149,8 @@ function ChargeRow({
           <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--vms-ink-muted)]">
             <span className="inline-flex items-center gap-1">
               <CalendarClock className="h-3.5 w-3.5" />
-              Due {due.toLocaleDateString(undefined, {
+              Due{" "}
+              {due.toLocaleDateString(undefined, {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -175,11 +181,7 @@ function ChargeRow({
           </Badge>
         </span>
         {payable ? (
-          <Button
-            isLoading={paying}
-            onClick={onPay}
-            className="min-h-11"
-          >
+          <Button isLoading={paying} onClick={onPay} className="min-h-11">
             {paying ? "Opening…" : "Pay balance"}
             <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </Button>

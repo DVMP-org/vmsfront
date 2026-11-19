@@ -9,9 +9,9 @@ import { contextApi } from "@/features/context/api";
  * Site step so the screen never fetches on its own.
  */
 export function useUseCaseCatalog() {
-    return useQuery({
-        queryKey: ["context-catalog"],
-        queryFn: contextApi.catalog,
-        staleTime: 5 * 60_000,
-    });
+  return useQuery({
+    queryKey: ["context-catalog"],
+    queryFn: contextApi.catalog,
+    staleTime: 5 * 60_000,
+  });
 }

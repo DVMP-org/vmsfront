@@ -253,8 +253,8 @@ function HardwareState({
       : command?.status === "acknowledged" || command?.status === "pending"
         ? "warning"
         : command?.status === "rejected" ||
-          command?.status === "offline" ||
-          command?.status === "timed_out"
+            command?.status === "offline" ||
+            command?.status === "timed_out"
           ? "danger"
           : "neutral";
   return (
@@ -658,13 +658,13 @@ function Console({
       const event = await checkpointsApi.record(body);
       const access = selectedLane
         ? await accessControlService.simulateDecision(selectedLane.id, {
-          idempotency_key: `${body.idempotency_key}:access`,
-          checkpoint_event_id: event.id,
-          outcome: event.outcome === "allowed" ? "allowed" : "denied",
-          reason_code: event.reason_code,
-          command_action: "open",
-          timeout_seconds: 15,
-        })
+            idempotency_key: `${body.idempotency_key}:access`,
+            checkpoint_event_id: event.id,
+            outcome: event.outcome === "allowed" ? "allowed" : "denied",
+            reason_code: event.reason_code,
+            command_action: "open",
+            timeout_seconds: 15,
+          })
         : null;
       return { event, access };
     },
@@ -744,9 +744,11 @@ function Console({
   // Without a preview (offline queueing or a pending lookup) the server stays
   // the authority, so the actions are only blocked by an explicit decision.
   const canCheckIn =
-    !needsGuest && (candidate ? candidate.can_check_in || manualOverride : true);
+    !needsGuest &&
+    (candidate ? candidate.can_check_in || manualOverride : true);
   const canCheckOut =
-    !needsGuest && (candidate ? candidate.can_check_out || manualOverride : true);
+    !needsGuest &&
+    (candidate ? candidate.can_check_out || manualOverride : true);
   const currentCheckpointName =
     result?.gate_name || gate.data?.name || undefined;
   useEffect(() => {
@@ -779,9 +781,9 @@ function Console({
       ...(selectedLane ? { lane_id: selectedLane.id } : {}),
       ...(manualOverride
         ? {
-          manual_override: true,
-          override_reason: overrideReason.trim(),
-        }
+            manual_override: true,
+            override_reason: overrideReason.trim(),
+          }
         : {}),
       idempotency_key: createIdempotencyKey(),
     };
@@ -869,9 +871,9 @@ function Console({
             <strong>
               {gate.dataUpdatedAt
                 ? new Date(gate.dataUpdatedAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "Just now"}
             </strong>
           </span>
@@ -1102,8 +1104,9 @@ function Console({
                 </h2>
                 <p>
                   {result
-                    ? `${result.subject_type || "credential"} · ${result.credential_reference || "reference redacted"
-                    }`
+                    ? `${result.subject_type || "credential"} · ${
+                        result.credential_reference || "reference redacted"
+                      }`
                     : candidate?.invitation
                       ? `${candidate.invitation.host_name || "Host"} invited this visitor to ${candidate.invitation.place_name || "this site"}`
                       : candidate
@@ -1129,8 +1132,8 @@ function Console({
                 {guests.length > 1 ? (
                   <fieldset className="checkpoint-guest-picker">
                     <legend>
-                      Visitors on this invitation ({guests.length}) — choose
-                      the one who is passing
+                      Visitors on this invitation ({guests.length}) — choose the
+                      one who is passing
                     </legend>
                     <ul>
                       {guests.map((guest) => {
@@ -1419,7 +1422,6 @@ function Console({
               gate.refetch();
             }}
           />
-
         </>
       )}
       <section className="checkpoint-recent">

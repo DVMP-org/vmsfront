@@ -7,7 +7,11 @@ import { PublicBookingPayment } from "./PublicBookingPayment";
 import type { PublicBookingCreated } from "../public-api-types";
 
 vi.mock("../public-queries", () => ({
-  usePayPublicBooking: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+  usePayPublicBooking: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+  }),
 }));
 
 function mount(booking: PublicBookingCreated) {
@@ -48,9 +52,7 @@ it("offers the server's price, not one the page worked out", () => {
 
   // Exact strings, not regexes: "$100" in a regex is an end-of-string anchor.
   expect(screen.getByRole("button", { name: `Pay ${total}` })).toBeTruthy();
-  expect(
-    screen.getByText(`2 nights at ${rate} a night`),
-  ).toBeTruthy();
+  expect(screen.getByText(`2 nights at ${rate} a night`)).toBeTruthy();
 });
 
 it("offers no payment when the stay has nothing to charge", () => {
@@ -73,7 +75,5 @@ it("says that paying does not confirm the stay", () => {
 
   // The promise a guest would otherwise assume — that money means a confirmed
   // room — is the one thing this must never imply.
-  expect(
-    screen.getByText(/paying does not confirm the stay/i),
-  ).toBeTruthy();
+  expect(screen.getByText(/paying does not confirm the stay/i)).toBeTruthy();
 });

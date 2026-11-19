@@ -18,14 +18,16 @@ import { AmenityPicker } from "./AmenityPicker";
 import { RoomCategoryField } from "./RoomCategoryField";
 import { RoomDetailsPanel } from "./RoomDetailsPanel";
 
-const roomStatusOptions: Array<{ value: RoomOperationalStatus; label: string }> =
-  [
-    { value: "available", label: "Available" },
-    { value: "reserved", label: "Reserved" },
-    { value: "occupied", label: "Occupied" },
-    { value: "cleaning", label: "Cleaning" },
-    { value: "out_of_service", label: "Out of service" },
-  ];
+const roomStatusOptions: Array<{
+  value: RoomOperationalStatus;
+  label: string;
+}> = [
+  { value: "available", label: "Available" },
+  { value: "reserved", label: "Reserved" },
+  { value: "occupied", label: "Occupied" },
+  { value: "cleaning", label: "Cleaning" },
+  { value: "out_of_service", label: "Out of service" },
+];
 
 const CURRENCIES = ["USD", "EUR", "GBP", "NGN", "KES", "ZAR", "AED"];
 
@@ -66,7 +68,9 @@ function Section({
       <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
         {title}
       </legend>
-      {hint ? <p className="text-xs text-[var(--vms-ink-muted)]">{hint}</p> : null}
+      {hint ? (
+        <p className="text-xs text-[var(--vms-ink-muted)]">{hint}</p>
+      ) : null}
       {children}
     </fieldset>
   );
@@ -241,7 +245,10 @@ export function RoomEditor({
           <RoomCategoryField
             value={values.place_group_id}
             onChange={(categoryId) =>
-              setValues((current) => ({ ...current, place_group_id: categoryId }))
+              setValues((current) => ({
+                ...current,
+                place_group_id: categoryId,
+              }))
             }
             categories={categories.data ?? []}
             isLoading={categories.isPending}

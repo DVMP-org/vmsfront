@@ -2,7 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const baseUrl = process.env.BASE_URL || "http://localhost:3101";
-const evidenceDir = new URL("../docs/evidence/oh01-foundations/", import.meta.url);
+const evidenceDir = new URL(
+  "../docs/evidence/oh01-foundations/",
+  import.meta.url,
+);
 const date = "2026-11-08";
 const viewports = [
   { name: "320", width: 320, height: 960 },
@@ -43,7 +46,8 @@ try {
     }));
 
     await page.screenshot({
-      path: new URL(`${date}-gallery-${viewport.name}.png`, evidenceDir).pathname,
+      path: new URL(`${date}-gallery-${viewport.name}.png`, evidenceDir)
+        .pathname,
       fullPage: true,
     });
 
@@ -59,10 +63,8 @@ try {
       await page.getByRole("button", { name: "Open property details" }).click();
       await page.getByRole("dialog", { name: "Cedar Court" }).waitFor();
       await page.screenshot({
-        path: new URL(
-          `${date}-drawer-${viewport.name}.png`,
-          evidenceDir,
-        ).pathname,
+        path: new URL(`${date}-drawer-${viewport.name}.png`, evidenceDir)
+          .pathname,
         fullPage: false,
       });
       await page.keyboard.press("Escape");
@@ -100,5 +102,7 @@ if (failures.length) {
   console.error(JSON.stringify(failures, null, 2));
   process.exitCode = 1;
 } else {
-  console.log(`Captured ${report.length} viewports with no overflow or page errors.`);
+  console.log(
+    `Captured ${report.length} viewports with no overflow or page errors.`,
+  );
 }

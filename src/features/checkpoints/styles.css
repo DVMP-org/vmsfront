@@ -777,7 +777,9 @@
   background: var(--vms-surface);
   padding: 8px 10px;
   text-align: left;
-  transition: border-color 150ms ease, background 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
 }
 
 .checkpoint-guest-option:hover {
@@ -855,8 +857,7 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0 18px 14px;
-  border: 1px solid
-    color-mix(in srgb, var(--vms-warning) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vms-warning) 35%, transparent);
   border-radius: 9px;
   background: var(--vms-warning-subtle);
   padding: 9px 11px;

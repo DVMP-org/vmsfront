@@ -17,7 +17,10 @@ import { VisitorJourneyPanel } from "@/features/access-journey/VisitorJourneyPan
 import { checkpointsApi } from "@/features/checkpoints/api";
 import { formatDateTime } from "@/lib/utils";
 import { invitationApprovalsApi } from "./api";
-import { guestNames, StatusBadge as InvitationStatusBadge } from "./InvitationApprovals";
+import {
+  guestNames,
+  StatusBadge as InvitationStatusBadge,
+} from "./InvitationApprovals";
 
 /**
  * Visitor/invitation detail in a side drawer.
@@ -63,8 +66,7 @@ export function VisitorDetailDrawer({
   });
 
   const can = (permission: string) =>
-    !profile.isError &&
-    access.allowed(`visit_authorizations.${permission}`);
+    !profile.isError && access.allowed(`visit_authorizations.${permission}`);
 
   async function refresh(message: string) {
     toast.success(message);
@@ -79,7 +81,8 @@ export function VisitorDetailDrawer({
     ]);
   }
 
-  const decline = useMutation({    mutationFn: (reason: string) =>
+  const decline = useMutation({
+    mutationFn: (reason: string) =>
       invitationApprovalsApi.decline(invitationId as string, reason),
     onSuccess: () => refresh("Invitation declined."),
     onError: (error) => toast.error(parseApiError(error).message),
@@ -112,7 +115,10 @@ export function VisitorDetailDrawer({
           <div className="h-24 w-full animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
         </div>
       ) : detail.isError ? (
-        <div role="alert" className="space-y-3 p-5 text-sm text-[var(--vms-danger)]">
+        <div
+          role="alert"
+          className="space-y-3 p-5 text-sm text-[var(--vms-danger)]"
+        >
           <p>{parseApiError(detail.error).message}</p>
           <Button variant="outline" size="sm" onClick={() => detail.refetch()}>
             Retry
@@ -139,8 +145,14 @@ export function VisitorDetailDrawer({
               label="Destination"
               value={invitation.destination_place.name}
             />
-            <Fact label="Valid from" value={formatDateTime(invitation.valid_from)} />
-            <Fact label="Valid until" value={formatDateTime(invitation.valid_to)} />
+            <Fact
+              label="Valid from"
+              value={formatDateTime(invitation.valid_from)}
+            />
+            <Fact
+              label="Valid until"
+              value={formatDateTime(invitation.valid_to)}
+            />
             <Fact label="Purpose" value={invitation.purpose || "Not stated"} />
             <Fact
               label="Requested"
@@ -180,7 +192,9 @@ export function VisitorDetailDrawer({
                   <StatusBadge
                     tone={guest.state === "checked_in" ? "success" : "neutral"}
                   >
-                    {guest.state === "checked_in" ? "Checked in" : "Not checked in"}
+                    {guest.state === "checked_in"
+                      ? "Checked in"
+                      : "Not checked in"}
                   </StatusBadge>
                 </li>
               ))}
@@ -199,13 +213,13 @@ export function VisitorDetailDrawer({
                 events={events.data?.items ?? []}
                 gates={(gates.data?.items ?? []).filter(
                   (gate) =>
-                    !invitation.site_id || !gate.site_id || gate.site_id === invitation.site_id,
+                    !invitation.site_id ||
+                    !gate.site_id ||
+                    gate.site_id === invitation.site_id,
                 )}
                 loading={events.isPending}
                 error={
-                  events.isError
-                    ? parseApiError(events.error).message
-                    : null
+                  events.isError ? parseApiError(events.error).message : null
                 }
                 onRetry={() => void events.refetch()}
                 initialGuestId={focusGuestId}
@@ -213,7 +227,8 @@ export function VisitorDetailDrawer({
             </div>
           </section>
 
-          {invitation.decline_reason ? (            <section>
+          {invitation.decline_reason ? (
+            <section>
               <h3 className="text-sm font-semibold">Decision note</h3>
               <p className="mt-1 text-sm text-[var(--vms-danger)]">
                 {invitation.decline_reason}
@@ -280,7 +295,15 @@ export function VisitorDetailDrawer({
                 variant="destructive-outlined"
                 isLoading={revoke.isPending}
                 disabled={pending}
-                onClick={() => confirmAction({title: "Revoke visitor access?", description: "This invitation will no longer grant access to its visitors.", confirmLabel: "Revoke access", onConfirm: () => revoke.mutateAsync()})}
+                onClick={() =>
+                  confirmAction({
+                    title: "Revoke visitor access?",
+                    description:
+                      "This invitation will no longer grant access to its visitors.",
+                    confirmLabel: "Revoke access",
+                    onConfirm: () => revoke.mutateAsync(),
+                  })
+                }
               >
                 <UserRound className="h-4 w-4" aria-hidden="true" />
                 Revoke access

@@ -16,7 +16,6 @@ import {
   PaginatedResponse,
 } from "@/types";
 
-
 export function useAdminForumCategories(params: {
   page?: number;
   pageSize?: number;
@@ -53,7 +52,7 @@ export function useAdminForumTopics(
     sort?: string;
     filters?: string;
   },
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) {
   return useQuery<PaginatedResponse<ForumTopic>>({
     queryKey: ["admin", "forum", "topics", params],
@@ -85,7 +84,7 @@ export function useAdminForumPosts(
     search?: string;
     sort?: string;
     filters?: string;
-  }
+  },
 ) {
   return useQuery<PaginatedResponse<ForumPost>>({
     queryKey: ["admin", "forum", "posts", topicId, params],
@@ -105,11 +104,13 @@ export function useCreateAdminForumCategory() {
       adminService.createForumCategory(data),
     onSuccess: () => {
       toast.success("Category created");
-      queryClient.invalidateQueries({ queryKey: ["admin", "forum", "categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "forum", "categories"],
+      });
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to create category."
+        error?.response?.data?.detail || "Failed to create category.",
       );
     },
   });
@@ -122,20 +123,19 @@ export function useUpdateAdminForumCategory() {
       categoryId: string;
       data: ForumCategoryUpdatePayload;
     }) =>
-      adminService.updateForumCategory(
-        variables.categoryId,
-        variables.data
-      ),
+      adminService.updateForumCategory(variables.categoryId, variables.data),
     onSuccess: (_, variables) => {
       toast.success("Category updated");
-      queryClient.invalidateQueries({ queryKey: ["admin", "forum", "categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "forum", "categories"],
+      });
       queryClient.invalidateQueries({
         queryKey: ["admin", "forum", "category", variables.categoryId],
       });
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to update category."
+        error?.response?.data?.detail || "Failed to update category.",
       );
     },
   });
@@ -148,11 +148,13 @@ export function useDeleteAdminForumCategory() {
       adminService.deleteForumCategory(categoryId),
     onSuccess: () => {
       toast.success("Category deleted");
-      queryClient.invalidateQueries({ queryKey: ["admin", "forum", "categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "forum", "categories"],
+      });
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.detail || "Failed to delete category."
+        error?.response?.data?.detail || "Failed to delete category.",
       );
     },
   });
@@ -250,7 +252,7 @@ export function useUpdateAdminForumPost() {
       adminService.updateForumPost(
         variables.topicId,
         variables.postId,
-        variables.data
+        variables.data,
       ),
     onSuccess: (_, variables) => {
       toast.success("Post updated");

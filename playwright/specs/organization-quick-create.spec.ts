@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  installCanonicalApi,
-  seedSession,
-} from "../fixtures/canonical-api";
+import { installCanonicalApi, seedSession } from "../fixtures/canonical-api";
 
 test("organization quick create opens the Site drawer", async ({
   context,
@@ -26,7 +23,9 @@ test("organization quick create opens the Site drawer", async ({
   await search.click();
   const searchDialog = page.getByRole("dialog", { name: "Go to a page" });
   await expect(searchDialog).toBeVisible();
-  await expect(searchDialog.getByRole("option", { name: /Sites/ })).toBeVisible();
+  await expect(
+    searchDialog.getByRole("option", { name: /Sites/ }),
+  ).toBeVisible();
   await searchDialog.getByRole("button", { name: "Close navigation" }).click();
 
   const trigger = page.getByRole("button", { name: "Create a resource" });

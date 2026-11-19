@@ -45,9 +45,9 @@ describe("commercial occupancy grouping", () => {
       "Corner Shop",
       "Office 9",
     ]);
-    expect(
-      standalone.find((row) => row.label === "Corner Shop"),
-    ).toMatchObject({ total: 1, occupied: 1 });
+    expect(standalone.find((row) => row.label === "Corner Shop")).toMatchObject(
+      { total: 1, occupied: 1 },
+    );
     expect(rows.some((row) => row.label === "Unassigned")).toBe(false);
   });
 
@@ -130,7 +130,11 @@ describe("commercial rent roll", () => {
       today,
     );
     const former = rows.find((row) => row.id === "suite-2");
-    expect(former).toMatchObject({ tenant: null, balance: 300, bucket: "1_30" });
+    expect(former).toMatchObject({
+      tenant: null,
+      balance: 300,
+      bucket: "1_30",
+    });
   });
 
   it("ignores ended and non-business relationships, and sorts by balance", () => {
@@ -191,11 +195,9 @@ const suite2b = place({ id: "suite-2b", name: "Suite 2B", parent_id: "tower" });
 const kiosk = place({ id: "kiosk", name: "Kiosk 1" });
 const inventoryPlaces = [tower, suite4a, suite2b, kiosk];
 
-const inventoryRows = buildInventoryRows(
-  inventoryPlaces,
-  inventoryPlaces,
-  [{ party: { display_name: "Acme Studio" }, place: { id: "suite-4a" } }],
-);
+const inventoryRows = buildInventoryRows(inventoryPlaces, inventoryPlaces, [
+  { party: { display_name: "Acme Studio" }, place: { id: "suite-4a" } },
+]);
 
 describe("commercial inventory hierarchy", () => {
   it("marks a building as a container and locates the spaces it holds", () => {
@@ -238,7 +240,11 @@ describe("commercial inventory hierarchy", () => {
     const scoped = buildInventoryRows([suite4a], inventoryPlaces, []);
     const rows = flattenInventoryRows(scoped, new Set());
     expect(rows).toEqual([
-      expect.objectContaining({ id: "suite-4a", depth: 0, has_children: false }),
+      expect.objectContaining({
+        id: "suite-4a",
+        depth: 0,
+        has_children: false,
+      }),
     ]);
   });
 });

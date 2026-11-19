@@ -135,9 +135,7 @@ export default function ResidentialUnits() {
       .map((place) => {
         const parent = place.parent_id ? byId.get(place.parent_id) : undefined;
         const residents = relationshipsByPlace.get(place.id) || [];
-        const rootParentId = selectedSite
-          ? `site:${selectedSite.id}`
-          : "";
+        const rootParentId = selectedSite ? `site:${selectedSite.id}` : "";
         return {
           ...place,
           building_id: parent?.id || (place.parent_id ? "" : rootParentId),
@@ -210,10 +208,14 @@ export default function ResidentialUnits() {
     },
   ];
   function requestArchive(unit: UnitRow) {
-    if (!unit.is_active) { toggle.mutate([unit.id]); return; }
+    if (!unit.is_active) {
+      toggle.mutate([unit.id]);
+      return;
+    }
     confirmAction({
       title: `Archive ${unit.name}?`,
-      description: "This removes the unit from active inventory. Existing occupancy or future use may prevent archiving.",
+      description:
+        "This removes the unit from active inventory. Existing occupancy or future use may prevent archiving.",
       confirmLabel: "Archive unit",
       onConfirm: () => toggle.mutateAsync([unit.id]),
     });

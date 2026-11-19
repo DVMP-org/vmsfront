@@ -31,7 +31,8 @@ export const inputVariants = cva(
 );
 
 export interface BaseInnerInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>,
+  extends
+    React.InputHTMLAttributes<HTMLInputElement>,
     VariantProps<typeof inputVariants> {}
 
 const BaseInnerInput = React.forwardRef<HTMLInputElement, BaseInnerInputProps>(
@@ -93,7 +94,8 @@ export const sideVariants = cva(
 );
 
 export interface InputProps
-  extends Omit<BaseInnerInputProps, "size">,
+  extends
+    Omit<BaseInnerInputProps, "size">,
     VariantProps<typeof inputContainerVariants> {
   isLoading?: boolean;
   error?: string;

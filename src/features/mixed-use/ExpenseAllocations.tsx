@@ -21,10 +21,7 @@ import {
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
-import {
-  placesApi,
-  type PlaceTreeNode,
-} from "@/features/places/api";
+import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import {
   mixedUseApi,
@@ -138,9 +135,7 @@ export function ExpenseAllocations() {
   const tree = useQuery({
     queryKey: ["property-tree", "mixed-use-expenses"],
     queryFn: () =>
-      selectedSite?.id
-        ? placesApi.tree(selectedSite.id)
-        : Promise.resolve([]),
+      selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
     enabled: !!selectedSite?.id,
     retry: false,
   });

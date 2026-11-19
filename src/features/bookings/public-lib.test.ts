@@ -38,7 +38,9 @@ describe("public booking dates", () => {
   });
 
   it("defaults to tomorrow for one night", () => {
-    const { checkIn, checkOut } = defaultStayDates(new Date("2027-06-01T10:00:00"));
+    const { checkIn, checkOut } = defaultStayDates(
+      new Date("2027-06-01T10:00:00"),
+    );
     expect(nightsBetween(checkIn, checkOut)).toBe(1);
   });
 });
@@ -60,8 +62,14 @@ describe("public booking pricing", () => {
 
   it("will not present an unpriced category as bookable", () => {
     // Zero is a price; absence is not. A category with no rate cannot be sold.
-    expect(canBookCategory({ rooms_available: 2, nightly_rate: null })).toBe(false);
-    expect(canBookCategory({ rooms_available: 0, nightly_rate: "120.00" })).toBe(false);
-    expect(canBookCategory({ rooms_available: 1, nightly_rate: "120.00" })).toBe(true);
+    expect(canBookCategory({ rooms_available: 2, nightly_rate: null })).toBe(
+      false,
+    );
+    expect(
+      canBookCategory({ rooms_available: 0, nightly_rate: "120.00" }),
+    ).toBe(false);
+    expect(
+      canBookCategory({ rooms_available: 1, nightly_rate: "120.00" }),
+    ).toBe(true);
   });
 });

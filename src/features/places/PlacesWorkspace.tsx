@@ -37,11 +37,7 @@ import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { contextApi } from "@/features/context/api";
-import {
-  type Place,
-  type PlaceInput,
-  placeKinds,
-} from "@/features/places/api";
+import { type Place, type PlaceInput, placeKinds } from "@/features/places/api";
 import {
   type Site,
   type SiteDetail,
@@ -782,7 +778,17 @@ function SiteDetails({
               className="w-full"
               variant="outline"
               disabled={archive.isPending}
-              onClick={() => site.is_active ? confirmAction({title: `Archive ${site.name}?`, description: "This Site will leave the active register. Its existing records remain available.", confirmLabel: "Archive Site", onConfirm: () => archive.mutateAsync()}) : archive.mutate()}
+              onClick={() =>
+                site.is_active
+                  ? confirmAction({
+                      title: `Archive ${site.name}?`,
+                      description:
+                        "This Site will leave the active register. Its existing records remain available.",
+                      confirmLabel: "Archive Site",
+                      onConfirm: () => archive.mutateAsync(),
+                    })
+                  : archive.mutate()
+              }
             >
               {archive.isPending
                 ? "Updating…"

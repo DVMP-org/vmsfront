@@ -26,10 +26,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FacetPicker, type FacetItem } from "@/components/facets/FacetPicker";
-import {
-  DataTable,
-  type Column,
-} from "@/components/ui/DataTable";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Drawer } from "@/components/ui/Drawer";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
@@ -240,10 +237,12 @@ export function InvitationApprovals() {
       key: "status",
       header: "Status",
       sortable: true,
-      accessor: (invitation) => <StatusBadge
-        status={invitation.status}
-        displayStatus={invitation.display_status}
-      />,
+      accessor: (invitation) => (
+        <StatusBadge
+          status={invitation.status}
+          displayStatus={invitation.display_status}
+        />
+      ),
     },
     {
       key: "actions",
@@ -421,9 +420,9 @@ export function InvitationApprovals() {
                 </span>
               </div>
               <StatusBadge
-        status={invitation.status}
-        displayStatus={invitation.display_status}
-      />
+                status={invitation.status}
+                displayStatus={invitation.display_status}
+              />
             </div>
             <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
               <dt className="text-[var(--vms-ink-muted)]">Host</dt>

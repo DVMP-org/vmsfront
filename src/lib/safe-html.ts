@@ -1,6 +1,14 @@
 "use client";
 
-const BLOCKED_TAGS = ["script", "style", "iframe", "object", "embed", "link", "meta"];
+const BLOCKED_TAGS = [
+  "script",
+  "style",
+  "iframe",
+  "object",
+  "embed",
+  "link",
+  "meta",
+];
 const ALLOWED_TAGS = new Set([
   "a",
   "b",
@@ -50,7 +58,9 @@ export const sanitizeHtml = (input: string) => {
   const container = window.document.createElement("div");
   container.innerHTML = input;
 
-  container.querySelectorAll(BLOCKED_TAGS.join(",")).forEach((node) => node.remove());
+  container
+    .querySelectorAll(BLOCKED_TAGS.join(","))
+    .forEach((node) => node.remove());
 
   const elements = container.querySelectorAll("*");
   elements.forEach((element) => {
@@ -95,7 +105,10 @@ export const sanitizeHtml = (input: string) => {
 
 export const stripHtml = (input: string) => {
   if (!input) return "";
-  return decodeHtmlEntities(input.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
+  return decodeHtmlEntities(input.replace(/<[^>]+>/g, " ")).replace(
+    /\s+/g,
+    " ",
+  );
 };
 
 export const convertPlainTextToHtml = (input: string) => {
@@ -119,6 +132,8 @@ export const toRenderableHtml = (input: string) => {
 
 export const hasMeaningfulContent = (input: string) => {
   if (!input) return false;
-  const plainText = stripHtml(input).replace(/&nbsp;/gi, " ").trim();
+  const plainText = stripHtml(input)
+    .replace(/&nbsp;/gi, " ")
+    .trim();
   return plainText.length > 0;
 };

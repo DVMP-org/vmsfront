@@ -6,12 +6,7 @@ import type {
 } from "@/features/access-journey/api";
 
 export type ApprovalStatus =
-  | "requested"
-  | "approved"
-  | "declined"
-  | "expired"
-  | "cancelled"
-  | "revoked";
+  "requested" | "approved" | "declined" | "expired" | "cancelled" | "revoked";
 
 export type ApprovalFilter = ApprovalStatus | "all";
 

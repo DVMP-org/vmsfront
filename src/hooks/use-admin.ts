@@ -81,8 +81,11 @@ export function useCreateResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { name: string; description?: string; address: string }) =>
-      adminService.createResidency(data),
+    mutationFn: (data: {
+      name: string;
+      description?: string;
+      address: string;
+    }) => adminService.createResidency(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
@@ -98,9 +101,17 @@ export function useUpdateResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ residencyId, data }: {
+    mutationFn: ({
+      residencyId,
+      data,
+    }: {
       residencyId: string;
-      data: { name?: string; description?: string; address?: string; residency_group_id?: string };
+      data: {
+        name?: string;
+        description?: string;
+        address?: string;
+        residency_group_id?: string;
+      };
     }) => adminService.updateResidency(residencyId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
@@ -117,7 +128,8 @@ export function useDeleteResidency() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (residencyId: string) => adminService.deleteResidency(residencyId),
+    mutationFn: (residencyId: string) =>
+      adminService.deleteResidency(residencyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
@@ -136,14 +148,14 @@ export function useAdminResidencyTypes(params: {
   status?: string;
   filters?: string;
   sort?: string;
-}){
+}) {
   return useQuery<PaginatedResponse<ResidencyType>>({
     queryKey: ["admin", "residency-types", params],
-    queryFn: async () => {  
+    queryFn: async () => {
       const response = await adminService.getResidencyTypes(params);
       return response.data;
     },
-  })
+  });
 }
 
 export function useAdminResidencyType(typeId: string | null) {
@@ -162,7 +174,8 @@ export function useBulkDeleteResidencies() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (residencyIds: string[]) => adminService.bulkDeleteResidencies(residencyIds),
+    mutationFn: (residencyIds: string[]) =>
+      adminService.bulkDeleteResidencies(residencyIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       toast.success("Residencies deleted successfully!");
@@ -177,7 +190,8 @@ export function useBulkToggleResidencyActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (residencyIds: string[]) => adminService.bulkToggleResidencyActive(residencyIds),
+    mutationFn: (residencyIds: string[]) =>
+      adminService.bulkToggleResidencyActive(residencyIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       toast.success("Residencies status updated successfully!");
@@ -210,8 +224,7 @@ export function useCreateResident() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ResidentUserCreate) =>
-      adminService.createResident(data),
+    mutationFn: (data: ResidentUserCreate) => adminService.createResident(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
@@ -262,7 +275,9 @@ export function useUpdateResident() {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
       // Also invalidate single resident query if it exists
       if (response.data?.resident?.id) {
-        queryClient.invalidateQueries({ queryKey: ["admin", "resident", response.data.resident.id] });
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "resident", response.data.resident.id],
+        });
       }
       toast.success("Resident updated successfully!");
     },
@@ -495,7 +510,6 @@ export function useAdminVisitor(visitorId: string | null) {
   });
 }
 
-
 export function useAdminGatePasses(params: {
   page: number;
   pageSize: number;
@@ -557,7 +571,7 @@ export function useAdminGateEvent(eventId: string | null) {
 
 export function useAdminGatePassEvents(
   passId: string | null,
-  params: { page: number; pageSize: number }
+  params: { page: number; pageSize: number },
 ) {
   return useQuery<GateEvent[]>({
     queryKey: ["admin", "gate-pass-events", passId, params],
@@ -647,11 +661,12 @@ export function useAdminUsers() {
 export function useImportResidencies() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData: FormData) => adminService.importResidencies(formData),
+    mutationFn: (formData: FormData) =>
+      adminService.importResidencies(formData),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residencies"] });
       toast.success(
-        `Imported ${response.data.successful} of ${response.data.total} residencies`
+        `Imported ${response.data.successful} of ${response.data.total} residencies`,
       );
     },
     onError: (error: any) => {
@@ -667,7 +682,7 @@ export function useImportResidents() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "residents"] });
       toast.success(
-        `Imported ${response.data.successful} of ${response.data.total} residents`
+        `Imported ${response.data.successful} of ${response.data.total} residents`,
       );
     },
     onError: (error: any) => {
@@ -693,7 +708,6 @@ export function useAdminResidencyGroups(params: {
   });
 }
 
-
 export function useAdminResidencyGroup(groupId: string | null) {
   return useQuery<ResidencyGroup>({
     queryKey: ["admin", "residency-group", groupId],
@@ -713,7 +727,9 @@ export function useCreateResidencyGroup() {
     mutationFn: (data: CreateResidencyGroupRequest) =>
       adminService.createResidencyGroup(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency group created successfully!");
     },
     onError: (error: any) => {
@@ -734,7 +750,9 @@ export function useUpdateResidencyGroup() {
       data: UpdateResidencyGroupRequest;
     }) => adminService.updateResidencyGroup(groupId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency group updated successfully!");
     },
     onError: (error: any) => {
@@ -749,7 +767,9 @@ export function useDeleteResidencyGroup() {
   return useMutation({
     mutationFn: (groupId: string) => adminService.deleteResidencyGroup(groupId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency group deleted successfully!");
     },
     onError: (error: any) => {
@@ -762,9 +782,12 @@ export function useBulkDeleteResidencyGroups() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupIds: string[]) => adminService.bulkDeleteResidencyGroups(groupIds),
+    mutationFn: (groupIds: string[]) =>
+      adminService.bulkDeleteResidencyGroups(groupIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency groups deleted successfully!");
     },
     onError: (error: any) => {
@@ -777,9 +800,12 @@ export function useToggleResidencyGroupActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupId: string) => adminService.toggleResidencyGroupActive(groupId),
+    mutationFn: (groupId: string) =>
+      adminService.toggleResidencyGroupActive(groupId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency group status updated successfully!");
     },
     onError: (error: any) => {
@@ -792,9 +818,12 @@ export function useBulkToggleResidencyGroupActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupIds: string[]) => adminService.bulkToggleResidencyGroupActive(groupIds),
+    mutationFn: (groupIds: string[]) =>
+      adminService.bulkToggleResidencyGroupActive(groupIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "residency-groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "residency-groups"],
+      });
       toast.success("Residency groups status updated successfully!");
     },
     onError: (error: any) => {
@@ -851,12 +880,19 @@ export function useUpdateDue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ dueId, data }: { dueId: string; data: Partial<CreateDueRequest> }) =>
-      adminService.updateDue(dueId, data),
+    mutationFn: ({
+      dueId,
+      data,
+    }: {
+      dueId: string;
+      data: Partial<CreateDueRequest>;
+    }) => adminService.updateDue(dueId, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "dues"] });
       if (response.data?.id) {
-        queryClient.invalidateQueries({ queryKey: ["admin", "due", response.data.id] });
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "due", response.data.id],
+        });
       }
       toast.success("Due updated successfully!");
     },
@@ -929,8 +965,13 @@ export function useUpdateGate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ gateId, data }: { gateId: string; data: UpdateGateRequest }) =>
-      adminGateService.updateGate(gateId, data),
+    mutationFn: ({
+      gateId,
+      data,
+    }: {
+      gateId: string;
+      data: UpdateGateRequest;
+    }) => adminGateService.updateGate(gateId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "gate"] });
@@ -961,8 +1002,13 @@ export function useToggleGateAdminStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ gateId, gateAdminIds }: { gateId: string; gateAdminIds: string[] }) =>
-      adminGateService.toggleGateAdminStatus(gateId, gateAdminIds),
+    mutationFn: ({
+      gateId,
+      gateAdminIds,
+    }: {
+      gateId: string;
+      gateAdminIds: string[];
+    }) => adminGateService.toggleGateAdminStatus(gateId, gateAdminIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "gates"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "gate"] });
@@ -974,13 +1020,14 @@ export function useToggleGateAdminStatus() {
   });
 }
 
-
-
-export function useAdminDueResidencies(dueId: string | null, params: {
-  page: number;
-  pageSize: number;
-  search?: string;
-}) {
+export function useAdminDueResidencies(
+  dueId: string | null,
+  params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+  },
+) {
   return useQuery<PaginatedResponse<ResidencyDue>>({
     queryKey: ["admin", "due-residencies", dueId, params],
     queryFn: async () => {
@@ -992,11 +1039,15 @@ export function useAdminDueResidencies(dueId: string | null, params: {
   });
 }
 
-export function useAdminResidencyDue(dueId: string | null, residencyId: string | null) {
+export function useAdminResidencyDue(
+  dueId: string | null,
+  residencyId: string | null,
+) {
   return useQuery<ResidencyDue>({
     queryKey: ["admin", "residency-due", dueId, residencyId],
     queryFn: async () => {
-      if (!dueId || !residencyId) throw new Error("Due ID and Residency ID are required");
+      if (!dueId || !residencyId)
+        throw new Error("Due ID and Residency ID are required");
       const response = await adminService.getResidencyDue(dueId, residencyId);
       return response.data;
     },
@@ -1010,19 +1061,29 @@ export function useAdminDueSchedules(
   page: number = 1,
   pageSize: number = 10,
   filters?: string,
-  sorts?: string
+  sorts?: string,
 ) {
   return useQuery({
-    queryKey: ["admin", "due-schedules", dueId, residencyId, page, pageSize, filters, sorts],
+    queryKey: [
+      "admin",
+      "due-schedules",
+      dueId,
+      residencyId,
+      page,
+      pageSize,
+      filters,
+      sorts,
+    ],
     queryFn: async () => {
-      if (!dueId || !residencyId) throw new Error("Due and Residency ID are required");
+      if (!dueId || !residencyId)
+        throw new Error("Due and Residency ID are required");
       const response = await adminService.getDueSchedules(
         dueId,
         residencyId,
         page,
         pageSize,
         filters,
-        sorts
+        sorts,
       );
       return response.data;
     },
@@ -1036,13 +1097,30 @@ export function useAdminDuePayments(
   page: number = 1,
   pageSize: number = 10,
   filters?: string,
-  sorts?: string
+  sorts?: string,
 ) {
   return useQuery({
-    queryKey: ["admin", "due-payments", dueId, residencyId, page, pageSize, filters, sorts],
+    queryKey: [
+      "admin",
+      "due-payments",
+      dueId,
+      residencyId,
+      page,
+      pageSize,
+      filters,
+      sorts,
+    ],
     queryFn: async () => {
-      if (!dueId || !residencyId) throw new Error("Due and Residency ID are required");
-      const response = await adminService.getDuePayments(dueId, residencyId, page, pageSize, filters, sorts);
+      if (!dueId || !residencyId)
+        throw new Error("Due and Residency ID are required");
+      const response = await adminService.getDuePayments(
+        dueId,
+        residencyId,
+        page,
+        pageSize,
+        filters,
+        sorts,
+      );
       return response.data;
     },
     enabled: !!dueId && !!residencyId,
@@ -1050,8 +1128,8 @@ export function useAdminDuePayments(
 }
 
 export function useAdminProfile() {
-  const {token,_hasHydrated,isAuthenticated,user}=useAuthStore();
-  const organization=useAppStore(s=>s.organization);
+  const { token, _hasHydrated, isAuthenticated, user } = useAuthStore();
+  const organization = useAppStore((s) => s.organization);
   const selectedSite = useAppStore((state) => state.selectedSite);
 
   return useQuery<Admin>({
@@ -1069,10 +1147,7 @@ export function useAdminProfile() {
         if (getApiErrorStatus(error) !== 404 || !user) throw error;
         const context = await contextApi.workspace(selectedSite?.id);
         const management = context.management;
-        if (
-          !management?.is_administrator ||
-          !management.site_admin_id
-        ) {
+        if (!management?.is_administrator || !management.site_admin_id) {
           throw error;
         }
         return siteAdminProfile(context, user);
@@ -1080,10 +1155,7 @@ export function useAdminProfile() {
     },
     staleTime: 30_000,
     refetchOnMount: false,
-    enabled:
-      _hasHydrated &&
-      !!organization?.id &&
-      (!!token || isAuthenticated),
+    enabled: _hasHydrated && !!organization?.id && (!!token || isAuthenticated),
     retry: false,
   });
 }
@@ -1109,17 +1181,16 @@ function siteAdminProfile(
     created_at: now,
     updated_at: now,
   }));
-  const role: AdminRole =
-    roles?.[0] ?? {
-      id: siteAdminId,
-      name: "Site administrator",
-      description: "Effective authority for the selected Site",
-      code: "site_admin",
-      permissions,
-      permissions_parsed: permissions,
-      created_at: now,
-      updated_at: now,
-    };
+  const role: AdminRole = roles?.[0] ?? {
+    id: siteAdminId,
+    name: "Site administrator",
+    description: "Effective authority for the selected Site",
+    code: "site_admin",
+    permissions,
+    permissions_parsed: permissions,
+    created_at: now,
+    updated_at: now,
+  };
   return {
     id: siteAdminId,
     user: user as Admin["user"],

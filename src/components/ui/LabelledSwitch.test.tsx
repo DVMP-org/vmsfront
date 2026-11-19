@@ -42,10 +42,13 @@ describe("lease toggle row", () => {
     const control = screen.getByRole("switch", {
       name: "Create a new Rent charge definition",
     });
-    expect(control).toHaveAttribute("aria-describedby", "rent-definition-description");
-    expect(document.getElementById("rent-definition-description")).toHaveTextContent(
-      "Off reuses the Site's existing Rent definition.",
+    expect(control).toHaveAttribute(
+      "aria-describedby",
+      "rent-definition-description",
     );
+    expect(
+      document.getElementById("rent-definition-description"),
+    ).toHaveTextContent("Off reuses the Site's existing Rent definition.");
   });
 
   it("reports the opposite state when toggled", () => {

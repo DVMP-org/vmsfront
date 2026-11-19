@@ -61,7 +61,7 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
   const reference =
     latest?.invitation_code && latest.guest_suffix
       ? `${latest.invitation_code}-${latest.guest_suffix}`
-      : latest?.credential_reference ?? "";
+      : (latest?.credential_reference ?? "");
   const gatePath = Array.from(
     new Set(movements.map((movement) => movement.gate_name)),
   );
@@ -126,11 +126,7 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
               </StatusBadge>
             </div>
             <dl className="mt-4 grid gap-3 border-t border-[var(--vms-line)] pt-4 text-sm sm:grid-cols-2">
-              <Detail
-                icon={Route}
-                label="Route"
-                value={gatePath.join(" → ")}
-              />
+              <Detail icon={Route} label="Route" value={gatePath.join(" → ")} />
               <Detail
                 icon={MapPin}
                 label="Latest checkpoint"
@@ -173,10 +169,7 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
               {movements.map((event) => {
                 const status = movementStatus(event);
                 return (
-                  <li
-                    key={event.id}
-                    className="flex items-start gap-3 py-3"
-                  >
+                  <li key={event.id} className="flex items-start gap-3 py-3">
                     <span
                       aria-hidden
                       className={cn(
@@ -196,9 +189,7 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
                         {formatTime(event.occurred_at)} · {event.reason_code}
                       </p>
                     </div>
-                    <StatusBadge tone={status.tone}>
-                      {status.label}
-                    </StatusBadge>
+                    <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
                   </li>
                 );
               })}

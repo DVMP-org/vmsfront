@@ -43,7 +43,10 @@ const queue = {
 
 function mount() {
   return render(
-    <AttentionQueueSection useCase="mixed_use" propertyName="Harbour Complex" />,
+    <AttentionQueueSection
+      useCase="mixed_use"
+      propertyName="Harbour Complex"
+    />,
   );
 }
 

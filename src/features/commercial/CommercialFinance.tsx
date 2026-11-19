@@ -26,11 +26,7 @@ import { formatMoney } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import type { Assignment } from "@/features/charges/api";
 import { CommercialShell, useCommercialAccess } from "./CommercialShell";
-import {
-  descendantIds,
-  flattenPlaces,
-  isCommercialInventory,
-} from "./api";
+import { descendantIds, flattenPlaces, isCommercialInventory } from "./api";
 import { RentRollSection } from "./components/RentRollSection";
 import { titleCase } from "./contracts";
 import { buildRentRoll } from "./lib";
@@ -54,8 +50,7 @@ type FinanceRow = {
 };
 
 export default function CommercialFinance() {
-  const { selectedSite, contextKey, canManageFinance } =
-    useCommercialAccess();
+  const { selectedSite, contextKey, canManageFinance } = useCommercialAccess();
   const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const tree = useCommercialTree(contextKey, !!placeId);
@@ -274,7 +269,9 @@ export default function CommercialFinance() {
       <RentRollSection
         rows={rentRoll}
         currency={currency}
-        isLoading={tree.isPending || relationships.isPending || assignments.isPending}
+        isLoading={
+          tree.isPending || relationships.isPending || assignments.isPending
+        }
         errorMessage={
           tree.isError || relationships.isError || assignments.isError
             ? parseApiError(

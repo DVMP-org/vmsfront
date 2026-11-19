@@ -22,8 +22,8 @@ export function FacetPicker({
 }: {
   facet: "parties" | "places";
   kind?: string;
-    /** Restricts party results to Parties with an active relationship to this Place. */
-    placeId?: string;
+  /** Restricts party results to Parties with an active relationship to this Place. */
+  placeId?: string;
   label: string;
   value: FacetItem | null;
   onChange: (item: FacetItem | null) => void;

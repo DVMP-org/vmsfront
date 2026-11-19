@@ -45,8 +45,12 @@ export function ProductModule({
         >
           {eyebrow}
         </p>
-        <h1 style={{ margin: "8px 0 16px", fontSize: 28, lineHeight: 1.25 }}>{title}</h1>
-        <div style={{ color: "var(--vms-ink-muted)", lineHeight: 1.6 }}>{children}</div>
+        <h1 style={{ margin: "8px 0 16px", fontSize: 28, lineHeight: 1.25 }}>
+          {title}
+        </h1>
+        <div style={{ color: "var(--vms-ink-muted)", lineHeight: 1.6 }}>
+          {children}
+        </div>
       </section>
     </main>
   );

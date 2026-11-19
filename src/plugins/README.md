@@ -96,11 +96,13 @@ Create `manifest.json`:
 ```
 
 **Required Fields:**
+
 - `name`: Unique plugin identifier (must match backend plugin name)
 - `title`: Display name shown in UI
 - `frontend.basePath`: URL path segment (e.g., "/my-plugin")
 
 **Optional Fields:**
+
 - `version`: Plugin version
 - `icon`: FontAwesome icon name (without "fa-" prefix)
 - `details`: Metadata for admin UI
@@ -128,14 +130,14 @@ const adminRoutes = [
     path: "/admin",
     component: AdminDashboard,
     title: "Dashboard",
-    icon: "home"
+    icon: "home",
   },
   {
     path: "/admin/settings",
     component: AdminSettings,
     title: "Settings",
-    icon: "cog"
-  }
+    icon: "cog",
+  },
 ];
 
 // Resident-specific routes
@@ -144,18 +146,19 @@ const residentRoutes = [
     path: "/",
     component: ResidentDashboard,
     title: "Dashboard",
-    icon: "home"
-  }
+    icon: "home",
+  },
 ];
 
 export default {
-  routes,        // Legacy (optional)
-  adminRoutes,   // Admin routes
-  residentRoutes // Resident routes
+  routes, // Legacy (optional)
+  adminRoutes, // Admin routes
+  residentRoutes, // Resident routes
 };
 ```
 
 **Route Properties:**
+
 - `path`: Route path relative to plugin basePath (e.g., "/admin" becomes "/plugins/my-plugin/admin")
 - `component`: React component to render
 - `title`: Display name in sidebar menu
@@ -171,9 +174,9 @@ import routes from "./routes";
 
 export default {
   manifest,
-  routes: routes.routes,        // Legacy (optional)
+  routes: routes.routes, // Legacy (optional)
   adminRoutes: routes.adminRoutes,
-  residentRoutes: routes.residentRoutes
+  residentRoutes: routes.residentRoutes,
 };
 ```
 
@@ -357,7 +360,7 @@ Icons use FontAwesome classes:
 
 ```javascript
 {
-  icon: "zap"  // Becomes "fa fa-zap"
+  icon: "zap"; // Becomes "fa fa-zap"
 }
 ```
 
@@ -395,18 +398,9 @@ Available icons: https://fontawesome.com/icons
     }
   },
   "details": {
-    "useCases": [
-      "Primary use case 1",
-      "Primary use case 2"
-    ],
-    "setupSteps": [
-      "Step 1: Configure API",
-      "Step 2: Set up permissions"
-    ],
-    "requirements": [
-      "API access",
-      "Minimum version 2.0"
-    ],
+    "useCases": ["Primary use case 1", "Primary use case 2"],
+    "setupSteps": ["Step 1: Configure API", "Step 2: Set up permissions"],
+    "requirements": ["API access", "Minimum version 2.0"],
     "configOptions": [
       {
         "key": "apiKey",
@@ -473,6 +467,7 @@ clearPluginsCache();
 ### Complete Example: Todo Plugin
 
 **Structure:**
+
 ```
 src/plugins/todo/
 ├── index.js
@@ -488,6 +483,7 @@ src/plugins/todo/
 ```
 
 **manifest.json:**
+
 ```json
 {
   "name": "todo",
@@ -501,6 +497,7 @@ src/plugins/todo/
 ```
 
 **routes.js:**
+
 ```javascript
 import dynamic from "next/dynamic";
 
@@ -513,21 +510,22 @@ export default {
       path: "/admin",
       component: TodoAdmin,
       title: "Todo Admin",
-      icon: "list"
-    }
+      icon: "list",
+    },
   ],
   residentRoutes: [
     {
       path: "/",
       component: TodoList,
       title: "My Todos",
-      icon: "check"
-    }
-  ]
+      icon: "check",
+    },
+  ],
 };
 ```
 
 **index.js:**
+
 ```javascript
 import manifest from "./manifest.json";
 import routes from "./routes";
@@ -535,11 +533,12 @@ import routes from "./routes";
 export default {
   manifest,
   adminRoutes: routes.adminRoutes,
-  residentRoutes: routes.residentRoutes
+  residentRoutes: routes.residentRoutes,
 };
 ```
 
 **Register in plugin_loader.ts:**
+
 ```typescript
 import todo from "@/plugins/todo";
 const FRONTEND_PLUGINS = [electricity, todo];
@@ -675,4 +674,3 @@ normalizeRoutePath(path: string): string
 ---
 
 **Note**: Plugins must be enabled in the backend to appear in the frontend. The plugin name in `manifest.json` must exactly match the backend plugin name.
-

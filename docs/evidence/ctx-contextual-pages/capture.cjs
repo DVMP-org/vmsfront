@@ -3,7 +3,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("../../../node_modules/@playwright/test");
 
-const base = process.env.VMS_CONTEXT_BASE || "http://context-acceptance.localhost:3003";
+const base =
+  process.env.VMS_CONTEXT_BASE || "http://context-acceptance.localhost:3003";
 const email = process.env.VMS_TEST_EMAIL;
 const password = process.env.VMS_TEST_PASSWORD;
 const output = __dirname;
@@ -49,7 +50,10 @@ async function screenshot(page, name) {
 
   await page.getByRole("button", { name: "Open workspace" }).click();
   await page.waitForURL(/\/admin$/);
-  await page.getByRole("button", { name: /Harbour Hotel/ }).first().waitFor();
+  await page
+    .getByRole("button", { name: /Harbour Hotel/ })
+    .first()
+    .waitFor();
   await screenshot(page, "property-context-desktop.png");
 
   await page.goto(`${base}/admin/charges`);
@@ -65,14 +69,25 @@ async function screenshot(page, name) {
   await page.getByText("Mixed use").waitFor();
   await screenshot(page, "organization-settings-desktop.png");
 
-  await page.getByRole("button", { name: /Harbour Hotel/ }).first().click();
+  await page
+    .getByRole("button", { name: /Harbour Hotel/ })
+    .first()
+    .click();
   await page.getByRole("button", { name: /Harbour Offices/ }).click();
-  await page.getByRole("button", { name: /Harbour Offices/ }).first().waitFor();
+  await page
+    .getByRole("button", { name: /Harbour Offices/ })
+    .first()
+    .waitFor();
   await page.waitForTimeout(700);
-  assert.equal(await page.getByRole("link", { name: "Guest stays" }).count(), 0);
+  assert.equal(
+    await page.getByRole("link", { name: "Guest stays" }).count(),
+    0,
+  );
   await screenshot(page, "commercial-context-gating-desktop.png");
 
-  const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const mobile = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   await mobile.addCookies(await context.cookies());
   const mobilePage = await mobile.newPage();
   mobilePage.on("console", (message) => {
@@ -84,9 +99,7 @@ async function screenshot(page, name) {
   );
   await mobilePage.goto(`${base}/admin/properties`);
   await mobilePage.getByRole("heading", { name: /^Properties/ }).waitFor();
-  await mobilePage
-    .getByLabel("Top-level within this organization")
-    .uncheck();
+  await mobilePage.getByLabel("Top-level within this organization").uncheck();
   await mobilePage.getByText("Harbour Hotel").waitFor();
   await screenshot(mobilePage, "properties-mobile-393.png");
   await mobilePage.goto(`${base}/admin/charges`);

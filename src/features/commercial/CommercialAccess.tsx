@@ -55,8 +55,7 @@ type AccessRow = {
 };
 
 export default function CommercialAccess() {
-  const { selectedSite, contextKey, canManageAccess } =
-    useCommercialAccess();
+  const { selectedSite, contextKey, canManageAccess } = useCommercialAccess();
   const client = useQueryClient();
   const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -94,9 +93,7 @@ export default function CommercialAccess() {
   const spaces = useMemo(
     () =>
       allPlaces
-        .filter(
-          (place) => scopeIds.has(place.id) && isCommercialPlace(place),
-        )
+        .filter((place) => scopeIds.has(place.id) && isCommercialPlace(place))
         // Spaces first, buildings last: operational access is normally granted
         // to a space, and the picker defaults to the first option.
         .sort(
@@ -323,9 +320,9 @@ export default function CommercialAccess() {
           {
             icon: DoorOpen,
             label: "Visitor approvals",
-            value: pendingInvitations,
+            value: invitations.isError ? "Unavailable" : pendingInvitations,
             detail: invitations.isError
-              ? "Invitation queue unavailable"
+              ? "Could not load the visitor queue"
               : "Requests awaiting approval",
           },
         ]}
@@ -586,7 +583,7 @@ function SummaryStrip({
   items: Array<{
     icon: LucideIcon;
     label: string;
-    value: number;
+    value: number | string;
     detail: string;
   }>;
 }) {

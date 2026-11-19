@@ -44,7 +44,9 @@ test.describe("@canonical authentication", () => {
     await auth.openLogin();
     await auth.login("wrong@example.com", "wrong-password", false);
     await expect(page).toHaveURL(/\/auth\/login\/?$/);
-    await expect(page.getByText(/email or password is incorrect/i)).toBeVisible();
+    await expect(
+      page.getByText(/email or password is incorrect/i),
+    ).toBeVisible();
   });
 
   test("authenticated tenant deep link preserves the requested route", async ({
@@ -55,6 +57,8 @@ test.describe("@canonical authentication", () => {
     const tenant = await seedSession(context);
     await page.goto(`${tenant}/admin/properties`);
     await expect(page).toHaveURL(/\/admin\/properties\/?$/);
-    await expect(page.getByRole("heading", { name: "Properties" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Properties" }),
+    ).toBeVisible();
   });
 });

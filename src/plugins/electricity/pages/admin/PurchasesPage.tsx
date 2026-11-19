@@ -17,202 +17,221 @@ import { PurchaseToken } from "@/plugins/electricity/types";
 import { useQuery } from "@tanstack/react-query";
 
 export default function AdminPurchasesPage() {
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
-    const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [searchQuery, setSearchQuery] = useState("");
 
-    // Fetch purchases
-    const { data: purchasesData, isLoading, isFetching, isError, error, refetch } = useQuery({
-        queryKey: ["electricity", "purchases", page],
-        queryFn: async () => {
-            const response = await electricityService.getPurchases({
-                page,
-                pageSize,
-            });
-            return response.data;
-        },
-    });
+  // Fetch purchases
+  const {
+    data: purchasesData,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["electricity", "purchases", page],
+    queryFn: async () => {
+      const response = await electricityService.getPurchases({
+        page,
+        pageSize,
+      });
+      return response.data;
+    },
+  });
 
-    const purchases = purchasesData?.items || [];
+  const purchases = purchasesData?.items || [];
 
-    // Filter purchases by search query (client-side filtering for now)
-    const filteredPurchases = purchases.filter(
-        (purchase) =>
-            purchase.meter?.meter_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            purchase?.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  // Filter purchases by search query (client-side filtering for now)
+  const filteredPurchases = purchases.filter(
+    (purchase) =>
+      purchase.meter?.meter_number
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      purchase.transaction_id
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      purchase?.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-    const totalRevenue = purchases
-        .filter((p) => p.transaction?.status === "success")
-        .reduce((sum, p) => sum + p.amount, 0);
+  const totalRevenue = purchases
+    .filter((p) => p.transaction?.status === "success")
+    .reduce((sum, p) => sum + p.amount, 0);
 
-    // Pagination data
-    const totalPages = purchasesData?.total_pages ?? 1;
-    const total = purchasesData?.total ?? 0;
-    const hasNext = purchasesData?.has_next ?? false;
-    const hasPrevious = purchasesData?.has_previous ?? false;
-    const showPagination = totalPages > 1;
+  // Pagination data
+  const totalPages = purchasesData?.total_pages ?? 1;
+  const total = purchasesData?.total ?? 0;
+  const hasNext = purchasesData?.has_next ?? false;
+  const hasPrevious = purchasesData?.has_previous ?? false;
+  const showPagination = totalPages > 1;
 
-    const handlePageChange = (newPage: number) => {
-        setPage(newPage);
-    };
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
-    const columns: Column<PurchaseToken>[] = [
-        {
-            key: "transaction_reference",
-            header: "Reference",
-            accessor: (purchase) => (
-                <span className="font-mono text-sm">{purchase.transaction?.reference || "N/A"}</span>
-            ),
-        },
-        {
-            key: "meter",
-            header: "Meter",
-            accessor: (purchase) => purchase.meter?.meter_number || "N/A",
-        },
-        {
-            key: "email",
-            header: "Email",
-            accessor: (purchase) => purchase.email,
-        },
-        {
-            key: "residency",
-            header: "Residency",
-            accessor: (purchase) => (
-                <span className="text-muted-foreground">
-                    {purchase?.residency?.name || "N/A"}
-                </span>
-            ),
-        },
-        {
-            key: "units",
-            header: "Units",
-            accessor: (purchase) => (
-                <span className="font-medium">
-                    {purchase.units ? `${purchase.units} kWh` : "N/A"}
-                </span>
-            ),
-        },
-        {
-            key: "amount",
-            header: "Amount",
-            accessor: (purchase) => (
-                <span className="font-semibold">
-                    ₦{purchase.amount.toLocaleString()}
-                </span>
-            ),
-        },
-        {
-            key: "status",
-            header: "Status",
-            accessor: (purchase) => (
-                <Badge
-                    variant={
-                        purchase.transaction?.status === "success"
-                            ? "success"
-                            : purchase.transaction?.status === "pending"
-                                ? "warning"
-                                : "danger"
-                    }
-                >
-                    {titleCase(purchase.transaction?.status || "pending").replace("_", " ")}
-                </Badge>
-            ),
-        },
-        {
-            key: "created_at",
-            header: "Date",
-            accessor: (purchase) => purchase.created_at ? formatDate(purchase.created_at) : "N/A",
-        },
-    ];
+  const columns: Column<PurchaseToken>[] = [
+    {
+      key: "transaction_reference",
+      header: "Reference",
+      accessor: (purchase) => (
+        <span className="font-mono text-sm">
+          {purchase.transaction?.reference || "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "meter",
+      header: "Meter",
+      accessor: (purchase) => purchase.meter?.meter_number || "N/A",
+    },
+    {
+      key: "email",
+      header: "Email",
+      accessor: (purchase) => purchase.email,
+    },
+    {
+      key: "residency",
+      header: "Residency",
+      accessor: (purchase) => (
+        <span className="text-muted-foreground">
+          {purchase?.residency?.name || "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "units",
+      header: "Units",
+      accessor: (purchase) => (
+        <span className="font-medium">
+          {purchase.units ? `${purchase.units} kWh` : "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      accessor: (purchase) => (
+        <span className="font-semibold">
+          ₦{purchase.amount.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      accessor: (purchase) => (
+        <Badge
+          variant={
+            purchase.transaction?.status === "success"
+              ? "success"
+              : purchase.transaction?.status === "pending"
+                ? "warning"
+                : "danger"
+          }
+        >
+          {titleCase(purchase.transaction?.status || "pending").replace(
+            "_",
+            " ",
+          )}
+        </Badge>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Date",
+      accessor: (purchase) =>
+        purchase.created_at ? formatDate(purchase.created_at) : "N/A",
+    },
+  ];
 
-    return (
-        <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
-            <PageHeader
-                eyebrow="Extensions / Electricity"
-                title="Electricity purchases"
-                description="Review token purchases made for meters in this organization."
-                metadata={
-                    totalRevenue > 0 ? (
-                        <p className="text-sm text-[var(--vms-ink-muted)]">
-                            Successful revenue on this page:{" "}
-                            <strong className="font-semibold tabular-nums text-[var(--vms-ink)]">
-                                ₦{totalRevenue.toLocaleString()}
-                            </strong>
-                        </p>
-                    ) : undefined
-                }
+  return (
+    <div className="space-y-5 pb-8 text-[var(--vms-ink)]">
+      <PageHeader
+        eyebrow="Extensions / Electricity"
+        title="Electricity purchases"
+        description="Review token purchases made for meters in this organization."
+        metadata={
+          totalRevenue > 0 ? (
+            <p className="text-sm text-[var(--vms-ink-muted)]">
+              Successful revenue on this page:{" "}
+              <strong className="font-semibold tabular-nums text-[var(--vms-ink)]">
+                ₦{totalRevenue.toLocaleString()}
+              </strong>
+            </p>
+          ) : undefined
+        }
+      />
+
+      {/* Purchases Table */}
+      <Card>
+        <CardHeader className="border-b border-[var(--vms-line)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>Purchase register</CardTitle>
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]"
+                aria-hidden="true"
+              />
+              <Input
+                aria-label="Search purchases"
+                placeholder="Search purchases..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1); // Reset to first page on search
+                }}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <TableSkeleton />
+          ) : isError ? (
+            <EmptyState
+              icon={AlertCircle}
+              title="Purchases could not be loaded"
+              description={parseApiError(error).message}
+              action={{ label: "Retry", onClick: () => refetch() }}
             />
-
-            {/* Purchases Table */}
-            <Card>
-                <CardHeader className="border-b border-[var(--vms-line)]">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <CardTitle>Purchase register</CardTitle>
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--vms-ink-muted)]" aria-hidden="true" />
-                            <Input
-                                aria-label="Search purchases"
-                                placeholder="Search purchases..."
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setPage(1); // Reset to first page on search
-                                }}
-                                className="pl-10"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? (
-                        <TableSkeleton />
-                    ) : isError ? (
-                        <EmptyState
-                            icon={AlertCircle}
-                            title="Purchases could not be loaded"
-                            description={parseApiError(error).message}
-                            action={{ label: "Retry", onClick: () => refetch() }}
-                        />
-                    ) : filteredPurchases.length === 0 ? (
-                        <EmptyState
-                            icon={CreditCard}
-                            title="No purchases yet"
-                            description={
-                                searchQuery
-                                    ? "No purchases match your search"
-                                    : "Purchases will appear here once residents start buying electricity"
-                            }
-                        />
-                    ) : (
-                        <>
-                            <DataTable
-                                data={filteredPurchases}
-                                columns={columns}
-                                searchable={false}
-                                showPagination={false}
-                                emptyMessage="No purchases found"
-                            />
-                            {showPagination && (
-                                <PaginationBar
-                                    page={page}
-                                    pageSize={pageSize}
-                                    total={total}
-                                    totalPages={totalPages}
-                                    hasNext={hasNext}
-                                    hasPrevious={hasPrevious}
-                                    resourceLabel="purchases"
-                                    onChange={handlePageChange}
-                                    isFetching={isFetching}
-                                    className="mt-6"
-                                />
-                            )}
-                        </>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-    );
+          ) : filteredPurchases.length === 0 ? (
+            <EmptyState
+              icon={CreditCard}
+              title="No purchases yet"
+              description={
+                searchQuery
+                  ? "No purchases match your search"
+                  : "Purchases will appear here once residents start buying electricity"
+              }
+            />
+          ) : (
+            <>
+              <DataTable
+                data={filteredPurchases}
+                columns={columns}
+                searchable={false}
+                showPagination={false}
+                emptyMessage="No purchases found"
+              />
+              {showPagination && (
+                <PaginationBar
+                  page={page}
+                  pageSize={pageSize}
+                  total={total}
+                  totalPages={totalPages}
+                  hasNext={hasNext}
+                  hasPrevious={hasPrevious}
+                  resourceLabel="purchases"
+                  onChange={handlePageChange}
+                  isFetching={isFetching}
+                  className="mt-6"
+                />
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
-

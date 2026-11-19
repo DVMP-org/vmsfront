@@ -64,7 +64,9 @@ export function GateConfigureDrawer({
           : "All hours",
         schedule.days?.length
           ? schedule.days
-              .map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day])
+              .map(
+                (day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day],
+              )
               .join(", ")
           : "Every day",
       ].join(" · ")

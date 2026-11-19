@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { vmsConfig } from "../configs/vms.config";
-import {
-  installCanonicalApi,
-  seedSession,
-} from "../fixtures/canonical-api";
+import { installCanonicalApi, seedSession } from "../fixtures/canonical-api";
 import { AuthPage } from "../pages/AuthPage";
 import { OrganizationSetupPage } from "../pages/OrganizationSetupPage";
 

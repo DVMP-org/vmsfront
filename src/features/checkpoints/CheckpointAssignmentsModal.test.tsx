@@ -74,9 +74,7 @@ it("allows saving an empty selection to leave the checkpoint unassigned", async 
   const first = await screen.findByRole("checkbox", { name: /First manager/ });
   await waitFor(() => expect(first).toBeChecked());
   fireEvent.click(first);
-  expect(
-    screen.getByText(/leaves this checkpoint unassigned/),
-  ).toBeVisible();
+  expect(screen.getByText(/leaves this checkpoint unassigned/)).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Save assignments" }));
   await waitFor(() => expect(m.save).toHaveBeenCalledWith("gate", []));
   await waitFor(() => expect(close).toHaveBeenCalled());

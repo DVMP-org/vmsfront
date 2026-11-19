@@ -48,8 +48,7 @@ type OccupancyRow = {
 
 export default function ResidentialOccupancies() {
   const { confirmAction, confirmationDialog } = useConfirmAction();
-  const { contextKey, selectedSite, canManagePeople } =
-    useResidentialAccess();
+  const { contextKey, selectedSite, canManagePeople } = useResidentialAccess();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -108,7 +107,10 @@ export default function ResidentialOccupancies() {
   );
 
   const selectedDetail = rows.find((row) => row.id === detailId);
-  const retainedDetail = useRef<{ contextKey: QueryContext; row: OccupancyRow }>();
+  const retainedDetail = useRef<{
+    contextKey: QueryContext;
+    row: OccupancyRow;
+  }>();
   if (selectedDetail)
     retainedDetail.current = { contextKey, row: selectedDetail };
   // Keep the record visible during the drawer's exit, within this workspace only.
@@ -515,7 +517,18 @@ export default function ResidentialOccupancies() {
                   <Button
                     variant="ghost"
                     className="mt-2 w-full"
-                    onClick={() => confirmAction({title: "End relationship?", description: `End ${detail.person_name}'s relationship with ${detail.unit_name}? Their access through this relationship will end.`, confirmLabel: "End relationship", onConfirm: () => update.mutateAsync({ ids: [detail.id], action: "end" })})}
+                    onClick={() =>
+                      confirmAction({
+                        title: "End relationship?",
+                        description: `End ${detail.person_name}'s relationship with ${detail.unit_name}? Their access through this relationship will end.`,
+                        confirmLabel: "End relationship",
+                        onConfirm: () =>
+                          update.mutateAsync({
+                            ids: [detail.id],
+                            action: "end",
+                          }),
+                      })
+                    }
                   >
                     End relationship
                   </Button>

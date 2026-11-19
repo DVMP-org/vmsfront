@@ -17,7 +17,11 @@ import type {
   LeaseInput,
   LeaseKind,
 } from "../api";
-import { useCreateLease, useUpdateLease, usePlacePartyOptions } from "../queries";
+import {
+  useCreateLease,
+  useUpdateLease,
+  usePlacePartyOptions,
+} from "../queries";
 
 export type PlaceOption = { id: string; name: string; kind: string };
 export type PartyOption = { id: string; display_name: string };
@@ -114,7 +118,9 @@ function draftFrom(lease: Lease): Draft {
     starts_at: lease.starts_at.slice(0, 10),
     ends_at: lease.ends_at ? lease.ends_at.slice(0, 10) : "",
     rent_amount: lease.rent_amount ?? rent?.amount ?? "",
-    rent_cadence: (lease.rent_cadence ?? rent?.recurrence ?? "monthly") as ChargeRecurrence,
+    rent_cadence: (lease.rent_cadence ??
+      rent?.recurrence ??
+      "monthly") as ChargeRecurrence,
     rent_creates_definition: rent?.create_definition ?? false,
     deposit_amount: lease.deposit_amount ?? "",
     notice_days: String(lease.notice_days),
@@ -243,10 +249,7 @@ export function LeaseFormDrawer({
     };
 
     if (lease) {
-      update.mutate(
-        { id: lease.id, ...input },
-        { onSuccess: () => onClose() },
-      );
+      update.mutate({ id: lease.id, ...input }, { onSuccess: () => onClose() });
     } else {
       create.mutate(input, { onSuccess: () => onClose() });
     }
@@ -278,7 +281,12 @@ export function LeaseFormDrawer({
         title="Agreement"
         description="Who takes which space, and under what kind of agreement."
       >
-        <Field id="lease-place" label="Space" required error={visible("place_id")}>
+        <Field
+          id="lease-place"
+          label="Space"
+          required
+          error={visible("place_id")}
+        >
           {(control) => (
             <select
               {...control}
@@ -449,9 +457,7 @@ export function LeaseFormDrawer({
                 step="0.01"
                 className={fieldControlClassName}
                 value={draft.rent_amount}
-                onChange={(event) =>
-                  update$("rent_amount", event.target.value)
-                }
+                onChange={(event) => update$("rent_amount", event.target.value)}
                 placeholder="500000"
               />
             )}

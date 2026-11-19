@@ -14,10 +14,7 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
-import {
-  placesApi,
-  type PlaceTreeNode,
-} from "@/features/places/api";
+import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { mixedUseApi } from "./api";
 import { MixedUseShell } from "./MixedUseShell";
@@ -87,9 +84,7 @@ export function MixedUseOverview() {
   const tree = useQuery({
     queryKey: ["mixed-use-overview-tree"],
     queryFn: () =>
-      selectedSite?.id
-        ? placesApi.tree(selectedSite.id)
-        : Promise.resolve([]),
+      selectedSite?.id ? placesApi.tree(selectedSite.id) : Promise.resolve([]),
     retry: false,
   });
   const selectedTree = findNode(tree.data ?? [], selectedSite?.id);

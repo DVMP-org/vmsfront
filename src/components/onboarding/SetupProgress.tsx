@@ -24,8 +24,8 @@ const STATE_COPY = {
 export function SetupProgress({
   currentStep,
 }: {
-    currentStep: OnboardingStepId;
-  }) {
+  currentStep: OnboardingStepId;
+}) {
   return (
     <ol
       aria-label="Organization setup progress"
@@ -48,17 +48,17 @@ export function SetupProgress({
               className={cn(
                 "grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold tabular-nums ring-1",
                 state === "complete" &&
-                "bg-[var(--vms-success-subtle)] text-[var(--vms-success)] ring-[color-mix(in_srgb,var(--vms-success)_30%,transparent)]",
+                  "bg-[var(--vms-success-subtle)] text-[var(--vms-success)] ring-[color-mix(in_srgb,var(--vms-success)_30%,transparent)]",
                 state === "current" &&
-                "bg-[var(--vms-action)] text-[var(--vms-on-action)] ring-transparent",
+                  "bg-[var(--vms-action)] text-[var(--vms-on-action)] ring-transparent",
                 state === "upcoming" &&
-                "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] ring-[var(--vms-line)]",
+                  "bg-[var(--vms-surface)] text-[var(--vms-ink-muted)] ring-[var(--vms-line)]",
               )}
             >
               {state === "complete" ? (
                 <Check className="h-3.5 w-3.5" />
               ) : (
-                  index + 1
+                index + 1
               )}
             </span>
             <span className="min-w-0">

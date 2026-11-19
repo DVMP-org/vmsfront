@@ -199,9 +199,7 @@ export default function CommercialOverview() {
           icon={WalletCards}
           label="Outstanding"
           value={
-            assignments.isPending
-              ? "—"
-              : formatMoney(openBalance, currency)
+            assignments.isPending ? "—" : formatMoney(openBalance, currency)
           }
           detail={`${outstandingAssignments.length} assignments in arrears`}
           attention={outstandingAssignments.length > 0}
@@ -461,7 +459,9 @@ export default function CommercialOverview() {
             />
             <Stat
               label="Under permit"
-              value={contractorRows.filter((item) => item.requires_permit).length}
+              value={
+                contractorRows.filter((item) => item.requires_permit).length
+              }
             />
           </div>
         ) : (

@@ -109,7 +109,8 @@ export function EditContractorDrawer({
     if (!draft.access_from || !draft.access_to) {
       next.access_to = "Set when the contractor may be on Site.";
     } else if (
-      new Date(draft.access_to).getTime() <= new Date(draft.access_from).getTime()
+      new Date(draft.access_to).getTime() <=
+      new Date(draft.access_from).getTime()
     ) {
       next.access_to = "Access must end after it starts.";
     }
@@ -147,7 +148,9 @@ export function EditContractorDrawer({
     );
   }
 
-  const serverError = mutation.error ? parseApiError(mutation.error).message : null;
+  const serverError = mutation.error
+    ? parseApiError(mutation.error).message
+    : null;
   const terminal = contractor.status === "revoked";
 
   return (
@@ -308,7 +311,10 @@ export function EditContractorDrawer({
         ) : null}
       </FormSection>
 
-      <FormSection title="Context" description="Internal notes for the site team.">
+      <FormSection
+        title="Context"
+        description="Internal notes for the site team."
+      >
         <Field id="contractor-edit-purpose" label="Purpose">
           {(control) => (
             <input

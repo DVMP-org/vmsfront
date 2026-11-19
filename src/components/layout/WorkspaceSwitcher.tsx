@@ -42,9 +42,7 @@ export function WorkspaceSwitcher({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedSite = useAppStore((state) => state.selectedSite);
-  const setSelectedSite = useAppStore(
-    (state) => state.setSelectedSite,
-  );
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const admin = useAdminProfile();
   const currentUser = useVerifyToken();
   const workspaceContext = useWorkspaceContext();
@@ -90,7 +88,9 @@ export function WorkspaceSwitcher({
     setSelectedSite(place ? { id: place.id, name: place.name } : null);
     setOpen(false);
     onMobileClose?.();
-    router.push(card.area === "management" ? withSite(card.href, place?.id) : card.href);
+    router.push(
+      card.area === "management" ? withSite(card.href, place?.id) : card.href,
+    );
   }
 
   if (collapsed && !isMobile) {

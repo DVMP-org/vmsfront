@@ -45,7 +45,9 @@ interface SidebarProps {
 
 // Personal Place navigation is owned by PlaceWorkspaceShell. Keep the shared
 // account link for plugin shells that still use the resident layout identifier.
-const accountLinks = [{ href: "/profile?context=resident", label: "Profile", icon: UserCog }];
+const accountLinks = [
+  { href: "/profile?context=resident", label: "Profile", icon: UserCog },
+];
 
 const SidebarLink = memo(function SidebarLink({
   link,

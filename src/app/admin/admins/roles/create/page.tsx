@@ -60,13 +60,13 @@ export default function CreateRolePage() {
         onSuccess: () => {
           router.push("/organization/roles");
         },
-      }
+      },
     );
   };
 
   const permissionsReady = useMemo(
     () => !isLoadingPermissions && !permissionsError && permissionsMap,
-    [isLoadingPermissions, permissionsError, permissionsMap]
+    [isLoadingPermissions, permissionsError, permissionsMap],
   );
 
   return (
@@ -75,7 +75,10 @@ export default function CreateRolePage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin/roles" className="text-primary hover:underline">
+              <Link
+                href="/admin/roles"
+                className="text-primary hover:underline"
+              >
                 Roles
               </Link>
               <span>/</span>
@@ -102,7 +105,8 @@ export default function CreateRolePage() {
           <CardHeader>
             <CardTitle>Role details</CardTitle>
             <CardDescription>
-              Define the role identity and attach the precise permissions it needs.
+              Define the role identity and attach the precise permissions it
+              needs.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,7 +182,11 @@ export default function CreateRolePage() {
                     {permissionsError && (
                       <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                         <span>Unable to fetch permissions right now.</span>
-                        <Button size="sm" variant="outline" onClick={() => refetch()}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => refetch()}
+                        >
                           Retry
                         </Button>
                       </div>

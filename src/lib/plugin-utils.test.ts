@@ -9,9 +9,10 @@ const plugin = {
 
 describe("plugin route resolution", () => {
   it("uses explicit admin and resident route tables", () => {
-    expect(
-      findPluginRouteAndType("/camera/admin", plugin),
-    ).toMatchObject({ layoutType: "admin", route: { path: "/admin" } });
+    expect(findPluginRouteAndType("/camera/admin", plugin)).toMatchObject({
+      layoutType: "admin",
+      route: { path: "/admin" },
+    });
     expect(findPluginRouteAndType("/camera", plugin)).toMatchObject({
       layoutType: "resident",
       route: { path: "/" },

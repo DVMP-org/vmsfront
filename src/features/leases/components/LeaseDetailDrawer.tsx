@@ -25,7 +25,9 @@ import { LeasePlanSummary } from "./LeasePlanSummary";
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2">
-      <dt className="text-xs font-medium text-[var(--vms-ink-muted)]">{label}</dt>
+      <dt className="text-xs font-medium text-[var(--vms-ink-muted)]">
+        {label}
+      </dt>
       <dd className="text-right text-sm text-[var(--vms-ink)]">{value}</dd>
     </div>
   );
@@ -85,20 +87,32 @@ export function LeaseDetailDrawer({
               <Button variant="secondary" onClick={() => onEdit(lease)}>
                 Edit draft
               </Button>
-              <Button variant="destructive-outlined" onClick={() => onTerminate(lease)}>
+              <Button
+                variant="destructive-outlined"
+                onClick={() => onTerminate(lease)}
+              >
                 Cancel draft
               </Button>
               {reviewing ? (
                 <Button
-                  onClick={() => activate.mutate(lease.id, { onSuccess: close })}
-                  disabled={activate.isPending || !plan.data?.creates_assignments}
+                  onClick={() =>
+                    activate.mutate(lease.id, { onSuccess: close })
+                  }
+                  disabled={
+                    activate.isPending || !plan.data?.creates_assignments
+                  }
                 >
                   <BadgeCheck className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                  {activate.isPending ? "Confirming…" : "Confirm and create charges"}
+                  {activate.isPending
+                    ? "Confirming…"
+                    : "Confirm and create charges"}
                 </Button>
               ) : (
                 <Button onClick={() => setReviewing(true)}>
-                  <FileSignature className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                  <FileSignature
+                    className="mr-1.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
                   Review and confirm
                 </Button>
               )}
@@ -170,13 +184,17 @@ export function LeaseDetailDrawer({
             <Row label="Notice" value={`${lease.notice_days} days`} />
             <Row
               label="Signed"
-              value={lease.signed_at ? formatDate(lease.signed_at) : "Not signed"}
+              value={
+                lease.signed_at ? formatDate(lease.signed_at) : "Not signed"
+              }
             />
             {lease.terminated_on ? (
               <Row
                 label="Ended"
                 value={`${formatDate(lease.terminated_on)}${
-                  lease.termination_reason ? ` · ${lease.termination_reason}` : ""
+                  lease.termination_reason
+                    ? ` · ${lease.termination_reason}`
+                    : ""
                 }`}
               />
             ) : null}
@@ -188,7 +206,10 @@ export function LeaseDetailDrawer({
             <Receipt className="h-4 w-4" aria-hidden="true" />
             Charges
           </h3>
-          <LeasePlanSummary lines={lease.charge_lines} currency={lease.currency} />
+          <LeasePlanSummary
+            lines={lease.charge_lines}
+            currency={lease.currency}
+          />
         </section>
 
         {reviewing ? (
@@ -224,7 +245,9 @@ export function LeaseDetailDrawer({
                             ? "Creates a new charge definition"
                             : "Reuses the Site definition"}{" "}
                           · {line.schedule_count}{" "}
-                          {line.schedule_count === 1 ? "installment" : "installments"}{" "}
+                          {line.schedule_count === 1
+                            ? "installment"
+                            : "installments"}{" "}
                           · {formatDate(line.first_due_date)} to{" "}
                           {formatDate(line.last_due_date)}
                         </p>

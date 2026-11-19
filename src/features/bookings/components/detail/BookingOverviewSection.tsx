@@ -6,13 +6,7 @@ import { BOOKING_DOMAIN_LABEL } from "../../api-types";
 import type { BookingDetailDto } from "../../api-types";
 
 /** A labelled fact, so the overview reads as a record rather than a paragraph. */
-function Fact({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-[11px] font-semibold uppercase tracking-wide text-[var(--vms-ink-muted)]">
@@ -44,7 +38,11 @@ export function BookingOverviewSection({
         <Fact label="Guest" value={booking.requester_name} />
         <Fact
           label="Contact"
-          value={contact ?? <span className="text-[var(--vms-ink-muted)]">None left</span>}
+          value={
+            contact ?? (
+              <span className="text-[var(--vms-ink-muted)]">None left</span>
+            )
+          }
         />
         <Fact label="Arrival" value={formatDateTime(booking.check_in_at)} />
         <Fact label="Departure" value={formatDateTime(booking.check_out_at)} />

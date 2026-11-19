@@ -112,14 +112,16 @@ export function EmailTemplatesSection() {
 
   return (
     <div className="space-y-4">
-
-
       {profile.isError ? (
         <InlineAlert
           tone="danger"
           title="Template permissions could not be loaded"
           action={
-            <Button size="sm" variant="outline" onClick={() => profile.refetch()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => profile.refetch()}
+            >
               Retry
             </Button>
           }

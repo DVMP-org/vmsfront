@@ -157,12 +157,7 @@
     }
   ],
   "dashboard": {
-    "priorities": [
-      "maintenance",
-      "collections",
-      "arrivals",
-      "occupancy"
-    ],
+    "priorities": ["maintenance", "collections", "arrivals", "occupancy"],
     "component": "residential"
   },
   "views": {
@@ -175,27 +170,11 @@
         "status",
         "updated"
       ],
-      "filters": [
-        "status",
-        "priority",
-        "category",
-        "unit"
-      ]
+      "filters": ["status", "priority", "category", "unit"]
     },
     "residents": {
-      "columns": [
-        "person",
-        "unit",
-        "role",
-        "lease",
-        "status",
-        "balance"
-      ],
-      "filters": [
-        "role",
-        "unit",
-        "status"
-      ]
+      "columns": ["person", "unit", "role", "lease", "status", "balance"],
+      "filters": ["role", "unit", "status"]
     }
   },
   "maintenance": {

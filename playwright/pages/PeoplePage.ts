@@ -30,6 +30,8 @@ export class PeoplePage {
     await this.page.getByLabel("Email", { exact: true }).fill(email);
     if (phone) await this.page.getByLabel("Phone").fill(phone);
     await this.page.getByRole("button", { name: "Add person" }).last().click();
-    await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
+    await expect(
+      this.page.getByText(name, { exact: true }).first(),
+    ).toBeVisible();
   }
 }

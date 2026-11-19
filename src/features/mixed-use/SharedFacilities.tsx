@@ -86,11 +86,7 @@ export function SharedFacilities() {
     mutationFn: async (input: SharedFacilityInput) => {
       if (!selectedSite) throw new Error("Select a property first");
       if (editing) {
-        return mixedUseApi.updateFacility(
-          selectedSite.id,
-          editing.id,
-          input,
-        );
+        return mixedUseApi.updateFacility(selectedSite.id, editing.id, input);
       }
       return mixedUseApi.createFacility(selectedSite.id, input);
     },

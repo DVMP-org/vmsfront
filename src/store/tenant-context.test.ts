@@ -79,9 +79,7 @@ const organization = (id: string) =>
 describe("Site selection persistence", () => {
   it("preserves a Site when the same organization is refreshed", () => {
     useAppStore.getState().setSelectedOrganization(organization("acme"));
-    useAppStore
-      .getState()
-      .setSelectedSite({ id: "site-1", name: "Main Site" });
+    useAppStore.getState().setSelectedSite({ id: "site-1", name: "Main Site" });
     useAppStore
       .getState()
       .setSelectedOrganization({ ...organization("acme"), name: "Updated" });
@@ -108,9 +106,7 @@ describe("Site selection persistence", () => {
 
   it("restores the Site through persistence rehydration", async () => {
     useAppStore.getState().setSelectedOrganization(organization("acme"));
-    useAppStore
-      .getState()
-      .setSelectedSite({ id: "site-1", name: "Main Site" });
+    useAppStore.getState().setSelectedSite({ id: "site-1", name: "Main Site" });
     const saved = localStorage.getItem("app-storage")!;
     useAppStore.setState({ organization: null, selectedSite: null });
     localStorage.setItem("app-storage", saved);
@@ -121,9 +117,7 @@ describe("Site selection persistence", () => {
 
   it("removes Site hints on logout", () => {
     useAppStore.getState().setSelectedOrganization(organization("acme"));
-    useAppStore
-      .getState()
-      .setSelectedSite({ id: "site-1", name: "Main Site" });
+    useAppStore.getState().setSelectedSite({ id: "site-1", name: "Main Site" });
     useAuthStore.getState().clearAuth();
     expect(getCookie("selected-site")).toBeNull();
     expect(useAppStore.getState().selectedSite).toBeNull();

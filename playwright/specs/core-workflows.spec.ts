@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { vmsConfig } from "../configs/vms.config";
-import {
-  installCanonicalApi,
-  seedSession,
-} from "../fixtures/canonical-api";
+import { installCanonicalApi, seedSession } from "../fixtures/canonical-api";
 import { AccessOperationsPage } from "../pages/AccessOperationsPage";
 import { PeoplePage } from "../pages/PeoplePage";
 import { PropertiesPage } from "../pages/PropertiesPage";
@@ -64,7 +61,9 @@ test.describe("@canonical @workflows persisted domain workflows", () => {
     });
 
     expect(api.mutations).toContain("place.person.add");
-    await expect(page.getByText("Tunde Balogun", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Tunde Balogun", { exact: true }),
+    ).toBeVisible();
   });
 
   test("visitor invitation can be selected and approved in bulk", async ({
@@ -79,7 +78,9 @@ test.describe("@canonical @workflows persisted domain workflows", () => {
     await access.approveFirstInvitation();
 
     expect(api.mutations).toContain("invitation.approve");
-    await expect(page.getByText("Approved", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText("Approved", { exact: true }).first(),
+    ).toBeVisible();
   });
 
   test("charge definition creation opens the canonical definition route", async ({

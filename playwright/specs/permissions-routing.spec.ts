@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  installCanonicalApi,
-  seedSession,
-} from "../fixtures/canonical-api";
+import { installCanonicalApi, seedSession } from "../fixtures/canonical-api";
 import { WorkspacesPage } from "../pages/WorkspacesPage";
 
 test.describe("@canonical @permissions management and tenant boundaries", () => {
@@ -89,7 +86,9 @@ test.describe("@canonical @permissions management and tenant boundaries", () => 
 
     await page.goto(`${tenant}/organization`);
 
-    await expect(page.getByRole("heading", { name: "Access Denied" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Access Denied" }),
+    ).toBeVisible();
   });
 
   test("plugins and integrations are organization-wide admin configuration", async ({

@@ -21,10 +21,7 @@
           "kind": {
             "anyOf": [
               {
-                "enum": [
-                  "person",
-                  "organization"
-                ],
+                "enum": ["person", "organization"],
                 "type": "string"
               },
               {
@@ -75,10 +72,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "kind",
-          "user_linked"
-        ],
+        "required": ["kind", "user_linked"],
         "title": "PartyMeta",
         "type": "object"
       },
@@ -104,13 +98,7 @@
           "kind": {
             "anyOf": [
               {
-                "enum": [
-                  "site",
-                  "building",
-                  "unit",
-                  "room",
-                  "space"
-                ],
+                "enum": ["site", "building", "unit", "room", "space"],
                 "type": "string"
               },
               {
@@ -166,11 +154,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "kind",
-          "slug",
-          "parent_id"
-        ],
+        "required": ["kind", "slug", "parent_id"],
         "title": "PlaceMeta",
         "type": "object"
       },

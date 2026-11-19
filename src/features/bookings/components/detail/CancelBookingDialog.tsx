@@ -73,7 +73,10 @@ export function CancelBookingDialog({
           />
         </div>
         {error ? (
-          <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+          <p
+            role="alert"
+            className="text-xs font-medium text-[var(--vms-danger)]"
+          >
             {error}
           </p>
         ) : null}

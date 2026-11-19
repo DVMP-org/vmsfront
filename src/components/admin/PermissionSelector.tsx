@@ -45,7 +45,7 @@ export function PermissionSelector({
         const filteredActions = group.actions.filter(
           (action) =>
             action.toLowerCase().includes(needle) ||
-            group.resource.toLowerCase().includes(needle)
+            group.resource.toLowerCase().includes(needle),
         );
         return { ...group, actions: filteredActions };
       })
@@ -136,10 +136,10 @@ export function PermissionSelector({
         ) : (
           filteredGroups.map((group) => {
             const dotPermissions = group.actions.map(
-              (action) => `${group.resource}.${action}`
+              (action) => `${group.resource}.${action}`,
             );
             const selectedCount = dotPermissions.filter((perm) =>
-              selectedSet.has(perm)
+              selectedSet.has(perm),
             ).length;
             const allSelected =
               selectedCount > 0 && selectedCount === dotPermissions.length;

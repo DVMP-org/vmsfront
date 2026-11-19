@@ -169,4 +169,3 @@ export function BootSkeleton({ label = "Loading" }: { label?: string }) {
     </div>
   );
 }
-

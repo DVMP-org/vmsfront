@@ -37,9 +37,7 @@ export class AuthPage {
   }
 
   async logout() {
-    await this.page
-      .getByRole("button", { name: /open account menu/i })
-      .click();
+    await this.page.getByRole("button", { name: /open account menu/i }).click();
     await this.page.getByRole("button", { name: "Sign out" }).click();
     await expect(this.page).toHaveURL(/\/auth\/login\/?(?:\?.*)?$/);
   }

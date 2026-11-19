@@ -42,7 +42,9 @@ export function BookingActivitySection({
               {formatDateTime(activity.occurred_at)}
             </span>
             {activity.message ? (
-              <p className="text-xs text-[var(--vms-ink)]">{activity.message}</p>
+              <p className="text-xs text-[var(--vms-ink)]">
+                {activity.message}
+              </p>
             ) : null}
           </li>
         ))}

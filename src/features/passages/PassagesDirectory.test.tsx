@@ -24,9 +24,9 @@ vi.mock("@/hooks/use-admin", () => ({
   }),
 }));
 vi.mock("@/features/places/api", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/features/places/api")
-  >("@/features/places/api");
+  const actual = await vi.importActual<typeof import("@/features/places/api")>(
+    "@/features/places/api",
+  );
   return { ...actual, placesApi: { list: vi.fn() } };
 });
 vi.mock("@/features/checkpoints/api", async () => {

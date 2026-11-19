@@ -4,10 +4,7 @@ import { useMemo } from "react";
 import { useMyOrganizations } from "@/hooks/use-organization";
 import { useCurrentOrganization } from "@/hooks/use-organization";
 import { Building2, Home, ArrowLeft, RefreshCw } from "lucide-react";
-import {
-  PageSkeleton,
-  StandalonePageSkeleton,
-} from "@/components/ui/Skeleton";
+import { PageSkeleton, StandalonePageSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "../ui/Button";
 import Link from "next/link";
 import { getApiErrorStatus } from "@/lib/error-utils";

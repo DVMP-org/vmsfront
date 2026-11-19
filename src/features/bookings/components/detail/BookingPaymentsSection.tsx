@@ -9,7 +9,10 @@ import { formatMoney } from "@/lib/currency";
 import { formatDateTime } from "@/lib/datetime";
 import { humanize } from "@/lib/strings";
 import { outstandingBalance } from "../../lib";
-import type { BookingDetailDto, RecordBookingPaymentInput } from "../../api-types";
+import type {
+  BookingDetailDto,
+  RecordBookingPaymentInput,
+} from "../../api-types";
 import { useBookingPayments, useRecordBookingPayment } from "../../queries";
 
 const METHODS: Array<NonNullable<RecordBookingPaymentInput["method"]>> = [
@@ -187,15 +190,18 @@ export function BookingPaymentsSection({
             </div>
           </div>
           {error ? (
-            <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+            <p
+              role="alert"
+              className="text-xs font-medium text-[var(--vms-danger)]"
+            >
               {error}
             </p>
           ) : null}
         </div>
       ) : (
         <p className="text-xs text-[var(--vms-ink-muted)]">
-          This booking is {humanize(booking.status)}, so no further payment can be
-          recorded against it.
+          This booking is {humanize(booking.status)}, so no further payment can
+          be recorded against it.
         </p>
       )}
 
@@ -237,7 +243,8 @@ export function BookingPaymentsSection({
                 <span className="font-medium text-[var(--vms-ink)]">
                   {formatMoney(payment.amount, payment.currency)}
                   <span className="ml-2 text-xs font-normal text-[var(--vms-ink-muted)]">
-                    {humanize(payment.method ?? "unspecified")} · {payment.status}
+                    {humanize(payment.method ?? "unspecified")} ·{" "}
+                    {payment.status}
                   </span>
                 </span>
                 <span className="text-xs text-[var(--vms-ink-muted)]">

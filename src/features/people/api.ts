@@ -38,10 +38,7 @@ export interface PlacePeople {
     updated_at: string;
   };
   effective_use_case:
-    | "residential"
-    | "commercial"
-    | "hospitality"
-    | "mixed_use";
+    "residential" | "commercial" | "hospitality" | "mixed_use";
   people: PlacePerson[];
 }
 

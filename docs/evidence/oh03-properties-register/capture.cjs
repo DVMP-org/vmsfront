@@ -250,7 +250,11 @@ async function createPage(browser, viewport) {
         await new Promise((resolve) => setTimeout(resolve, placesDelay));
       }
       if (placesMode === "error" || placesMode === "stale") {
-        return fulfillJson(route, errorBody("Property service unavailable"), 503);
+        return fulfillJson(
+          route,
+          errorBody("Property service unavailable"),
+          503,
+        );
       }
       const search = (url.searchParams.get("search") || "").toLowerCase();
       const status = url.searchParams.get("is_active");
@@ -392,10 +396,7 @@ async function main() {
       );
       await waitForRegister(page);
       const dimensions = await checkNoOverflow(page, `${label}px success`);
-      const screenshot = await capture(
-        page,
-        `properties-${label}.png`,
-      );
+      const screenshot = await capture(page, `properties-${label}.png`);
       if (viewport.width <= 390) {
         await page
           .locator(".property-table tbody tr")
@@ -424,7 +425,9 @@ async function main() {
       await page.goto(`${origin}/admin/properties`, {
         waitUntil: "domcontentloaded",
       });
-      await page.getByRole("heading", { name: "Properties", exact: true }).waitFor();
+      await page
+        .getByRole("heading", { name: "Properties", exact: true })
+        .waitFor();
       await page.getByText("Loading properties…").waitFor();
       await capture(page, "properties-loading-1440.png");
       await page.getByRole("button", { name: "Open Harbour Court" }).waitFor();
@@ -477,9 +480,9 @@ async function main() {
       });
       await waitForRegister(page);
       placesMode = "stale";
-      await page.getByRole("combobox", { name: "Status" }).selectOption(
-        "archived",
-      );
+      await page
+        .getByRole("combobox", { name: "Status" })
+        .selectOption("archived");
       await page.getByText(/latest update failed/i).waitFor();
       await checkNoOverflow(page, "390px stale");
       await capture(page, "properties-stale-390.png");
@@ -497,9 +500,7 @@ async function main() {
       if (
         (await page.getByRole("button", { name: "New property" }).count()) !== 0
       ) {
-        throw new Error(
-          `${label}px read-only state exposed the create action`,
-        );
+        throw new Error(`${label}px read-only state exposed the create action`);
       }
       await capture(page, `properties-read-only-${label}.png`);
       await context.close();

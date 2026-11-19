@@ -12,7 +12,11 @@ import {
 
 import { formatMoney } from "@/lib/currency";
 import { formatDateTime } from "@/lib/datetime";
-import type { AttentionCategory, AttentionItem, OperationsAttention } from "@/types";
+import type {
+  AttentionCategory,
+  AttentionItem,
+  OperationsAttention,
+} from "@/types";
 import { PanelState, ReportPanel, SeeAllLink } from "./DashboardPrimitives";
 
 /**
@@ -24,7 +28,8 @@ const CODE_COPY: Record<string, string> = {
   "billing.charge_overdue": "Charge past due",
   "maintenance.past_due": "Maintenance past due",
   "maintenance.sla_response_breached": "Maintenance not picked up in time",
-  "maintenance.sla_resolution_breached": "Maintenance past its resolution target",
+  "maintenance.sla_resolution_breached":
+    "Maintenance past its resolution target",
   "lease.expiring": "Lease ending soon",
 };
 
@@ -215,7 +220,7 @@ export function AttentionQueue({
           description="Nothing has been changed. Retry to read the current exceptions."
           onRetry={onRetry}
           isRetrying={isRetrying}
-            retryLabel="Retry work queue"
+          retryLabel="Retry work queue"
           compact
         />
       ) : !queue || queue.total === 0 ? (

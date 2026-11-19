@@ -28,12 +28,15 @@ interface ProfileValues {
 }
 
 function initialValues(
-  user: {
-    first_name?: string | null;
-    last_name?: string | null;
-    phone?: string | null;
-    address?: string | null;
-  } | null | undefined,
+  user:
+    | {
+        first_name?: string | null;
+        last_name?: string | null;
+        phone?: string | null;
+        address?: string | null;
+      }
+    | null
+    | undefined,
 ): ProfileValues {
   return {
     first_name: user?.first_name ?? "",
@@ -49,11 +52,7 @@ function initialValues(
  * SiteAdmins and Parties edit the same User identity record; only the role
  * label and the navigation shell differ.
  */
-export function ProfilePage({
-  audience,
-}: {
-  audience: "admin" | "resident";
-}) {
+export function ProfilePage({ audience }: { audience: "admin" | "resident" }) {
   return audience === "admin" ? <AdminProfile /> : <ResidentProfile />;
 }
 
@@ -227,7 +226,11 @@ function ProfileForm({
           </Button>
         }
         primaryAction={
-          <Button type="submit" isLoading={update.isPending} disabled={!isDirty}>
+          <Button
+            type="submit"
+            isLoading={update.isPending}
+            disabled={!isDirty}
+          >
             <Save className="h-4 w-4" aria-hidden="true" />
             Save changes
           </Button>
@@ -268,7 +271,12 @@ function ProfileForm({
             Your name is used on invitations and in checkpoint history.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Field id="profile-first-name" label="First name" required error={errors.first_name}>
+            <Field
+              id="profile-first-name"
+              label="First name"
+              required
+              error={errors.first_name}
+            >
               {(control) => (
                 <input
                   {...control}
@@ -284,7 +292,12 @@ function ProfileForm({
                 />
               )}
             </Field>
-            <Field id="profile-last-name" label="Last name" required error={errors.last_name}>
+            <Field
+              id="profile-last-name"
+              label="Last name"
+              required
+              error={errors.last_name}
+            >
               {(control) => (
                 <input
                   {...control}
@@ -328,7 +341,11 @@ function ProfileForm({
                 />
               )}
             </Field>
-            <Field id="profile-address" label="Address" className="sm:col-span-2">
+            <Field
+              id="profile-address"
+              label="Address"
+              className="sm:col-span-2"
+            >
               {(control) => (
                 <textarea
                   {...control}

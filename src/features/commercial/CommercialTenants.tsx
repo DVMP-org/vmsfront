@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   CircleSlash2,
   Plus,
-  UserRoundPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
@@ -58,8 +57,7 @@ type TenantRow = {
 
 export default function CommercialTenants() {
   const { confirmAction, confirmationDialog } = useConfirmAction();
-  const { selectedSite, contextKey, canManagePeople } =
-    useCommercialAccess();
+  const { selectedSite, contextKey, canManagePeople } = useCommercialAccess();
   const client = useQueryClient();
   const placeId = selectedSite?.id || "";
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -85,9 +83,7 @@ export default function CommercialTenants() {
   const spaces = useMemo(
     () =>
       allPlaces
-        .filter(
-          (place) => scopeIds.has(place.id) && isCommercialPlace(place),
-        )
+        .filter((place) => scopeIds.has(place.id) && isCommercialPlace(place))
         // Spaces first, buildings last: a whole-building lease is the rare case,
         // and the picker defaults to the first option.
         .sort(
@@ -233,7 +229,15 @@ export default function CommercialTenants() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => confirmAction({title: "End tenancy?", description: `End ${row.tenant}'s relationship with ${row.space}? Their access through this relationship will end.`, confirmLabel: "End tenancy", onConfirm: () => update.mutateAsync({ ids: [row.id], action: "end" })})}
+            onClick={() =>
+              confirmAction({
+                title: "End tenancy?",
+                description: `End ${row.tenant}'s relationship with ${row.space}? Their access through this relationship will end.`,
+                confirmLabel: "End tenancy",
+                onConfirm: () =>
+                  update.mutateAsync({ ids: [row.id], action: "end" }),
+              })
+            }
           >
             End
           </Button>
@@ -355,17 +359,6 @@ export default function CommercialTenants() {
               relationship; contractors are registered against the Site instead.
             </p>
           </div>
-          {canManagePeople ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-            >
-              <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
-              Add a party
-            </Button>
-          ) : null}
         </div>
         <DataTable
           data={rows}

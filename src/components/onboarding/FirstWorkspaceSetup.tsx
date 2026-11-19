@@ -75,9 +75,7 @@ export function FirstWorkspaceSetup({
           icon={CheckCircle2}
           label="Next step"
           detail={
-            propertyReady
-              ? "Review the first site"
-              : "Create the first site"
+            propertyReady ? "Review the first site" : "Create the first site"
           }
         />
       </div>

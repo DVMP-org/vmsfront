@@ -18,7 +18,10 @@ export function useLeaseAgreements(
   partyId: string | null | undefined,
 ) {
   return useQuery({
-    queryKey: workspaceAgreementKeys.leases(placeId ?? "none", partyId ?? "none"),
+    queryKey: workspaceAgreementKeys.leases(
+      placeId ?? "none",
+      partyId ?? "none",
+    ),
     queryFn: () => placeWorkspaceApi.leases(placeId!),
     enabled: Boolean(placeId && partyId),
     retry: false,
@@ -35,7 +38,8 @@ export function useAcceptLease(
 ) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (leaseId: string) => placeWorkspaceApi.acceptLease(placeId!, leaseId),
+    mutationFn: (leaseId: string) =>
+      placeWorkspaceApi.acceptLease(placeId!, leaseId),
     onSuccess: async () => {
       await client.invalidateQueries({
         queryKey: workspaceAgreementKeys.leases(

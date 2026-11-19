@@ -42,7 +42,7 @@ export function useUpdateResidentProfile() {
     onError: (error: any) => {
       toast.error(
         error?.response?.data?.detail ??
-          "Unable to update resident profile right now."
+          "Unable to update resident profile right now.",
       );
     },
   });
@@ -75,7 +75,7 @@ export function useUpdateAdminProfile() {
     onError: (error: any) => {
       toast.error(
         error?.response?.data?.detail ??
-          "Unable to update admin profile right now."
+          "Unable to update admin profile right now.",
       );
     },
   });

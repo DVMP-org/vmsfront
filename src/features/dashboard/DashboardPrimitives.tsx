@@ -148,7 +148,7 @@ export function PanelState({
   onRetry?: () => void;
   isRetrying?: boolean;
   compact?: boolean;
-    retryLabel?: string;
+  retryLabel?: string;
 }) {
   return (
     <div

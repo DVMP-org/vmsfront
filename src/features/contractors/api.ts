@@ -2,11 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export type ContractorStatus =
-  | "invited"
-  | "active"
-  | "suspended"
-  | "expired"
-  | "revoked";
+  "invited" | "active" | "suspended" | "expired" | "revoked";
 
 /** A contractor registered against the selected Site. */
 export interface Contractor {
@@ -65,7 +61,8 @@ export const contractorsApi = {
   create: async (body: ContractorInput) =>
     (await apiClient.post<ApiResponse<Contractor>>(base, body)).data,
   update: async (id: string, body: ContractorUpdateInput) =>
-    (await apiClient.patch<ApiResponse<Contractor>>(`${base}/${id}`, body)).data,
+    (await apiClient.patch<ApiResponse<Contractor>>(`${base}/${id}`, body))
+      .data,
   revoke: async (id: string) =>
     (await apiClient.post<ApiResponse<Contractor>>(`${base}/${id}/revoke`, {}))
       .data,

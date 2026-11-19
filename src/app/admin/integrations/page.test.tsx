@@ -90,7 +90,9 @@ describe("integration catalog", () => {
   it("presents connected, paused and needs-setup providers as a catalog", () => {
     render(<AdminIntegrationsPage />);
 
-    expect(screen.getByRole("heading", { name: "Integrations" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Integrations" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Twilio")).toBeInTheDocument();
     expect(screen.getByText("Stripe")).toBeInTheDocument();
     expect(screen.getByText("Whatsapp")).toBeInTheDocument();
@@ -110,23 +112,26 @@ describe("integration catalog", () => {
     render(<AdminIntegrationsPage />);
 
     const summary = screen.getByRole("region", { name: "Integration summary" });
-    expect(within(summary).getByText("Connected").closest("div")).toHaveTextContent(
-      "1",
-    );
-    expect(within(summary).getByText("Configured").closest("div")).toHaveTextContent(
-      "2",
-    );
-    expect(within(summary).getByText("Needs setup").closest("div")).toHaveTextContent(
-      "1",
-    );
+    expect(
+      within(summary).getByText("Connected").closest("div"),
+    ).toHaveTextContent("1");
+    expect(
+      within(summary).getByText("Configured").closest("div"),
+    ).toHaveTextContent("2");
+    expect(
+      within(summary).getByText("Needs setup").closest("div"),
+    ).toHaveTextContent("1");
   });
 
   it("filters by search, status and category", () => {
     render(<AdminIntegrationsPage />);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search integrations" }), {
-      target: { value: "settlement" },
-    });
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search integrations" }),
+      {
+        target: { value: "settlement" },
+      },
+    );
     expect(screen.getByText("Stripe")).toBeInTheDocument();
     expect(screen.queryByText("Twilio")).not.toBeInTheDocument();
 
@@ -145,9 +150,12 @@ describe("integration catalog", () => {
   it("explains an empty filter result and clears it", () => {
     render(<AdminIntegrationsPage />);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search integrations" }), {
-      target: { value: "no-such-provider" },
-    });
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search integrations" }),
+      {
+        target: { value: "no-such-provider" },
+      },
+    );
 
     expect(
       screen.getByText("No integrations match these filters"),
@@ -160,9 +168,7 @@ describe("integration catalog", () => {
   it("disables a connected provider through the labelled switch", () => {
     render(<AdminIntegrationsPage />);
 
-    fireEvent.click(
-      screen.getByRole("switch", { name: "Disable Twilio" }),
-    );
+    fireEvent.click(screen.getByRole("switch", { name: "Disable Twilio" }));
 
     expect(mocks.disable).toHaveBeenCalledWith("twilio");
     expect(mocks.enable).not.toHaveBeenCalled();
@@ -176,7 +182,9 @@ describe("integration catalog", () => {
     ).not.toBeInTheDocument();
 
     const whatsappCard = screen.getByText("Whatsapp").closest("article")!;
-    fireEvent.click(within(whatsappCard).getByRole("button", { name: "Set up" }));
+    fireEvent.click(
+      within(whatsappCard).getByRole("button", { name: "Set up" }),
+    );
 
     expect(mocks.push).toHaveBeenCalledWith("/admin/integrations/whatsapp");
   });
@@ -190,7 +198,9 @@ describe("integration catalog", () => {
     ).not.toBeInTheDocument();
 
     const whatsappCard = screen.getByText("Whatsapp").closest("article")!;
-    fireEvent.click(within(whatsappCard).getByRole("button", { name: "Set up" }));
+    fireEvent.click(
+      within(whatsappCard).getByRole("button", { name: "Set up" }),
+    );
 
     expect(mocks.push).toHaveBeenCalledWith(
       "/organization/settings/integrations/whatsapp",

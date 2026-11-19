@@ -5,7 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { OrganizationShell } from "./OrganizationShell";
 
-const navigation = vi.hoisted(() => ({ pathname: "/organization/sites", permissions: ["places.list"] }));
+const navigation = vi.hoisted(() => ({
+  pathname: "/organization/sites",
+  permissions: ["places.list"],
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,
@@ -27,22 +30,43 @@ vi.mock("@/hooks/use-admin", () => ({
 }));
 
 describe("OrganizationShell", () => {
-  it.each(["/organization/roles", "/organization/roles/create", "/organization/roles/role-1/edit"])("keeps Members & Roles active at %s", (pathname) => {
+  it.each([
+    "/organization/roles",
+    "/organization/roles/create",
+    "/organization/roles/role-1/edit",
+  ])("keeps Members & Roles active at %s", (pathname) => {
     navigation.pathname = pathname;
     navigation.permissions = ["*"];
-    const view = render(<OrganizationShell><div>Roles</div></OrganizationShell>);
+    const view = render(
+      <OrganizationShell>
+        <div>Roles</div>
+      </OrganizationShell>,
+    );
     const active = view.container.querySelectorAll('a[aria-current="page"]');
     expect(active).toHaveLength(2);
-    active.forEach((link) => expect(link).toHaveAttribute("href", "/organization/administrators"));
+    active.forEach((link) =>
+      expect(link).toHaveAttribute("href", "/organization/administrators"),
+    );
     navigation.pathname = "/organization/sites";
     navigation.permissions = ["places.list"];
   });
-  it.each(["/organization/sites/child", "/organization/sites/child/edit", "/organization/sites/child/move", "/organization/sites/new"])("keeps Sites active at %s", (pathname) => {
+  it.each([
+    "/organization/sites/child",
+    "/organization/sites/child/edit",
+    "/organization/sites/child/move",
+    "/organization/sites/new",
+  ])("keeps Sites active at %s", (pathname) => {
     navigation.pathname = pathname;
-    const view = render(<OrganizationShell><div>Site</div></OrganizationShell>);
+    const view = render(
+      <OrganizationShell>
+        <div>Site</div>
+      </OrganizationShell>,
+    );
     const active = view.container.querySelectorAll('a[aria-current="page"]');
     expect(active).toHaveLength(2);
-    active.forEach((link) => expect(link).toHaveAttribute("href", "/organization/sites"));
+    active.forEach((link) =>
+      expect(link).toHaveAttribute("href", "/organization/sites"),
+    );
     navigation.pathname = "/organization/sites";
   });
   it("exposes the organization-wide Site directory", () => {
@@ -52,12 +76,14 @@ describe("OrganizationShell", () => {
       </OrganizationShell>,
     );
 
-    expect(
-      screen.getAllByRole("link", { name: "Sites" })[0],
-    ).toHaveAttribute("href", "/organization/sites");
-    expect(
-      screen.getAllByRole("link", { name: "Sites" })[0],
-    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: "Sites" })[0]).toHaveAttribute(
+      "href",
+      "/organization/sites",
+    );
+    expect(screen.getAllByRole("link", { name: "Sites" })[0]).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("hydrates desktop, mobile and organization-switch links after host annotations", async () => {

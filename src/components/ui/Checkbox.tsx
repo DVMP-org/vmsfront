@@ -3,8 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface CheckboxProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: React.ReactNode;
   description?: React.ReactNode;
 }

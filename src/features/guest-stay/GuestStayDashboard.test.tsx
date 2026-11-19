@@ -130,7 +130,9 @@ it("shows what the stay costs and what is still owed", async () => {
 
   expect(await screen.findByText("Your bill")).toBeInTheDocument();
   expect(screen.getByText("Room charge")).toBeInTheDocument();
-  expect(screen.getByText("Payment taken with the booking")).toBeInTheDocument();
+  expect(
+    screen.getByText("Payment taken with the booking"),
+  ).toBeInTheDocument();
   expect(screen.getByText("Balance")).toBeInTheDocument();
   expect(screen.getByText("Open")).toBeInTheDocument();
 });

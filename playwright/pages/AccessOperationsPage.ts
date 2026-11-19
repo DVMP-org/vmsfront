@@ -15,9 +15,7 @@ export class AccessOperationsPage {
   async approveFirstInvitation() {
     await this.page.getByRole("button", { name: "Select row" }).first().click();
     this.page.once("dialog", (dialog) => dialog.accept());
-    await this.page
-      .getByRole("button", { name: "Approve selected" })
-      .click();
+    await this.page.getByRole("button", { name: "Approve selected" }).click();
     await expect(
       this.page.getByText(/invitation.*approved/i).first(),
     ).toBeVisible();
@@ -30,13 +28,7 @@ export class AccessOperationsPage {
     ).toBeVisible();
   }
 
-  async createCharge({
-    name,
-    amount,
-  }: {
-    name: string;
-    amount: string;
-  }) {
+  async createCharge({ name, amount }: { name: string; amount: string }) {
     await this.page.getByRole("link", { name: "Create charge" }).click();
     await this.page.getByLabel("Name").fill(name);
     await this.page.getByLabel("Amount").fill(amount);

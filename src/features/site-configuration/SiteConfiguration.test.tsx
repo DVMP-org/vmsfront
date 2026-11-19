@@ -21,9 +21,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/store/app-store", () => ({
   useAppStore: (
-    selector: (state: {
-      selectedSite: typeof mocks.selectedSite;
-    }) => unknown,
+    selector: (state: { selectedSite: typeof mocks.selectedSite }) => unknown,
   ) => selector({ selectedSite: mocks.selectedSite }),
 }));
 vi.mock("@/features/context/use-workspace-context", () => ({

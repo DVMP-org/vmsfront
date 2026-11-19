@@ -186,7 +186,15 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
             <Button
               type="button"
               variant="destructive-outlined"
-              onClick={() => confirmAction({title: "Revoke invitation?", description: "This invitation will no longer grant visitor access.", confirmLabel: "Revoke invitation", onConfirm: () => revoke.mutateAsync()})}
+              onClick={() =>
+                confirmAction({
+                  title: "Revoke invitation?",
+                  description:
+                    "This invitation will no longer grant visitor access.",
+                  confirmLabel: "Revoke invitation",
+                  onConfirm: () => revoke.mutateAsync(),
+                })
+              }
               isLoading={revoke.isPending}
               loadingLabel="Revoking"
             >
@@ -368,12 +376,11 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
           guests={item.guests}
           events={events.data?.items ?? []}
           gates={(gates.data?.items ?? []).filter(
-            (gate) => !item.site_id || !gate.site_id || gate.site_id === item.site_id,
+            (gate) =>
+              !item.site_id || !gate.site_id || gate.site_id === item.site_id,
           )}
           loading={events.isPending}
-          error={
-            events.isError ? parseApiError(events.error).message : null
-          }
+          error={events.isError ? parseApiError(events.error).message : null}
           onRetry={() => void events.refetch()}
         />
       </DetailPanel>

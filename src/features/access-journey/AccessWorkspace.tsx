@@ -2,7 +2,14 @@
 
 import { useConfirmAction } from "@/components/ui/useConfirmAction";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowUpRight,
   CalendarClock,
@@ -35,11 +42,7 @@ import {
   type VisitAuthorization,
   type VisitAuthorizationStatus,
 } from "./api";
-import {
-  MAX_INVITATION_GUESTS,
-  bucketInvitations,
-  clampMaxUses,
-} from "./lib";
+import { MAX_INVITATION_GUESTS, bucketInvitations, clampMaxUses } from "./lib";
 import { VisitorJourneyPanel } from "./VisitorJourneyPanel";
 import {
   useCreateInvitation,
@@ -102,7 +105,9 @@ function statusPresentation(
 ) {
   const effective = displayStatus ?? status;
   if (effective === "active") return activeStatusMeta;
-  return statusMeta[effective as VisitAuthorizationStatus] ?? statusMeta[status];
+  return (
+    statusMeta[effective as VisitAuthorizationStatus] ?? statusMeta[status]
+  );
 }
 
 const PAGE_SIZE = 8;
@@ -142,7 +147,10 @@ function filterInvitations(
     if (visitDate !== "all") {
       const start = new Date(invitation.valid_from);
       if (start > horizon) return false;
-      if (visitDate === "today" && start < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+      if (
+        visitDate === "today" &&
+        start < new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      ) {
         return false;
       }
     }
@@ -186,7 +194,10 @@ function InvitationStatus({
 function VisitWindow({ from, to }: { from: string; to: string }) {
   const start = new Date(from);
   const end = new Date(to);
-  const hours = Math.max(1, Math.round((end.getTime() - start.getTime()) / 3_600_000));
+  const hours = Math.max(
+    1,
+    Math.round((end.getTime() - start.getTime()) / 3_600_000),
+  );
   return (
     <div className="text-xs leading-5 text-[var(--vms-ink-muted)]">
       <p className="flex items-center gap-1.5 font-medium text-[var(--vms-ink)]">
@@ -275,7 +286,10 @@ function EmptyInvitations({
   };
   return (
     <div className="flex flex-col items-center gap-2 py-12 text-center">
-      <CalendarClock aria-hidden className="h-6 w-6 text-[var(--vms-ink-muted)]" />
+      <CalendarClock
+        aria-hidden
+        className="h-6 w-6 text-[var(--vms-ink-muted)]"
+      />
       <p className="text-sm font-semibold text-[var(--vms-ink)]">
         {copy[tab].title}
       </p>
@@ -304,8 +318,8 @@ export function AccessWorkspace({
   relationship: WorkspaceRelationship;
   partyName: string;
   partyEmail?: string | null;
-    siteId?: string | null;
-  }) {
+  siteId?: string | null;
+}) {
   const [showComposer, setShowComposer] = useState(false);
   const [selectedInvitationId, setSelectedInvitationId] = useState<
     string | null
@@ -373,7 +387,6 @@ export function AccessWorkspace({
     <div className="space-y-4">
       <section className="overflow-hidden rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-
           <button
             type="button"
             onClick={() => setShowComposer(true)}
@@ -519,7 +532,10 @@ export function AccessWorkspace({
           ) : invitations.isPending ? (
             <LoadingRows />
           ) : visible.length === 0 ? (
-            <EmptyInvitations tab={tab} onInvite={() => setShowComposer(true)} />
+            <EmptyInvitations
+              tab={tab}
+              onInvite={() => setShowComposer(true)}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[46rem] border-collapse text-left">
@@ -634,48 +650,48 @@ export function AccessWorkspace({
                         </tr>
                         {grouped && isOpen
                           ? invitation.guests.map((guest) => (
-                            <tr
-                              key={`${invitation.id}:${guest.id}`}
-                              className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]/40 align-top"
-                            >
-                              <td className="py-2.5 pr-3 pl-9">
-                                <span className="font-mono text-[12px] text-[var(--vms-ink-muted)]">
-                                  {invitation.code}-{guest.suffix}
-                                </span>
-                              </td>
-                              <td className="py-2.5 pr-3">
-                                <VisitorCell
-                                  guestName={guest.display_name_snapshot}
-                                  guestPhone={guest.phone_snapshot}
-                                  state={guest.state}
-                                />
-                              </td>
-                              <td className="py-2.5 pr-3">
-                                <VisitWindow
-                                  from={invitation.valid_from}
-                                  to={invitation.valid_to}
-                                />
-                              </td>
-                              <td className="py-2.5 pr-3 text-sm text-[var(--vms-ink-muted)]">
-                                {invitation.host_party?.display_name ||
-                                  partyName}
-                              </td>
-                              <td className="py-2.5 pr-3">
-                                <InvitationStatus
-                                  status={invitation.status}
-                                  displayStatus={invitation.display_status}
-                                />
-                              </td>
-                              <td />
-                            </tr>
-                          ))
+                              <tr
+                                key={`${invitation.id}:${guest.id}`}
+                                className="border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]/40 align-top"
+                              >
+                                <td className="py-2.5 pr-3 pl-9">
+                                  <span className="font-mono text-[12px] text-[var(--vms-ink-muted)]">
+                                    {invitation.code}-{guest.suffix}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <VisitorCell
+                                    guestName={guest.display_name_snapshot}
+                                    guestPhone={guest.phone_snapshot}
+                                    state={guest.state}
+                                  />
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <VisitWindow
+                                    from={invitation.valid_from}
+                                    to={invitation.valid_to}
+                                  />
+                                </td>
+                                <td className="py-2.5 pr-3 text-sm text-[var(--vms-ink-muted)]">
+                                  {invitation.host_party?.display_name ||
+                                    partyName}
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <InvitationStatus
+                                    status={invitation.status}
+                                    displayStatus={invitation.display_status}
+                                  />
+                                </td>
+                                <td />
+                              </tr>
+                            ))
                           : null}
                       </Fragment>
                     );
                   })}
-                      </tbody>
-                    </table>
-                  </div>
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -713,7 +729,9 @@ export function AccessWorkspace({
             ))}
             <button
               type="button"
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              onClick={() =>
+                setPage((current) => Math.min(totalPages, current + 1))
+              }
               disabled={page >= totalPages}
               aria-label="Next page"
               className="grid h-8 w-8 place-items-center rounded-md border border-[var(--vms-line)] text-[var(--vms-ink-muted)] transition hover:bg-[var(--vms-surface-subtle)] disabled:opacity-40"
@@ -749,14 +767,14 @@ function InvitationComposer({
   partyEmail,
   onCreated,
 }: {
-    isOpen: boolean;
-    onClose: () => void;
-    siteId: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+  siteId: string | null;
   destinationPlaceId: string;
   destinationName: string;
   partyName: string;
   partyEmail?: string | null;
-    onCreated: () => void | Promise<void>;
+  onCreated: () => void | Promise<void>;
 }) {
   const [guests, setGuests] = useState<GuestDraft[]>([createGuestDraft()]);
   const [purpose, setPurpose] = useState("");
@@ -784,9 +802,11 @@ function InvitationComposer({
   const windowEnd = new Date(validTo);
   const windowHours =
     Number.isFinite(windowStart.getTime()) &&
-      Number.isFinite(windowEnd.getTime()) &&
-      windowEnd > windowStart
-      ? Math.round(((windowEnd.getTime() - windowStart.getTime()) / 3_600_000) * 10) / 10
+    Number.isFinite(windowEnd.getTime()) &&
+    windowEnd > windowStart
+      ? Math.round(
+          ((windowEnd.getTime() - windowStart.getTime()) / 3_600_000) * 10,
+        ) / 10
       : null;
 
   function applyWindow(hours: number, dayOffset = 0) {
@@ -860,10 +880,11 @@ function InvitationComposer({
       size="lg"
       footerNote={
         siteId
-          ? `${guests.length} ${guests.length === 1 ? "visitor" : "visitors"}${windowHours
-            ? ` · ${windowHours} hour${windowHours === 1 ? "" : "s"} of access`
-            : ""
-          }`
+          ? `${guests.length} ${guests.length === 1 ? "visitor" : "visitors"}${
+              windowHours
+                ? ` · ${windowHours} hour${windowHours === 1 ? "" : "s"} of access`
+                : ""
+            }`
           : "This workspace is missing its Site reference"
       }
       error={error}
@@ -985,10 +1006,11 @@ function InvitationComposer({
             return (
               <div
                 key={guest.id}
-                className={`rounded-[var(--vms-radius-control)] border bg-[var(--vms-surface)] p-3 ${invalid
+                className={`rounded-[var(--vms-radius-control)] border bg-[var(--vms-surface)] p-3 ${
+                  invalid
                     ? "border-[var(--vms-danger)]"
                     : "border-[var(--vms-line)]"
-                  }`}
+                }`}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -1044,7 +1066,9 @@ function InvitationComposer({
                   </Field>
                   <Field
                     label={
-                      index === 0 ? "Email" : `Additional visitor ${index} email`
+                      index === 0
+                        ? "Email"
+                        : `Additional visitor ${index} email`
                     }
                   >
                     <input
@@ -1065,7 +1089,9 @@ function InvitationComposer({
                   </Field>
                   <Field
                     label={
-                      index === 0 ? "Phone" : `Additional visitor ${index} phone`
+                      index === 0
+                        ? "Phone"
+                        : `Additional visitor ${index} phone`
                     }
                   >
                     <input
@@ -1503,7 +1529,15 @@ function InvitationDetail({
               {canEdit ? (
                 <button
                   type="button"
-                  onClick={() => confirmAction({title: "Revoke invitation?", description: "This invitation will no longer grant visitor access.", confirmLabel: "Revoke invitation", onConfirm: onRevoke})}
+                  onClick={() =>
+                    confirmAction({
+                      title: "Revoke invitation?",
+                      description:
+                        "This invitation will no longer grant visitor access.",
+                      confirmLabel: "Revoke invitation",
+                      onConfirm: onRevoke,
+                    })
+                  }
                   disabled={revoking}
                   className="rounded-lg border border-[var(--vms-danger)] px-3 py-2 text-sm font-semibold text-[var(--vms-danger)] hover:bg-[var(--vms-danger-subtle)] disabled:opacity-50   "
                 >
@@ -1548,9 +1582,7 @@ function InvitationEditForm({
   const [validTo, setValidTo] = useState(() =>
     toLocalInput(new Date(invitation.valid_to)),
   );
-  const [maxUses, setMaxUses] = useState(
-    String(invitation.max_uses ?? 1),
-  );
+  const [maxUses, setMaxUses] = useState(String(invitation.max_uses ?? 1));
   const [purpose, setPurpose] = useState(invitation.purpose ?? "");
   const [error, setError] = useState<string | null>(null);
 
@@ -1714,7 +1746,7 @@ function Field({
 }: {
   label: string;
   required?: boolean;
-    hint?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (

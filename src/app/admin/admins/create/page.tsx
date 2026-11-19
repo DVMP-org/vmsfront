@@ -90,8 +90,17 @@ export default function CreateAdminPage() {
   };
 
   const permissionsReady = useMemo(
-    () => useCustomPermissions && !permissionsLoading && !permissionsError && permissionsMap,
-    [useCustomPermissions, permissionsLoading, permissionsError, permissionsMap]
+    () =>
+      useCustomPermissions &&
+      !permissionsLoading &&
+      !permissionsError &&
+      permissionsMap,
+    [
+      useCustomPermissions,
+      permissionsLoading,
+      permissionsError,
+      permissionsMap,
+    ],
   );
 
   return (
@@ -100,7 +109,10 @@ export default function CreateAdminPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Link href="/admin" className="text-[var(--brand-primary,#213928)] hover:underline">
+              <Link
+                href="/admin"
+                className="text-[var(--brand-primary,#213928)] hover:underline"
+              >
                 Admin dashboard
               </Link>
               <span>/</span>
@@ -111,7 +123,8 @@ export default function CreateAdminPage() {
               Onboard Admin
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Assign a role and optional overrides for a teammate who needs console access.
+              Assign a role and optional overrides for a teammate who needs
+              console access.
             </p>
           </div>
           <Button
@@ -128,7 +141,8 @@ export default function CreateAdminPage() {
           <CardHeader>
             <CardTitle>Admin profile</CardTitle>
             <CardDescription>
-              Provide their identity details, base role, and fine-tune extra permissions if needed.
+              Provide their identity details, base role, and fine-tune extra
+              permissions if needed.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -148,7 +162,10 @@ export default function CreateAdminPage() {
                   placeholder="Ada"
                   value={form.first_name}
                   onChange={(event) =>
-                    setForm((prev) => ({ ...prev, first_name: event.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      first_name: event.target.value,
+                    }))
                   }
                   required
                 />
@@ -157,7 +174,10 @@ export default function CreateAdminPage() {
                   placeholder="Obi"
                   value={form.last_name}
                   onChange={(event) =>
-                    setForm((prev) => ({ ...prev, last_name: event.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      last_name: event.target.value,
+                    }))
                   }
                   required
                 />
@@ -168,7 +188,9 @@ export default function CreateAdminPage() {
                   Role
                 </label>
                 {rolesLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading roles...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Loading roles...
+                  </p>
                 ) : !roles || roles?.items?.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No roles available. Create one first.
@@ -178,7 +200,10 @@ export default function CreateAdminPage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     value={form.role_id}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, role_id: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        role_id: event.target.value,
+                      }))
                     }
                     required
                   >
@@ -195,9 +220,12 @@ export default function CreateAdminPage() {
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-sm font-medium">Custom permission overrides</p>
+                    <p className="text-sm font-medium">
+                      Custom permission overrides
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Optionally augment or restrict the role with direct permissions.
+                      Optionally augment or restrict the role with direct
+                      permissions.
                     </p>
                   </div>
                   <Checkbox
@@ -265,9 +293,11 @@ export default function CreateAdminPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit"
+                <Button
+                  type="submit"
                   className="border-[var(--brand-primary,#213928)] gap-2 text-white bg-[var(--brand-primary,#213928)] hover:bg-[var(--brand-primary,#213928)/90]"
-                  isLoading={createAdmin.isPending}>
+                  isLoading={createAdmin.isPending}
+                >
                   Onboard admin
                 </Button>
               </div>

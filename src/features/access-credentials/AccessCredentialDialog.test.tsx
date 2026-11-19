@@ -56,7 +56,9 @@ it("issues and displays a one-time permanent access credential", async () => {
     </QueryClientProvider>,
   );
 
-  expect(await screen.findByText("No access credentials have been issued.")).toBeVisible();
+  expect(
+    await screen.findByText("No access credentials have been issued."),
+  ).toBeVisible();
   fireEvent.change(screen.getByLabelText("Label"), {
     target: { value: "Primary" },
   });

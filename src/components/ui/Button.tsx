@@ -45,8 +45,7 @@ const buttonVariants = cva(
         lg: "h-[var(--vms-control-height-touch)] min-w-[var(--vms-control-height-touch)] px-5 text-base",
         "icon-sm":
           "h-8 w-8 min-w-8 p-0 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
-        icon:
-          "h-10 w-10 min-w-10 p-0 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
+        icon: "h-10 w-10 min-w-10 p-0 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
         "icon-lg": "h-11 w-11 min-w-11 p-0",
       },
     },
@@ -60,7 +59,8 @@ const buttonVariants = cva(
 export type ButtonVariant = VariantProps<typeof buttonVariants>["variant"];
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;

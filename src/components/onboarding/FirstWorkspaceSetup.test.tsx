@@ -20,9 +20,7 @@ describe("FirstWorkspaceSetup", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("1 root site")).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Review first site/ }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Review first site/ }));
     expect(openProperties).toHaveBeenCalledOnce();
   });
 

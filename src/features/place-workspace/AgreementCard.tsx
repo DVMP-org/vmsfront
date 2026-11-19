@@ -127,8 +127,7 @@ export function AgreementCard({
                       aria-hidden
                       className="h-3.5 w-3.5 text-[var(--vms-success)]"
                     />
-                    You accepted these terms on{" "}
-                    {formatDate(lease.accepted_at!)}
+                    You accepted these terms on {formatDate(lease.accepted_at!)}
                   </p>
                 ) : (
                   <p className="text-xs text-[var(--vms-ink-muted)]">

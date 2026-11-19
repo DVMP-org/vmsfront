@@ -1,12 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export type OperationsIllustrationVariant =
-  | "property"
-  | "people"
-  | "access"
-  | "finance"
-  | "search"
-  | "generic";
+  "property" | "people" | "access" | "finance" | "search" | "generic";
 
 const illustrationLabels: Record<OperationsIllustrationVariant, string> = {
   property: "Property and place illustration",

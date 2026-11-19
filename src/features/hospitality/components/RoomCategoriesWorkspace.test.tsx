@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,8 +41,9 @@ const categories = [
 ];
 
 vi.mock("@/store/app-store", () => ({
-  useAppStore: (selector: (state: { selectedSite: { id: string } }) => unknown) =>
-    selector({ selectedSite: { id: "site" } }),
+  useAppStore: (
+    selector: (state: { selectedSite: { id: string } }) => unknown,
+  ) => selector({ selectedSite: { id: "site" } }),
 }));
 
 vi.mock("@/features/place-groups/api", () => ({
@@ -60,8 +67,20 @@ vi.mock("../queries", () => ({
   }),
   useHospitalityRooms: () => ({
     data: [
-      { id: "room-1", name: "101", room_number: "101", status: "available", place_group_id: "group-deluxe" },
-      { id: "room-2", name: "102", room_number: "102", status: "available", place_group_id: "group-deluxe" },
+      {
+        id: "room-1",
+        name: "101",
+        room_number: "101",
+        status: "available",
+        place_group_id: "group-deluxe",
+      },
+      {
+        id: "room-2",
+        name: "102",
+        room_number: "102",
+        status: "available",
+        place_group_id: "group-deluxe",
+      },
     ],
     isPending: false,
   }),
@@ -72,7 +91,10 @@ function mount(canManage = true) {
     <QueryClientProvider
       client={
         new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
         })
       }
     >
@@ -106,11 +128,17 @@ describe("room categories", () => {
       target: { value: "Garden Twin" },
     });
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Create category" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Create category" }),
+    );
 
     await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
     expect(mocks.create).toHaveBeenCalledWith(
-      expect.objectContaining({ site_id: "site", name: "Garden Twin", place_ids: [] }),
+      expect.objectContaining({
+        site_id: "site",
+        name: "Garden Twin",
+        place_ids: [],
+      }),
     );
   });
 

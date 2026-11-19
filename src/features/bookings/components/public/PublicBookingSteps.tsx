@@ -72,34 +72,37 @@ export function PublicBookingSteps({ current }: { current: number }) {
                 </span>
               ) : null}
               <span
-              aria-hidden="true"
-              className={
-                "grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold tabular-nums " +
-                (active
-                  ? "bg-[var(--vms-accent)] text-white"
-                  : done
-                    ? "bg-[var(--vms-success)] text-white"
-                    : "bg-[var(--vms-surface-muted)] text-[var(--vms-ink-muted)] ring-1 ring-inset ring-[var(--vms-line)]")
-              }
-            >
-              {done ? "✓" : index + 1}
-            </span>
-            <span
-              aria-current={active ? "step" : undefined}
-              className={
-                active
-                  ? "font-semibold text-[var(--vms-ink)]"
-                  : "text-[var(--vms-ink-muted)]"
-              }
-            >
-              {label}
-            </span>
-            {index < STEPS.length - 1 ? (
-              <span aria-hidden="true" className="text-[var(--vms-line-strong)]">
-                —
+                aria-hidden="true"
+                className={
+                  "grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold tabular-nums " +
+                  (active
+                    ? "bg-[var(--vms-accent)] text-white"
+                    : done
+                      ? "bg-[var(--vms-success)] text-white"
+                      : "bg-[var(--vms-surface-muted)] text-[var(--vms-ink-muted)] ring-1 ring-inset ring-[var(--vms-line)]")
+                }
+              >
+                {done ? "✓" : index + 1}
               </span>
-            ) : null}
-          </li>
+              <span
+                aria-current={active ? "step" : undefined}
+                className={
+                  active
+                    ? "font-semibold text-[var(--vms-ink)]"
+                    : "text-[var(--vms-ink-muted)]"
+                }
+              >
+                {label}
+              </span>
+              {index < STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="text-[var(--vms-line-strong)]"
+                >
+                  —
+                </span>
+              ) : null}
+            </li>
           );
         })}
       </ol>

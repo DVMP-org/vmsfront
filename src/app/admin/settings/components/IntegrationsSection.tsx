@@ -137,7 +137,8 @@ export default function IntegrationsSection({
     const rows = integrations.filter((integration) => {
       if (typeFilter && integration.provider !== typeFilter) return false;
       if (statusFilter === "connected" && !integration.enabled) return false;
-      if (statusFilter === "needs-setup" && integration.configured) return false;
+      if (statusFilter === "needs-setup" && integration.configured)
+        return false;
       if (
         statusFilter === "paused" &&
         (!integration.configured || integration.enabled)
@@ -157,7 +158,9 @@ export default function IntegrationsSection({
   }, [integrations, searchQuery, statusFilter, typeFilter]);
 
   const hasActiveFilters =
-    Boolean(searchQuery.trim()) || statusFilter !== "all" || Boolean(typeFilter);
+    Boolean(searchQuery.trim()) ||
+    statusFilter !== "all" ||
+    Boolean(typeFilter);
   const togglingName = enableMutation.isPending
     ? enableMutation.variables
     : disableMutation.isPending
@@ -199,10 +202,26 @@ export default function IntegrationsSection({
         className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
       >
         <dl className="grid grid-cols-2 divide-x divide-y divide-[var(--vms-line)] sm:grid-cols-4 sm:divide-y-0">
-          <SummaryCell label="Connected" value={counts.connected} hint="Live for this organization" />
-          <SummaryCell label="Configured" value={counts.configured} hint="Credentials saved" />
-          <SummaryCell label="Needs setup" value={counts.needsSetup} hint="Awaiting credentials" />
-          <SummaryCell label="Categories" value={counts.categories} hint="Provider types" />
+          <SummaryCell
+            label="Connected"
+            value={counts.connected}
+            hint="Live for this organization"
+          />
+          <SummaryCell
+            label="Configured"
+            value={counts.configured}
+            hint="Credentials saved"
+          />
+          <SummaryCell
+            label="Needs setup"
+            value={counts.needsSetup}
+            hint="Awaiting credentials"
+          />
+          <SummaryCell
+            label="Categories"
+            value={counts.categories}
+            hint="Provider types"
+          />
         </dl>
       </section>
 
@@ -299,7 +318,9 @@ export default function IntegrationsSection({
               variant="outline"
               size="sm"
               onClick={() => refetch()}
-              leftNode={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}
+              leftNode={
+                <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+              }
             >
               Retry
             </Button>
@@ -311,10 +332,7 @@ export default function IntegrationsSection({
       ) : null}
 
       {isLoading ? (
-        <div
-          role="status"
-          className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-        >
+        <div role="status" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <span className="sr-only">Loading integrations</span>
           {[0, 1, 2, 3, 4, 5].map((key) => (
             <div
@@ -360,7 +378,10 @@ export default function IntegrationsSection({
               className="inline-flex min-h-8 items-center gap-1.5 rounded-[var(--vms-radius-control)] px-2 font-semibold hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] disabled:opacity-50"
             >
               {isFetching ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
               )}
@@ -475,7 +496,8 @@ function IntegrationCard({
         <span aria-hidden="true">·</span> Organization-wide
       </p>
       <p className="mt-3 line-clamp-3 flex-1 text-sm leading-6 text-[var(--vms-ink-muted)]">
-        {integration.description || "Provider connection for this organization."}
+        {integration.description ||
+          "Provider connection for this organization."}
       </p>
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--vms-line)] pt-4">

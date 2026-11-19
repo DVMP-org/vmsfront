@@ -185,7 +185,7 @@ export const Header = memo(function Header({
                 useCase={
                   isOrganizationRoute
                     ? undefined
-                    : workspaceContext.data?.effective_use_case ?? undefined
+                    : (workspaceContext.data?.effective_use_case ?? undefined)
                 }
                 routes={isOrganizationRoute ? organizationCommands : undefined}
                 searchLabel={
@@ -202,7 +202,9 @@ export const Header = memo(function Header({
                     : null
                 }
                 contextKey={`${organization?.id}:${currentUser?.id}:${pathname}`}
-                navigate={(href) => router.push(withSite(href, selectedSite?.id))}
+                navigate={(href) =>
+                  router.push(withSite(href, selectedSite?.id))
+                }
               />
             </div>
           </div>
@@ -219,13 +221,19 @@ export const Header = memo(function Header({
             ) : null}
             {isOrganizationRoute ? (
               <>
-                <span className="mx-0.5 hidden h-6 w-px bg-white/15 sm:block" aria-hidden="true" />
+                <span
+                  className="mx-0.5 hidden h-6 w-px bg-white/15 sm:block"
+                  aria-hidden="true"
+                />
                 <Link
                   href="/organization/settings"
                   aria-label="Organization settings"
                   className="grid h-10 w-10 place-items-center rounded-full text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-coral-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--vms-ink)]"
                 >
-                  <Settings className="h-[1.125rem] w-[1.125rem]" aria-hidden="true" />
+                  <Settings
+                    className="h-[1.125rem] w-[1.125rem]"
+                    aria-hidden="true"
+                  />
                 </Link>
               </>
             ) : null}
@@ -235,7 +243,10 @@ export const Header = memo(function Header({
 
             {isOrganizationRoute ? (
               <>
-                <span className="mx-0.5 hidden h-6 w-px bg-white/15 md:block" aria-hidden="true" />
+                <span
+                  className="mx-0.5 hidden h-6 w-px bg-white/15 md:block"
+                  aria-hidden="true"
+                />
                 <div className="hidden md:block">
                   <OrganizationSwitcher compact />
                 </div>
@@ -336,7 +347,11 @@ export const Header = memo(function Header({
             </div>
           </div>
         ) : (
-          <div role="status" aria-label="Loading account" className="flex h-10 w-24 shrink-0 items-center justify-end gap-2">
+          <div
+            role="status"
+            aria-label="Loading account"
+            className="flex h-10 w-24 shrink-0 items-center justify-end gap-2"
+          >
             <span className="h-5 w-5 animate-pulse rounded bg-white/20" />
             <span className="h-8 w-8 animate-pulse rounded-full bg-white/20" />
             <span className="h-3 w-3 rounded bg-white/20" />

@@ -41,10 +41,7 @@ export function useCreateContractor(siteId?: string | null) {
 export function useUpdateContractor(siteId?: string | null) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      ...input
-    }: ContractorUpdateInput & { id: string }) =>
+    mutationFn: ({ id, ...input }: ContractorUpdateInput & { id: string }) =>
       contractorsApi.update(id, input),
     onSuccess: async (contractor) => {
       await client.invalidateQueries({ queryKey: contractorKeys.list(siteId) });

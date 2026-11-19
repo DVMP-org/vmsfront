@@ -211,7 +211,7 @@ export function useProfile() {
 export function useVerifyToken() {
   const { isAuthenticated, _hasHydrated, token, user } = useAuthStore();
   const organization = useAppStore((state) => state.organization);
-  
+
   return useQuery<CurrentUserContext>({
     queryKey: ["auth", "verify", organization?.id, user?.id],
     staleTime: 0,

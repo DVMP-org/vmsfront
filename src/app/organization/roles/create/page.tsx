@@ -32,7 +32,8 @@ const emptyDraft: RoleDraft = {
 
 export default function RoleDraftPage() {
   const pathname = usePathname();
-  const embedded = pathname?.startsWith("/organization/settings/roles") === true;
+  const embedded =
+    pathname?.startsWith("/organization/settings/roles") === true;
   const searchParams = useSearchParams();
   const roleId = searchParams.get("role");
   const roles = useAdminRoles({ page: 1, pageSize: 100 });
@@ -91,10 +92,7 @@ export default function RoleDraftPage() {
       ) : null}
 
       <div className="flex gap-3 rounded-[var(--vms-radius-surface)] border border-[var(--vms-info)] bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] p-4 text-sm text-[var(--vms-info)]">
-        <FlaskConical
-          className="mt-0.5 h-4 w-4 shrink-0"
-          aria-hidden="true"
-        />
+        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         <div>
           <p className="font-semibold">No changes are saved</p>
           <p className="mt-1 leading-5">
@@ -266,9 +264,7 @@ export default function RoleDraftPage() {
             </p>
           </div>
           <div className="flex justify-end">
-            <Button onClick={() => setPreviewOpen(false)}>
-              Close preview
-            </Button>
+            <Button onClick={() => setPreviewOpen(false)}>Close preview</Button>
           </div>
         </div>
       </Modal>

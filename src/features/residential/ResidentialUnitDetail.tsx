@@ -156,7 +156,6 @@ export function ResidentialUnitDetail({
       }
     >
       <div className="space-y-4 border-b border-[var(--vms-line)] px-5 py-5 sm:px-6">
-
         <div className="flex flex-wrap gap-2">
           <StatusBadge
             tone={

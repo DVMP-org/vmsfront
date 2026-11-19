@@ -126,7 +126,8 @@ export function PublicBookingForm({
     : site.hosts;
   // Who is hosting is meaningless before the visitor has said where they are
   // going, and offering the whole Site's people would be a list they cannot judge.
-  const askForHost = site.requires_host && (placeId !== "" || !site.requires_place);
+  const askForHost =
+    site.requires_host && (placeId !== "" || !site.requires_place);
   const nights = nightsBetween(checkIn, checkOut);
   const window = stayWindow(checkIn, checkOut);
   const placeMissing = site.requires_place && !placeId;
@@ -279,8 +280,6 @@ export function PublicBookingForm({
           </Field>
         </div>
 
-
-
         <Field id="book-guests" label="How many of you?" required>
           {(control) => (
             <input
@@ -381,13 +380,20 @@ export function PublicBookingForm({
       </fieldset>
 
       {submit.isError ? (
-        <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+        <p
+          role="alert"
+          className="text-xs font-medium text-[var(--vms-danger)]"
+        >
           {parseApiError(submit.error).message}
         </p>
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Button type="submit" disabled={!canSubmit} isLoading={submit.isPending}>
+        <Button
+          type="submit"
+          disabled={!canSubmit}
+          isLoading={submit.isPending}
+        >
           <CalendarClock className="h-4 w-4" aria-hidden="true" />
           Send request
         </Button>

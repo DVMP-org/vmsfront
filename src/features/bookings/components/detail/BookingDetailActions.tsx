@@ -8,7 +8,11 @@ import { BookingApprovalActions } from "../BookingApprovalActions";
 import { CancelBookingDialog } from "./CancelBookingDialog";
 import { canCancel, canDecide } from "../../api-types";
 import type { BookingDetailDto } from "../../api-types";
-import { useApproveBooking, useCancelBooking, useDeclineBooking } from "../../queries";
+import {
+  useApproveBooking,
+  useCancelBooking,
+  useDeclineBooking,
+} from "../../queries";
 
 /**
  * Everything an operator may do to this booking, and nothing they may not.
@@ -19,7 +23,11 @@ import { useApproveBooking, useCancelBooking, useDeclineBooking } from "../../qu
  * that the server will refuse is worse than hiding it, because the refusal
  * arrives as an error rather than as an explanation.
  */
-export function BookingDetailActions({ booking }: { booking: BookingDetailDto }) {
+export function BookingDetailActions({
+  booking,
+}: {
+  booking: BookingDetailDto;
+}) {
   const approve = useApproveBooking(booking.id);
   const decline = useDeclineBooking(booking.id);
   const cancel = useCancelBooking(booking.id);
@@ -29,7 +37,8 @@ export function BookingDetailActions({ booking }: { booking: BookingDetailDto })
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const needsRoom = booking.kind === "reservation" && booking.status === "requested";
+  const needsRoom =
+    booking.kind === "reservation" && booking.status === "requested";
   const decidable = canDecide(booking) && !needsRoom;
   const cancellable = canCancel(booking);
 
@@ -41,7 +50,9 @@ export function BookingDetailActions({ booking }: { booking: BookingDetailDto })
       setDeclineReason("");
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "That action did not go through.",
+        cause instanceof Error
+          ? cause.message
+          : "That action did not go through.",
       );
     }
   }
@@ -101,7 +112,9 @@ export function BookingDetailActions({ booking }: { booking: BookingDetailDto })
               variant="outline"
               disabled={declineReason.trim().length < 3 || decline.isPending}
               isLoading={decline.isPending}
-              onClick={() => void run(() => decline.mutateAsync(declineReason.trim()))}
+              onClick={() =>
+                void run(() => decline.mutateAsync(declineReason.trim()))
+              }
             >
               Confirm decline
             </Button>
@@ -111,13 +124,16 @@ export function BookingDetailActions({ booking }: { booking: BookingDetailDto })
 
       {needsRoom ? (
         <p className="rounded-lg border border-[var(--vms-line)] px-3 py-2 text-xs text-[var(--vms-ink-muted)]">
-          A reservation has to name a room before it can be approved. Assign one on
-          the Rooms tab.
+          A reservation has to name a room before it can be approved. Assign one
+          on the Rooms tab.
         </p>
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-xs font-medium text-[var(--vms-danger)]">
+        <p
+          role="alert"
+          className="text-xs font-medium text-[var(--vms-danger)]"
+        >
           {error}
         </p>
       ) : null}

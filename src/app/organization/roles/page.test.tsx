@@ -34,14 +34,14 @@ describe("organization role prototype", () => {
     render(<OrganizationRolesPage />);
     expect(screen.getByText("Authoring prototype")).toBeInTheDocument();
     expect(
-      screen.getByText(/drafts are not saved and existing roles are not changed/i),
+      screen.getByText(
+        /drafts are not saved and existing roles are not changed/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Create draft role" }),
     ).toHaveAttribute("href", "/organization/roles/create");
-    expect(
-      screen.getByRole("link", { name: /Inspect draft/ }),
-    ).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Inspect draft/ })).toHaveAttribute(
       "href",
       `/organization/roles/create?role=${role.id}`,
     );

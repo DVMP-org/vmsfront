@@ -32,14 +32,18 @@ describe("form primitives", () => {
   it("announces errors, focuses the summary and links to the invalid control", async () => {
     render(
       <>
-        <FormErrorSummary errors={{ "property-name": "Enter a property name." }} />
+        <FormErrorSummary
+          errors={{ "property-name": "Enter a property name." }}
+        />
         <input id="property-name" aria-label="Property name" />
       </>,
     );
 
     const summary = screen.getByRole("alert");
     await waitFor(() => expect(summary).toHaveFocus());
-    fireEvent.click(screen.getByRole("link", { name: "Enter a property name." }));
+    fireEvent.click(
+      screen.getByRole("link", { name: "Enter a property name." }),
+    );
     expect(screen.getByLabelText("Property name")).toHaveFocus();
   });
 

@@ -14,7 +14,12 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { parseApiError } from "@/lib/error-utils";
 import { placeGroupsApi, type PlaceGroup } from "@/features/place-groups/api";
 import { useAppStore } from "@/store/app-store";
-import { useHospitalityRooms, useRoomCategories, roomCategoryKeys, hospitalityRoomKeys } from "../queries";
+import {
+  useHospitalityRooms,
+  useRoomCategories,
+  roomCategoryKeys,
+  hospitalityRoomKeys,
+} from "../queries";
 
 /**
  * The categories a room is sold as.
@@ -28,11 +33,7 @@ import { useHospitalityRooms, useRoomCategories, roomCategoryKeys, hospitalityRo
  * category. A count column that someone has to remember to update is a count
  * column that is eventually wrong.
  */
-export function RoomCategoriesWorkspace({
-  canManage,
-}: {
-  canManage: boolean;
-}) {
+export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
   const selectedSite = useAppStore((state) => state.selectedSite);
   const client = useQueryClient();
   const categories = useRoomCategories();
@@ -74,7 +75,9 @@ export function RoomCategoriesWorkspace({
         const count = counts.get(group.id) ?? 0;
         return (
           <span className={count === 0 ? "text-[var(--vms-ink-muted)]" : ""}>
-            {count === 0 ? "No rooms yet" : `${count} room${count === 1 ? "" : "s"}`}
+            {count === 0
+              ? "No rooms yet"
+              : `${count} room${count === 1 ? "" : "s"}`}
           </span>
         );
       },
@@ -101,7 +104,11 @@ export function RoomCategoriesWorkspace({
         tone="danger"
         title="Room categories could not be loaded"
         action={
-          <Button variant="outline" size="sm" onClick={() => categories.refetch()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => categories.refetch()}
+          >
             Retry
           </Button>
         }
@@ -119,8 +126,8 @@ export function RoomCategoriesWorkspace({
             Room categories
           </h2>
           <p className="text-xs text-[var(--vms-ink-muted)]">
-            What guests book — “Deluxe Super”, “Executive Suite”. A category can be
-            created before any room belongs to it, and a room belongs to one
+            What guests book — “Deluxe Super”, “Executive Suite”. A category can
+            be created before any room belongs to it, and a room belongs to one
             category.
           </p>
         </div>
@@ -143,10 +150,15 @@ export function RoomCategoriesWorkspace({
           <div className="space-y-2">
             <strong>{group.name}</strong>
             <p className="text-xs text-[var(--vms-ink-muted)]">
-              {counts.get(group.id) ?? 0} rooms · {group.description || "No description"}
+              {counts.get(group.id) ?? 0} rooms ·{" "}
+              {group.description || "No description"}
             </p>
             {canManage ? (
-              <Button size="sm" variant="outline" onClick={() => setEditing(group)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditing(group)}
+              >
                 Edit {group.name}
               </Button>
             ) : null}
