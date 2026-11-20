@@ -19,12 +19,16 @@ import {
   Users,
   Wallet,
   Wrench,
+  Zap,
 } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import type { PlaceContext } from "./api";
-import { placeWorkspaceNavigation } from "./navigation";
+import {
+  pluginWorkspaceNavigation,
+  placeWorkspaceNavigation,
+} from "./navigation";
 import { PlaceWorkspaceSwitcher } from "./PlaceWorkspaceSwitcher";
 
 const icons: Record<string, typeof Home> = {
@@ -58,6 +62,7 @@ export function PlaceSidebar({
 }) {
   const pathname = usePathname()?.replace(/\/+$/, "");
   const groups = context ? placeWorkspaceNavigation(context) : [];
+  const pluginItems = context ? pluginWorkspaceNavigation(context) : [];
 
   return (
     <div className="flex h-full flex-col gap-4 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -109,6 +114,42 @@ export function PlaceSidebar({
             </ul>
           </div>
         ))}
+        {pluginItems.length ? (
+          <div>
+            <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--vms-ink-muted)]">
+              Extensions
+            </p>
+            <ul className="space-y-0.5">
+              {pluginItems.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <li key={`${item.plugin}-${item.key}`}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "relative flex min-h-10 items-center gap-2.5 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]",
+                        active
+                          ? "bg-[var(--vms-surface-subtle)] font-semibold text-[var(--vms-ink)]"
+                          : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
+                      )}
+                    >
+                      {active ? (
+                        <span
+                          aria-hidden
+                          className="absolute w-[3px] rounded-full bg-[var(--vms-active-accent)]"
+                        />
+                      ) : null}
+                      <Zap aria-hidden className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0 truncate">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
       </nav>
 
       <div className="mt-auto border-t border-[var(--vms-line)] pt-2">

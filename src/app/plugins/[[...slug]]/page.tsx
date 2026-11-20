@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FileQuestion } from "lucide-react";
+import { useWorkspaceContext } from "@/features/context/use-workspace-context";
+import { FileQuestion, PlugZap } from "lucide-react";
 
 function PluginContent() {
   const params = useParams<{ slug?: string[] }>();
@@ -88,8 +89,13 @@ function PluginContent() {
     return "resident";
   }, [fullPath, plugins, isLoading]);
 
+  // Installation for the organization is eligibility only. The Site must have
+  // activated the plugin, otherwise its routes do not exist for this workspace.
+  const workspaceContext = useWorkspaceContext();
+  const activePlugins = workspaceContext.data?.active_plugins ?? [];
+
   // Show loading state while plugins are being loaded
-  if (isLoading) {
+  if (isLoading || workspaceContext.isPending) {
     return (
       <DashboardLayout type="resident">
         <div className="p-6 space-y-4">
@@ -106,6 +112,26 @@ function PluginContent() {
   if (matchedRoute) {
     const { route, layoutType, plugin } = matchedRoute;
     const Component = route.component;
+    if (!activePlugins.includes(plugin.name)) {
+      return (
+        <DashboardLayout type={layoutType}>
+          <Card>
+            <CardContent className="p-10">
+              <EmptyState
+                icon={PlugZap}
+                title={`${plugin.manifest.title} is not active here`}
+                description="Plugins run only on Sites that activated them. Ask the Site administrator to activate this plugin for this Site."
+                action={{
+                  label: "Go to Dashboard",
+                  onClick: () =>
+                    router.push(layoutType === "admin" ? "/admin" : "/"),
+                }}
+              />
+            </CardContent>
+          </Card>
+        </DashboardLayout>
+      );
+    }
     return (
       <DashboardLayout type={layoutType}>
         <PluginErrorBoundary pluginName={plugin.manifest.title}>
@@ -147,5 +173,16 @@ function PluginContent() {
 }
 
 export default function PluginPage() {
-  return <PluginContent />;
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      }
+    >
+      <PluginContent />
+    </Suspense>
+  );
 }

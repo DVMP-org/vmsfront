@@ -37,18 +37,38 @@ export function useWorkspaceContext() {
     retry: false,
   });
 
+  // The server resolved this hint to a Site; that answer is authoritative for
+  // ``selectedSite``. Without this, a stale or Place-shaped hint (an old
+  // cookie, a shared link) left the store empty and the next Site-scoped
+  // request reached the plugin guard without a Site.
+  //
+  // Only primitives are listed as dependencies: the effect array must keep a
+  // constant shape across renders (a hook hot-replaced while mounted otherwise
+  // trips "The final argument passed to useEffect changed size").
+  const resolvedSiteId =
+    query.data?.management?.selected_site?.id ??
+    query.data?.management?.authoritative_site?.id ??
+    null;
+  const resolvedSiteName =
+    query.data?.management?.selected_site?.name ??
+    query.data?.management?.authoritative_site?.name ??
+    null;
+  const selectedSiteId = site?.id ?? null;
+  const selectedSiteName = site?.name ?? null;
+
   useEffect(() => {
-    const activeSite =
-      query.data?.management?.selected_site ||
-      query.data?.management?.authoritative_site;
-    if (
-      activeSite &&
-      (!effectiveSiteId || activeSite.id === effectiveSiteId) &&
-      (!site || site.id !== activeSite.id || site.name !== activeSite.name)
-    ) {
-      setSelectedSite({ id: activeSite.id, name: activeSite.name });
+    if (!resolvedSiteId) return;
+    if (selectedSiteId === resolvedSiteId && selectedSiteName === resolvedSiteName) {
+      return;
     }
-  }, [query.data, site, effectiveSiteId, setSelectedSite]);
+    setSelectedSite({ id: resolvedSiteId, name: resolvedSiteName ?? "" });
+  }, [
+    resolvedSiteId,
+    resolvedSiteName,
+    selectedSiteId,
+    selectedSiteName,
+    setSelectedSite,
+  ]);
 
   return query;
 }

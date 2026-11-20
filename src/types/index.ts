@@ -415,6 +415,8 @@ export interface WorkspacePlace {
   slug: string;
   kind: string;
   is_active: boolean;
+  /** The Site that owns this Place — the only valid ``X-Site`` value. */
+  site_id?: string | null;
   site_name?: string | null;
   effective_use_case?: import("@/features/context/api").UseCase | null;
   address?: string;

@@ -294,6 +294,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
   // This ensures plugins only appear in the correct sidebar context
   // Also deduplicates by plugin name to prevent duplicates
   const filteredPlugins = useMemo(() => {
+    // Installing a plugin for the organization only makes it eligible. The
+    // Site decides where it runs, so the shell follows the server's
+    // active_plugins list instead of every loaded frontend package.
+    const activePlugins = new Set(
+      workspaceContext.data?.active_plugins ?? [],
+    );
     const seen = new Set<string>();
     return plugins.filter((plugin) => {
       // Deduplicate by name first
@@ -301,6 +307,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
         return false;
       }
       seen.add(plugin.name);
+
+      if (!activePlugins.has(plugin.name)) {
+        return false;
+      }
 
       // Only show plugin if it has routes for the current sidebar type
       // Use actualType to ensure consistency with pathname
@@ -312,7 +322,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
       }
       return false;
     });
-  }, [plugins, actualType]);
+  }, [plugins, actualType, workspaceContext.data?.active_plugins]);
 
   const links = useMemo(() => {
     let baseLinks =
@@ -852,6 +862,10 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                           plugin.basePath,
                           route.path,
                         );
+                        const routeLink =
+                          actualType === "admin"
+                            ? withSite(routeHref, activeSiteId)
+                            : routeHref;
                         const routeTitle = route.title || route.path || "Route";
                         const routeIcon = route.icon || "circle";
                         return (
@@ -866,7 +880,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                   ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
                                   : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                               )}
-                              href={routeHref}
+                              href={routeLink}
                             >
                               <i
                                 className={cn(

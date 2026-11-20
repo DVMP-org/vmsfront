@@ -53,10 +53,14 @@ import {
 } from "@/types";
 import {
   BackendPlugin,
-  Plugin,
   MarketplacePlugin,
   MarketplaceCategory,
   InstallPluginResponse,
+  PluginConfig,
+  PluginHealth,
+  PluginSiteActivationResult,
+  PluginSiteState,
+  SitePluginList,
 } from "@/types/plugin";
 
 export const adminService = {
@@ -627,14 +631,6 @@ export const adminService = {
     return apiClient.get("/admin/plugins");
   },
 
-  async getPluginEntitlements(): Promise<ApiResponse<any[]>> {
-    return apiClient.get("/admin/plugins/entitlements");
-  },
-
-  async getPluginEntitlement(pluginId: string): Promise<ApiResponse<any>> {
-    return apiClient.get(`/admin/plugins/entitlements/${pluginId}`);
-  },
-
   async togglePlugin(pluginId: string): Promise<ApiResponse<any>> {
     return apiClient.put(`/admin/plugins/${pluginId}/enable`);
   },
@@ -650,6 +646,55 @@ export const adminService = {
     settings: any,
   ): Promise<ApiResponse<any>> {
     return apiClient.post(`/admin/plugins/${pluginId}/configure`, settings);
+  },
+
+  async getPluginSites(
+    pluginId: string,
+  ): Promise<ApiResponse<PluginSiteState[]>> {
+    return apiClient.get(`/admin/plugins/${pluginId}/sites`);
+  },
+
+  async activatePluginForSites(
+    pluginId: string,
+    siteIds: string[],
+    body: { bindings: Record<string, string>; configuration?: PluginConfig },
+  ): Promise<ApiResponse<PluginSiteActivationResult[]>> {
+    return apiClient.put(`/admin/plugins/${pluginId}/sites`, {
+      ...body,
+      site_ids: siteIds,
+    });
+  },
+
+  async getPluginHealth(pluginId: string): Promise<ApiResponse<PluginHealth>> {
+    return apiClient.get(`/admin/plugins/${pluginId}/health`);
+  },
+
+  async suspendPluginForSite(
+    pluginId: string,
+    siteId: string,
+  ): Promise<ApiResponse<PluginSiteState>> {
+    return apiClient.post(`/admin/plugins/${pluginId}/sites/${siteId}/suspend`);
+  },
+
+  async getSitePlugins(siteId: string): Promise<ApiResponse<SitePluginList>> {
+    return apiClient.get(`/admin/sites/${siteId}/plugins`);
+  },
+
+  async activateSitePlugin(
+    siteId: string,
+    pluginId: string,
+    body: { bindings: Record<string, string>; configuration?: PluginConfig },
+  ): Promise<ApiResponse<PluginSiteState>> {
+    return apiClient.put(`/admin/sites/${siteId}/plugins/${pluginId}`, body);
+  },
+
+  async suspendSitePlugin(
+    siteId: string,
+    pluginId: string,
+  ): Promise<ApiResponse<PluginSiteState>> {
+    return apiClient.post(
+      `/admin/sites/${siteId}/plugins/${pluginId}/suspend`,
+    );
   },
 
   // Branding Themes
@@ -850,12 +895,6 @@ export const adminService = {
     });
   },
 
-  async getMarketplacePlugin(
-    pluginId: string,
-  ): Promise<ApiResponse<MarketplacePlugin>> {
-    return apiClient.get(`/admin/plugins/marketplace/${pluginId}`);
-  },
-
   async getMarketplaceCategories(): Promise<
     ApiResponse<MarketplaceCategory[]>
   > {
@@ -866,11 +905,5 @@ export const adminService = {
     pluginId: string,
   ): Promise<ApiResponse<InstallPluginResponse>> {
     return apiClient.post(`/admin/plugins/${pluginId}/marketplace/install`);
-  },
-
-  async uninstallPlugin(
-    pluginId: string,
-  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return apiClient.delete(`/admin/plugins/${pluginId}/marketplace/uninstall`);
   },
 };

@@ -15,6 +15,16 @@ export interface PlaceContext {
   modules: string[];
   maintenance_categories: string[];
   site_id: string;
+  /** Plugin slugs active on this Place's Site. */
+  active_plugins?: string[];
+  /** Navigation contributed by those plugins for the party workspace. */
+  plugin_navigation?: Array<{
+    plugin: string;
+    key: string;
+    label: string;
+    route: string;
+    permission: string;
+  }>;
 }
 export interface Announcement {
   id: string;

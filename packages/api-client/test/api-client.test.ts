@@ -39,18 +39,18 @@ describe("@vms/api-client", () => {
       axiosInstance: http,
       getToken: () => "session-token",
       getOrganizationSlug: () => "acme",
-      getPropertyId: () => "property-1",
+      getSiteId: () => "site-1",
     });
 
-    await expect(client.get("/api/properties")).resolves.toEqual({ ok: true });
+    await expect(client.get("/api/places")).resolves.toEqual({ ok: true });
     expect(requestHeaders).toMatchObject({
       Authorization: "Bearer session-token",
       "X-Organization": "acme",
-      "X-Property": "property-1",
+      "X-Site": "site-1",
     });
   });
 
-  it("does not send property context on the base domain", async () => {
+  it("does not send Site context on the base domain", async () => {
     let requestHeaders: Record<string, unknown> = {};
     const http = axios.create();
     http.defaults.adapter = async (config) => {
@@ -67,12 +67,12 @@ describe("@vms/api-client", () => {
     const client = createApiClient({
       axiosInstance: http,
       getOrganizationSlug: () => null,
-      getPropertyId: () => "stale-property",
+      getSiteId: () => "stale-site",
     });
 
     await client.get("/api/organizations");
     expect(requestHeaders).not.toHaveProperty("X-Organization");
-    expect(requestHeaders).not.toHaveProperty("X-Property");
+    expect(requestHeaders).not.toHaveProperty("X-Site");
   });
 
   it("clears the session and preserves the current path on 401", async () => {

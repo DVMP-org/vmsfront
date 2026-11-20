@@ -77,7 +77,6 @@ export function organizationSettingsSectionFromPath(
   if (pathname?.startsWith("/organization/settings/subscription")) {
     return "subscription";
   }
-  if (pathname?.startsWith("/organization/settings/plugins")) return "plugins";
   if (pathname?.startsWith("/organization/plugins")) return "plugins";
   if (pathname?.startsWith("/organization/settings/integrations")) {
     return "integrations";

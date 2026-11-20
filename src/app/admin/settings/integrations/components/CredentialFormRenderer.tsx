@@ -16,6 +16,8 @@ interface CredentialFormRendererProps {
   credentials: IntegrationCredentials;
   values: CredentialFormValues;
   onChange: (key: string, value: string | number | boolean) => void;
+  /** Keys with a stored value. The value itself never reaches the client. */
+  configuredKeys?: string[];
   errors?: Record<string, string>;
   disabled?: boolean;
 }
@@ -26,6 +28,43 @@ function formatFieldLabel(key: string): string {
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase())
     .trim();
+}
+
+function SavedBadge() {
+  return (
+    <span className="rounded-full bg-[var(--vms-success-subtle)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--vms-success)]">
+      Saved
+    </span>
+  );
+}
+
+function FieldLabel({
+  htmlFor,
+  label,
+  isRequired,
+  saved,
+}: {
+  htmlFor: string;
+  label: string;
+  isRequired: boolean;
+  saved: boolean;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="flex flex-wrap items-center gap-2 text-sm font-semibold"
+    >
+      <span>
+        {label}
+        {isRequired ? (
+          <span className="ml-1 text-[var(--vms-danger)]" aria-hidden="true">
+            *
+          </span>
+        ) : null}
+      </span>
+      {saved ? <SavedBadge /> : null}
+    </label>
+  );
 }
 
 function FieldError({ id, error }: { id: string; error?: string }) {
@@ -41,11 +80,21 @@ function FieldError({ id, error }: { id: string; error?: string }) {
   );
 }
 
-function FieldDescription({ id, children }: { id: string; children?: string }) {
-  if (!children) return null;
+function FieldDescription({
+  id,
+  children,
+  saved,
+}: {
+  id: string;
+  children?: string;
+  saved?: boolean;
+}) {
+  if (!children && !saved) return null;
   return (
     <p id={id} className="text-xs leading-5 text-[var(--vms-ink-muted)]">
-      {children}
+      {saved
+        ? `${children ? `${children} ` : ""}Leave blank to keep the saved value.`
+        : children}
     </p>
   );
 }
@@ -57,38 +106,34 @@ function renderField(
   onChange: (val: string | number | boolean) => void,
   error?: string,
   disabled?: boolean,
+  saved = false,
 ) {
   const label = formatFieldLabel(key);
   const isRequired = field.required !== false;
   const currentValue = value ?? field.value ?? "";
   const inputId = `integration-credential-${key}`;
-  const descriptionId = field.description
-    ? `${inputId}-description`
-    : undefined;
+  const descriptionId = `${inputId}-description`;
   const errorId = error ? `${inputId}-error` : undefined;
   const describedBy =
     [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
   const placeholder =
     field.placeholder ??
-    (field.type === "password"
-      ? "Enter a value"
-      : `Enter ${label.toLowerCase()}`);
+    (saved
+      ? "•••••••• saved — enter a new value to replace"
+      : field.type === "password"
+        ? "Enter a value"
+        : `Enter ${label.toLowerCase()}`);
 
   switch (field.type) {
     case "password":
       return (
         <div key={key} className="space-y-1.5">
-          <label htmlFor={inputId} className="block text-sm font-semibold">
-            {label}
-            {isRequired ? (
-              <span
-                className="ml-1 text-[var(--vms-danger)]"
-                aria-hidden="true"
-              >
-                *
-              </span>
-            ) : null}
-          </label>
+          <FieldLabel
+            htmlFor={inputId}
+            label={label}
+            isRequired={isRequired}
+            saved={saved}
+          />
           <PasswordInput
             id={inputId}
             placeholder={placeholder}
@@ -99,7 +144,7 @@ function renderField(
             disabled={disabled}
             aria-describedby={describedBy}
           />
-          <FieldDescription id={`${inputId}-description`}>
+          <FieldDescription id={descriptionId} saved={saved}>
             {field.description}
           </FieldDescription>
         </div>
@@ -116,14 +161,17 @@ function renderField(
               disabled={disabled}
               aria-describedby={describedBy}
             />
-            <div className="flex flex-col">
-              <label
-                htmlFor={inputId}
-                className="cursor-pointer text-sm font-medium leading-5"
-              >
-                {label}
-              </label>
-              <FieldDescription id={`${inputId}-description`}>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <label
+                  htmlFor={inputId}
+                  className="cursor-pointer text-sm font-medium leading-5"
+                >
+                  {label}
+                </label>
+                {saved ? <SavedBadge /> : null}
+              </div>
+              <FieldDescription id={descriptionId} saved={saved}>
                 {field.description}
               </FieldDescription>
             </div>
@@ -135,17 +183,12 @@ function renderField(
     case "number":
       return (
         <div key={key} className="space-y-1.5">
-          <label htmlFor={inputId} className="block text-sm font-semibold">
-            {label}
-            {isRequired ? (
-              <span
-                className="ml-1 text-[var(--vms-danger)]"
-                aria-hidden="true"
-              >
-                *
-              </span>
-            ) : null}
-          </label>
+          <FieldLabel
+            htmlFor={inputId}
+            label={label}
+            isRequired={isRequired}
+            saved={saved}
+          />
           <Input
             id={inputId}
             type="number"
@@ -158,7 +201,7 @@ function renderField(
             disabled={disabled}
             aria-describedby={describedBy}
           />
-          <FieldDescription id={`${inputId}-description`}>
+          <FieldDescription id={descriptionId} saved={saved}>
             {field.description}
           </FieldDescription>
         </div>
@@ -167,17 +210,12 @@ function renderField(
     case "select":
       return (
         <div key={key} className="space-y-1.5">
-          <label htmlFor={inputId} className="block text-sm font-semibold">
-            {label}
-            {isRequired ? (
-              <span
-                className="ml-1 text-[var(--vms-danger)]"
-                aria-hidden="true"
-              >
-                *
-              </span>
-            ) : null}
-          </label>
+          <FieldLabel
+            htmlFor={inputId}
+            label={label}
+            isRequired={isRequired}
+            saved={saved}
+          />
           <select
             id={inputId}
             value={String(currentValue)}
@@ -200,7 +238,7 @@ function renderField(
               </option>
             ))}
           </select>
-          <FieldDescription id={`${inputId}-description`}>
+          <FieldDescription id={descriptionId} saved={saved}>
             {field.description}
           </FieldDescription>
           <FieldError id={`${inputId}-error`} error={error} />
@@ -210,17 +248,12 @@ function renderField(
     case "text":
       return (
         <div key={key} className="space-y-1.5">
-          <label htmlFor={inputId} className="block text-sm font-semibold">
-            {label}
-            {isRequired ? (
-              <span
-                className="ml-1 text-[var(--vms-danger)]"
-                aria-hidden="true"
-              >
-                *
-              </span>
-            ) : null}
-          </label>
+          <FieldLabel
+            htmlFor={inputId}
+            label={label}
+            isRequired={isRequired}
+            saved={saved}
+          />
           <textarea
             id={inputId}
             placeholder={placeholder}
@@ -237,7 +270,7 @@ function renderField(
                 "border-[var(--vms-danger)] bg-[var(--vms-danger-subtle)]",
             )}
           />
-          <FieldDescription id={`${inputId}-description`}>
+          <FieldDescription id={descriptionId} saved={saved}>
             {field.description}
           </FieldDescription>
           <FieldError id={`${inputId}-error`} error={error} />
@@ -250,17 +283,12 @@ function renderField(
     default:
       return (
         <div key={key} className="space-y-1.5">
-          <label htmlFor={inputId} className="block text-sm font-semibold">
-            {label}
-            {isRequired ? (
-              <span
-                className="ml-1 text-[var(--vms-danger)]"
-                aria-hidden="true"
-              >
-                *
-              </span>
-            ) : null}
-          </label>
+          <FieldLabel
+            htmlFor={inputId}
+            label={label}
+            isRequired={isRequired}
+            saved={saved}
+          />
           <Input
             id={inputId}
             type={
@@ -277,7 +305,7 @@ function renderField(
             disabled={disabled}
             aria-describedby={describedBy}
           />
-          <FieldDescription id={`${inputId}-description`}>
+          <FieldDescription id={descriptionId} saved={saved}>
             {field.description}
           </FieldDescription>
         </div>
@@ -289,6 +317,7 @@ export function CredentialFormRenderer({
   credentials,
   values,
   onChange,
+  configuredKeys = [],
   errors = {},
   disabled = false,
 }: CredentialFormRendererProps) {
@@ -299,7 +328,9 @@ export function CredentialFormRenderer({
       </div>
     );
   }
+
   const credentialEntries = Object.entries(credentials);
+  const saved = new Set(configuredKeys);
 
   if (credentialEntries.length === 0) {
     return (
@@ -319,6 +350,7 @@ export function CredentialFormRenderer({
           (val) => onChange(key, val),
           errors[key],
           disabled,
+          saved.has(key),
         ),
       )}
     </div>

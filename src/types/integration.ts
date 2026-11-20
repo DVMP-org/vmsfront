@@ -36,6 +36,10 @@ export type IntegrationType =
 export type IntegrationCapability =
   | "send_message"
   | "receive_message"
+  | "send_media"
+  | "receive_media"
+  | "voice_call"
+  | "video_call"
   | "process_payment"
   | "verify_identity"
   | "access_control"
@@ -44,7 +48,10 @@ export type IntegrationCapability =
   | "realtime"
   | "batch_processing"
   | "notification"
-  | "file_storage";
+  | "file_storage"
+  | "utility.electricity.customer_verify"
+  | "utility.electricity.vend"
+  | "utility.electricity.transaction_status";
 
 export interface IntegrationConfig {
   name: string;
@@ -77,6 +84,15 @@ export interface Integration {
   // Runtime state
   enabled: boolean;
   configured: boolean;
+  /**
+   * The organization's own connection row. `id` is the catalog entry used for
+   * routing and credential writes; a plugin binding references this instead.
+   */
+  organization_integration_id?: string | null;
+  /** Credential keys with a stored value. Secret values are never returned. */
+  configured_credentials?: string[];
+  /** Stored values for non-secret fields (url, string, email, number, boolean). */
+  credential_values?: Record<string, string | number | boolean>;
   /** Whether the provider driver is registered and running in this process. */
   is_running?: boolean;
   last_synced_at?: string | null;
@@ -109,15 +125,35 @@ export const INTEGRATION_CAPABILITY_LABELS: Record<
   IntegrationCapability,
   string
 > = {
-  send_message: "Send Messages",
-  receive_message: "Receive Messages",
-  process_payment: "Process Payments",
-  verify_identity: "Verify Identity",
-  access_control: "Access Control",
-  data_sync: "Data Sync",
+  send_message: "Send messages",
+  receive_message: "Receive messages",
+  send_media: "Send media",
+  receive_media: "Receive media",
+  voice_call: "Voice calls",
+  video_call: "Video calls",
+  process_payment: "Process payments",
+  verify_identity: "Verify identity",
+  access_control: "Access control",
+  data_sync: "Data sync",
   webhook: "Webhooks",
-  realtime: "Real-time",
-  batch_processing: "Batch Processing",
+  realtime: "Real-time updates",
+  batch_processing: "Batch processing",
   notification: "Notifications",
-  file_storage: "File Storage",
+  file_storage: "File storage",
+  "utility.electricity.customer_verify": "Verify electricity customer",
+  "utility.electricity.vend": "Sell electricity units",
+  "utility.electricity.transaction_status": "Check transaction status",
 };
+
+/**
+ * Operator-facing capability text. Mirrors
+ * `vmscore.domain.integration_capabilities.CAPABILITY_LABELS`; an unknown
+ * capability still reads as words instead of a dotted identifier.
+ */
+export function capabilityLabel(capability: string): string {
+  const label =
+    INTEGRATION_CAPABILITY_LABELS[capability as IntegrationCapability];
+  if (label) return label;
+  const words = capability.replaceAll(".", " ").replaceAll("_", " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : capability;
+}

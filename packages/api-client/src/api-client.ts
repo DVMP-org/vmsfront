@@ -22,7 +22,8 @@ export interface ApiClientOptions {
   axiosInstance?: AxiosInstance;
   getToken?: () => string | null;
   getOrganizationSlug?: () => string | null;
-  getPropertyId?: () => string | null;
+  /** The active Site id. Every Site-scoped request carries it as ``X-Site``. */
+  getSiteId?: () => string | null;
   onUnauthorized?: () => void | Promise<void>;
   getLocation?: () => ApiBrowserLocation;
   navigate?: (url: string) => void;
@@ -32,7 +33,10 @@ function getBrowserStorage(): Pick<
   Storage,
   "getItem" | "setItem" | "removeItem"
 > | null {
-  return typeof window === "undefined" ? null : window.localStorage;
+  if (typeof window === "undefined") return null;
+  const storage = window.localStorage as Storage | undefined;
+  // Some runtimes expose a placeholder object instead of a working Storage.
+  return typeof storage?.getItem === "function" ? storage : null;
 }
 
 export function getStoredAuthToken(
@@ -86,9 +90,9 @@ export class ApiClient {
           addHeader(config, "X-Organization", organizationSlug);
         }
 
-        const propertyId = this.options.getPropertyId?.() ?? null;
-        if (organizationSlug && propertyId) {
-          addHeader(config, "X-Property", propertyId);
+        const siteId = this.options.getSiteId?.() ?? null;
+        if (organizationSlug && siteId) {
+          addHeader(config, "X-Site", siteId);
         }
 
         const token = this.options.getToken?.() ?? getStoredAuthToken();

@@ -160,10 +160,17 @@ export function PlaceWorkspaceSwitcher({
         (item) => item.place.id === entry.placeId,
       );
       if (relationship) {
-        setSelectedSite({
-          id: relationship.place.id,
-          name: qualifiedPlaceName(relationship.place),
-        });
+        // ``selectedSite`` is the Site, never the Place: Site-scoped requests
+        // send it as ``X-Site`` and several screens use it as a Site id.
+        const siteId = relationship.site_id ?? relationship.place.site_id;
+        if (siteId) {
+          setSelectedSite({
+            id: siteId,
+            name:
+              relationship.place.site_name ??
+              qualifiedPlaceName(relationship.place),
+          });
+        }
       }
     }
     router.push(entry.href);

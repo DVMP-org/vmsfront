@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -27,6 +27,8 @@ export function PlaceWorkspaceShell({
   const { placeId } = useParams<{ placeId: string }>();
   const user = useAuthStore((state) => state.user);
   const organization = useAppStore((state) => state.organization);
+  const selectedSite = useAppStore((state) => state.selectedSite);
+  const setSelectedSite = useAppStore((state) => state.setSelectedSite);
   const [open, setOpen] = useState(false);
   const query = useQuery({
     queryKey: ["place-workspace", organization?.id, user?.id, placeId],
@@ -35,6 +37,17 @@ export function PlaceWorkspaceShell({
     staleTime: 0,
   });
   const context = query.data;
+
+  // The Place context names its owning Site. Adopting it keeps ``X-Site`` a
+  // real Site id on every Site-scoped request made inside this workspace, and
+  // replaces any stale id a previous session left in storage.
+  const owningSiteId = context?.site_id ?? null;
+  const owningSiteName =
+    context?.place.site_name?.trim() || context?.place.name || "Site";
+  useEffect(() => {
+    if (!owningSiteId || selectedSite?.id === owningSiteId) return;
+    setSelectedSite({ id: owningSiteId, name: owningSiteName });
+  }, [owningSiteId, owningSiteName, selectedSite?.id, setSelectedSite]);
   const sidebar = (
     <PlaceSidebar
       placeId={placeId}

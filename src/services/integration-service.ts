@@ -57,7 +57,14 @@ export const integrationService = {
   // Health check
   async checkHealth(
     name: string,
-  ): Promise<ApiResponse<{ status: string; message?: string }>> {
+  ): Promise<
+    ApiResponse<{
+      name: string;
+      is_running: boolean;
+      is_healthy: boolean;
+      detail?: string | null;
+    }>
+  > {
     return apiClient.get(`/admin/integrations/${name}/health`);
   },
 

@@ -124,7 +124,14 @@ function partyCard(workspace: PropertyWorkspace): LobbyWorkspace | null {
     roleLabel: roleLabels.join(" · "),
     destination: `/workspace/${workspace.place.id}`,
     useCase,
-    selection: { id: workspace.place.id, name: selectionName },
+    // ``selectedSite`` is the Site, never the Place: the plugin and admin
+    // guards read it as ``X-Site``.
+    selection: workspace.place.site_id
+      ? {
+          id: workspace.place.site_id,
+          name: workspace.place.site_name ?? selectionName,
+        }
+      : undefined,
   };
 }
 

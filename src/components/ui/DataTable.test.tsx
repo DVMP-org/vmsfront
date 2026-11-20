@@ -254,6 +254,55 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("DataTable row identity", () => {
+  it("gives rows without an id unique keys instead of [object Object]", () => {
+    type Unidentified = { name: string; role: string };
+    const unidentified: Column<Unidentified>[] = [
+      { key: "name", header: "Name" },
+      { key: "role", header: "Role" },
+    ];
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
+
+    render(
+      <DataTable
+        data={[
+          { name: "Ada", role: "Manager" },
+          { name: "Tunde", role: "Manager" },
+        ]}
+        columns={unidentified}
+        tableLabel="Managers without ids"
+        mobileSummary={(row) => <span>{row.name}</span>}
+      />,
+    );
+
+    expect(screen.getAllByText("Ada").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Tunde").length).toBeGreaterThan(0);
+    const duplicateKeyWarning = errorSpy.mock.calls.find((call) =>
+      String(call[0]).includes("Encountered two children with the same key"),
+    );
+    expect(duplicateKeyWarning).toBeUndefined();
+    errorSpy.mockRestore();
+  });
+
+  it("uses a primitive id when the row exposes one", () => {
+    const rows = [{ assignment_id: "a-1", name: "Ada", role: "Manager" }];
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
+
+    render(
+      <DataTable
+        data={rows}
+        columns={columns as unknown as Column<(typeof rows)[0]>[]}
+        tableLabel="Assigned managers"
+        getRowId={(row: (typeof rows)[0]) => row.assignment_id}
+      />,
+    );
+
+    expect(screen.getAllByText("Ada").length).toBeGreaterThan(0);
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});
+
 describe("PaginationBar", () => {
   it("reports zero results without a nonsensical 1-0 range", () => {
     render(

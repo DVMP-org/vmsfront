@@ -18,6 +18,37 @@ import {
 } from "./Table";
 import { Input } from "./Input";
 import { useConfirmAction } from "./useConfirmAction";
+
+/**
+ * A React key must be a primitive. Tables whose rows carry no `id` used to fall
+ * back to `String(row)`, which is `"[object Object]"` for every row: React then
+ * reported duplicate keys and could duplicate or drop rows. Identities are
+ * therefore normalized, with a per-object fallback that is stable for the life
+ * of the row object.
+ */
+const rowIdCache = new WeakMap<object, string>();
+let rowIdSequence = 0;
+
+function toRowId(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value);
+  }
+  return "";
+}
+
+function stableRowId(row: unknown, explicit: unknown): string {
+  const direct = toRowId(explicit);
+  if (direct) return direct;
+  if (row && typeof row === "object") {
+    const cached = rowIdCache.get(row as object);
+    if (cached) return cached;
+    const generated = `row-${++rowIdSequence}`;
+    rowIdCache.set(row as object, generated);
+    return generated;
+  }
+  return toRowId(row);
+}
 import { Button } from "./Button";
 import {
   ChevronLeft,
@@ -194,7 +225,7 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No records match your current view.",
   className,
   selectable = false,
-  getRowId = (row: T) => (row as any).id || String(row),
+  getRowId = (row: T) => toRowId((row as any)?.id),
   selectedRows,
   onSelectionChange,
   serverSide = false,
@@ -232,6 +263,13 @@ export function DataTable<T extends Record<string, any>>({
   const safeColumns = useMemo(
     () => (Array.isArray(columns) ? columns : []),
     [columns],
+  );
+
+  // One identity function for keys, selection and hierarchy lookups, so a row
+  // is the same child everywhere it appears.
+  const rowIdOf = useCallback(
+    (row: T) => stableRowId(row, getRowId(row)),
+    [getRowId],
   );
 
   // Use new props if provided, fall back to legacy props for backward compatibility
@@ -596,8 +634,8 @@ export function DataTable<T extends Record<string, any>>({
 
     if (hierarchy) {
       const byId = new Map<string, T>();
-      safeData.forEach((row) => byId.set(getRowId(row), row));
-      const matched = new Set(result.map((row) => getRowId(row)));
+      safeData.forEach((row) => byId.set(rowIdOf(row), row));
+      const matched = new Set(result.map((row) => rowIdOf(row)));
       const isNarrowed = Boolean(localSearchTerm) || currentFilters.length > 0;
 
       if (isNarrowed) {
@@ -612,10 +650,10 @@ export function DataTable<T extends Record<string, any>>({
             parent = parentRow ? hierarchy.parentId(parentRow) : null;
           }
         });
-        result = safeData.filter((row) => keep.has(getRowId(row)));
+        result = safeData.filter((row) => keep.has(rowIdOf(row)));
       } else {
         result = safeData.filter((row) => {
-          if (!matched.has(getRowId(row))) return false;
+          if (!matched.has(rowIdOf(row))) return false;
           let parent = hierarchy.parentId(row);
           while (parent && byId.has(parent)) {
             if (!hierarchy.isExpanded(parent)) return false;
@@ -637,7 +675,7 @@ export function DataTable<T extends Record<string, any>>({
     serverSide,
     disableClientSideFiltering,
     hierarchy,
-    getRowId,
+    rowIdOf,
   ]);
 
   // Sort data
@@ -774,7 +812,7 @@ export function DataTable<T extends Record<string, any>>({
     if (selected.size === paginatedData.length) {
       setSelected(new Set());
     } else {
-      const allIds = new Set(paginatedData.map((row) => getRowId(row)));
+      const allIds = new Set(paginatedData.map((row) => rowIdOf(row)));
       setSelected(allIds);
     }
   };
@@ -1375,7 +1413,7 @@ export function DataTable<T extends Record<string, any>>({
                     </TableRow>
                   ) : (
                     paginatedData.map((row, index) => {
-                      const rowId = getRowId(row);
+                      const rowId = rowIdOf(row);
                       const isSelected = selected.has(rowId);
                       const isEven = index % 2 === 0;
                       const customClassName = rowClassName
@@ -1471,7 +1509,7 @@ export function DataTable<T extends Record<string, any>>({
                 </li>
               ) : (
                 paginatedData.map((row, index) => {
-                  const rowId = getRowId(row);
+                  const rowId = rowIdOf(row);
                   return (
                     <li
                       key={rowId || index}
@@ -1509,7 +1547,7 @@ export function DataTable<T extends Record<string, any>>({
                     </div>
                   ) : (
                     paginatedData.map((row, index) => {
-                      const rowId = getRowId(row);
+                      const rowId = rowIdOf(row);
                       const isSelected = selected.has(rowId);
                       const renderContent =
                         renderCard ?? mobileSummary ?? generatedMobileSummary;

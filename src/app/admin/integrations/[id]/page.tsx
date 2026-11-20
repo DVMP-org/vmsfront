@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { integrationService } from "@/services/integration-service";
@@ -64,6 +64,7 @@ export default function IntegrationDetailsPage() {
 
   const [credentialValues, setCredentialValues] =
     useState<CredentialFormValues>({});
+  const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
   const [hasChanges, setHasChanges] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -75,19 +76,29 @@ export default function IntegrationDetailsPage() {
   } = useIntegration(integrationId);
 
   const integration = integrationData;
+  const configuredKeys = useMemo(
+    () => new Set(integration?.configured_credentials ?? []),
+    [integration?.configured_credentials],
+  );
 
-  // Initialize credential values when data loads
+  // Prefill what the API can safely return: stored non-secret values plus
+  // catalog defaults. Saved secrets stay masked until replaced.
   useEffect(() => {
-    if (integration?.config?.credentials) {
-      // Initialize with defaults
-      const defaults: CredentialFormValues = {};
-      Object.entries(integration.config.credentials).forEach(([key, field]) => {
-        if (field.value !== undefined) {
-          defaults[key] = field.value;
-        }
-      });
-      setCredentialValues(defaults);
-    }
+    if (!integration?.config?.credentials) return;
+    const prefilled: CredentialFormValues = {};
+    Object.entries(integration.config.credentials).forEach(([key, field]) => {
+      if (field.value !== undefined && field.value !== null) {
+        prefilled[key] = field.value;
+      }
+    });
+    Object.entries(integration.credential_values ?? {}).forEach(
+      ([key, value]) => {
+        prefilled[key] = value;
+      },
+    );
+    setCredentialValues(prefilled);
+    setDirtyKeys(new Set());
+    setHasChanges(false);
   }, [integration]);
 
   // Enable mutation
@@ -107,10 +118,10 @@ export default function IntegrationDetailsPage() {
       return integrationService.checkHealth(integration.name);
     },
     onSuccess: (response) => {
-      if (response.data.status === "healthy") {
-        toast.success(response.data.message || "Connection healthy");
+      if (response.data.is_healthy) {
+        toast.success(response.data.detail || "Credentials verified");
       } else {
-        toast.error(response.data.message || "Connection unhealthy");
+        toast.error(response.data.detail || "Credentials are not valid");
       }
     },
     onError: (error: any) => {
@@ -123,6 +134,7 @@ export default function IntegrationDetailsPage() {
     value: string | number | boolean,
   ) => {
     setCredentialValues((prev) => ({ ...prev, [key]: value }));
+    setDirtyKeys((prev) => new Set(prev).add(key));
     setHasChanges(true);
     // Clear error for this field
     if (errors[key]) {
@@ -145,6 +157,7 @@ export default function IntegrationDetailsPage() {
       // Check required fields
       if (
         isRequired &&
+        !configuredKeys.has(key) &&
         (value === undefined || value === "" || value === null)
       ) {
         newErrors[key] = "This field is required";
@@ -180,6 +193,7 @@ export default function IntegrationDetailsPage() {
 
     if (integration?.config?.credentials) {
       Object.entries(integration.config.credentials).forEach(([key, field]) => {
+        if (!dirtyKeys.has(key)) return;
         updatedCredentials[key] = {
           ...field,
           value: credentialValues[key],
@@ -187,8 +201,16 @@ export default function IntegrationDetailsPage() {
       });
     }
 
+    if (Object.keys(updatedCredentials).length === 0) {
+      setHasChanges(false);
+      return;
+    }
+
     updateMutation.mutate(updatedCredentials, {
-      onSuccess: () => setHasChanges(false),
+      onSuccess: () => {
+        setHasChanges(false);
+        setDirtyKeys(new Set());
+      },
     });
   };
 
@@ -323,6 +345,11 @@ export default function IntegrationDetailsPage() {
               <div className="flex items-center gap-1.5 text-sm text-emerald-600">
                 <CheckCircle2 className="h-4 w-4" />
                 Configured
+                {configuredKeys.size ? (
+                  <span className="text-xs text-muted-foreground">
+                    · {configuredKeys.size} saved
+                  </span>
+                ) : null}
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-sm text-amber-600">
@@ -347,7 +374,10 @@ export default function IntegrationDetailsPage() {
                 </CardTitle>
               </div>
               <CardDescription>
-                Configure the credentials required for this integration.
+                {configuredKeys.size
+                  ? `${configuredKeys.size} credential${configuredKeys.size === 1 ? "" : "s"
+                  } saved. Saved secrets are never displayed — enter a new value to replace one.`
+                  : "Configure the credentials required for this integration."}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
@@ -355,6 +385,7 @@ export default function IntegrationDetailsPage() {
                 credentials={integration?.config?.credentials}
                 values={credentialValues}
                 onChange={handleCredentialChange}
+                configuredKeys={Array.from(configuredKeys)}
                 errors={errors}
                 disabled={updateMutation.isPending}
               />
@@ -374,7 +405,7 @@ export default function IntegrationDetailsPage() {
                     )
                   }
                 >
-                  Check Health
+                  Test credentials
                 </Button>
 
                 <Button
@@ -394,7 +425,7 @@ export default function IntegrationDetailsPage() {
         <div className="space-y-6">
           {/* Integration Info */}
           <Card>
-            <CardHeader className="pb-3 border-b border-[var(--vms-line)]">
+            <CardHeader className="pb-3 mb-2 border-b border-[var(--vms-line)]">
               <div className="flex items-center gap-2">
                 <Info className="h-4 w-4 text-muted-foreground" />
                 <CardTitle className="text-base">Details</CardTitle>
@@ -504,7 +535,7 @@ export default function IntegrationDetailsPage() {
           {integration?.capabilities &&
             integration?.capabilities.length > 0 && (
               <Card>
-                <CardHeader className="pb-3 border-b border-[var(--vms-line)]">
+              <CardHeader className="pb-3 mb-2 border-b border-[var(--vms-line)]">
                   <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-muted-foreground" />
                     <CardTitle className="text-base">Capabilities</CardTitle>

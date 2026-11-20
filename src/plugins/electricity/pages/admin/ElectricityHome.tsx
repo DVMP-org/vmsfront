@@ -27,17 +27,20 @@ import { formatDate, titleCase } from "@/lib/utils";
 import { parseApiError } from "@/lib/error-utils";
 import { electricityService } from "../../services/electricity-service";
 import { ElectricityStats } from "../../types";
+import { SiteRequired } from "./SiteRequired";
+import { useAppStore } from "@/store/app-store";
 
 const defaultStats: ElectricityStats = {
   total_meters: 0,
   active_meters: 0,
   total_purchases: 0,
   total_revenue: 0,
-  residencies: [],
+  places: [],
   recent_purchases: [],
 };
 
 export default function AdminElectricityDashboard() {
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const {
     data: statsResponse,
     isLoading,
@@ -45,14 +48,17 @@ export default function AdminElectricityDashboard() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["electricity", "stats"],
+    queryKey: ["electricity", "stats", selectedSite?.id ?? null],
     queryFn: async () => {
       const response = await electricityService.getStats();
       return response.data;
     },
+    enabled: Boolean(selectedSite?.id),
   });
 
   const stats = statsResponse || defaultStats;
+
+  if (!selectedSite) return <SiteRequired />;
 
   if (isLoading) {
     return (
@@ -92,19 +98,16 @@ export default function AdminElectricityDashboard() {
       icon: DollarSign,
     },
     {
-      label: "Active property relationships",
+      label: "Units with meters",
       value: Array.from(
         new Set(
-          (stats.residencies || [])
-            .filter(
-              (residency) =>
-                Array.isArray(residency.meters) && residency.meters.length > 0,
-            )
-            .map((residency) => residency.id)
+          (stats.places || [])
+            .filter((place) => Array.isArray(place.meters) && place.meters.length > 0)
+            .map((place) => place.id)
             .filter(Boolean),
         ),
       ).length,
-      detail: "With meters",
+      detail: "Across this Site",
       icon: Users,
     },
   ];
@@ -114,7 +117,7 @@ export default function AdminElectricityDashboard() {
       <PageHeader
         eyebrow="Extensions / Electricity"
         title="Electricity management"
-        description="Monitor meters, purchases, and property relationships in this organization."
+        description="Monitor meters, purchases, and property relationships for this Site."
         primaryAction={
           <Button
             onClick={() => {
@@ -207,7 +210,7 @@ export default function AdminElectricityDashboard() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium">{purchase.residency_name}</p>
+                      <p className="font-medium">{purchase.place_name}</p>
                       <Badge
                         variant={
                           purchase.status === "success"

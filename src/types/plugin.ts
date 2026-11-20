@@ -12,20 +12,149 @@ export interface PluginConfig {
   [key: string]: any;
 }
 
+export interface PluginConfigOption {
+  key: string;
+  label: string;
+  type:
+  | "text"
+  | "string"
+  | "number"
+  | "integer"
+  | "boolean"
+  | "toggle"
+  | "select"
+  | "url";
+  required?: boolean;
+  default?: any;
+  choices?: string[] | null;
+  min?: number | null;
+  max?: number | null;
+  description?: string | null;
+}
+
+export interface PluginConfigurationSchema {
+  organization: PluginConfigOption[];
+  site: PluginConfigOption[];
+}
+
+export interface PluginRequirement {
+  key: string;
+  capability: string;
+  required?: boolean;
+  cardinality?: "one" | "many";
+}
+
+export interface PluginContribution {
+  key: string;
+  workspace: "site" | "party";
+  label?: string | null;
+  route?: string | null;
+  metric?: string | null;
+  permission?: string;
+  domains?: string[] | null;
+}
+
+export interface PluginManifestData {
+  supported_domains?: string[];
+  requires?: PluginRequirement[];
+  contributes?: {
+    navigation?: PluginContribution[];
+    dashboard?: PluginContribution[];
+    actions?: PluginContribution[];
+  };
+  configuration?: Partial<PluginConfigurationSchema>;
+}
+
+export interface PluginSiteRequirementStatus {
+  key: string;
+  capability: string;
+  required: boolean;
+  satisfied: boolean;
+  organization_integration_id: string | null;
+  provider: string | null;
+}
+
+export interface PluginSiteState {
+  site_id: string;
+  site_name: string | null;
+  plugin_id: string;
+  state: "active" | "needs_configuration" | "suspended" | "inactive";
+  config_revision: number;
+  configuration: PluginConfig | null;
+  updated_at: string | null;
+  requirements: PluginSiteRequirementStatus[];
+  contributions: PluginContribution[];
+}
+
+export interface PluginSiteHealth {
+  site_id: string;
+  site_name: string | null;
+  state: PluginSiteState["state"];
+  healthy: boolean;
+  unmet_requirements: string[];
+}
+
+export interface PluginConnectionHealth {
+  id: string;
+  name: string;
+  provider: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface PluginHealth {
+  plugin_id: string;
+  name: string;
+  slug: string;
+  installed: boolean;
+  enabled: boolean;
+  configured: boolean;
+  licensed: boolean;
+  healthy: boolean;
+  detail: string;
+  sites: PluginSiteHealth[];
+  connections: PluginConnectionHealth[];
+}
+
+export interface SitePluginConnection {
+  id: string;
+  name: string;
+  provider: string;
+  capabilities: string[];
+  enabled: boolean;
+  configured: boolean;
+}
+
+export interface SitePluginSummary {
+  plugin_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  state: PluginSiteState["state"];
+  config_revision: number;
+  requirements: PluginSiteRequirementStatus[];
+}
+
+export interface SitePluginList {
+  site_id: string;
+  plugins: SitePluginSummary[];
+  connections: SitePluginConnection[];
+}
+
+export interface PluginSiteActivationResult {
+  site_id: string;
+  site_name: string | null;
+  state: PluginSiteState["state"] | null;
+  error: string | null;
+}
+
 export interface PluginDetails {
   configEndpoint: string | null;
   documentationUrl: string | null;
   useCases: string[];
   setupSteps: string[];
   requirements: string[];
-  configOptions: {
-    key: string;
-    label: string;
-    type: "text" | "toggle" | "select" | "number" | "boolean";
-    description: string;
-    defaultValue?: any;
-    options?: string[];
-  }[];
 }
 
 export interface BackendPlugin {
@@ -38,7 +167,10 @@ export interface BackendPlugin {
   image?: string;
   details?: PluginDetails;
   [key: string]: any;
+  manifest?: PluginManifestData;
   configuration?: PluginConfig; // Current configuration from backend
+  configuration_schema?: PluginConfigurationSchema;
+  config_revision?: number;
   configured?: boolean; // Whether the plugin has been configured at least once
   installed?: boolean;
   licensed?: boolean;
@@ -53,37 +185,7 @@ export interface BackendPlugin {
   can_configure?: boolean;
 }
 
-// Plugin type definition (for UI display)
-export interface Plugin {
-  id: string;
-  name: string;
-  title: string;
-  description: string;
-  icon: any;
-  enabled: boolean;
-  category: string;
-  image?: string;
-  color: string;
-  details: PluginDetails;
-  config: PluginConfig;
-  backendVersion?: string;
-  frontendVersion?: string;
-  hasFrontend?: boolean; // Whether frontend plugin exists
-  configuration?: PluginConfig; // Current configuration from backend
-  installed: boolean;
-  configured: boolean;
-  licensed: boolean;
-  access_ready: boolean;
-  entitlementStatus?: string;
-  entitlementSource?: string | null;
-  entitlementReason?: string | null;
-  planId?: string | null;
-  planName?: string | null;
-  graceEndsAt?: string | null;
-  canEnable: boolean;
-  canConfigure: boolean;
-}
-
+// Frontend plugin host (src/plugins/<name>, loaded into the app shell)
 export interface PluginManifest {
   name: string;
   title: string;
@@ -111,7 +213,6 @@ export interface LoadedPlugin {
   manifest: PluginManifest;
   adminRoutes?: PluginRoute[];
   residentRoutes?: PluginRoute[];
-  // Backend plugin ID for enable/disable operations
   backendId?: string;
 }
 
@@ -127,6 +228,7 @@ export interface MarketplacePlugin {
   image?: string;
   screenshots?: string[];
   details?: PluginDetails;
+  manifest?: PluginManifestData;
   price: number; // 0 for free
   currency?: string;
   rating: number; // 0-5

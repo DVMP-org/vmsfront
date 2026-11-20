@@ -51,6 +51,7 @@ const relationship = {
     slug: "apt-01",
     kind: "unit",
     parent_id: "site-1",
+    site_id: "site-1",
     site_name: "Pebble Court",
     is_active: true,
     effective_use_case: "residential",
@@ -126,7 +127,8 @@ describe("buildLobbyWorkspaces", () => {
       category: "RESIDENTIAL HOME",
       roleLabel: "Resident",
       destination: "/workspace/place-1",
-      selection: { id: "place-1", name: "Pebble Court - APT 01" },
+      // A party workspace still operates inside its Site.
+      selection: { id: "site-1", name: "Pebble Court" },
     });
   });
 

@@ -191,7 +191,7 @@ export default function IntegrationsSection({
           description="Connect messaging, payments, access control and data providers once, then share them across every active place in this organization."
           primaryAction={
             <Button asChild variant="outline">
-              <Link href="/admin/plugins">Browse plugins</Link>
+              <Link href="/organization/plugins?view=catalog">Browse plugins</Link>
             </Button>
           }
         />

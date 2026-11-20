@@ -228,6 +228,7 @@ export function OrganizationManagersPage() {
             onSearchChange={setSearch}
             isLoading={managers.isPending}
             emptyMessage="No Site managers match this search"
+              getRowId={(manager) => manager.assignment_id}
             mobileSummary={(manager) => (
               <span className="flex items-center gap-3">
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--vms-surface-subtle)]">

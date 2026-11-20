@@ -24,12 +24,26 @@ vi.mock("@/hooks/use-auth", () => ({
         {
           id: "relationship-home",
           role: "resident",
-          place: { id: "home", name: "My home", kind: "unit" },
+          site_id: "site",
+          place: {
+            id: "home",
+            name: "My home",
+            kind: "unit",
+            site_id: "site",
+            site_name: "Sunset Estate",
+          },
         },
         {
           id: "relationship-office",
           role: "tenant",
-          place: { id: "office", name: "My office", kind: "space" },
+          site_id: "site",
+          place: {
+            id: "office",
+            name: "My office",
+            kind: "space",
+            site_id: "site",
+            site_name: "Sunset Estate",
+          },
         },
       ],
       site_workspaces: [
@@ -54,11 +68,17 @@ vi.mock("./api", () => ({ placeWorkspaceApi: { context: m.context } }));
 beforeEach(() => {
   vi.resetAllMocks();
   m.context.mockResolvedValue({
-    place: { id: "home", name: "My home" },
+    place: {
+      id: "home",
+      name: "My home",
+      site_id: "site",
+      site_name: "Sunset Estate",
+    },
     party: { id: "party" },
     effective_use_case: "residential",
     modules: ["access_control", "people", "billing"],
     is_place_admin: false,
+    site_id: "site",
   });
 });
 function mount() {
@@ -88,7 +108,8 @@ it("renders a Place sidebar, active page, and the workspace switcher", async () 
   expect(screen.getByText("Sunset Estate management")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: /My office/ }));
   expect(m.push).toHaveBeenCalledWith("/workspace/office");
-  expect(m.select).toHaveBeenCalledWith({ id: "office", name: "My office" });
+  // Switching a Place workspace keeps the Site as the operating context.
+  expect(m.select).toHaveBeenCalledWith({ id: "site", name: "Sunset Estate" });
 });
 it("keeps the shell mounted while Place context resolves", () => {
   m.context.mockImplementation(() => new Promise(() => {}));

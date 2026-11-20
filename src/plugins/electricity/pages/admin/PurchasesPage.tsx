@@ -14,9 +14,12 @@ import { formatDate, titleCase } from "@/lib/utils";
 import { parseApiError } from "@/lib/error-utils";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
 import { PurchaseToken } from "@/plugins/electricity/types";
+import { SiteRequired } from "./SiteRequired";
 import { useQuery } from "@tanstack/react-query";
+import { useAppStore } from "@/store/app-store";
 
 export default function AdminPurchasesPage() {
+  const selectedSite = useAppStore((state) => state.selectedSite);
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,7 +33,7 @@ export default function AdminPurchasesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["electricity", "purchases", page],
+    queryKey: ["electricity", "purchases", selectedSite?.id ?? null, page],
     queryFn: async () => {
       const response = await electricityService.getPurchases({
         page,
@@ -38,9 +41,12 @@ export default function AdminPurchasesPage() {
       });
       return response.data;
     },
+    enabled: Boolean(selectedSite?.id),
   });
 
   const purchases = purchasesData?.items || [];
+
+  if (!selectedSite) return <SiteRequired />;
 
   // Filter purchases by search query (client-side filtering for now)
   const filteredPurchases = purchases.filter(
@@ -90,11 +96,11 @@ export default function AdminPurchasesPage() {
       accessor: (purchase) => purchase.email,
     },
     {
-      key: "residency",
-      header: "Residency",
+      key: "place",
+      header: "Unit",
       accessor: (purchase) => (
         <span className="text-muted-foreground">
-          {purchase?.residency?.name || "N/A"}
+          {purchase.meter?.place?.name || "N/A"}
         </span>
       ),
     },
@@ -149,7 +155,7 @@ export default function AdminPurchasesPage() {
       <PageHeader
         eyebrow="Extensions / Electricity"
         title="Electricity purchases"
-        description="Review token purchases made for meters in this organization."
+        description="Review token purchases made for meters in this Site."
         metadata={
           totalRevenue > 0 ? (
             <p className="text-sm text-[var(--vms-ink-muted)]">

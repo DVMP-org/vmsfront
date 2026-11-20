@@ -7,12 +7,9 @@ const AdminElectricityDashboard = dynamic(
 const AdminMetersPage = dynamic(() => import("./pages/admin/MetersPage"));
 const AdminPurchasesPage = dynamic(() => import("./pages/admin/PurchasesPage"));
 
-// Resident-specific components
-const ResidentElectricityDashboard = dynamic(
-  () => import("./pages/resident/ElectricityHome"),
-);
-const ResidentPurchaseMeter = dynamic(
-  () => import("./pages/resident/PurchaseMeter"),
+// Party (place workspace) pages
+const ElectricityPartyPage = dynamic(
+  () => import("./pages/party/ElectricityPartyPage"),
 );
 
 // Admin-specific routes
@@ -37,19 +34,13 @@ const adminRoutes = [
   },
 ];
 
-// Resident-specific routes
+// Party routes render inside the place workspace shell
 const residentRoutes = [
   {
     path: "/",
-    component: ResidentElectricityDashboard,
-    title: "Dashboard",
+    component: ElectricityPartyPage,
+    title: "Electricity",
     icon: "zap",
-  },
-  {
-    path: "/purchase",
-    component: ResidentPurchaseMeter,
-    title: "Purchase",
-    icon: "credit-card",
   },
 ];
 

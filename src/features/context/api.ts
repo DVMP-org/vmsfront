@@ -39,6 +39,8 @@ export interface WorkspaceContext {
   context_scope: "organization" | "administration" | "membership";
   modules: string[];
   module_groups: ModuleGroup[];
+  /** Plugin slugs the selected Site has activated. */
+  active_plugins: string[];
   management?: {
     mode: "local" | "inherited" | "none";
     management_required: boolean;

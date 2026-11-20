@@ -38,6 +38,7 @@ import { HospitalityGuestOverview } from "./HospitalityGuestOverview";
 import { PlaceSettingsPage } from "@/features/place-settings/PlaceSettingsPage";
 import { ProfilePage } from "@/features/profile/ProfilePage";
 import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
+import { partyPluginSection } from "@/plugins/registry";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ import {
 import { usePlaceWorkspace } from "./PlaceWorkspaceShell";
 import {
   placeWorkspaceNavigation,
+  pluginWorkspaceSection,
   workspaceSectionAllowed,
 } from "./navigation";
 import {
@@ -448,6 +450,10 @@ const hospitalityGuestSectionDescription: Record<
 export function PlaceWorkspacePage({ section }: { section: string }) {
   const context = usePlaceWorkspace();
   const navigation = placeWorkspaceNavigation(context);
+  const pluginSection = pluginWorkspaceSection(context, section);
+  const PluginSection = pluginSection
+    ? partyPluginSection(pluginSection.plugin, section)
+    : null;
   const placeName = qualifiedPlaceName(context.place);
   const isHospitalityGuest =
     context.effective_use_case === "hospitality" &&
@@ -456,6 +462,7 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
     );
   const stayPlaceName = context.place.site_name || placeName;
   const title =
+    pluginSection?.label ??
     navigation
       .flatMap((group) => group.items)
       .find(
@@ -519,6 +526,7 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
         <ProfilePage audience={isHospitalityGuest ? "guest" : "resident"} />
       )}
       {section === "settings" && <PlaceSettingsPage />}
+      {PluginSection ? <PluginSection /> : null}
     </div>
   );
 }

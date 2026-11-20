@@ -101,6 +101,7 @@ const relationship = {
     slug: "apt-01",
     kind: "unit",
     parent_id: "site-1",
+    site_id: "site-1",
     site_name: "Pebble Court",
     is_active: true,
     effective_use_case: "residential",
@@ -213,9 +214,10 @@ describe("WorkspaceLobbyPage", () => {
     await waitFor(() =>
       expect(mocks.push).toHaveBeenCalledWith("/workspace/place-1"),
     );
+    // The party workspace operates inside its Site, never as a Place context.
     expect(mocks.setSelectedSite).toHaveBeenCalledWith({
-      id: "place-1",
-      name: "Pebble Court - APT 01",
+      id: "site-1",
+      name: "Pebble Court",
     });
   });
 
