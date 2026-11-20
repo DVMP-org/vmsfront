@@ -17,6 +17,10 @@ const mocks = vi.hoisted(() => ({
   updateRole: vi.fn(),
   remove: vi.fn(),
   profile: vi.fn(),
+  permissions: vi.fn(),
+  createRole: vi.fn(),
+  updateDefinition: vi.fn(),
+  deleteRole: vi.fn(),
 }));
 
 // The page reads its route to decide whether it is embedded in settings.
@@ -47,6 +51,24 @@ vi.mock("@/hooks/use-admin", () => ({
     isPending: false,
     isError: false,
     error: null,
+  }),
+  useAdminPermissions: mocks.permissions,
+  useCreateRole: () => ({
+    mutate: mocks.createRole,
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+  }),
+  useUpdateRole: () => ({
+    mutate: mocks.updateDefinition,
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+  }),
+  useAdminDeleteRole: () => ({
+    mutate: mocks.deleteRole,
+    isPending: false,
+    isError: false,
   }),
 }));
 
@@ -108,6 +130,10 @@ beforeEach(() => {
         "admins.create",
         "admins.update",
         "admins.delete",
+        "roles.list",
+        "roles.create",
+        "roles.update",
+        "roles.delete",
       ],
     },
   });
@@ -119,11 +145,49 @@ beforeEach(() => {
   });
   mocks.roles.mockReturnValue({
     data: { items: [role], total: 1, total_pages: 1, page: 1 },
+    isPending: false,
     isError: false,
+    refetch: vi.fn(),
+  });
+  mocks.permissions.mockReturnValue({
+    data: { admins: ["list", "create"], roles: ["list", "create"] },
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
   });
 });
 
 describe("organization administrators", () => {
+  it("manages role definitions from the canonical Members & Roles screen", async () => {
+    mount();
+    fireEvent.click(await screen.findByRole("tab", { name: "Roles" }));
+    expect(await screen.findByText("Organization roles")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Create role" }));
+    const editor = screen.getByRole("dialog", {
+      name: "Create organization role",
+    });
+    fireEvent.change(within(editor).getByLabelText(/Role name/), {
+      target: { value: "Security supervisor" },
+    });
+    fireEvent.change(within(editor).getByLabelText(/Role code/), {
+      target: { value: "security_supervisor" },
+    });
+    fireEvent.click(
+      within(editor).getByLabelText("Grant all organization permissions"),
+    );
+    fireEvent.click(
+      within(editor).getByRole("button", { name: "Create role" }),
+    );
+    expect(mocks.createRole).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Security supervisor",
+        code: "security_supervisor",
+        permissions: ["*"],
+      }),
+      expect.any(Object),
+    );
+  });
+
   it("shows administrators without presenting them as place relationships", async () => {
     mount();
     expect((await screen.findAllByText("Ada Okafor")).length).toBeGreaterThan(

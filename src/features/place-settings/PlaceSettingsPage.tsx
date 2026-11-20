@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormDrawer } from "@/components/ui/form/FormDrawer";
@@ -77,6 +78,9 @@ export function PlaceSettingsPage() {
   const remove = (member: HouseholdMember) => setPendingRemoval(member);
 
   const siteLabel = place.site_name?.trim() || place.name;
+  const preferencesError = preferences.isError
+    ? parseApiError(preferences.error).message
+    : null;
 
   return (
     <div className="space-y-4">
@@ -111,7 +115,34 @@ export function PlaceSettingsPage() {
         </p>
       ) : null}
 
-      {preferences.isPending ? (
+      {preferences.isError ? (
+        <InlineAlert
+          tone="danger"
+          title={preferences.data ? "Preferences could not be refreshed" : "Preferences could not be loaded"}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              onClick={() => void preferences.refetch()}
+              isLoading={preferences.isFetching}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {preferencesError}
+          {preferences.data ? " Your current preferences remain available." : null}
+        </InlineAlert>
+      ) : null}
+
+      {savePreferences.isError ? (
+        <InlineAlert tone="danger" title="Preferences were not saved">
+          {parseApiError(savePreferences.error).message}
+        </InlineAlert>
+      ) : null}
+
+      {preferences.isPending && !current ? (
         <p role="status" className="text-sm text-[var(--vms-ink-muted)]">
           Loading preferences…
         </p>
@@ -135,6 +166,10 @@ export function PlaceSettingsPage() {
                 <HouseholdAccessCard
                   members={members.data ?? []}
                   isLoading={members.isPending}
+                  error={members.isError ? parseApiError(members.error).message : null}
+                  isStale={members.isError && !!members.data}
+                  onRetry={() => void members.refetch()}
+                  isRetrying={members.isFetching}
                   canManage={is_place_admin}
                   onAdd={() => setAddOpen(true)}
                   onRemove={remove}
@@ -163,6 +198,10 @@ export function PlaceSettingsPage() {
             <HouseholdAccessCard
               members={members.data ?? []}
               isLoading={members.isPending}
+              error={members.isError ? parseApiError(members.error).message : null}
+              isStale={members.isError && !!members.data}
+              onRetry={() => void members.refetch()}
+              isRetrying={members.isFetching}
               canManage={is_place_admin}
               onAdd={() => setAddOpen(true)}
               onRemove={remove}

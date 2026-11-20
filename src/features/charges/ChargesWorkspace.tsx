@@ -689,7 +689,7 @@ function DefinitionDetail({
   });
 
   if (query.isPending) return <PageSkeleton label="Loading charge" />;
-  if (query.isError) {
+  if (query.isError && !query.data) {
     return (
       <InlineFailure
         title="Charge unavailable"
@@ -747,6 +747,14 @@ function DefinitionDetail({
   ];
   return (
     <>
+      {query.isError ? (
+        <StaleRefreshNotice
+          subject="charge definition"
+          error={query.error}
+          isRetrying={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div className="flex min-w-0 gap-3">
@@ -809,9 +817,11 @@ function DefinitionDetail({
             value={
               assignments.data
                 ? String(assignments.data.total)
-                : allow("list")
-                  ? "Loading…"
-                  : "Restricted"
+                : assignments.isError
+                  ? "Unavailable"
+                  : allow("list")
+                    ? "Loading…"
+                    : "Restricted"
             }
           />
           {definition.end_date ? (
@@ -1253,7 +1263,7 @@ function AssignmentDetail({
   });
 
   if (query.isPending) return <PageSkeleton label="Loading assignment" />;
-  if (query.isError) {
+  if (query.isError && !query.data) {
     return (
       <InlineFailure
         title="Assignment unavailable"
@@ -1319,6 +1329,14 @@ function AssignmentDetail({
   ];
   return (
     <>
+      {query.isError ? (
+        <StaleRefreshNotice
+          subject="charge assignment"
+          error={query.error}
+          isRetrying={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div>
@@ -1362,9 +1380,11 @@ function AssignmentDetail({
             value={
               schedules.data
                 ? String(schedules.data.total)
-                : allow("list")
-                  ? "Loading…"
-                  : "Restricted"
+                : schedules.isError
+                  ? "Unavailable"
+                  : allow("list")
+                    ? "Loading…"
+                    : "Restricted"
             }
           />
         </div>
@@ -1919,6 +1939,39 @@ function InlineFailure({
         {parseApiError(error).message}
       </p>
       <Button variant="secondary" className="mt-4" onClick={onRetry}>
+        <RefreshCw className="h-4 w-4" aria-hidden="true" />
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+function StaleRefreshNotice({
+  subject,
+  error,
+  isRetrying,
+  onRetry,
+}: {
+  subject: string;
+  error: unknown;
+  isRetrying: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="flex flex-col gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-warning)] bg-[var(--vms-warning-subtle)] px-4 py-3 text-sm text-[var(--vms-warning)] sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>
+        Could not refresh this {subject}. Showing previously loaded details. {parseApiError(error).message}
+      </p>
+      <Button
+        variant="outline"
+        size="sm"
+        isLoading={isRetrying}
+        onClick={onRetry}
+        className="shrink-0"
+      >
         <RefreshCw className="h-4 w-4" aria-hidden="true" />
         Retry
       </Button>

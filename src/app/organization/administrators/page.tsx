@@ -37,6 +37,7 @@ import { hasAdminPermission } from "@/lib/permissions";
 import { adminService } from "@/services/admin-service";
 import type { Admin, AdminRole, CreateAdminRequest } from "@/types";
 import { OrganizationAdminHeader } from "@/features/organization-admin/OrganizationAdminHeader";
+import { OrganizationRolesPanel } from "@/features/organization-admin/OrganizationRolesPanel";
 
 const PAGE_SIZE = 10;
 
@@ -94,6 +95,7 @@ export default function OrganizationAdministratorsPage() {
   const [draft, setDraft] = useState<CreateDraft>(emptyDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
+  const [section, setSection] = useState<"members" | "roles">("members");
 
   const profile = useQuery({
     queryKey: ["organization-admin-profile"],
@@ -115,6 +117,10 @@ export default function OrganizationAdministratorsPage() {
   const canCreate = hasAdminPermission(profile.data, "admins.create");
   const canUpdate = hasAdminPermission(profile.data, "admins.update");
   const canDelete = hasAdminPermission(profile.data, "admins.delete");
+  const canListRoles = hasAdminPermission(profile.data, "roles.list");
+  const canCreateRole = hasAdminPermission(profile.data, "roles.create");
+  const canUpdateRole = hasAdminPermission(profile.data, "roles.update");
+  const canDeleteRole = hasAdminPermission(profile.data, "roles.delete");
   const readOnly = !canCreate && !canUpdate && !canDelete;
 
   useEffect(() => {
@@ -349,7 +355,7 @@ export default function OrganizationAdministratorsPage() {
         title="Members & Roles"
         description="Manage organization-level members and the roles that delegate administration. Site administration and occupancy relationships remain separate in Places and People."
         actions={
-          canCreate ? (
+          section === "members" && canCreate ? (
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add administrator
@@ -357,6 +363,17 @@ export default function OrganizationAdministratorsPage() {
           ) : undefined
         }
       />
+
+      <div role="tablist" aria-label="Members and roles" className="flex gap-1 border-b border-[var(--vms-line)]">
+        <button type="button" role="tab" aria-selected={section === "members"} onClick={() => setSection("members")} className={`px-4 py-3 text-sm font-medium transition-colors ${section === "members" ? "border-b-2 border-[var(--vms-ink)] text-[var(--vms-ink)]" : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"}`}>
+          Administrators
+        </button>
+        {canListRoles ? <button type="button" role="tab" aria-selected={section === "roles"} onClick={() => setSection("roles")} className={`px-4 py-3 text-sm font-medium transition-colors ${section === "roles" ? "border-b-2 border-[var(--vms-ink)] text-[var(--vms-ink)]" : "text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)]"}`}>
+          Roles
+        </button> : null}
+      </div>
+
+      {section === "roles" ? <OrganizationRolesPanel canCreate={canCreateRole} canUpdate={canUpdateRole} canDelete={canDeleteRole} /> : <>
 
       {notice ? (
         <div
@@ -691,6 +708,7 @@ export default function OrganizationAdministratorsPage() {
           </Button>
         </div>
       </Modal>
+      </>}
     </div>
   );
 }

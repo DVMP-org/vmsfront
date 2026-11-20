@@ -148,6 +148,7 @@ export default function TransactionsPage() {
     {
       key: "reference",
       header: "Reference",
+      minWidth: 180,
       accessor: (row) => (
         <div className="flex flex-col">
           <span className="font-mono text-xs font-bold uppercase tracking-tight">
@@ -162,6 +163,7 @@ export default function TransactionsPage() {
     {
       key: "type",
       header: "Type",
+      minWidth: 135,
       accessor: (row) => (
         <Badge
           variant="outline"
@@ -174,8 +176,9 @@ export default function TransactionsPage() {
     {
       key: "amount",
       header: "Amount",
+      minWidth: 145,
       accessor: (row) => (
-        <span className="font-bold tabular-nums">
+        <span className="whitespace-nowrap font-bold tabular-nums">
           {formatCurrency(row.amount)}
         </span>
       ),
@@ -183,6 +186,7 @@ export default function TransactionsPage() {
     {
       key: "status",
       header: "Status",
+      minWidth: 120,
       accessor: (row) => {
         const variants: Record<
           string,
@@ -205,6 +209,7 @@ export default function TransactionsPage() {
     {
       key: "processor",
       header: "Processor",
+      minWidth: 130,
       accessor: (row) => (
         <span className="text-xs text-muted-foreground capitalize">
           {row.processor || "—"}
@@ -214,6 +219,7 @@ export default function TransactionsPage() {
     {
       key: "paid_at",
       header: "Paid At",
+      minWidth: 160,
       sortable: true,
       accessor: (row) => (
         <span className="text-xs text-muted-foreground capitalize">
@@ -223,7 +229,9 @@ export default function TransactionsPage() {
     },
     {
       key: "actions",
-      header: "",
+      header: "Action",
+      minWidth: 100,
+      mobileHide: true,
       accessor: (row) => (
         <div className="flex justify-end">
           <Button
@@ -324,6 +332,7 @@ export default function TransactionsPage() {
         <DataTable
           data={transactions}
           columns={columns}
+          tableLabel="Payment transactions"
           searchable
           searchPlaceholder="Search by reference…"
           pageSize={pageSize}
@@ -367,6 +376,45 @@ export default function TransactionsPage() {
               (dateFromFilter?.value as string | undefined) || undefined,
             );
             setDateTo((dateToFilter?.value as string | undefined) || undefined);
+          }}
+          mobileSummary={(row) => {
+            const variants: Record<
+              string,
+              "success" | "warning" | "danger" | "secondary"
+            > = { success: "success", pending: "warning", failed: "danger" };
+            return (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="block break-all font-mono text-xs font-semibold text-[var(--vms-ink)]">
+                      {row.reference}
+                    </span>
+                    <span className="mt-1 block text-xs text-[var(--vms-ink-muted)]">
+                      {titleCase(row.type)} · {formatDateTime(row.created_at)}
+                    </span>
+                  </div>
+                  <Badge variant={variants[row.status] || "secondary"}>
+                    {titleCase(row.status)}
+                  </Badge>
+                </div>
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <span className="block text-xs text-[var(--vms-ink-muted)]">Amount</span>
+                    <span className="font-semibold tabular-nums text-[var(--vms-ink)]">
+                      {formatCurrency(row.amount)}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11"
+                    onClick={() => router.push(`/admin/transactions/${row.id}`)}
+                  >
+                    View transaction
+                  </Button>
+                </div>
+              </div>
+            );
           }}
           initialSort={sort}
           onSortChange={(nextSort) => {

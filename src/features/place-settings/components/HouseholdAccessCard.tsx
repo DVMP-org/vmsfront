@@ -5,6 +5,7 @@ import { MoreHorizontal, UserPlus } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { roleLabel } from "@/features/workspaces/catalog";
 import { humanize } from "@/lib/strings";
 import {
@@ -17,6 +18,10 @@ import { SettingsCard, SettingsSelect } from "./SettingsPrimitives";
 export function HouseholdAccessCard({
   members,
   isLoading,
+  error,
+  isStale,
+  onRetry,
+  isRetrying,
   canManage,
   onAdd,
   onRemove,
@@ -25,6 +30,10 @@ export function HouseholdAccessCard({
 }: {
   members: HouseholdMember[];
   isLoading: boolean;
+  error: string | null;
+  isStale: boolean;
+  onRetry: () => void;
+  isRetrying: boolean;
   /** Only a Place administrator may add or remove people. */
   canManage: boolean;
   onAdd: () => void;
@@ -48,11 +57,32 @@ export function HouseholdAccessCard({
       }
       bodyClassName="px-4 pb-2 pt-1 sm:px-5 sm:pb-3"
     >
+      {error ? (
+        <InlineAlert
+          tone={isStale ? "warning" : "danger"}
+          title={isStale ? "Household list could not be refreshed" : "Household list could not be loaded"}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              onClick={onRetry}
+              isLoading={isRetrying}
+            >
+              Retry
+            </Button>
+          }
+          className="mb-3"
+        >
+          {error}
+          {isStale ? " Showing the last available household list." : null}
+        </InlineAlert>
+      ) : null}
       {isLoading ? (
         <p role="status" className="py-6 text-sm text-[var(--vms-ink-muted)]">
           Loading household members…
         </p>
-      ) : !members.length ? (
+      ) : error && !members.length ? null : !members.length ? (
         <p className="py-6 text-sm text-[var(--vms-ink-muted)]">
           No one is linked to this Place yet.
         </p>

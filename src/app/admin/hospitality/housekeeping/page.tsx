@@ -111,6 +111,7 @@ export default function HospitalityHousekeepingPage() {
     {
       key: "room_name",
       header: "Room",
+      minWidth: 180,
       sortable: true,
       accessor: (task) => (
         <div>
@@ -124,6 +125,7 @@ export default function HospitalityHousekeepingPage() {
     {
       key: "status",
       header: "State",
+      minWidth: 125,
       sortable: true,
       accessor: (task) => (
         <StatusPill
@@ -142,6 +144,7 @@ export default function HospitalityHousekeepingPage() {
     {
       key: "assigned_to",
       header: "Assignee",
+      minWidth: 180,
       sortable: true,
       accessor: (task) => (
         <select
@@ -154,7 +157,7 @@ export default function HospitalityHousekeepingPage() {
               body: { assigned_to: event.currentTarget.value || null },
             })
           }
-          className="h-9 max-w-48 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-2 text-sm"
+          className="h-11 min-w-40 max-w-56 rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
         >
           <option value="">Unassigned</option>
           {assignees.map((person) => (
@@ -168,12 +171,18 @@ export default function HospitalityHousekeepingPage() {
     {
       key: "due_at",
       header: "Due",
+      minWidth: 170,
       sortable: true,
-      accessor: (task) => formatDateTime(task.due_at, access.siteTimezone),
+      accessor: (task) => (
+        <span className="whitespace-nowrap">
+          {formatDateTime(task.due_at, access.siteTimezone)}
+        </span>
+      ),
     },
     {
       key: "notes",
       header: "Notes",
+      minWidth: 180,
       accessor: (task) => (
         <span className="line-clamp-2 max-w-64 text-[var(--vms-ink-muted)]">
           {task.notes || "No notes"}
@@ -183,13 +192,15 @@ export default function HospitalityHousekeepingPage() {
     {
       key: "updated_at",
       header: "Updated",
+      minWidth: 155,
       sortable: true,
       responsiveHide: "lg",
       accessor: (task) => formatDateTime(task.updated_at, access.siteTimezone),
     },
     {
       key: "actions",
-      header: "",
+      header: "Next step",
+      minWidth: 145,
       mobileHide: true,
       accessor: (task) => {
         const action = nextAction(task.status);

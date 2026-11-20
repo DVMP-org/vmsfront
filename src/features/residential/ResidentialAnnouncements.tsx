@@ -2,7 +2,6 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { Archive, Megaphone, Pencil, Pin, Plus, Send } from "lucide-react";
 import { format } from "date-fns/format";
 
@@ -42,6 +41,10 @@ export default function ResidentialAnnouncements() {
   const [formOpen, setFormOpen] = useState(false);
   const [active, setActive] = useState<Announcement | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [feedback, setFeedback] = useState<{
+    tone: "success" | "danger";
+    message: string;
+  } | null>(null);
   const placeId = selectedSite?.id || "";
   const announcements = useQuery({
     queryKey: ["residential", contextKey, "announcements", placeId],
@@ -69,13 +72,16 @@ export default function ResidentialAnnouncements() {
       await queryClient.invalidateQueries({
         queryKey: ["residential", contextKey, "announcements"],
       });
-      toast.success(
-        `${updated.length} announcement${updated.length === 1 ? "" : "s"} ${
+      setFeedback({
+        tone: "success",
+        message: `${updated.length} announcement${updated.length === 1 ? "" : "s"} ${
           variables.body.status ? `marked ${variables.body.status}` : "updated"
         }.`,
-      );
+      });
     },
-    onError: (error) => toast.error(parseApiError(error).message),
+    onMutate: () => setFeedback(null),
+    onError: (error) =>
+      setFeedback({ tone: "danger", message: parseApiError(error).message }),
   });
   const columns: Column<Announcement>[] = [
     {
@@ -169,6 +175,7 @@ export default function ResidentialAnnouncements() {
               size="sm"
               variant="ghost"
               onClick={() => {
+                setFeedback(null);
                 setActive(announcement);
                 setFormOpen(true);
               }}
@@ -232,6 +239,7 @@ export default function ResidentialAnnouncements() {
         canManageAnnouncements ? (
           <Button
             onClick={() => {
+              setFeedback(null);
               setActive(null);
               setFormOpen(true);
             }}
@@ -242,6 +250,20 @@ export default function ResidentialAnnouncements() {
         ) : undefined
       }
     >
+      {feedback ? (
+        <div
+          role={feedback.tone === "danger" ? "alert" : "status"}
+          aria-live={feedback.tone === "danger" ? "assertive" : "polite"}
+          aria-atomic="true"
+          className={`rounded-[var(--vms-radius-control)] border px-3 py-2.5 text-sm ${
+            feedback.tone === "danger"
+              ? "border-[color-mix(in_srgb,var(--vms-danger)_25%,transparent)] bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]"
+              : "border-[color-mix(in_srgb,var(--vms-success)_25%,transparent)] bg-[var(--vms-success-subtle)] text-[var(--vms-success)]"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      ) : null}
       <section className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-3">
         <Summary
           label="All notices"
@@ -295,6 +317,7 @@ export default function ResidentialAnnouncements() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
+                  setFeedback(null);
                   setActive(announcement);
                   setFormOpen(true);
                 }}
@@ -314,7 +337,8 @@ export default function ResidentialAnnouncements() {
           setFormOpen(false);
           setActive(null);
         }}
-        onSaved={() => {
+        onSaved={(message) => {
+          setFeedback({ tone: "success", message });
           setFormOpen(false);
           setActive(null);
           void queryClient.invalidateQueries({
@@ -337,7 +361,7 @@ function AnnouncementModal({
   announcement: Announcement | null;
   readOnly: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (message: string) => void;
 }) {
   const [title, setTitle] = useState(announcement?.title || "");
   const [body, setBody] = useState(announcement?.body || "");
@@ -367,10 +391,9 @@ function AnnouncementModal({
         : residentialApi.createAnnouncement(input);
     },
     onSuccess: () => {
-      toast.success(
+      onSaved(
         announcement ? "Announcement updated." : "Announcement draft created.",
       );
-      onSaved();
     },
     onError: (error) => setErrors({ form: parseApiError(error).message }),
   });

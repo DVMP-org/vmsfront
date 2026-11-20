@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
@@ -550,6 +551,33 @@ export function PassagesDirectory() {
     }));
   }
 
+  const summaryQueries = [
+    {
+      label: "Entries today",
+      isError: entriesToday.isError,
+      isFetching: entriesToday.isFetching,
+      refetch: entriesToday.refetch,
+    },
+    {
+      label: "Exits today",
+      isError: exitsToday.isError,
+      isFetching: exitsToday.isFetching,
+      refetch: exitsToday.refetch,
+    },
+    {
+      label: "Currently on site",
+      isError: presence.isError,
+      isFetching: presence.isFetching,
+      refetch: presence.refetch,
+    },
+    {
+      label: "Denied attempts",
+      isError: deniedToday.isError,
+      isFetching: deniedToday.isFetching,
+      refetch: deniedToday.refetch,
+    },
+  ];
+
   function clearFilters() {
     setFilters({});
     setSearch("");
@@ -640,6 +668,30 @@ export function PassagesDirectory() {
           tone="danger"
         />
       </section>
+
+      {summaryQueries.some((query) => query.isError) ? (
+        <InlineAlert
+          tone="warning"
+          title="Some movement summaries could not be refreshed"
+          className="mb-4"
+        >
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {summaryQueries
+              .filter((summaryQuery) => summaryQuery.isError)
+              .map((summaryQuery) => (
+                <Button
+                  key={summaryQuery.label}
+                  size="sm"
+                  variant="outline"
+                  isLoading={summaryQuery.isFetching}
+                  onClick={() => void summaryQuery.refetch()}
+                >
+                  Retry {summaryQuery.label}
+                </Button>
+              ))}
+          </div>
+        </InlineAlert>
+      ) : null}
 
       <section className="movement-register">
         <div className="movement-toolbar">
@@ -744,13 +796,61 @@ export function PassagesDirectory() {
           </label>
         </div>
 
-        {query.isError && !query.data ? (
-          <div className="movement-error" role="alert">
-            <p>{parseApiError(query.error).message}</p>
-            <Button variant="outline" onClick={() => query.refetch()}>
-              Retry
+        {gates.isError ? (
+          <InlineAlert
+            tone="warning"
+            title="Checkpoint filter options could not be loaded"
+            className="mb-3"
+          >
+            <Button
+              size="sm"
+              variant="outline"
+              isLoading={gates.isFetching}
+              onClick={() => void gates.refetch()}
+            >
+              Retry checkpoints
             </Button>
-          </div>
+          </InlineAlert>
+        ) : null}
+
+        {query.isError && !query.data ? (
+          <InlineAlert
+            tone="danger"
+            title="Movement logs could not be loaded"
+            action={
+              <Button
+                size="sm"
+                variant="outline"
+                isLoading={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                Retry
+              </Button>
+            }
+            className="mb-3"
+          >
+            {parseApiError(query.error).message}
+          </InlineAlert>
+        ) : null}
+
+        {query.isError && query.data ? (
+          <InlineAlert
+            tone="warning"
+            title="Showing previously loaded movements"
+            action={
+              <Button
+                size="sm"
+                variant="outline"
+                isLoading={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                Retry
+              </Button>
+            }
+            className="mb-3"
+          >
+            {parseApiError(query.error).message}
+          </InlineAlert>
         ) : null}
 
         <div

@@ -901,7 +901,7 @@ export function DataTable<T extends Record<string, any>>({
           onChange={(event) =>
             handleFilterChange(filterDef.field, event.target.value)
           }
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-[150px]"
+          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:w-[150px]"
         >
           <option value="">All {filterDef.label.toLowerCase()}</option>
           {filterDef.options?.map((option) => (
@@ -933,7 +933,7 @@ export function DataTable<T extends Record<string, any>>({
             portalId="root"
             aria-label={`Filter by ${filterDef.label}`}
             placeholderText={filterDef.label}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9"
           />
           <CalendarIcon
             className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -973,7 +973,7 @@ export function DataTable<T extends Record<string, any>>({
           aria-label={`Filter by ${filterDef.label} range`}
           dateFormat="MMM d, yyyy"
           placeholderText={filterDef.label}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 w-full rounded-md border border-input bg-background px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9"
         />
         <CalendarIcon
           className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -1033,7 +1033,7 @@ export function DataTable<T extends Record<string, any>>({
                 placeholder={searchPlaceholder}
                 value={localSearchTerm}
                 onChange={(event) => handleSearchChange(event.target.value)}
-                className="h-9 pl-9 text-sm"
+                className="h-11 pl-9 text-sm md:h-9"
               />
             </div>
           ) : null}
@@ -1043,8 +1043,8 @@ export function DataTable<T extends Record<string, any>>({
               <div className="hidden flex-wrap items-center gap-2 md:flex">
                 {availableFilters.map(renderFilterControl)}
               </div>
-              <details className="relative md:hidden">
-                <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+              <details className="order-last w-full md:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)] [&::-webkit-details-marker]:hidden">
                   <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                   Filters
                   {currentFilters.length ? (
@@ -1053,7 +1053,7 @@ export function DataTable<T extends Record<string, any>>({
                     </span>
                   ) : null}
                 </summary>
-                <div className="absolute left-0 z-30 mt-2 grid w-[min(20rem,calc(100vw-2rem))] gap-3 rounded-md border border-border bg-card p-3 shadow-xl">
+                <div className="mt-2 grid max-h-[60dvh] gap-3 overflow-y-auto rounded-md border border-border bg-card p-3">
                   {availableFilters.map(renderFilterControl)}
                 </div>
               </details>
@@ -1073,7 +1073,8 @@ export function DataTable<T extends Record<string, any>>({
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="h-9 gap-1.5 px-2"
+                aria-label="Clear search and filters"
+                className="min-h-11 gap-1.5 px-2 md:min-h-9"
               >
                 <FilterX className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden lg:inline">Clear</span>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import type { ForumCategory, Residency, ResidencyGroup } from "@/types";
 
 interface CategoryFormValues {
@@ -72,6 +73,8 @@ export function CategoryFormModal({
   onSubmit,
   isSubmitting,
 }: CategoryFormModalProps) {
+  const formId = useId();
+  const fieldPrefix = useId().replace(/:/g, "");
   const [formValues, setFormValues] = useState<CategoryFormValues>({
     scopeType: defaultResidencyId ? "residency" : "organization",
     residencyId: defaultResidencyId || "",
@@ -108,8 +111,29 @@ export function CategoryFormModal({
     mode === "create" ? "Create Forum Category" : "Edit Forum Category";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      size="lg"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={!canSubmit}
+            isLoading={isSubmitting}
+          >
+            {mode === "create" ? "Create category" : "Save changes"}
+          </Button>
+        </div>
+      }
+    >
       <form
+        id={formId}
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
@@ -125,59 +149,62 @@ export function CategoryFormModal({
           });
         }}
       >
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Category scope
-          </label>
-          <select
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            value={formValues.scopeType}
-            onChange={(event) =>
-              setFormValues((prev) => ({
-                ...prev,
-                scopeType: event.target
-                  .value as CategoryFormValues["scopeType"],
-                residencyId:
-                  event.target.value === "organization"
-                    ? ""
-                    : prev.residencyId ||
-                      defaultResidencyId ||
-                      residencies[0]?.id ||
-                      "",
-              }))
-            }
-          >
-            <option value="organization">Organization-wide</option>
-            <option value="residency">Single residency</option>
-          </select>
-        </div>
-
-        {formValues.scopeType === "residency" && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Residency scope
-            </label>
+        <Field id={`${fieldPrefix}-category-scope`} label="Category scope">
+          {(control) => (
             <select
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={formValues.residencyId}
+              {...control}
+              className={fieldControlClassName}
+              value={formValues.scopeType}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  residencyId: event.target.value,
+                  scopeType: event.target
+                    .value as CategoryFormValues["scopeType"],
+                  residencyId:
+                    event.target.value === "organization"
+                      ? ""
+                      : prev.residencyId ||
+                        defaultResidencyId ||
+                        residencies[0]?.id ||
+                        "",
                 }))
               }
-              required
             >
-              <option value="" disabled>
-                Select residency
-              </option>
-              {residencies.map((residency) => (
-                <option key={residency.id} value={residency.id}>
-                  {residency.name}
-                </option>
-              ))}
+              <option value="organization">Organization-wide</option>
+              <option value="residency">Single residency</option>
             </select>
-          </div>
+          )}
+        </Field>
+
+        {formValues.scopeType === "residency" && (
+          <Field
+            id={`${fieldPrefix}-residency-scope`}
+            label="Residency scope"
+            required
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={formValues.residencyId}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    residencyId: event.target.value,
+                  }))
+                }
+              >
+                <option value="" disabled>
+                  Select residency
+                </option>
+                {residencies.map((residency) => (
+                  <option key={residency.id} value={residency.id}>
+                    {residency.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
         )}
 
         <p className="text-xs text-muted-foreground">
@@ -185,37 +212,40 @@ export function CategoryFormModal({
           stay local to one residency.
         </p>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Category name
-          </label>
-          <Input
-            placeholder="e.g., Community Updates"
-            value={formValues.name}
-            onChange={(event) =>
-              setFormValues((prev) => ({ ...prev, name: event.target.value }))
-            }
-            required
-          />
-        </div>
+        <Field
+          id={`${fieldPrefix}-category-name`}
+          label="Category name"
+          required
+        >
+          {(control) => (
+            <Input
+              {...control}
+              placeholder="e.g., Community Updates"
+              value={formValues.name}
+              onChange={(event) =>
+                setFormValues((prev) => ({ ...prev, name: event.target.value }))
+              }
+            />
+          )}
+        </Field>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Description
-          </label>
-          <textarea
-            rows={3}
-            placeholder="Short description that explains what belongs here"
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            value={formValues.description}
-            onChange={(event) =>
-              setFormValues((prev) => ({
-                ...prev,
-                description: event.target.value,
-              }))
-            }
-          />
-        </div>
+        <Field id={`${fieldPrefix}-category-description`} label="Description">
+          {(control) => (
+            <textarea
+              {...control}
+              rows={3}
+              placeholder="Short description that explains what belongs here"
+              className={`${fieldControlClassName} min-h-24 resize-y`}
+              value={formValues.description}
+              onChange={(event) =>
+                setFormValues((prev) => ({
+                  ...prev,
+                  description: event.target.value,
+                }))
+              }
+            />
+          )}
+        </Field>
 
         <div className="grid gap-3">
           <Checkbox
@@ -241,15 +271,6 @@ export function CategoryFormModal({
             description="Locked categories are visible but read-only."
           />
         </div>
-
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting}>
-            {mode === "create" ? "Create category" : "Save changes"}
-          </Button>
-        </div>
       </form>
     </Modal>
   );
@@ -267,6 +288,8 @@ export function TopicFormModal({
   onSubmit,
   isSubmitting,
 }: TopicFormModalProps) {
+  const formId = useId();
+  const fieldPrefix = useId().replace(/:/g, "");
   const [formValues, setFormValues] = useState<TopicFormValues>({
     targetType: "residency",
     residencyId: defaultResidencyId || "",
@@ -341,8 +364,29 @@ export function TopicFormModal({
   const modalTitle = mode === "create" ? "Create Topic" : "Edit Topic";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      size="lg"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={!canSubmit}
+            isLoading={isSubmitting}
+          >
+            {mode === "create" ? "Create topic" : "Save changes"}
+          </Button>
+        </div>
+      }
+    >
       <form
+        id={formId}
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
@@ -363,153 +407,169 @@ export function TopicFormModal({
         }}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Topic audience
-            </label>
-            <select
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={formValues.targetType}
-              disabled={mode === "edit"}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  targetType: event.target
-                    .value as TopicFormValues["targetType"],
-                  residencyId:
-                    event.target.value === "residency"
-                      ? prev.residencyId ||
-                        defaultResidencyId ||
-                        residencies[0]?.id ||
-                        ""
-                      : "",
-                  residencyGroupId:
-                    event.target.value === "residencyGroup"
-                      ? prev.residencyGroupId || residencyGroups[0]?.id || ""
-                      : "",
-                  categoryId: "",
-                }))
-              }
-            >
-              <option value="residency">Single residency</option>
-              {mode === "create" ? (
-                <option value="residencyGroup">Residency group</option>
-              ) : null}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {formValues.targetType === "residencyGroup"
+          <Field
+            id={`${fieldPrefix}-topic-audience`}
+            label="Topic audience"
+            className="space-y-2"
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={formValues.targetType}
+                disabled={mode === "edit"}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    targetType: event.target
+                      .value as TopicFormValues["targetType"],
+                    residencyId:
+                      event.target.value === "residency"
+                        ? prev.residencyId ||
+                          defaultResidencyId ||
+                          residencies[0]?.id ||
+                          ""
+                        : "",
+                    residencyGroupId:
+                      event.target.value === "residencyGroup"
+                        ? prev.residencyGroupId || residencyGroups[0]?.id || ""
+                        : "",
+                    categoryId: "",
+                  }))
+                }
+              >
+                <option value="residency">Single residency</option>
+                {mode === "create" ? (
+                  <option value="residencyGroup">Residency group</option>
+                ) : null}
+              </select>
+            )}
+          </Field>
+          <Field
+            id={`${fieldPrefix}-topic-scope`}
+            label={
+              formValues.targetType === "residencyGroup"
                 ? "Residency group"
-                : "Residency"}
-            </label>
-            <select
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={
-                formValues.targetType === "residencyGroup"
-                  ? formValues.residencyGroupId
-                  : formValues.residencyId
-              }
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  residencyId:
-                    prev.targetType === "residency"
-                      ? event.target.value
-                      : prev.residencyId,
-                  residencyGroupId:
-                    prev.targetType === "residencyGroup"
-                      ? event.target.value
-                      : prev.residencyGroupId,
-                  categoryId: "",
-                }))
-              }
-            >
-              <option value="">
-                {formValues.targetType === "residencyGroup"
-                  ? "Select residency group"
-                  : "Select residency"}
-              </option>
-              {formValues.targetType === "residencyGroup"
-                ? residencyGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))
-                : residencies.map((residency) => (
-                    <option key={residency.id} value={residency.id}>
-                      {residency.name}
-                    </option>
-                  ))}
-            </select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Category
-            </label>
-            <select
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={formValues.categoryId}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  categoryId: event.target.value,
-                }))
-              }
-              required
-            >
-              <option value="" disabled>
-                {categoriesForTarget.length === 0
-                  ? "No categories available for this audience"
-                  : "Select category"}
-              </option>
-              {categoriesForTarget.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                  {!category.residency_id ? " · Organization" : ""}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              Residency-group creation fans out into one topic per residency and
-              can only use organization-wide categories.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Topic title
-          </label>
-          <Input
-            placeholder="Add a concise headline"
-            value={formValues.title}
-            onChange={(event) =>
-              setFormValues((prev) => ({ ...prev, title: event.target.value }))
+                : "Residency"
             }
             required
-          />
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={
+                  formValues.targetType === "residencyGroup"
+                    ? formValues.residencyGroupId
+                    : formValues.residencyId
+                }
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    residencyId:
+                      prev.targetType === "residency"
+                        ? event.target.value
+                        : prev.residencyId,
+                    residencyGroupId:
+                      prev.targetType === "residencyGroup"
+                        ? event.target.value
+                        : prev.residencyGroupId,
+                    categoryId: "",
+                  }))
+                }
+              >
+                <option value="">
+                  {formValues.targetType === "residencyGroup"
+                    ? "Select residency group"
+                    : "Select residency"}
+                </option>
+                {formValues.targetType === "residencyGroup"
+                  ? residencyGroups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))
+                  : residencies.map((residency) => (
+                      <option key={residency.id} value={residency.id}>
+                        {residency.name}
+                      </option>
+                    ))}
+              </select>
+            )}
+          </Field>
+          <Field
+            id={`${fieldPrefix}-topic-category`}
+            label="Category"
+            required
+            description="Residency-group creation fans out into one topic per residency and can only use organization-wide categories."
+            className="sm:col-span-2"
+          >
+            {(control) => (
+              <select
+                {...control}
+                className={fieldControlClassName}
+                value={formValues.categoryId}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    categoryId: event.target.value,
+                  }))
+                }
+              >
+                <option value="" disabled>
+                  {categoriesForTarget.length === 0
+                    ? "No categories available for this audience"
+                    : "Select category"}
+                </option>
+                {categoriesForTarget.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                    {!category.residency_id ? " · Organization" : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
         </div>
 
-        {mode === "create" ? (
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Initial post
-            </label>
-            <textarea
-              rows={4}
-              placeholder="Seed the conversation with context..."
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              value={formValues.content}
+        <Field id={`${fieldPrefix}-topic-title`} label="Topic title" required>
+          {(control) => (
+            <Input
+              {...control}
+              placeholder="Add a concise headline"
+              value={formValues.title}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  content: event.target.value,
+                  title: event.target.value,
                 }))
               }
-              required
             />
-          </div>
+          )}
+        </Field>
+
+        {mode === "create" ? (
+          <Field
+            id={`${fieldPrefix}-topic-content`}
+            label="Initial post"
+            required
+          >
+            {(control) => (
+              <textarea
+                {...control}
+                rows={4}
+                placeholder="Seed the conversation with context..."
+                className={`${fieldControlClassName} min-h-28 resize-y`}
+                value={formValues.content}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    content: event.target.value,
+                  }))
+                }
+              />
+            )}
+          </Field>
         ) : (
           <div className="grid gap-3">
             <Checkbox
@@ -536,15 +596,6 @@ export function TopicFormModal({
             />
           </div>
         )}
-
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting}>
-            {mode === "create" ? "Create topic" : "Save changes"}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

@@ -6,6 +6,8 @@ import { adminService } from "@/services/admin-service";
 import { PaymentGateway, UpdatePaymentGatewayRequest } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -29,6 +31,7 @@ import {
   Webhook,
 } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
+import { parseApiError } from "@/lib/error-utils";
 
 export function PaymentGatewaysSection() {
   const queryClient = useQueryClient();
@@ -81,7 +84,7 @@ export function PaymentGatewaysSection() {
     setTimeout(() => setCopiedWebhook(null), 2000);
   };
 
-  const { data: gateways, isLoading } = useQuery<PaymentGateway[]>({
+  const { data: gateways, isLoading, isError, isFetching, error, refetch } = useQuery<PaymentGateway[]>({
     queryKey: ["admin", "payment-gateways"],
     queryFn: async () => {
       const response = await adminService.getPaymentGateways();
@@ -201,19 +204,31 @@ export function PaymentGatewaysSection() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-[var(--vms-ink-muted)]" />
+      <div role="status" className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--vms-ink-muted)]">
+        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+        Loading payment gateways…
       </div>
     );
   }
 
-  if (!gateways || gateways.length === 0) {
+  if (isError && !gateways) {
     return (
-      <div className="border border-[var(--vms-line)] rounded-lg p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          No payment gateways configured
-        </p>
-      </div>
+      <InlineAlert
+        tone="danger"
+        title="Payment gateways could not be loaded"
+        action={<Button size="sm" variant="outline" isLoading={isFetching} onClick={() => void refetch()}>Retry</Button>}
+      >
+        {parseApiError(error).message}
+      </InlineAlert>
+    );
+  }
+
+  if (!gateways?.length) {
+    return (
+      <EmptyState
+        title="No payment gateways configured"
+        description="Available gateways will appear here when configured for this organization."
+      />
     );
   }
 
@@ -221,6 +236,15 @@ export function PaymentGatewaysSection() {
 
   return (
     <>
+      {isError ? (
+        <InlineAlert
+          tone="warning"
+          title="Showing the last loaded gateways"
+          action={<Button size="sm" variant="outline" isLoading={isFetching} onClick={() => void refetch()}>Retry</Button>}
+        >
+          Refresh failed. {parseApiError(error).message}
+        </InlineAlert>
+      ) : null}
       {!hasActiveGateway && (
         <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-4 mb-4">
           <div className="flex items-start gap-3">

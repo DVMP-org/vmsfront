@@ -358,6 +358,7 @@ export function useAdminDeleteRole() {
     mutationFn: (roleId: string) => adminService.deleteRole(roleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "admins"] });
       toast.success("Role deleted successfully!");
     },
     onError: (error: any) => {
@@ -384,6 +385,7 @@ export function useUpdateRole() {
     }) => adminService.updateRole(roleId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "admins"] });
       toast.success("Role updated successfully!");
     },
     onError: (error: any) => {

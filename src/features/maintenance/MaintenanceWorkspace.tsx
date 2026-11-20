@@ -29,6 +29,7 @@ import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { domainExperience, type DomainUseCase } from "@/config/domains";
+import { useSiteAccess } from "@/features/context/use-site-access";
 import { placesApi, type PlaceTreeNode } from "@/features/places/api";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
@@ -57,6 +58,8 @@ const statusTone = {
 
 export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
   const experience = domainExperience(domain)!;
+  const access = useSiteAccess();
+  const canCreate = access.isAdministrator || access.allowed("maintenance.create");
   const selectedSite = useAppStore((state) => state.selectedSite);
   const client = useQueryClient();
   const [filters, setFilters] = useState<FilterConfig[]>([]);
@@ -253,10 +256,10 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
             : "Track issues, assignments, approvals and completed work."
         }
         primaryAction={
-          <Button onClick={() => setFormOpen(true)}>
+          canCreate ? <Button onClick={() => setFormOpen(true)}>
             <Plus className="h-4 w-4" />
             New request
-          </Button>
+          </Button> : undefined
         }
       />
       <section
