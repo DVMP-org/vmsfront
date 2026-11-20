@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin-service";
 import { PaymentGateway, UpdatePaymentGatewayRequest } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -368,46 +369,32 @@ export function PaymentGatewaysSection() {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Sandbox Mode
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formState.sandbox_mode}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      sandbox_mode: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 rounded border-[var(--vms-line)]"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Enable sandbox mode
-                </span>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Active</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formState.active}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 rounded border-[var(--vms-line)]"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Enable gateway
-                </span>
-              </div>
-            </div>
+            <Checkbox
+              id="payment-gateway-sandbox-mode"
+              label="Sandbox mode"
+              description="Use the provider's test environment."
+              checked={formState.sandbox_mode}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  sandbox_mode: e.target.checked,
+                }))
+              }
+              className="h-4 w-4"
+            />
+            <Checkbox
+              id="payment-gateway-active"
+              label="Active"
+              description="Allow this gateway to process payments."
+              checked={formState.active}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  active: e.target.checked,
+                }))
+              }
+              className="h-4 w-4"
+            />
           </div>
 
           {editingGateway?.api_key !== null && (

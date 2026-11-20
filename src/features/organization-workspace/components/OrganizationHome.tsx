@@ -9,6 +9,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { hasAdminPermission } from "@/lib/permissions";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
 
 import type { CreatedOrganizationSite } from "../api";
 import { useOrganizationOverview } from "../queries";
@@ -164,14 +165,20 @@ function OrganizationHomeSkeleton() {
         <div className="h-8 w-64 animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
         <div className="h-4 w-full max-w-xl animate-pulse rounded bg-[var(--vms-surface-subtle)]" />
       </div>
-      <div className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div
-            key={index}
-            className="h-24 animate-pulse border-b border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] sm:border-r xl:border-b-0"
-          />
-        ))}
-      </div>
+      <MetricStrip
+        label="Portfolio summary"
+        metrics={[
+          "Total Sites",
+          "Total Places",
+          "Organization Members",
+          "Active Integrations",
+        ].map((label) => ({
+          label,
+          value: "",
+          detail: "Loading current data…",
+          state: "loading" as const,
+        }))}
+      />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,1fr)]">
         <div className="h-72 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />
         <div className="h-72 animate-pulse rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)]" />

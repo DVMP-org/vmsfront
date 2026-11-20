@@ -4,7 +4,6 @@ import { twMerge } from "tailwind-merge";
 
 import { formatDateTime } from "./datetime";
 import { initials } from "./strings";
-import { DEFAULT_CURRENCY } from "./currency";
 
 // Formatting helpers live in focused modules and are re-exported here so
 // existing imports keep working while new code imports the specific module.
@@ -224,14 +223,6 @@ export function safeFormatDateTime(value?: string | null): string | null {
   if (Number.isNaN(parsed.getTime())) return null;
   return formatDateTime(parsed);
 }
-
-export const formatPrice = (price: number, currency?: string) => {
-  if (price === 0) return "Free";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || DEFAULT_CURRENCY,
-  }).format(price);
-};
 
 export const formatNumber = (num: number) => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

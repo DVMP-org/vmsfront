@@ -736,9 +736,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(function Sidebar({
                                 onClick={handleLinkClick}
                                 className={cn(
                                   "flex min-h-11 items-center text-[13px] font-medium transition-colors duration-[var(--vms-motion)] lg:min-h-10",
-                                  "gap-3 px-3 py-2",
+                                  "gap-3",
                                   isChildActive
-                                    ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent pl-[10px] font-semibold text-[var(--vms-ink)]"
+                                    ? "border-l-2 border-[var(--vms-active-accent)] bg-transparent font-semibold text-[var(--vms-ink)]"
                                     : "text-[var(--vms-ink-muted)] hover:bg-[var(--vms-surface-subtle)] hover:text-[var(--vms-ink)]",
                                 )}
                               >

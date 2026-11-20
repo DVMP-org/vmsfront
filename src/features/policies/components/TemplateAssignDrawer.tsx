@@ -4,6 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { FormDrawer, FormHint } from "@/components/ui/form/FormDrawer";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormSection } from "@/components/ui/form/FormSection";
 
 import type {
@@ -104,19 +106,36 @@ export function TemplateAssignDrawer({
                         const checked = selected.includes(site.site_id);
                         return (
                             <li key={site.site_id}>
-                                <label
+                                <div
                                     className={[
-                                        "flex min-h-11 items-start gap-3 rounded-[var(--vms-radius-control)] border px-3 py-2 text-sm",
+                                        "rounded-[var(--vms-radius-control)] border px-3 py-1 text-sm",
                                         allowed
                                             ? "border-[var(--vms-line)]"
                                             : "border-dashed border-[var(--vms-line)] opacity-60",
                                     ].join(" ")}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        className="mt-1"
+                                    <Checkbox
+                                        id={`policy-assignment-site-${site.site_id}`}
+                                        label={site.site_name}
+                                        description={
+                                            <>
+                                                {contextLabel(site.use_case)} ·{" "}
+                                                {site.template_name
+                                                    ? `currently ${site.template_name}`
+                                                    : "no standard"}
+                                                {site.override_count > 0
+                                                    ? ` · ${site.override_count} site override${site.override_count === 1 ? "" : "s"}`
+                                                    : ""}
+                                                {!allowed ? (
+                                                    <span className="mt-1 block text-xs text-[var(--vms-warning)]">
+                                                        This standard does not cover {contextLabel(site.use_case)}.
+                                                    </span>
+                                                ) : null}
+                                            </>
+                                        }
                                         disabled={!allowed}
                                         checked={checked}
+                                        className="mt-0.5"
                                         onChange={() =>
                                             setSelected((current) =>
                                                 checked
@@ -125,25 +144,7 @@ export function TemplateAssignDrawer({
                                             )
                                         }
                                     />
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block font-medium">{site.site_name}</span>
-                                        <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
-                                            {contextLabel(site.use_case)} ·{" "}
-                                            {site.template_name
-                                                ? `currently ${site.template_name}`
-                                                : "no standard"}
-                                            {site.override_count > 0
-                                                ? ` · ${site.override_count} site override${site.override_count === 1 ? "" : "s"
-                                                }`
-                                                : ""}
-                                        </span>
-                                        {!allowed ? (
-                                            <span className="mt-1 block text-xs text-[var(--vms-warning)]">
-                                                This standard does not cover {contextLabel(site.use_case)}.
-                                            </span>
-                                        ) : null}
-                                    </span>
-                                </label>
+                                </div>
                             </li>
                         );
                     })}
@@ -154,13 +155,18 @@ export function TemplateAssignDrawer({
                 title="Reason"
                 description="Optional. Recorded in the policy change history."
             >
-                <input
-                    className="min-h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3 text-sm"
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    placeholder="Rolling out the 2026 estate standard"
-                    maxLength={255}
-                />
+                <Field id="policy-assignment-reason" label="Reason">
+                    {(control) => (
+                        <input
+                            {...control}
+                            className={fieldControlClassName}
+                            value={reason}
+                            onChange={(event) => setReason(event.target.value)}
+                            placeholder="Rolling out the 2026 estate standard"
+                            maxLength={255}
+                        />
+                    )}
+                </Field>
                 <FormHint>
                     Assigning a standard does not overwrite a site's own overrides.
                 </FormHint>

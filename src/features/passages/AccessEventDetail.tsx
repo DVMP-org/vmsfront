@@ -5,11 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { checkpointsApi } from "@/features/checkpoints/api";
 import { parseApiError } from "@/lib/error-utils";
+import { formatDateTime } from "@/lib/datetime";
+import { humanize } from "@/lib/strings";
 
 function readable(value?: string | null) {
-  return (value || "unknown").replaceAll("_", " ");
+  return humanize(value || "unknown");
 }
 
 export function AccessEventDetail({ eventId }: { eventId: string }) {
@@ -37,26 +40,15 @@ export function AccessEventDetail({ eventId }: { eventId: string }) {
       >
         Back to passage history
       </Link>
-      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Access event
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            {event.person_name || "Unknown credential"}
-          </h1>
-          <p className="mt-2 text-sm text-[var(--vms-ink-muted)]">
-            {event.direction === "entry" ? "Check in" : "Check out"} at{" "}
-            {event.gate_name || "checkpoint"}
-          </p>
-        </div>
-        <Badge variant={event.outcome === "allowed" ? "success" : "danger"}>
-          {event.outcome}
-        </Badge>
-      </header>
+      <PageHeader
+        eyebrow="Access event"
+        title={event.person_name || "Unknown credential"}
+        description={`${event.direction === "entry" ? "Check in" : "Check out"} at ${event.gate_name || "checkpoint"}`}
+        metadata={<Badge variant={event.outcome === "allowed" ? "success" : "danger"}>{humanize(event.outcome)}</Badge>}
+      />
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Occurred", new Date(event.occurred_at).toLocaleString()],
+          ["Occurred", formatDateTime(event.occurred_at)],
           ["Property", event.place_name || "Unknown"],
           ["Checkpoint", event.gate_name || "Unknown"],
           ["Person type", readable(event.subject_type)],

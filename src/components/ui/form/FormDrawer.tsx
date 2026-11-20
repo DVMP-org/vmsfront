@@ -75,11 +75,12 @@ export function FormDrawer({
           ) : (
             <span className="hidden flex-1 sm:block" />
           )}
-          <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             {secondaryAction}
             <Button
               type="button"
               variant="outline"
+              className="min-h-11 flex-1 sm:flex-initial"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -88,6 +89,7 @@ export function FormDrawer({
             <Button
               type="submit"
               form={formId}
+              className="min-h-11 flex-1 sm:flex-initial"
               isLoading={isSubmitting}
               disabled={!canSubmit}
             >

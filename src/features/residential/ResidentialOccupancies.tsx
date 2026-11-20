@@ -8,7 +8,6 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarClock, CircleSlash2, Plus } from "lucide-react";
-import { format } from "date-fns/format";
 
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parseApiError } from "@/lib/error-utils";
+import { formatDate } from "@/lib/datetime";
 import type { WorkspaceRelationship } from "@/types";
 import { PlaceAssignmentModal } from "@/features/places/PlaceAssignmentModal";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
@@ -282,11 +282,11 @@ export default function ResidentialOccupancies() {
           </StatusBadge>
           {row.status === "pending" && row.effective_from ? (
             <span className="text-xs text-[var(--vms-ink-muted)]">
-              From {format(new Date(row.effective_from), "d MMM yyyy")}
+              From {formatDate(row.effective_from)}
             </span>
           ) : row.effective_to ? (
             <span className="text-xs text-[var(--vms-ink-muted)]">
-              Until {format(new Date(row.effective_to), "d MMM yyyy")}
+              Until {formatDate(row.effective_to)}
             </span>
           ) : null}
         </div>
@@ -647,10 +647,10 @@ export default function ResidentialOccupancies() {
                       </div>
                       <p className="text-xs text-[var(--vms-ink-muted)]">
                         {row.effective_from
-                          ? `From ${format(new Date(row.effective_from), "d MMM yyyy")}`
+                          ? `From ${formatDate(row.effective_from)}`
                           : "Start date unavailable"}
                         {row.effective_to
-                          ? ` · Until ${format(new Date(row.effective_to), "d MMM yyyy")}`
+                          ? ` · Until ${formatDate(row.effective_to)}`
                           : " · Open-ended"}
                       </p>
                     </button>
@@ -703,11 +703,11 @@ export default function ResidentialOccupancies() {
                     <h3 className="font-semibold">Occupancy</h3>
                     <p className="mt-2 text-sm">
                       {detail.effective_from
-                        ? format(new Date(detail.effective_from), "MMM d, yyyy")
+                        ? formatDate(detail.effective_from)
                         : "Start date unavailable"}{" "}
                       –{" "}
                       {detail.effective_to
-                        ? format(new Date(detail.effective_to), "MMM d, yyyy")
+                        ? formatDate(detail.effective_to)
                         : "Present"}
                     </p>
                     <p className="mt-2 text-sm">
@@ -823,7 +823,7 @@ export default function ResidentialOccupancies() {
                             <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
                               {titleCase(member.role)}
                               {member.effective_from
-                                ? ` · From ${format(new Date(member.effective_from), "d MMM yyyy")}`
+                                ? ` · From ${formatDate(member.effective_from)}`
                                 : ""}
                             </span>
                           </span>

@@ -146,6 +146,7 @@ export const Header = memo(function Header({
             onClick={onMenuClick}
             className="h-11 w-11 flex-shrink-0 p-0 text-white hover:bg-white/10 hover:text-white focus-visible:ring-[var(--vms-coral-accent)] lg:hidden"
             aria-label="Toggle navigation"
+            aria-expanded={Boolean(sidebarOpen)}
           >
             <Menu className="h-5 w-5" />
           </Button>

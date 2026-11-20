@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/Button";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { useWorkspaceContext } from "@/features/context/use-workspace-context";
 import { placeRelationshipsApi, placesApi } from "@/features/places/api";
@@ -46,9 +45,16 @@ function defaultWindow() {
  */
 export function BookingCreateForm({
   onCreated,
+  formId,
+  onSubmitStateChange,
   initialKind = "booking",
 }: {
   onCreated: () => void;
+  formId: string;
+  onSubmitStateChange: (state: {
+    canSubmit: boolean;
+    isSubmitting: boolean;
+  }) => void;
   initialKind?: AdminBookingCreateInput["kind"];
 }) {
   const context = useWorkspaceContext();
@@ -92,6 +98,19 @@ export function BookingCreateForm({
     HOST_ROLES.includes(item.role),
   );
 
+  const reserving = reservable && kind === "reservation";
+  const placeMissing = !reserving && !placeId;
+  const hostMissing = needsHost && !hostId;
+  const canSubmit =
+    !placeMissing &&
+    !hostMissing &&
+    name.trim().length >= 2 &&
+    new Date(checkOut) > new Date(checkIn);
+
+  useEffect(() => {
+    onSubmitStateChange({ canSubmit, isSubmitting: create.isPending });
+  }, [canSubmit, create.isPending, onSubmitStateChange]);
+
   if (context.isPending) {
     return (
       <p className="text-sm text-[var(--vms-ink-muted)]">Loading this Site…</p>
@@ -107,17 +126,9 @@ export function BookingCreateForm({
     );
   }
 
-  const reserving = reservable && kind === "reservation";
-  const placeMissing = !reserving && !placeId;
-  const hostMissing = needsHost && !hostId;
-  const canSubmit =
-    !placeMissing &&
-    !hostMissing &&
-    name.trim().length >= 2 &&
-    new Date(checkOut) > new Date(checkIn);
-
   return (
     <form
+      id={formId}
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
@@ -335,9 +346,6 @@ export function BookingCreateForm({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={!canSubmit} isLoading={create.isPending}>
-        Take booking
-      </Button>
       <p className="text-xs text-[var(--vms-ink-muted)]">
         It arrives as a request, so it still needs a decision.
       </p>

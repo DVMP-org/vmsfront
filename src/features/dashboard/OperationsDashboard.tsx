@@ -17,6 +17,7 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { formatDateTime } from "@/lib/datetime";
 import type {
   AdminDashboard,
@@ -107,8 +108,9 @@ export function OperationsDashboard({
         />
       ) : null}
 
-      <header className="border-b border-[var(--vms-line)] pb-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
+      <PageHeader
+        eyebrow={
+          <span className="flex flex-wrap items-center gap-2">
           <Building2 className="h-3.5 w-3.5" aria-hidden />
           <span>{organizationName}</span>
           <span aria-hidden>/</span>
@@ -116,21 +118,12 @@ export function OperationsDashboard({
           <Badge variant="neutral" className="capitalize">
             {useCase}
           </Badge>
-        </div>
-        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-              Operations Hub
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold leading-8 tracking-[-0.03em] sm:text-[28px] sm:leading-9">
-              Property operations
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-              Prioritize access exceptions, monitor movement and keep the
-              selected property operating from one current view.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+          </span>
+        }
+        title="Property operations"
+        description="Prioritize access exceptions, monitor movement and keep the selected property operating from one current view."
+        primaryAction={
+          <>
             <Button variant="secondary" size="sm" asChild>
               <Link href="/admin/invitations">
                 <ListChecks className="h-4 w-4" aria-hidden />
@@ -143,9 +136,9 @@ export function OperationsDashboard({
                 Open check-in console
               </Link>
             </Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {setupPanel}
 

@@ -87,6 +87,7 @@ export function OrganizationManagersPage() {
     {
       key: "site",
       header: "Site",
+      minWidth: 190,
       accessor: (manager) => (
         <span>
           <strong className="block">{manager.site.name}</strong>
@@ -100,6 +101,7 @@ export function OrganizationManagersPage() {
     {
       key: "manager",
       header: "Manager",
+      minWidth: 210,
       accessor: (manager) => (
         <span>
           <strong className="block">{manager.user.name}</strong>
@@ -113,6 +115,7 @@ export function OrganizationManagersPage() {
     {
       key: "roles",
       header: "Roles",
+      minWidth: 180,
       accessor: (manager) => (
         <span className="flex flex-wrap gap-1">
           {manager.roles.length ? (
@@ -132,6 +135,7 @@ export function OrganizationManagersPage() {
     {
       key: "authority",
       header: "Authority",
+      minWidth: 155,
       accessor: (manager) => (
         <span className="text-xs text-[var(--vms-ink-muted)]">
           {manager.effective_permissions.includes("*")
@@ -144,6 +148,7 @@ export function OrganizationManagersPage() {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      minWidth: 170,
       accessor: (manager) => (
         <span className="flex gap-2">
           {can("roles.update") ? (

@@ -167,6 +167,7 @@ export default function CommercialTenants() {
       key: "tenant",
       header: "Business tenant",
       sortable: true,
+      minWidth: 230,
       accessor: (row) => (
         <span className="flex items-center gap-3">
           <Avatar name={row.tenant} src={row.avatar_url} size="sm" />
@@ -183,6 +184,7 @@ export default function CommercialTenants() {
       key: "space",
       header: "Space",
       sortable: true,
+      minWidth: 145,
       accessor: (row) => (
         <Link
           href={`/admin/places/${row.space_id}`}
@@ -196,12 +198,14 @@ export default function CommercialTenants() {
       key: "role",
       header: "Role",
       sortable: true,
+      minWidth: 96,
       accessor: (row) => titleCase(row.role),
     },
     {
       key: "lease_state",
       header: "Lease",
       sortable: true,
+      minWidth: 112,
       accessor: (row) => (
         <StatusBadge tone={leaseTone(row.lease_state)}>
           {titleCase(row.lease_state)}
@@ -212,6 +216,7 @@ export default function CommercialTenants() {
       key: "ends",
       header: "Ends",
       sortable: true,
+      minWidth: 120,
       accessor: (row) =>
         row.ends ? format(new Date(row.ends), "d MMM yyyy") : "Open ended",
     },
@@ -219,6 +224,7 @@ export default function CommercialTenants() {
       key: "status",
       header: "Relationship",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge tone={relationshipTone(row.status)}>
           {titleCase(row.status)}
@@ -228,7 +234,8 @@ export default function CommercialTenants() {
     {
       key: "actions",
       header: "Actions",
-      className: "text-right",
+      className: "w-28 text-right",
+      minWidth: 104,
       mobileHide: true,
       accessor: (row) =>
         canManagePeople && ["pending", "active"].includes(row.status) ? (
@@ -245,7 +252,7 @@ export default function CommercialTenants() {
               })
             }
           >
-            End
+            End tenancy
           </Button>
         ) : row.status === "ended" && canManagePeople ? (
           <Button

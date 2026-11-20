@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal } from "@/components/ui/Modal";
 import { managersApi } from "@/features/managers/api";
 import { parseApiError } from "@/lib/error-utils";
@@ -107,12 +108,14 @@ export function CheckpointAssignmentsModal({
               <p>No active managers are available for this Site.</p>
             )}
             {active.map((manager) => (
-              <label
+              <div
                 key={manager.assignment_id}
-                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--vms-line)] p-3"
+                className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3"
               >
-                <input
-                  type="checkbox"
+                <Checkbox
+                  id={`checkpoint-manager-${gate.id}-${manager.assignment_id}`}
+                  label={manager.user.name}
+                  description={manager.user.email}
                   checked={selected?.includes(manager.assignment_id) ?? false}
                   onChange={(event) =>
                     setSelected((current) =>
@@ -123,14 +126,9 @@ export function CheckpointAssignmentsModal({
                           ),
                     )
                   }
+                  className="mt-0.5"
                 />
-                <span>
-                  <strong className="block text-sm">{manager.user.name}</strong>
-                  <span className="text-xs text-[var(--vms-ink-muted)]">
-                    {manager.user.email}
-                  </span>
-                </span>
-              </label>
+              </div>
             ))}
             {selected?.length === 0 && (
               <p role="status" className="text-sm text-[var(--vms-ink-muted)]">

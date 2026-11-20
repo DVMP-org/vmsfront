@@ -40,7 +40,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ErrorBoundary>
         <ThemeProvider>
           {children}
-          <Toaster position="top-right" richColors />
+          <Toaster position="bottom-right" richColors />
         </ThemeProvider>
       </ErrorBoundary>
     </QueryClientProvider>

@@ -18,13 +18,14 @@ function toDate(value: DateInput): Date | null {
 }
 
 /** `4 Nov 2026` */
-export function formatDate(value: DateInput): string {
+export function formatDate(value: DateInput, timeZone?: string | null): string {
   const date = toDate(value);
   if (!date) return EMPTY;
   return date.toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: timeZone || undefined,
   });
 }
 
@@ -35,8 +36,22 @@ export function formatMonthYear(value: DateInput): string {
   return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
+/** `Wed` */
+export function formatWeekday(value: DateInput): string {
+  const date = toDate(value);
+  if (!date) return EMPTY;
+  return date.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+/** `4 Nov` */
+export function formatShortDate(value: DateInput): string {
+  const date = toDate(value);
+  if (!date) return EMPTY;
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
 /** `4 Nov 2026, 14:30` */
-export function formatDateTime(value: DateInput): string {
+export function formatDateTime(value: DateInput, timeZone?: string | null): string {
   const date = toDate(value);
   if (!date) return EMPTY;
   return date.toLocaleString(undefined, {
@@ -45,6 +60,8 @@ export function formatDateTime(value: DateInput): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: timeZone || undefined,
+    ...(timeZone ? { timeZoneName: "short" as const } : {}),
   });
 }
 
@@ -120,6 +137,71 @@ export function toDateTimeInputValue(value: DateInput): string {
   if (!date) return "";
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function zonedParts(value: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(value);
+  const number = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  return {
+    year: number("year"),
+    month: number("month"),
+    day: number("day"),
+    hour: number("hour"),
+    minute: number("minute"),
+  };
+}
+
+/** An instant expressed as a Site-local `datetime-local` input value. */
+export function toZonedDateTimeInputValue(value: DateInput, timeZone: string): string {
+  const date = toDate(value);
+  if (!date) return "";
+  const parts = zonedParts(date, timeZone);
+  const pad = (number: number) => String(number).padStart(2, "0");
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+/** Resolve Site-local civil time to one UTC instant; reject DST gaps and overlaps. */
+export function fromZonedDateTimeInputValue(value: string, timeZone: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) throw new Error("Enter a valid date and time.");
+  const [, year, month, day, hour, minute] = match.map(Number);
+  const civil = Date.UTC(year, month - 1, day, hour, minute);
+  const valid = new Date(civil);
+  if (
+    valid.getUTCFullYear() !== year ||
+    valid.getUTCMonth() + 1 !== month ||
+    valid.getUTCDate() !== day ||
+    valid.getUTCHours() !== hour ||
+    valid.getUTCMinutes() !== minute
+  ) throw new Error("Enter a valid date and time.");
+
+  const offsetAt = (instant: number) => {
+    const parts = zonedParts(new Date(instant), timeZone);
+    return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) - instant;
+  };
+  const offsets = new Set([
+    offsetAt(civil - 36 * 60 * 60 * 1000),
+    offsetAt(civil),
+    offsetAt(civil + 36 * 60 * 60 * 1000),
+  ]);
+  const matches = [...offsets]
+    .map((offset) => new Date(civil - offset))
+    .filter((candidate) => {
+      const parts = zonedParts(candidate, timeZone);
+      return parts.year === year && parts.month === month && parts.day === day &&
+        parts.hour === hour && parts.minute === minute;
+    });
+  if (matches.length === 0) throw new Error("This time does not exist in the Site time zone.");
+  if (matches.length > 1) throw new Error("This time occurs twice in the Site time zone. Choose another time.");
+  return matches[0];
 }
 
 /**

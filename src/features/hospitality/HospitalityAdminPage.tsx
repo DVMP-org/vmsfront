@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { PageHeader } from "@/components/ui/PageHeader";
 import PageLoader from "@/components/ui/PageLoader";
+import { humanize } from "@/lib/strings";
 
 import type { useHospitalityAccess } from "./use-hospitality-access";
 
@@ -81,7 +82,6 @@ export function HospitalityAdminPage({
     </main>
   );
 }
-
 export function RoomStatus({
   status,
   housekeeping,
@@ -101,7 +101,7 @@ export function RoomStatus({
             : "neutral";
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <StatusPill tone={tone}>{status.replaceAll("_", " ")}</StatusPill>
+      <StatusPill tone={tone}>{humanize(status)}</StatusPill>
       {housekeeping ? (
         <StatusPill
           tone={
@@ -112,7 +112,7 @@ export function RoomStatus({
                 : "neutral"
           }
         >
-          {housekeeping.replaceAll("_", " ")}
+          {humanize(housekeeping)}
         </StatusPill>
       ) : null}
     </div>
@@ -214,33 +214,4 @@ export function ModulePanel({
       <div className="min-w-0 p-4 sm:p-5">{children}</div>
     </section>
   );
-}
-
-export function money(value: string | number, currency: string) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return `${currency} ${value}`;
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
-export function displayDate(
-  value: string | null | undefined,
-  withTime = false,
-) {
-  if (!value) return "Not set";
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return value;
-  return date.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
 }

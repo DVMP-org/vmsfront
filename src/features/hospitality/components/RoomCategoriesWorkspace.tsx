@@ -55,6 +55,7 @@ export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
     {
       key: "category",
       header: "Category",
+      minWidth: 280,
       accessor: (group) => (
         <span className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
@@ -72,6 +73,7 @@ export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
     {
       key: "rooms",
       header: "Rooms",
+      minWidth: 110,
       accessor: (group) => {
         const count = counts.get(group.id) ?? 0;
         return (
@@ -87,6 +89,7 @@ export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
       key: "actions",
       header: "",
       mobileHide: true,
+      minWidth: 100,
       accessor: (group) =>
         canManage ? (
           <div className="flex justify-end">
@@ -137,6 +140,20 @@ export function RoomCategoriesWorkspace({ canManage }: { canManage: boolean }) {
         searchPlaceholder="Search categories"
         isLoading={categories.isPending || rooms.isPending}
         emptyMessage="No categories yet. Create one to start selling rooms by type."
+        emptyAction={
+          canManage ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setCreating(true);
+              }}
+            >
+              New category
+            </Button>
+          ) : undefined
+        }
         mobileSummary={(group) => (
           <div className="space-y-2">
             <strong>{group.name}</strong>

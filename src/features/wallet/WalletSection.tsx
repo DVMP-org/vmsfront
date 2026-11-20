@@ -11,14 +11,14 @@ import { WalletSummaryCard } from "./WalletSummaryCard";
  * then the immutable journal history.
  */
 export function WalletSection() {
-  const context = usePlaceWorkspace();
-  const placeId = context.place.id;
+    const context = usePlaceWorkspace();
+    const placeId = context.place.id;
 
-  return (
-    <div className="space-y-5">
-      <WalletSummaryCard placeId={placeId} variant="full" />
-      <WalletPendingTopUps placeId={placeId} />
-      <WalletActivityList placeId={placeId} />
-    </div>
-  );
+    return (
+        <div className="space-y-5">
+            <WalletSummaryCard placeId={placeId} variant="full" />
+            <WalletPendingTopUps placeId={placeId} />
+            <WalletActivityList placeId={placeId} />
+        </div>
+    );
 }

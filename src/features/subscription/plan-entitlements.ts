@@ -27,6 +27,7 @@ function readableKey(key: string): string {
 
 export function planEntitlements(
   features: Record<string, unknown> | null | undefined,
+  usage?: Record<string, number> | null,
 ): PlanEntitlement[] {
   if (!features) return [];
 
@@ -49,6 +50,20 @@ export function planEntitlements(
         ? Number(value)
         : Number.NaN;
     if (Number.isFinite(limit) && limit >= 0 && Number.isInteger(limit)) {
+      const used = usage?.[key];
+      if (
+        key in limitLabels &&
+        typeof used === "number" &&
+        Number.isInteger(used) &&
+        used >= 0
+      ) {
+        const remaining = limit - used;
+        return [{
+          key,
+          label,
+          detail: `${used.toLocaleString()} used of ${limit.toLocaleString()} · ${remaining < 0 ? `${Math.abs(remaining).toLocaleString()} over limit` : `${remaining.toLocaleString()} available`}`,
+        }];
+      }
       return [{ key, label, detail: `${limit.toLocaleString()} included` }];
     }
 

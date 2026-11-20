@@ -29,6 +29,7 @@ export function useSiteAccess() {
   );
   return {
     workspace,
+    siteTimezone: workspace.data?.site_timezone ?? null,
     permissions,
     contextKey: `${organization?.id || "organization"}:${
       activeSite?.id || "site"

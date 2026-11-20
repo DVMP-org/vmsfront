@@ -1,3 +1,5 @@
+import { humanize } from "@/lib/strings";
+
 /**
  * Plain-language explanations for checkpoint decision reason codes.
  *
@@ -67,9 +69,7 @@ export function reasonMessage(code?: string | null): string {
   if (!code) return "No reason was recorded.";
   const known = reasonMessages[code.toLowerCase()];
   if (known) return known;
-  return code
-    .replaceAll("_", " ")
-    .replace(/^\w/, (character) => character.toUpperCase());
+  return humanize(code);
 }
 
 /** Short label for tables, e.g. "Not approved yet". */
@@ -96,7 +96,7 @@ export function reasonLabel(code?: string | null): string {
   if (!code) return "No reason";
   const known = reasonLabels[code.toLowerCase()];
   if (known) return known;
-  return code.replaceAll("_", " ");
+  return humanize(code);
 }
 
 /**

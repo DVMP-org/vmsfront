@@ -28,9 +28,11 @@ import {
 import { useAppStore } from "@/store/app-store";
 import { useAuthStore } from "@/store/auth-store";
 import { parseApiError } from "@/lib/error-utils";
+import { humanize } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import {
@@ -122,8 +124,8 @@ function Outcome({ event }: { event: Passage }) {
         <div>
           <dt className="text-xs text-[var(--vms-ink-muted)]">Access state</dt>
           <dd className="mt-1 font-semibold">
-            {(event.state_before || "unknown").replaceAll("_", " ")} to{" "}
-            {(event.state_after || "unknown").replaceAll("_", " ")}
+            {humanize(event.state_before || "unknown")} to{" "}
+            {humanize(event.state_after || "unknown")}
           </dd>
         </div>
         <div>
@@ -298,7 +300,7 @@ function HardwareState({
           <strong>{command?.action || "None"}</strong>
           <small>{commandStatusLabel(command)}</small>
           <Badge variant={commandTone} className="mt-2">
-            {command?.status?.replaceAll("_", " ") || "Not dispatched"}
+            {command?.status ? humanize(command.status) : "Not dispatched"}
           </Badge>
         </div>
         <div>
@@ -372,28 +374,21 @@ function DefaultCheckpointDirectory() {
   const items = gates.data?.items ?? [];
   return (
     <main className="checkpoint-page">
-      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Access operations
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            Checkpoints
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Every gate in this Site. Open the console to check visitors in or
-            out, review dependencies, or inspect the movement log.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Access operations"
+        title="Checkpoints"
+        description="Every gate in this Site. Open the console to check visitors in or out, review dependencies, or inspect the movement log."
+        primaryAction={
           <Button asChild>
             <Link href="/admin/checkpoints/console">Open check-in console</Link>
           </Button>
+        }
+        secondaryActions={
           <Button variant="outline" asChild>
             <Link href="/admin/passages">Movement log</Link>
           </Button>
-        </div>
-      </header>
+        }
+      />
       {items.length ? (
         <section className="grid gap-3 sm:grid-cols-2">
           {items.map((gate) => (
@@ -1693,14 +1688,7 @@ export function CheckpointRecord({
       >
         Back to checkpoint
       </Link>
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-          Access record
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-          Passage record
-        </h1>
-      </header>
+      <PageHeader eyebrow="Access record" title="Passage record" />
       {record.isPending ? (
         <p role="status">Loading passage…</p>
       ) : record.isError ? (

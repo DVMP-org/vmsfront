@@ -4,19 +4,18 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Building2,
   CheckCircle2,
   KeyRound,
   Mail,
   Plus,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 
 import { PlacePicker } from "@/components/sites/PlacePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -83,6 +82,7 @@ export default function PeopleWorkspace() {
       key: "person",
       header: "Person",
       sortable: true,
+      minWidth: 230,
       accessor: (person) => (
         <span className="flex items-center gap-3">
           <Avatar
@@ -103,11 +103,13 @@ export default function PeopleWorkspace() {
       key: "role",
       header: "Party role",
       sortable: true,
+      minWidth: 130,
       accessor: (person) => <Badge variant="default">{person.role}</Badge>,
     },
     {
       key: "place",
       header: "Place",
+      minWidth: 180,
       accessor: (person) => (
         <span>
           <strong className="block text-sm">{person.place.name}</strong>
@@ -120,6 +122,7 @@ export default function PeopleWorkspace() {
     {
       key: "status",
       header: "Status",
+      minWidth: 110,
       accessor: (person) => (
         <Badge variant={person.party.is_active ? "success" : "neutral"}>
           {person.party.is_active ? "Active" : "Inactive"}
@@ -130,6 +133,7 @@ export default function PeopleWorkspace() {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      minWidth: 205,
       accessor: (person) => (
         <span className="flex gap-2">
           <Button
@@ -166,41 +170,17 @@ export default function PeopleWorkspace() {
   ];
   return (
     <main className="mx-auto w-full max-w-[1360px] space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <p className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-          <Users className="h-3.5 w-3.5 text-[var(--vms-active-accent)]" />
-          {organization?.name}
-          <span>/</span>
-          <span className="font-semibold text-[var(--vms-ink)]">People</span>
-          {selectedSite ? (
-            <>
-              <span>/</span>
-              <span>{selectedSite.name}</span>
-            </>
-          ) : null}
-        </p>
-        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-[-0.035em]">
-              People
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-              Every person here is a Party attached to a non-Site Place in the
-              selected Site. Site managers are administered separately and may
-              also hold a Place relationship.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-
-            {canManage ? (
+      <PageHeader
+        eyebrow={`${organization?.name || "Organization"} / ${selectedSite?.name || "Select a Site"}`}
+        title="People"
+        description="Every person here is a Party attached to a non-Site Place in the selected Site. Site managers are administered separately and may also hold a Place relationship."
+        primaryAction={canManage ? (
               <Button onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add party
               </Button>
-            ) : null}
-          </div>
-        </div>
-      </header>
+        ) : undefined}
+      />
 
       {notice ? (
         <InlineAlert tone="success" title="People updated">
@@ -239,7 +219,15 @@ export default function PeopleWorkspace() {
             initialSearch={search}
             onSearchChange={setSearch}
             isLoading={people.isPending}
-            emptyMessage="No Parties match these filters"
+            emptyMessage="No Parties are attached to this Site yet."
+            emptyAction={
+              canManage && !search.trim() ? (
+                <Button size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add party
+                </Button>
+              ) : undefined
+            }
             mobileSummary={(person) => (
               <span className="flex items-center gap-3">
                 <Avatar

@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAppStore } from "@/store/app-store";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -33,13 +34,14 @@ import {
   type Passage,
 } from "@/features/checkpoints/api";
 import { formatDateTime } from "@/lib/datetime";
+import { humanize } from "@/lib/strings";
 import { useMovementQueries } from "./queries";
 import "./passages.css";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 function readable(value?: string | null) {
-  return (value || "unknown").replaceAll("_", " ");
+  return humanize(value || "unknown");
 }
 
 function initials(value?: string | null) {
@@ -602,18 +604,15 @@ export function PassagesDirectory() {
 
   return (
     <main className={cn("movement-page", selected && "has-detail")}>
-      <header className="movement-heading">
-        <nav aria-label="Breadcrumb">
+      <PageHeader
+        breadcrumbs={<nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
           <span>Access operations</span>
-          <ChevronRight aria-hidden="true" />
-          <strong>Movement logs</strong>
-        </nav>
-        <h1>Movement logs</h1>
-        <p>
-          Audit entries, exits and checkpoint progress across{" "}
-          {selectedSite?.name || "this Site"}.
-        </p>
-      </header>
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          <strong className="text-[var(--vms-ink)]">Movement logs</strong>
+        </nav>}
+        title="Movement logs"
+        description={`Audit entries, exits and checkpoint progress across ${selectedSite?.name || "this Site"}.`}
+      />
 
       <section className="movement-metrics" aria-label="Movement summary">
         <Metric

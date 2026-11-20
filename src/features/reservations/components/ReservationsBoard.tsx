@@ -26,7 +26,10 @@ import {
   reservationBookingStatusLabel,
   reservationBookingStatusTone,
 } from "../lib";
-import type { BookingDto, BookingListParams } from "@/features/bookings/api-types";
+import type {
+  BookingDto,
+  BookingListParams,
+} from "@/features/bookings/api-types";
 
 const PAGE_SIZE = 20;
 
@@ -49,6 +52,10 @@ export function ReservationsBoard() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterConfig[]>([]);
   const [creating, setCreating] = useState(false);
+  const [createFormState, setCreateFormState] = useState({
+    canSubmit: false,
+    isSubmitting: false,
+  });
   const [openId, setOpenId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
 
@@ -235,7 +242,9 @@ export function ReservationsBoard() {
         }
         secondaryActions={
           <Button asChild size="sm" variant="outline">
-            <Link href="/admin/hospitality/calendar">Check room availability</Link>
+            <Link href="/admin/hospitality/calendar">
+              Check room availability
+            </Link>
           </Button>
         }
       />
@@ -293,7 +302,14 @@ export function ReservationsBoard() {
         }
         isStale={list.isError && Boolean(list.data)}
         onRetry={() => void list.refetch()}
-        emptyMessage="No reservations match this search for the selected Site."
+        emptyMessage="No reservations are holding capacity at this Site yet."
+        emptyAction={
+          search.trim() || filters.length > 0 ? undefined : (
+            <Button type="button" size="sm" onClick={() => setCreating(true)}>
+              New reservation
+            </Button>
+          )
+        }
         mobileSummary={(row) => (
           <div className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
@@ -311,12 +327,12 @@ export function ReservationsBoard() {
                 <span className="mt-1 block text-xs text-[var(--vms-ink-muted)]">
                   {row.financials?.priced
                     ? `${formatMoney(
-                      row.financials.total,
-                      row.financials.currency,
-                    )} quoted · ${formatMoney(
-                      row.financials.balance,
-                      row.financials.currency,
-                    )} outstanding`
+                        row.financials.total,
+                        row.financials.currency,
+                      )} quoted · ${formatMoney(
+                        row.financials.balance,
+                        row.financials.currency,
+                      )} outstanding`
                     : "Not quoted yet"}
                 </span>
               </div>
@@ -354,8 +370,23 @@ export function ReservationsBoard() {
         onClose={() => setCreating(false)}
         title="New reservation"
         description="A request holding a room or category until it is confirmed"
+        footer={
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              form="admin-reservation-create-form"
+              disabled={!createFormState.canSubmit}
+              isLoading={createFormState.isSubmitting}
+              loadingLabel="Taking reservation"
+            >
+              Create reservation
+            </Button>
+          </div>
+        }
       >
         <BookingCreateForm
+          formId="admin-reservation-create-form"
+          onSubmitStateChange={setCreateFormState}
           initialKind="reservation"
           onCreated={() => setCreating(false)}
         />

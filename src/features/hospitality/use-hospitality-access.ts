@@ -17,6 +17,7 @@ export function useHospitalityAccess() {
     selectedSite,
     user,
     contextKey,
+    siteTimezone: access.siteTimezone,
     profile,
     isLoading:
       !organization?.id ||

@@ -67,6 +67,7 @@ export function VisitorsRegister({
       key: "guestName",
       header: "Visitor",
       sortable: true,
+      minWidth: 190,
       accessor: (row) => (
         <div>
           <span className="block font-semibold">{row.guestName}</span>
@@ -81,18 +82,25 @@ export function VisitorsRegister({
       header: "Search",
       hiddenByDefault: true,
     },
-    { key: "host", header: "Host", sortable: true },
-    { key: "destination", header: "Destination", sortable: true },
+    { key: "host", header: "Host", sortable: true, minWidth: 170 },
+    {
+      key: "destination",
+      header: "Destination",
+      sortable: true,
+      minWidth: 170,
+    },
     {
       key: "validTo",
       header: "Valid until",
       sortable: true,
+      minWidth: 150,
       accessor: (row) => formatDateTime(row.validTo),
     },
     {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 130,
       accessor: (row) => (
         <Badge variant={visitorStatusVariant(row.status)}>
           {visitorStatusLabel(row)}
@@ -103,6 +111,7 @@ export function VisitorsRegister({
       key: "actions",
       header: "",
       mobileHide: true,
+      minWidth: 88,
       accessor: (row) => (
         <Button
           type="button"

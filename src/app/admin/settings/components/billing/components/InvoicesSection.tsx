@@ -32,31 +32,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { Invoice, InvoiceStatus } from "@/types/subscription";
-
-function formatDateShort(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateLong(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatCurrency(amount: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    currencyDisplay: "code",
-    minimumFractionDigits: 2,
-  }).format(amount / 100);
-}
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 
 function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   const config = {
@@ -94,7 +71,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
             </div>
             <div className="text-sm text-[var(--vms-ink-muted)]">
               {invoice.period_start && invoice.period_end
-                ? `${formatDateShort(invoice.period_start)} - ${formatDateShort(invoice.period_end)}`
+                ? `${formatDate(invoice.period_start)} - ${formatDate(invoice.period_end)}`
                 : "—"}
             </div>
           </div>
@@ -103,7 +80,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
       <TableCell>
         <div className="flex items-center gap-2 text-[var(--vms-ink-muted)] ">
           <Calendar className="h-4 w-4 text-[var(--vms-ink-muted)]" />
-          {invoice.created_at ? formatDateLong(invoice.created_at) : "—"}
+          {invoice.created_at ? formatDate(invoice.created_at) : "—"}
         </div>
       </TableCell>
       <TableCell className="text-right">
@@ -113,7 +90,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
             className="h-4 w-4 text-[var(--vms-ink-muted)]"
           />
           <span className="font-medium tabular-nums text-[var(--vms-ink)]">
-            {formatCurrency(invoice.amount_due, invoice.currency)}
+            {formatMoneyWithCode(invoice.amount_due, invoice.currency)}
           </span>
         </div>
       </TableCell>
@@ -121,7 +98,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
         <InvoiceStatusBadge status={invoice.status} />
       </TableCell>
       <TableCell>
-        {invoice.paid_at ? formatDateShort(invoice.paid_at) : "—"}
+        {invoice.paid_at ? formatDate(invoice.paid_at) : "—"}
       </TableCell>
       <TableCell className="text-right">
         <Button
@@ -159,7 +136,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
               Invoice #{invoice.id.slice(0, 8).toUpperCase()}
             </div>
             <div className="text-sm text-[var(--vms-ink-muted)]">
-              {invoice.created_at ? formatDateShort(invoice.created_at) : "—"}
+              {invoice.created_at ? formatDate(invoice.created_at) : "—"}
             </div>
           </div>
         </div>
@@ -172,7 +149,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
             Amount
           </span>
           <div className="font-semibold tabular-nums text-[var(--vms-ink)]">
-            {formatCurrency(invoice.amount_due, invoice.currency)}
+            {formatMoneyWithCode(invoice.amount_due, invoice.currency)}
           </div>
         </div>
         <div>
@@ -181,7 +158,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
           </span>
           <div className="text-sm text-[var(--vms-ink-muted)] ">
             {invoice.period_start && invoice.period_end
-              ? `${formatDateShort(invoice.period_start)} - ${formatDateShort(invoice.period_end)}`
+              ? `${formatDate(invoice.period_start)} - ${formatDate(invoice.period_end)}`
               : "—"}
           </div>
         </div>

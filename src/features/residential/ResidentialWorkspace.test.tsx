@@ -367,6 +367,36 @@ describe("residential operations", () => {
     expect(screen.queryByRole("img", { name: /of units occupied/ })).toBeNull();
   });
 
+  it("keeps unit balances separate by currency", async () => {
+    const assignment = (currency: string, amount: string) => ({
+      id: `assignment-${currency}`,
+      charge_definition_id: `charge-${currency}`,
+      charge_definition: {
+        id: `charge-${currency}`,
+        site_id: "site",
+        name: "Site charge",
+        description: null,
+        amount,
+        currency,
+        recurrence: "monthly",
+        is_active: true,
+      },
+      target_place: { id: "unit-4b", name: "Apartment 4B" },
+      current_responsibility: null,
+      outstanding_amount: amount,
+    });
+    mocks.chargeAssignments.mockResolvedValue([
+      assignment("NGN", "100"),
+      assignment("USD", "10"),
+    ]);
+    mount(<ResidentialOverview />);
+
+    const activity = await screen.findByRole("table", {
+      name: "Residential unit activity",
+    });
+    expect(within(activity).getByText(/NGN.*USD/)).toBeInTheDocument();
+  });
+
   it("opens and closes the selected unit details", async () => {
     mount(<ResidentialUnits />);
     fireEvent.click(

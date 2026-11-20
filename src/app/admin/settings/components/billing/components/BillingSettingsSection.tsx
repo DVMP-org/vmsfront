@@ -2,7 +2,16 @@
 
 import { useConfirmAction } from "@/components/ui/useConfirmAction";
 
-import { useState, useEffect, useMemo } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useId,
+  useState,
+  useEffect,
+  useMemo,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   useBillingSettings,
   useUpdateBillingSettings,
@@ -344,9 +353,14 @@ function FormField({
   children: React.ReactNode;
   optional?: boolean;
 }) {
+  const id = useId();
+  const messageId = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-[var(--vms-ink)] flex items-center gap-2">
+      <label
+        htmlFor={id}
+        className="text-sm font-medium text-[var(--vms-ink)] flex items-center gap-2"
+      >
         {label}
         {optional && (
           <span className="text-xs text-[var(--vms-ink-muted)] font-normal">
@@ -354,18 +368,59 @@ function FormField({
           </span>
         )}
       </label>
-      {children}
+      {linkFieldControl(children, {
+        id,
+        describedBy: messageId,
+        invalid: Boolean(error),
+      })}
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p
+          id={messageId}
+          className="text-xs text-red-500 flex items-center gap-1"
+        >
           <AlertCircle className="h-3 w-3" />
           {error}
         </p>
       )}
       {hint && !error && (
-        <p className="text-xs text-[var(--vms-ink-muted)]">{hint}</p>
+        <p id={messageId} className="text-xs text-[var(--vms-ink-muted)]">
+          {hint}
+        </p>
       )}
     </div>
   );
+}
+
+function linkFieldControl(
+  node: ReactNode,
+  attributes: { id: string; describedBy?: string; invalid: boolean },
+): ReactNode {
+  if (Array.isArray(node)) {
+    return node.map((child) => linkFieldControl(child, attributes));
+  }
+  if (!isValidElement(node)) return node;
+  const element = node as ReactElement<Record<string, any> & { children?: ReactNode }>;
+  const isControl =
+    element.type === Input ||
+    element.type === "input" ||
+    element.type === "select" ||
+    element.type === "textarea";
+  if (isControl) {
+    return cloneElement(element, {
+      id: attributes.id,
+      "aria-invalid": attributes.invalid || undefined,
+      "aria-describedby": attributes.describedBy,
+      "aria-errormessage": attributes.invalid ? attributes.describedBy : undefined,
+    });
+  }
+  if (element.props.children) {
+    return cloneElement(
+      element,
+      {},
+      linkFieldControl(element.props.children, attributes),
+    );
+  }
+  return element;
 }
 
 export function BillingSettingsSection() {
@@ -616,7 +671,7 @@ export function BillingSettingsSection() {
                     }
                     className={cn(
                       "h-11",
-                      fieldErrors.billing_address_line1 &&
+                      fieldErrors.address_line1 &&
                         "border-red-500 focus:ring-red-500",
                     )}
                   />
@@ -636,7 +691,7 @@ export function BillingSettingsSection() {
 
                 {/* City and State/Province */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField label="City" error={fieldErrors.billing_city}>
+                  <FormField label="City" error={fieldErrors.city}>
                     <Input
                       type="text"
                       placeholder="San Francisco"

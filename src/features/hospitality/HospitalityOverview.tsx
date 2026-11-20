@@ -26,7 +26,8 @@ import { RoomReadinessPanel } from "@/features/hospitality/RoomReadinessPanel";
 import { StayReviewDrawer } from "@/features/hospitality/StayReviewDrawer";
 import { StayStatusBadge } from "@/features/hospitality/components/StayStatusBadge";
 import { useHospitalitySiteRooms } from "@/features/hospitality/queries";
-import { guestName, Stay, statusLabel } from "@/features/hospitality/contracts";
+import { guestName, Stay } from "@/features/hospitality/contracts";
+import { titleCase } from "@/lib/strings";
 import "@/app/admin/hospitality/styles.css";
 import PageLoader from "@/components/ui/PageLoader";
 
@@ -104,6 +105,11 @@ function HospitalityWorkspace({
     queryFn: () => hospitalityApi.list(1, "checked_in"),
     enabled: allowed("list"),
   });
+  const dailyFlow = useQuery({
+    queryKey: ["hospitality", context, "daily-flow"],
+    queryFn: hospitalityApi.dailyFlow,
+    enabled: allowed("list"),
+  });
   const detail = useQuery({
     queryKey: ["hospitality", context, "detail", selected],
     queryFn: () => hospitalityApi.get(selected!),
@@ -168,8 +174,8 @@ function HospitalityWorkspace({
       sortable: true,
       accessor: (stay) => (
         <span className="text-sm">
-          {formatDateTime(stay.planned_check_in)} →{" "}
-          {formatDateTime(stay.planned_check_out)}
+          {formatDateTime(stay.planned_check_in, workspaceContext.data?.site_timezone)} →{" "}
+          {formatDateTime(stay.planned_check_out, workspaceContext.data?.site_timezone)}
         </span>
       ),
     },
@@ -223,7 +229,7 @@ function HospitalityWorkspace({
             new Date(stay.planned_check_in).toISOString(),
             new Date(stay.planned_check_out).toISOString(),
             stay.room_assignments.at(-1)?.room.name || "",
-            statusLabel(stay.status),
+            titleCase(stay.status),
           ]),
         ];
         const csv = rows
@@ -261,6 +267,10 @@ function HospitalityWorkspace({
           rooms={rooms.data ?? []}
           reservedCount={reserved.data?.total ?? 0}
           checkedInCount={checkedIn.data?.total ?? 0}
+          arrivalsToday={dailyFlow.data?.arrivals ?? 0}
+          departuresToday={dailyFlow.data?.departures ?? 0}
+          dailyFlowLoading={dailyFlow.isPending}
+          dailyFlowError={dailyFlow.isError}
           roomsLoading={rooms.isPending}
           roomsError={rooms.isError}
           staysLoading={reserved.isPending}
@@ -282,6 +292,7 @@ function HospitalityWorkspace({
       )}
       <div className="grid gap-4 xl:grid-cols-2">
         <HotelArrivalsPanel
+          siteTimezone={workspaceContext.data?.site_timezone}
           authorityMode={workspaceContext.data?.management?.mode}
           authoritativeSiteName={
             workspaceContext.data?.management?.authoritative_site?.name
@@ -337,7 +348,7 @@ function HospitalityWorkspace({
                   "no_show",
                 ].map((s) => (
                   <option key={s} value={s}>
-                    {statusLabel(s)}
+                    {titleCase(s)}
                   </option>
                 ))}
               </select>
@@ -374,8 +385,8 @@ function HospitalityWorkspace({
                   <div>
                     <strong className="block text-sm">{guestName(stay)}</strong>
                     <span className="text-xs text-[var(--vms-ink-muted)]">
-                      {formatDateTime(stay.planned_check_in)} →{" "}
-                      {formatDateTime(stay.planned_check_out)}
+                      {formatDateTime(stay.planned_check_in, workspaceContext.data?.site_timezone)} →{" "}
+                      {formatDateTime(stay.planned_check_out, workspaceContext.data?.site_timezone)}
                     </span>
                   </div>
                   <StayStatusBadge status={stay.status} />
@@ -404,6 +415,7 @@ function HospitalityWorkspace({
         </section>
       </div>
       <StayReviewDrawer
+        siteTimezone={workspaceContext.data?.site_timezone}
         isOpen={!!selected}
         onClose={() => setSelected(null)}
         stay={detail.data}

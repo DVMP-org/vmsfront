@@ -13,7 +13,8 @@ import {
   useSubscriptionPaymentStatus,
 } from "@/hooks/use-subscription";
 import { openPaymentPopup } from "@/lib/payment-popup";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMoneyWithCode } from "@/lib/currency";
 import { isDirectSubscriptionResponse } from "@/services/subscription-service";
 import type { Plan } from "@/types/subscription";
 
@@ -290,8 +291,9 @@ export function PlanStep({ mode }: { mode: "setup" | "standalone" }) {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-[var(--vms-ink)]">
                     {requiresPayment
-                      ? `${selectedPlan.name} · ${formatPrice(
+                      ? `${selectedPlan.name} · ${formatMoneyWithCode(
                           planPriceFor(selectedPlan, billingCycle),
+                          selectedPlan.currency,
                         )} per ${billingCycle === "monthly" ? "month" : "year"}`
                       : `${selectedPlan.name} · no card required`}
                   </p>

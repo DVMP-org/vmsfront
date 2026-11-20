@@ -32,7 +32,6 @@ import {
 import type { WorkspaceRelationship } from "@/types";
 import { formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
-import { formatCurrency } from "@/lib/utils";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
@@ -46,7 +45,7 @@ interface UnitActivityRow {
   building: string;
   residents: string;
   occupancyStatus: "occupied" | "vacant";
-  balance: number;
+  balance: string | null;
   openRequests: number | null;
   updatedAt: string;
 }
@@ -130,20 +129,8 @@ export default function ResidentialOverview() {
   const outstandingAssignments = scopedAssignments.filter(
     (assignment) => Number(assignment.outstanding_amount || 0) > 0,
   );
-  const balancesByCurrency = new Map<string, number>();
-  for (const assignment of outstandingAssignments) {
-    const code = assignment.charge_definition.currency.toUpperCase();
-    balancesByCurrency.set(
-      code,
-      (balancesByCurrency.get(code) ?? 0) +
-        Number(assignment.outstanding_amount || 0),
-    );
-  }
   const outstandingLabel =
-    [...balancesByCurrency]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([code, amount]) => formatMoneyWithCode(amount, code))
-      .join(" · ") || "No balance due";
+    formatAssignmentBalances(outstandingAssignments) || "No balance due";
   const openMaintenance = (maintenance.data?.items || []).filter(
     (request) => !["resolved", "closed"].includes(request.status),
   );
@@ -170,11 +157,7 @@ export default function ResidentialOverview() {
           .filter(Boolean)
           .join(", ") || "No active household",
       occupancyStatus: unitRelationships.length ? "occupied" : "vacant",
-      balance: unitAssignments.reduce(
-        (total, assignment) =>
-          total + Number(assignment.outstanding_amount || 0),
-        0,
-      ),
+      balance: formatAssignmentBalances(unitAssignments),
       openRequests:
         maintenance.isPending || maintenance.isError
           ? null
@@ -481,6 +464,7 @@ function UnitActivity({
       key: "name",
       header: "Unit",
       sortable: true,
+      minWidth: 190,
       accessor: (row) => (
         <div>
           <strong className="block text-sm">{row.name}</strong>
@@ -494,6 +478,7 @@ function UnitActivity({
       key: "residents",
       header: "Resident",
       sortable: true,
+      minWidth: 180,
       accessor: (row) => (
         <span className="line-clamp-2 max-w-52 text-sm">{row.residents}</span>
       ),
@@ -502,6 +487,7 @@ function UnitActivity({
       key: "occupancyStatus",
       header: "Occupancy",
       sortable: true,
+      minWidth: 125,
       accessor: (row) => (
         <StatusBadge
           tone={row.occupancyStatus === "occupied" ? "success" : "neutral"}
@@ -513,16 +499,16 @@ function UnitActivity({
     {
       key: "balance",
       header: "Balance",
-      sortable: true,
+      minWidth: 145,
       accessor: (row) => (
         <span
           className={
-            row.balance > 0
+            row.balance
               ? "font-semibold tabular-nums text-[var(--vms-danger)]"
               : "tabular-nums text-[var(--vms-ink-muted)]"
           }
         >
-          {row.balance > 0 ? formatCurrency(row.balance) : "No balance"}
+          {row.balance || "No balance"}
         </span>
       ),
     },
@@ -530,6 +516,7 @@ function UnitActivity({
       key: "openRequests",
       header: "Open requests",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <span className="tabular-nums">
           {row.openRequests === null ? "—" : row.openRequests}
@@ -541,6 +528,7 @@ function UnitActivity({
       key: "updatedAt",
       header: "Updated",
       sortable: true,
+      minWidth: 145,
       accessor: (row) => (
         <span className="whitespace-nowrap text-xs text-[var(--vms-ink-muted)]">
           {relativeTime(row.updatedAt)}
@@ -552,6 +540,7 @@ function UnitActivity({
       key: "actions",
       header: "",
       mobileHide: true,
+      minWidth: 88,
       accessor: (row) => (
         <Button asChild size="sm" variant="ghost">
           <Link
@@ -719,6 +708,21 @@ function groupAssignments(assignments: Assignment[]) {
     grouped.set(assignment.target_place.id, current);
   });
   return grouped;
+}
+
+function formatAssignmentBalances(assignments: Assignment[]): string | null {
+  const balances = new Map<string, number>();
+  for (const assignment of assignments) {
+    const amount = Number(assignment.outstanding_amount || 0);
+    if (!(amount > 0)) continue;
+    const currency = assignment.charge_definition.currency.toUpperCase();
+    balances.set(currency, (balances.get(currency) || 0) + amount);
+  }
+  if (!balances.size) return null;
+  return [...balances]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([currency, amount]) => formatMoneyWithCode(amount, currency))
+    .join(" · ");
 }
 
 function groupMaintenance(requests: MaintenanceRequest[]) {

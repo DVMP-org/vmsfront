@@ -2,7 +2,7 @@
 
 import type { QueryContext } from "@/lib/query-keys";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   keepPreviousData,
@@ -32,6 +32,8 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { formatDateTime } from "@/lib/datetime";
+import { humanize } from "@/lib/strings";
 import type {
   VisitAuthorization,
   VisitAuthorizationStatus,
@@ -185,6 +187,7 @@ export function InvitationApprovals() {
       key: "guest",
       header: "Guest",
       sortable: true,
+      minWidth: 210,
       accessor: (invitation) => (
         <div className="min-w-52 max-w-80">
           {invitation.guests.length > 1 ? (
@@ -211,6 +214,7 @@ export function InvitationApprovals() {
       key: "host_party",
       header: "Host / place",
       sortable: true,
+      minWidth: 200,
       accessor: (invitation) => (
         <div className="text-[var(--vms-ink-muted)]">
           <span className="block text-[var(--vms-ink)]">
@@ -226,12 +230,14 @@ export function InvitationApprovals() {
       key: "valid_from",
       header: "Validity",
       sortable: true,
+      minWidth: 190,
       accessor: (invitation) => <Validity invitation={invitation} />,
     },
     {
       key: "uses_count",
       header: "Uses",
       sortable: true,
+      minWidth: 120,
       accessor: (invitation) => (
         <span className="whitespace-nowrap tabular-nums text-[var(--vms-ink-muted)]">
           {invitation.uses_count}
@@ -243,6 +249,7 @@ export function InvitationApprovals() {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 130,
       accessor: (invitation) => (
         <StatusBadge
           status={invitation.status}
@@ -254,6 +261,7 @@ export function InvitationApprovals() {
       key: "actions",
       header: "",
       mobileHide: true,
+      minWidth: 100,
       accessor: (invitation) => (
         <Link
           href={`/admin/invitations/${invitation.id}`}
@@ -410,6 +418,13 @@ export function InvitationApprovals() {
             ? "No invitations match this search"
             : `No ${activeLabel.toLowerCase()}`
         }
+        emptyAction={
+          canCreate && status === "all" && !search ? (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              Create invitation
+            </Button>
+          ) : undefined
+        }
         selectable
         getRowId={(invitation) => invitation.id}
         mobileSummary={(invitation) => (
@@ -499,6 +514,7 @@ function CreateInvitationDrawer({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const formId = useId();
   const [host, setHost] = useState<FacetItem | null>(null);
   const [destination, setDestination] = useState<FacetItem | null>(null);
   const [kind, setKind] = useState<"single" | "group">("single");
@@ -599,8 +615,30 @@ function CreateInvitationDrawer({
       title="New invitation"
       description="Create an approved visitor pass for this Site."
       className="max-w-2xl"
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={create.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            isLoading={create.isPending}
+            loadingLabel="Creating invitation"
+          >
+            {kind === "group"
+              ? `Create group pass · ${guests.length}`
+              : "Create pass"}
+          </Button>
+        </div>
+      }
     >
-      <form className="flex min-h-full flex-col gap-5" onSubmit={submit}>
+      <form id={formId} className="flex flex-col gap-5" onSubmit={submit}>
         <FormErrorSummary errors={errors} />
         <div className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] bg-[var(--vms-surface-subtle)] p-3 text-xs leading-5 text-[var(--vms-ink-muted)]">
           Group invitations remain one pass with one invitation code. Each
@@ -812,25 +850,6 @@ function CreateInvitationDrawer({
             is applied by the Site checkpoint service.
           </p>
         </div>
-        <div className="mt-auto flex flex-col-reverse gap-2 border-t border-[var(--vms-line)] pt-4 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={create.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            isLoading={create.isPending}
-            loadingLabel="Creating invitation"
-          >
-            {kind === "group"
-              ? `Create group pass · ${guests.length}`
-              : "Create pass"}
-          </Button>
-        </div>
       </form>
     </Drawer>
   );
@@ -894,21 +913,9 @@ export function StatusBadge({
             : "neutral";
   return (
     <Badge variant={variant}>
-      {effective === "active" ? "Active" : statusLabel(effective)}
+      {effective === "active" ? "Active" : humanize(effective)}
     </Badge>
   );
-}
-
-export function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function statusLabel(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function Validity({
@@ -921,12 +928,12 @@ function Validity({
   return (
     <span className={compact ? "inline" : "grid gap-0.5 text-xs"}>
       <time dateTime={invitation.valid_from} className="whitespace-nowrap">
-        {formatDate(invitation.valid_from)}
+        {formatDateTime(invitation.valid_from)}
       </time>
       <span className="text-[var(--vms-ink-muted)]">
         {compact ? " – " : ""}
         <time dateTime={invitation.valid_to}>
-          {formatDate(invitation.valid_to)}
+          {formatDateTime(invitation.valid_to)}
         </time>
       </span>
     </span>

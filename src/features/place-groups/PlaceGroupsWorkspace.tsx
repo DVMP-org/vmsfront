@@ -131,6 +131,14 @@ export function PlaceGroupsWorkspace() {
           }
           onRetry={() => groups.refetch()}
           emptyMessage="No Place groups have been created."
+          emptyAction={
+            canManage ? (
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Create group
+              </Button>
+            ) : undefined
+          }
           mobileSummary={(group) => (
             <div className="space-y-2">
               <strong>{group.name}</strong>
@@ -262,12 +270,20 @@ function PlaceGroupDrawer({
             />
           )}
         </Field>
-        <fieldset>
+        <fieldset
+          aria-invalid={errors.places ? true : undefined}
+          aria-describedby={errors.places ? "place-group-places-error" : undefined}
+          aria-errormessage={errors.places ? "place-group-places-error" : undefined}
+        >
           <legend className="text-sm font-semibold">
             Places in this group
           </legend>
           {errors.places ? (
-            <p role="alert" className="mt-1 text-xs text-[var(--vms-danger)]">
+            <p
+              id="place-group-places-error"
+              role="alert"
+              className="mt-1 text-xs text-[var(--vms-danger)]"
+            >
               {errors.places}
             </p>
           ) : null}
@@ -303,6 +319,13 @@ function PlaceGroupDrawer({
                   className="px-3 hover:bg-[var(--vms-surface-subtle)]"
                 >
                   <Checkbox
+                    aria-invalid={errors.places ? true : undefined}
+                    aria-describedby={
+                      errors.places ? "place-group-places-error" : undefined
+                    }
+                    aria-errormessage={
+                      errors.places ? "place-group-places-error" : undefined
+                    }
                     checked={memberIds.has(place.id)}
                     onChange={(event) =>
                       setSelected((current) =>

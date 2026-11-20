@@ -11,6 +11,8 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { hospitalityApi } from "@/features/hospitality/api";
 import { HousekeepingDrawer } from "@/features/hospitality/components/HousekeepingDrawer";
@@ -20,8 +22,6 @@ import {
   ModuleMetrics,
   ModulePanel,
   RoomStatus,
-  displayDate,
-  money,
 } from "@/features/hospitality/HospitalityAdminPage";
 import type {
   HospitalityRoom,
@@ -131,7 +131,7 @@ export default function HospitalityRoomsPage() {
       header: "Nightly rate",
       sortable: true,
       responsiveHide: "xl",
-      accessor: (room) => money(room.base_rate, room.currency),
+      accessor: (room) => formatMoneyWithCode(room.base_rate, room.currency),
     },
     {
       key: "status",
@@ -156,7 +156,7 @@ export default function HospitalityRoomsPage() {
           </span>
           <span className="text-xs text-[var(--vms-ink-muted)]">
             {room.next_arrival
-              ? `${room.next_guest_name ? `${room.next_guest_name} · ` : "Next "}${displayDate(room.next_arrival)}`
+              ? `${room.next_guest_name ? `${room.next_guest_name} · ` : "Next "}${formatDate(room.next_arrival, access.siteTimezone)}`
               : "No upcoming arrival"}
           </span>
         </div>
@@ -344,6 +344,20 @@ export default function HospitalityRoomsPage() {
                 : null
             }
             emptyMessage="No rooms have been added to this hospitality property."
+            emptyAction={
+              access.allowed("create") ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setEditing(null);
+                    setFormOpen(true);
+                  }}
+                >
+                  Add room
+                </Button>
+              ) : undefined
+            }
             mobileSummary={(room) => (
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-3">
@@ -356,7 +370,7 @@ export default function HospitalityRoomsPage() {
                     </strong>
                     <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
                       {room.room_type} · sleeps {room.capacity} ·{" "}
-                      {money(room.base_rate, room.currency)}
+                      {formatMoneyWithCode(room.base_rate, room.currency)}
                     </span>
                   </div>
                   <RoomStatus
@@ -372,7 +386,7 @@ export default function HospitalityRoomsPage() {
                 {!room.current_guest_name && room.next_arrival ? (
                   <p className="text-xs text-[var(--vms-ink-muted)]">
                     Arriving: {room.next_guest_name ?? "Guest"} ·{" "}
-                    {displayDate(room.next_arrival)}
+                    {formatDate(room.next_arrival, access.siteTimezone)}
                   </p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
@@ -93,28 +94,19 @@ export function DiscussionList({
   };
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="mb-2 text-xs font-medium text-[var(--vms-ink-muted)]">
-            {context.site_name} / Community
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px]">
-            Community forum
-          </h1>
-          <p className="mt-2 max-w-xl text-sm text-[var(--vms-ink-muted)]">
-            A shared space to ask questions, exchange ideas and keep your Site
-            connected.
-          </p>
-        </div>
-        <Button
+      <PageHeader
+        eyebrow={`${context.site_name} / Community`}
+        title="Community forum"
+        description="A shared space to ask questions, exchange ideas and keep your Site connected."
+        primaryAction={<Button
           className="gap-2"
           onClick={() => open("topic")}
           disabled={!context.categories.length}
         >
           <Plus className="h-4 w-4" />
           Start a discussion
-        </Button>
-      </header>
+        </Button>}
+      />
       <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="space-y-5">
           <section className={cn(surface, "p-4")}>
@@ -290,7 +282,7 @@ export function DiscussionList({
                 <h2 className="text-lg font-semibold">
                   {!context.categories.length
                     ? "Your community starts here"
-                    : search || unread || category
+                    : search || input || unread || category
                       ? "No discussions match this view"
                       : "Be the first to start a conversation"}
                 </h2>
@@ -302,9 +294,26 @@ export function DiscussionList({
                     : "Ask a question, share an idea or start something useful together."}
                 </p>
                 {context.categories.length > 0 && (
-                  <Button className="mt-5" onClick={() => open("topic")}>
-                    Start a discussion
-                  </Button>
+                  <div className="mt-5 flex flex-wrap justify-center gap-2">
+                    {search || input || unread || category ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setInput("");
+                          setSearch("");
+                          setUnread(false);
+                          changeCategory("");
+                        }}
+                      >
+                        Clear search and filters
+                      </Button>
+                    ) : null}
+                    {!search && !input && !unread && !category ? (
+                      <Button onClick={() => open("topic")}>
+                        Start a discussion
+                      </Button>
+                    ) : null}
+                  </div>
                 )}
               </div>
             ) : (

@@ -63,6 +63,7 @@ export function ContractorDirectory() {
       key: "contact_name",
       header: "Contractor",
       sortable: true,
+      minWidth: 210,
       accessor: (row) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-[var(--vms-ink)]">
@@ -78,6 +79,7 @@ export function ContractorDirectory() {
       key: "access_to",
       header: "Access window",
       sortable: true,
+      minWidth: 175,
       accessor: (row) => (
         <div>
           <p className="text-sm">{contractorWindow(row)}</p>
@@ -93,6 +95,7 @@ export function ContractorDirectory() {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge tone={contractorStatusTone(row.status)}>
           {contractorStatusLabel(row.status)}
@@ -102,6 +105,7 @@ export function ContractorDirectory() {
     {
       key: "permit",
       header: "Permit",
+      minWidth: 150,
       accessor: (row) => {
         const state = contractorPermitState(row);
         return (
@@ -120,6 +124,7 @@ export function ContractorDirectory() {
     {
       key: "actions",
       header: "",
+      minWidth: 175,
       accessor: (row) =>
         canManage && row.status !== "revoked" ? (
           <div className="flex items-center justify-end gap-1">
@@ -277,6 +282,13 @@ export function ContractorDirectory() {
               isStale={query.isError && rows.length > 0}
               onRetry={() => void query.refetch()}
               emptyMessage="No contractors registered for this Site yet."
+              emptyAction={
+                canManage && statusFilter === "all" ? (
+                  <Button size="sm" onClick={() => setCreateOpen(true)}>
+                    Register contractor
+                  </Button>
+                ) : undefined
+              }
               tableLabel="Contractors"
               mobileSummary={(row) => (
                 <div className="space-y-2">

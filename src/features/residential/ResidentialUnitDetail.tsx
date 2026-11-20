@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PropertyImage } from "@/components/ui/PropertyImage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 import type { Assignment } from "@/features/charges/api";
 import type { Place } from "@/features/places/api";
 import { useSiteAccess } from "@/features/context/use-site-access";
@@ -38,15 +40,6 @@ export type ResidentialUnitRow = Place & {
 
 const detailTabs = ["Overview", "Residents", "Charges"] as const;
 type DetailTab = (typeof detailTabs)[number];
-
-function dateLabel(value?: string | null) {
-  if (!value || !Number.isFinite(Date.parse(value))) return "Not recorded";
-  return new Date(value).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function DetailSection({
   title,
@@ -246,7 +239,7 @@ export function ResidentialUnitDetail({
               ["Unit type", unitType],
               ["Building", current.building_name],
               ["Status", current.is_active ? "Active" : "Archived"],
-              ["Last updated", dateLabel(current.updated_at)],
+              ["Last updated", formatDate(current.updated_at)],
             ].map(([label, value]) => (
               <div key={label} className="min-w-0">
                 <dt className="text-xs text-[var(--vms-ink-muted)]">{label}</dt>
@@ -292,7 +285,7 @@ export function ResidentialUnitDetail({
                     dateTime={row.date}
                     className="mt-1 block text-xs tabular-nums text-[var(--vms-ink-muted)]"
                   >
-                    {dateLabel(row.date)}
+                    {formatDate(row.date)}
                   </time>
                 </li>
               ))}
@@ -341,7 +334,7 @@ export function ResidentialUnitDetail({
                     <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
                       {titleCase(row.role)}
                       {row.effective_from
-                        ? ` · Since ${dateLabel(row.effective_from)}`
+                        ? ` · Since ${formatDate(row.effective_from)}`
                         : ""}
                     </p>
                     {row.party.email && (
@@ -351,7 +344,7 @@ export function ResidentialUnitDetail({
                     )}
                     {row.effective_to && (
                       <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                        Until {dateLabel(row.effective_to)}
+                        Until {formatDate(row.effective_to)}
                       </p>
                     )}
                   </div>
@@ -400,17 +393,6 @@ export function ResidentialUnitDetail({
   );
 }
 
-function money(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toLocaleString()}`;
-  }
-}
-
 function UnitCharges({ assignments }: { assignments: Assignment[] }) {
   if (!assignments.length)
     return (
@@ -437,7 +419,7 @@ function UnitCharges({ assignments }: { assignments: Assignment[] }) {
             key={currency}
             className="mt-1 break-words text-2xl font-semibold tracking-tight tabular-nums"
           >
-            {money(total, currency)}
+            {formatMoneyWithCode(total, currency)}
           </p>
         ))}
       </div>
@@ -450,7 +432,7 @@ function UnitCharges({ assignments }: { assignments: Assignment[] }) {
                   {item.charge_definition.name}
                 </p>
                 <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                  {money(
+                  {formatMoneyWithCode(
                     Number(item.charge_definition.amount),
                     item.charge_definition.currency,
                   )}{" "}
@@ -458,7 +440,7 @@ function UnitCharges({ assignments }: { assignments: Assignment[] }) {
                 </p>
               </div>
               <span className="shrink-0 text-sm font-semibold tabular-nums">
-                {money(
+                {formatMoneyWithCode(
                   Number(item.outstanding_amount || 0),
                   item.charge_definition.currency,
                 )}
@@ -467,7 +449,7 @@ function UnitCharges({ assignments }: { assignments: Assignment[] }) {
             {item.next_due_date && (
               <p className="flex items-center gap-1.5 text-xs text-[var(--vms-ink-muted)]">
                 <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-                Next due {dateLabel(item.next_due_date)}
+                Next due {formatDate(item.next_due_date)}
               </p>
             )}
             {item.current_responsibility && (

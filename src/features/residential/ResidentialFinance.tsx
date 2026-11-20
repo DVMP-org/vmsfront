@@ -24,12 +24,13 @@ import {
   type FilterDefinition,
 } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { formatMoney, formatMoneyWithCode } from "@/lib/currency";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
+import { titleCase } from "@/lib/strings";
 import { parseApiError } from "@/lib/error-utils";
 import type { Assignment } from "@/features/charges/api";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
-import { titleCase } from "./contracts";
 
 type FinanceRow = {
   id: string;
@@ -134,6 +135,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "charge",
       header: "Charge",
       sortable: true,
+      minWidth: 180,
       accessor: (row) => (
         <span>
           <Link
@@ -152,6 +154,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "target",
       header: "Property / unit",
       sortable: true,
+      minWidth: 175,
       accessor: (row) => (
         <Link
           href={`/admin/charges/assignments/${row.id}`}
@@ -170,6 +173,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "schedules",
       header: "Schedules",
       sortable: true,
+      minWidth: 150,
       accessor: (row) => (
         <span className="text-sm">
           <strong className="block tabular-nums">
@@ -177,7 +181,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
           </strong>
           <span className="text-xs text-[var(--vms-ink-muted)]">
             {row.next_due_date
-              ? `Next ${new Date(row.next_due_date).toLocaleDateString()}`
+              ? `Next ${formatDate(row.next_due_date)}`
               : `${row.schedule_count} total`}
           </span>
         </span>
@@ -187,15 +191,18 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "payer",
       header: "Responsible Party",
       sortable: true,
+      minWidth: 165,
       accessor: (row) => row.payer,
     },
     {
       key: "outstanding",
       header: "Balance",
       sortable: true,
+      minWidth: 155,
+      className: "text-right",
       accessor: (row) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(row.outstanding, row.currency)}
+          {formatMoneyWithCode(row.outstanding, row.currency)}
         </span>
       ),
     },
@@ -203,6 +210,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "balance_state",
       header: "Collection",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge
           tone={row.balance_state === "outstanding" ? "warning" : "success"}
@@ -215,16 +223,20 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
       key: "status",
       header: "Assignment",
       sortable: true,
+      minWidth: 115,
       accessor: (row) => titleCase(row.status),
     },
     {
       key: "open",
       header: "Actions",
       mobileHide: true,
-      className: "text-right",
+      className: "w-28 text-right",
+      minWidth: 104,
       accessor: (row) => (
         <Button asChild variant="ghost" size="sm">
-          <Link href={`/admin/charges/assignments/${row.id}`}>Open</Link>
+          <Link href={`/admin/charges/assignments/${row.id}`}>
+            Open assignment
+          </Link>
         </Button>
       ),
     },
@@ -408,7 +420,7 @@ function ResidentialFinanceView({ view }: { view: "register" | "arrears" }) {
                     row.balance_state === "outstanding" ? "warning" : "success"
                   }
                 >
-                  {formatMoney(row.outstanding, row.currency)}
+                  {formatMoneyWithCode(row.outstanding, row.currency)}
                 </StatusBadge>
               </div>
               <Button asChild variant="outline" size="sm">

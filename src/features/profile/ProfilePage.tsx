@@ -145,9 +145,7 @@ function ProfileForm({
         client.invalidateQueries({ queryKey: ["profile"] }),
         client.invalidateQueries({ queryKey: ["auth", "profile"] }),
       ]);
-      toast.success("Profile saved.");
     },
-    onError: (saveError) => toast.error(parseApiError(saveError).message),
   });
 
   const isDirty = (Object.keys(initial) as Array<keyof ProfileValues>).some(

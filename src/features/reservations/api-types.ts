@@ -14,6 +14,8 @@ export interface ReservationDto {
   id: string;
   site_id: string;
   booking_id: string | null;
+  guest_name: string | null;
+  booking_reference: string | null;
   booking_item_id: string | null;
   /** The physical room, once one has been chosen. */
   place_id: string | null;

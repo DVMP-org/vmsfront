@@ -141,6 +141,8 @@ interface DataTableProps<T> {
   onPageSizeChange?: (pageSize: number) => void;
   showPagination?: boolean;
   emptyMessage?: string;
+  /** Valid create/setup action shown only when the unfiltered collection is empty. */
+  emptyAction?: ReactNode;
   className?: string;
   // Multi-select support
   selectable?: boolean;
@@ -222,7 +224,8 @@ export function DataTable<T extends Record<string, any>>({
   pageSizeOptions = [10, 20, 30, 50, 100],
   onPageSizeChange,
   showPagination = true,
-  emptyMessage = "No records match your current view.",
+  emptyMessage = "No records yet.",
+  emptyAction,
   className,
   selectable = false,
   getRowId = (row: T) => toRowId((row as any)?.id),
@@ -1397,7 +1400,9 @@ export function DataTable<T extends Record<string, any>>({
                             />
                           )}
                           <p className="font-medium text-foreground">
-                            {emptyMessage}
+                            {hasActiveFilters
+                              ? "Nothing matches the current search and filters."
+                              : emptyMessage}
                           </p>
                           {hasActiveFilters && (
                             <Button
@@ -1408,6 +1413,7 @@ export function DataTable<T extends Record<string, any>>({
                               Clear search and filters
                             </Button>
                           )}
+                          {!hasActiveFilters && emptyAction}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1496,7 +1502,11 @@ export function DataTable<T extends Record<string, any>>({
                   ) : (
                     <Inbox className="h-6 w-6" aria-hidden="true" />
                   )}
-                  <p className="font-medium text-foreground">{emptyMessage}</p>
+                  <p className="font-medium text-foreground">
+                    {hasActiveFilters
+                      ? "Nothing matches the current search and filters."
+                      : emptyMessage}
+                  </p>
                   {hasActiveFilters ? (
                     <Button
                       variant="outline"
@@ -1506,6 +1516,7 @@ export function DataTable<T extends Record<string, any>>({
                       Clear search and filters
                     </Button>
                   ) : null}
+                  {!hasActiveFilters ? emptyAction : null}
                 </li>
               ) : (
                 paginatedData.map((row, index) => {
@@ -1542,8 +1553,27 @@ export function DataTable<T extends Record<string, any>>({
                   className="grid gap-3 p-2 sm:grid-cols-2 xl:grid-cols-3"
                 >
                   {paginatedData.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
-                      {emptyMessage}
+                    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
+                      {hasActiveFilters ? (
+                        <SearchX className="h-6 w-6" aria-hidden="true" />
+                      ) : (
+                        <Inbox className="h-6 w-6" aria-hidden="true" />
+                      )}
+                      <p className="font-medium text-foreground">
+                        {hasActiveFilters
+                          ? "Nothing matches the current search and filters."
+                          : emptyMessage}
+                      </p>
+                      {hasActiveFilters ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                        >
+                          Clear search and filters
+                        </Button>
+                      ) : null}
+                      {!hasActiveFilters ? emptyAction : null}
                     </div>
                   ) : (
                     paginatedData.map((row, index) => {

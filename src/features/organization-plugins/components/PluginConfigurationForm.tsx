@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { fieldControlClassName } from "@/components/ui/form/Field";
 import type { BackendPlugin, PluginConfig } from "@/types/plugin";
@@ -99,14 +100,13 @@ export function PluginConfigurationForm({
 
                         {field.type === "boolean" || field.type === "toggle" ? (
                             <div className="flex min-h-11 items-center">
-                                <input
+                                <Checkbox
                                     id={id}
-                                    type="checkbox"
                                     checked={value === true}
                                     disabled={disabled}
                                     aria-describedby={help ? `${id}-help` : undefined}
                                     onChange={(event) => setValue(field.key, event.target.checked)}
-                                    className="h-5 w-5 accent-[var(--vms-action)]"
+                                    className="h-5 w-5"
                                 />
                             </div>
                         ) : field.type === "select" ? (

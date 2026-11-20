@@ -1,17 +1,14 @@
 "use client";
-import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { parseApiError } from "@/lib/error-utils";
+import { relativeTime } from "@/lib/datetime";
 export const field =
   "min-h-11 w-full rounded-md border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]";
 export const surface =
   "rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)]";
 export function age(date: string) {
-  const value = new Date(date);
-  return Number.isNaN(value.getTime())
-    ? ""
-    : formatDistanceToNow(value, { addSuffix: true });
+  return relativeTime(date);
 }
 export function ErrorText({ error }: { error: unknown }) {
   return error ? (

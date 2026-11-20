@@ -196,9 +196,10 @@ export function LeaseFormDrawer({
     }
     draft.extras.forEach((line) => {
       if (!line.name.trim()) {
-        found[`extra-${line.key}`] = "Name this charge";
+        found[`extra-${line.key}-name`] = "Name this charge";
       } else if (!(Number(line.amount) > 0)) {
-        found[`extra-${line.key}`] = "Enter an amount greater than zero";
+        found[`extra-${line.key}-amount`] =
+          "Enter an amount greater than zero";
       }
     });
     return found;
@@ -412,7 +413,12 @@ export function LeaseFormDrawer({
               />
             )}
           </Field>
-          <Field id="lease-ends" label="Ends" error={visible("ends_at")}>
+          <Field
+            id="lease-ends"
+            label="Ends"
+            required={draft.kind === "stay"}
+            error={visible("ends_at")}
+          >
             {(control) => (
               <input
                 {...control}
@@ -532,7 +538,7 @@ export function LeaseFormDrawer({
                 <Field
                   id={`lease-extra-name-${line.key}`}
                   label="Charge"
-                  error={visible(`extra-${line.key}`)}
+                  error={visible(`extra-${line.key}-name`)}
                 >
                   {(control) => (
                     <input
@@ -548,7 +554,12 @@ export function LeaseFormDrawer({
                     />
                   )}
                 </Field>
-                <Field id={`lease-extra-amount-${line.key}`} label="Amount">
+                <Field
+                  id={`lease-extra-amount-${line.key}`}
+                  label="Amount"
+                  required
+                  error={visible(`extra-${line.key}-amount`)}
+                >
                   {(control) => (
                     <input
                       {...control}

@@ -13,6 +13,7 @@ import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { formatShortDate, formatWeekday } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { hospitalityApi } from "@/features/hospitality/api";
 import {
@@ -261,16 +262,10 @@ function HospitalityAvailabilityContent() {
                         className="min-w-28 border-b border-r border-[var(--vms-line)] px-2 py-2 text-center text-xs font-semibold"
                       >
                         <span className="block">
-                          {new Date(`${date}T12:00:00`).toLocaleDateString(
-                            undefined,
-                            { weekday: "short" },
-                          )}
+                          {formatWeekday(`${date}T12:00:00`)}
                         </span>
                         <span className="font-normal text-[var(--vms-ink-muted)]">
-                          {new Date(`${date}T12:00:00`).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "numeric" },
-                          )}
+                          {formatShortDate(`${date}T12:00:00`)}
                         </span>
                       </th>
                     ))}

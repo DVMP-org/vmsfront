@@ -3,7 +3,7 @@
 import { ArrowRight, Check, Crown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import { formatPrice } from "@/lib/utils";
+import { formatMoneyWithCode } from "@/lib/currency";
 import type { Plan } from "@/types/subscription";
 
 import {
@@ -69,7 +69,7 @@ export function PlanCard({
       <div className="mb-5">
         <p className="flex items-baseline gap-1.5">
           <span className="text-3xl font-semibold tracking-[-0.03em] tabular-nums text-[var(--vms-ink)]">
-            {formatPrice(monthly)}
+            {formatMoneyWithCode(monthly, plan.currency)}
           </span>
           <span className="text-sm text-[var(--vms-ink-muted)]">
             {price > 0 ? "/month" : "forever"}
@@ -77,7 +77,7 @@ export function PlanCard({
         </p>
         {billingCycle === "yearly" && price > 0 ? (
           <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-            {formatPrice(price)} billed annually
+            {formatMoneyWithCode(price, plan.currency)} billed annually
             {savings > 0 ? (
               <span className="rounded-full bg-[var(--vms-success-subtle)] px-2 py-0.5 font-semibold text-[var(--vms-success)]">
                 Save {savings}%

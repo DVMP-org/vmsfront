@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMarkAsRead, useNotifications } from "@/hooks/use-notifications";
 import { parseApiError } from "@/lib/error-utils";
+import { relativeTime } from "@/lib/datetime";
 
 export function WorkspaceNotifications({ userId }: { userId: string }) {
   const notifications = useNotifications(userId, { page: 1, pageSize: 5 });
@@ -109,7 +110,7 @@ export function WorkspaceNotifications({ userId }: { userId: string }) {
                   dateTime={notification.created_at}
                   className="mt-1 block text-[10px] font-medium uppercase tracking-[0.08em] text-[#98a2b3]"
                 >
-                  {formatRelativeDate(notification.created_at)}
+                  {relativeTime(notification.created_at)}
                 </time>
               </div>
               {notification.is_read ? (
@@ -134,23 +135,4 @@ export function WorkspaceNotifications({ userId }: { userId: string }) {
       )}
     </section>
   );
-}
-
-function formatRelativeDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown date";
-
-  const elapsed = Date.now() - date.getTime();
-  const minutes = Math.floor(elapsed / 60_000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }

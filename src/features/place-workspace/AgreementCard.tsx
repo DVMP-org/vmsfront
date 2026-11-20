@@ -3,14 +3,16 @@
 import { BadgeCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { formatMoney } from "@/lib/currency";
 import { formatDate, formatDateRange } from "@/lib/datetime";
+import { titleCase } from "@/lib/strings";
 
 import type { LeaseAgreement } from "./api";
 import { useAcceptLease, useLeaseAgreements } from "./queries";
-import { SectionCard, StatusPill, formatMoney, titleCaseStatus } from "./ui";
+import { SectionCard, StatusPill } from "./ui";
 
 function cadence(value: string | null): string {
-  return value ? titleCaseStatus(value) : "";
+  return value ? titleCase(value) : "";
 }
 
 function LeaseTerms({ lease }: { lease: LeaseAgreement }) {
@@ -113,7 +115,7 @@ export function AgreementCard({
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <StatusPill status={lease.status} />
                 <span className="text-xs text-[var(--vms-ink-muted)]">
-                  {lease.reference ?? titleCaseStatus(lease.kind)}
+                  {lease.reference ?? titleCase(lease.kind)}
                 </span>
               </div>
 

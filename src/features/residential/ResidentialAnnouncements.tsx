@@ -82,6 +82,7 @@ export default function ResidentialAnnouncements() {
       key: "title",
       header: "Announcement",
       sortable: true,
+      minWidth: 280,
       accessor: (announcement) => (
         <span>
           <button
@@ -107,12 +108,14 @@ export default function ResidentialAnnouncements() {
       key: "audience",
       header: "Audience",
       sortable: true,
+      minWidth: 120,
       accessor: (announcement) => titleCase(announcement.audience),
     },
     {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 120,
       accessor: (announcement) => (
         <StatusBadge tone={announcementTone(announcement.status)}>
           {titleCase(announcement.status)}
@@ -123,6 +126,7 @@ export default function ResidentialAnnouncements() {
       key: "published_at",
       header: "Published",
       sortable: true,
+      minWidth: 125,
       accessor: (announcement) =>
         announcement.published_at
           ? format(new Date(announcement.published_at), "d MMM yyyy")
@@ -132,6 +136,7 @@ export default function ResidentialAnnouncements() {
       key: "expires_at",
       header: "Expires",
       sortable: true,
+      minWidth: 125,
       accessor: (announcement) =>
         announcement.expires_at
           ? format(new Date(announcement.expires_at), "d MMM yyyy")
@@ -142,6 +147,7 @@ export default function ResidentialAnnouncements() {
       header: "Actions",
       className: "text-right",
       mobileHide: true,
+      minWidth: 180,
       accessor: (announcement) =>
         canManageAnnouncements ? (
           <div className="flex justify-end gap-1">

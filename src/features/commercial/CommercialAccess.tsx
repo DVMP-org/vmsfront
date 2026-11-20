@@ -165,6 +165,7 @@ export default function CommercialAccess() {
       key: "person",
       header: "Person",
       sortable: true,
+      minWidth: 210,
       accessor: (row) => (
         <span>
           <strong className="block truncate">{row.person}</strong>
@@ -178,6 +179,7 @@ export default function CommercialAccess() {
       key: "space",
       header: "Commercial space",
       sortable: true,
+      minWidth: 150,
       accessor: (row) => (
         <Link
           href={`/admin/places/${row.space_id}`}
@@ -191,6 +193,7 @@ export default function CommercialAccess() {
       key: "role",
       header: "Access role",
       sortable: true,
+      minWidth: 118,
       accessor: (row) => (
         <StatusBadge tone="info">{titleCase(row.role)}</StatusBadge>
       ),
@@ -199,6 +202,7 @@ export default function CommercialAccess() {
       key: "ends",
       header: "Access window",
       sortable: true,
+      minWidth: 148,
       accessor: (row) =>
         row.ends
           ? `${format(new Date(row.ends), "d MMM yyyy")} · ${titleCase(
@@ -210,6 +214,7 @@ export default function CommercialAccess() {
       key: "status",
       header: "Relationship",
       sortable: true,
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge tone={accessTone(row.status)}>
           {titleCase(row.status)}
@@ -220,7 +225,8 @@ export default function CommercialAccess() {
       key: "actions",
       header: "Actions",
       mobileHide: true,
-      className: "text-right",
+      className: "w-32 text-right",
+      minWidth: 112,
       accessor: (row) =>
         canManageAccess && ["active", "pending"].includes(row.status) ? (
           <Button
@@ -236,7 +242,7 @@ export default function CommercialAccess() {
             size="sm"
             onClick={() => update.mutate({ ids: [row.id], active: true })}
           >
-            Restore
+            Restore access
           </Button>
         ) : null,
     },

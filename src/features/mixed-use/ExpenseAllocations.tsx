@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
+import { fieldControlClassName } from "@/components/ui/form/Field";
 import {
   DataTable,
   type BulkAction,
@@ -21,6 +22,7 @@ import {
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/lib/error-utils";
+import { formatMoneyWithCode } from "@/lib/currency";
 import {
   placeKinds,
   placesApi,
@@ -96,14 +98,6 @@ function selectedTree(
   return null;
 }
 
-function money(amount: string, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(Number(amount));
-}
-
 export function ExpenseAllocations() {
   const selectedSite = useAppStore((state) => state.selectedSite);
   const context = useMixedUseAccess();
@@ -143,7 +137,7 @@ export function ExpenseAllocations() {
           (totals[allocation.currency] ?? 0) + Number(allocation.total_amount);
         return totals;
       }, {}),
-    ).map(([currency, amount]) => money(amount.toFixed(2), currency));
+    ).map(([currency, amount]) => formatMoneyWithCode(amount, currency));
   const totalAllocated = totalsByCurrency(rows);
   const approvedTotal = totalsByCurrency(
     rows.filter((allocation) => allocation.status === "approved"),
@@ -293,6 +287,7 @@ export function ExpenseAllocations() {
       key: "title",
       header: "Shared expense",
       sortable: true,
+      minWidth: 230,
       accessor: (allocation) => (
         <div className="min-w-56">
           <p className="font-semibold">{allocation.title}</p>
@@ -306,6 +301,7 @@ export function ExpenseAllocations() {
       key: "period_start",
       header: "Period",
       sortable: true,
+      minWidth: 175,
       accessor: (allocation) => (
         <span className="whitespace-nowrap text-xs">
           {new Date(`${allocation.period_start}T12:00:00`).toLocaleDateString()}
@@ -318,13 +314,16 @@ export function ExpenseAllocations() {
       key: "total_amount",
       header: "Total",
       sortable: true,
+      minWidth: 128,
+      className: "text-right tabular-nums",
       accessor: (allocation) =>
-        money(allocation.total_amount, allocation.currency),
+        formatMoneyWithCode(allocation.total_amount, allocation.currency),
     },
     {
       key: "shares",
       header: "Allocation",
       sortable: false,
+      minWidth: 220,
       accessor: (allocation) => (
         <div className="flex max-w-sm flex-wrap gap-1.5">
           {allocation.shares.map((share) => (
@@ -343,12 +342,14 @@ export function ExpenseAllocations() {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 100,
       accessor: (allocation) => <StatusLabel status={allocation.status} />,
     },
     {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      minWidth: 112,
       accessor: (allocation) =>
         context.canManageExpenses && allocation.status !== "archived" ? (
           <Button
@@ -529,7 +530,7 @@ export function ExpenseAllocations() {
                 <StatusLabel status={allocation.status} />
               </div>
               <p className="text-sm font-semibold">
-                {money(allocation.total_amount, allocation.currency)}
+                {formatMoneyWithCode(allocation.total_amount, allocation.currency)}
               </p>
               <p className="text-xs text-[var(--vms-ink-muted)]">
                 {allocation.shares
@@ -569,9 +570,36 @@ export function ExpenseAllocations() {
         }}
         title="New shared expense allocation"
         description="Create a draft allocation, review domain shares, then approve it for the property."
-        size="xl"
+        size="lg"
+        className="sm:max-w-[880px]"
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={create.isPending}
+              onClick={() => setFormOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="new-shared-expense-form"
+              disabled={!sharesComplete}
+              isLoading={create.isPending}
+              loadingLabel="Creating…"
+            >
+              Create draft
+            </Button>
+          </div>
+        }
       >
-        <form className="space-y-5" onSubmit={submit} noValidate>
+        <form
+          id="new-shared-expense-form"
+          className="space-y-5"
+          onSubmit={submit}
+          noValidate
+        >
           {formError ? (
             <InlineAlert tone="danger" title="Allocation was not created">
               {formError}
@@ -797,7 +825,7 @@ export function ExpenseAllocations() {
                   </label>
                   <div className="flex items-end justify-between gap-2 sm:block">
                     <p className="pb-2 text-xs font-semibold sm:pb-0">
-                      {money(
+                      {formatMoneyWithCode(
                         (
                           allocationAmount *
                           ((Number(share.percentage) || 0) / 100)
@@ -844,24 +872,6 @@ export function ExpenseAllocations() {
               </span>
             </div>
           </section>
-
-          <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--vms-line)] pt-4">
-            <Button
-              variant="secondary"
-              disabled={create.isPending}
-              onClick={() => setFormOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!sharesComplete}
-              isLoading={create.isPending}
-              loadingLabel="Creating…"
-            >
-              Create draft
-            </Button>
-          </div>
         </form>
       </Modal>
 
@@ -944,7 +954,7 @@ export function ExpenseAllocations() {
                     </p>
                   </div>
                   <p className="text-base font-semibold">
-                    {money(allocation.total_amount, allocation.currency)}
+                    {formatMoneyWithCode(allocation.total_amount, allocation.currency)}
                   </p>
                 </div>
                 <div className="mt-4 divide-y divide-[var(--vms-line)] border-y border-[var(--vms-line)]">
@@ -969,7 +979,7 @@ export function ExpenseAllocations() {
                       </div>
                       <p className="font-medium tabular-nums">
                         {Number(share.percentage).toFixed(2)}% ·{" "}
-                        {money(share.amount, allocation.currency)}
+                        {formatMoneyWithCode(share.amount, allocation.currency)}
                       </p>
                     </div>
                   ))}
@@ -988,8 +998,7 @@ export function ExpenseAllocations() {
   );
 }
 
-const fieldClass =
-  "min-h-11 w-full rounded-[var(--vms-radius-control)] border border-[var(--vms-line-strong)] bg-[var(--vms-surface)] px-3 text-base outline-none focus:border-[var(--vms-ink)] focus:ring-2 focus:ring-[var(--vms-focus)] sm:text-sm";
+const fieldClass = fieldControlClassName;
 
 function Summary({
   label,

@@ -33,34 +33,10 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 import { SubscriptionStatus, Plan } from "@/types/subscription";
 import { planEntitlements } from "@/features/subscription/plan-entitlements";
-
-function formatDateShort(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateLong(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    currencyDisplay: "code",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(price);
-}
 
 function StatusBadge({ status }: { status: SubscriptionStatus }) {
   const config = {
@@ -198,7 +174,7 @@ function ChangePlanModal({
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-[var(--vms-ink)] ">
-                        {formatPrice(price)}
+                        {formatMoneyWithCode(price, plan.currency)}
                       </span>
                       <span className="text-sm text-[var(--vms-ink-muted)]">
                         /{billingCycle === "monthly" ? "mo" : "yr"}
@@ -398,7 +374,7 @@ export function SubscriptionSection() {
     subscription.billing_cycle === "yearly"
       ? plan?.price_yearly
       : plan?.price_monthly;
-  const entitlements = planEntitlements(plan?.features);
+  const entitlements = planEntitlements(plan?.features, subscription.usage);
 
   return (
     <div className="space-y-6">
@@ -432,7 +408,7 @@ export function SubscriptionSection() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-[var(--vms-ink)] ">
-                  {currentPrice != null ? formatPrice(currentPrice) : "—"}
+                  {currentPrice != null && plan ? formatMoneyWithCode(currentPrice, plan.currency) : "—"}
                 </div>
                 <div className="text-sm text-[var(--vms-ink-muted)]">
                   per{" "}
@@ -481,7 +457,7 @@ export function SubscriptionSection() {
               <div className="font-medium text-[var(--vms-ink)] ">
                 {subscription.current_period_start &&
                 subscription.current_period_end
-                  ? `${formatDateShort(subscription.current_period_start)} - ${formatDateShort(
+                  ? `${formatDate(subscription.current_period_start)} - ${formatDate(
                       subscription.current_period_end,
                     )}`
                   : "—"}
@@ -494,7 +470,7 @@ export function SubscriptionSection() {
               </div>
               <div className="font-medium text-[var(--vms-ink)] ">
                 {subscription.current_period_end
-                  ? formatDateLong(subscription.current_period_end)
+                  ? formatDate(subscription.current_period_end)
                   : "—"}
               </div>
             </div>
@@ -520,7 +496,7 @@ export function SubscriptionSection() {
                 <p className="text-sm text-amber-700 mt-1">
                   Your subscription will end on{" "}
                   {subscription.current_period_end
-                    ? formatDateLong(subscription.current_period_end)
+                    ? formatDate(subscription.current_period_end)
                     : "the end of the billing period"}
                   . You can reactivate before then to keep your access.
                 </p>
@@ -545,7 +521,7 @@ export function SubscriptionSection() {
                   <h4 className="font-medium text-blue-800 ">Trial Active</h4>
                   <p className="text-sm text-blue-700 mt-1">
                     Your trial ends on{" "}
-                    {formatDateLong(subscription.trial_ends_at)}. Add a payment
+                    {formatDate(subscription.trial_ends_at)}. Add a payment
                     method to continue after the trial.
                   </p>
                 </div>

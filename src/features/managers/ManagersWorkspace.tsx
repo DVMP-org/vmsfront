@@ -7,6 +7,8 @@ import { Plus, ShieldCheck, UserCog, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -52,6 +54,7 @@ export function ManagersWorkspace() {
     {
       key: "manager",
       header: "Manager",
+      minWidth: 220,
       accessor: (manager) => (
         <span>
           <strong className="block">{manager.user.name}</strong>
@@ -65,6 +68,7 @@ export function ManagersWorkspace() {
     {
       key: "roles",
       header: "Roles",
+      minWidth: 170,
       accessor: (manager) => (
         <span className="flex flex-wrap gap-1">
           {manager.roles.length ? (
@@ -84,6 +88,7 @@ export function ManagersWorkspace() {
     {
       key: "permissions",
       header: "Authority",
+      minWidth: 160,
       accessor: (manager) => (
         <span className="text-xs text-[var(--vms-ink-muted)]">
           {manager.effective_permissions.includes("*")
@@ -96,6 +101,7 @@ export function ManagersWorkspace() {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      minWidth: 180,
       accessor: (manager) =>
         canManage ? (
           <span className="flex gap-2">
@@ -137,30 +143,17 @@ export function ManagersWorkspace() {
   }
   return (
     <main className="mx-auto w-full max-w-[1360px] space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            <UserCog className="h-4 w-4" aria-hidden="true" />
-            {selectedSite?.name} / Site administration
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            Managers
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Site managers administer this Site and its child hierarchy. They are
-            separate from Place parties and may also hold a Party relationship
-            at any child Place.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {canManage ? (
+      <PageHeader
+        eyebrow={<span className="inline-flex items-center gap-2"><UserCog className="h-4 w-4" aria-hidden="true" />{selectedSite?.name} / Site administration</span>}
+        title="Managers"
+        description="Site managers administer this Site and its child hierarchy. They are separate from Place parties and may also hold a Party relationship at any child Place."
+        primaryAction={canManage ? (
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add manager
             </Button>
-          ) : null}
-        </div>
-      </header>
+        ) : undefined}
+      />
       {notice ? (
         <InlineAlert tone="success" title="Manager updated">
           {notice}
@@ -375,12 +368,14 @@ function ManagerRolesModal({
       >
         <div className="space-y-2">
           {roles.map((role) => (
-            <label
+            <div
               key={role.id}
-              className="flex min-h-11 cursor-pointer items-start gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] p-3"
+              className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3"
             >
-              <input
-                type="checkbox"
+              <Checkbox
+                id={`site-manager-role-${role.id}`}
+                label={role.name}
+                description={role.description || role.permissions.join(", ")}
                 checked={selected.includes(role.id)}
                 onChange={(event) =>
                   setSelected((current) =>
@@ -389,14 +384,9 @@ function ManagerRolesModal({
                       : current.filter((id) => id !== role.id),
                   )
                 }
+                className="py-2"
               />
-              <span>
-                <strong className="block text-sm">{role.name}</strong>
-                <span className="block text-xs text-[var(--vms-ink-muted)]">
-                  {role.description || role.permissions.join(", ")}
-                </span>
-              </span>
-            </label>
+            </div>
           ))}
         </div>
         {mutation.isError ? (

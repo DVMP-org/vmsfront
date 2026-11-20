@@ -36,15 +36,15 @@ const STATUS_OPTIONS: Array<{
   value: NonNullable<BookingListParams["status"]>;
   label: string;
 }> = [
-    { value: "pending_payment", label: "Awaiting payment" },
-    { value: "requested", label: "To decide" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "checked_in", label: "Checked in" },
-    { value: "checked_out", label: "Checked out" },
-    { value: "declined", label: "Declined" },
-    { value: "cancelled", label: "Cancelled" },
-    { value: "no_show", label: "No show" },
-  ];
+  { value: "pending_payment", label: "Awaiting payment" },
+  { value: "requested", label: "To decide" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "checked_in", label: "Checked in" },
+  { value: "checked_out", label: "Checked out" },
+  { value: "declined", label: "Declined" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "no_show", label: "No show" },
+];
 
 /**
  * The Site's bookings directory — confirmed arrangements, and nothing else.
@@ -68,6 +68,10 @@ export function BookingsRegister() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterConfig[]>([]);
   const [creating, setCreating] = useState(false);
+  const [createFormState, setCreateFormState] = useState({
+    canSubmit: false,
+    isSubmitting: false,
+  });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openBookingId, setOpenBookingId] = useState<string | null>(null);
 
@@ -100,10 +104,10 @@ export function BookingsRegister() {
         : {}),
       ...(stay.to
         ? {
-          overlaps_to: new Date(
-            new Date(`${stay.to}T00:00:00`).getTime() + 86_400_000,
-          ).toISOString(),
-        }
+            overlaps_to: new Date(
+              new Date(`${stay.to}T00:00:00`).getTime() + 86_400_000,
+            ).toISOString(),
+          }
         : {}),
     };
   }, [page, search, filters]);
@@ -192,13 +196,12 @@ export function BookingsRegister() {
       accessor: (booking) =>
         booking.financials?.priced ? (
           <span className="tabular-nums">
-            {formatMoney(
-              booking.financials.total,
-              booking.financials.currency,
-            )}
+            {formatMoney(booking.financials.total, booking.financials.currency)}
           </span>
         ) : (
-          <span className="text-xs text-[var(--vms-ink-muted)]">Not priced</span>
+          <span className="text-xs text-[var(--vms-ink-muted)]">
+            Not priced
+          </span>
         ),
     },
     {
@@ -358,7 +361,14 @@ export function BookingsRegister() {
         }
         isStale={list.isError && Boolean(list.data)}
         onRetry={() => void list.refetch()}
-        emptyMessage="No bookings match this search for the selected Site."
+        emptyMessage="No bookings have been recorded at this Site yet."
+        emptyAction={
+          search.trim() || filters.length > 0 ? undefined : (
+            <Button type="button" size="sm" onClick={() => setCreating(true)}>
+              New booking
+            </Button>
+          )
+        }
         mobileSummary={(booking) => {
           const payment = paymentStatusView(booking.financials);
           const nights = stayNights(booking.check_in_at, booking.check_out_at);
@@ -391,9 +401,9 @@ export function BookingsRegister() {
                   : "Room not assigned"}
                 {booking.financials?.priced
                   ? ` · ${formatMoney(
-                    booking.financials.balance,
-                    booking.financials.currency,
-                  )} outstanding`
+                      booking.financials.balance,
+                      booking.financials.currency,
+                    )} outstanding`
                   : ""}
               </span>
               <Button
@@ -415,8 +425,25 @@ export function BookingsRegister() {
         onClose={() => setCreating(false)}
         title="New booking"
         description="Taken on a call, or at the desk"
+        footer={
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              form="admin-booking-create-form"
+              disabled={!createFormState.canSubmit}
+              isLoading={createFormState.isSubmitting}
+              loadingLabel="Taking booking"
+            >
+              Take booking
+            </Button>
+          </div>
+        }
       >
-        <BookingCreateForm onCreated={() => setCreating(false)} />
+        <BookingCreateForm
+          formId="admin-booking-create-form"
+          onSubmitStateChange={setCreateFormState}
+          onCreated={() => setCreating(false)}
+        />
       </Drawer>
 
       <BookingQuickViewDrawer

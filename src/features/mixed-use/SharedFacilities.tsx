@@ -164,6 +164,7 @@ export function SharedFacilities() {
       key: "name",
       header: "Facility",
       sortable: true,
+      minWidth: 270,
       accessor: (facility) => {
         const Icon = typeIcons[facility.facility_type];
         return (
@@ -185,6 +186,7 @@ export function SharedFacilities() {
       key: "facility_type",
       header: "Type",
       sortable: true,
+      minWidth: 135,
       accessor: (facility) =>
         facilityTypes.find((item) => item.value === facility.facility_type)
           ?.label ?? facility.facility_type,
@@ -193,6 +195,7 @@ export function SharedFacilities() {
       key: "capacity",
       header: "Capacity",
       sortable: true,
+      minWidth: 120,
       accessor: (facility) =>
         facility.capacity ? `${facility.capacity} people` : "Not limited",
     },
@@ -200,6 +203,7 @@ export function SharedFacilities() {
       key: "is_active",
       header: "Status",
       sortable: true,
+      minWidth: 100,
       accessor: (facility) => (
         <span
           className={
@@ -216,6 +220,8 @@ export function SharedFacilities() {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      className: "w-28",
+      minWidth: 104,
       accessor: (facility) =>
         context.canManageFacilities ? (
           <Button variant="ghost" size="sm" onClick={() => openEdit(facility)}>

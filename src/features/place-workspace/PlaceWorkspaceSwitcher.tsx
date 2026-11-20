@@ -200,10 +200,10 @@ export function PlaceWorkspaceSwitcher({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-semibold text-[var(--vms-ink)]">
+          <span className="block line-clamp-2 break-words text-[13px] font-semibold leading-4 text-[var(--vms-ink)]">
             {current?.title ?? fallbackName ?? "Choose a workspace"}
           </span>
-          <span className="block truncate text-[10px] text-[var(--vms-ink-muted)]">
+          <span className="block truncate text-[10px] leading-4 text-[var(--vms-ink-muted)]">
             {current?.subtitle ?? "Place workspace"}
           </span>
         </span>
@@ -254,10 +254,10 @@ export function PlaceWorkspaceSwitcher({
                         className="h-4 w-4 shrink-0 text-[var(--vms-ink-muted)]"
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-semibold text-[var(--vms-ink)]">
+                        <span className="block line-clamp-2 break-words text-[13px] font-semibold leading-4 text-[var(--vms-ink)]">
                           {entry.title}
                         </span>
-                        <span className="block truncate text-[10px] text-[var(--vms-ink-muted)]">
+                        <span className="block line-clamp-2 break-words text-[10px] leading-4 text-[var(--vms-ink-muted)]">
                           {entry.subtitle}
                         </span>
                       </span>

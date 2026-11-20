@@ -6,11 +6,11 @@ import { ArrowUpRight, Lock, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { formatMoney } from "@/lib/currency";
 import {
     EmptyRow,
     IconTile,
     SectionCard,
-    formatMoney,
     surfaceClass,
 } from "@/features/place-workspace/ui";
 import { cn } from "@/lib/utils";

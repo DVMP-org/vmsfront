@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   relationships: vi.fn(),
   assignment: vi.fn(),
   maintenance: vi.fn(),
+  contractors: vi.fn(),
   createRelationship: vi.fn(),
   createMaintenance: vi.fn(),
   updateMaintenance: vi.fn(),
@@ -108,10 +109,10 @@ vi.mock("@/features/invitation-approvals/api", () => ({
   invitationApprovalsApi: { list: mocks.invitations },
 }));
 vi.mock("@/features/maintenance/api", () => ({
-  maintenanceApi: { list: async () => ({ items: [], total: 0 }) },
+  maintenanceApi: { list: mocks.maintenance },
 }));
 vi.mock("@/features/contractors/api", () => ({
-  contractorsApi: { list: async () => ({ items: [], total: 0 }) },
+  contractorsApi: { list: mocks.contractors },
 }));
 vi.mock("@/features/places/api", () => ({
   placesApi: {
@@ -264,6 +265,8 @@ describe("commercial operations", () => {
     mocks.tree.mockResolvedValue(tree);
     mocks.relationships.mockResolvedValue({ items: [tenant], total: 1 });
     mocks.assignment.mockResolvedValue([]);
+    mocks.maintenance.mockResolvedValue({ items: [], total: 0 });
+    mocks.contractors.mockResolvedValue({ items: [], total: 0 });
     mocks.invitations.mockResolvedValue({ items: [], total: 0 });
     mocks.createProperty.mockResolvedValue(space());
     mocks.createRelationship.mockResolvedValue(tenant);
@@ -282,6 +285,88 @@ describe("commercial operations", () => {
     expect(screen.getAllByText("Lease attention").length).toBeGreaterThan(0);
     expect(screen.getByText("Occupancy by building")).toBeInTheDocument();
     expect(screen.getByText("Contractor access")).toBeInTheDocument();
+  });
+
+  it("labels occupancy and lease counts as partial when relationships are paginated", async () => {
+    mocks.relationships.mockResolvedValue({ items: [tenant], total: 101 });
+    mount(<CommercialOverview />);
+
+    expect(
+      await screen.findByText(/Occupied counts below are lower bounds/),
+    ).toBeVisible();
+    expect(screen.queryByText("100% occupied")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Counts below are lower bounds from the loaded active relationships/,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText("This list includes loaded relationships only."),
+    ).toBeVisible();
+  });
+
+  it("shows an assignment error instead of claiming there are no balances", async () => {
+    mocks.assignment.mockRejectedValue(new Error("Charge source unavailable"));
+    mount(<CommercialOverview />);
+
+    expect(
+      await screen.findByText("Outstanding charges are unavailable"),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("No outstanding balances."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps work orders and contractors scoped to the selected Site", async () => {
+    mocks.maintenance.mockResolvedValue({
+      total: 2,
+      items: [
+        {
+          id: "local",
+          title: "Repair lift",
+          status: "open",
+          priority: "high",
+          due_at: null,
+          place: { id: "suite-4a", name: "Suite 4A" },
+        },
+        {
+          id: "foreign",
+          title: "Repair roof",
+          status: "open",
+          priority: "high",
+          due_at: null,
+          place: { id: "other-site", name: "Other Site" },
+        },
+      ],
+    });
+    mocks.contractors.mockResolvedValue({
+      total: 2,
+      items: [
+        {
+          id: "local",
+          site_id: "site",
+          status: "active",
+          requires_permit: false,
+          permit_expires_at: null,
+          access_to: "2099-01-01T00:00:00Z",
+        },
+        {
+          id: "foreign",
+          site_id: "other-site",
+          status: "active",
+          requires_permit: false,
+          permit_expires_at: null,
+          access_to: "2099-01-01T00:00:00Z",
+        },
+      ],
+    });
+    mount(<CommercialOverview />);
+
+    expect(await screen.findByText("Repair lift")).toBeVisible();
+    expect(screen.queryByText("Repair roof")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Active registrations").parentElement,
+    ).toHaveTextContent("1");
   });
 
   it("lists buildings next to the spaces they contain", async () => {

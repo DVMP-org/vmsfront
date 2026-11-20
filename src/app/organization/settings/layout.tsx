@@ -6,6 +6,7 @@ import {
   organizationSettingsSectionFromPath,
   type OrganizationSettingsSection,
 } from "@/components/settings/OrganizationSettingsTabs";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const headings: Record<
   OrganizationSettingsSection,
@@ -54,17 +55,11 @@ export default function OrganizationSettingsLayout({
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
-          Organization administration
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-          {heading.title}
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
-          {heading.description}
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Organization administration"
+        title={heading.title}
+        description={heading.description}
+      />
       <OrganizationSettingsTabs active={section} />
       {children}
     </main>

@@ -31,7 +31,10 @@ import { FormErrorSummary } from "@/components/ui/form/FormErrorSummary";
 import { FormSection } from "@/components/ui/form/FormSection";
 import { Modal } from "@/components/ui/Modal";
 import { Drawer } from "@/components/ui/Drawer";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { parseApiError } from "@/lib/error-utils";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDate } from "@/lib/datetime";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { placeGroupsApi, type PlaceGroup } from "@/features/place-groups/api";
 import { useAppStore } from "@/store/app-store";
@@ -163,34 +166,33 @@ function ChargeHeader({ action }: { action?: ChargeAction }) {
         ? "Charge definition"
         : "Charge definitions";
   return (
-    <header className="border-b border-[var(--vms-line)] pb-5">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-        <ReceiptText className="h-3.5 w-3.5 text-[var(--vms-action)]" />
-        <span>Finance</span>
-        <span className="text-[var(--vms-line-strong)]">/</span>
-        <span>Charge definitions</span>
-        {action ? (
-          <>
-            <span className="text-[var(--vms-line-strong)]">/</span>
-            <span className="capitalize">{action}</span>
-          </>
-        ) : null}
-      </div>
-      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] sm:text-[36px]">
-            {title}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--vms-ink-muted)]">
-            {action === "assignment"
-              ? "Review the assigned Place, responsible Party and payment schedules."
-              : action === "definition"
-                ? "Review the charge amount, cadence and assigned Places."
-                : "Define billable amounts and schedules for the selected Site. Assign each definition to Places or groups."}
-          </p>
-        </div>
-      </div>
-    </header>
+    <PageHeader
+      eyebrow={
+        <span className="flex flex-wrap items-center gap-2">
+          <ReceiptText
+            className="h-3.5 w-3.5 text-[var(--vms-action)]"
+            aria-hidden="true"
+          />
+          <span>Finance</span>
+          <span aria-hidden="true">/</span>
+          <span>Charge definitions</span>
+          {action ? (
+            <>
+              <span aria-hidden="true">/</span>
+              <span className="capitalize">{action}</span>
+            </>
+          ) : null}
+        </span>
+      }
+      title={title}
+      description={
+        action === "assignment"
+          ? "Review the assigned Place, responsible Party and payment schedules."
+          : action === "definition"
+            ? "Review the charge amount, cadence and assigned Places."
+            : "Define billable amounts and schedules for the selected Site. Assign each definition to Places or groups."
+      }
+    />
   );
 }
 
@@ -219,6 +221,7 @@ function Directory({
       key: "name",
       header: "Charge",
       sortable: false,
+      minWidth: 250,
       accessor: (definition) => (
         <span className="min-w-0">
           <Link
@@ -236,26 +239,30 @@ function Directory({
     {
       key: "amount",
       header: "Amount",
+      minWidth: 150,
       accessor: (definition) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(definition.amount, definition.currency)}
+          {formatMoneyWithCode(definition.amount, definition.currency)}
         </span>
       ),
     },
     {
       key: "recurrence",
       header: "Schedule",
+      minWidth: 145,
       accessor: (definition) => recurrenceLabel(definition.recurrence),
     },
     {
       key: "is_active",
       header: "Status",
+      minWidth: 115,
       accessor: (definition) => <StatusBadge active={definition.is_active} />,
     },
     {
       key: "open",
       header: "Action",
       className: "text-right",
+      minWidth: 100,
       accessor: (definition) => (
         <Button asChild variant="ghost" size="sm">
           <Link href={`/admin/charges/definitions/${definition.id}`}>Open</Link>
@@ -365,7 +372,7 @@ function Directory({
                     <div>
                       <dt className="text-[var(--vms-ink-muted)]">Amount</dt>
                       <dd className="mt-1 font-semibold tabular-nums">
-                        {formatMoney(definition.amount, definition.currency)}
+                        {formatMoneyWithCode(definition.amount, definition.currency)}
                       </dd>
                     </div>
                     <div>
@@ -718,7 +725,7 @@ function DefinitionDetail({
       header: "Outstanding",
       accessor: (assignment) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(
+          {formatMoneyWithCode(
             assignment.outstanding_amount,
             assignment.charge_definition.currency,
           )}
@@ -787,7 +794,7 @@ function DefinitionDetail({
         >
           <Fact
             label="Amount"
-            value={formatMoney(definition.amount, definition.currency)}
+            value={formatMoneyWithCode(definition.amount, definition.currency)}
           />
           <Fact
             label="Recurrence"
@@ -878,7 +885,7 @@ function DefinitionDetail({
                   <div>
                     <dt className="text-[var(--vms-ink-muted)]">Outstanding</dt>
                     <dd className="mt-1 font-semibold tabular-nums">
-                      {formatMoney(
+                      {formatMoneyWithCode(
                         assignment.outstanding_amount,
                         assignment.charge_definition.currency,
                       )}
@@ -974,7 +981,7 @@ function AssignCharge({
       error={mutation.isError ? parseApiError(mutation.error).message : null}
       footerNote={
         definition.data
-          ? `${formatMoney(definition.data.amount, definition.data.currency)} · ${recurrenceLabel(definition.data.recurrence)} · schedules open automatically`
+          ? `${formatMoneyWithCode(definition.data.amount, definition.data.currency)} · ${recurrenceLabel(definition.data.recurrence)} · schedules open automatically`
           : "Schedules open automatically for every target Place."
       }
     >
@@ -1279,7 +1286,7 @@ function AssignmentDetail({
       header: "Amount",
       accessor: (schedule) => (
         <span className="whitespace-nowrap tabular-nums">
-          {formatMoney(schedule.amount, schedule.currency)}
+          {formatMoneyWithCode(schedule.amount, schedule.currency)}
         </span>
       ),
     },
@@ -1288,7 +1295,7 @@ function AssignmentDetail({
       header: "Balance",
       accessor: (schedule) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(schedule.balance, schedule.currency)}
+          {formatMoneyWithCode(schedule.balance, schedule.currency)}
         </span>
       ),
     },
@@ -1338,7 +1345,7 @@ function AssignmentDetail({
         <div className="grid border-t border-[var(--vms-line)] sm:grid-cols-3">
           <Fact
             label="Outstanding"
-            value={formatMoney(
+            value={formatMoneyWithCode(
               assignment.outstanding_amount,
               assignment.charge_definition.currency,
             )}
@@ -1453,13 +1460,13 @@ function AssignmentDetail({
                     <div>
                       <dt className="text-[var(--vms-ink-muted)]">Amount</dt>
                       <dd className="mt-1 font-semibold tabular-nums">
-                        {formatMoney(schedule.amount, schedule.currency)}
+                        {formatMoneyWithCode(schedule.amount, schedule.currency)}
                       </dd>
                     </div>
                     <div>
                       <dt className="text-[var(--vms-ink-muted)]">Balance</dt>
                       <dd className="mt-1 font-semibold tabular-nums">
-                        {formatMoney(schedule.balance, schedule.currency)}
+                        {formatMoneyWithCode(schedule.balance, schedule.currency)}
                       </dd>
                     </div>
                   </dl>
@@ -1976,33 +1983,6 @@ function TableSkeleton({ rows = 4 }: { rows?: number }) {
       ))}
     </div>
   );
-}
-
-function formatMoney(value: string, currency: string) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return `${currency} ${value}`;
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      currencyDisplay: "code",
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-}
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function recurrenceLabel(value: string) {

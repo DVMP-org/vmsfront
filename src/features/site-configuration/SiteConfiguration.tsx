@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SiteModulesPanel } from "@/features/modules/SiteModulesPanel";
@@ -56,14 +58,7 @@ export function SiteConfiguration() {
   if (!selectedSite?.id) {
     return (
       <main className="space-y-5 pb-10">
-        <header className="border-b border-[var(--vms-line)] pb-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Site administration
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            Site configuration
-          </h1>
-        </header>
+        <PageHeader eyebrow="Site administration" title="Site configuration" />
         <EmptyState
           title="Select a site workspace"
           description="Site modules and operating configuration are managed inside a site workspace."
@@ -141,41 +136,34 @@ export function SiteConfiguration() {
     return true;
   }) as Array<
     [
-      | "general"
-      | "gates"
-      | "access"
-      | "roles"
-      | "operations"
-      | "policies"
-      | "notifications",
+      (
+        | "general"
+        | "gates"
+        | "access"
+        | "roles"
+        | "operations"
+        | "policies"
+        | "notifications"
+      ),
       string,
     ]
   >;
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Site administration
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            {property.data.name}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Configure the operating capabilities and site-wide defaults used
-            throughout this workspace.
-          </p>
-        </div>
-        {importableModels.length > 0 ? (
-          <div className="flex shrink-0 flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Site administration"
+        title={property.data.name}
+        description="Configure the operating capabilities and site-wide defaults used throughout this workspace."
+        secondaryActions={
+          importableModels.length > 0 ? (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" aria-hidden="true" />
               Import
             </Button>
-          </div>
-        ) : null}
-      </header>
+          ) : undefined
+        }
+      />
 
       <nav
         aria-label="Site configuration sections"
@@ -203,38 +191,42 @@ export function SiteConfiguration() {
 
       {activeTab === "general" ? (
         <div className="space-y-5">
-        <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
-          <h2 className="text-lg font-semibold">General details</h2>
-          <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">Name</dt>
-              <dd className="mt-1 font-semibold">{property.data.name}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">Address</dt>
-              <dd className="mt-1 font-semibold">
-                {property.data.address || "No address recorded"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">Hierarchy</dt>
-              <dd className="mt-1 font-semibold">
-                {property.data.parent_site_id ? "Child Site" : "Root Site"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-[var(--vms-ink-muted)]">
-                Operating context
-              </dt>
-              <dd className="mt-1 font-semibold capitalize">
-                {property.data.use_case.replaceAll("_", " ")}
-              </dd>
-            </div>
-          </dl>
-          <Button className="mt-5" variant="outline" asChild>
-            <Link href="/admin/site/configuration">Edit property details</Link>
-          </Button>
-        </section>
+          <section className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
+            <h2 className="text-lg font-semibold">General details</h2>
+            <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-[var(--vms-ink-muted)]">Name</dt>
+                <dd className="mt-1 font-semibold">{property.data.name}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--vms-ink-muted)]">Address</dt>
+                <dd className="mt-1 font-semibold">
+                  {property.data.address || "No address recorded"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--vms-ink-muted)]">
+                  Hierarchy
+                </dt>
+                <dd className="mt-1 font-semibold">
+                  {property.data.parent_site_id ? "Child Site" : "Root Site"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--vms-ink-muted)]">
+                  Operating context
+                </dt>
+                <dd className="mt-1 font-semibold capitalize">
+                  {property.data.use_case.replaceAll("_", " ")}
+                </dd>
+              </div>
+            </dl>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/site/configuration">
+                Edit property details
+              </Link>
+            </Button>
+          </section>
           <section className="space-y-5 rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-5">
             <div>
               <h2 className="text-lg font-semibold">Site images</h2>
@@ -313,10 +305,7 @@ export function SiteConfiguration() {
       ) : null}
 
       {activeTab === "policies" ? (
-        <SitePoliciesPanel
-          siteId={property.data.id}
-          canEdit={canEditModules}
-        />
+        <SitePoliciesPanel siteId={property.data.id} canEdit={canEditModules} />
       ) : null}
 
       {activeTab === "notifications" ? (
@@ -403,15 +392,17 @@ function NotificationSettingsPanel({
       </p>
       <div className="mt-5 divide-y divide-[var(--vms-line)] rounded-[var(--vms-radius-control)] border border-[var(--vms-line)]">
         {notificationOptions.map((option) => (
-          <label
+          <div
             key={option.key}
-            className="flex cursor-pointer items-start gap-3 p-4"
+            className="p-2 sm:px-4"
           >
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4"
+            <Checkbox
+              id={`site-notification-${option.key}`}
+              label={option.label}
+              description={option.description}
               checked={values[option.key]}
               disabled={!canEdit || save.isPending}
+              className="mt-0.5"
               onChange={(event) =>
                 setValues((current) => ({
                   ...current,
@@ -419,15 +410,7 @@ function NotificationSettingsPanel({
                 }))
               }
             />
-            <span>
-              <span className="block text-sm font-semibold">
-                {option.label}
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-[var(--vms-ink-muted)]">
-                {option.description}
-              </span>
-            </span>
-          </label>
+          </div>
         ))}
       </div>
       {save.isError ? (

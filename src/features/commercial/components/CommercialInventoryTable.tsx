@@ -185,6 +185,7 @@ export function CommercialInventoryTable({
     {
       key: "name",
       header: "Space",
+      minWidth: 260,
       accessor: (row) => {
         const expanded = expandedIds.has(row.id);
         return (
@@ -223,11 +224,13 @@ export function CommercialInventoryTable({
     {
       key: "commercial_type",
       header: "Type",
+      minWidth: 150,
       accessor: (row) => commercialSpaceTypeLabel(row.commercial_type),
     },
     {
       key: "occupancy",
       header: "Occupancy",
+      minWidth: 125,
       accessor: (row) => (
         <StatusBadge
           tone={
@@ -245,6 +248,7 @@ export function CommercialInventoryTable({
     {
       key: "occupants",
       header: "Business relationship",
+      minWidth: 205,
       accessor: (row) => (
         <span className="block max-w-64 truncate">
           {row.occupants ||
@@ -257,6 +261,7 @@ export function CommercialInventoryTable({
     {
       key: "state",
       header: "Status",
+      minWidth: 125,
       accessor: (row) => (
         <StatusBadge tone={row.is_active ? "success" : "warning"}>
           {titleCase(row.state)}
@@ -268,6 +273,7 @@ export function CommercialInventoryTable({
       header: "Actions",
       className: "text-right",
       mobileHide: true,
+      minWidth: 105,
       accessor: (row) =>
         canManage ? (
           <div className="flex justify-end gap-1">

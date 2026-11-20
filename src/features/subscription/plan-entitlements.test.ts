@@ -36,4 +36,25 @@ describe("plan entitlements", () => {
       },
     ]);
   });
+
+  it("shows scoped usage only for named numeric limits", () => {
+    expect(
+      planEntitlements(
+        { max_admins: 5, max_residents: 20, priority_support: true },
+        { max_admins: 2, max_residents: 22 },
+      ),
+    ).toEqual([
+      {
+        key: "max_admins",
+        label: "Organization administrators",
+        detail: "2 used of 5 · 3 available",
+      },
+      {
+        key: "max_residents",
+        label: "Residents",
+        detail: "22 used of 20 · 2 over limit",
+      },
+      { key: "priority_support", label: "Priority support", detail: "Included" },
+    ]);
+  });
 });

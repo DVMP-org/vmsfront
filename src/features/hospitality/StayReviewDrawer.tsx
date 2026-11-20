@@ -7,16 +7,21 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PanelState } from "@/features/dashboard/DashboardPrimitives";
-import { formatDateTime } from "@/lib/datetime";
+import {
+  formatDateTime,
+  fromZonedDateTimeInputValue,
+  toZonedDateTimeInputValue,
+} from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 
 import { hospitalityApi } from "./api";
-import { guestName, interval, localInput, type Stay } from "./contracts";
+import { guestName, type Stay } from "./contracts";
 import { StayStatusBadge } from "./components/StayStatusBadge";
 
 type StayAction = "check-in" | "check-out";
 
 export function StayReviewDrawer({
+  siteTimezone,
   isOpen,
   onClose,
   stay,
@@ -28,6 +33,7 @@ export function StayReviewDrawer({
   canUpdate,
   onChanged,
 }: {
+  siteTimezone?: string | null;
   isOpen: boolean;
   onClose: () => void;
   stay?: Stay;
@@ -47,14 +53,14 @@ export function StayReviewDrawer({
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (!stay) return;
-    setArrival(localInput(stay.planned_check_in));
-    setDeparture(localInput(stay.planned_check_out));
+    if (!stay || !siteTimezone) return;
+    setArrival(toZonedDateTimeInputValue(stay.planned_check_in, siteTimezone));
+    setDeparture(toZonedDateTimeInputValue(stay.planned_check_out, siteTimezone));
     setNotes(stay.notes || "");
     setPendingAction(null);
     setEditing(false);
     setFormError("");
-  }, [stay]);
+  }, [stay, siteTimezone]);
 
   const transition = useMutation({
     mutationFn: (action: StayAction) => hospitalityApi.action(stay!.id, action),
@@ -91,9 +97,23 @@ export function StayReviewDrawer({
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      const dates = interval(arrival, departure);
+      if (!siteTimezone || !stay)
+        throw new Error("Site time zone is unavailable.");
+      const start =
+        arrival === toZonedDateTimeInputValue(stay.planned_check_in, siteTimezone)
+          ? new Date(stay.planned_check_in)
+          : fromZonedDateTimeInputValue(arrival, siteTimezone);
+      const end =
+        departure === toZonedDateTimeInputValue(stay.planned_check_out, siteTimezone)
+          ? new Date(stay.planned_check_out)
+          : fromZonedDateTimeInputValue(departure, siteTimezone);
+      if (end <= start) throw new Error("Departure must be after arrival.");
       setFormError("");
-      update.mutate({ ...dates, notes: notes.trim() || null });
+      update.mutate({
+        planned_check_in: start.toISOString(),
+        planned_check_out: end.toISOString(),
+        notes: notes.trim() || null,
+      });
     } catch (cause) {
       setFormError(
         cause instanceof Error ? cause.message : "Invalid stay dates.",
@@ -140,17 +160,17 @@ export function StayReviewDrawer({
           <dl className="grid grid-cols-2 gap-x-5 gap-y-4 border-y border-[var(--vms-line)] py-4 text-sm">
             <Fact
               label="Planned arrival"
-              value={formatDateTime(stay.planned_check_in)}
+              value={formatDateTime(stay.planned_check_in, siteTimezone)}
             />
             <Fact
               label="Planned departure"
-              value={formatDateTime(stay.planned_check_out)}
+              value={formatDateTime(stay.planned_check_out, siteTimezone)}
             />
             <Fact
               label="Checked in"
               value={
                 stay.actual_check_in
-                  ? formatDateTime(stay.actual_check_in)
+                  ? formatDateTime(stay.actual_check_in, siteTimezone)
                   : "—"
               }
             />
@@ -158,7 +178,7 @@ export function StayReviewDrawer({
               label="Checked out"
               value={
                 stay.actual_check_out
-                  ? formatDateTime(stay.actual_check_out)
+                  ? formatDateTime(stay.actual_check_out, siteTimezone)
                   : "—"
               }
             />
@@ -228,6 +248,9 @@ export function StayReviewDrawer({
               className="space-y-4 border-t border-[var(--vms-line)] pt-4"
             >
               <h3 className="text-sm font-semibold">Reschedule stay</h3>
+              <p className="text-xs text-[var(--vms-ink-muted)]">
+                Enter arrival and departure in the Site time zone ({siteTimezone}).
+              </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-sm font-medium">
                   Planned arrival
@@ -289,10 +312,16 @@ export function StayReviewDrawer({
                 <Button
                   size="sm"
                   variant="outline"
+                  disabled={!siteTimezone}
                   onClick={() => setEditing(true)}
                 >
                   Reschedule / edit
                 </Button>
+              )}
+              {stay.status === "reserved" && canUpdate && !siteTimezone && (
+                <p className="text-xs text-[var(--vms-ink-muted)]">
+                  Loading the Site time zone before rescheduling.
+                </p>
               )}
             </div>
           )}

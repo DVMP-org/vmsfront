@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Crown, Mail, Palette, Settings } from "lucide-react";
+import { CreditCard, Crown, Mail, Palette } from "lucide-react";
 import { Suspense } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const settingsTabs = [
   { id: "payment", label: "Payment gateways", icon: CreditCard },
@@ -25,22 +26,11 @@ function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="border-b border-[var(--vms-line)] pb-5">
-        <div className="flex items-center gap-2 text-xs text-[var(--vms-ink-muted)]">
-          <Settings
-            className="h-4 w-4 text-[var(--vms-action)]"
-            aria-hidden="true"
-          />
-          Organization administration
-        </div>
-        <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-          Organization configuration
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--vms-ink-muted)]">
-          Configure branding, mail delivery, payments and the organization
-          subscription.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Organization administration"
+        title="Organization configuration"
+        description="Configure branding, mail delivery, payments and the organization subscription."
+      />
 
       <nav
         aria-label="Organization configuration sections"

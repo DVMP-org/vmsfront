@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { titleCase } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 /**
@@ -86,19 +87,13 @@ export function statusTone(status: string): StatusTone {
   return "neutral";
 }
 
-export function titleCaseStatus(status: string) {
-  return status
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
 export function StatusPill({ status }: { status?: string | null }) {
   if (!status?.trim()) {
     return <StatusBadge tone="neutral">Unknown</StatusBadge>;
   }
   return (
     <StatusBadge tone={statusTone(status)}>
-      {titleCaseStatus(status)}
+      {titleCase(status)}
     </StatusBadge>
   );
 }
@@ -351,23 +346,6 @@ export function Toolbar({ children }: { children: ReactNode }) {
 
 export const controlClass =
   "min-h-10 rounded-lg border border-[var(--vms-line)] bg-[var(--vms-surface)] px-3 text-sm text-[var(--vms-ink)] transition hover:border-[var(--vms-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]";
-
-export function formatMoney(amount: string | number, currency?: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return String(amount);
-  if (currency) {
-    try {
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency,
-        maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-      }).format(value);
-    } catch {
-      /* Fall through to a plain decimal for unknown currency codes. */
-    }
-  }
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
 
 export function PlaceRowSkeleton({ rows = 3 }: { rows?: number }) {
   return (

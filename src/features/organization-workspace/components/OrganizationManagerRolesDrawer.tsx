@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { FormDrawer } from "@/components/ui/form/FormDrawer";
 import { FormSection } from "@/components/ui/form/FormSection";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { parseApiError } from "@/lib/error-utils";
 
@@ -72,27 +73,23 @@ export function OrganizationManagerRolesDrawer({
           {roles.map((role) => {
             const checked = selected.includes(role.id);
             return (
-              <label
+              <div
                 key={role.id}
-                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 py-2 text-sm transition-colors hover:bg-[var(--vms-surface-subtle)]"
+                className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 transition-colors hover:bg-[var(--vms-surface-subtle)]"
               >
-                <input
-                  type="checkbox"
+                <Checkbox
+                  id={`organization-manager-role-${role.id}`}
+                  label={role.name}
+                  description={
+                    role.permissions.includes("*")
+                      ? "Full Site authority"
+                      : `${role.permissions.length} permissions`
+                  }
                   checked={checked}
                   onChange={() => toggle(role.id)}
-                  className="mt-1 h-4 w-4"
+                  className="mt-0.5"
                 />
-                <span className="min-w-0">
-                  <span className="block font-semibold text-[var(--vms-ink)]">
-                    {role.name}
-                  </span>
-                  <span className="block text-xs text-[var(--vms-ink-muted)]">
-                    {role.permissions.includes("*")
-                      ? "Full Site authority"
-                      : `${role.permissions.length} permissions`}
-                  </span>
-                </span>
-              </label>
+              </div>
             );
           })}
         </div>

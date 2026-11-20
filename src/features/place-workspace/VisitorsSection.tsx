@@ -28,6 +28,7 @@ import {
 import { accessJourneyKeys } from "@/features/access-journey/queries";
 import { isGuestOnSite } from "@/features/access-journey/lib";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { formatDate, formatTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import { usePlaceWorkspace } from "./PlaceWorkspaceShell";
@@ -66,19 +67,6 @@ const bucketRank: Record<VisitorBucket, number> = {
   expected: 1,
   history: 2,
 };
-
-const day = (value: string) =>
-  new Date(value).toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-const time = (value: string) =>
-  new Date(value).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 
 function bucketFrom(
   status: string,
@@ -398,9 +386,9 @@ export function VisitorsSection() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap py-3 pr-3 text-sm text-[var(--vms-ink)]">
-                        {day(record.lastVisitAt)}
+                        {formatDate(record.lastVisitAt)}
                         <span className="block text-xs text-[var(--vms-ink-muted)]">
-                          {time(record.lastVisitAt)}
+                          {formatTime(record.lastVisitAt)}
                         </span>
                       </td>
                       <td className="py-3 pr-3 text-sm tabular-nums text-[var(--vms-ink)]">
@@ -536,8 +524,8 @@ export function VisitorsSection() {
                   className="mt-0.5 h-4 w-4 shrink-0 text-[var(--vms-ink-muted)]"
                 />
                 <dd className="min-w-0 text-[var(--vms-ink)]">
-                  Last visit {day(selected.lastVisitAt)} ·{" "}
-                  {time(selected.lastVisitAt)}
+                  Last visit {formatDate(selected.lastVisitAt)} ·{" "}
+                  {formatTime(selected.lastVisitAt)}
                 </dd>
               </div>
               <div className="flex items-start gap-2">
@@ -580,7 +568,7 @@ export function VisitorsSection() {
                           {status.label}
                         </p>
                         <p className="text-[11px] text-[var(--vms-ink-muted)]">
-                          {day(visit.from)} · {time(visit.from)}
+                          {formatDate(visit.from)} · {formatTime(visit.from)}
                         </p>
                         <p className="font-mono text-[10px] text-[var(--vms-ink-muted)]">
                           {visit.inviteId}
@@ -695,8 +683,8 @@ export function VisitorsSection() {
                     className="mt-0.5 h-4 w-4 shrink-0 text-[var(--vms-ink-muted)]"
                   />
                   <dd className="min-w-0">
-                    Last visit {day(selected.lastVisitAt)} ·{" "}
-                    {time(selected.lastVisitAt)}
+                    Last visit {formatDate(selected.lastVisitAt)} ·{" "}
+                    {formatTime(selected.lastVisitAt)}
                   </dd>
                 </div>
                 <div className="flex items-start gap-2">
@@ -739,7 +727,7 @@ export function VisitorsSection() {
                             {status.label}
                           </p>
                           <p className="text-[11px] text-[var(--vms-ink-muted)]">
-                            {day(visit.from)} · {time(visit.from)}
+                            {formatDate(visit.from)} · {formatTime(visit.from)}
                           </p>
                           <p className="font-mono text-[10px] text-[var(--vms-ink-muted)]">
                             {visit.inviteId}

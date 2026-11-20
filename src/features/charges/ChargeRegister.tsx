@@ -11,7 +11,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useSiteAccess } from "@/features/context/use-site-access";
-import { formatMoney } from "@/lib/currency";
+import { formatMoneyWithCode } from "@/lib/currency";
 import { formatDate } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
@@ -48,6 +48,7 @@ export function ChargeRegister() {
     {
       key: "charge",
       header: "Charge",
+      minWidth: 170,
       accessor: (schedule) => (
         <Link
           href={`/admin/charges/definitions/${schedule.charge_definition.id}`}
@@ -60,6 +61,7 @@ export function ChargeRegister() {
     {
       key: "place",
       header: "Place",
+      minWidth: 170,
       accessor: (schedule) => (
         <Link
           href={`/admin/places/${schedule.target_place.id}`}
@@ -72,6 +74,7 @@ export function ChargeRegister() {
     {
       key: "payer",
       header: "Responsible Party",
+      minWidth: 190,
       accessor: (schedule) =>
         schedule.current_responsibility?.responsible_party.display_name ??
         "Unassigned",
@@ -79,6 +82,7 @@ export function ChargeRegister() {
     {
       key: "due_date",
       header: "Due",
+      minWidth: 120,
       accessor: (schedule) => (
         <span className="whitespace-nowrap">
           {formatDate(schedule.due_date)}
@@ -89,9 +93,10 @@ export function ChargeRegister() {
       key: "amount",
       header: "Billed",
       className: "text-right",
+      minWidth: 130,
       accessor: (schedule) => (
         <span className="whitespace-nowrap tabular-nums">
-          {formatMoney(schedule.amount, schedule.currency)}
+          {formatMoneyWithCode(schedule.amount, schedule.currency)}
         </span>
       ),
     },
@@ -99,9 +104,10 @@ export function ChargeRegister() {
       key: "amount_paid",
       header: "Paid",
       className: "text-right",
+      minWidth: 130,
       accessor: (schedule) => (
         <span className="whitespace-nowrap tabular-nums">
-          {formatMoney(schedule.amount_paid, schedule.currency)}
+          {formatMoneyWithCode(schedule.amount_paid, schedule.currency)}
         </span>
       ),
     },
@@ -109,15 +115,17 @@ export function ChargeRegister() {
       key: "balance",
       header: "Balance",
       className: "text-right",
+      minWidth: 140,
       accessor: (schedule) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
-          {formatMoney(schedule.balance, schedule.currency)}
+          {formatMoneyWithCode(schedule.balance, schedule.currency)}
         </span>
       ),
     },
     {
       key: "status",
       header: "Status",
+      minWidth: 120,
       accessor: (schedule) => (
         <StatusBadge tone={scheduleTone(schedule.status)}>
           {schedule.status === "void"
@@ -133,6 +141,7 @@ export function ChargeRegister() {
       header: "Action",
       mobileHide: true,
       className: "text-right",
+      minWidth: 110,
       accessor: (schedule) => (
         <Button asChild size="sm" variant="ghost">
           <Link
@@ -234,7 +243,7 @@ export function ChargeRegister() {
                     .display_name ?? "Unassigned payer"}
                 </p>
                 <p className="text-sm font-semibold tabular-nums">
-                  Balance {formatMoney(schedule.balance, schedule.currency)}
+                  Balance {formatMoneyWithCode(schedule.balance, schedule.currency)}
                 </p>
                 <Button asChild variant="outline" size="sm">
                   <Link

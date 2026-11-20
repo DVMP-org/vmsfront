@@ -1,6 +1,6 @@
 "use client";
 
-import { Metric } from "./organization-ui";
+import { MetricStrip } from "@/features/dashboard/MetricStrip";
 import type { PortfolioMetrics } from "../lib";
 
 export function PortfolioSummary({
@@ -13,42 +13,32 @@ export function PortfolioSummary({
   integrationsAvailable: boolean;
 }) {
   return (
-    <section
-      aria-label="Portfolio summary"
-      className="grid overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] sm:grid-cols-2 xl:grid-cols-4"
-    >
-      <div className="border-b border-[var(--vms-line)] sm:border-r xl:border-b-0">
-        <Metric
-          label="Total Sites"
-          value={sitesAvailable ? metrics.totalSites : "—"}
-          detail="Operating boundaries"
-        />
-      </div>
-      <div className="border-b border-[var(--vms-line)] xl:border-b-0 xl:border-r">
-        <Metric
-          label="Total Places"
-          value={sitesAvailable ? metrics.totalPlaces : "—"}
-          detail="Managed units and spaces"
-        />
-      </div>
-      <div className="border-b border-[var(--vms-line)] sm:border-b-0 sm:border-r">
-        <Metric
-          label="Organization Members"
-          value={metrics.totalMembers}
-          detail="Organization administrators"
-        />
-      </div>
-      <div>
-        <Metric
-          label="Active Integrations"
-          value={integrationsAvailable ? metrics.activeIntegrations : "—"}
-          detail={
-            integrationsAvailable
-              ? "Connected providers"
-              : "Unavailable or restricted"
-          }
-        />
-      </div>
-    </section>
+    <MetricStrip
+      label="Portfolio summary"
+      metrics={[
+        {
+          label: "Total Sites",
+          value: sitesAvailable ? metrics.totalSites : "—",
+          detail: "Operating boundaries",
+        },
+        {
+          label: "Total Places",
+          value: sitesAvailable ? metrics.totalPlaces : "—",
+          detail: "Managed units and spaces",
+        },
+        {
+          label: "Organization Members",
+          value: metrics.totalMembers,
+          detail: "Organization administrators",
+        },
+        {
+          label: "Active Integrations",
+          value: integrationsAvailable ? metrics.activeIntegrations : "—",
+          detail: integrationsAvailable
+            ? "Connected providers"
+            : "Unavailable or restricted",
+        },
+      ]}
+    />
   );
 }

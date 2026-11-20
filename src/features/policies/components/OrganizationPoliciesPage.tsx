@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Modal } from "@/components/ui/Modal";
@@ -112,28 +113,19 @@ export function OrganizationPoliciesPage() {
 
     return (
         <main className="space-y-6 pb-10 text-[var(--vms-ink)]">
-            <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-                        Organization management
-                    </p>
-                    <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-                        Policies &amp; standards
-                    </h1>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-                        Define how your sites operate once, assign the result to compatible
-                        sites, and see where a site has deliberately diverged.
-                    </p>
-                </div>
-                {canManage ? (
+            <PageHeader
+                eyebrow="Organization management"
+                title="Policies & standards"
+                description="Define how your sites operate once, assign the result to compatible sites, and see where a site has deliberately diverged."
+                primaryAction={canManage ? (
                     <Button
                         onClick={() => setTemplateDrawer({ open: true, template: null })}
                     >
                         <Plus className="h-4 w-4" aria-hidden="true" />
                         New standard
                     </Button>
-                ) : null}
-            </header>
+                ) : undefined}
+            />
 
             <section aria-label="Policy overview" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {stats.map((stat) => (
@@ -167,6 +159,15 @@ export function OrganizationPoliciesPage() {
                     <EmptyState
                         title="No standards yet"
                         description="Create a reusable standard such as a residential estate baseline or hotel operations standard, then assign it to your sites."
+                        action={
+                            canManage
+                                ? {
+                                    label: "New standard",
+                                    onClick: () =>
+                                        setTemplateDrawer({ open: true, template: null }),
+                                }
+                                : undefined
+                        }
                     />
                 ) : (
                     <ul className="divide-y divide-[var(--vms-line)]">

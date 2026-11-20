@@ -101,6 +101,7 @@ export function LeasesDirectory() {
     {
       key: "party",
       header: "Party",
+      minWidth: 220,
       sortable: true,
       accessor: (row) => (
         <div className="min-w-0">
@@ -117,6 +118,7 @@ export function LeasesDirectory() {
       key: "term",
       header: "Term",
       sortable: true,
+      minWidth: 180,
       responsiveHide: "md",
       accessor: (row) => (
         <div className="text-sm text-[var(--vms-ink)]">
@@ -131,6 +133,7 @@ export function LeasesDirectory() {
       key: "billing",
       header: "Bills",
       responsiveHide: "lg",
+      minWidth: 160,
       accessor: (row) => {
         const value = monthlyEquivalent(row.charge_lines);
         if (value === 0) {
@@ -158,6 +161,7 @@ export function LeasesDirectory() {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 140,
       accessor: (row) => {
         const attention = leaseAttentionReasons(row);
         return (
@@ -178,6 +182,7 @@ export function LeasesDirectory() {
       key: "actions",
       header: "",
       mobileHide: true,
+      minWidth: 100,
       accessor: (row) => (
         <Button variant="secondary" size="sm" onClick={() => setDetail(row)}>
           Manage

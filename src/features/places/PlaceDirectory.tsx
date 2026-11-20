@@ -113,6 +113,7 @@ export function PlaceDirectory() {
     {
       key: "name",
       header: "Place",
+      minWidth: 235,
       accessor: (place) => {
         const src = attachmentUrl(
           images.data?.[place.id]?.thumbnail_url ?? null,
@@ -148,11 +149,13 @@ export function PlaceDirectory() {
     {
       key: "kind",
       header: "Structure",
+      minWidth: 140,
       accessor: (place) => placeKinds[place.kind],
     },
     {
       key: "building_type",
       header: "Category",
+      minWidth: 150,
       accessor: (place) =>
         place.building_type ? (
           categoryLabels.get(place.building_type) ||
@@ -165,6 +168,7 @@ export function PlaceDirectory() {
     {
       key: "parent_id",
       header: "Within",
+      minWidth: 190,
       accessor: (place) =>
         place.parent_id ? (
           <Link
@@ -180,13 +184,19 @@ export function PlaceDirectory() {
     {
       key: "is_active",
       header: "Status",
+      minWidth: 110,
       accessor: (place) => (
         <StatusBadge tone={place.is_active ? "success" : "neutral"}>
           {place.is_active ? "Active" : "Archived"}
         </StatusBadge>
       ),
     },
-    { key: "address", header: "Address", responsiveHide: "lg" },
+    {
+      key: "address",
+      header: "Address",
+      responsiveHide: "lg",
+      minWidth: 190,
+    },
   ];
   if (workspace.isPending) return <p role="status">Loading workspace…</p>;
   if (workspace.isError)
@@ -325,7 +335,14 @@ export function PlaceDirectory() {
               list.isError ? parseApiError(list.error).message : null
             }
             onRetry={() => list.refetch()}
-            emptyMessage="No Places match this view. Change the filters or search to see other locations."
+            emptyMessage="No Places have been added to this Site yet."
+            emptyAction={
+              canCreate && !kind && !status && !search.trim() ? (
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  Add Place
+                </Button>
+              ) : undefined
+            }
             tableLabel="Site place inventory"
             mobileSummary={(place) => (
               <div className="flex items-start justify-between gap-3">

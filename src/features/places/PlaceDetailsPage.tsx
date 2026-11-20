@@ -54,6 +54,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
     {
       key: "party.display_name",
       header: "Person",
+      minWidth: 230,
       accessor: (row) => (
         <span className="flex items-center gap-3">
           <Avatar
@@ -68,11 +69,13 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
     {
       key: "role",
       header: "Relationship",
+      minWidth: 160,
       accessor: (row) => row.role.replaceAll("_", " "),
     },
     {
       key: "status",
       header: "Status",
+      minWidth: 120,
       accessor: (row) => (
         <StatusBadge tone={row.status === "active" ? "success" : "neutral"}>
           {row.status}

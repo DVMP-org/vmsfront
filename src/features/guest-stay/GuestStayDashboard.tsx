@@ -8,12 +8,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/datetime";
+import { titleCase } from "@/lib/strings";
 import { parseApiError } from "@/lib/error-utils";
-import {
-  guestName,
-  statusLabel,
-  type Stay,
-} from "@/features/hospitality/contracts";
+import { guestName, type Stay } from "@/features/hospitality/contracts";
+import { ReportPanel } from "@/features/dashboard/DashboardPrimitives";
 import { GuestStayAttention } from "./GuestStayAttention";
 import { GuestStayFolio } from "./GuestStayFolio";
 import { GuestStayHousekeeping } from "./GuestStayHousekeeping";
@@ -49,23 +47,12 @@ export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
           <GuestStayAttention stays={items} />
         </div>
       ) : null}
-    <section
-      aria-labelledby="guest-stays-title"
-      className="rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]"
-    >
-      <div className="flex items-start justify-between gap-4 border-b border-[var(--vms-line)] p-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Your stay
-          </p>
-          <h2 id="guest-stays-title" className="mt-1 text-lg font-semibold">
-            Stay details and arrival
-          </h2>
-          <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-            Hotel staff manage reservations and rooms. This view only shows your
-            guest stay.
-          </p>
-        </div>
+    <ReportPanel
+      eyebrow="Your stay"
+      title="Stay details and arrival"
+      titleId="guest-stays-title"
+      description="Hotel staff manage reservations and rooms. This view only shows your guest stay."
+      action={
         <button
           type="button"
           onClick={() => stays.refetch()}
@@ -79,7 +66,8 @@ export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
           />
           Refresh
         </button>
-      </div>
+      }
+    >
 
       {stays.isPending ? (
         <div className="grid gap-3 p-5">
@@ -120,7 +108,7 @@ export function GuestStayDashboard({ placeId }: { placeId?: string } = {}) {
           ))}
         </div>
       )}
-    </section>
+    </ReportPanel>
     </>
   );
 }
@@ -134,7 +122,7 @@ function StayCard({ stay }: { stay: Stay }) {
         ? "Arrival scheduled"
         : stay.status === "checked_out"
           ? "Stay completed"
-          : statusLabel(stay.status);
+          : titleCase(stay.status);
   return (
     <div className="flex flex-col gap-4 p-5">
       <article className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">

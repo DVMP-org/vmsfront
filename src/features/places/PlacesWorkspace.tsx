@@ -21,6 +21,7 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   DataTable,
   type BulkAction,
@@ -144,6 +145,7 @@ function SitesWorkspace({
     {
       key: "site",
       header: "Site",
+      minWidth: 225,
       accessor: (site) => (
         <span className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)]">
@@ -162,6 +164,7 @@ function SitesWorkspace({
     {
       key: "address",
       header: "Location",
+      minWidth: 220,
       accessor: (site) => (
         <span className="flex items-center gap-2 text-sm text-[var(--vms-ink-muted)]">
           <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
@@ -172,6 +175,7 @@ function SitesWorkspace({
     {
       key: "hierarchy",
       header: "Hierarchy",
+      minWidth: 155,
       accessor: (site) =>
         site.parent_site_id
           ? siteNames.get(site.parent_site_id) || "Child Site"
@@ -180,6 +184,7 @@ function SitesWorkspace({
     {
       key: "status",
       header: "Status",
+      minWidth: 110,
       accessor: (site) => (
         <Badge variant={site.is_active ? "success" : "neutral"}>
           {site.is_active ? "Active" : "Archived"}
@@ -190,6 +195,7 @@ function SitesWorkspace({
       key: "actions",
       header: "Action",
       mobileHide: true,
+      minWidth: 200,
       accessor: (site) => (
         <div className="flex justify-end gap-1">
           <Button asChild size="sm" variant="ghost" disabled={!allowed("show")}>
@@ -281,27 +287,17 @@ function SitesWorkspace({
   }
   return (
     <main className="place-workspace">
-      <header className="place-heading">
-        <div>
-          <p className="place-eyebrow">
-            <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-            {organizationName}
-            <span>/</span>Organization Sites
-          </p>
-          <h1>Places</h1>
-          <p className="place-heading-copy">
-            Sites are organization-owned management boundaries. Each Site owns
-            its child Sites and the buildings, units, rooms and spaces beneath
-            them.
-          </p>
-        </div>
-        {allowed("create") ? (
+      <PageHeader
+        eyebrow={<span className="inline-flex items-center gap-2"><Building2 className="h-3.5 w-3.5" aria-hidden="true" />{organizationName} / Organization</span>}
+        title="Sites"
+        description="Sites are organization-owned management boundaries. Each Site owns its child Sites and the buildings, units, rooms and spaces beneath them."
+        primaryAction={allowed("create") ? (
           <Button onClick={() => router.push(`${basePath}/new`)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             New Site
           </Button>
-        ) : null}
-      </header>
+        ) : undefined}
+      />
       {notice ? (
         <InlineAlert tone="success" title="Places updated">
           {notice}
@@ -1015,17 +1011,20 @@ function Places({
     {
       key: "name",
       header: "Place",
+      minWidth: 210,
       accessor: (place) => <strong>{place.name}</strong>,
       sortable: true,
     },
     {
       key: "kind",
       header: "Structure",
+      minWidth: 140,
       accessor: (place) => placeKinds[place.kind] || place.kind,
     },
     {
       key: "address",
       header: "Location",
+      minWidth: 220,
       accessor: (place) => place.address || "No address",
     },
   ];

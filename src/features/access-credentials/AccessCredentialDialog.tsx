@@ -156,9 +156,26 @@ export function AccessCredentialDialog({
           {query.isPending ? (
             <p className="p-4 text-sm">Loading credentials…</p>
           ) : query.isError ? (
-            <p className="p-4 text-sm text-[var(--vms-danger)]" role="alert">
-              {parseApiError(query.error).message}
-            </p>
+            <div
+              className="flex flex-col items-start gap-2 p-4"
+              role="alert"
+            >
+              <p className="text-sm font-medium text-[var(--vms-danger)]">
+                Credential history could not be loaded.
+              </p>
+              <p className="text-sm text-[var(--vms-ink-muted)]">
+                {parseApiError(query.error).message}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                isLoading={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                Retry loading credentials
+              </Button>
+            </div>
           ) : credentials.length ? (
             <ul className="divide-y divide-[var(--vms-line)]">
               {credentials.map((credential) => (

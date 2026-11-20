@@ -12,6 +12,7 @@ import { formatDateTime } from "@/lib/datetime";
 import { guestName, type Stay } from "./contracts";
 
 export function HotelArrivalsPanel({
+  siteTimezone,
   stays,
   isLoading,
   error,
@@ -20,6 +21,7 @@ export function HotelArrivalsPanel({
   authorityMode,
   authoritativeSiteName,
 }: {
+  siteTimezone?: string | null;
   stays: Stay[];
   isLoading: boolean;
   error: string | null;
@@ -77,7 +79,7 @@ export function HotelArrivalsPanel({
                     {guestName(stay)}
                   </strong>
                   <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
-                    {formatDateTime(stay.planned_check_in)}
+                    {formatDateTime(stay.planned_check_in, siteTimezone)}
                     {" · "}
                     {stay.room_assignments.at(-1)?.room.name ||
                       "Room unassigned"}

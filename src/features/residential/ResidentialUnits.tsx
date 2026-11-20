@@ -228,6 +228,7 @@ export default function ResidentialUnits() {
       key: "name",
       header: "Unit",
       sortable: true,
+      minWidth: 220,
       accessor: (unit) => (
         <span className="flex min-w-0 items-center gap-3">
           <PropertyImage name={unit.name} className="h-10 w-10" />
@@ -251,11 +252,13 @@ export default function ResidentialUnits() {
       key: "building_name",
       header: "Building / floor",
       sortable: true,
+      minWidth: 160,
       accessor: (unit) => unit.building_name,
     },
     {
       key: "residents",
       header: "Resident",
+      minWidth: 180,
       accessor: (unit) => (
         <span className="flex min-w-0 items-center gap-2">
           <Avatar
@@ -275,6 +278,7 @@ export default function ResidentialUnits() {
       key: "occupancy_status",
       header: "Occupancy",
       sortable: true,
+      minWidth: 130,
       accessor: (unit) => (
         <StatusBadge
           tone={unit.occupancy_status === "occupied" ? "success" : "neutral"}
@@ -287,6 +291,7 @@ export default function ResidentialUnits() {
       key: "status",
       header: "Status",
       sortable: true,
+      minWidth: 115,
       accessor: (unit) => (
         <StatusBadge tone={unit.is_active ? "success" : "warning"}>
           {unit.is_active ? "Active" : "Archived"}
@@ -298,6 +303,7 @@ export default function ResidentialUnits() {
       header: "Actions",
       className: "text-right",
       mobileHide: true,
+      minWidth: 190,
       accessor: (unit) => (
         <div className="flex justify-end gap-1">
           <Button

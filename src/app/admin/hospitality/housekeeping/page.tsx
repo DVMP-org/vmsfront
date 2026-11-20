@@ -11,6 +11,7 @@ import {
   type Column,
 } from "@/components/ui/DataTable";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { hospitalityApi } from "@/features/hospitality/api";
 import {
@@ -18,7 +19,6 @@ import {
   ModuleMetrics,
   ModulePanel,
   StatusPill,
-  displayDate,
 } from "@/features/hospitality/HospitalityAdminPage";
 import type {
   HousekeepingStatus,
@@ -169,7 +169,7 @@ export default function HospitalityHousekeepingPage() {
       key: "due_at",
       header: "Due",
       sortable: true,
-      accessor: (task) => displayDate(task.due_at, true),
+      accessor: (task) => formatDateTime(task.due_at, access.siteTimezone),
     },
     {
       key: "notes",
@@ -185,7 +185,7 @@ export default function HospitalityHousekeepingPage() {
       header: "Updated",
       sortable: true,
       responsiveHide: "lg",
-      accessor: (task) => displayDate(task.updated_at, true),
+      accessor: (task) => formatDateTime(task.updated_at, access.siteTimezone),
     },
     {
       key: "actions",
@@ -326,7 +326,7 @@ export default function HospitalityHousekeepingPage() {
                   <div>
                     <strong className="block">{task.room_name}</strong>
                     <span className="text-xs text-[var(--vms-ink-muted)]">
-                      Due {displayDate(task.due_at, true)}
+                      Due {formatDateTime(task.due_at, access.siteTimezone)}
                     </span>
                   </div>
                   <StatusPill

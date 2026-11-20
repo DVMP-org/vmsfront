@@ -10,44 +10,6 @@
   padding-right: 390px;
 }
 
-.movement-heading {
-  border-bottom: 1px solid var(--vms-line);
-  padding-bottom: 18px;
-}
-
-.movement-heading nav {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--vms-ink-muted);
-  font-size: 12px;
-}
-
-.movement-heading nav svg {
-  width: 13px;
-  height: 13px;
-}
-
-.movement-heading nav strong {
-  color: var(--vms-ink);
-  font-weight: 650;
-}
-
-.movement-heading h1 {
-  margin: 14px 0 0;
-  font-size: clamp(28px, 3vw, 36px);
-  font-weight: 660;
-  letter-spacing: -0.045em;
-  line-height: 1.08;
-}
-
-.movement-heading p {
-  margin: 7px 0 0;
-  color: var(--vms-ink-muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
 .movement-metrics {
   display: grid;
   gap: 12px;
@@ -1001,10 +963,6 @@
 @media (max-width: 640px) {
   .movement-page {
     padding-bottom: 32px;
-  }
-
-  .movement-heading h1 {
-    font-size: 28px;
   }
 
   .movement-metrics {

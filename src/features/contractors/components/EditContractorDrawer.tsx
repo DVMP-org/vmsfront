@@ -107,8 +107,11 @@ export function EditContractorDrawer({
     event.preventDefault();
     if (!contractor || !draft) return;
     const next: Record<string, string> = {};
-    if (!draft.access_from || !draft.access_to) {
-      next.access_to = "Set when the contractor may be on Site.";
+    if (!draft.access_from) {
+      next.access_from = "Set when the contractor may start on Site.";
+    }
+    if (!draft.access_to) {
+      next.access_to = "Set when the contractor must leave the Site.";
     } else if (
       new Date(draft.access_to).getTime() <=
       new Date(draft.access_from).getTime()
@@ -179,7 +182,12 @@ export function EditContractorDrawer({
         description="The gate honours this window only; extend it before the current one ends."
       >
         <div className="grid gap-4">
-          <Field id="contractor-edit-from" label="Allowed from" required>
+          <Field
+            id="contractor-edit-from"
+            label="Allowed from"
+            required
+            error={errors.access_from}
+          >
             {(control) => (
               <input
                 {...control}

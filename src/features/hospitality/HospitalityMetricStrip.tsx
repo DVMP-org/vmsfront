@@ -7,6 +7,10 @@ export function HospitalityMetricStrip({
   rooms,
   reservedCount,
   checkedInCount,
+  arrivalsToday,
+  departuresToday,
+  dailyFlowLoading,
+  dailyFlowError,
   roomsLoading,
   roomsError,
   staysLoading,
@@ -14,11 +18,15 @@ export function HospitalityMetricStrip({
   checkedInLoading,
   checkedInError,
 }: {
-    rooms: HospitalityRoom[];
+  rooms: HospitalityRoom[];
   reservedCount: number;
   checkedInCount: number;
-    roomsLoading: boolean;
-    roomsError: boolean;
+  arrivalsToday: number;
+  departuresToday: number;
+  dailyFlowLoading: boolean;
+  dailyFlowError: boolean;
+  roomsLoading: boolean;
+  roomsError: boolean;
   staysLoading: boolean;
   staysError: boolean;
   checkedInLoading: boolean;
@@ -47,6 +55,28 @@ export function HospitalityMetricStrip({
           state: checkedInLoading
             ? "loading"
             : checkedInError
+              ? "error"
+              : "ready",
+        },
+        {
+          icon: CalendarClock,
+          label: "Arrivals today",
+          value: arrivalsToday,
+          detail: "Reserved stays due to check in today",
+          state: dailyFlowLoading
+            ? "loading"
+            : dailyFlowError
+              ? "error"
+              : "ready",
+        },
+        {
+          icon: DoorOpen,
+          label: "Departures today",
+          value: departuresToday,
+          detail: "Checked-in stays due to check out today",
+          state: dailyFlowLoading
+            ? "loading"
+            : dailyFlowError
               ? "error"
               : "ready",
         },

@@ -47,6 +47,7 @@ export function RentRollSection({
       key: "space",
       header: "Space",
       sortable: true,
+      minWidth: 175,
       accessor: (row) => (
         <Link
           href={`/admin/places/${row.place_id}`}
@@ -60,6 +61,7 @@ export function RentRollSection({
       key: "tenant",
       header: "Tenant",
       sortable: true,
+      minWidth: 190,
       accessor: (row) =>
         row.tenant ?? (
           <span className="text-[var(--vms-ink-muted)]">
@@ -71,6 +73,7 @@ export function RentRollSection({
       key: "lease_ends_at",
       header: "Lease end",
       sortable: true,
+      minWidth: 140,
       accessor: (row) =>
         row.lease_ends_at ? formatDate(row.lease_ends_at) : "No lease term",
     },
@@ -78,6 +81,7 @@ export function RentRollSection({
       key: "balance",
       header: "Balance",
       sortable: false,
+      minWidth: 145,
       accessor: (row) => (
         <span className="whitespace-nowrap font-semibold tabular-nums">
           {row.currency
@@ -90,6 +94,7 @@ export function RentRollSection({
       key: "bucket",
       header: "Arrears age",
       sortable: true,
+      minWidth: 135,
       accessor: (row) => (
         <StatusBadge tone={bucketTones[row.bucket]}>
           {bucketLabel(row.bucket)}

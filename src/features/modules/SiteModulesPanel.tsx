@@ -156,6 +156,7 @@ export function SiteModulesPanel({
       key: "label",
       header: "Module",
       sortable: true,
+      minWidth: 280,
       accessor: (module) => {
         const Icon = moduleIcons[module.key] ?? Building2;
         return (
@@ -179,6 +180,7 @@ export function SiteModulesPanel({
       key: "scope",
       header: "Availability",
       sortable: true,
+      minWidth: 120,
       accessor: () => (
         <span className="text-xs font-medium text-[var(--vms-ink-muted)]">
           this Site
@@ -189,7 +191,7 @@ export function SiteModulesPanel({
     {
       key: "stagedEnabled",
       header: "Status",
-      minWidth: 136,
+      minWidth: 145,
       sortable: true,
       accessor: (module) => (
         <button
@@ -226,6 +228,7 @@ export function SiteModulesPanel({
     {
       key: "change",
       header: "Change",
+      minWidth: 110,
       accessor: (module) =>
         module.stagedEnabled === module.enabled ? (
           <span className="text-xs text-[var(--vms-ink-muted)]">Saved</span>

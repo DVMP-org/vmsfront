@@ -101,8 +101,11 @@ export function CreateContractorDrawer({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim())) {
       next.email = "Enter a valid email address.";
     }
-    if (!draft.access_from || !draft.access_to) {
-      next.access_to = "Set when the contractor may be on Site.";
+    if (!draft.access_from) {
+      next.access_from = "Set when the contractor may start on Site.";
+    }
+    if (!draft.access_to) {
+      next.access_to = "Set when the contractor must leave the Site.";
     } else if (
       new Date(draft.access_to).getTime() <=
       new Date(draft.access_from).getTime()
@@ -253,7 +256,12 @@ export function CreateContractorDrawer({
         description="Contractors are time-bounded by definition; the window is enforced at the gate."
       >
         <div className="grid gap-4">
-          <Field id="contractor-access-from" label="Allowed from" required>
+          <Field
+            id="contractor-access-from"
+            label="Allowed from"
+            required
+            error={errors.access_from}
+          >
             {(control) => (
               <input
                 {...control}

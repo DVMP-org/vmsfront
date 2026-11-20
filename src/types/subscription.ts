@@ -37,6 +37,7 @@ export interface Subscription {
   updated_at: string;
 
   plan: Plan | null;
+  usage: Record<string, number>;
 }
 
 export interface Plan {
@@ -46,6 +47,7 @@ export interface Plan {
   description?: string | null;
   price_monthly: number;
   price_yearly: number;
+  currency: string;
   features?: Record<string, any> | null;
   trial_days?: number | null;
   is_active: boolean;

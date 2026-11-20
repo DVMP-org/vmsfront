@@ -55,8 +55,9 @@ export function OrganizationSwitcher({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="global-organization-switcher"
+        aria-label={`Current organization: ${organization?.name || "Choose organization"}. Open organization switcher`}
         className={cn(
-          "flex h-10 max-w-[260px] items-center gap-2 rounded-md px-2.5 text-left text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]",
+          "flex min-h-10 max-w-[260px] items-center gap-2 rounded-md px-2.5 py-1 text-left text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D3F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F2933]",
           compact
             ? "bg-white/[0.06]"
             : "border border-white/15 bg-white/[0.06]",
@@ -69,9 +70,12 @@ export function OrganizationSwitcher({
         <span className="hidden min-w-0 flex-1 sm:block">
           <span
             className={cn(
-              "block truncate font-semibold",
-              compact ? "text-sm" : "text-xs",
+              "block font-semibold",
+              compact
+                ? "line-clamp-2 break-words text-sm leading-4"
+                : "line-clamp-2 break-words text-xs leading-4",
             )}
+            title={organization?.name || "Choose organization"}
           >
             {organization?.name || "Choose organization"}
           </span>
@@ -106,7 +110,10 @@ export function OrganizationSwitcher({
               name={organization?.name}
               logoUrl={organization?.logo_url}
             />
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+            <span
+              className="line-clamp-2 min-w-0 flex-1 break-words text-sm font-semibold leading-5"
+              title={organization?.name || "Organization"}
+            >
               {organization?.name || "Organization"}
             </span>
             <Check className="h-4 w-4 text-[#137A4B]" aria-label="Selected" />
@@ -135,7 +142,12 @@ export function OrganizationSwitcher({
                       name={item.name}
                       logoUrl={item.logo_url}
                     />
-                    <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                    <span
+                      className="line-clamp-2 min-w-0 flex-1 break-words leading-4"
+                      title={item.name}
+                    >
+                      {item.name}
+                    </span>
                   </button>
                 ))}
               </div>

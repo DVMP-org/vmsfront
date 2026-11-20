@@ -171,34 +171,6 @@ export interface HospitalityMaintenanceRequest {
   created_at: string;
   updated_at: string;
 }
-export const statusLabel = (status: string) =>
-  status
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-export const roomStatusLabel = (status: RoomOperationalStatus) =>
-  status.replaceAll("_", " ");
-export function localInput(iso: string) {
-  const date = new Date(iso);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-}
-export function interval(start: string, end: string) {
-  const first = new Date(start);
-  const last = new Date(end);
-  if (
-    !start ||
-    !end ||
-    !Number.isFinite(first.getTime()) ||
-    !Number.isFinite(last.getTime()) ||
-    last <= first
-  )
-    throw new Error("Departure must be after arrival.");
-  return {
-    planned_check_in: first.toISOString(),
-    planned_check_out: last.toISOString(),
-  };
-}
 export const guestName = (stay: Stay) =>
   stay.guests.find((g) => g.role === "primary")?.party.display_name ||
   stay.guests[0]?.party.display_name ||

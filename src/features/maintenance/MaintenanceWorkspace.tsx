@@ -144,6 +144,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       key: "ticket",
       header: "Ticket",
       sortable: true,
+      minWidth: 105,
       accessor: (item) => (
         <span className="whitespace-nowrap font-mono text-xs font-semibold">
           {ticketReference(item)}
@@ -154,6 +155,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       key: "title",
       header: "Issue / unit",
       sortable: true,
+      minWidth: 230,
       accessor: (item) => (
         <div className="min-w-48">
           <strong className="block text-sm">{item.title}</strong>
@@ -166,12 +168,14 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     {
       key: "reported_by",
       header: "Requested by",
+      minWidth: 170,
       accessor: (item) => <Requester request={item} />,
       responsiveHide: "lg",
     },
     {
       key: "priority",
       header: "Priority",
+      minWidth: 110,
       accessor: (item) => (
         <Badge variant={priorityTone[item.priority]}>{item.priority}</Badge>
       ),
@@ -179,6 +183,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     {
       key: "assigned_to",
       header: "Assigned to",
+      minWidth: 150,
       accessor: (item) => (
         <span className="whitespace-nowrap text-sm">
           {item.assigned_to?.display_name || "Unassigned"}
@@ -189,6 +194,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
     {
       key: "status",
       header: "Status",
+      minWidth: 135,
       accessor: (item) => (
         <Badge variant={statusTone[item.status]}>
           {item.status.replaceAll("_", " ")}
@@ -199,6 +205,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       key: "updated_at",
       header: "Updated",
       sortable: true,
+      minWidth: 155,
       accessor: (item) => (
         <span className="whitespace-nowrap text-xs text-[var(--vms-ink-muted)]">
           {formatTimestamp(item.updated_at)}
@@ -210,6 +217,7 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
       key: "actions",
       header: "Actions",
       mobileHide: true,
+      minWidth: 100,
       accessor: (item) => (
         <Button
           size="sm"
@@ -345,7 +353,14 @@ export function MaintenanceWorkspace({ domain }: { domain: DomainUseCase }) {
             query.isError ? parseApiError(query.error).message : undefined
           }
           onRetry={() => query.refetch()}
-          emptyMessage="No maintenance requests match this property."
+          emptyMessage="No maintenance requests have been reported for this Site yet."
+          emptyAction={
+            canCreate ? (
+              <Button size="sm" onClick={() => setFormOpen(true)}>
+                Report maintenance
+              </Button>
+            ) : undefined
+          }
           mobileSummary={(item) => (
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-3">

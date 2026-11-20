@@ -8,18 +8,24 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export function ReportPanel({
+  eyebrow,
   title,
+  titleId,
   description,
   action,
   children,
   className,
+  bodyClassName,
   footer,
 }: {
+  eyebrow?: string;
   title: string;
+  titleId?: string;
   description: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  bodyClassName?: string;
   footer?: ReactNode;
 }) {
   return (
@@ -32,7 +38,15 @@ export function ReportPanel({
     >
       <header className="flex min-h-16 items-start justify-between gap-4 border-b border-[var(--vms-line)] px-4 py-3.5 sm:px-5">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold leading-6 text-[var(--vms-ink)]">
+          {eyebrow ? (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--vms-ink-muted)]">
+              {eyebrow}
+            </p>
+          ) : null}
+          <h2
+            id={titleId}
+            className="text-base font-semibold leading-6 text-[var(--vms-ink)]"
+          >
             {title}
           </h2>
           <p className="mt-0.5 text-xs leading-5 text-[var(--vms-ink-muted)]">
@@ -41,7 +55,11 @@ export function ReportPanel({
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </header>
-      {children}
+      {bodyClassName ? (
+        <div className={bodyClassName}>{children}</div>
+      ) : (
+        children
+      )}
       {footer ? (
         <footer className="border-t border-[var(--vms-line)] px-4 py-3 text-xs text-[var(--vms-ink-muted)] sm:px-5">
           {footer}

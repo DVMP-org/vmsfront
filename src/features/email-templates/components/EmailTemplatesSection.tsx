@@ -145,13 +145,24 @@ export function EmailTemplatesSection() {
         emptyMessage="No email templates are available"
         showPagination={false}
         mobileSummary={(template) => (
-          <span>
+          <button
+            type="button"
+            className="min-h-11 w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+            aria-label={`${canEdit ? "Edit" : "View"} ${template.label} email template`}
+            onClick={() => {
+              setSelected(template.name);
+              setDrawerOpen(true);
+            }}
+          >
             <strong className="block">{template.label}</strong>
             <span className="mt-0.5 block text-xs text-[var(--vms-ink-muted)]">
               {template.has_override ? "Customized" : "Packaged default"} ·{" "}
               {template.subject || "Event default subject"}
             </span>
-          </span>
+            <span className="mt-2 block text-xs font-semibold text-[var(--vms-action)]">
+              {canEdit ? "Edit template" : "View template"}
+            </span>
+          </button>
         )}
       />
 

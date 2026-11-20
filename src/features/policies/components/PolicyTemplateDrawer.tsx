@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { FormDrawer, FormHint } from "@/components/ui/form/FormDrawer";
 import { FormSection } from "@/components/ui/form/FormSection";
-import { fieldControlClassName } from "@/components/ui/form/Field";
+import { Field, fieldControlClassName } from "@/components/ui/form/Field";
 
 import type {
     PolicyDefinitionCatalog,
@@ -118,25 +119,30 @@ export function PolicyTemplateDrawer({
             size="lg"
         >
             <FormSection title="Standard" description="A name operators will recognise.">
-                <label className="block text-xs font-medium text-[var(--vms-ink-muted)]">
-                    Name
-                    <input
-                        className={`${fieldControlClassName} mt-1`}
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder="Estate operations standard"
-                        required
-                    />
-                </label>
-                <label className="block text-xs font-medium text-[var(--vms-ink-muted)]">
-                    Description
-                    <textarea
-                        className={`${fieldControlClassName} mt-1 min-h-20`}
-                        value={description}
-                        onChange={(event) => setDescription(event.target.value)}
-                        placeholder="What this standard is for, and which sites should use it."
-                    />
-                </label>
+                <Field id="policy-standard-name" label="Name" required>
+                    {(control) => (
+                        <input
+                            {...control}
+                            className={fieldControlClassName}
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            placeholder="Estate operations standard"
+                            maxLength={120}
+                        />
+                    )}
+                </Field>
+                <Field id="policy-standard-description" label="Description">
+                    {(control) => (
+                        <textarea
+                            {...control}
+                            className={`${fieldControlClassName} min-h-20`}
+                            value={description}
+                            onChange={(event) => setDescription(event.target.value)}
+                            placeholder="What this standard is for, and which sites should use it."
+                            rows={3}
+                        />
+                    )}
+                </Field>
             </FormSection>
 
             <FormSection
@@ -145,17 +151,18 @@ export function PolicyTemplateDrawer({
             >
                 <div className="grid gap-2 sm:grid-cols-2">
                     {CONTEXTS.map((context) => (
-                        <label
+                        <div
                             key={context.value}
-                            className="flex min-h-11 items-center gap-2 rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3 text-sm"
+                            className="rounded-[var(--vms-radius-control)] border border-[var(--vms-line)] px-3"
                         >
-                            <input
-                                type="checkbox"
+                            <Checkbox
+                                id={`policy-standard-context-${context.value}`}
+                                label={context.label}
                                 checked={useCases.includes(context.value)}
                                 onChange={() => toggleContext(context.value)}
+                                className="rounded border-[var(--vms-line-strong)]"
                             />
-                            {context.label}
-                        </label>
+                        </div>
                     ))}
                 </div>
                 <FormHint>

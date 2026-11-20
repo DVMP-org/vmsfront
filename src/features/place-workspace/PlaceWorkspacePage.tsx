@@ -42,6 +42,14 @@ import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
 import { partyPluginSection } from "@/plugins/registry";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { parseApiError } from "@/lib/error-utils";
+import { formatMoney } from "@/lib/currency";
+import {
+  formatDate,
+  formatDateTime,
+  formatMonthYear,
+  formatTime,
+} from "@/lib/datetime";
+import { titleCase } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 import { AgreementCard } from "./AgreementCard";
 import { MovementsSection } from "./MovementsSection";
@@ -68,29 +76,10 @@ import {
   SectionCard,
   StatusPill,
   Tabs,
-  formatMoney,
   listRowClass,
   surfaceClass,
   surfacePad,
-  titleCaseStatus,
 } from "./ui";
-
-const date = (value: string) =>
-  new Date(value).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-const day = (value: string) =>
-  new Date(value).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-const time = (value: string) =>
-  new Date(value).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 
 const cadenceLabels: Record<string, string> = {
   one_time: "One-off",
@@ -115,7 +104,7 @@ const cadenceOrder = [
 
 function cadenceLabel(value?: string | null) {
   if (!value) return "—";
-  return cadenceLabels[value] ?? titleCaseStatus(value);
+  return cadenceLabels[value] ?? titleCase(value);
 }
 
 /** A payer may only acknowledge the same cadence or a coarser one. */
@@ -287,7 +276,7 @@ function AnnouncementAlert({
 }
 const relative = (value: string) => {
   const then = new Date(value).getTime();
-  if (Number.isNaN(then)) return day(value);
+  if (Number.isNaN(then)) return formatDate(value);
   const minutes = Math.round((Date.now() - then) / 60000);
   if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes} min ago`;
@@ -295,7 +284,7 @@ const relative = (value: string) => {
   if (hours < 24) return `${hours} hr ago`;
   const days = Math.round(hours / 24);
   if (days < 7) return `${days} d ago`;
-  return day(value);
+  return formatDate(value);
 };
 /** Dismissed announcement ids survive reloads for this Party + Place. */
 function readDismissedAnnouncements(key: string): string[] {
@@ -332,10 +321,7 @@ const dayBucket = (value: string) => {
   );
   if (diff === 0) return "Today";
   if (diff === 1) return "Yesterday";
-  return target.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-  });
+  return formatDate(target);
 };
 /** `Starting now`, `in 3 h`, `in 2 days` for the upcoming visits card. */
 function visitCountdown(value: string) {
@@ -663,7 +649,7 @@ function Overview() {
         title: `${item.person_name ?? "Visitor"} · ${
           item.direction === "entry" ? "entry" : "exit"
         } ${item.outcome}`,
-        meta: `${item.gate_name} · ${titleCaseStatus(item.reason_code)}`,
+        meta: `${item.gate_name} · ${titleCase(item.reason_code)}`,
         when: item.occurred_at,
         tone: (item.outcome === "allowed" ? "success" : "danger") as
           "success" | "danger",
@@ -672,7 +658,7 @@ function Overview() {
         id: `request-${item.id}`,
         icon: Wrench,
         title: item.title,
-        meta: `Maintenance · ${titleCaseStatus(item.status)}`,
+        meta: `Maintenance · ${titleCase(item.status)}`,
         when: item.created_at,
         tone: "neutral" as const,
       })),
@@ -693,7 +679,7 @@ function Overview() {
         title: `Invitation for ${
           item.guests[0]?.display_name_snapshot ?? "a visitor"
         }`,
-        meta: `Invitation · ${titleCaseStatus(item.status)}`,
+        meta: `Invitation · ${titleCase(item.status)}`,
         when: item.requested_at,
         tone: "info" as const,
       })),
@@ -767,7 +753,7 @@ function Overview() {
             >
               <Building2 className="h-7 w-7 opacity-90" />
               <span className="absolute bottom-1.5 w-full text-center text-[8px] font-bold uppercase tracking-[0.14em] text-white/70">
-                {titleCaseStatus(context.place.kind)}
+                {titleCase(context.place.kind)}
               </span>
             </div>
             <div className="min-w-0">
@@ -844,7 +830,7 @@ function Overview() {
                         {formatMoney(nextDue.balance, nextDue.currency)}
                       </p>
                       <p className="mt-0.5 text-[11px] leading-4 text-[var(--vms-ink-muted)]">
-                        Due {day(nextDue.due_date)} ·{" "}
+                        Due {formatDate(nextDue.due_date)} ·{" "}
                         {cadenceLabel(
                           nextDue.acknowledged_cadence ?? nextDue.recurrence,
                         )}
@@ -1015,8 +1001,8 @@ function Overview() {
                           <span className="font-semibold text-[var(--vms-ink)]">
                             {visitCountdown(invitation.valid_from)}
                           </span>{" "}
-                          · {day(invitation.valid_from)} ·{" "}
-                          {time(invitation.valid_from)}
+                          · {formatDate(invitation.valid_from)} ·{" "}
+                          {formatTime(invitation.valid_from)}
                         </p>
                       </div>
                       <StatusPill status={invitation.status} />
@@ -1114,8 +1100,8 @@ function Overview() {
                         {item.title}
                       </p>
                       <p className="mt-0.5 text-xs text-[var(--vms-ink-muted)]">
-                        Raised {day(item.created_at)} ·{" "}
-                        {titleCaseStatus(item.category)}
+                        Raised {formatDate(item.created_at)} ·{" "}
+                        {titleCase(item.category)}
                       </p>
                     </div>
                     <StatusPill status={item.status} />
@@ -1294,7 +1280,7 @@ function Announcements() {
                     {selected.title}
                   </h2>
                   <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-                    Published {date(selected.published_at)} · by{" "}
+                    Published {formatDateTime(selected.published_at)} · by{" "}
                     {qualifiedPlaceName(place)} management
                   </p>
                   <div className="mt-4 space-y-3 border-t border-[var(--vms-line)] pt-4 text-sm leading-6 text-[var(--vms-ink)]">
@@ -1521,7 +1507,7 @@ function Charges() {
                         {formatMoney(row.outstanding, row.currency)}
                       </td>
                       <td className="hidden whitespace-nowrap px-3 py-2.5 text-xs text-[var(--vms-ink-muted)] sm:table-cell">
-                        {row.next_due_date ? day(row.next_due_date) : "—"}
+                        {row.next_due_date ? formatDate(row.next_due_date) : "—"}
                       </td>
                       <td className="hidden whitespace-nowrap px-3 py-2.5 text-center text-xs text-[var(--vms-ink-muted)] md:table-cell">
                         {`${row.open_count} open / ${row.schedule_count}`}
@@ -1592,7 +1578,7 @@ function Charges() {
               Next due
             </p>
             <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-[var(--vms-ink)]">
-              {nextDue ? day(nextDue.due_date) : "Nothing scheduled"}
+              {nextDue ? formatDate(nextDue.due_date) : "Nothing scheduled"}
             </p>
             {nextDue ? (
               <>
@@ -1761,13 +1747,10 @@ function Charges() {
                           )}
                         >
                           <td className="hidden whitespace-nowrap px-3 py-2.5 text-xs text-[var(--vms-ink-muted)] sm:table-cell">
-                            {new Date(item.due_date).toLocaleDateString(
-                              undefined,
-                              { month: "short", year: "numeric" },
-                            )}
+                            {formatMonthYear(item.due_date)}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2.5 text-xs text-[var(--vms-ink-muted)]">
-                            {day(item.due_date)}
+                            {formatDate(item.due_date)}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-[var(--vms-ink)]">
                             {formatMoney(item.amount, item.currency)}
@@ -1852,7 +1835,7 @@ function Charges() {
                         Due date
                       </p>
                       <p className="mt-0.5 text-base font-semibold text-[var(--vms-ink)]">
-                        {day(selected.due_date)}
+                        {formatDate(selected.due_date)}
                       </p>
                     </div>
                   </div>
@@ -2260,10 +2243,10 @@ function Maintenance() {
                           </button>
                         </td>
                         <td className="hidden px-3 py-2.5 text-xs text-[var(--vms-ink-muted)] sm:table-cell">
-                          {titleCaseStatus(item.category)}
+                          {titleCase(item.category)}
                         </td>
                         <td className="hidden whitespace-nowrap px-3 py-2.5 text-xs text-[var(--vms-ink-muted)] md:table-cell">
-                          {date(item.created_at)}
+                          {formatDateTime(item.created_at)}
                         </td>
                         <td className="px-3 py-2.5">
                           <StatusPill status={item.status} />
@@ -2467,11 +2450,11 @@ function MaintenanceDetails({
       <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--vms-ink-muted)]">
         <span className="inline-flex items-center gap-1">
           <Wrench aria-hidden className="h-3.5 w-3.5" />
-          {titleCaseStatus(request.category)}
+          {titleCase(request.category)}
         </span>
         <span className="inline-flex items-center gap-1">
           <Clock3 aria-hidden className="h-3.5 w-3.5" />
-          Reported {date(request.created_at)}
+          Reported {formatDateTime(request.created_at)}
         </span>
       </p>
 
@@ -2514,7 +2497,7 @@ function MaintenanceDetails({
           Priority
         </p>
         <p className="mt-0.5 text-sm font-semibold capitalize text-[var(--vms-ink)]">
-          {titleCaseStatus(request.priority)}
+          {titleCase(request.priority)}
         </p>
       </div>
 
@@ -2539,7 +2522,7 @@ function MaintenanceDetails({
             />
             <div className="min-w-0">
               <p className="text-[11px] font-semibold text-[var(--vms-ink)]">
-                {date(request.created_at)}
+                {formatDateTime(request.created_at)}
               </p>
               <p className="mt-0.5 text-xs leading-5 text-[var(--vms-ink-muted)]">
                 Request received and logged for this Place.
@@ -2553,7 +2536,7 @@ function MaintenanceDetails({
             />
             <div className="min-w-0">
               <p className="text-[11px] font-semibold text-[var(--vms-ink)]">
-                Current status · {titleCaseStatus(request.status)}
+                Current status · {titleCase(request.status)}
               </p>
               <p className="mt-0.5 text-xs leading-5 text-[var(--vms-ink-muted)]">
                 Property management updates this request as work progresses.

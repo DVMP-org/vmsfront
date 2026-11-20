@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
-import { formatMoney } from "@/features/place-workspace/ui";
+import { formatMoney } from "@/lib/currency";
 import { formatDate } from "@/lib/utils";
 
 import type { WalletJournalEntry } from "./api";

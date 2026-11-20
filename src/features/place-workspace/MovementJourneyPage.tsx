@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
+import { ReportPanel } from "@/features/dashboard/DashboardPrimitives";
 import { formatDate, formatDateTime, formatTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
@@ -68,26 +70,26 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <Link
-          href={`/workspace/${place.id}/movements`}
-          className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Movement log
-        </Link>
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--vms-ink-muted)]">
-          Visitor journey
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
-          {personName}
-        </h1>
-        {reference ? (
-          <p className="mt-1 font-mono text-xs text-[var(--vms-ink-muted)]">
-            {reference}
-          </p>
-        ) : null}
-      </div>
+      <PageHeader
+        eyebrow="Visitor journey"
+        title={personName}
+        breadcrumbs={
+          <Link
+            href={`/workspace/${place.id}/movements`}
+            className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--vms-ink-muted)] hover:text-[var(--vms-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vms-focus)]"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Movement log
+          </Link>
+        }
+        metadata={
+          reference ? (
+            <span className="font-mono text-xs text-[var(--vms-ink-muted)]">
+              {reference}
+            </span>
+          ) : undefined
+        }
+      />
 
       {query.isError ? (
         <div
@@ -111,7 +113,11 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
         </div>
       ) : (
         <>
-          <section className="rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
+          <ReportPanel
+            title="Journey summary"
+            description="Visitor and checkpoint details for this Site."
+            bodyClassName="p-4"
+          >
             <div className="flex items-center gap-3">
               <Avatar name={personName} size="lg" tone="ink" decorative />
               <div className="min-w-0">
@@ -159,12 +165,12 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
                 value={movementStatus(latest).label}
               />
             </dl>
-          </section>
+          </ReportPanel>
 
-          <section className="rounded-xl border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-            <h2 className="border-b border-[var(--vms-line)] px-4 py-3 text-sm font-semibold">
-              Every scan
-            </h2>
+          <ReportPanel
+            title="Every scan"
+            description="Chronological checkpoint events for this visitor."
+          >
             <ol className="divide-y divide-[var(--vms-line)] px-4">
               {movements.map((event) => {
                 const status = movementStatus(event);
@@ -194,7 +200,7 @@ export function MovementJourneyPage({ visitorKey }: { visitorKey: string }) {
                 );
               })}
             </ol>
-          </section>
+          </ReportPanel>
         </>
       )}
     </div>

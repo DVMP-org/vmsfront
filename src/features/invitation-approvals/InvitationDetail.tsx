@@ -23,13 +23,14 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { formatDateTime } from "@/lib/datetime";
 import type { CheckpointEvent } from "@/features/access-journey/api";
 import { VisitorJourneyPanel } from "@/features/access-journey/VisitorJourneyPanel";
 import { checkpointsApi } from "@/features/checkpoints/api";
 import { parseApiError } from "@/lib/error-utils";
 import { useSiteAccess } from "@/features/context/use-site-access";
 import { invitationApprovalsApi, type VisitSession } from "./api";
-import { formatDate, guestNames, StatusBadge } from "./InvitationApprovals";
+import { guestNames, StatusBadge } from "./InvitationApprovals";
 
 export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const { confirmAction, confirmationDialog } = useConfirmAction();
@@ -176,7 +177,7 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
             <span>
               Requested{" "}
               <time dateTime={item.requested_at}>
-                {formatDate(item.requested_at)}
+                {formatDateTime(item.requested_at)}
               </time>
             </span>
           </div>
@@ -255,13 +256,13 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
               <Fact
                 icon={CalendarClock}
                 label="Valid from"
-                value={formatDate(item.valid_from)}
+                value={formatDateTime(item.valid_from)}
                 machineTime={item.valid_from}
               />
               <Fact
                 icon={Clock3}
                 label="Valid until"
-                value={formatDate(item.valid_to)}
+                value={formatDateTime(item.valid_to)}
                 machineTime={item.valid_to}
               />
               <Fact
@@ -513,7 +514,7 @@ function EventRow({ event }: { event: CheckpointEvent }) {
         </Badge>
       </div>
       <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-        {formatDate(event.occurred_at)} · {event.reason_code}
+        {formatDateTime(event.occurred_at)} · {event.reason_code}
       </p>
     </li>
   );
@@ -527,7 +528,7 @@ function SessionRow({ session }: { session: VisitSession }) {
           Visit {session.sequence_number}
         </strong>
         <p className="mt-1 text-xs text-[var(--vms-ink-muted)]">
-          {formatDate(session.started_at)}
+          {formatDateTime(session.started_at)}
         </p>
       </div>
       <Badge variant={session.status === "active" ? "warning" : "neutral"}>

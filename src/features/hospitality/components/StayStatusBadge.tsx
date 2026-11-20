@@ -1,5 +1,6 @@
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
-import { statusLabel, type StayStatus } from "../contracts";
+import { titleCase } from "@/lib/strings";
+import type { StayStatus } from "../contracts";
 
 const tones: Record<StayStatus, StatusTone> = {
   reserved: "warning",
@@ -10,5 +11,5 @@ const tones: Record<StayStatus, StatusTone> = {
 };
 
 export function StayStatusBadge({ status }: { status: StayStatus }) {
-  return <StatusBadge tone={tones[status]}>{statusLabel(status)}</StatusBadge>;
+  return <StatusBadge tone={tones[status]}>{titleCase(status)}</StatusBadge>;
 }

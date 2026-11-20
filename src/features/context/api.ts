@@ -30,6 +30,7 @@ export interface WorkspaceContext {
   organization_id: string;
   effective_use_case: UseCase | null;
   site_id: string | null;
+  site_timezone: string | null;
   /**
    * The selected Site's slug. The public booking page is addressed by it, and a
    * Site administrator has no other way to learn it.

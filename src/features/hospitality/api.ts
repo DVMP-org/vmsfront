@@ -32,6 +32,13 @@ export interface HospitalityPublicPage {
   logo_url: string | null;
 }
 
+export interface HospitalityDailyFlow {
+  site_id: string;
+  local_date: string;
+  arrivals: number;
+  departures: number;
+}
+
 /** One entry in the amenity vocabulary the server accepts. */
 export interface AmenityOption {
   code: string;
@@ -41,6 +48,12 @@ export interface AmenityOption {
 }
 
 export const hospitalityApi = {
+  dailyFlow: async () =>
+    (
+      await apiClient.get<ApiResponse<HospitalityDailyFlow>>(
+        `${moduleBase}/daily-flow`,
+      )
+    ).data,
   list: async (page: number, status: string) =>
     (
       await apiClient.get<ApiResponse<PaginatedResponse<Stay>>>(base, {

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   DataTable,
   Column,
@@ -28,6 +29,7 @@ import { CheckpointAssignmentsModal } from "@/features/checkpoints/CheckpointAss
 import { GateDependencyEditorModal } from "@/components/admin/gate-modals/GateDependencyEditorModal";
 import { GateDependencyModal } from "@/components/admin/gate-modals/GateDependencyModal";
 import { formatFiltersForAPI } from "@/lib/table-utils";
+import { parseApiError } from "@/lib/error-utils";
 import { useAppStore } from "@/store/app-store";
 import { checkpointsApi } from "@/features/checkpoints/api";
 import { useQuery } from "@tanstack/react-query";
@@ -114,7 +116,14 @@ export default function AdminGatesPage() {
     pageSize: 100,
   });
 
-  const { data, isLoading, isFetching } = useAdminGates({
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useAdminGates({
     page,
     pageSize,
     search: search.trim() || undefined,
@@ -302,20 +311,11 @@ export default function AdminGatesPage() {
 
   return (
     <main className="space-y-5 pb-10 text-[var(--vms-ink)]">
-      <header className="flex flex-col gap-4 border-b border-[var(--vms-line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vms-ink-muted)]">
-            Access operations
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            Gates
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vms-ink-muted)]">
-            Configure logical checkpoints, dependencies and the administrators
-            who operate them.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        eyebrow="Access operations"
+        title="Gates"
+        description="Configure logical checkpoints, dependencies and the administrators who operate them."
+        secondaryActions={
           <Button
             variant="outline"
             onClick={() => setIsDependencyModalOpen(true)}
@@ -323,12 +323,14 @@ export default function AdminGatesPage() {
             <GitGraph className="h-4 w-4" aria-hidden="true" />
             Dependency map
           </Button>
+        }
+        primaryAction={
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Create gate
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <section className="overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
         <div className="border-b border-[var(--vms-line)] px-4 py-3">
@@ -353,6 +355,10 @@ export default function AdminGatesPage() {
           total={total}
           currentPage={page}
           onPageChange={setPage}
+          errorMessage={isError && !data ? parseApiError(error).message : null}
+          isStale={isError && Boolean(data)}
+          onRetry={() => void refetch()}
+          emptyMessage="No gates have been configured for this Site yet."
           initialSearch={search}
           availableFilters={availableFilters}
           initialFilters={activeFilters}

@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/Input";
+import { formatMoneyWithCode } from "@/lib/currency";
+import { formatDateTime } from "@/lib/datetime";
 import { parseApiError } from "@/lib/error-utils";
 import { hospitalityApi } from "@/features/hospitality/api";
 import {
@@ -21,8 +23,6 @@ import {
   ModuleMetrics,
   ModulePanel,
   StatusPill,
-  displayDate,
-  money,
 } from "@/features/hospitality/HospitalityAdminPage";
 import type { GuestFolioLine } from "@/features/hospitality/contracts";
 import { useHospitalityAccess } from "@/features/hospitality/use-hospitality-access";
@@ -86,9 +86,10 @@ export function BillingWorkspace() {
       key: "created_at",
       header: "Posted",
       sortable: true,
+      minWidth: 180,
       accessor: (line) => (
         <div>
-          <span className="block">{displayDate(line.created_at, true)}</span>
+          <span className="block">{formatDateTime(line.created_at, access.siteTimezone)}</span>
           <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
             {line.category}
           </span>
@@ -99,12 +100,14 @@ export function BillingWorkspace() {
       key: "description",
       header: "Description",
       sortable: true,
+      minWidth: 230,
       accessor: (line) => line.description,
     },
     {
       key: "amount",
       header: "Amount",
       sortable: true,
+      minWidth: 150,
       accessor: (line) => (
         <span
           className={
@@ -114,7 +117,7 @@ export function BillingWorkspace() {
           }
         >
           {line.category === "payment" ? "−" : ""}
-          {money(line.amount, line.currency)}
+          {formatMoneyWithCode(line.amount, line.currency)}
         </span>
       ),
     },
@@ -243,19 +246,19 @@ export function BillingWorkspace() {
                 },
                 {
                   label: "Charges",
-                  value: money(folio.data.total, folio.data.currency),
+                  value: formatMoneyWithCode(folio.data.total, folio.data.currency),
                   detail: `${lines.length} posted lines`,
                   icon: CircleDollarSign,
                 },
                 {
                   label: "Paid",
-                  value: money(folio.data.paid, folio.data.currency),
+                  value: formatMoneyWithCode(folio.data.paid, folio.data.currency),
                   detail: "Payments received",
                   icon: CreditCard,
                 },
                 {
                   label: "Balance",
-                  value: money(folio.data.balance, folio.data.currency),
+                  value: formatMoneyWithCode(folio.data.balance, folio.data.currency),
                   detail:
                     folio.data.status === "settled"
                       ? "Folio settled"
@@ -306,12 +309,12 @@ export function BillingWorkspace() {
                       <div>
                         <strong className="block">{line.description}</strong>
                         <span className="text-xs capitalize text-[var(--vms-ink-muted)]">
-                          {line.category} · {displayDate(line.created_at, true)}
+                          {line.category} · {formatDateTime(line.created_at, access.siteTimezone)}
                         </span>
                       </div>
                       <span className="font-semibold">
                         {line.category === "payment" ? "−" : ""}
-                        {money(line.amount, line.currency)}
+                        {formatMoneyWithCode(line.amount, line.currency)}
                       </span>
                     </div>
                   )}
