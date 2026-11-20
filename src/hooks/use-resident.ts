@@ -5,9 +5,6 @@ import {
   GatePass,
   PaginatedResponse,
   ResidentUserCreate,
-  Wallet,
-  FundWalletRequest,
-  WalletTransaction,
   UpdateResidencyRequest,
   ResidencyDue,
   DueSchedule,
@@ -255,71 +252,6 @@ export function useResidentOnboarding() {
       queryClient.invalidateQueries({ queryKey: ["resident", "me"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard", "select"] });
       toast.success("You're now onboarded as a resident!");
-    },
-    onError: (error: any) => {
-      toast.error(parseApiError(error).message);
-    },
-  });
-}
-
-export function useWallet() {
-  return useQuery({
-    queryKey: ["resident", "wallet"],
-    queryFn: async () => {
-      const response = await residentService.getWallet();
-      return response.data;
-    },
-  });
-}
-
-export function useWalletHistory(params: {
-  page: number;
-  pageSize: number;
-  search?: string;
-  sort?: string;
-  filters?: string;
-}) {
-  return useQuery<PaginatedResponse<WalletTransaction>>({
-    queryKey: ["resident", "wallet", "history", params],
-    queryFn: async () => {
-      const response = await residentService.getWalletHistory(params);
-      return response.data;
-    },
-  });
-}
-
-export function useWalletTransaction(reference: string | null) {
-  return useQuery<WalletTransaction>({
-    queryKey: ["resident", "wallet", "transaction", reference],
-    queryFn: async () => {
-      if (!reference) throw new Error("Reference is required");
-      const response = await residentService.getWalletTransaction(reference);
-      return response.data;
-    },
-    enabled: !!reference,
-    retry: 5, // Retry up to 5 times before giving up
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-    refetchInterval: (query) => {
-      // Poll every 3 seconds if transaction is pending or if we don't have data yet
-      const data = query.state.data;
-      if (data?.status === "pending" || !data) {
-        return 3000;
-      }
-      return false;
-    },
-    // Continue polling for up to 60 seconds
-    refetchIntervalInBackground: true,
-  });
-}
-
-export function useFundWallet() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: FundWalletRequest) => residentService.fundWallet(data),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["resident", "wallet"] });
-      return response.data;
     },
     onError: (error: any) => {
       toast.error(parseApiError(error).message);

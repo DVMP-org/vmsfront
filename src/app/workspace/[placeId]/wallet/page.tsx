@@ -1,0 +1,5 @@
+import { PlaceWorkspacePage } from "@/features/place-workspace/PlaceWorkspacePage";
+
+export default function WalletPage() {
+    return <PlaceWorkspacePage section="wallet" />;
+}

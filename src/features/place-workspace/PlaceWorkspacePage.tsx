@@ -37,6 +37,7 @@ import { GuestStayBill } from "@/features/guest-stay/GuestStayBill";
 import { HospitalityGuestOverview } from "./HospitalityGuestOverview";
 import { PlaceSettingsPage } from "@/features/place-settings/PlaceSettingsPage";
 import { ProfilePage } from "@/features/profile/ProfilePage";
+import { WalletSection } from "@/features/wallet/WalletSection";
 import { qualifiedPlaceName, roleLabel } from "@/features/workspaces/catalog";
 import { partyPluginSection } from "@/plugins/registry";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -427,6 +428,7 @@ const sectionDescription: Record<string, (placeName: string) => string> = {
   movements: () => "Entry and exit activity recorded for your visitors.",
   announcements: (placeName) => `Notices published for ${placeName}.`,
   charges: (placeName) => `Charges and payment records for ${placeName}.`,
+  wallet: () => "Your wallet balance, top-ups and payment history.",
   maintenance: () => "Requests you raised and their current progress.",
   profile: () => "Your shared identity, contact details and profile photo.",
   settings: (placeName) => `Preferences for ${placeName}.`,
@@ -443,6 +445,7 @@ const hospitalityGuestSectionDescription: Record<
   movements: () => "Entry and exit activity recorded for your guests.",
   announcements: (placeName) => `Notices for guests staying at ${placeName}.`,
   charges: () => "Your stay bill, charges and payment history.",
+  wallet: () => "Your wallet balance, top-ups and payment history.",
   maintenance: () => "Report a room issue and follow its progress.",
   profile: () => "Your shared identity and contact details.",
 };
@@ -522,6 +525,7 @@ export function PlaceWorkspacePage({ section }: { section: string }) {
           <Charges />
         ))}
       {section === "maintenance" && <Maintenance />}
+      {section === "wallet" && <WalletSection />}
       {section === "profile" && (
         <ProfilePage audience={isHospitalityGuest ? "guest" : "resident"} />
       )}
@@ -1434,7 +1438,7 @@ function Charges() {
 
         <State query={definitions} rows={4}>
           {!definitionRows.length ? (
-            <div className={cn(surfaceClass, "py-2")}>
+            <div className={cn(surfaceClass, "p-2")}>
               <EmptyRow
                 icon={ReceiptText}
                 title="No charges assigned"

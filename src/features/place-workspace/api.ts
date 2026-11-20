@@ -153,6 +153,7 @@ export interface MaintenanceInput {
   priority: "low" | "normal" | "high" | "urgent";
 }
 const path = (id: string) => `/workspace/places/${encodeURIComponent(id)}`;
+
 export const placeWorkspaceApi = {
   context: async (id: string) =>
     (await apiClient.get<ApiResponse<PlaceContext>>(`${path(id)}/context`))

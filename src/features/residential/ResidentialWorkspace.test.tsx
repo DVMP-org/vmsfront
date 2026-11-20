@@ -320,6 +320,53 @@ describe("residential operations", () => {
     );
   });
 
+  it("shows pending unit households with exact record links and counts only unit occupancy", async () => {
+    mocks.relationships.mockResolvedValue({
+      items: [
+        relationship,
+        {
+          ...relationship,
+          id: "pending-unit",
+          status: "pending",
+          party: { ...relationship.party, display_name: "Bola Applicant" },
+        },
+        {
+          ...relationship,
+          id: "building-staff",
+          role: "staff",
+          place: { ...relationship.place, id: "building-a", name: "Block A" },
+        },
+      ],
+      total: 3,
+    });
+    mount(<ResidentialOverview />);
+
+    const pending = screen.getByRole("region", { name: "Pending households" });
+    expect(
+      await within(pending).findByRole("link", { name: /Bola Applicant/ }),
+    ).toHaveAttribute("href", "/admin/residential/occupancies/pending-unit");
+    expect(within(pending).queryByText("Block A")).toBeNull();
+    expect(
+      screen.getByRole("img", { name: "100% of units occupied" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Requires attention" }),
+    ).toBeNull();
+  });
+
+  it("withholds the occupancy percentage when relationships are paginated", async () => {
+    mocks.relationships.mockResolvedValue({
+      items: [relationship],
+      total: 101,
+    });
+    mount(<ResidentialOverview />);
+
+    expect(
+      await screen.findByText("Full occupancy rate unavailable"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /of units occupied/ })).toBeNull();
+  });
+
   it("opens and closes the selected unit details", async () => {
     mount(<ResidentialUnits />);
     fireEvent.click(
@@ -691,7 +738,7 @@ describe("residential operations", () => {
     mount(<ResidentialOverview />);
 
     expect(
-      (await screen.findAllByText("Maintenance offline")).length,
+      (await screen.findAllByText(/Maintenance offline/)).length,
     ).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /Retry maintenance/ }),

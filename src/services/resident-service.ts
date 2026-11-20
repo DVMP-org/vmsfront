@@ -20,10 +20,6 @@ import {
   ForumPostCreatePayload,
   ForumPostUpdatePayload,
   ResidentProfileUpdatePayload,
-  Wallet,
-  FundWalletRequest,
-  FundWalletResponse,
-  WalletTransaction,
   ResidentResidency,
   ResidentCreate,
   ResidencyDue,
@@ -341,37 +337,6 @@ export const residentService = {
     );
   },
 
-  // Wallet
-  async getWallet(): Promise<ApiResponse<Wallet>> {
-    return apiClient.get("/resident/wallet");
-  },
-
-  async fundWallet(
-    data: FundWalletRequest,
-  ): Promise<ApiResponse<FundWalletResponse>> {
-    return apiClient.post("/resident/wallet/fund", data);
-  },
-
-  async getWalletHistory(params: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    filters?: string;
-    sort?: string;
-  }): Promise<ApiResponse<PaginatedResponse<WalletTransaction>>> {
-    return apiClient.get("/resident/wallet/history", {
-      params: {
-        ...params,
-      },
-    });
-  },
-
-  async getWalletTransaction(
-    reference: string,
-  ): Promise<ApiResponse<WalletTransaction>> {
-    return apiClient.get(`/resident/wallet/transaction/${reference}`);
-  },
-
   // Residency Residents Management (Super User)
   async getResidencyResidents(
     residencyId: string,
@@ -502,7 +467,14 @@ export const residentService = {
     residencyId: string,
     dueId: string,
     scheduleId: string,
-  ): Promise<ApiResponse<FundWalletResponse>> {
+  ): Promise<
+    ApiResponse<{
+      access_code?: string;
+      reference: string;
+      authorization_url?: string;
+      status: string;
+    }>
+  > {
     return apiClient.post(
       `/resident/residency/${residencyId}/dues/${dueId}/schedules/${scheduleId}/pay`,
     );

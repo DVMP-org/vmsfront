@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ArrowRight,
-  BadgeDollarSign,
   Building2,
   Clock3,
   Home,
   Megaphone,
   Plus,
-  ReceiptText,
   RefreshCw,
   UserCheck,
   UsersRound,
@@ -37,11 +34,11 @@ import { formatMoneyWithCode } from "@/lib/currency";
 import { parseApiError } from "@/lib/error-utils";
 import { formatCurrency } from "@/lib/utils";
 import { AttentionQueueSection } from "@/features/dashboard/AttentionQueueSection";
+import { PanelState } from "@/features/dashboard/DashboardPrimitives";
 import { ResidentialShell, useResidentialAccess } from "./ResidentialShell";
+import { PendingHouseholdsPanel } from "./PendingHouseholdsPanel";
 import { descendantIds, flattenPlaces, residentialApi } from "./api";
-import { titleCase, type Announcement } from "./contracts";
-
-const occupancyRoles = ["resident", "owner", "tenant", "household_member"];
+import { occupancyRoles, titleCase, type Announcement } from "./contracts";
 
 interface UnitActivityRow {
   id: string;
@@ -50,7 +47,7 @@ interface UnitActivityRow {
   residents: string;
   occupancyStatus: "occupied" | "vacant";
   balance: number;
-  openRequests: number;
+  openRequests: number | null;
   updatedAt: string;
 }
 
@@ -79,6 +76,7 @@ export default function ResidentialOverview() {
   const units = places.filter(
     (place) => scopeIds.has(place.id) && place.kind === "unit",
   );
+  const unitIds = new Set(units.map((unit) => unit.id));
   const relationships = useQuery({
     queryKey: ["residential", contextKey, "relationships", placeId, "all"],
     queryFn: () => residentialApi.relationships(),
@@ -108,11 +106,20 @@ export default function ResidentialOverview() {
     scopeIds.has(row.place.id),
   );
   const activeRelationships = scopedRelationships.filter(
-    (row) => row.status === "active" && occupancyRoles.includes(row.role),
+    (row) =>
+      row.status === "active" &&
+      unitIds.has(row.place.id) &&
+      occupancyRoles.includes(row.role as never),
   );
   const pendingRelationships = scopedRelationships.filter(
-    (row) => row.status === "pending",
+    (row) =>
+      row.status === "pending" &&
+      unitIds.has(row.place.id) &&
+      occupancyRoles.includes(row.role as never),
   );
+  const relationshipsComplete =
+    !!relationships.data &&
+    relationships.data.total <= relationships.data.items.length;
   const relationshipsByUnit = groupRelationships(activeRelationships);
   const occupiedUnitIds = new Set(
     activeRelationships.map((row) => row.place.id),
@@ -137,16 +144,8 @@ export default function ResidentialOverview() {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([code, amount]) => formatMoneyWithCode(amount, code))
       .join(" · ") || "No balance due";
-  const overdueAssignments = outstandingAssignments.filter(
-    (assignment) =>
-      !!assignment.next_due_date &&
-      new Date(assignment.next_due_date).getTime() < Date.now(),
-  );
   const openMaintenance = (maintenance.data?.items || []).filter(
     (request) => !["resolved", "closed"].includes(request.status),
-  );
-  const urgentMaintenance = openMaintenance.filter((request) =>
-    ["high", "urgent"].includes(request.priority),
   );
   const assignmentsByPlace = groupAssignments(scopedAssignments);
   const maintenanceByPlace = groupMaintenance(openMaintenance);
@@ -176,7 +175,10 @@ export default function ResidentialOverview() {
           total + Number(assignment.outstanding_amount || 0),
         0,
       ),
-      openRequests: unitRequests.length,
+      openRequests:
+        maintenance.isPending || maintenance.isError
+          ? null
+          : unitRequests.length,
       updatedAt,
     } satisfies UnitActivityRow;
   });
@@ -193,13 +195,10 @@ export default function ResidentialOverview() {
     chargeAssignments.isError ||
     maintenance.isError ||
     announcements.isError;
-  const occupancyPercent = units.length
-    ? Math.round((occupiedUnitIds.size / units.length) * 100)
-    : 0;
-  const attentionTotal =
-    overdueAssignments.length +
-    pendingRelationships.length +
-    urgentMaintenance.length;
+  const occupancyPercent =
+    relationshipsComplete && units.length
+      ? Math.round((occupiedUnitIds.size / units.length) * 100)
+      : null;
 
   return (
     <ResidentialShell
@@ -234,9 +233,13 @@ export default function ResidentialOverview() {
           {
             icon: UsersRound,
             label: "Occupied",
-            value: occupiedUnitIds.size,
+            value: relationshipsComplete
+              ? occupiedUnitIds.size
+              : `≥${occupiedUnitIds.size}`,
             detail: units.length
-              ? `${occupancyPercent}% of units occupied`
+              ? occupancyPercent === null
+                ? "Known occupied units; full rate unavailable"
+                : `${occupancyPercent}% of units occupied`
               : "No units configured",
             state:
               tree.isPending || relationships.isPending
@@ -304,94 +307,23 @@ export default function ResidentialOverview() {
         </section>
       ) : null}
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(20rem,1fr)]">
-        <section className="flex h-full flex-col overflow-hidden rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)]">
-          <div className="flex items-start justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-4">
-            <div>
-              <h2 className="flex items-center gap-2 text-base font-semibold">
-                <AlertTriangle
-                  className="h-4 w-4 text-[var(--vms-warning)]"
-                  aria-hidden="true"
-                />
-                Requires attention
-              </h2>
-              <p className="mt-1 text-sm text-[var(--vms-ink-muted)]">
-                Items that need your action to keep operations running smoothly.
-              </p>
-            </div>
-            <Link
-              href="/admin/residential/maintenance"
-              className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold underline-offset-4 hover:underline"
-            >
-              View all ({attentionTotal}){" "}
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="grid flex-1 divide-y divide-[var(--vms-line)]">
-            <AttentionRow
-              icon={ReceiptText}
-              tone="danger"
-              title="Overdue charges"
-              detail={
-                overdueAssignments.length
-                  ? `${overdueAssignments.length} assigned charge${overdueAssignments.length === 1 ? " is" : "s are"} past due and need follow-up.`
-                  : "No assigned charge is currently overdue."
-              }
-              count={overdueAssignments.length}
-              action={
-                <Button asChild size="sm">
-                  <Link href="/admin/residential/arrears">Review arrears</Link>
-                </Button>
-              }
-            />
-            <AttentionRow
-              icon={UserCheck}
-              tone="warning"
-              title="Pending occupancy approval"
-              detail={
-                pendingRelationships.length
-                  ? `${pendingRelationships.length} household relationship${pendingRelationships.length === 1 ? " is" : "s are"} awaiting review.`
-                  : "No household relationship is awaiting review."
-              }
-              count={pendingRelationships.length}
-              action={
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/admin/residential/occupancies">
-                    Review requests
-                  </Link>
-                </Button>
-              }
-            />
-            <AttentionRow
-              icon={Wrench}
-              tone="info"
-              title="Maintenance requests"
-              detail={
-                maintenance.isError
-                  ? parseApiError(maintenance.error).message
-                  : `${openMaintenance.length} open request${openMaintenance.length === 1 ? "" : "s"} · ${urgentMaintenance.length} high or urgent.`
-              }
-              count={openMaintenance.length}
-              action={
-                maintenance.isError ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => maintenance.refetch()}
-                  >
-                    Retry maintenance
-                  </Button>
-                ) : (
-                  <Button asChild size="sm" variant="outline">
-                    <Link href="/admin/residential/maintenance">
-                      View requests
-                    </Link>
-                  </Button>
-                )
-              }
-            />
-          </div>
-        </section>
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+        <PendingHouseholdsPanel
+          relationships={pendingRelationships}
+          isLoading={tree.isPending || relationships.isPending}
+          error={
+            tree.isError
+              ? parseApiError(tree.error).message
+              : relationships.isError
+                ? parseApiError(relationships.error).message
+                : null
+          }
+          isComplete={relationshipsComplete}
+          onRetry={() => {
+            void tree.refetch();
+            void relationships.refetch();
+          }}
+        />
 
         <section className="flex h-full flex-col rounded-[var(--vms-radius-surface)] border border-[var(--vms-line)] bg-[var(--vms-surface)] p-4">
           <div className="flex items-start justify-between gap-3">
@@ -406,57 +338,98 @@ export default function ResidentialOverview() {
               </p>
             </div>
           </div>
-          <div className="my-4 grid flex-1 grid-cols-[112px_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
-            <div
-              className="relative mx-auto grid aspect-square h-28 w-28 shrink-0 place-items-center rounded-full sm:h-32 sm:w-32"
-              style={{
-                background: `conic-gradient(var(--vms-success) ${occupancyPercent}%, var(--vms-surface-subtle) ${occupancyPercent}% 100%)`,
+          {tree.isPending || relationships.isPending ? (
+            <PanelState
+              compact
+              kind="loading"
+              title="Loading occupancy"
+              description="Checking units and household relationships."
+            />
+          ) : tree.isError || relationships.isError ? (
+            <PanelState
+              compact
+              kind="error"
+              title="Occupancy is unavailable"
+              description="The unit or household data could not be loaded."
+              onRetry={() => {
+                void tree.refetch();
+                void relationships.refetch();
               }}
-              aria-label={`${occupancyPercent}% of units occupied`}
-              role="img"
+            />
+          ) : units.length === 0 ? (
+            <PanelState
+              compact
+              kind="empty"
+              title="No units configured"
+              description="Add units to start tracking occupancy."
+            />
+          ) : occupancyPercent === null ? (
+            <div
+              role="status"
+              className="my-4 flex flex-1 flex-col justify-center gap-2 rounded-[var(--vms-radius-control)] bg-[var(--vms-surface-subtle)] p-4"
             >
-              <div className="grid h-20 w-20 place-items-center sm:h-24 sm:w-24 rounded-full bg-[var(--vms-surface)] text-center">
-                <div>
-                  <strong className="block text-2xl font-semibold tracking-[-0.04em]">
-                    {occupancyPercent}%
-                  </strong>
-                  <span className="text-[11px] text-[var(--vms-ink-muted)]">
-                    Occupied
-                  </span>
+              <strong className="text-sm font-semibold">
+                Full occupancy rate unavailable
+              </strong>
+              <p className="text-sm text-[var(--vms-ink-muted)]">
+                At least {occupiedUnitIds.size} of {units.length} units have
+                active households in the loaded relationship page. Open
+                Residents &amp; households for the complete register.
+              </p>
+            </div>
+          ) : (
+            <div className="my-4 grid flex-1 grid-cols-[112px_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
+              <div
+                className="relative mx-auto grid aspect-square h-28 w-28 shrink-0 place-items-center rounded-full sm:h-32 sm:w-32"
+                style={{
+                  background: `conic-gradient(var(--vms-success) ${occupancyPercent}%, var(--vms-surface-subtle) ${occupancyPercent}% 100%)`,
+                }}
+                aria-label={`${occupancyPercent}% of units occupied`}
+                role="img"
+              >
+                <div className="grid h-20 w-20 place-items-center sm:h-24 sm:w-24 rounded-full bg-[var(--vms-surface)] text-center">
+                  <div>
+                    <strong className="block text-2xl font-semibold tracking-[-0.04em]">
+                      {occupancyPercent}%
+                    </strong>
+                    <span className="text-[11px] text-[var(--vms-ink-muted)]">
+                      Occupied
+                    </span>
+                  </div>
                 </div>
               </div>
+              <dl className="space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--vms-success)]" />
+                    Occupied
+                  </dt>
+                  <dd className="font-semibold tabular-nums">
+                    {occupiedUnitIds.size}
+                    <span className="ml-1.5 font-normal text-[var(--vms-ink-muted)]">
+                      ({occupancyPercent}%)
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--vms-surface-subtle)] ring-1 ring-[var(--vms-line)]" />
+                    Vacant
+                  </dt>
+                  <dd className="font-semibold tabular-nums">
+                    {Math.max(0, units.length - occupiedUnitIds.size)}
+                    <span className="ml-1.5 font-normal text-[var(--vms-ink-muted)]">
+                      ({units.length ? 100 - occupancyPercent : 0}%)
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--vms-line)] pt-3">
+                  <dt className="font-semibold">Total units</dt>
+                  <dd className="font-semibold tabular-nums">{units.length}</dd>
+                </div>
+              </dl>
             </div>
-            <dl className="space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--vms-success)]" />
-                  Occupied
-                </dt>
-                <dd className="font-semibold tabular-nums">
-                  {occupiedUnitIds.size}
-                  <span className="ml-1.5 font-normal text-[var(--vms-ink-muted)]">
-                    ({occupancyPercent}%)
-                  </span>
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="flex items-center gap-2 text-[var(--vms-ink-muted)]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--vms-surface-subtle)] ring-1 ring-[var(--vms-line)]" />
-                  Vacant
-                </dt>
-                <dd className="font-semibold tabular-nums">
-                  {Math.max(0, units.length - occupiedUnitIds.size)}
-                  <span className="ml-1.5 font-normal text-[var(--vms-ink-muted)]">
-                    ({units.length ? 100 - occupancyPercent : 0}%)
-                  </span>
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-t border-[var(--vms-line)] pt-3">
-                <dt className="font-semibold">Total units</dt>
-                <dd className="font-semibold tabular-nums">{units.length}</dd>
-              </div>
-            </dl>
-          </div>
+          )}
           <Link
             href="/admin/residential/units"
             className="inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
@@ -489,49 +462,6 @@ export default function ResidentialOverview() {
         />
       </div>
     </ResidentialShell>
-  );
-}
-
-function AttentionRow({
-  icon: Icon,
-  tone,
-  title,
-  detail,
-  count,
-  action,
-}: {
-  icon: LucideIcon;
-  tone: "danger" | "warning" | "info";
-  title: string;
-  detail: string;
-  count: number;
-  action: React.ReactNode;
-}) {
-  const toneClass = {
-    danger: "bg-[var(--vms-danger-subtle)] text-[var(--vms-danger)]",
-    warning: "bg-[var(--vms-warning-subtle)] text-[var(--vms-warning)]",
-    info: "bg-[color-mix(in_srgb,var(--vms-info)_9%,white)] text-[var(--vms-info)]",
-  }[tone];
-  return (
-    <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap">
-      <span
-        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass}`}
-      >
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold">{title}</h3>
-          <span className="rounded-full bg-[var(--vms-surface-subtle)] px-2 py-0.5 text-[11px] font-semibold tabular-nums">
-            {count}
-          </span>
-        </div>
-        <p className="mt-0.5 text-sm leading-5 text-[var(--vms-ink-muted)]">
-          {detail}
-        </p>
-      </div>
-      <div className="ml-auto flex shrink-0 items-center gap-2">{action}</div>
-    </div>
   );
 }
 
@@ -601,7 +531,9 @@ function UnitActivity({
       header: "Open requests",
       sortable: true,
       accessor: (row) => (
-        <span className="tabular-nums">{row.openRequests}</span>
+        <span className="tabular-nums">
+          {row.openRequests === null ? "—" : row.openRequests}
+        </span>
       ),
       responsiveHide: "lg",
     },
@@ -648,27 +580,29 @@ function UnitActivity({
           <Link href="/admin/residential/units">View all</Link>
         </Button>
       </div>
-      {maintenanceError && !rows.length ? (
-        <div role="alert" className="p-5 text-sm text-[var(--vms-danger)]">
-          <p>{maintenanceError}</p>
-          <Button className="mt-3" variant="outline" onClick={onRetry}>
+      {maintenanceError ? (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--vms-line)] px-4 py-3 text-sm text-[var(--vms-danger)]"
+        >
+          <p>Request counts unavailable: {maintenanceError}</p>
+          <Button size="sm" variant="outline" onClick={onRetry}>
             Retry maintenance
           </Button>
         </div>
-      ) : (
-        <div className="p-3 sm:p-4">
-          <DataTable
-            data={rows.slice(0, 5)}
-            columns={columns}
-            tableLabel="Residential unit activity"
-            searchable={false}
-            showPagination={false}
-            enableViewControls={false}
-            isLoading={loading}
-            emptyMessage="No units have been created at this property."
-          />
-        </div>
-      )}
+      ) : null}
+      <div className="p-3 sm:p-4">
+        <DataTable
+          data={rows.slice(0, 5)}
+          columns={columns}
+          tableLabel="Residential unit activity"
+          searchable={false}
+          showPagination={false}
+          enableViewControls={false}
+          isLoading={loading}
+          emptyMessage="No units have been created at this property."
+        />
+      </div>
     </section>
   );
 }

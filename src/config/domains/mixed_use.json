@@ -261,6 +261,12 @@
           "module": "billing"
         },
         {
+          "label": "Wallet",
+          "href": "/workspace/{placeId}/wallet",
+          "icon": "wallet",
+          "module": "core"
+        },
+        {
           "label": "Maintenance requests",
           "href": "/workspace/{placeId}/maintenance",
           "icon": "wrench",

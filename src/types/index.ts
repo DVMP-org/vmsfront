@@ -220,12 +220,12 @@ export interface VisitorGateStatus {
   event: GateEvent | null;
   dependency_gate: GateResponseLite | null;
   status:
-    | "locked"
-    | "pending"
-    | "checked_in"
-    | "checked_out"
-    | "unavailable"
-    | string;
+  | "locked"
+  | "pending"
+  | "checked_in"
+  | "checked_out"
+  | "unavailable"
+  | string;
   message: string | null;
 }
 
@@ -816,45 +816,12 @@ export interface OperationsAttention {
   categories: AttentionCategory[];
 }
 
-// Wallet Types
-export interface Wallet {
-  id: string;
-  resident_id: string;
-  balance: number;
-  status: "active" | "frozen" | "closed";
-  created_at: string;
-  updated_at: string;
-}
-
-export interface FundWalletRequest {
-  amount: number;
-  description: string;
-}
-
-export interface FundWalletResponse {
-  access_code: string;
-  reference: string;
-  authorization_url: string;
-  status: string;
-}
-
-export interface WalletTransaction {
-  id: string;
-  wallet_id: string;
-  reference: string;
-  balance_before: number;
-  amount: number;
-  balance_after: number;
-  type: "credit" | "debit";
-  status: "pending" | "success" | "failed";
-  description: string | null;
-  metadata: Record<string, any> | null;
-  created_at: string;
-  updated_at: string;
-}
+// Wallet money lives in the Party wallet (`features/place-workspace`), which is
+// scoped to a Party, an organization and a currency. There is no resident wallet.
 
 export enum TransactionType {
   WALLET_FUNDING = "wallet_funding",
+  WALLET_SETTLEMENT = "wallet_settlement",
   DUE_PAYMENT = "due_payment",
   PLUGIN_PURCHASE = "plugin_purchase",
   INTERNAL_DEBIT = "internal_debit",

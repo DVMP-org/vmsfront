@@ -13,7 +13,7 @@ import { CreditCard, Search, AlertCircle } from "lucide-react";
 import { formatDate, titleCase } from "@/lib/utils";
 import { parseApiError } from "@/lib/error-utils";
 import { electricityService } from "@/plugins/electricity/services/electricity-service";
-import { PurchaseToken } from "@/plugins/electricity/types";
+import { ElectricityPurchase } from "@/plugins/electricity/types";
 import { SiteRequired } from "./SiteRequired";
 import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
@@ -75,7 +75,7 @@ export default function AdminPurchasesPage() {
     setPage(newPage);
   };
 
-  const columns: Column<PurchaseToken>[] = [
+  const columns: Column<ElectricityPurchase>[] = [
     {
       key: "transaction_reference",
       header: "Reference",

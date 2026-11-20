@@ -3,10 +3,13 @@ import { ApiResponse, PaginatedResponse } from "@/types";
 import {
     Disco,
     ElectricityPlace,
+  ElectricityPurchase,
     ElectricityStats,
   Meter,
   MeterCreate,
     MeterUpdate,
+  PurchaseQuote,
+  PurchaseQuoteCreate,
     PurchaseToken,
     PurchaseTokenCreate,
 } from "../types";
@@ -66,11 +69,31 @@ export const electricityService = {
         return apiClient.delete(`/electricity/meters/${meterId}`);
     },
 
-    // Purchase electricity token from the wallet
+  /** Price a purchase and report which tenders the policy allows. */
+  async getPurchaseQuote(
+    data: PurchaseQuoteCreate,
+  ): Promise<ApiResponse<PurchaseQuote>> {
+    return apiClient.post("/electricity/purchase/quote", data);
+  },
+
+  /**
+   * Buy electricity. A wallet purchase is queued for vending; a gateway
+   * purchase returns a checkout payload. Neither confirms delivery.
+   */
   async purchaseToken(
     data: PurchaseTokenCreate,
   ): Promise<ApiResponse<PurchaseToken>> {
     return apiClient.post("/electricity/purchase/token", data);
+  },
+
+  /** Requery an ambiguous purchase with the provider. */
+  async reconcilePurchase(
+    purchaseId: string,
+  ): Promise<ApiResponse<{ status: string; reason?: string }>> {
+    return apiClient.post(
+      `/electricity/purchases/${encodeURIComponent(purchaseId)}/reconcile`,
+      {},
+    );
   },
 
   // Get paginated list of purchases
@@ -78,7 +101,7 @@ export const electricityService = {
     page?: number;
     pageSize?: number;
       placeId?: string;
-  }): Promise<ApiResponse<PaginatedResponse<PurchaseToken>>> {
+  }): Promise<ApiResponse<PaginatedResponse<ElectricityPurchase>>> {
     return apiClient.get("/electricity/purchases", {
       params: {
         page: params?.page ?? 1,

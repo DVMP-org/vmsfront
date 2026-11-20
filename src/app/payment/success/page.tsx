@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useTransaction, useWalletTransaction } from "@/hooks/use-resident";
+import { useTransaction } from "@/hooks/use-resident";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -83,11 +83,10 @@ export default function PaymentSuccessPage() {
   useEffect(() => {
     if (!transaction || !reference) return;
 
-    // Invalidate wallet queries to refresh balance
-    queryClient.invalidateQueries({ queryKey: ["resident", "wallet"] });
-    queryClient.invalidateQueries({
-      queryKey: ["resident", "wallet", "history"],
-    });
+    // The browser returning here is not proof of payment: the server credits a
+    // wallet only when the gateway callback verifies. Refresh the wallet views
+    // so a verified top-up shows up as soon as it lands.
+    queryClient.invalidateQueries({ queryKey: ["wallet"] });
 
     // If in popup, notify parent window
     if (isInPopup && window.opener) {

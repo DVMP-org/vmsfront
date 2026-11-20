@@ -4,7 +4,6 @@ import {
   Residency,
   NotificationResponse,
   Transaction,
-  WalletTransaction,
   PaginatedResponse,
   GatePass,
 } from "@/types";
